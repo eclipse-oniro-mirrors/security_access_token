@@ -131,7 +131,7 @@ sptr<IBackgroundTaskMgr> BackgourndTaskManagerAccessClient::GetProxy()
 
 void BackgourndTaskManagerAccessClient::ReleaseProxy()
 {
-    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+    if ((proxy_ != nullptr) && (proxy_->AsObject() != nullptr) && (serviceDeathObserver_ != nullptr)) {
         proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
     }
     proxy_ = nullptr;

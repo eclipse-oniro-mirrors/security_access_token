@@ -108,15 +108,9 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
 
     ASSERT_EQ("process6", tokenInfos[0]->GetProcessName());
     ASSERT_EQ(static_cast<AccessTokenID>(685266937), tokenInfos[0]->GetTokenID());
-    ASSERT_EQ(static_cast<uint32_t>(2), tokenInfos[0]->GetDcap().size());
-    ASSERT_EQ("AT_CAP", (tokenInfos[0]->GetDcap())[0]);
-    ASSERT_EQ("ST_CAP", (tokenInfos[0]->GetDcap())[1]);
 
     ASSERT_EQ("process5", tokenInfos[1]->GetProcessName());
     ASSERT_EQ(static_cast<AccessTokenID>(678065606), tokenInfos[1]->GetTokenID());
-    ASSERT_EQ(static_cast<uint32_t>(2), tokenInfos[1]->GetDcap().size());
-    ASSERT_EQ("AT_CAP", (tokenInfos[1]->GetDcap())[0]);
-    ASSERT_EQ("ST_CAP", (tokenInfos[1]->GetDcap())[1]);
 }
 
 /**
@@ -282,7 +276,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     // test process one
-    NativeTokenInfo info = {
+    NativeTokenInfoBase info = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "ProcessNativeTokenInfos001",
@@ -295,15 +289,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
     tokenInfos.emplace_back(nativeToken);
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.apl, info.apl);
-    ASSERT_EQ(findInfo.ver, info.ver);
     ASSERT_EQ(findInfo.processName, info.processName);
-    ASSERT_EQ(findInfo.tokenID, info.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info.dcap);
 
     // wait fresh tokens to sql.
     sleep(3);
@@ -319,63 +309,15 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
         if (tokenId != info.tokenID) {
             continue;
         }
-        GTEST_LOG_(INFO) <<"apl " << nativeTokenValue.GetInt(TokenFiledConst::FIELD_APL);
+        GTEST_LOG_(INFO) << "apl " << nativeTokenValue.GetInt(TokenFiledConst::FIELD_APL);
         std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
         ASSERT_NE(native, nullptr);
         ret = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);
         ASSERT_EQ(ret, RET_SUCCESS);
         ASSERT_EQ(native->GetTokenID(), info.tokenID);
         ASSERT_EQ(native->GetProcessName(), info.processName);
-        ASSERT_EQ(native->GetDcap(), info.dcap);
     }
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
-    ASSERT_EQ(ret, RET_SUCCESS);
-}
-
-/**
- * @tc.name: CheckNativeDCap001
- * @tc.desc: Verify CheckNativeDCap normal and abnormal branch
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "test CheckNativeDCap001!");
-
-    // test tokenInfo = nullptr
-    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
-    tokenInfos.emplace_back(nullptr);
-    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-
-    // test process one
-    NativeTokenInfo info = {.apl = APL_NORMAL,
-        .ver = 1,
-        .processName = "CheckNativeDCap001",
-        .dcap = {"AT_CAP", "ST_CAP"},
-        .tokenID = 0x28100000,
-        .tokenAttr = 0};
-
-    std::vector<PermissionStateFull> permStateList = {};
-    std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
-    tokenInfos.emplace_back(nativeToken);
-    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-    NativeTokenInfo findInfo;
-    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, info.apl);
-    ASSERT_EQ(findInfo.ver, info.ver);
-    ASSERT_EQ(findInfo.processName, info.processName);
-    ASSERT_EQ(findInfo.tokenID, info.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info.dcap);
-
-    std::string dcap = "AT_CAP";
-    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, dcap), RET_SUCCESS);
-    std::string ndcap = "AT";
-    ASSERT_NE(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, ndcap), RET_SUCCESS);
-    AccessTokenID testId = 1;
-    ASSERT_NE(AccessTokenInfoManager::GetInstance().CheckNativeDCap(testId, dcap), RET_SUCCESS);
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
@@ -410,17 +352,13 @@ static void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
     permStateList.emplace_back(infoManagerTestState3);
 }
 
-static void CompareGoalTokenInfo(NativeTokenInfo &info)
+static void CompareGoalTokenInfo(const NativeTokenInfoBase &info)
 {
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.apl, info.apl);
-    ASSERT_EQ(findInfo.ver, info.ver);
     ASSERT_EQ(findInfo.processName, info.processName);
-    ASSERT_EQ(findInfo.tokenID, info.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info.dcap);
 }
 
 /**
@@ -433,7 +371,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos002!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
-    NativeTokenInfo info1;
+    NativeTokenInfoBase info1;
     info1.apl = APL_NORMAL;
     info1.ver = 1;
     info1.processName = "native_token_test1";
@@ -441,7 +379,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     info1.tokenID = 0x28100001;
     info1.tokenAttr = 0;
 
-    NativeTokenInfo info2;
+    NativeTokenInfoBase info2;
     info2.apl = APL_SYSTEM_BASIC;
     info2.ver = 1;
     info2.processName = "native_token_test2";
@@ -472,11 +410,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 
     CompareGoalTokenInfo(info1);
 
-    int ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.MANAGE_USER_IDM");
+    int ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.MANAGE_USER_IDM");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.ACCELEROMETER");
+    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.ACCELEROMETER");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.DISCOVER_BLUETOOTH");
+    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.DISCOVER_BLUETOOTH");
     ASSERT_EQ(ret, PERMISSION_DENIED);
 
     CompareGoalTokenInfo(info2);
@@ -484,9 +422,9 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.MANAGE_USER_IDM");
+    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.MANAGE_USER_IDM");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.ACCELEROMETER");
+    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.ACCELEROMETER");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID);
@@ -521,7 +459,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos004!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
-    NativeTokenInfo info3 = {
+    NativeTokenInfoBase info3 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test3",
@@ -530,7 +468,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
         .tokenAttr = 0
     };
 
-    NativeTokenInfo info4 = {
+    NativeTokenInfoBase info4 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test4",
@@ -547,15 +485,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
 
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info3.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.apl, info3.apl);
-    ASSERT_EQ(findInfo.ver, info3.ver);
     ASSERT_EQ(findInfo.processName, info3.processName);
-    ASSERT_EQ(findInfo.tokenID, info3.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info3.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info3.dcap);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info3.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -572,7 +506,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos005!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
-    NativeTokenInfo info5 = {
+    NativeTokenInfoBase info5 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test5",
@@ -581,7 +515,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
         .tokenAttr = 0
     };
 
-    NativeTokenInfo info6 = {
+    NativeTokenInfoBase info6 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test5",
@@ -598,18 +532,14 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
 
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info5.tokenID, findInfo);
     ASSERT_EQ(ret, ERR_TOKENID_NOT_EXIST);
 
     ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info6.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.apl, info6.apl);
-    ASSERT_EQ(findInfo.ver, info6.ver);
     ASSERT_EQ(findInfo.processName, info6.processName);
-    ASSERT_EQ(findInfo.tokenID, info6.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info6.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info6.dcap);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info6.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -626,7 +556,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos006!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
-    NativeTokenInfo info7 = {
+    NativeTokenInfoBase info7 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test7",
@@ -635,7 +565,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
         .tokenAttr = 0
     };
 
-    NativeTokenInfo info8 = {
+    NativeTokenInfoBase info8 = {
         .apl = APL_SYSTEM_BASIC,
         .ver = 1,
         .processName = "native_token_test7",
@@ -652,15 +582,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
 
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info7.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.apl, info8.apl);
-    ASSERT_EQ(findInfo.ver, info8.ver);
     ASSERT_EQ(findInfo.processName, info8.processName);
-    ASSERT_EQ(findInfo.tokenID, info8.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info8.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info8.dcap);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info8.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -696,7 +622,7 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     ASSERT_NE(tokenId, INVALID_TOKENID);
 
     NativeTokenReceptor::GetInstance().Init();
-    NativeTokenInfo findInfo;
+    NativeTokenInfoBase findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenId, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(findInfo.processName, infoInstance.processName);

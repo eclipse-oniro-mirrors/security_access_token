@@ -23,7 +23,6 @@
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "parcel.h"
 #include "parcel_utils.h"
@@ -336,66 +335,6 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     EXPECT_EQ(true, readedData1 == nullptr);
 }
 
-/**
- * @tc.name: NativeTokenInfoForSyncParcel001
- * @tc.desc: Test HapTokenInfoForSync Marshalling/Unmarshalling.
- * @tc.type: FUNC
- * @tc.require: issueI5QKZF
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoForSyncParcel001, TestSize.Level1)
-{
-    NativeTokenInfoForSyncParcel nativeTokenInfoSync;
-
-    NativeTokenInfo baseInfo;
-    baseInfo.apl = APL_NORMAL,
-    baseInfo.ver = 1,
-    baseInfo.processName = "native_token_test1",
-    baseInfo.tokenID = 0x28100000, // 0x28100000 tokenid
-    baseInfo.tokenAttr = 0,
-    baseInfo.dcap =  {"AT_CAP", "ST_CAP"};
-    baseInfo.nativeAcls = {"ohos.permission.LOCATION"};
-
-    Parcel out;
-    NativeTokenInfoParcel baseInfoParcel;
-    baseInfoParcel.nativeTokenInfoParams = baseInfo;
-    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE);
-
-    std::shared_ptr<NativeTokenInfoForSyncParcel> readedData(NativeTokenInfoForSyncParcel::Unmarshalling(out));
-    EXPECT_NE(nullptr, readedData);
-
-    Parcel outInvalid;
-    WriteParcelable(outInvalid, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
-    std::shared_ptr<NativeTokenInfoForSyncParcel> readedData1(NativeTokenInfoForSyncParcel::Unmarshalling(outInvalid));
-    EXPECT_EQ(true, readedData1 == nullptr);
-}
-
-/**
- * @tc.name: NativeTokenInfoForSyncParcel002
- * @tc.desc: Test HapTokenInfoForSync Marshalling/Unmarshalling.
- * @tc.type: FUNC
- * @tc.require: issueI5QKZF
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoForSyncParcel002, TestSize.Level1)
-{
-    NativeTokenInfoForSyncParcel nativeTokenInfoSync;
-
-    NativeTokenInfo baseInfo;
-    baseInfo.apl = APL_NORMAL,
-    baseInfo.ver = 1,
-    baseInfo.processName = "native_token_test2",
-    baseInfo.tokenID = 0x28100000, // 0x28100000 tokenid
-    baseInfo.tokenAttr = 0,
-    baseInfo.dcap =  {"AT_CAP", "ST_CAP"};
-    baseInfo.nativeAcls = {"ohos.permission.LOCATION"};
-
-    nativeTokenInfoSync.nativeTokenInfoForSyncParams.baseInfo = baseInfo;
-    nativeTokenInfoSync.nativeTokenInfoForSyncParams.permStateList.emplace_back(g_permStatBeta);
-
-    Parcel parcel;
-    EXPECT_EQ(true, nativeTokenInfoSync.Marshalling(parcel));
-    std::shared_ptr<NativeTokenInfoForSyncParcel> readedData(NativeTokenInfoForSyncParcel::Unmarshalling(parcel));
-    EXPECT_NE(nullptr, readedData);
-}
 
 static void PutData(Parcel& out, uint32_t deviceSize, uint32_t statusSize, uint32_t flagSize)
 {
@@ -463,116 +402,6 @@ HWTEST_F(AccessTokenParcelTest, PermissionStateFullParcel002, TestSize.Level1)
 
     std::shared_ptr<PermissionStateFullParcel> readedData(PermissionStateFullParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
-}
-
-
-static void PutNativeTokenInfoData(Parcel& out, uint32_t dcapSize, uint32_t aclSize)
-{
-    EXPECT_EQ(true, out.WriteInt32(APL_NORMAL));
-    EXPECT_EQ(true, out.WriteUint8(1));
-    EXPECT_EQ(true, out.WriteString("native_token_test0"));
-    EXPECT_EQ(true, out.WriteUint32(0x28100000)); // 0x28100000 tokenid
-    EXPECT_EQ(true, out.WriteUint32(0));
-
-    EXPECT_EQ(true, out.WriteUint32(dcapSize));
-    for (uint32_t i = 0; i < dcapSize; i++) {
-        EXPECT_EQ(true, out.WriteString("dcapItem"));
-    }
-    EXPECT_EQ(true, out.WriteUint32(aclSize));
-    for (uint32_t i = 0; i < aclSize; i++) {
-        EXPECT_EQ(true, out.WriteString("ohos.permission.LOCATION"));
-    }
-}
-
-/**
- * @tc.name: NativeTokenInfoParcel001
- * @tc.desc: Test NativeTokenInfoParcel Marshalling/Unmarshalling.
- * @tc.type: FUNC
- * @tc.require: issueI5QKZF
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel001, TestSize.Level1)
-{
-    Parcel out;
-    PutNativeTokenInfoData(out, MAX_DCAP_SIZE, MAX_ACL_SIZE);
-    std::shared_ptr<NativeTokenInfoParcel> readedData(NativeTokenInfoParcel::Unmarshalling(out));
-    EXPECT_NE(nullptr, readedData);
-
-    Parcel out1;
-    PutNativeTokenInfoData(out1, MAX_DCAP_SIZE, MAX_ACL_SIZE + 1);
-    std::shared_ptr<NativeTokenInfoParcel> readedData1(NativeTokenInfoParcel::Unmarshalling(out1));
-    EXPECT_EQ(readedData1, nullptr);
-
-    Parcel out2;
-    PutNativeTokenInfoData(out2, MAX_DCAP_SIZE + 1, MAX_ACL_SIZE + 1);
-    std::shared_ptr<NativeTokenInfoParcel> readedData2(NativeTokenInfoParcel::Unmarshalling(out2));
-    EXPECT_EQ(readedData2, nullptr);
-}
-
-/**
- * @tc.name: NativeTokenInfoParcel002
- * @tc.desc: Test NativeTokenInfoParcel Marshalling/Unmarshalling.
- * @tc.type: FUNC
- * @tc.require: issueI5QKZF
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel002, TestSize.Level1)
-{
-    NativeTokenInfoParcel nativeTokenInfoParcel;
-    nativeTokenInfoParcel.nativeTokenInfoParams.apl = APL_NORMAL;
-    nativeTokenInfoParcel.nativeTokenInfoParams.ver = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.processName = "processName";
-    nativeTokenInfoParcel.nativeTokenInfoParams.dcap = {"AT_CAP"};
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = {};
-
-    Parcel parcel;
-    EXPECT_EQ(true, nativeTokenInfoParcel.Marshalling(parcel));
-    std::shared_ptr<NativeTokenInfoParcel> readedData(NativeTokenInfoParcel::Unmarshalling(parcel));
-    EXPECT_NE(nullptr, readedData);
-}
-
-/*
- * @tc.name: NativeTokenInfoParcel003
- * @tc.desc: NativeTokenInfoParcel::Marshalling function test dcap size > 32
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel003, TestSize.Level1)
-{
-    std::vector<std::string> vec(33, "AT_CAP");
-    NativeTokenInfoParcel nativeTokenInfoParcel;
-    nativeTokenInfoParcel.nativeTokenInfoParams.apl = APL_NORMAL;
-    nativeTokenInfoParcel.nativeTokenInfoParams.ver = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.processName = "processName";
-    nativeTokenInfoParcel.nativeTokenInfoParams.dcap = vec; // size is 33
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = {};
-
-    Parcel parcel;
-    EXPECT_NE(true, nativeTokenInfoParcel.Marshalling(parcel));
-}
-
-/*
- * @tc.name: NativeTokenInfoParcel004
- * @tc.desc: NativeTokenInfoParcel::Marshalling function test nativeAcls size > 64
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel004, TestSize.Level1)
-{
-    std::vector<std::string> vec(65, "AT_CAP");
-    NativeTokenInfoParcel nativeTokenInfoParcel;
-    nativeTokenInfoParcel.nativeTokenInfoParams.apl = APL_NORMAL;
-    nativeTokenInfoParcel.nativeTokenInfoParams.ver = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.processName = "processName";
-    nativeTokenInfoParcel.nativeTokenInfoParams.dcap = {"AT_CAP"};
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
-    nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = vec; // size is 65
-
-    Parcel parcel;
-    EXPECT_NE(true, nativeTokenInfoParcel.Marshalling(parcel));
 }
 
 /**

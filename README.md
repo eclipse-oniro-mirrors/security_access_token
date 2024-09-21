@@ -55,7 +55,6 @@ The following figure shows the ATM architecture.
 | int GetTokenTypeFlag(AccessTokenID tokenID); | Obtains the type of a trusted token ID.|
 | int GetTokenType(FullTokenID tokenID); | Obtains the type of an access token.|
 | int GetTokenTypeFlag(FullTokenID tokenID); | Obtains the type of a trusted token ID.|
-| int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | Checks whether the native process corresponding to the given token ID has the specified distributed capability.|
 | AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token ID of an app.|
 | AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token ID of an app.|
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | Obtains the token information about an OpenHarmony Ability Package (HAP).|
@@ -75,7 +74,6 @@ ATM provides unified access control for apps and allows apps or service abilitie
 
 #### Native Process
 -  Before a native process starts, it calls **GetAccessTokenId** to obtain a token ID, and then calls **SetSelfTokenID** to set the token ID to the kernel.
--  During the running of a native process, it calls **GetNativeTokenInfo** or **CheckNativeDCap** to obtain the token information, including the distributed capability and APL.
 
 #### App HAP
 -  When an app is installed, **AllocHapToken** is called to obtain the token ID of the app.

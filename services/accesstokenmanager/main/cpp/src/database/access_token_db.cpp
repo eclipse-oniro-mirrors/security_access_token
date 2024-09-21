@@ -95,8 +95,6 @@ int32_t AccessTokenDb::RestoreAndInsertIfCorrupt(const int32_t resultCode, int64
 int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValues>& values)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add type is %{public}u.", type);
-
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
@@ -105,7 +103,6 @@ int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValu
 
     size_t addSize = values.size();
     if (addSize == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Insert values is empty.");
         return 0;
     }
 
@@ -116,6 +113,7 @@ int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValu
     {
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         if (db_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -136,7 +134,7 @@ int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValu
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add call cast %{public}" PRId64 ", batch insert %{public}" PRId64
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add cost %{public}" PRId64 ", batch insert %{public}" PRId64
         " records to table %{public}s.", endTime - beginTime, outInsertNum, tableName.c_str());
 
     return 0;
@@ -170,8 +168,6 @@ int32_t AccessTokenDb::RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32
 int32_t AccessTokenDb::Remove(const AtmDataType type, const GenericValues& conditionValue)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove type is %{public}u.", type);
-
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
@@ -185,6 +181,7 @@ int32_t AccessTokenDb::Remove(const AtmDataType type, const GenericValues& condi
     {
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         if (db_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -200,7 +197,7 @@ int32_t AccessTokenDb::Remove(const AtmDataType type, const GenericValues& condi
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove call cast %{public}" PRId64
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove cost %{public}" PRId64
         ", delete %{public}d records from table %{public}s.", endTime - beginTime, deletedRows, tableName.c_str());
 
     return 0;
@@ -235,8 +232,6 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     const GenericValues& conditionValue)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Modify type is %{public}u.", type);
-
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
@@ -257,6 +252,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     {
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         if (db_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -272,7 +268,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Modify call cast %{public}" PRId64
+    ACCESSTOKEN_LOG_INFO(LABEL, "Modify cost %{public}" PRId64
         ", update %{public}d records from table %{public}s.", endTime - beginTime, changedRows, tableName.c_str());
 
     return 0;
@@ -315,8 +311,6 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     std::vector<GenericValues>& results)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Find type is %{public}u.", type);
-
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
@@ -331,6 +325,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     {
         OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         if (db_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -359,7 +354,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Find call cast %{public}" PRId64
+    ACCESSTOKEN_LOG_INFO(LABEL, "Find cost %{public}" PRId64
         ", query %{public}d records from table %{public}s.", endTime - beginTime, count, tableName.c_str());
 
     return 0;
@@ -382,7 +377,7 @@ int32_t AccessTokenDb::DeleteAndAddSingleTable(const GenericValues delCondition,
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Delete %{public}d record from table %{public}s", deletedRows, tableName.c_str());
 
-    // if nothing to insert, no need to call BatchInsert
+    // if nothing to insert, no need to BatchInsert
     if (addValues.empty()) {
         return 0;
     }
@@ -442,6 +437,7 @@ int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vect
     {
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         if (db_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -457,7 +453,7 @@ int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vect
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertHap cast %{public}" PRId64 ".", endTime - beginTime);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertHap cost %{public}" PRId64 ".", endTime - beginTime);
 
     return 0;
 }

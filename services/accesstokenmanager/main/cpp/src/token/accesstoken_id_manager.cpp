@@ -124,9 +124,9 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Reigster tokenId failed, maybe repeat, retry");
+            ACCESSTOKEN_LOG_WARN(LABEL, "Reigster tokenId failed(error=%{public}d), maybe repeat, retry.", ret);
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Reigster tokenId finally failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Reigster tokenId finally failed(error=%{public}d).", ret);
             tokenId = INVALID_TOKENID;
         }
     }

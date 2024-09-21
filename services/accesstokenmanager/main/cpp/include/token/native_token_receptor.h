@@ -47,7 +47,7 @@ private:
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int32_t ParserNativeRawData(const std::string& nativeRawData,
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    void from_json(const nlohmann::json& j, NativeTokenInfo& p);
+    void from_json(const nlohmann::json& j, NativeTokenInfoBase& p);
 };
 } // namespace AccessToken
 } // namespace Security

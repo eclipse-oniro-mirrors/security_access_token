@@ -200,19 +200,6 @@ HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level1)
 }
 
 /**
- * @tc.name: CheckNativeDCap001
- * @tc.desc: CheckNativeDCap with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, CheckNativeDCap001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123;
-    const std::string dcap = "AT_CAP";
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::CheckNativeDCap(tokenId, dcap));
-}
-
-/**
  * @tc.name: GetHapTokenID001
  * @tc.desc: GetHapTokenID with no permission
  * @tc.type: FUNC

@@ -31,7 +31,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"; // todo
+static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO";
 static PermissionStateFull g_permiState = {
     .permissionName = SHORT_TEMP_PERMISSION,
     .isGeneral = true,
@@ -109,10 +109,12 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission001, TestSize.Level1)
     ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, onceTime);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     sleep(onceTime + 1);
-    EXPECT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -141,17 +143,20 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     sleep(maxTime - 1);
-    ASSERT_EQ(PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     sleep(1 + 1);
-    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     // onceTime = maxTime + 1
     ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, maxTime + 1);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     sleep(maxTime + 2);
-    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -180,7 +185,8 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     sleep(onceTime - 1);
-    ASSERT_EQ(PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, onceTime);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -190,21 +196,24 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     sleep(onceTime - 1);
-    ASSERT_EQ(PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     // thirdth set 3s
     ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, onceTime);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     sleep(onceTime - 1);
-    ASSERT_EQ(PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     // fourth set 5s
     ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, onceTime);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     sleep(onceTime + 1);
-    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

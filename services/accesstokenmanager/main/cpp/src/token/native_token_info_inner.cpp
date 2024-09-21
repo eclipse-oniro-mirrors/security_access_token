@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,7 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenInfoInner"};
 }
 
-NativeTokenInfoInner::NativeTokenInfoInner() : isRemote_(false)
+NativeTokenInfoInner::NativeTokenInfoInner()
 {
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenID = 0;
@@ -37,8 +37,8 @@ NativeTokenInfoInner::NativeTokenInfoInner() : isRemote_(false)
     tokenInfoBasic_.apl = APL_NORMAL;
 }
 
-NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native,
-    const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
+NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfoBase& native,
+    const std::vector<PermissionStateFull>& permStateList)
 {
     tokenInfoBasic_ = native;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(native.tokenID,
@@ -48,32 +48,6 @@ NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native,
 NativeTokenInfoInner::~NativeTokenInfoInner()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
-}
-
-int NativeTokenInfoInner::Init(const TokenInfo& tokenInfo, const std::vector<std::string>& dcap,
-    const std::vector<std::string>& nativeAcls,
-    const std::vector<PermissionStateFull>& permStateList)
-{
-    tokenInfoBasic_.tokenID = tokenInfo.id;
-    if (!DataValidator::IsProcessNameValid(tokenInfo.processName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
-        return ERR_PARAM_INVALID;
-    }
-    tokenInfoBasic_.processName = tokenInfo.processName;
-    if (!DataValidator::IsAplNumValid(tokenInfo.apl)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: %{public}u init failed, apl %{public}d is invalid",
-            tokenInfoBasic_.tokenID, tokenInfo.apl);
-        return ERR_PARAM_INVALID;
-    }
-    tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(tokenInfo.apl);
-    tokenInfoBasic_.dcap = dcap;
-    tokenInfoBasic_.nativeAcls = nativeAcls;
-
-    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfo.id,
-        permStateList);
-    return RET_SUCCESS;
 }
 
 std::string NativeTokenInfoInner::DcapToString(const std::vector<std::string>& dcap) const
@@ -98,19 +72,6 @@ std::string NativeTokenInfoInner::NativeAclsToString(const std::vector<std::stri
         }
     }
     return nativeAclsStr;
-}
-
-int NativeTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
-{
-    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
-    outGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
-    outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
-    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
-    outGenericValues.Put(TokenFiledConst::FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
-    outGenericValues.Put(TokenFiledConst::FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
-    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
-
-    return RET_SUCCESS;
 }
 
 int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const GenericValues& inGenericValues,
@@ -156,36 +117,21 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     return RET_SUCCESS;
 }
 
-void NativeTokenInfoInner::TranslateToNativeTokenInfo(NativeTokenInfo& infoParcel) const
+void NativeTokenInfoInner::TransferNativeInfo(std::vector<GenericValues>& valueList) const
 {
-    infoParcel.apl = tokenInfoBasic_.apl;
-    infoParcel.ver = tokenInfoBasic_.ver;
-    infoParcel.processName = tokenInfoBasic_.processName;
-    infoParcel.dcap = tokenInfoBasic_.dcap;
-    infoParcel.nativeAcls = tokenInfoBasic_.nativeAcls;
-    infoParcel.tokenID = tokenInfoBasic_.tokenID;
-    infoParcel.tokenAttr = tokenInfoBasic_.tokenAttr;
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
+    value.Put(TokenFiledConst::FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
+    value.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
+    value.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
+    value.Put(TokenFiledConst::FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
+    value.Put(TokenFiledConst::FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
+    value.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
+    valueList.emplace_back(value);
 }
 
-void NativeTokenInfoInner::StoreNativeInfo(std::vector<GenericValues>& valueList) const
+void NativeTokenInfoInner::TransferPermissionPolicy(std::vector<GenericValues>& permStateValues) const
 {
-    if (isRemote_) {
-        ACCESSTOKEN_LOG_INFO(LABEL,
-            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
-        return;
-    }
-    GenericValues genericValues;
-    TranslationIntoGenericValues(genericValues);
-    valueList.emplace_back(genericValues);
-}
-
-void NativeTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permStateValues) const
-{
-    if (isRemote_) {
-        ACCESSTOKEN_LOG_INFO(LABEL,
-            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
-        return;
-    }
     if (permPolicySet_ != nullptr) {
         permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
@@ -196,14 +142,9 @@ AccessTokenID NativeTokenInfoInner::GetTokenID() const
     return tokenInfoBasic_.tokenID;
 }
 
-std::vector<std::string> NativeTokenInfoInner::GetDcap() const
+AccessTokenID NativeTokenInfoInner::GetApl() const
 {
-    return tokenInfoBasic_.dcap;
-}
-
-std::vector<std::string> NativeTokenInfoInner::GetNativeAcls() const
-{
-    return tokenInfoBasic_.nativeAcls;
+    return tokenInfoBasic_.apl;
 }
 
 std::string NativeTokenInfoInner::GetProcessName() const
@@ -224,16 +165,6 @@ uint32_t NativeTokenInfoInner::GetReqPermissionSize() const
     return static_cast<uint32_t>(0);
 }
 
-bool NativeTokenInfoInner::IsRemote() const
-{
-    return isRemote_;
-}
-
-void NativeTokenInfoInner::SetRemote(bool isRemote)
-{
-    isRemote_ = isRemote;
-}
-
 void NativeTokenInfoInner::SetDcaps(const std::string& dcapStr)
 {
     std::string::size_type start = 0;
@@ -243,21 +174,21 @@ void NativeTokenInfoInner::SetDcaps(const std::string& dcapStr)
             tokenInfoBasic_.dcap.push_back(dcapStr.substr(start));
             break;
         }
-        tokenInfoBasic_.dcap.push_back(dcapStr.substr(start, offset));
+        tokenInfoBasic_.dcap.push_back(dcapStr.substr(start, start - offset));
         start = offset + 1;
     }
 }
 
-void NativeTokenInfoInner::SetNativeAcls(const std::string& AclsStr)
+void NativeTokenInfoInner::SetNativeAcls(const std::string& aclsStr)
 {
     std::string::size_type start = 0;
     while (true) {
-        std::string::size_type offset = AclsStr.find(',', start);
+        std::string::size_type offset = aclsStr.find(',', start);
         if (offset == std::string::npos) {
-            tokenInfoBasic_.nativeAcls.push_back(AclsStr.substr(start));
+            tokenInfoBasic_.nativeAcls.push_back(aclsStr.substr(start));
             break;
         }
-        tokenInfoBasic_.nativeAcls.push_back(AclsStr.substr(start, offset));
+        tokenInfoBasic_.nativeAcls.push_back(aclsStr.substr(start, offset - start));
         start = offset + 1;
     }
 }
@@ -267,13 +198,8 @@ void NativeTokenInfoInner::ToString(std::string& info) const
     info.append(R"({)");
     info.append("\n");
     info.append(R"(  "tokenID": )" + std::to_string(tokenInfoBasic_.tokenID) + ",\n");
-    info.append(R"(  "tokenAttr": )" + std::to_string(tokenInfoBasic_.tokenAttr) + ",\n");
-    info.append(R"(  "ver": )" + std::to_string(tokenInfoBasic_.ver) + ",\n");
     info.append(R"(  "processName": ")" + tokenInfoBasic_.processName + R"(")" + ",\n");
     info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
-    info.append(R"(  "dcap": ")" + DcapToString(tokenInfoBasic_.dcap) + R"(")" + ",\n");
-    info.append(R"(  "nativeAcls": ")" + NativeAclsToString(tokenInfoBasic_.nativeAcls) + R"(")" + ",\n");
-    info.append(R"(  "isRemote": )" + std::to_string(isRemote_? 1 : 0) + ",\n");
     if (permPolicySet_ != nullptr) {
         permPolicySet_->PermStateToString(tokenInfoBasic_.apl, tokenInfoBasic_.nativeAcls, info);
     }
