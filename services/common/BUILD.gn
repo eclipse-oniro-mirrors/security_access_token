@@ -73,7 +73,7 @@ ohos_static_library("accesstoken_service_common") {
     "c_utils:utils",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

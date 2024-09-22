@@ -49,7 +49,7 @@ ohos_shared_library("accesstoken_config_policy") {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
-      "ipc:ipc_core",
+      "ipc:ipc_single",
       "json:nlohmann_json_static",
     ]
     if (customization_config_policy_enable) {

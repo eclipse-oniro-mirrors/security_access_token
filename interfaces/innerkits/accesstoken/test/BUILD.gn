@@ -130,7 +130,7 @@ ohos_unittest("accesstoken_mock_test") {
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "init:libbegetutil",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "ipc:libdbinder",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
