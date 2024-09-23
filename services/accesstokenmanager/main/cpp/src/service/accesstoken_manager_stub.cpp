@@ -893,27 +893,6 @@ void AccessTokenManagerStub::GetPermissionManagerInfoInner(MessageParcel& data, 
     reply.WriteParcelable(&infoParcel);
 }
 
-void AccessTokenManagerStub::GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-
-    AccessTokenID tokenId = data.ReadUint32();
-    std::string name;
-
-    int32_t result = this->GetNativeTokenName(tokenId, name);
-    if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
-    }
-
-    if (result == RET_SUCCESS) {
-        reply.WriteString(name);
-    }
-}
-
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
@@ -1010,8 +989,6 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::SetPermDialogCapInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_MANAGER_INFO)] =
         &AccessTokenManagerStub::GetPermissionManagerInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME)] =
-        &AccessTokenManagerStub::GetNativeTokenNameInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
