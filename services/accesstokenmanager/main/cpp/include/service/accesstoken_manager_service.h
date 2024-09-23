@@ -69,7 +69,6 @@ public:
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int DeleteToken(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;

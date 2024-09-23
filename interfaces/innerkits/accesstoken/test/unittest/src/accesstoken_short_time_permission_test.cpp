@@ -24,7 +24,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const int32_t INDEX_ZERO = 0;
-static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"; // todo
+static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO";
 static PermissionStateFull g_permiState = {
     .permissionName = SHORT_TEMP_PERMISSION,
     .isGeneral = true,
@@ -71,7 +71,6 @@ static void NativeTokenGet()
 {
     uint64_t tokenID;
     const char **perms = new const char *[1]; // 1: array size
-    // todo
     perms[INDEX_ZERO] = "ohos.permission.DISTRIBUTED_DATASYNC";
 
     tokenID = GetNativeTokenTest("AccessTokenShortTimePermTest", perms, 1); // 1: array size

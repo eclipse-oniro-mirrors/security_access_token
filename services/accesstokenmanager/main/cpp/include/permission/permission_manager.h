@@ -60,10 +60,8 @@ public:
     void AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
         bool updateFlag);
     void RemoveDefPermissions(AccessTokenID tokenID);
-    int VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
-    virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
@@ -114,14 +112,12 @@ private:
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
     int32_t UpdateTokenPermissionState(
         AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
-    std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
-    void PermDefToString(const PermissionDef& def, std::string& info) const;
     bool IsPermissionStateOrFlagMatched(const PermissionStateFull& stata1, const PermissionStateFull& stata2);
 
     PermissionGrantEvent grantEvent_;

@@ -18,7 +18,6 @@ group("fuzztest") {
     # deps file
     "allochaptokenstub_fuzzer:AllocHapTokenStubFuzzTest",
     "alloclocaltokenidstub_fuzzer:AllocLocalTokenIDStubFuzzTest",
-    "checknativedcapstub_fuzzer:CheckNativeDCapStubFuzzTest",
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",
     "deleteremotedevicetokensstub_fuzzer:DeleteRemoteDeviceTokensStubFuzzTest",
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",

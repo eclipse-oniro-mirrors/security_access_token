@@ -56,7 +56,6 @@ private:
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
-    void CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply);
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);

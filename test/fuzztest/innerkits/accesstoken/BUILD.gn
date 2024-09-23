@@ -20,7 +20,6 @@ group("fuzztest") {
     # deps file
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
-    "checknativedcap_fuzzer:CheckNativeDCapFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
     "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",
     "deleteremotetoken_fuzzer:DeleteRemoteTokenFuzzTest",
