@@ -212,7 +212,14 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
     }
 
     running_ = true;
-    const std::function<void()> runner = [this]() {this->ProcessBufferedCommands(true);};
+    const std::function<void()> runner = [weak = weak_from_this()]() {
+        auto self = weak.lock();
+        if (self == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "RemoteCommandExecutor is nullptr");
+            return;
+        }
+        self->ProcessBufferedCommands(true);
+    };
 
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =

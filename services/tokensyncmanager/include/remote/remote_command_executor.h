@@ -27,7 +27,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class RemoteCommandExecutor final {
+class RemoteCommandExecutor final : public std::enable_shared_from_this<RemoteCommandExecutor>  {
 public:
     explicit RemoteCommandExecutor(const std::string &targetNodeId);
     virtual ~RemoteCommandExecutor();

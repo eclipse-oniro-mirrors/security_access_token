@@ -81,7 +81,7 @@ void PermissionDefinitionCache::DeleteByToken(AccessTokenID tokenId)
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         if (tokenId == it->second.tokenId) {
-            permissionDefinitionMap_.erase(it++);
+            it = permissionDefinitionMap_.erase(it);
         } else {
             ++it;
         }
