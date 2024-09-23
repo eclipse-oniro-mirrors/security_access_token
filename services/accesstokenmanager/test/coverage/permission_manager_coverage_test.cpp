@@ -206,36 +206,6 @@ HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestS
 
     AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
-
-/**
- * @tc.name: GetNativeTokenName001
- * @tc.desc: Test AccessTokenInfoManager::GetNativeTokenName
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerCoverageTest, GetNativeTokenName001, TestSize.Level1)
-{
-    std::string name;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetNativeTokenName(
-        INVALID_TOKENID, name));
-
-    AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(
-        static_cast<FullTokenID>(tokenId)));
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetNativeTokenName(
-        tokenId, name));
-    
-    std::string processName = "hdcd";
-    tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId(processName);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().GetNativeTokenName(tokenId, name));
-    ASSERT_EQ(processName, name);
-
-    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

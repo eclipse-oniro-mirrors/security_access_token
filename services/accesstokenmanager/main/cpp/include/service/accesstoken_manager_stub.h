@@ -81,7 +81,6 @@ private:
     void GetVersionInner(MessageParcel& data, MessageParcel& reply);
     void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply);
-    void GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply);
     void InitUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply);

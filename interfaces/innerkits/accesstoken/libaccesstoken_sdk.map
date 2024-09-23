@@ -67,7 +67,6 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionUsedType(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterTokenSyncCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::TokenSyncKitInterface> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterTokenSyncCallback()";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenName(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::Security::AccessToken::TokenSyncCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::TokenSyncCallback::TokenSyncCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::TokenSyncKitInterface> const&)";
         "OHOS::Security::AccessToken::TokenSyncCallback::~TokenSyncCallback()";

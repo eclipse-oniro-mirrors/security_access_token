@@ -95,7 +95,6 @@ public:
 
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
-    int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) override;
     int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
     int32_t ClearUserPolicy() override;

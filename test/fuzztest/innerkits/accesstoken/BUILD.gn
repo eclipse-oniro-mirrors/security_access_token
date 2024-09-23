@@ -33,7 +33,6 @@ group("fuzztest") {
     "gethaptokeninfofromremote_fuzzer:GetHapTokenInfoFromRemoteFuzzTest",
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
-    "getnativetokenname_fuzzer:GetNativeTokenNameFuzzTest",
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
     "getpermissionrequesttogglestatus_fuzzer:GetPermissionRequestToggleStatusFuzzTest",
     "getpermissionsstatus_fuzzer:GetPermissionsStatusFuzzTest",

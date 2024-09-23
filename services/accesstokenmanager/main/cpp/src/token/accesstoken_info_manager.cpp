@@ -1676,25 +1676,6 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
     return true;
 }
 
-int32_t AccessTokenInfoManager::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenId);
-    if ((type != ATokenTypeEnum::TOKEN_NATIVE) && (type != ATokenTypeEnum::TOKEN_SHELL)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token type %{public}u is invalid.", type);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-    auto iter = nativeTokenInfoMap_.find(tokenId);
-    if (iter == nativeTokenInfoMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is not exist.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    name = iter->second.processName;
-    return RET_SUCCESS;
-}
-
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {

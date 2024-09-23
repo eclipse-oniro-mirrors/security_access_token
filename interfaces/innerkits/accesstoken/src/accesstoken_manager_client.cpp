@@ -709,16 +709,6 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
     info = infoParcel.info;
 }
 
-int32_t AccessTokenManagerClient::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    return proxy->GetNativeTokenName(tokenId, name);
-}
-
 int32_t AccessTokenManagerClient::InitUserPolicy(
     const std::vector<UserState>& userList, const std::vector<std::string>& permList)
 {

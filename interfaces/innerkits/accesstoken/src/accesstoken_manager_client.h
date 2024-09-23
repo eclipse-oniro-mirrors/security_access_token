@@ -98,7 +98,6 @@ public:
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
-    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
     int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
     int32_t ClearUserPolicy();

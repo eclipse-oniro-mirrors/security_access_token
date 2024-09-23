@@ -79,7 +79,6 @@ public:
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
     void ReduceDumpTaskNum();
-    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
