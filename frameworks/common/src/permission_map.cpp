@@ -536,6 +536,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.SET_TELEPHONY_ESIM_STATE_OPEN",       false},
     {"ohos.permission.SUPERVISE_KIA_SERVICE",               false},
     {"ohos.permission.ACCESS_ANALYTICS",                    false},
+    {"ohos.permission.WINDOW_TOPMOST",                      false},
     {"ohos.permission.BLOCK_ALL_APP_START",                 false},
     {"ohos.permission.START_UIABILITY_TO_HIDDEN",           false},
     {"ohos.permission.ACCESS_SUPER_HUB",                    false},

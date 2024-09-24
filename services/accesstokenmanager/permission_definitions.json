@@ -5187,6 +5187,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WINDOW_TOPMOST",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.BLOCK_ALL_APP_START",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
