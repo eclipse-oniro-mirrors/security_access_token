@@ -70,7 +70,6 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_WRITE_DESKTOP_DIRECTORY", true},
     {"ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", true},
     {"ohos.permission.ACCESS_NEARLINK", true},
-    {"ohos.permission.ACCESS_SUPER_HUB",        true},
     {"ohos.permission.USE_BLUETOOTH",           false},
     {"ohos.permission.DISCOVER_BLUETOOTH",      false},
     {"ohos.permission.MANAGE_BLUETOOTH",        false},
@@ -538,6 +537,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_ANALYTICS",                    false},
     {"ohos.permission.BLOCK_ALL_APP_START",                 false},
     {"ohos.permission.START_UIABILITY_TO_HIDDEN",           false},
+    {"ohos.permission.ACCESS_SUPER_HUB",                    false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
