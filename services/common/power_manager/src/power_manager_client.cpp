@@ -80,7 +80,7 @@ void PowerMgrClient::InitProxy()
         powerManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<IPowerMgr>(powerManagerSa);
+    proxy_ = new PowerMgrProxy(powerManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

@@ -108,7 +108,7 @@ void BackgourndTaskManagerAccessClient::InitProxy()
         backgroundTaskManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<IBackgroundTaskMgr>(backgroundTaskManagerSa);
+    proxy_ = new BackgroundTaskManagerAccessProxy(backgroundTaskManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
+#include "token_sync_manager_proxy.h"
 
 namespace OHOS {
 namespace Security {
@@ -95,7 +96,7 @@ sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy() const
         return nullptr;
     }
 
-    auto proxy = iface_cast<ITokenSyncManager>(tokensyncSa);
+    auto proxy = new TokenSyncManagerProxy(tokensyncSa);
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Iface_cast get null");
         return nullptr;

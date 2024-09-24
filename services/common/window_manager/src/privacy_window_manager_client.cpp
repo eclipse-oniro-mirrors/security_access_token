@@ -135,7 +135,7 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
         return;
     }
-    mockSessionManagerServiceProxy_ = iface_cast<IMockSessionManagerInterface>(remoteObject);
+    mockSessionManagerServiceProxy_ = new PrivacyMockSessionManagerProxy(remoteObject);
     if (!mockSessionManagerServiceProxy_) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Get mock session manager service proxy failed, nullptr");
         return;
@@ -145,7 +145,7 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object2 is nullptr");
         return;
     }
-    sessionManagerServiceProxy_ = iface_cast<ISessionManagerService>(remoteObject2);
+    sessionManagerServiceProxy_ = new PrivacySessionManagerProxy(remoteObject2);
     if (!sessionManagerServiceProxy_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
     }
@@ -166,7 +166,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         ACCESSTOKEN_LOG_WARN(LABEL, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
-    sceneSessionManagerProxy_ = iface_cast<ISceneSessionManager>(remoteObject);
+    sceneSessionManagerProxy_ = new PrivacySceneSessionManagerProxy(remoteObject);
     if (sceneSessionManagerProxy_ == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerProxy_ is null.");
         return;
@@ -197,7 +197,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         ACCESSTOKEN_LOG_WARN(LABEL, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
-    sceneSessionManagerLiteProxy_ = iface_cast<ISceneSessionManagerLite>(remoteObject);
+    sceneSessionManagerLiteProxy_ = new PrivacySceneSessionManagerLiteProxy(remoteObject);
     if (sceneSessionManagerLiteProxy_ == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerLiteProxy_ is null.");
         return;
@@ -250,7 +250,7 @@ void PrivacyWindowManagerClient::InitWMSProxy()
         windowManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    wmsProxy_ = iface_cast<IWindowManager>(windowManagerSa);
+    wmsProxy_ = new PrivacyWindowManagerProxy(windowManagerSa);
     if (wmsProxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WmsProxy_ is null.");
         return;
