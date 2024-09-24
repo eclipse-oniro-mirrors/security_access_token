@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,9 +29,7 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
 #include "thread_pool.h"
-#endif
 
 namespace OHOS {
 namespace Security {
@@ -70,7 +68,6 @@ public:
         const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
         const std::vector<PermissionDef>& permList);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
-    void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
@@ -98,11 +95,6 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    int32_t GetCurTaskNum();
-    void AddCurTaskNum();
-    void ReduceCurTaskNum();
-#endif
     bool UpdateStatesToDatabase(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList);
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
 
@@ -118,7 +110,6 @@ private:
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    void StoreAllTokenInfo();
     int AddHapTokenInfoToDb(AccessTokenID tokenID);
     int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
@@ -136,6 +127,8 @@ private:
 #else
     OHOS::ThreadPool tokenDataWorker_;
 #endif
+    bool RemoveNativeInfoFromDatabase(AccessTokenID tokenID);
+
     bool hasInited_;
     std::atomic_int32_t dumpTaskNum_;
 

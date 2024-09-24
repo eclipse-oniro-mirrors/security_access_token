@@ -50,6 +50,7 @@
         "napi",
         "openssl",
         "power_manager",
+        "relational_store",
         "safwk",
         "samgr",
         "screenlock_mgr",
