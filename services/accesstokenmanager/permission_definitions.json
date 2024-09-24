@@ -3931,6 +3931,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_ANALYTICS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GET_TELEPHONY_ESIM_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5167,14 +5177,34 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.ACCESS_SUPER_HUB",
+            "name": "ohos.permission.BLOCK_ALL_APP_START",
             "grantMode": "system_grant",
-            "availableLevel": "system_basic",
+            "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        }
+        },
+        {
+            "name": "ohos.permission.START_UIABILITY_TO_HIDDEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+              {
+            "name": "ohos.permission.ACCESS_SUPER_HUB",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
     ]
 }
