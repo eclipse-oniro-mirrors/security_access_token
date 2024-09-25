@@ -29,7 +29,6 @@
 #include "hap_token_info_parcel.h"
 #include "iremote_broker.h"
 #include "i_permission_state_callback.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
 #include "permission_grant_info_parcel.h"
@@ -73,7 +72,6 @@ public:
         AccessTokenIDEx& fullTokenId) = 0;
     virtual int DeleteToken(AccessTokenID tokenID) = 0;
     virtual int GetTokenType(AccessTokenID tokenID) = 0;
-    virtual int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) = 0;
     virtual AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) = 0;
     virtual AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) = 0;
     virtual int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) = 0;
@@ -108,7 +106,6 @@ public:
     virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
     virtual int32_t GetVersion(uint32_t& version) = 0;
     virtual void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) = 0;
-    virtual int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) = 0;
 };
 } // namespace AccessToken
 } // namespace Security

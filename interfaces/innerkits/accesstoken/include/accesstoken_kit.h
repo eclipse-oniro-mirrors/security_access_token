@@ -147,13 +147,6 @@ public:
      */
     static ATokenTypeEnum GetTokenTypeFlag(FullTokenID tokenID);
     /**
-     * @brief Check native token dcap by token id.
-     * @param tokenID token id
-     * @param dcap dcap to be checked
-     * @return error code, see access_token_error.h
-     */
-    static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
-    /**
      * @brief Query hap tokenID by input prarms.
      * @param userID user id
      * @param bundleName bundle name
@@ -406,13 +399,6 @@ public:
      * @param info application info of permission manager
      */
     static void GetPermissionManagerInfo(PermissionGrantInfo& info);
-    /**
-     * @brief Get the name of native token by the specific tokenId.
-     * @param tokenId native token id
-     * @param name name of the native token
-     * @return error code, see access_token_error.h
-     */
-    static int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
 
     /**
      * @brief Set user permission policy

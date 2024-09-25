@@ -705,32 +705,6 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     return result;
 }
 
-int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteString(dcap)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
-    return result;
-}
-
 AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     AccessTokenIDEx tokenIdEx = {0};
@@ -1205,34 +1179,6 @@ void AccessTokenManagerProxy::GetPermissionManagerInfo(PermissionGrantInfoParcel
         return;
     }
     infoParcel = *parcel;
-}
-
-int32_t AccessTokenManagerProxy::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteUint32(tokenId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = reply.ReadInt32();
-    if (result == RET_SUCCESS) {
-        if (!reply.ReadString(name)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
-            return ERR_READ_PARCEL_FAILED;
-        }
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, name=%{public}s).", result, name.c_str());
-    return result;
 }
 
 int32_t AccessTokenManagerProxy::InitUserPolicy(

@@ -22,8 +22,6 @@
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
-#include "native_token_info_for_sync_parcel.h"
-#include "native_token_info.h"
 #include "parameter.h"
 #include "permission_grant_info_parcel.h"
 #include "accesstoken_callbacks.h"
@@ -419,16 +417,6 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
     return static_cast<ATokenTypeEnum>(proxy->GetTokenType(tokenID));
 }
 
-int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    return proxy->CheckNativeDCap(tokenID, dcap);
-}
-
 AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
@@ -666,7 +654,7 @@ void AccessTokenManagerClient::InitProxy()
         if (serviceDeathObserver_ != nullptr) {
             accesstokenSa->AddDeathRecipient(serviceDeathObserver_);
         }
-        proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
+        proxy_ = new AccessTokenManagerProxy(accesstokenSa);
         if (proxy_ == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
         }
@@ -719,16 +707,6 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
     PermissionGrantInfoParcel infoParcel;
     proxy->GetPermissionManagerInfo(infoParcel);
     info = infoParcel.info;
-}
-
-int32_t AccessTokenManagerClient::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    return proxy->GetNativeTokenName(tokenId, name);
 }
 
 int32_t AccessTokenManagerClient::InitUserPolicy(

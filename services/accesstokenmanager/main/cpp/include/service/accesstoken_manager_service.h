@@ -69,7 +69,6 @@ public:
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int DeleteToken(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
@@ -96,7 +95,6 @@ public:
 
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
-    int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) override;
     int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
     int32_t ClearUserPolicy() override;

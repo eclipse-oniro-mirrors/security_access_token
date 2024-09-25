@@ -90,7 +90,7 @@ void CameraManagerPrivacyClient::InitProxy()
         cameraManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<ICameraService>(cameraManagerSa);
+    proxy_ = new CameraManagerPrivacyProxy(cameraManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

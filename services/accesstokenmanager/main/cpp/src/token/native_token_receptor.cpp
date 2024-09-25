@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -74,10 +74,10 @@ int32_t NativeReqPermsGet(
     return RET_SUCCESS;
 }
 
-// nlohmann json need the function named from_json to parse NativeTokenInfo
+// nlohmann json need the function named from_json to parse NativeTokenInfoBase
 void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p)
 {
-    NativeTokenInfo native;
+    NativeTokenInfoBase native;
 
     if (!JsonParser::GetStringFromJson(j, JSON_PROCESS_NAME, native.processName) ||
         !DataValidator::IsProcessNameValid(native.processName)) {
@@ -173,7 +173,7 @@ int NativeTokenReceptor::Init()
     }
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok, native token size: %{public}zu.", tokenInfos.size());
     return RET_SUCCESS;
 }
 

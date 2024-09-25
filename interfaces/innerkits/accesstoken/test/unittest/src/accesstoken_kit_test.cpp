@@ -19,7 +19,6 @@
 #include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "i_accesstoken_manager.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -42,7 +41,6 @@ static const int32_t INDEX_ONE = 1;
 static const int32_t INDEX_TWO = 2;
 static const int32_t INDEX_THREE = 3;
 static const int32_t INDEX_FOUR = 4;
-static const int32_t RANDOM_UID = 123;
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
@@ -3076,38 +3074,6 @@ HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
 }
 
 /**
- * @tc.name: CheckNativeDCap001
- * @tc.desc: cannot Check native dcap with invalid tokenID.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
-{
-    AccessTokenID tokenID = 0;
-    const std::string dcap = "AT_CAP";
-    int ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-
-    tokenID = 1;
-    ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
-}
-
-/**
- * @tc.name: CheckNativeDCap002
- * @tc.desc: cannot Check native dcap with invalid dcap.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, CheckNativeDCap002, TestSize.Level1)
-{
-    AccessTokenID tokenID = 0Xff;
-    const std::string invalidDcap (INVALID_DCAP_LEN, 'x');
-    int ret = AccessTokenKit::CheckNativeDCap(tokenID, invalidDcap);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-}
-
-/**
  * @tc.name: GetNativeTokenInfo001
  * @tc.desc: cannot get native token with invalid tokenID.
  * @tc.type: FUNC
@@ -3273,55 +3239,6 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     SetSelfTokenID(tokenID);
     PermissionGrantInfo info;
     ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-}
-
-/**
- * @tc.name: GetNativeTokenName001
- * @tc.desc: AccessTokenKit::GetNativeTokenName.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetNativeTokenName001, TestSize.Level1)
-{
-    std::string name;
-    // invalid tokenId
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenName(INVALID_TOKENID, name));
-
-    AccessTokenID tokenId = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenKit::GetTokenTypeFlag(tokenId));
-    // invalid token type
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenName(tokenId, name));
-
-    std::string processName = "hdcd";
-    tokenId = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(0, AccessTokenKit::GetNativeTokenName(tokenId, name));
-    ASSERT_EQ(processName, name);
-}
-
-/**
- * @tc.name: GetNativeTokenName002
- * @tc.desc: AccessTokenKit::GetNativeTokenName.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
-{
-    AccessTokenID tokenId = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenKit::GetTokenTypeFlag(tokenId));
-    EXPECT_EQ(0, SetSelfTokenID(tokenId)); // set self to hap
-
-    std::string name;
-    std::string processName = "hdcd";
-    tokenId = AccessTokenKit::GetNativeTokenId(processName);
-
-    int32_t selfUid = getuid();
-    setuid(RANDOM_UID);
-    // calling is not native token, permission denied
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenName(tokenId, name));
-    setuid(selfUid);
 }
 
 /**

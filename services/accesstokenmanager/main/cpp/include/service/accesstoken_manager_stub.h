@@ -56,7 +56,6 @@ private:
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
-    void CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply);
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
@@ -82,7 +81,6 @@ private:
     void GetVersionInner(MessageParcel& data, MessageParcel& reply);
     void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply);
-    void GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply);
     void InitUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply);

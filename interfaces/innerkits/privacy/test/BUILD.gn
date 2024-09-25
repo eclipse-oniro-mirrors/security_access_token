@@ -64,7 +64,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -131,7 +131,7 @@ ohos_unittest("libprivacy_mock_test") {
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "init:libbegetutil",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "ipc:libdbinder",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

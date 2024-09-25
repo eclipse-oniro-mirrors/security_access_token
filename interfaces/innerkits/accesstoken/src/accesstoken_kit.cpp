@@ -179,20 +179,6 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
-int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, dcap=%{public}s.", tokenID, dcap.c_str());
-    if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!DataValidator::IsDcapValid(dcap)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dcap is invalid");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
-}
-
 AccessTokenID AccessTokenKit::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex) __attribute__((no_sanitize("cfi")))
 {
@@ -579,24 +565,6 @@ int32_t AccessTokenKit::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool en
 void AccessTokenKit::GetPermissionManagerInfo(PermissionGrantInfo& info)
 {
     AccessTokenManagerClient::GetInstance().GetPermissionManagerInfo(info);
-}
-
-int32_t AccessTokenKit::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenId);
-
-    if (tokenId == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is invalid.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    ATokenTypeEnum type = GetTokenTypeFlag(static_cast<FullTokenID>(tokenId));
-    if ((type != ATokenTypeEnum::TOKEN_NATIVE) && (type != ATokenTypeEnum::TOKEN_SHELL)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token type %{public}u is invalid.", type);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return AccessTokenManagerClient::GetInstance().GetNativeTokenName(tokenId, name);
 }
 
 int32_t AccessTokenKit::InitUserPolicy(

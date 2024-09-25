@@ -482,19 +482,6 @@ void AccessTokenManagerStub::GetTokenTypeInner(MessageParcel& data, MessageParce
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    AccessTokenID tokenID = data.ReadUint32();
-    std::string dCap = data.ReadString();
-    int result = this->CheckNativeDCap(tokenID, dCap);
-    reply.WriteInt32(result);
-}
-
 void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
@@ -842,27 +829,6 @@ void AccessTokenManagerStub::GetPermissionManagerInfoInner(MessageParcel& data, 
     reply.WriteParcelable(&infoParcel);
 }
 
-void AccessTokenManagerStub::GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-
-    AccessTokenID tokenId = data.ReadUint32();
-    std::string name;
-
-    int32_t result = this->GetNativeTokenName(tokenId, name);
-    if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
-    }
-
-    if (result == RET_SUCCESS) {
-        reply.WriteString(name);
-    }
-}
-
 void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1021,8 +987,6 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::DeleteTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_TOKEN_TYPE)] =
         &AccessTokenManagerStub::GetTokenTypeInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP)] =
-        &AccessTokenManagerStub::CheckNativeDCapInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID)] =
         &AccessTokenManagerStub::GetHapTokenIDInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID)] =
@@ -1043,8 +1007,6 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::SetPermDialogCapInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_MANAGER_INFO)] =
         &AccessTokenManagerStub::GetPermissionManagerInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME)] =
-        &AccessTokenManagerStub::GetNativeTokenNameInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::INIT_USER_POLICY)] =
         &AccessTokenManagerStub::InitUserPolicyInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_USER_POLICY)] =

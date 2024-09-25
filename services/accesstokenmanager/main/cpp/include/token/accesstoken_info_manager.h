@@ -30,7 +30,6 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
-#include "thread_pool.h"
 
 namespace OHOS {
 namespace Security {
@@ -52,16 +51,13 @@ public:
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
-    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& infoParcel);
+    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
-    std::shared_ptr<PermissionPolicySet> GetNativePermissionPolicySet(AccessTokenID id);
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
-    int32_t AddAllNativeTokenInfoToDb(void);
     int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
@@ -83,10 +79,11 @@ public:
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
     void ReduceDumpTaskNum();
-    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
+    int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -116,7 +113,9 @@ private:
     bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AddHapTokenInfoToDb(AccessTokenID tokenID);
-    int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
+    int AddNativeTokenInfoToDb(
+        const std::vector<GenericValues>& nativeInfoValues, const std::vector<GenericValues>& permStateValues);
+    int RemoveTokenInfoFromDb(AccessTokenID tokenID, bool isHap = true);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
@@ -135,14 +134,6 @@ private:
     int32_t UpdatePermissionStateToKernel(const std::map<AccessTokenID, bool>& tokenIdList);
     void GetGoalHapList(std::map<AccessTokenID, bool>& tokenIdList,
         std::map<int32_t, bool>& changedUserList);
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::atomic_int32_t curTaskNum_;
-    std::shared_ptr<ffrt::queue> ffrtTaskQueue_ = std::make_shared<ffrt::queue>("TokenStore");
-#else
-    OHOS::ThreadPool tokenDataWorker_;
-#endif
-    bool RemoveNativeInfoFromDatabase(AccessTokenID tokenID);
-
     bool hasInited_;
     std::atomic_int32_t dumpTaskNum_;
 
@@ -153,8 +144,7 @@ private:
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
-    std::map<int, std::shared_ptr<NativeTokenInfoInner>> nativeTokenInfoMap_;
-    std::map<std::string, AccessTokenID> nativeTokenIdMap_;
+    std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 
     OHOS::Utils::RWLock userPolicyLock_;
     std::vector<int32_t> inactiveUserList_;

@@ -63,7 +63,6 @@ ATM部件的架构图如下所示：
 | int GetTokenTypeFlag(AccessTokenID tokenID); | 查询指定可信tokenID的类型 |
 | int GetTokenType(FullTokenID tokenID); | 查询指定tokenID的类型 |
 | int GetTokenTypeFlag(FullTokenID tokenID); | 查询指定可信tokenID的类型 |
-| int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | 检测指定tokenID对应的native进程是否具有指定的分布式能力 |
 | AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenId |
 | AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenIDEx |
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | 查询指定tokenID对应的hap包的tokenInfo信息 |
@@ -84,7 +83,6 @@ ATM提供了统一的应用权限访问控制功能，支持应用程序或者SA
 
 #### native进程
 -  在native进程拉起前，需要调用GetAccessTokenId函数，获取该native进程的TokenID；再调用SetSelfTokenID将进程TokenID设置到内核中。
--  在native进程运行过程中，可以通过调用GetNativeTokenInfo、CheckNativeDCap来查验对应进程所具备的token信息，包括分布式能力、APL等级等信息。
 
 #### 应用hap
 -  在应用安装时，需要调用AllocHapToken创建获取该应用的TokenID。

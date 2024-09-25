@@ -20,7 +20,6 @@ group("fuzztest") {
     # deps file
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
-    "checknativedcap_fuzzer:CheckNativeDCapFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
     "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",
     "deleteremotetoken_fuzzer:DeleteRemoteTokenFuzzTest",
@@ -34,7 +33,6 @@ group("fuzztest") {
     "gethaptokeninfofromremote_fuzzer:GetHapTokenInfoFromRemoteFuzzTest",
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
-    "getnativetokenname_fuzzer:GetNativeTokenNameFuzzTest",
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
     "getpermissionrequesttogglestatus_fuzzer:GetPermissionRequestToggleStatusFuzzTest",
     "getpermissionsstatus_fuzzer:GetPermissionsStatusFuzzTest",

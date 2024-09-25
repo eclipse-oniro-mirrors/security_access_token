@@ -405,7 +405,7 @@ void PrivacyManagerClient::InitProxy()
         if (serviceDeathObserver_ != nullptr) {
             privacySa->AddDeathRecipient(serviceDeathObserver_);
         }
-        proxy_ = iface_cast<IPrivacyManager>(privacySa);
+        proxy_ = new PrivacyManagerProxy(privacySa);
         if (proxy_ == nullptr) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Iface_cast get null");
         }

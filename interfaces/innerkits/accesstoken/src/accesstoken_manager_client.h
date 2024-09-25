@@ -29,7 +29,6 @@
 #include "hap_policy_parcel.h"
 #include "hap_token_info.h"
 #include "i_accesstoken_manager.h"
-#include "native_token_info.h"
 #include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_info.h"
@@ -70,7 +69,6 @@ public:
     int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);
     int DeleteToken(AccessTokenID tokenID);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy);
@@ -100,7 +98,6 @@ public:
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
-    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
     int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
     int32_t ClearUserPolicy();

@@ -134,7 +134,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 #ifdef HITRACE_NATIVE_ENABLE
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
 #endif
-    int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    int32_t res = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
     if ((res == PERMISSION_GRANTED) &&
@@ -374,13 +374,6 @@ int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
-int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, dcap: %{public}s",
-        tokenID, dcap.c_str());
-    return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
-}
-
 AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
@@ -422,8 +415,11 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", tokenID);
-
-    return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, infoParcel.nativeTokenInfoParams);
+    NativeTokenInfoBase baseInfo;
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, baseInfo);
+    infoParcel.nativeTokenInfoParams.apl = baseInfo.apl;
+    infoParcel.nativeTokenInfoParams.processName = baseInfo.processName;
+    return ret;
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
@@ -529,13 +525,6 @@ void AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParc
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     infoParcel.info.permStateAbilityName = permStateAbilityName_;
     infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
-}
-
-int32_t AccessTokenManagerService::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID is %{public}u.", tokenId);
-
-    return AccessTokenInfoManager::GetInstance().GetNativeTokenName(tokenId, name);
 }
 
 int32_t AccessTokenManagerService::InitUserPolicy(
