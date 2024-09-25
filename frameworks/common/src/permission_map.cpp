@@ -494,6 +494,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.NETWORK_DHCP",                  false},
     {"ohos.permission.ACCESS_BBOX_DIR",               false},
     {"ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE",       false},
+    {"ohos.permission.START_RESTORE_NOTIFICATION",          false},
     {"ohos.permission.ALLOW_CONNECT_CAR",                   false},
     {"ohos.permission.MANAGE_NET_FIREWALL",                 false},
     {"ohos.permission.GET_NET_FIREWALL",                    false},

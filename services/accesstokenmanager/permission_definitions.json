@@ -3921,6 +3921,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.START_RESTORE_NOTIFICATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.INSTALL_INTERNALTESTING_BUNDLE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
