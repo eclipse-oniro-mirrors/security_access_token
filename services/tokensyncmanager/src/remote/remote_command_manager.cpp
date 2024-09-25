@@ -217,7 +217,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
         return Constant::FAILURE;
     }
     std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
-    std::function<void()> delayed = ([=]() {
+    std::function<void()> delayed = ([uniqueDeviceId]() {
         AccessTokenKit::DeleteRemoteDeviceTokens(uniqueDeviceId);
     });
 

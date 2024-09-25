@@ -95,18 +95,23 @@ void SoftBusChannel::CloseConnection()
         return;
     }
 #endif
-    auto thisPtr = shared_from_this();
-    std::function<void()> delayed = ([thisPtr]() {
-        std::unique_lock<std::mutex> lock(thisPtr->socketMutex_);
-        if (thisPtr->isSocketUsing_) {
+    std::weak_ptr<SoftBusChannel> weakPtr = shared_from_this();
+    std::function<void()> delayed = ([weakPtr]() {
+        auto self = weakPtr.lock();
+        if (self == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "SoftBusChannel is nullptr");
+            return;
+        }
+        std::unique_lock<std::mutex> lock(self->socketMutex_);
+        if (self->isSocketUsing_) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Socket is in using, cancel close socket");
         } else {
-            SoftBusManager::GetInstance().CloseSocket(thisPtr->socketFd_);
-            thisPtr->socketFd_ = Constant::INVALID_SESSION;
+            SoftBusManager::GetInstance().CloseSocket(self->socketFd_);
+            self->socketFd_ = Constant::INVALID_SESSION;
             ACCESSTOKEN_LOG_INFO(LABEL, "Close socket for device: %{public}s",
-                ConstantCommon::EncryptDevId(thisPtr->deviceId_).c_str());
+                ConstantCommon::EncryptDevId(self->deviceId_).c_str());
         }
-        thisPtr->isDelayClosing_ = false;
+        self->isDelayClosing_ = false;
     });
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
@@ -231,8 +236,13 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
 
     std::string type = message->GetType();
     if (REQUEST_TYPE == (type)) {
-        std::function<void()> delayed = ([=]() {
-            HandleRequest(socket, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
+        std::function<void()> delayed = ([weak = weak_from_this(), socket, message]() {
+            auto self = weak.lock();
+            if (self == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "SoftBusChannel is nullptr");
+                return;
+            }
+            self->HandleRequest(socket, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
         });
 
 #ifdef EVENTHANDLER_ENABLE
