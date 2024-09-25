@@ -51,6 +51,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+constexpr const char* LOCATION = "ohos.permission.LOCATION";
+constexpr const char* APPROXIMATELY_LOCATION = "ohos.permission.APPROXIMATELY_LOCATION";
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
@@ -472,6 +474,23 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
     }
 }
 
+static bool IsNeedExecuteCallback(const std::string& permissionName, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
+{
+    if (permissionName != LOCATION) {
+        return true;
+    }
+    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+    if (permPolicySet == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null.");
+        return false;
+    }
+    int32_t res = permPolicySet->VerifyPermissionStatus(APPROXIMATELY_LOCATION);
+    if (res == PERMISSION_DENIED) {
+        return false;
+    }
+    return true;
+}
+
 void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
@@ -481,8 +500,11 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     // set to kernel(grant/revoke)
     SetPermToKernel(tokenID, permissionName, isGranted);
 
-    // To notify the listener register.
-    CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
+    bool isNeedExecuteCallback = IsNeedExecuteCallback(permissionName, infoPtr);
+    if (isNeedExecuteCallback) {
+        // To notify the listener register.
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
+    }
 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
@@ -538,7 +560,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     if (statusAfter != statusBefore) {
         NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke
-        if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
+        if (needKill && (!isGranted && !isSecCompGrantedBefore) && (permission != LOCATION)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
             AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id);
         }
