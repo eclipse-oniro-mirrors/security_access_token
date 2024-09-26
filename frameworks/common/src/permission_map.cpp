@@ -527,7 +527,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_STATUSBAR_ICON",               false},
     {"ohos.permission.ACCESS_AI_ABILITY",                   false},
     {"ohos.permission.READ_HEALTH_MOTION",                  false},
-    {"ohos.permission.REQUEST_HSDR",                        false},
+    {"ohos.permission.hsdr.REQUEST_HSDR",                   false},
     {"ohos.permission.QUERY_PASSWORD_VAULT_DATA",           false},
     {"ohos.permission.SUBSCRIBE_NOTIFICATION_WINDOW_STATE", false},
     {"ohos.permission.STORAGE_MANAGER_CRYPT",               false},
