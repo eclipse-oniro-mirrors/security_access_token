@@ -44,7 +44,7 @@ static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
     "  -h, --help                                               list available options\n"
-    "  -t, --token-info                                         list all token info in system\n"
+    "  -t, --all                                                list all name of token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
