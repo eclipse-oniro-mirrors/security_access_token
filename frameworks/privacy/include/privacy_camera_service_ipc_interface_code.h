@@ -21,7 +21,7 @@ namespace Security {
 namespace AccessToken {
 enum PrivacyCameraServiceInterfaceCode {
     CAMERA_SERVICE_IS_CAMERA_MUTED = 13,
-    CAMERA_SERVICE_MUTE_CAMERA_PERSIST = 22,
+    CAMERA_SERVICE_MUTE_CAMERA_PERSIST = 23,
 };
 } // namespace AccessToken
 } // namespace Security
