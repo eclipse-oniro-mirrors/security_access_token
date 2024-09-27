@@ -36,9 +36,11 @@ static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
     "These are common atm commands list:\n"
     "  help    list available commands\n"
-    "  dump    dumpsys command\n"
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  perm    grant/cancel permission\n"
-    "  toggle  set/get toggle status\n";
+    "  toggle  set/get toggle status\n"
+#endif
+    "  dump    dump system command\n";
 
 static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
@@ -48,22 +50,32 @@ static const std::string HELP_MSG_DUMP =
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
+#endif
     "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
 
 static const std::string HELP_MSG_PERM =
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "usage: atm perm <option>.\n"
     "options list:\n"
     "  -h, --help                                       list available options\n"
     "  -g, --grant -i <token-id> -p <permission-name>   grant a permission by a specified token-id\n"
     "  -c, --cancel -i <token-id> -p <permission-name>  cancel a permission by a specified token-id\n";
+#else
+    "";
+#endif
 
 static const std::string HELP_MSG_TOGGLE =
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "usage: atm toggle <option>.\n"
     "options list:\n"
     "  -h, --help                                               list available options\n"
     "  -s, --set -u <user-id> -p <permission-name> -k <status>  set the status by a specified user-id and permission\n"
     "  -o, --get -u <user-id> -p <permission-name>              get the status by a specified user-id and permission\n";
+#else
+    "";
+#endif
 
 static const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
@@ -357,33 +369,33 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
             AccessTokenKit::DumpTokenInfo(info, dumpInfo);
             break;
         case DUMP_RECORD:
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             dumpInfo = DumpRecordInfo(info.tokenId, info.permissionName);
+#endif
             break;
         case DUMP_TYPE:
             dumpInfo = DumpUsedTypeInfo(info.tokenId, info.permissionName);
             break;
         case PERM_GRANT:
         case PERM_REVOKE:
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = ModifyPermission(info.type, info.tokenId, info.permissionName);
-            if (ret == RET_SUCCESS) {
-                dumpInfo = "Success";
-            } else {
-                dumpInfo = "Failure";
-            }
+            dumpInfo = (ret == RET_SUCCESS) ? "Success" : "Failure";
+#endif
             break;
         case TOGGLE_SET:
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = SetToggleStatus(info.userID, info.permissionName, info.status);
-            if (ret == RET_SUCCESS) {
-                dumpInfo = "Success";
-            } else {
-                dumpInfo = "Failure";
-            }
+            dumpInfo = (ret == RET_SUCCESS) ? "Success" : "Failure";
+#endif
             break;
         case TOGGLE_GET:
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = GetToggleStatus(info.userID, info.permissionName, dumpInfo);
             if (ret != RET_SUCCESS) {
                 dumpInfo = "Failure.";
             }
+#endif
             break;
         default:
             resultReceiver_.append("error: miss option \n");
