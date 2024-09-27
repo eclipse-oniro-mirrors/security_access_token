@@ -119,18 +119,6 @@ HWTEST_F(IpcCodeTest, CameraManagerCodeTest001, TestSize.Level1)
         static_cast<uint32_t>(AccessToken::PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST));
 }
 #endif
-
-#ifdef AUDIO_FRAMEWORK_ENABLE
-/*
- * @tc.name: AudioManagerCodeTest001
- * @tc.desc: test audio framework ipc code
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(IpcCodeTest, AudioManagerCodeTest001, TestSize.Level1)
-{
-}
-#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
