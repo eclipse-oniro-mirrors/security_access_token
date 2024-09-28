@@ -35,6 +35,10 @@ ohos_executable("atm") {
 
   cflags = []
 
+  if (build_variant == "user") {
+    cflags_cc = [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
