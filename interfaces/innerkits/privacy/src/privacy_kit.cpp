@@ -18,11 +18,11 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_log.h"
 #include "constant_common.h"
 #include "data_validator.h"
 #include "privacy_error.h"
 #include "privacy_manager_client.h"
+#include "time_util.h"
 
 namespace OHOS {
 namespace Security {

@@ -1061,8 +1061,6 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 
 int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, policyType: %{public}d, isMute: %{public}d",
-        callerType, policyType, isMute);
     std::string permissionName;
     if (callerType == MICROPHONE) {
         permissionName = MICROPHONE_PERMISSION_NAME;
