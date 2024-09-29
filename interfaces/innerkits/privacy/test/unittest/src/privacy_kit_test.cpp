@@ -587,9 +587,12 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     info.successCount = 1;
     info.failCount = 0;
 
+    // <200ms, record is dropped
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(200000); // 200000us = 200ms
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(200000); // 200000us = 200ms
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
     PermissionUsedRequest request;
@@ -602,7 +605,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
-    CheckPermissionUsedResult(request, result, 1, 4, 0); // records in the same minute combine to one
+    CheckPermissionUsedResult(request, result, 1, 3, 0); // records in the same minute combine to one
 }
 
 /**
@@ -865,8 +868,11 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
     info.successCount = 1;
     info.failCount = 0;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(200000); // 200000us = 200ms
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(200000); // 200000us = 200ms
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(200000); // 200000us = 200ms
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
     PermissionUsedRequest request;
@@ -877,12 +883,15 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 1, 4, 0);
 
+    usleep(200000); // 200000us = 200ms
     info.permissionName = "ohos.permission.READ_CONTACTS";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
+    usleep(200000); // 200000us = 200ms
     info.permissionName = "ohos.permission.READ_CALENDAR";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
+    usleep(200000); // 200000us = 200ms
     info.permissionName = "ohos.permission.WRITE_CALENDAR";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
