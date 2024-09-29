@@ -950,6 +950,44 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetPermissionUsedRecords006
+ * @tc.desc: GetPermissionUsedRecords with 200ms.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.MICROPHONE";
+    info.successCount = 0;
+    info.failCount = 1;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // fail:1, success:0
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result1;
+    std::vector<std::string> permissionList;
+    // query by tokenId
+    BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result1));
+    ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords.size());
+    request.deviceId = GetLocalDeviceUdid();
+    request.bundleName = g_infoParmsA.bundleName;
+    CheckPermissionUsedResult(request, result1, 1, 0, 1);
+
+    usleep(200000); // 200000us = 200ms
+    info.permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // fail:1, success:0
+    info.successCount = 1;
+    info.failCount = 0;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // fail:0, success:1
+    PermissionUsedResult result2;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result2));
+    ASSERT_EQ(static_cast<uint32_t>(1), result2.bundleRecords.size());
+    CheckPermissionUsedResult(request, result2, 2, 1, 2);
+}
+
+/**
  * @tc.name: GetPermissionUsedRecordsAsync001
  * @tc.desc: cannot GetPermissionUsedRecordsAsync with invalid query time.
  * @tc.type: FUNC
