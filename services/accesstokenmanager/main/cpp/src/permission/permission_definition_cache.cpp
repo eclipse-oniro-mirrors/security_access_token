@@ -81,7 +81,7 @@ void PermissionDefinitionCache::DeleteByBundleName(const std::string& bundleName
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         if (bundleName == it->second.permDef.bundleName) {
-            permissionDefinitionMap_.erase(it++);
+            it = permissionDefinitionMap_.erase(it);
         } else {
             ++it;
         }
