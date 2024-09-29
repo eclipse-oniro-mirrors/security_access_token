@@ -48,7 +48,6 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
-    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
@@ -85,8 +84,6 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
         PermissionRecordManager::GetInstance()
             .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED) {
-        PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
         PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
