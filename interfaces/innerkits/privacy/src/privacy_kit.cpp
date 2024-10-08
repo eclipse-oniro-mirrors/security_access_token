@@ -28,9 +28,13 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const uint64_t MERGE_TIMESTAMP = 200; // 200ms
+constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
 std::mutex g_lockCache;
-std::map<std::string, uint64_t> g_recordMap;
+struct RecordCache {
+    int32_t successCount = 0;
+    int64_t timespamp = 0;
+};
+std::map<std::string, RecordCache> g_recordMap;
 }
 static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 {
@@ -39,19 +43,28 @@ static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 
 bool FindAndInsertRecord(const AddPermParamInfo& record)
 {
-    std::string newRecordStr = GetRecordUniqueStr(record);
-    uint64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
     std::lock_guard<std::mutex> lock(g_lockCache);
+    std::string newRecordStr = GetRecordUniqueStr(record);
+    int64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
     auto iter = g_recordMap.find(newRecordStr);
     if (iter == g_recordMap.end()) {
-        g_recordMap[newRecordStr] = curTimestamp;
+        g_recordMap[newRecordStr].successCount = record.successCount;
+        g_recordMap[newRecordStr].timespamp = curTimestamp;
         return false;
     }
-    if (curTimestamp - iter->second < MERGE_TIMESTAMP) {
-        return true;
+    if (curTimestamp - iter->second.timespamp >= MERGE_TIMESTAMP) {
+        g_recordMap[newRecordStr].successCount = record.successCount;
+        g_recordMap[newRecordStr].timespamp = curTimestamp;
+        return false;
     }
-    g_recordMap[newRecordStr] = curTimestamp;
-    return false;
+    if (iter->second.successCount == 0 && record.successCount != 0) {
+        g_recordMap[newRecordStr].successCount += record.successCount;
+        g_recordMap[newRecordStr].timespamp = curTimestamp;
+        return false;
+    }
+    g_recordMap[newRecordStr].successCount += record.successCount;
+    g_recordMap[newRecordStr].timespamp = curTimestamp;
+    return true;
 }
 
 int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
