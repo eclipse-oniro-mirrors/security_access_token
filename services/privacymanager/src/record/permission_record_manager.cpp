@@ -122,7 +122,7 @@ void PrivacyAppStateObserver::OnApplicationStateChanged(const AppStateData &appS
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
         PermissionRecordManager::GetInstance().RemoveRecordFromStartListByPid(
-            processData.accessTokenId, processData.pid);
+            appStateData.accessTokenId, appStateData.pid);
     }
 }
 
