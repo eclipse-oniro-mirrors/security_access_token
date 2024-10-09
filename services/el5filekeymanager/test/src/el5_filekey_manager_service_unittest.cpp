@@ -38,6 +38,12 @@ void El5FilekeyManagerServiceTest::SetUp()
 
 void El5FilekeyManagerServiceTest::TearDown()
 {
+#ifndef EVENTHANDLER_ENABLE
+#define EVENTHANDLER_ENABLE
+    int32_t delayedTime = 1;
+    el5FilekeyManagerService_->PostDelayedUnloadTask(delayedTime);
+    el5FilekeyManagerService_->CancelDelayedUnloadTask();
+#endif
 }
 
 class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
@@ -255,35 +261,6 @@ HWTEST_F(El5FilekeyManagerServiceTest, Dump003, TestSize.Level1)
     int fd = 1;
     std::vector<std::u16string> args = {u"-h"};
     ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: PostDelayedUnloadTask001
- * @tc.desc: PostDelayedUnloadTask fun test.
- * @tc.type: FUNC
- * @tc.require: issueI9Q6K2
- */
-HWTEST_F(El5FilekeyManagerServiceTest, PostDelayedUnloadTask001, TestSize.Level1)
-{
-#ifndef EVENTHANDLER_ENABLE
-#define EVENTHANDLER_ENABLE
-    int32_t delayedTime = 1;
-    el5FilekeyManagerService_->PostDelayedUnloadTask(delayedTime);
-#endif
-}
-
-/**
- * @tc.name: CancelDelayedUnloadTask001
- * @tc.desc: CancelDelayedUnloadTask fun test.
- * @tc.type: FUNC
- * @tc.require: issueI9Q6K2
- */
-HWTEST_F(El5FilekeyManagerServiceTest, CancelDelayedUnloadTask001, TestSize.Level1)
-{
-#ifndef EVENTHANDLER_ENABLE
-#define EVENTHANDLER_ENABLE
-    el5FilekeyManagerService_->CancelDelayedUnloadTask();
-#endif
 }
 
 /**
