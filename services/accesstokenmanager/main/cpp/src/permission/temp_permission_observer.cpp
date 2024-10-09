@@ -236,7 +236,9 @@ void TempPermissionObserver::RegisterCallback()
             }
             int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
                 FORM_VISIBLE_NAME, formVisibleCallback_->AsObject());
-            ACCESSTOKEN_LOG_INFO(LABEL, "Register formStateCallback %{public}d.", ret);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Register observer %{public}d.", ret);
+            }
         }
         if (formInvisibleCallback_ == nullptr) {
             formInvisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
@@ -247,7 +249,9 @@ void TempPermissionObserver::RegisterCallback()
             }
             int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
                 FORM_INVISIBLE_NAME, formInvisibleCallback_->AsObject());
-            ACCESSTOKEN_LOG_INFO(LABEL, "Register formStateCallback %{public}d.", ret);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Register observer %{public}d.", ret);
+            }
         }
     }
     RegisterAppStatusListener();
@@ -264,7 +268,9 @@ void TempPermissionObserver::RegisterAppStatusListener()
                 return;
             }
             int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
-            ACCESSTOKEN_LOG_INFO(LABEL, "Register appStateCallback %{public}d.", ret);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Register appStateCallback %{public}d.", ret);
+            }
         }
     }
     // app manager death callback register
@@ -286,7 +292,10 @@ void TempPermissionObserver::UnRegisterCallback()
     {
         std::lock_guard<std::mutex> lock(appStateCallbackMutex_);
         if (appStateCallback_ != nullptr) {
-            AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+            int32_t ret = AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStateCallback %{public}d.", ret);
+            }
             appStateCallback_= nullptr;
         }
     }
@@ -294,7 +303,11 @@ void TempPermissionObserver::UnRegisterCallback()
     {
         std::lock_guard<std::mutex> lock(backgroundTaskCallbackMutex_);
         if (backgroundTaskCallback_ != nullptr) {
-            BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(backgroundTaskCallback_);
+            int32_t ret = BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(
+                backgroundTaskCallback_);
+            if (ret != ERR_NONE) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStateCallback %{public}d.", ret);
+            }
             backgroundTaskCallback_= nullptr;
         }
     }
@@ -302,11 +315,20 @@ void TempPermissionObserver::UnRegisterCallback()
     {
         std::lock_guard<std::mutex> lock(formStateCallbackMutex_);
         if (formVisibleCallback_ != nullptr) {
-            FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_VISIBLE_NAME, formVisibleCallback_);
+            int32_t ret = FormManagerAccessClient::GetInstance().RegisterRemoveObserver(
+                FORM_VISIBLE_NAME,
+                formVisibleCallback_);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStateCallback %{public}d.", ret);
+            }
             formVisibleCallback_ = nullptr;
         }
         if (formInvisibleCallback_ != nullptr) {
-            FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_INVISIBLE_NAME, formInvisibleCallback_);
+            int32_t ret = FormManagerAccessClient::GetInstance().RegisterRemoveObserver(
+                FORM_INVISIBLE_NAME, formInvisibleCallback_);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStateCallback %{public}d.", ret);
+            }
             formInvisibleCallback_ = nullptr;
         }
     }
@@ -545,9 +567,14 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
         std::vector<PermissionStateFull> tmpList;
         GetPermissionStateFull(iter->first, tmpList);
         for (const auto& permissionState : tmpList) {
-            if (permissionState.grantFlags[0] == PERMISSION_ALLOW_THIS_TIME) {
-                PermissionManager::GetInstance().RevokePermission(
-                    iter->first, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME);
+            if (permissionState.grantFlags[0] != PERMISSION_ALLOW_THIS_TIME) {
+                continue;
+            }
+            int32_t ret = PermissionManager::GetInstance().RevokePermission(
+                iter->first, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME);
+            if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "revoke permission failed, TokenId=%{public}d, permission \
+                name is %{public}s", iter->first, permissionState.permissionName.c_str());
             }
         }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(iter->first);

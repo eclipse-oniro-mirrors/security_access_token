@@ -1322,7 +1322,11 @@ bool PermissionRecordManager::Register()
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Register appStateCallback failed.");
                 return false;
             }
-            AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+            int32_t result = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+            if (result != ERR_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register application state observer failed.");
+                return false;
+            }
         }
     }
     return true;

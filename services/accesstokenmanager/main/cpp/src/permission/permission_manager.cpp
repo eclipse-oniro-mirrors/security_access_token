@@ -540,15 +540,16 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
-            AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id);
+            if ((ret = AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id)) != ERR_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "kill process failed, ret=%{public}d.", ret);
+            }
         }
     }
 
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission);
-    return RET_SUCCESS;
+    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission);
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
