@@ -524,6 +524,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_STATUS)
         .append(",")
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
         .append("))");
     return ExecuteSql(sql);
 }
