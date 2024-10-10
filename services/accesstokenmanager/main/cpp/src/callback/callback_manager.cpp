@@ -75,7 +75,10 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback size has reached limitation");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
-    callback->AddDeathRecipient(callbackDeathRecipient_);
+    int32_t ret = callback->AddDeathRecipient(callbackDeathRecipient_);
+    if (ret != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "add death recipient failed ret is %{public}d", ret);
+    }
 
     CallbackRecord recordInstance;
     recordInstance.callbackObject_ = callback;

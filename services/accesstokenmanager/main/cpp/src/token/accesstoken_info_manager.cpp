@@ -845,7 +845,10 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
     hapSync.baseInfo.deviceID = deviceID;
     int ret = CreateRemoteHapTokenInfo(mapID, hapSync);
     if (ret != RET_SUCCESS) {
-        AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
+        int result = AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
+        if (result != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "remove device map token id failed");
+        }
         ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s token %{public}u map to local token %{public}u failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         return ret;
@@ -919,9 +922,13 @@ int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID
         return ret;
     }
     for (AccessTokenID remoteID : remoteTokens) {
-        DeleteRemoteToken(deviceID, remoteID);
+        ret = DeleteRemoteToken(deviceID, remoteID);
+        if (ret != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "delete remote token failed! deviceId=%{public}s, remoteId=%{public}d.", \
+                deviceID.c_str(), remoteID);
+        }
     }
-    return RET_SUCCESS;
+    return ret;
 }
 
 AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
@@ -936,8 +943,8 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
         return 0;
     }
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
-    SetFirstCallerTokenID(fullTokenId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Set first caller %{public}" PRIu64 ".", fullTokenId);
+    int result = SetFirstCallerTokenID(fullTokenId); // for debug
+    ACCESSTOKEN_LOG_INFO(LABEL, "Set first caller %{public}" PRIu64 "., ret is %{public}d", fullTokenId, result);
 
     std::string remoteUdid;
     DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(ACCESS_TOKEN_PACKAGE_NAME, remoteDeviceID,

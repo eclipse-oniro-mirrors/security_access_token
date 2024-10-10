@@ -27,7 +27,7 @@ bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 {
     HapTokenInfoParcel baseInfoParcel;
     baseInfoParcel.hapTokenInfoParams = this->hapTokenInfoForSyncParams.baseInfo;
-    out.WriteParcelable(&baseInfoParcel);
+    RETURN_IF_FALSE(out.WriteParcelable(&baseInfoParcel));
 
     const std::vector<PermissionStateFull>& permStateList = this->hapTokenInfoForSyncParams.permStateList;
     uint32_t permStateListSize = permStateList.size();
@@ -36,7 +36,7 @@ bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
     for (uint32_t i = 0; i < permStateListSize; i++) {
         PermissionStateFullParcel permStateParcel;
         permStateParcel.permStatFull = permStateList[i];
-        out.WriteParcelable(&permStateParcel);
+        RETURN_IF_FALSE(out.WriteParcelable(&permStateParcel));
     }
 
     return true;

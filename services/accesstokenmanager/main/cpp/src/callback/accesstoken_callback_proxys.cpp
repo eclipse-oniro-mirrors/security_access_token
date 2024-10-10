@@ -44,7 +44,10 @@ PermissionStateChangeCallbackProxy::~PermissionStateChangeCallbackProxy()
 void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChangeInfo& result)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor());
+    if (!data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write interfacetoken failed.");
+        return;
+    }
 
     PermissionStateChangeInfoParcel resultParcel;
     resultParcel.changeInfo = result;
@@ -81,7 +84,10 @@ TokenSyncCallbackProxy::~TokenSyncCallbackProxy()
 int32_t TokenSyncCallbackProxy::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    if (!data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write interfacetoken failed.");
+        return TOKEN_SYNC_PARAMS_INVALID;
+    }
 
     if (!data.WriteString(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write deviceID.");
@@ -114,7 +120,10 @@ int32_t TokenSyncCallbackProxy::GetRemoteHapTokenInfo(const std::string& deviceI
 int32_t TokenSyncCallbackProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    if (!data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write interfacetoken failed.");
+        return TOKEN_SYNC_PARAMS_INVALID;
+    }
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID.");
         return TOKEN_SYNC_PARAMS_INVALID;
@@ -142,7 +151,10 @@ int32_t TokenSyncCallbackProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 int32_t TokenSyncCallbackProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    if (!data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write interfacetoken failed.");
+        return TOKEN_SYNC_PARAMS_INVALID;
+    }
 
     HapTokenInfoForSyncParcel tokenInfoParcel;
     tokenInfoParcel.hapTokenInfoForSyncParams = tokenInfo;

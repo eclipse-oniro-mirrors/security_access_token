@@ -120,10 +120,14 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         return;
     }
     for (AccessTokenID deleteToken : deleteTokenList_) {
+        int ret = TOKEN_SYNC_SUCCESS;
         if (tokenSyncCallbackObject_ != nullptr) {
-            tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
+            ret = tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
         }
-        tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
+        ret = tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
+        if (ret != TOKEN_SYNC_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to delete remote haptoken info, ret is %{public}d", ret);
+        }
     }
 
     for (AccessTokenID modifyToken : modifiedTokenList_) {
@@ -134,9 +138,12 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
             continue;
         }
         if (tokenSyncCallbackObject_ != nullptr) {
-            tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(hapSync);
+            ret = tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(hapSync);
         }
-        tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
+        ret = tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
+        if (ret != TOKEN_SYNC_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to update remote haptoken info, ret is %{public}d", ret);
+        }
     }
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
