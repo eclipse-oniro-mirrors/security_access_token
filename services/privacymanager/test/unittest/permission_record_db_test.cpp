@@ -460,6 +460,47 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
 }
 
 /*
+ * @tc.name: Add004
+ * @tc.desc: PermissionUsedRecordDb::Add function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+
+    GenericValues value2; // only used_type diff from value1
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    value2.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::PICKER_TYPE));
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+
+    // if primary key do not add used_type, this place should be wrong
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value1));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value2));
+}
+
+/*
  * @tc.name: FindByConditions001
  * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
  * @tc.type: FUNC

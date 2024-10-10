@@ -69,9 +69,12 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
         InsertLockScreenStatusColumn();
         InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
+        UpdatePermissionRecordTablePrimaryKey();
     } else if (version == DataBaseVersion::VERISION_2) {
         InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
+    } else if (version == DataBaseVersion::VERISION_3) {
+        UpdatePermissionRecordTablePrimaryKey();
     }
 }
 
@@ -600,6 +603,94 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
     int32_t insertResult = ExecuteSql(sql);
     ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d", insertResult);
     return insertResult;
+}
+
+static void CreateNewPermissionRecordTable(std::string& newTableName, std::string& createNewSql)
+{
+    createNewSql = CREATE_TABLE_STR;
+    createNewSql.append(newTableName + " (")
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_OP_CODE)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_STATUS)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_TIMESTAMP)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_ACCESS_DURATION)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_ACCESS_COUNT)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_REJECT_COUNT)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_OP_CODE)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_STATUS)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_TIMESTAMP)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append("))");
+}
+
+int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+
+    std::string tableName = it->second.tableName_;
+    std::string newTableName = it->second.tableName_ + "_new";
+    std::string createNewSql;
+    CreateNewPermissionRecordTable(newTableName, createNewSql);
+
+    BeginTransaction();
+
+    int32_t createNewRes = ExecuteSql(createNewSql); // 1、create new table with new primary key
+    if (createNewRes != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
+            createNewRes, SpitError().c_str());
+        return FAILURE;
+    }
+
+    std::string copyDataSql = "insert into " + newTableName + " select * from " + tableName;
+    int32_t copyDataRes = ExecuteSql(copyDataSql); // 2、copy data from old table to new table
+    if (copyDataRes != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Copy data from old table failed, errCode is %{public}d, errMsg is %{public}s.",
+            copyDataRes, SpitError().c_str());
+        RollbackTransaction();
+        return FAILURE;
+    }
+
+    std::string dropOldSql = "drop table " + tableName;
+    int32_t dropOldRes = ExecuteSql(dropOldSql); // 3、drop old table
+    if (dropOldRes != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Drop old table failed, errCode is %{public}d, errMsg is %{public}s.",
+            dropOldRes, SpitError().c_str());
+        RollbackTransaction();
+        return FAILURE;
+    }
+
+    std::string renameSql = "alter table " + newTableName + " rename to " + tableName;
+    int32_t renameRes = ExecuteSql(renameSql); // 4、rename new table to old
+    if (renameRes != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rename table failed, errCode is %{public}d, errMsg is %{public}s.",
+            renameRes, SpitError().c_str());
+        RollbackTransaction();
+        return FAILURE;
+    }
+
+    CommitTransaction();
+
+    return SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security
