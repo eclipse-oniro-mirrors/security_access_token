@@ -5239,8 +5239,8 @@
         {
             "name": "ohos.permission.READ_WRITE_USB_DEV",
             "grantMode": "system_grant",
-            "availableLevel": "normal",
-            "availableType": "NORMAL",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
