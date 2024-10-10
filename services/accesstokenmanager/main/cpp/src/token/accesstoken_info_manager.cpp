@@ -303,8 +303,47 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     if (iter != hapTokenInfoMap_.end()) {
         return iter->second;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
-    return nullptr;
+    GenericValues conditionValue;
+    if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
+        std::vector<GenericValues> permDefRes;
+        AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, permDefRes);
+        PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes); // restore all permission definition
+        ACCESSTOKEN_LOG_INFO(LABEL, "Restore perm def size: %{public}zu, mapSize: %{public}zu.",
+            permDefRes.size(), hapTokenInfoMap_.size());
+    }
+
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    if (ret != RET_SUCCESS || hapTokenResults.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
+            "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
+        return nullptr;
+    }
+    std::vector<GenericValues> permStateRes;
+    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
+            "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
+        return nullptr;
+    }
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
+            id, ret, hapTokenInfoMap_.size());
+        return nullptr;
+    }
+    AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
+    hapTokenIdMap_[GetHapUniqueStr(hap)] = id;
+    hapTokenInfoMap_[id] = hap;
+    std::shared_ptr<PermissionPolicySet> policySet = hap->GetHapInfoPermissionPolicySet();
+    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
+    ACCESSTOKEN_LOG_INFO(LABEL, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
+        " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
+        hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());
+    return hap;
 }
 
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
@@ -314,7 +353,7 @@ int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
     if ((iter != hapTokenInfoMap_.end()) && (iter->second != nullptr)) {
         return iter->second->GetDlpType();
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid, mapSize: %{public}zu.", id, hapTokenInfoMap_.size());
     return BUTT_DLP_TYPE;
 }
 
@@ -407,8 +446,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
     if (type != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is not hap.", id);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is not hap.", id);
         return ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> info;
@@ -416,6 +454,11 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     PermissionManager::GetInstance().RemoveDefPermissions(id);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        RemoveTokenInfoFromDb(id, true);
+        // remove hap to kernel
+        PermissionManager::GetInstance().RemovePermFromKernel(id);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
+
         if (hapTokenInfoMap_.count(id) == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token %{public}u no exist.", id);
             return ERR_TOKENID_NOT_EXIST;
@@ -438,11 +481,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         hapTokenInfoMap_.erase(id);
     }
 
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "Remove hap token %{public}u ok!", id);
-    RemoveTokenInfoFromDb(id, true);
-    // remove hap to kernel
-    PermissionManager::GetInstance().RemovePermFromKernel(id);
     PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
@@ -540,7 +579,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
-    AddHapTokenInfoToDb(tokenId);
+    AddHapTokenInfoToDb(tokenId, tokenInfo);
     return RET_SUCCESS;
 }
 
@@ -713,12 +752,12 @@ inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleNam
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
             PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet, permPolicyList_);
-            ModifyHapTokenInfoFromDb(tokenID);
+            ModifyHapTokenInfoFromDb(tokenID, infoPtr);
             return RET_SUCCESS;
         }
     }
     PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
-    return ModifyHapTokenInfoFromDb(tokenID);
+    return ModifyHapTokenInfoFromDb(tokenID, infoPtr);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -989,9 +1028,9 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
     return *instance;
 }
 
-int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
+int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(
+    AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInner)
 {
-    std::shared_ptr<HapTokenInfoInner> hapInner = GetHapTokenInfoInner(tokenID);
     if (hapInner == nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
@@ -1018,11 +1057,11 @@ int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
         permStateValues);
 }
 
-int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission)
+int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(
+    AccessTokenID tokenID, const std::string& permission, const std::shared_ptr<HapTokenInfoInner>& hapInfo)
 {
     std::vector<GenericValues> permStateValues;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
-    std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
     if (hapInfo == nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u info is null!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
@@ -1042,13 +1081,12 @@ int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, 
     return RET_SUCCESS;
 }
 
-int AccessTokenInfoManager::AddHapTokenInfoToDb(AccessTokenID tokenID)
+int AccessTokenInfoManager::AddHapTokenInfoToDb(
+    AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo)
 {
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permDefValues;
     std::vector<GenericValues> permStateValues;
-
-    std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
     if (hapInfo == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u info is null!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;

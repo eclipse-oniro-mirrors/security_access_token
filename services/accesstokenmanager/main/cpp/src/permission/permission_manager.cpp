@@ -140,12 +140,6 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u", __func__, tokenID);
-    std::shared_ptr<HapTokenInfoInner> tokenInfo =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
-        return;
-    }
     PermissionDefinitionCache::GetInstance().DeleteByToken(tokenID);
 }
 
@@ -549,7 +543,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission);
+    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
