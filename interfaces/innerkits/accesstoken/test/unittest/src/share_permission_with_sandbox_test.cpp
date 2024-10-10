@@ -28,7 +28,7 @@ using namespace OHOS::Security::AccessToken;
 
 namespace {
 static const std::string PERMISSION_ALL = "ohos.permission.CAMERA";
-static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.WRITE_MEDIA";
+static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.PRINT";
 static const std::string PERMISSION_NONE = "ohos.permission.INTERNET";
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
@@ -61,7 +61,7 @@ HapInfoParams g_infoParmsReadOnly = {
 };
 
 PermissionStateFull g_stateFullControl = {
-    .permissionName = "ohos.permission.WRITE_MEDIA",
+    .permissionName = "ohos.permission.PRINT",
     .isGeneral = true,
     .resDeviceID = {"local"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
