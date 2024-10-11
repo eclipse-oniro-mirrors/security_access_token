@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #define private public
+#include "short_grant_manager.h"
 #include "accesstoken_manager_service.h"
 #include "permission_manager.h"
 #undef private
@@ -41,6 +42,7 @@ public:
     sptr<AccessTokenManagerService> accessTokenService_ = nullptr;
     std::shared_ptr<AppExecFwk::EventRunner> shortGrantEventRunner_;
     std::shared_ptr<AccessEventHandler> shortGrantEventHandler_;
+    sptr<ShortPermAppStateObserver> appStateObserver_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
