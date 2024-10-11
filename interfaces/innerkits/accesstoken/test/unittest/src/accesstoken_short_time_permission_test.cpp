@@ -244,7 +244,7 @@ HWTEST_F(AccessTokenShortTimePermTest, GrantPermissionForSpecifiedTime005, TestS
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
     // second onceTime is reached, permission is revoked
-    sleep(onceTime - 1);
+    sleep(onceTime);
     ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 }
 } // namespace AccessToken
