@@ -1160,38 +1160,17 @@ void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bun
     }
 }
 
-void AccessTokenInfoManager::DumpAllHapTokenInfo(std::string& dumpInfo)
+void AccessTokenInfoManager::DumpAllHapTokenname(std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all hap token info.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all hap token name.");
 
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
-            iter->second->ToString(dumpInfo);
+            dumpInfo += std::to_string(iter->second->GetTokenID()) + ": " + iter->second->GetBundleName();
             dumpInfo.append("\n");
         }
     }
-}
-
-void AccessTokenInfoManager::DumpUserPolicyInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get user policy info.");
-
-    Utils::UniqueReadGuard<Utils::RWLock> infoUser(this->userPolicyLock_);
-    dumpInfo.append(R"({)");
-    dumpInfo.append("\n");
-    dumpInfo.append(R"(  "userIdList": )");
-    for (uint32_t i = 0; i < inactiveUserList_.size(); i++) {
-        dumpInfo.append(R"( )" + std::to_string(inactiveUserList_[i]));
-    }
-    dumpInfo.append("\n");
-    dumpInfo.append(R"(  "permissionList": )");
-    for (uint32_t i = 0; i < permPolicyList_.size(); i++) {
-        dumpInfo.append(R"( )" + permPolicyList_[i]);
-    }
-    dumpInfo.append("\n");
-    dumpInfo.append("}");
-    dumpInfo.append("\n");
 }
 
 void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
@@ -1203,17 +1182,13 @@ void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string&
     }
 }
 
-void AccessTokenInfoManager::DumpAllNativeTokenInfo(std::string& dumpInfo)
+void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all native token info.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all native token name.");
 
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
-        AccessTokenID id = iter->first;
-        std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(id);
-        if (infoPtr != nullptr) {
-            infoPtr->ToString(dumpInfo);
-        }
+        dumpInfo += std::to_string(iter->first) + ": " + iter->second.processName;
         dumpInfo.append("\n");
     }
 }
@@ -1265,9 +1240,8 @@ void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::s
         return;
     }
 
-    DumpAllHapTokenInfo(dumpInfo);
-    DumpAllNativeTokenInfo(dumpInfo);
-    DumpUserPolicyInfo(dumpInfo);
+    DumpAllHapTokenname(dumpInfo);
+    DumpAllNativeTokenName(dumpInfo);
 }
 
 

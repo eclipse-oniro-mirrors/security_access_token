@@ -121,10 +121,9 @@ private:
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
     void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
-    void DumpAllHapTokenInfo(std::string& dumpInfo);
-    void DumpUserPolicyInfo(std::string& dumpInfo);
+    void DumpAllHapTokenname(std::string& dumpInfo);
     void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
-    void DumpAllNativeTokenInfo(std::string& dumpInfo);
+    void DumpAllNativeTokenName(std::string& dumpInfo);
     int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
         const std::vector<std::string>& permList, std::map<int32_t, bool>& changedUserList);
     int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
