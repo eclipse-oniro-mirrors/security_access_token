@@ -580,14 +580,18 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapPermissionPolicySet001, TestSize.Leve
 HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_NE(AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID), RET_SUCCESS);
+    // type != TOKEN_HAP
+    ASSERT_EQ(
+        ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
-    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // count(id) == 0
+    // hapTokenInfoMap_.count(id) == 0
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
-    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info is null
+    ASSERT_EQ(ERR_TOKEN_INVALID, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info == nullptr
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
@@ -595,6 +599,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
     info->tokenInfoBasic_.bundleName = "com.ohos.TEST";
     info->tokenInfoBasic_.instIndex = INST_INDEX;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     // count(HapUniqueKey) == 0
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 
@@ -606,8 +611,6 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
     // hapTokenIdMap_[HapUniqueKey] != id
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
     AccessTokenInfoManager::GetInstance().hapTokenIdMap_.erase(hapUniqueKey);
-
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 }
 
 /**
