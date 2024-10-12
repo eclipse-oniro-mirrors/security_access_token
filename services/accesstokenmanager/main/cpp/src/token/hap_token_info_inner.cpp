@@ -316,9 +316,6 @@ void HapTokenInfoInner::ToString(std::string& info) const
     info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
     info.append(R"(  "dlpType": )" + std::to_string(tokenInfoBasic_.dlpType) + ",\n");
     info.append(R"(  "appID": ")" + tokenInfoBasic_.appID + R"(")" + ",\n");
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    info.append(R"(  "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")" + ",\n");
-#endif
     info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
     info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
