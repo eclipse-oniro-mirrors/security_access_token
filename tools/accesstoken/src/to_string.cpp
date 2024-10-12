@@ -73,7 +73,6 @@ void ToString::BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, st
     infos.append(R"(      "tokenId": )" + std::to_string(bundleRecord.tokenId) + ",\n");
     infos.append(R"(      "isRemote": )" + std::to_string(bundleRecord.isRemote) + ",\n");
     infos.append(R"(      "bundleName": )" + bundleRecord.bundleName + ",\n");
-    infos.append(R"(      "deviceId": )" + ConstantCommon::EncryptDevId(bundleRecord.deviceId) + ",\n");
     infos.append(R"(      "permissionRecords": [)");
     infos.append("\n");
 
