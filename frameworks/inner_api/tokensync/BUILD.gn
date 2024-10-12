@@ -15,7 +15,8 @@ import("../../../access_token.gni")
 
 config("tokensync") {
   visibility = [ ":*" ]
-  include_dirs = [ "include" ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/inner_api/tokensync/include" ]
 }
 
 if (is_standard_system) {
@@ -37,7 +38,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "include",
+      "${access_token_path}/interfaces/inner_api/tokensync/include",
       "src",
     ]
 
