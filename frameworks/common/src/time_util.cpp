@@ -14,17 +14,21 @@
  */
 
 #include "time_util.h"
-#include <chrono>
+#include <sys/time.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr int64_t ONE_SECOND_MILLISECONDS = 1000;
+}
 int64_t TimeUtil::GetCurrentTimestamp()
 {
-    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
-    return ms.count();
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    int64_t timestamp = t.tv_sec * ONE_SECOND_MILLISECONDS + t.tv_usec / ONE_SECOND_MILLISECONDS;
+
+    return timestamp;
 }
 
 bool TimeUtil::IsTimeStampsSameMinute(int64_t timeStamp1, int64_t timeStamp2)
