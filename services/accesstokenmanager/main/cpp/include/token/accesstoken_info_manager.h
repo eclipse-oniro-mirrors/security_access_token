@@ -58,7 +58,7 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t AddAllNativeTokenInfoToDb(void);
-    int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID);
+    int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInner);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
@@ -74,7 +74,8 @@ public:
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
-    int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
+    int32_t ModifyHapPermStateFromDb(
+        AccessTokenID tokenID, const std::string& permission, const std::shared_ptr<HapTokenInfoInner>& hapInfo);
     void DumpToken();
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
@@ -110,7 +111,7 @@ private:
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    int AddHapTokenInfoToDb(AccessTokenID tokenID);
+    int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo);
     int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
