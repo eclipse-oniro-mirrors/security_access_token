@@ -29,7 +29,7 @@ ohos_unittest("libtokensync_sdk_test") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "../include",
+    "${access_token_path}/interfaces/inner_api/tokensync/include",
     "../src",
   ]
 

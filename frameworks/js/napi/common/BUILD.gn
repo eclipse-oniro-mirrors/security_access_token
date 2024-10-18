@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../../../access_token.gni")
 
-ohos_shared_library("screenlockfilemanager") {
+ohos_static_library("libnapi_common") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -23,22 +23,27 @@ ohos_shared_library("screenlockfilemanager") {
   branch_protector_ret = "pac_ret"
 
   include_dirs = [
-    "${access_token_path}/frameworks/el5filekeymanager/include",
-    "${access_token_path}/interfaces/innerkits/el5filekeymanager/include",
-    "include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/kits/js/napi/common/include",
   ]
 
-  sources = [ "src/el5_filekey_manager_napi.cpp" ]
+  sources = [
+    "src/napi_common.cpp",
+    "src/napi_error.cpp",
+  ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk" ]
-
+  deps = []
+  cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
     "hilog:libhilog",
-    "ipc:ipc_single",
     "napi:ace_napi",
   ]
 
-  relative_install_dir = "module/ability/"
   subsystem_name = "security"
   part_name = "access_token"
 }

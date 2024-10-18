@@ -69,10 +69,10 @@
         "fwk_group": [
           "//base/security/access_token/interfaces/kits/capi:capi_packages",
           "//base/security/access_token/interfaces/kits/cj:cj_packages",
-          "//base/security/access_token/interfaces/kits/napi:napi_packages"
+          "//base/security/access_token/frameworks/js/napi:napi_packages"
         ],
         "service_group": [
-          "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
+          "//base/security/access_token/frameworks/inner_api/tokensync:libtokensync_sdk",
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
           "//base/security/access_token/services/el5filekeymanager:el5filekeymanager",
@@ -121,12 +121,24 @@
           }
         },
         {
-          "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+          "name": "//base/security/access_token/frameworks/inner_api/privacy:libprivacy_sdk",
           "header": {
             "header_files": [
-              "privacy_kit.h"
+              "active_change_response_info.h",
+              "add_perm_param_info.h",
+              "on_permission_used_record_callback.h",
+              "perm_active_status_customized_cbk.h",
+              "permission_used_request.h",
+              "permission_used_result.h",
+              "permission_used_type_info.h",
+              "permission_used_type.h",
+              "privacy_error.h",
+              "privacy_kit.h",
+              "privacy_param.h",
+              "privacy_permission_record_ipc_interface_code.h",
+              "state_customized_cbk.h"
             ],
-            "header_base": "//base/security/access_token/interfaces/innerkits/privacy/include"
+            "header_base": "//base/security/access_token/interfaces/inner_api/privacy/include"
           }
         },
         {
@@ -172,6 +184,16 @@
               "el5_filekey_manager_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/el5filekeymanager/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/frameworks/inner_api/tokensync:libtokensync_sdk",
+          "header": {
+            "header_files": [
+              "token_sync_kit.h",
+              "token_sync_kit_loader.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/inner_api/tokensync/include"
           }
         }
       ],

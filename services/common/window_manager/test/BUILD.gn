@@ -28,7 +28,7 @@ ohos_unittest("libwindow_manager_test") {
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/privacy/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/inner_api/privacy/include",
     "${access_token_path}/services/common/window_manager/include",
   ]
 
