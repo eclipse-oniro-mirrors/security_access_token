@@ -622,8 +622,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission);
-    return RET_SUCCESS;
+    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
