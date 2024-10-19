@@ -110,6 +110,7 @@ public:
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
     void RemoveRecordFromStartListByOp(int32_t opCode);
     void ExecuteAllCameraExecuteCallback();
+    void UpdatePermRecImmediately();
 
 private:
     PermissionRecordManager();
@@ -118,7 +119,10 @@ private:
     bool IsAllowedUsingCamera(AccessTokenID tokenId);
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
 
-    void AddRecord(const PermissionRecord& record);
+    void AddRecordToCacheAndDb(const PermissionRecord& record, GenericValues& value);
+    int32_t MergeOrInsertRecord(const PermissionRecord& record);
+    bool UpdatePermissionUsedRecord(const PermissionRecord& record);
+    int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
@@ -127,6 +131,8 @@ private:
     void ReduceDeleteTaskNum();
     int32_t DeletePermissionRecord(int32_t days);
 
+    void GetMergedRecordsFromCache(std::vector<PermissionRecord>& mergedRecords);
+    void InsteadMergedRecIfNessary(GenericValues& mergedRecord, std::vector<PermissionRecord>& mergedRecords);
     void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
         PermissionUsedRecord& outRecord);
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
@@ -154,7 +160,6 @@ private:
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
-    void RemovePermissionUsedType(AccessTokenID tokenId);
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -242,6 +247,9 @@ private:
     std::shared_ptr<AccessEventHandler> deleteEventHandler_;
 #endif
     std::atomic_int32_t deleteTaskNum_ = 0;
+
+    std::mutex permUsedRecMutex_;
+    std::vector<PermissionRecordCache> permUsedRecList_;
 };
 } // namespace AccessToken
 } // namespace Security
