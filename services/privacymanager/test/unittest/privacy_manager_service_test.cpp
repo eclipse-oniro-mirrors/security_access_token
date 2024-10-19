@@ -24,7 +24,6 @@
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "perm_active_status_change_callback.h"
-#include "power_manager_loader.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_manager_service.h"
@@ -110,12 +109,6 @@ void PrivacyManagerServiceTest::SetUp()
     g_tokenID = AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
     AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
     selfTokenId_ = GetSelfTokenID();
-
-    LibraryLoader loader(POWER_MANAGER_LIBPATH);
-    PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
-    if (powerManagerLoader != nullptr) {
-        powerManagerLoader->WakeupDevice();
-    }
 }
 
 void PrivacyManagerServiceTest::TearDown()
