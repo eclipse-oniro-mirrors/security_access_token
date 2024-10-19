@@ -39,7 +39,7 @@
 #include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
-#include "power_manager_loader.h"
+#include "power_manager_client.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
@@ -646,13 +646,7 @@ int32_t PermissionRecordManager::GetLockScreenStatus()
 
 bool PermissionRecordManager::IsScreenOn()
 {
-    LibraryLoader loader(POWER_MANAGER_LIBPATH);
-    PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
-    if (powerManagerLoader == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to load powermanager.");
-        return false;
-    }
-    return powerManagerLoader->IsScreenOn();
+    return PowerMgrClient::GetInstance().IsScreenOn();
 }
 
 int32_t PermissionRecordManager::RemoveRecordFromStartList(

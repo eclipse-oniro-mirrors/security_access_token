@@ -109,7 +109,6 @@ group("accesstoken_common") {
     deps = [
       ":accesstoken_service_common",
       "config_policy:accesstoken_config_policy",
-      "power_manager:accesstoken_power_manager",
       "screenlock_manager:accesstoken_screenlock_manager",
       "window_manager:accesstoken_window_manager",
     ]
