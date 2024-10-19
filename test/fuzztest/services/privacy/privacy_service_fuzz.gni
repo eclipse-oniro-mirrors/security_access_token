@@ -71,6 +71,8 @@ privacy_sources = [
   "${access_token_path}/services/common/app_manager/src/app_status_change_callback.cpp",
   "${access_token_path}/services/common/app_manager/src/process_data.cpp",
   "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
+  "${access_token_path}/services/common/power_manager/src/power_manager_client.cpp",
+  "${access_token_path}/services/common/power_manager/src/power_manager_proxy.cpp",
   "${access_token_path}/services/privacymanager/src/active/active_status_callback_manager.cpp",
   "${access_token_path}/services/privacymanager/src/active/perm_active_status_callback_death_recipient.cpp",
   "${access_token_path}/services/privacymanager/src/active/perm_active_status_change_callback_proxy.cpp",
