@@ -98,16 +98,6 @@ static HapInfoParams g_infoParmsB = {
     .appIDDesc = "privacy_test.bundleB"
 };
 
-static PermissionDef g_infoManagerTestPermDefC = {
-    .permissionName = "ohos.permission.PERMISSION_USED_STATS",
-    .bundleName = "ohos.privacy_test.bundleC",
-    .grantMode = 1,
-    .availableLevel = APL_NORMAL,
-    .label = "labelC",
-    .labelId = 1,
-    .description = "break the door",
-    .descriptionId = 1
-};
 static PermissionStateFull g_infoManagerTestStateC = {
     .permissionName = "ohos.permission.PERMISSION_USED_STATS",
     .isGeneral = true,
@@ -125,7 +115,7 @@ static HapInfoParams g_infoParmsC = {
 static HapPolicyParams g_policyPramsC = {
     .apl = APL_NORMAL,
     .domain = "test.domain.C",
-    .permList = {g_infoManagerTestPermDefC},
+    .permList = {},
     .permStateList = {g_infoManagerTestStateC}
 };
 
@@ -438,35 +428,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
-    dcaps[0] = "AT_CAP";
-    dcaps[1] = "ST_CAP";
-    uint64_t tokenId;
-    const char **acls = new const char *[2];
-    acls[0] = "ohos.permission.test1";
-    acls[1] = "ohos.permission.test2";
-    const char **perms = new const char *[2];
-    perms[0] = "ohos.permission.test1";
-    perms[1] = "ohos.permission.test2";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 2,
-        .permsNum = 2,
-        .aclsNum = 2,
-        .dcaps = dcaps,
-        .perms = perms,
-        .acls = acls,
-        .processName = "GetAccessTokenId008",
-        .aplStr = "system_core",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    ASSERT_NE(tokenId, static_cast<uint32_t>(0));
-
-    delete[] perms;
-    delete[] dcaps;
-    delete[] acls;
-
     AddPermParamInfo info;
-    info.tokenId = tokenId;
+    info.tokenId = g_nativeToken;
     info.permissionName = "ohos.permission.READ_CONTACTS";
     info.successCount = 1;
     info.failCount = 0;
@@ -475,7 +438,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(tokenId, "", "", permissionList, request);
+    BuildQueryRequest(g_nativeToken, "", "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());

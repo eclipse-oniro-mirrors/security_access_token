@@ -66,8 +66,6 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/record/on_permission_used_record_callback_proxy.cpp",
       "../../src/record/permission_record.cpp",
       "../../src/record/permission_record_manager.cpp",
-      "../../src/record/permission_record_repository.cpp",
-      "../../src/record/permission_used_record_cache.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
