@@ -47,6 +47,16 @@ ShortGrantManager& ShortGrantManager::GetInstance()
     return *instance;
 }
 
+void ShortPermAppStateObserver::OnAppStopped(const AppStateData &appStateData)
+{
+    if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
+        uint32_t tokenID = appStateData.accessTokenId;
+        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID:%{public}d died.", tokenID);
+        
+        ShortGrantManager::GetInstance().ClearShortPermissionByTokenID(tokenID);
+    }
+}
+
 void ShortGrantManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
 {
     eventHandler_ = eventHandler;
@@ -94,12 +104,12 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         data.permissionName = permission;
         data.firstGrantTimes = GetCurrentTime();
         data.revokeTimes = data.firstGrantTimes + onceTime;
-        shortGrantData_.emplace_back(data);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "GrantPermission failed result %{public}d", ret);
             return ret;
         }
+        shortGrantData_.emplace_back(data);
         ShortGrantManager::GetInstance().ScheduleRevokeTask(tokenID, permission, taskName, onceTime);
         return RET_SUCCESS;
     }
@@ -144,6 +154,28 @@ void ShortGrantManager::ClearShortPermissionData(AccessTokenID tokenID, const st
     }
 }
 
+void ShortGrantManager::ClearShortPermissionByTokenID(AccessTokenID tokenID)
+{
+    std::unique_lock<std::mutex> lck(shortGrantDataMutex_);
+    auto item = shortGrantData_.begin();
+    while (item != shortGrantData_.end()) {
+        if (item->tokenID == tokenID) {
+            if (PermissionManager::GetInstance().UpdatePermission(
+                tokenID, item->permissionName, false, PERMISSION_USER_FIXED, false) != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
+                    tokenID, item->permissionName.c_str());
+                return;
+            }
+            // clear task and data
+            std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(tokenID) + item->permissionName;
+            ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
+            item = shortGrantData_.erase(item);
+        } else {
+            ++item;
+        }
+    }
+}
+
 void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::string& permission,
     const std::string& taskName, uint32_t cancelTimes)
 {
@@ -172,6 +204,15 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
 uint32_t ShortGrantManager::GetCurrentTime()
 {
     return static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch() / std::chrono::seconds(1));
+}
+
+bool ShortGrantManager::IsShortGrantPermission(const std::string& permissionName)
+{
+    auto it = find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permissionName);
+    if (it == g_shortGrantPermission.end()) {
+        return false;
+    }
+    return true;
 }
 
 ShortGrantManager::ShortGrantManager() : maxTime_(DEFAULT_MAX_TIME_MILLISECONDS)

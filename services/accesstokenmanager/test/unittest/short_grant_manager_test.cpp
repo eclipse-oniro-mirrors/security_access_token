@@ -218,6 +218,45 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 }
+
+/**
+ * @tc.name: RefreshPermission004
+ * @tc.desc: 1. The permission is granted when onceTime is not reached;
+ *           2. The permission is revoked after app is stopped.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(ShortGrantManagerTest, RefreshPermission004, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    uint32_t onceTime = 10;
+
+    ret = ShortGrantManager::GetInstance().RefreshPermission(tokenID, SHORT_TEMP_PERMISSION, onceTime);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+
+    if (appStateObserver_ != nullptr) {
+        return;
+    }
+    appStateObserver_ = sptr<ShortPermAppStateObserver>::MakeSptr();
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
+    appStateData.accessTokenId = tokenID;
+    appStateObserver_->OnAppStopped(appStateData);
+
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

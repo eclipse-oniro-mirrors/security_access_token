@@ -23,6 +23,7 @@
 #include <string>
 
 #include "access_event_handler.h"
+#include "app_status_change_callback.h"
 
 namespace OHOS {
 namespace Security {
@@ -37,6 +38,16 @@ typedef struct {
     uint32_t revokeTimes;
 } PermTimerData;
 
+class ShortPermAppStateObserver : public ApplicationStateObserverStub {
+public:
+    ShortPermAppStateObserver() = default;
+    ~ShortPermAppStateObserver() = default;
+
+    void OnAppStopped(const AppStateData &appStateData) override;
+
+    DISALLOW_COPY_AND_MOVE(ShortPermAppStateObserver);
+};
+
 class ShortGrantManager {
 public:
     static ShortGrantManager& GetInstance();
@@ -44,6 +55,10 @@ public:
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
 
     int RefreshPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
+
+    bool IsShortGrantPermission(const std::string& permissionName);
+
+    void ClearShortPermissionByTokenID(AccessTokenID tokenID);
 
 private:
     ShortGrantManager();
