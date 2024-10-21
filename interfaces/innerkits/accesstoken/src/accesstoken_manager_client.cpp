@@ -19,7 +19,6 @@
 #include "access_token_error.h"
 #include "accesstoken_manager_proxy.h"
 #include "atm_tools_param_info_parcel.h"
-#include "data_validator.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
@@ -76,10 +75,6 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
-        return PERMISSION_DENIED;
-    }
     auto proxy = GetProxy();
     if (proxy != nullptr) {
         return proxy->VerifyAccessToken(tokenID, permissionName);

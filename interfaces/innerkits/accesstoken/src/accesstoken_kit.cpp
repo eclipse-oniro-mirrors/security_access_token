@@ -38,8 +38,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
-constexpr const char* LOCATION = "ohos.permission.LOCATION";
-constexpr const char* APPROXIMATELY_LOCATION = "ohos.permission.APPROXIMATELY_LOCATION";
 } // namespace
 
 PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
@@ -247,8 +245,15 @@ int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<
     return AccessTokenManagerClient::GetInstance().GetPermissionsStatus(tokenID, permList);
 }
 
-static int GetAccessTokenStatus(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
+int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
+        tokenID, permissionName.c_str(), crossIpc);
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
+        return PERMISSION_DENIED;
+    }
+
     uint32_t code;
     if (crossIpc || !TransferPermissionToOpcode(permissionName, code)) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
@@ -261,32 +266,16 @@ static int GetAccessTokenStatus(AccessTokenID tokenID, const std::string& permis
     return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
 }
 
-static int GetLocationStatus(AccessTokenID tokenID, bool crossIpc)
-{
-    if (GetAccessTokenStatus(tokenID, APPROXIMATELY_LOCATION, crossIpc) == PERMISSION_DENIED) {
-        return PERMISSION_DENIED;
-    }
-    return GetAccessTokenStatus(tokenID, LOCATION, crossIpc);
-}
-
-int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
-        tokenID, permissionName.c_str(), crossIpc);
-
-    if (permissionName == LOCATION) {
-        return GetLocationStatus(tokenID, crossIpc);
-    }
-    return GetAccessTokenStatus(tokenID, permissionName, crossIpc);
-}
-
 int AccessTokenKit::VerifyAccessToken(
     AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName, bool crossIpc)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "CallerToken=%{public}d, firstToken=%{public}d, permissionName=%{public}s.",
         callerTokenID, firstTokenID, permissionName.c_str());
     int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName, crossIpc);
-    if (ret != PERMISSION_GRANTED || firstTokenID == FIRSTCALLER_TOKENID_DEFAULT) {
+    if (ret != PERMISSION_GRANTED) {
+        return ret;
+    }
+    if (firstTokenID == FIRSTCALLER_TOKENID_DEFAULT) {
         return ret;
     }
     return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName, crossIpc);
@@ -294,13 +283,33 @@ int AccessTokenKit::VerifyAccessToken(
 
 int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    return AccessTokenKit::VerifyAccessToken(tokenID, permissionName, false);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
+        tokenID, permissionName.c_str());
+    uint32_t code;
+    if (!TransferPermissionToOpcode(permissionName, code)) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
+    bool isGranted = false;
+    int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
+    if (ret != 0) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
+    return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
 }
 
 int AccessTokenKit::VerifyAccessToken(
     AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName)
 {
-    return AccessTokenKit::VerifyAccessToken(callerTokenID, firstTokenID, permissionName, false);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "CallerToken=%{public}d, firstToken=%{public}d, permissionName=%{public}s.",
+        callerTokenID, firstTokenID, permissionName.c_str());
+    int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName);
+    if (ret != PERMISSION_GRANTED) {
+        return ret;
+    }
+    if (firstTokenID == FIRSTCALLER_TOKENID_DEFAULT) {
+        return ret;
+    }
+    return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
