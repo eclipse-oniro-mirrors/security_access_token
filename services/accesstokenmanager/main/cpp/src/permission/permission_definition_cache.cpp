@@ -203,6 +203,12 @@ int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>
     }
     return RET_SUCCESS;
 }
+
+uint32_t PermissionDefinitionCache::GetDefPermissionsSize()
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    return static_cast<uint32_t>(permissionDefinitionMap_.size());
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -57,7 +57,6 @@ if (is_standard_system && ability_base_enable) {
       "c_utils:utils",
       "googletest:gtest_main",
       "hilog:libhilog",
-      "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",

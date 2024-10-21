@@ -60,6 +60,8 @@ public:
 
     bool HasHapPermissionDefinitionForHap(const std::string& permissionName);
 
+    uint32_t GetDefPermissionsSize();
+
 private:
     PermissionDefinitionCache();
 

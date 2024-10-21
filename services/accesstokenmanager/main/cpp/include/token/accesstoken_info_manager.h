@@ -105,8 +105,8 @@ private:
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);
 
-    void InitHapTokenInfos();
-    void InitNativeTokenInfos();
+    void InitHapTokenInfos(uint32_t& hapSize);
+    void InitNativeTokenInfos(uint32_t& nativeSize);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info);
     int AddNativeTokenInfo(const std::shared_ptr<NativeTokenInfoInner>& info);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;

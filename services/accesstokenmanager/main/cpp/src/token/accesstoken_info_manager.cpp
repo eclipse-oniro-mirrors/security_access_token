@@ -36,6 +36,7 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
+#include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
@@ -89,8 +90,14 @@ void AccessTokenInfoManager::Init()
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "Init begin!");
-    InitHapTokenInfos();
-    InitNativeTokenInfos();
+    uint32_t hapSize = 0;
+    uint32_t nativeSize = 0;
+    InitHapTokenInfos(hapSize);
+    InitNativeTokenInfos(nativeSize);
+    uint32_t pefDefSize = PermissionDefinitionCache::GetInstance().GetDefPermissionsSize();
+    ReportSysEventServiceStart(getpid(), hapSize, nativeSize, pefDefSize);
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
+        hapSize, nativeSize, pefDefSize);
 
 #ifdef TOKEN_SYNC_ENABLE
     std::function<void()> runner = []() {
@@ -117,25 +124,32 @@ void AccessTokenInfoManager::Init()
     ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
 }
 
-void AccessTokenInfoManager::InitHapTokenInfos()
+void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permDefRes;
     std::vector<GenericValues> permStateRes;
-
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, permDefRes);
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
-
+    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
+    if (ret != RET_SUCCESS || hapTokenRes.empty()) {
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load hap from db fail.", ret);
+    }
+    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, permDefRes);
+    if (ret != RET_SUCCESS || permDefRes.empty()) {
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load perm def from db fail.", ret);
+    }
+    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    if (ret != RET_SUCCESS || permStateRes.empty()) {
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load perm state from db fail.", ret);
+    }
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, ret);
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-                "ERROR_REASON", "hap tokenID error");
+            ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
+                "RegisterTokenId fail, " + bundle + std::to_string(tokenId), ret);
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
@@ -150,11 +164,11 @@ void AccessTokenInfoManager::InitHapTokenInfos()
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed.", tokenId);
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-                "ERROR_REASON", "hap token has exist");
+            ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
+                "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), ret);
             continue;
         }
+        hapSize++;
         ACCESSTOKEN_LOG_INFO(LABEL,
             " Restore hap token %{public}u bundle name %{public}s user %{public}d,"
             " permSize %{public}d, inst %{public}d ok!",
@@ -163,21 +177,28 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes);
 }
 
-void AccessTokenInfoManager::InitNativeTokenInfos()
+void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> nativeTokenResults;
     std::vector<GenericValues> permStateRes;
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue, nativeTokenResults);
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    int32_t ret = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue, nativeTokenResults);
+    if (ret != RET_SUCCESS || nativeTokenResults.empty()) {
+        ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR, "Load native from db fail.", ret);
+    }
+    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    if (ret != RET_SUCCESS || permStateRes.empty()) {
+        ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR, "Load perm state from db fail.", ret);
+    }
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        std::string process = nativeTokenValue.GetString(TokenFiledConst::FIELD_PROCESS_NAME);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (ret != RET_SUCCESS) {
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-                "ERROR_REASON", "native tokenID error");
+            ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR,
+                "RegisterTokenId fail, " + process + std::to_string(tokenId), ret);
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed, error=%{public}d.", tokenId, ret);
             continue;
         }
@@ -193,11 +214,11 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u add failed.", tokenId);
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-                "ERROR_REASON", "native tokenID error");
+            ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR,
+                "AddNativeTokenInfo fail, " + process + std::to_string(tokenId), ret);
             continue;
         }
+        nativeSize++;
         ACCESSTOKEN_LOG_INFO(LABEL,
             "restore native token %{public}u process name %{public}s, permSize %{public}u ok!",
             tokenId, native->GetProcessName().c_str(), native->GetReqPermissionSize());
