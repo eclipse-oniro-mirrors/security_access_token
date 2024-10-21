@@ -28,7 +28,7 @@ bool ProcessData::Marshalling(Parcel &parcel) const
         parcel.WriteInt32(static_cast<int32_t>(processType)) && parcel.WriteInt32(extensionType)
         && parcel.WriteInt32(renderUid) && parcel.WriteUint32(accessTokenId) &&
         parcel.WriteBool(isTestMode) && parcel.WriteInt32(exitReason) && parcel.WriteString(exitMsg) &&
-        parcel.WriteInt32(childUid) && parcel.WriteBool(isPreload)));
+        parcel.WriteInt32(childUid) && parcel.WriteBool(isPreload));
 }
 
 bool ProcessData::ReadFromParcel(Parcel &parcel)
