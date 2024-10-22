@@ -4003,6 +4003,18 @@
     ],
     "userGrantPermissions": [
         {
+            "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
+            "grantMode": "user_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "label": "$string:ohos_lab_custom_screen_capture",
+            "description": "$string:ohos_desc_custom_screen_capture"
+        },
+        {
             "name": "ohos.permission.READ_HEALTH_DATA",
             "grantMode": "user_grant",
             "availableLevel": "normal",
