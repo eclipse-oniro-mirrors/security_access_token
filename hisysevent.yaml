@@ -13,6 +13,19 @@
 
 domain: ACCESS_TOKEN
 
+ACCESSTOKEN_SERVICE_START:
+  __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: service startup}
+  PID: {type: INT32, desc: access token service pid}
+  HAP_SIZE: {type: UINT32, desc: hap token size}
+  NATIVE_SIZE: {type: UINT32, desc: native token size}
+  PERM_DEFINITION_SIZE: {type: UINT32, desc: permission definition size}
+
+ACCESSTOKEN_SERVICE_START_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: service startup error}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  ERROR_MSG: {type: STRING, desc: error reason}
+
 PERMISSION_VERIFY_REPORT:
   __BASE: {type: SECURITY, level: CRITICAL, desc: permission verification error}
   CODE: {type: INT32, desc: error code}
