@@ -57,6 +57,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
 };
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
+constexpr int32_t ERROR = -1;
 constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
@@ -93,7 +94,7 @@ void AccessTokenManagerService::OnStart()
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
-        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", -1);
+        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
         return;
     }
     AccessTokenServiceParamSet();
@@ -631,7 +632,7 @@ bool AccessTokenManagerService::Initialize()
     eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!eventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
-        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create temp eventRunner error.", -1);
+        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create temp eventRunner error.", ERROR);
         return false;
     }
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
@@ -640,7 +641,7 @@ bool AccessTokenManagerService::Initialize()
     shortGrantEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!shortGrantEventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner_.");
-        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create short grant eventRunner error.", -1);
+        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create short grant eventRunner error.", ERROR);
         return false;
     }
     shortGrantEventHandler_ = std::make_shared<AccessEventHandler>(shortGrantEventRunner_);
