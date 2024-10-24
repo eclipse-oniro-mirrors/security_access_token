@@ -30,7 +30,7 @@
 #endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
-#include "hisysevent.h"
+#include "hisysevent_adapter.h"
 #ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
 #endif
@@ -48,7 +48,6 @@
 #include "string_ex.h"
 #include "system_ability_definition.h"
 #include "permission_definition_parser.h"
-#include "time_util.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -66,8 +65,6 @@ const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const std::string PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
 const std::string GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
-static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
-static constexpr char ADD_DOMAIN[] = "PERFORMANCE";
 }
 
 const bool REGISTER_RESULT =
@@ -99,6 +96,7 @@ void AccessTokenManagerService::OnStart()
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
+        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", -1);
         return;
     }
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
@@ -673,12 +671,7 @@ void AccessTokenManagerService::GetConfigValue()
 
 bool AccessTokenManagerService::Initialize()
 {
-    // accesstoken_service add CPU_SCENE_ENTRY system event in OnStart, avoid CPU statistics
-    long id = 1 << 0; // first scene
-    int64_t time = AccessToken::TimeUtil::GetCurrentTimestamp();
-
-    HiSysEventWrite(ADD_DOMAIN, "CPU_SCENE_ENTRY", HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME, "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
+    ReportSysEventPerformance();
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 
@@ -686,6 +679,7 @@ bool AccessTokenManagerService::Initialize()
     eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!eventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
+        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create temp eventRunner error.", -1);
         return false;
     }
     dumpEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
@@ -700,6 +694,7 @@ bool AccessTokenManagerService::Initialize()
     shortGrantEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!shortGrantEventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner_.");
+        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create short grant eventRunner error.", -1);
         return false;
     }
     shortGrantEventHandler_ = std::make_shared<AccessEventHandler>(shortGrantEventRunner_);
@@ -709,9 +704,6 @@ bool AccessTokenManagerService::Initialize()
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
-        "PID_INFO", getpid());
     PermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();

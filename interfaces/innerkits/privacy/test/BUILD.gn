@@ -128,7 +128,6 @@ ohos_unittest("libprivacy_mock_test") {
     "googletest:gmock",
     "googletest:gtest_main",
     "hilog:libhilog",
-    "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_core",

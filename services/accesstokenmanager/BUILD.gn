@@ -58,11 +58,12 @@ if (is_standard_system) {
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/utils/include",
       "main/cpp/include/callback",
+      "main/cpp/include/database",
+      "main/cpp/include/dfx",
       "main/cpp/include/service",
       "main/cpp/include/form_manager",
       "main/cpp/include/token",
       "main/cpp/include/permission",
-      "main/cpp/include/database",
     ]
 
     include_dirs += access_token_impl_include_dirs
@@ -76,6 +77,7 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
+      "main/cpp/src/dfx/hisysevent_adapter.cpp",
       "main/cpp/src/form_manager/form_instance.cpp",
       "main/cpp/src/form_manager/form_manager_access_client.cpp",
       "main/cpp/src/form_manager/form_manager_access_proxy.cpp",

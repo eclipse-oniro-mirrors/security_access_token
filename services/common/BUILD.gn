@@ -72,7 +72,6 @@ ohos_static_library("accesstoken_service_common") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
-    "hisysevent:libhisysevent",
     "ipc:ipc_core",
     "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
