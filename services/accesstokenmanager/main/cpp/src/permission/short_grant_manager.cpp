@@ -173,7 +173,7 @@ uint32_t ShortGrantManager::GetCurrentTime()
     return static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch() / std::chrono::seconds(1));
 }
 
-bool IsShortGrantPermission(const std::string& permissionName)
+bool ShortGrantManager::IsShortGrantPermission(const std::string& permissionName)
 {
     auto it = find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permissionName);
     if (it == g_shortGrantPermission.end()) {
