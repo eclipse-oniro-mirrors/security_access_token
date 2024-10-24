@@ -622,7 +622,6 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
     if (!ShortGrantManager::GetInstance().IsShortGrantPermission(permission)) {
         return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
     }
