@@ -95,12 +95,12 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         data.permissionName = permission;
         data.firstGrantTimes = GetCurrentTime();
         data.revokeTimes = data.firstGrantTimes + onceTime;
-        shortGrantData_.emplace_back(data);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "GrantPermission failed result %{public}d", ret);
             return ret;
         }
+        shortGrantData_.emplace_back(data);
         ShortGrantManager::GetInstance().ScheduleRevokeTask(tokenID, permission, taskName, onceTime);
         return RET_SUCCESS;
     }
