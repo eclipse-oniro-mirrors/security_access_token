@@ -70,6 +70,7 @@ enum class AccessTokenInterfaceCode {
     INIT_USER_POLICY,
     UPDATE_USER_POLICY,
     CLEAR_USER_POLICY,
+    GET_HAP_TOKENINFO_EXT,
 };
 } // namespace AccessToken
 } // namespace Security

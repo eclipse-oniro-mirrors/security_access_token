@@ -889,6 +889,43 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
 
 #endif
 
+int AccessTokenManagerProxy::GetHapTokenInfoExtension(AccessTokenID tokenID,
+    HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 fail");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKENINFO_EXT, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    sptr<HapTokenInfoParcel> hapResult = reply.ReadParcelable<HapTokenInfoParcel>();
+    if (hapResult == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    hapTokenInfoRes = *hapResult;
+    if (!reply.ReadString(appID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString fail.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+
+    return result;
+}
+
 AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& processName)
 {
     MessageParcel data;

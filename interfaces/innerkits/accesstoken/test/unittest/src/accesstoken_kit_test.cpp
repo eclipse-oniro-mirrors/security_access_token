@@ -3265,6 +3265,27 @@ HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
     ret = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(ret, 0);
 }
+
+/**
+ * @tc.name: GetHapTokenInfoExt001
+ * @tc.desc: GetHapTokenInfoExt001.
+ * @tc.type: FUNC
+ * @tc.require: IAZTZD
+ */
+HWTEST_F(AccessTokenKitTest, GetHapTokenInfoExt001, TestSize.Level1)
+{
+    setuid(0);
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    HapTokenInfoExt hapTokenInfoExt;
+    int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapTokenInfoExt);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(TEST_BUNDLE_NAME, hapTokenInfoExt.baseInfo.bundleName);
+    ASSERT_EQ("appIDDesc", hapTokenInfoExt.appID);
+
+    ret = AccessTokenKit::GetHapTokenInfoExtension(INVALID_TOKENID, hapTokenInfoExt);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

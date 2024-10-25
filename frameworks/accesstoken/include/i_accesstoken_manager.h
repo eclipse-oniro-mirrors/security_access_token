@@ -84,6 +84,8 @@ public:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     virtual int32_t ReloadNativeTokenInfo() = 0;
 #endif
+    virtual int GetHapTokenInfoExtension(AccessTokenID tokenID,
+        HapTokenInfoParcel& hapTokenInfoRes, std::string& appID) = 0;
     virtual AccessTokenID GetNativeTokenId(const std::string& processName) = 0;
 
 #ifdef TOKEN_SYNC_ENABLE

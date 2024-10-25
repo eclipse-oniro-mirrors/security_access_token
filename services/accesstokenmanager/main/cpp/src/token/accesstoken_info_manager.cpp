@@ -145,27 +145,27 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-        if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, ret);
+        int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+        if (result != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
             ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
-                "RegisterTokenId fail, " + bundle + std::to_string(tokenId), ret);
+                "RegisterTokenId fail, " + bundle + std::to_string(tokenId), result);
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-        ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
-        if (ret != RET_SUCCESS) {
+        result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
+        if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u restore failed.", tokenId);
             continue;
         }
 
-        ret = AddHapTokenInfo(hap);
-        if (ret != RET_SUCCESS) {
+        result = AddHapTokenInfo(hap);
+        if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed.", tokenId);
             ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
-                "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), ret);
+                "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), result);
             continue;
         }
         hapSize++;
@@ -195,27 +195,27 @@ void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         std::string process = nativeTokenValue.GetString(TokenFiledConst::FIELD_PROCESS_NAME);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
-        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
-        if (ret != RET_SUCCESS) {
+        int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
+        if (result != RET_SUCCESS) {
             ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR,
-                "RegisterTokenId fail, " + process + std::to_string(tokenId), ret);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed, error=%{public}d.", tokenId, ret);
+                "RegisterTokenId fail, " + process + std::to_string(tokenId), result);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed, error=%{public}d.", tokenId, result);
             continue;
         }
         std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
-        ret = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);
-        if (ret != RET_SUCCESS) {
+        result = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);
+        if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u restore failed.", tokenId);
             continue;
         }
 
-        ret = AddNativeTokenInfo(native);
-        if (ret != RET_SUCCESS) {
+        result = AddNativeTokenInfo(native);
+        if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u add failed.", tokenId);
             ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR,
-                "AddNativeTokenInfo fail, " + process + std::to_string(tokenId), ret);
+                "AddNativeTokenInfo fail, " + process + std::to_string(tokenId), result);
             continue;
         }
         nativeSize++;
@@ -1171,6 +1171,31 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
         CallbackManager::GetInstance().ExecuteCallbackAsync(
             id, permissionName, PermStateChangeType::STATE_CHANGE_REVOKED);
     }
+}
+
+int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
+        return ret;
+    }
+
+    if (hapTokenResults.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Id(%{public}u) is not in hap_token_table.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    std::string result = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
+    if (!DataValidator::IsAppIDDescValid(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x appID is error.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    appId = result;
+    return RET_SUCCESS;
 }
 
 AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)

@@ -126,6 +126,14 @@ public:
     std::vector<PermissionStateFull> permStateList;
 };
 
+class HapTokenInfoExt final {
+public:
+    /** hap token info */
+    HapTokenInfo baseInfo;
+    /** hap app id */
+    std::string appID;
+};
+
 /**
  * @brief Declares hap base token info class
  */

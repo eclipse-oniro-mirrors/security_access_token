@@ -483,6 +483,17 @@ int32_t AccessTokenKit::ReloadNativeTokenInfo()
 #endif
 }
 
+int AccessTokenKit::GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
+    if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID =%{public}d is invalid.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    return AccessTokenManagerClient::GetInstance().GetHapTokenInfoExtension(tokenID, info);
+}
+
 AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 {
     if (!DataValidator::IsProcessNameValid(processName)) {

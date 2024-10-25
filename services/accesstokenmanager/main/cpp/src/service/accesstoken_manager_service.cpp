@@ -405,6 +405,19 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
 
+int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
+    HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d.", tokenID);
+    int ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes.hapTokenInfoParams);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get hap token info extenstion failed, ret is %{public}d.", ret);
+        return ret;
+    }
+
+    return AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenID, appID);
+}
+
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", tokenID);
