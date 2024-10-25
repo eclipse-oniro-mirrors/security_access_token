@@ -101,7 +101,7 @@ PermissionRecordManager::~PermissionRecordManager()
     Unregister();
 }
 
-void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData &appStateData)
+void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, pid=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.pid, appStateData.state);
@@ -115,14 +115,13 @@ void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData 
     PermissionRecordManager::GetInstance().NotifyAppStateChange(appStateData.accessTokenId, appStateData.pid, status);
 }
 
-void PrivacyAppStateObserver::OnApplicationStateChanged(const AppStateData &appStateData)
+void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.state);
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
-        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByPid(
-            appStateData.accessTokenId, appStateData.pid);
+        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(appStateData.accessTokenId);
     }
 }
 
@@ -702,7 +701,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
         std::vector<std::string> permList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-            if (it->tokenId != tokenId || (!it->pidList.empty() && it->pidList.find(pid) == it->pidList.end())) {
+            if (it->tokenId != tokenId || it->pidList.empty() || it->pidList.find(pid) == it->pidList.end()) {
                 it++;
                 continue;
             }

@@ -80,7 +80,7 @@ void PermissionAppStateObserver::OnProcessDied(const ProcessData &processData)
     TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
 }
 
-void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateData &appStateData)
+void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)
 {
     uint32_t tokenID = appStateData.accessTokenId;
     std::vector<bool> list;
@@ -104,7 +104,7 @@ void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateDa
     }
 }
 
-void PermissionAppStateObserver::OnApplicationStateChanged(const AppStateData &appStateData)
+void PermissionAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
         uint32_t tokenID = appStateData.accessTokenId;

@@ -99,10 +99,6 @@ HWTEST_F(IpcCodeTest, AmsManagerCodeTest001, TestSize.Level1)
  */
 HWTEST_F(IpcCodeTest, AbilityManagerCodeTest001, TestSize.Level1)
 {
-    ASSERT_EQ(static_cast<uint32_t>(
-        AppExecFwk::IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED),
-        static_cast<uint32_t>(
-            AccessToken::AccessAppServiceInterfaceCode::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED));
     ASSERT_EQ(static_cast<uint32_t>(AAFwk::AbilityManagerInterfaceCode::START_ABILITY_ADD_CALLER),
         static_cast<uint32_t>(AccessToken::AccessAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER));
 }
