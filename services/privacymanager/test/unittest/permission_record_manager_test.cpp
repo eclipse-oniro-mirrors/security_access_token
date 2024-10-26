@@ -637,6 +637,41 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Leve
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
 }
 
+/*
+ * @tc.name: StartUsingPermissionTest011
+ * @tc.desc: Test default pid -1 start using permission and OnProcessDied
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
+
+    // makesure callback end
+    usleep(500000); // 500000us = 0.5s
+    callback->type_ = PERM_TEMPORARY_CALL;
+    ProcessData processData;
+    processData.accessTokenId = tokenId;
+    processData.pid = PID;
+    appStateObserver_->OnProcessDied(processData);
+    usleep(500000);
+    ASSERT_EQ(PERM_TEMPORARY_CALL, callback->type_);
+}
+
 #ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * @tc.name: ShowGlobalDialog001
