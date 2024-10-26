@@ -73,6 +73,8 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = [
+      "${access_token_path}/services/common/power_manager/src/power_manager_client.cpp",
+      "${access_token_path}/services/common/power_manager/src/power_manager_proxy.cpp",
       "src/active/active_status_callback_manager.cpp",
       "src/active/perm_active_status_callback_death_recipient.cpp",
       "src/active/perm_active_status_change_callback_proxy.cpp",
