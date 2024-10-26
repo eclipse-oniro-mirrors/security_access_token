@@ -47,7 +47,8 @@
 #include "time_util.h"
 #include "want.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "window_manager_loader.h"
+#include "privacy_window_manager_client.h"
+#include "scene_board_judgement.h"
 #endif
 
 namespace OHOS {
@@ -942,7 +943,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
     }
     if (isUsingCamera) {
         cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
-        UnRegisterWindowCallback(); // unregister window linstener
     }
 }
 
@@ -973,14 +973,12 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
     }
     if (isUsingCamera) {
         cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
-        UnRegisterWindowCallback(); // unregister window linstener
     }
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OpCode %{public}d", opCode);
-    bool isUsingCamera = (opCode == Constant::OP_CAMERA);
     std::string perm;
     Constant::TransferOpcodeToPermission(opCode, perm);
     {
@@ -997,9 +995,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
         for (size_t i = 0; i < tokenList.size(); ++i) {
             CallbackExecute(tokenList[i], perm, PERM_INACTIVE);
         }
-    }
-    if (isUsingCamera) {
-        UnRegisterWindowCallback(); // unregister window linstener
     }
 }
 
@@ -1195,8 +1190,6 @@ int32_t PermissionRecordManager::StopUsingPermission(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
-    // clear callback
-    UnRegisterWindowCallback();
     return RemoveRecordFromStartList(tokenId, pid, permissionName);
 }
 
@@ -1576,86 +1569,48 @@ void HandleWindowDied()
 bool PermissionRecordManager::RegisterWindowCallback()
 {
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    std::lock_guard<std::mutex> lock(windowLoaderMutex_);
     ACCESSTOKEN_LOG_INFO(LABEL, "Begin to RegisterWindowCallback.");
-    if (windowLoader_ != nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "WindowCallback has already been registered.");
-        return true;
-    }
-    windowLoader_ = new (std::nothrow) LibraryLoader(WINDOW_MANAGER_PATH);
-    if (windowLoader_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new %{public}s.", WINDOW_MANAGER_PATH.c_str());
-        return false;
-    }
-    WindowManagerLoaderInterface* winManagerLoader = windowLoader_->GetObject<WindowManagerLoaderInterface>();
-    if (winManagerLoader == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to dlopen %{public}s.", WINDOW_MANAGER_PATH.c_str());
-        delete windowLoader_;
-        windowLoader_ = nullptr;
-        return false;
-    }
+
+    std::lock_guard<std::mutex> lock(windowMutex_);
     WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
-    ErrCode err = winManagerLoader->RegisterFloatWindowListener(floatCallback);
+    if (floatWindowCallback_ == nullptr) {
+        floatWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(floatCallback);
+        if (floatWindowCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new PrivacyWindowManagerAgent.");
+            return false;
+        }
+    }
+    ErrCode err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
+        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register float window listener, err:%{public}d", err);
-        delete windowLoader_;
-        windowLoader_ = nullptr;
         return false;
     }
-    WindowChangeCallback pipCallback = UpdatePipWindowStatus;
-    err = winManagerLoader->RegisterPipWindowListener(pipCallback);
-    if (err != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register pip window listener, err:%{public}d", err);
-        winManagerLoader->UnregisterFloatWindowListener(floatCallback);
-        delete windowLoader_;
-        windowLoader_ = nullptr;
-        return false;
+
+    if (Rosen::SceneBoardJudgement::IsSceneBoardEnabled()) {
+        WindowChangeCallback pipCallback = UpdatePipWindowStatus;
+
+        if (pipWindowCallback_ == nullptr) {
+            pipWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(pipCallback);
+            if (floatWindowCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new PrivacyWindowManagerAgent.");
+                return false;
+            }
+        }
+
+        err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
+            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW, pipWindowCallback_);
+        if (err != ERR_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register pip window listener, err:%{public}d", err);
+            PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
+                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
+            return false;
+        }
     }
-    winManagerLoader->AddDeathCallback(HandleWindowDied);
+
+    PrivacyWindowManagerClient::GetInstance().AddDeathCallback(HandleWindowDied);
 #endif
     return true;
-}
-
-bool PermissionRecordManager::UnRegisterWindowCallback()
-{
-    bool isSuccess = true;
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    if (!isAutoClose) {
-        return true;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Begin to UnRegisterWindowCallback.");
-    std::lock_guard<std::mutex> lock(windowLoaderMutex_);
-    if (windowLoader_ == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "WindowCallback has already been unregistered.");
-        return true;
-    }
-    if (HasUsingCamera()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Camera is using.");
-        return true;
-    }
-    WindowManagerLoaderInterface* winManagerLoader = windowLoader_->GetObject<WindowManagerLoaderInterface>();
-    if (winManagerLoader == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to dlopen %{public}s.", WINDOW_MANAGER_PATH.c_str());
-        delete windowLoader_;
-        windowLoader_ = nullptr;
-        return false;
-    }
-    WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
-    ErrCode err = winManagerLoader->UnregisterFloatWindowListener(floatCallback);
-    if (err != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to unregister float window, err:%{public}d", err);
-        isSuccess = false;
-    }
-    WindowChangeCallback pipCallback = UpdatePipWindowStatus;
-    err = winManagerLoader->UnregisterPipWindowListener(pipCallback);
-    if (err != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to unregister pip window, err:%{public}d", err);
-        isSuccess = false;
-    }
-    delete windowLoader_;
-    windowLoader_ = nullptr;
-#endif
-    return isSuccess;
 }
 
 void PermissionRecordManager::InitializeMuteState(const std::string& permissionName)
@@ -1747,13 +1702,6 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
     RemoveRecordFromStartListByOp(Constant::OP_CAMERA);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     ClearWindowShowing();
-    {
-        std::lock_guard<std::mutex> lock(windowLoaderMutex_);
-        if (windowLoader_ != nullptr) {
-            delete windowLoader_;
-            windowLoader_ = nullptr;
-        }
-    }
 #endif
 }
 

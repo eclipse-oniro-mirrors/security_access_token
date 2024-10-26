@@ -109,7 +109,6 @@ group("accesstoken_common") {
       ":accesstoken_service_common",
       "config_policy:accesstoken_config_policy",
       "screenlock_manager:accesstoken_screenlock_manager",
-      "window_manager:accesstoken_window_manager",
     ]
   }
 }
