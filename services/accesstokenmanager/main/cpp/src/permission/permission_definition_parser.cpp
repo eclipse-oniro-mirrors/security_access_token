@@ -25,6 +25,7 @@
 #include "access_token_error.h"
 #include "accesstoken_info_manager.h"
 #include "data_validator.h"
+#include "hisysevent_adapter.h"
 #include "json_parser.h"
 #include "permission_def.h"
 #include "permission_definition_cache.h"
@@ -237,11 +238,13 @@ int32_t PermissionDefinitionParser::Init()
     int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
+        ReportSysEventServiceStartError(INIT_PERM_DEF_JSON_ERROR, "ReadCfgFile fail.", ret);
         return ERR_FILE_OPERATE_FAILED;
     }
     std::vector<PermissionDef> permDefList;
     ret = ParserPermsRawData(permsRawData, permDefList);
     if (ret != RET_SUCCESS) {
+        ReportSysEventServiceStartError(INIT_PERM_DEF_JSON_ERROR, "ParserPermsRawData fail.", ret);
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserPermsRawData failed.");
         return ret;
     }
