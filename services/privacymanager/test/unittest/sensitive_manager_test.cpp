@@ -76,11 +76,19 @@ static PermissionStateFull g_testState4 = {
     .grantFlags = {1}
 };
 
+static PermissionStateFull g_testState5 = {
+    .permissionName = "ohos.permission.MICROPHONE_CONTROL",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
 static HapPolicyParams g_PolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
     .permList = {},
-    .permStateList = {g_testState1, g_testState2, g_testState3, g_testState4}
+    .permStateList = {g_testState1, g_testState2, g_testState3, g_testState4, g_testState5}
 };
 
 static HapInfoParams g_InfoParms1 = {
