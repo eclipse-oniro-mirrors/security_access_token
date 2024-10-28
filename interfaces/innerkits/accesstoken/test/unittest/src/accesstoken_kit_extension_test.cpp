@@ -95,7 +95,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
 };
 
 PermissionDef g_infoManagerTestPermDef3 = {
-    .permissionName = "ohos.permission.GET_BUNDLE_INFO",
+    .permissionName = "ohos.permission.GET_BUNDLE_INFO_TEST",
     .bundleName = "accesstoken_test3",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,
@@ -2046,7 +2046,6 @@ HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest002, TestSize.Level1)
     retTokenId = TokenIdKit::GetRenderTokenID(invalidTokenID);
     ASSERT_EQ(invalidTokenID, retTokenId);
 }
-
 #ifdef TOKEN_SYNC_ENABLE
 namespace {
 class TokenSyncCallbackStubTest : public TokenSyncCallbackStub {
