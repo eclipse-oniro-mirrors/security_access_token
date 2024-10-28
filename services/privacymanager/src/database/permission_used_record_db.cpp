@@ -73,6 +73,7 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
     } else if (version == DataBaseVersion::VERISION_2) {
         InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
+        UpdatePermissionRecordTablePrimaryKey();
     } else if (version == DataBaseVersion::VERISION_3) {
         UpdatePermissionRecordTablePrimaryKey();
     }
