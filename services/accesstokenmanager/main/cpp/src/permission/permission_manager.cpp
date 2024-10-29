@@ -616,7 +616,10 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
+    if (!ShortGrantManager::GetInstance().IsShortGrantPermission(permission)) {
+        return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
+    }
+    return RET_SUCCESS;
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
