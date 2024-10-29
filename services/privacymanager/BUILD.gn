@@ -69,7 +69,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/power_manager/include",
       "${access_token_path}/services/common/screenlock_manager/include",
       "${access_token_path}/services/common/utils/include",
-      "${audio_framework_path}/services/audio_policy/common/include",
     ]
 
     sources = [
@@ -129,13 +128,17 @@ if (is_standard_system && ability_base_enable == true) {
       "sqlite:sqlite",
     ]
 
+    if (audio_framework_enable) {
+      include_dirs +=
+          [ "${audio_framework_path}/services/audio_policy/common/include" ]
+    }
+
     if (ohos_indep_compiler_enable) {
       external_deps += [
         "bounds_checking_function:libsec_shared",
         "json:nlohmann_json_static",
       ]
     }
-
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
       external_deps += [ "eventhandler:libeventhandler" ]
