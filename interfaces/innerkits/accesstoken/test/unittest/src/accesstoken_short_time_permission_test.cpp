@@ -211,7 +211,8 @@ HWTEST_F(AccessTokenShortTimePermTest, GrantPermissionForSpecifiedTime004, TestS
 
     sleep(onceTime);
 
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION, true));
 }
 
 /**
