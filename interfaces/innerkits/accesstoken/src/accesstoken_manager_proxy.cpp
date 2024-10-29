@@ -703,7 +703,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (error=%{public}d).", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (type=%{public}d).", result);
     return result;
 }
 
@@ -863,21 +863,27 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write tokenID failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteBool(info.isSystemApp)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write isSystemApp failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(info.appIDDesc)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write appIDDesc failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(info.apiVersion)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write apiVersion failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(info.appDistributionType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write appDistributionType failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write policyParcel failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1183,6 +1189,7 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
     }
 
     if (!data.WriteParcelable(&infoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write infoParcel failed.");
         return;
     }
     MessageParcel reply;
