@@ -129,6 +129,8 @@ if (is_standard_system && ability_base_enable == true) {
         "-DHILOG_ENABLE",
         "-DFEATURE_DTMF_TONE",
       ]
+      include_dirs +=
+          [ "${audio_framework_path}/services/audio_policy/common/include" ]
     }
 
     if (window_manager_enable && access_token_camera_float_window_enable) {
