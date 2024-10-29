@@ -41,6 +41,10 @@
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "nlohmann/json.hpp"
+#include "permission_record_config.h"
+#endif
 
 namespace OHOS {
 namespace Security {

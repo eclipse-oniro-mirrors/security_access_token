@@ -47,7 +47,8 @@ AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new AccessTokenManagerClient();
+            AccessTokenManagerClient* tmp = new AccessTokenManagerClient();
+            instance = std::move(tmp);
         }
     }
     return *instance;
@@ -332,6 +333,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 
     if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
         scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope oversize");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());

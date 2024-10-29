@@ -38,7 +38,7 @@ public:
 
     bool Update(const PermissionDef& info, AccessTokenID tokenId);
 
-    void DeleteByBundleName(const std::string& bundleName);
+    void DeleteByToken(AccessTokenID tokenId);
 
     int FindByPermissionName(const std::string& permissionName, PermissionDef& info);
 

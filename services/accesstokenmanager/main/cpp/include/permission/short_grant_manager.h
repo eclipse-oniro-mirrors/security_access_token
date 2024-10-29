@@ -45,6 +45,8 @@ public:
 
     int RefreshPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
 
+    bool IsShortGrantPermission(const std::string& permissionName);
+
 private:
     ShortGrantManager();
     ~ShortGrantManager() = default;

@@ -131,6 +131,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
             PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
         } else {
+            PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());
         }
@@ -140,14 +141,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u", __func__, tokenID);
-    std::shared_ptr<HapTokenInfoInner> tokenInfo =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params(tokenID: %{public}u)!", tokenID);
-        return;
-    }
-    std::string bundleName = tokenInfo->GetBundleName();
-    PermissionDefinitionCache::GetInstance().DeleteByBundleName(bundleName);
+    PermissionDefinitionCache::GetInstance().DeleteByToken(tokenID);
 }
 
 int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -364,9 +358,8 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         permState.state = INVALID_OPER;
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{publics}s: status: %{public}d, flag: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: status: %{public}d, flag: %{public}d",
         permState.permissionName.c_str(), goalGrantStatus, goalGrantFlag);
-
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
@@ -624,7 +617,10 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
+    if (!ShortGrantManager::GetInstance().IsShortGrantPermission(permission)) {
+        return AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission, infoPtr);
+    }
+    return RET_SUCCESS;
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
