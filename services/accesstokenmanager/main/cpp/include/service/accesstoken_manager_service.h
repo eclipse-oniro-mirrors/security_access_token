@@ -108,14 +108,11 @@ private:
     bool GetConfigGrantValueFromFile(std::string& fileContent);
     void GetConfigValue();
     bool Initialize();
-    void DumpTokenIfNeeded();
     void AccessTokenServiceParamSet() const;
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
-    std::shared_ptr<AppExecFwk::EventRunner> dumpEventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
-    std::shared_ptr<AccessEventHandler> dumpEventHandler_;
     std::shared_ptr<AppExecFwk::EventRunner> shortGrantEventRunner_;
     std::shared_ptr<AccessEventHandler> shortGrantEventHandler_;
 #endif
