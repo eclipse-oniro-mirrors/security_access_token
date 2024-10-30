@@ -37,7 +37,7 @@ ohos_shared_library("accesstoken_common_cxx") {
 
   include_dirs = [
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/inner_api/privacy/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
   ]
 

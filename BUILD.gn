@@ -19,12 +19,12 @@ group("accesstoken_build_module_test") {
   deps = []
   if (is_standard_system) {
     deps += [
-      "frameworks/inner_api/privacy/test:unittest",
       "frameworks/test/unittest:unittest",
       "interfaces/innerkits/accesstoken/test:unittest",
       "interfaces/innerkits/analysis_model/test:unittest",
       "interfaces/innerkits/el5filekeymanager/test:unittest",
       "interfaces/innerkits/nativetoken/test:unittest",
+      "interfaces/innerkits/privacy/test:unittest",
       "interfaces/innerkits/token_callback/test:unittest",
       "interfaces/innerkits/token_setproc/test:unittest",
       "services/accesstokenmanager/test:unittest",
@@ -43,7 +43,7 @@ group("accesstoken_build_module_test") {
   }
   if (token_sync_enable == true) {
     deps += [
-      "frameworks/inner_api/tokensync/test:unittest",
+      "interfaces/innerkits/tokensync/test:unittest",
       "services/tokensyncmanager/test:unittest",
     ]
   }

@@ -35,9 +35,9 @@ ohos_fuzztest("StartUsingPermissionCallbackStubFuzzTest") {
 
   sources += privacy_sources
   sources += [
-    "${access_token_path}/frameworks/inner_api/privacy/src/state_change_callback.cpp",
-    "${access_token_path}/frameworks/inner_api/privacy/src/state_change_callback_stub.cpp",
-    "${access_token_path}/frameworks/inner_api/privacy/src/state_customized_cbk.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/state_change_callback.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/state_change_callback_stub.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/state_customized_cbk.cpp",
   ]
 
   defines = privacy_defines

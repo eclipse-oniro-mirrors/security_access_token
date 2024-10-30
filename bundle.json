@@ -72,7 +72,7 @@
           "//base/security/access_token/frameworks/js/napi:napi_packages"
         ],
         "service_group": [
-          "//base/security/access_token/frameworks/inner_api/tokensync:libtokensync_sdk",
+          "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
           "//base/security/access_token/services/el5filekeymanager:el5filekeymanager",
@@ -121,7 +121,7 @@
           }
         },
         {
-          "name": "//base/security/access_token/frameworks/inner_api/privacy:libprivacy_sdk",
+          "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
           "header": {
             "header_files": [
               "active_change_response_info.h",
@@ -138,7 +138,7 @@
               "privacy_permission_record_ipc_interface_code.h",
               "state_customized_cbk.h"
             ],
-            "header_base": "//base/security/access_token/interfaces/inner_api/privacy/include"
+            "header_base": "//base/security/access_token/interfaces/innerkits/privacy/include"
           }
         },
         {
@@ -187,13 +187,13 @@
           }
         },
         {
-          "name": "//base/security/access_token/frameworks/inner_api/tokensync:libtokensync_sdk",
+          "name": "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
           "header": {
             "header_files": [
               "token_sync_kit.h",
               "token_sync_kit_loader.h"
             ],
-            "header_base": "//base/security/access_token/interfaces/inner_api/tokensync/include"
+            "header_base": "//base/security/access_token/interfaces/innerkits/tokensync/include"
           }
         }
       ],

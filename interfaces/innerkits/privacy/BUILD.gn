@@ -16,7 +16,7 @@ import("../../../access_token.gni")
 
 config("pricacy") {
   visibility = [ ":*" ]
-  include_dirs = [ "${access_token_path}/interfaces/inner_api/privacy/include" ]
+  include_dirs = [ "include" ]
 }
 
 if (is_standard_system) {
@@ -42,7 +42,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/inner_api/privacy/include",
+      "include",
       "src",
     ]
 
