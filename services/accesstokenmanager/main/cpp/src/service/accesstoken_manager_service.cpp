@@ -87,9 +87,9 @@ void AccessTokenManagerService::OnStart()
         ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService has already started!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService is starting");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService is starting.");
     if (!Initialize()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize.");
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
@@ -99,6 +99,7 @@ void AccessTokenManagerService::OnStart()
         ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", -1);
         return;
     }
+    AccessTokenServiceParamSet();
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
     ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, AccessTokenManagerService start successfully!");
 }
@@ -163,8 +164,6 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, isSystemGrant: %{public}d", tokenID, isSystemGrant);
-
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
@@ -237,7 +236,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Perm: 0x%{public}s, state: 0x%{public}d",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Perm: %{public}s, state: %{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
@@ -351,7 +350,6 @@ int32_t AccessTokenManagerService::InitHapToken(
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, fullTokenId);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token info create failed.");
         return ret;
     }
 
@@ -705,7 +703,6 @@ bool AccessTokenManagerService::Initialize()
     DlpPermissionSetParser::GetInstance().Init();
 #endif
     PermissionDefinitionParser::GetInstance().Init();
-    AccessTokenServiceParamSet();
     GetConfigValue();
     TempPermissionObserver::GetInstance().GetConfigValue();
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
