@@ -36,9 +36,9 @@ ohos_fuzztest("UnRegisterPermActiveStatusCallbackStubFuzzTest") {
   sources += privacy_sources
 
   sources += [
-    "${access_token_path}/frameworks/inner_api/privacy/src/perm_active_status_change_callback.cpp",
-    "${access_token_path}/frameworks/inner_api/privacy/src/perm_active_status_change_callback_stub.cpp",
-    "${access_token_path}/frameworks/inner_api/privacy/src/perm_active_status_customized_cbk.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_change_callback.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_change_callback_stub.cpp",
+    "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_customized_cbk.cpp",
   ]
 
   defines = privacy_defines

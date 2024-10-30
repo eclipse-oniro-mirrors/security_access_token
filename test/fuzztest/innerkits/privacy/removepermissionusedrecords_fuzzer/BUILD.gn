@@ -31,7 +31,7 @@ ohos_fuzztest("RemovePermissionUsedRecordsFuzzTest") {
   ]
   sources = [ "removepermissionusedrecords_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/frameworks/inner_api/privacy:libprivacy_sdk" ]
+  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
