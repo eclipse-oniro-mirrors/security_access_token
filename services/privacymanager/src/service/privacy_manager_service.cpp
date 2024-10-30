@@ -331,7 +331,12 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
         ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
-            PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
+            int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+            if (screenlockManagerLoader->IsScreenLocked()) {
+                lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED;
+            }
+
+            PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
         }
         return;
     }

@@ -215,7 +215,8 @@ PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std
         }
 
         if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
+            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s is granted by seccomp, tokenID=%{public}d.",
+                permissionName.c_str(), tokenId_);
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
 
@@ -231,7 +232,8 @@ PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std
 
     if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
         [permissionName](const auto& permission) { return permission == permissionName; })) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
+            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s is granted by seccomp, tokenID=%{public}d.",
+                permissionName.c_str(), tokenId_);
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Application %{public}u not apply for %{public}s.", tokenId_, permissionName.c_str());
@@ -256,8 +258,8 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
             return PERMISSION_GRANTED;
         }
         if (iter->grantStatus[0] != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted",
-                tokenId_, permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted, flag: %{public}d",
+                tokenId_, permissionName.c_str(), iter->grantFlags[0]);
             return PERMISSION_DENIED;
         }
         return PERMISSION_GRANTED;
@@ -319,6 +321,7 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
                 flag = perm.grantFlags[0];
                 return RET_SUCCESS;
             } else {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission %{public}s is invalid", permissionName.c_str());
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
         }
@@ -436,7 +439,6 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& per
 
 int32_t PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName %{public}s.", permissionName.c_str());
     if (!IsPermGrantedBySecComp(flag)) {
         return UpdatePermStateList(permissionName, isGranted, flag);
     }

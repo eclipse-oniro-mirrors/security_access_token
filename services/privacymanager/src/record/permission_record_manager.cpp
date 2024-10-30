@@ -967,8 +967,6 @@ int32_t PermissionRecordManager::StartUsingPermission(
 int32_t PermissionRecordManager::StopUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id=0x%{public}x, permissionName=%{public}s",
-        tokenId, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
@@ -1462,7 +1460,7 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
             std::lock_guard<std::mutex> lock(camLoadMutex_);
             if (!isCamLoad_) {
                 bool isEdmMute = false;
-            ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
+                ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
             }
         }
     }
