@@ -63,6 +63,7 @@ private:
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);
 #endif
+    void GetHapTokenInfoExtensionInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply);
 
 #ifdef TOKEN_SYNC_ENABLE

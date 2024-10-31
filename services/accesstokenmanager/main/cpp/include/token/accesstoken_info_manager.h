@@ -57,6 +57,7 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInner);
+    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);

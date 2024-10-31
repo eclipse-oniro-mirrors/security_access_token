@@ -555,13 +555,32 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&hapTokenInfoParcel), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
+}
+
+void AccessTokenManagerStub::GetHapTokenInfoExtensionInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        return;
+    }
+    HapTokenInfoParcel hapTokenInfoParcel;
+    std::string appID;
+    AccessTokenID tokenID = data.ReadUint32();
+    int result = this->GetHapTokenInfoExtension(tokenID, hapTokenInfoParcel, appID);
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteString(appID), "Write string failed.");
 }
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", IPCSkeleton::GetCallingTokenID());
         IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
@@ -1013,6 +1032,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::UpdateUserPolicyInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_POLICY)] =
         &AccessTokenManagerStub::ClearUserPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKENINFO_EXT)] =
+        &AccessTokenManagerStub::GetHapTokenInfoExtensionInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()

@@ -77,6 +77,7 @@ public:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo();
 #endif
+    int GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);

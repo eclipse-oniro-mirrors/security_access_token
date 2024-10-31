@@ -81,6 +81,8 @@ public:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
 #endif
+    int GetHapTokenInfoExtension(AccessTokenID tokenID,
+        HapTokenInfoParcel& hapTokenInfoRes, std::string& appID) override;
     AccessTokenID GetNativeTokenId(const std::string& processName) override;
 
 #ifdef TOKEN_SYNC_ENABLE

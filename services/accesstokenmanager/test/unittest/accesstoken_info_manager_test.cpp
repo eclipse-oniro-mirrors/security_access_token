@@ -2508,6 +2508,33 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
     permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PERMISSION_DENIED, AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
+
+/**
+ * @tc.name: GetAppId001
+ * @tc.desc: AccessTokenInfoManagerTest::VerifyAccessToken function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "accesstoken_info_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "accesstoken_info_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    std::string appId;
+    int ret = AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenIdEx.tokenIdExStruct.tokenID, appId);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(appId, "accesstoken_info_manager_test");
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

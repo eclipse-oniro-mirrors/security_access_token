@@ -332,6 +332,14 @@ public:
     static AccessTokenID GetNativeTokenId(const std::string& processName);
 
     /**
+     * @brief Get hap token extension info by token id.
+     * @param tokenID token id
+     * @param info HapTokenInfoExt include appID
+     * @return error code, see access_token_error.h
+     */
+    static int GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info);
+
+    /**
      * @brief Set permission dialog capability
      * @param hapBaseInfo base infomation of hap
      * @param enable status of enable dialog
@@ -347,6 +355,7 @@ public:
      * @return error code, see access_token_error.h
      */
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
+
     /**
      * @brief Set remote hap token info with remote deviceID.
      * @param deviceID remote deviceID

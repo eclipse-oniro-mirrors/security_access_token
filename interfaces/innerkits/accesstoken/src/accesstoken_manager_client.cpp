@@ -492,6 +492,20 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
 }
 #endif
 
+int AccessTokenManagerClient::GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    HapTokenInfoParcel hapTokenInfoParcel;
+    int res = proxy->GetHapTokenInfoExtension(tokenID, hapTokenInfoParcel, info.appID);
+    info.baseInfo = hapTokenInfoParcel.hapTokenInfoParams;
+    return res;
+}
+
 AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& processName)
 {
     auto proxy = GetProxy();
