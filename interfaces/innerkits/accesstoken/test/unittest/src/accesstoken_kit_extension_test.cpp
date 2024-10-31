@@ -976,13 +976,29 @@ HWTEST_F(AccessTokenKitExtensionTest, GetTokenTypeFlag003, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitExtensionTest, GetPermissionFlag006, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permList = {},
+        .permStateList = {infoManagerTestStateA}
+    };
+
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_POLICY_FIXED);
+
+    int ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", PERMISSION_POLICY_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.CAMERA", flag);
     ASSERT_EQ(PERMISSION_POLICY_FIXED, flag);
     ASSERT_EQ(RET_SUCCESS, ret);
 }

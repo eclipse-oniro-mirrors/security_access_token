@@ -21,6 +21,7 @@
 #include "accesstoken_log.h"
 #include "access_token_db.h"
 #include "access_token_error.h"
+#include "constant_common.h"
 #include "permission_definition_cache.h"
 #include "permission_map.h"
 #include "permission_validator.h"
@@ -41,6 +42,22 @@ PermissionPolicySet::~PermissionPolicySet()
         "%{public}s called, tokenID: 0x%{public}x destruction", __func__, tokenId_);
 }
 
+
+void PermissionPolicySet::GetPermissionBriefData(std::vector<BriefPermData>& list,
+    const std::vector<PermissionStateFull> &permStateList)
+{
+    for (const auto& state : permStateList) {
+        BriefPermData data = {0};
+        uint32_t code;
+        if (TransferPermissionToOpcode(state.permissionName, code)) {
+            data.status = (state.grantStatus[0] == PERMISSION_GRANTED) ? 1 : 0;
+            data.permCode = code;
+            data.flag = state.grantFlags[0];
+            list.emplace_back(data);
+        }
+    }
+}
+
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicySet(
     AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
 {
@@ -48,6 +65,9 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
+    std::vector<BriefPermData> list;
+    GetPermissionBriefData(list, policySet->permStateList_);
+    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
     return policySet;
 }
 
@@ -60,6 +80,29 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPolicySetWithoutD
     policySet->tokenId_ = tokenId;
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permStateList_ size: %{public}zu",
         tokenId, policySet->permStateList_.size());
+    std::vector<BriefPermData> list;
+    GetPermissionBriefData(list, policySet->permStateList_);
+    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
+    return policySet;
+}
+
+std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicySetFromDb(
+    AccessTokenID tokenId, const std::vector<GenericValues>& permStateRes)
+{
+    std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
+    policySet->tokenId_ = tokenId;
+
+    for (const GenericValues& stateValue : permStateRes) {
+        if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) == tokenId) {
+            PermissionStateFull state;
+            int ret = DataTranslator::TranslationIntoPermissionStateFull(stateValue, state);
+            if (ret == RET_SUCCESS) {
+                MergePermissionStateFull(policySet->permStateList_, state);
+            } else {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0%{public}u permState is wrong.", tokenId);
+            }
+        }
+    }
     return policySet;
 }
 
@@ -104,11 +147,14 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
         }
     }
     permStateList_ = permStateFilterList;
+    std::vector<BriefPermData> list;
+    GetPermissionBriefData(list, permStateList_);
+    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId_, list);
 }
 
 uint32_t PermissionPolicySet::GetFlagWroteToDb(uint32_t grantFlag)
 {
-    return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
+    return ConstantCommon::GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
 }
 
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolicy(AccessTokenID tokenId,
@@ -128,6 +174,9 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
             }
         }
     }
+    std::vector<BriefPermData> list;
+    GetPermissionBriefData(list, policySet->permStateList_);
+    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
     return policySet;
 }
 
@@ -177,140 +226,9 @@ void PermissionPolicySet::StorePermissionPolicySet(std::vector<GenericValues>& p
     StorePermissionState(permStateValueList);
 }
 
-static bool IsPermOperatedByUser(int32_t flag)
-{
-    uint32_t uFlag = static_cast<uint32_t>(flag);
-    return (uFlag & PERMISSION_USER_FIXED) || (uFlag & PERMISSION_USER_SET);
-}
-
-static bool IsPermOperatedBySystem(int32_t flag)
-{
-    uint32_t uFlag = static_cast<uint32_t>(flag);
-    return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_GRANTED_BY_POLICY);
-}
-
-static bool IsPermGrantedBySecComp(int32_t flag)
-{
-    uint32_t uFlag = static_cast<uint32_t>(flag);
-    return uFlag & PERMISSION_COMPONENT_SET;
-}
-
-uint32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag)
-{
-    uint32_t unmaskedFlag = (fullFlag) & (~removedFlag);
-    return unmaskedFlag;
-}
-
-PermUsedTypeEnum PermissionPolicySet::GetPermissionUsedType(const std::string& permissionName)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
-        [permissionName](const PermissionStateFull& permState) {
-            return permissionName == permState.permissionName;
-        });
-    if (iter != permStateList_.end()) {
-        if (!iter->isGeneral) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not general.",
-                permissionName.c_str(), tokenId_);
-            return PermUsedTypeEnum::INVALID_USED_TYPE;
-        }
-
-        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s is granted by seccomp, tokenID=%{public}d.",
-                permissionName.c_str(), tokenId_);
-            return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
-        }
-
-        if (iter->grantStatus[0] != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is requested, not granted.",
-                permissionName.c_str(), tokenId_);
-            return PermUsedTypeEnum::INVALID_USED_TYPE;
-        }
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s of %{public}d is applied for normally.",
-            permissionName.c_str(), tokenId_);
-        return PermUsedTypeEnum::NORMAL_TYPE;
-    }
-
-    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-        [permissionName](const auto& permission) { return permission == permissionName; })) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s is granted by seccomp, tokenID=%{public}d.",
-                permissionName.c_str(), tokenId_);
-            return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
-    }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Application %{public}u not apply for %{public}s.", tokenId_, permissionName.c_str());
-    return PermUsedTypeEnum::INVALID_USED_TYPE;
-}
-
-int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
-        [permissionName](const PermissionStateFull& permState) {
-            return permissionName == permState.permissionName;
-        });
-    if (iter != permStateList_.end()) {
-        if (!iter->isGeneral) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not general",
-                tokenId_, permissionName.c_str());
-            return PERMISSION_DENIED;
-        }
-        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission is granted by seccomp", tokenId_);
-            return PERMISSION_GRANTED;
-        }
-        if (iter->grantStatus[0] != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted, flag: %{public}d",
-                tokenId_, permissionName.c_str(), iter->grantFlags[0]);
-            return PERMISSION_DENIED;
-        }
-        return PERMISSION_GRANTED;
-    }
-    // check if undeclared permission is granted by security component.
-    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-        [permissionName](const auto& permission) { return permission == permissionName; })) {
-            return PERMISSION_GRANTED;
-    }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, permission: %{public}s is undeclared",
-        tokenId_, permissionName.c_str());
-    return PERMISSION_DENIED;
-}
-
-
-bool PermissionPolicySet::IsPermissionGrantedWithSecComp(const std::string& permissionName)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
-        [permissionName](const PermissionStateFull& permState) {
-            return permissionName == permState.permissionName;
-        });
-    if (iter != permStateList_.end()) {
-        if (!iter->isGeneral) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not general",
-                tokenId_, permissionName.c_str());
-            return false;
-        }
-        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission is granted by secComp", tokenId_);
-            return true;
-        }
-    }
-
-    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-        [permissionName](const auto& permission) { return permission == permissionName; })) {
-            return true;
-    }
-    return false;
-}
-
 void PermissionPolicySet::GetDefPermissions(std::vector<PermissionDef>& permList)
 {
     PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenId_);
-}
-
-void PermissionPolicySet::GetPermissionStateFulls(std::vector<PermissionStateFull>& permList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    permList.assign(permStateList_.begin(), permStateList_.end());
 }
 
 int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, int& flag)
@@ -337,7 +255,8 @@ static uint32_t UpdateWithNewFlag(uint32_t oldFlag, uint32_t currFlag)
     return newFlag;
 }
 
-int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag)
+int32_t PermissionPolicySet::UpdatePermStateList(
+    const std::string& permissionName, bool isGranted, uint32_t flag)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
@@ -345,16 +264,19 @@ int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionNa
             return permissionName == permState.permissionName;
         });
     if (iter != permStateList_.end()) {
-        if (iter->isGeneral) {
-            if ((static_cast<uint32_t>(iter->grantFlags[0]) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission fixed by system!");
-                return AccessTokenError::ERR_PARAM_INVALID;
-            }
-            iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-            iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
-        } else {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Perm isGeneral is false.");
+        if ((static_cast<uint32_t>(iter->grantFlags[0]) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Permission fixed by system!");
+            return AccessTokenError::ERR_PARAM_INVALID;
         }
+        iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
+        uint32_t opCode;
+        if (!TransferPermissionToOpcode(permissionName, opCode)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid %{public}s.", permissionName.c_str());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        bool status = (iter->grantStatus[0] == PERMISSION_GRANTED) ? 1 : 0;
+        return PermissionDataBrief::GetInstance().SetBriefPermData(tokenId_, opCode, status, iter->grantFlags[0]);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -362,61 +284,19 @@ int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionNa
     return RET_SUCCESS;
 }
 
-void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permissionName, bool isAdded)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    if (isAdded) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is added.");
-        auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-            [permissionName](const std::string &grantedPerm) {
-                return permissionName == grantedPerm;
-            });
-        if (iter == secCompGrantedPermList_.end()) {
-            secCompGrantedPermList_.emplace_back(permissionName);
-            return;
-        }
-    } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is deleted.");
-        auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-            [permissionName](const std::string &grantedPerm) {
-                return permissionName == grantedPerm;
-            });
-        if (iter != secCompGrantedPermList_.end()) {
-            secCompGrantedPermList_.erase(iter);
-            return;
-        }
-    }
-    return;
-}
-
-void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, uint32_t flag, bool needToAdd)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (auto& perm : permStateList_) {
-        if (perm.permissionName == permissionName) {
-            if (perm.isGeneral) {
-                uint32_t oldFlag = perm.grantFlags[0];
-                uint32_t newFlag =
-                    needToAdd ? (oldFlag | flag) : (oldFlag & (~PERMISSION_COMPONENT_SET));
-                perm.grantFlags[0] = newFlag;
-                return;
-            }
-        }
-    }
-    return;
-}
-
-int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& permissionName, bool isToGrant)
+int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(
+    const std::string& permissionName, bool isToGrant)
 {
     int32_t flag = 0;
     int32_t ret = QueryPermissionFlag(permissionName, flag);
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Ret is %{public}d. flag is %{public}d", ret, flag);
     // if the permission has been operated by user or the permission has been granted by system.
-    if ((IsPermOperatedByUser(flag) || IsPermOperatedBySystem(flag))) {
+    if ((ConstantCommon::IsPermOperatedByUser(flag) || ConstantCommon::IsPermOperatedBySystem(flag))) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission has been operated.");
         if (isToGrant) {
-            int32_t status = VerifyPermissionStatus(permissionName);
+            // The data included in requested perm list.
+            int32_t status = PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenId_, permissionName);
             // Permission has been granted, there is no need to add perm state in security component permList.
             if (status == PERMISSION_GRANTED) {
                 return RET_SUCCESS;
@@ -426,36 +306,30 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& per
             }
         } else {
             /* revoke is called while the permission has been operated by user or system */
-            /* the permission need to be deleted from secCompGrantedPermList_ */
-            SecCompGrantedPermListUpdated(permissionName, false);
+            PermissionDataBrief::GetInstance().SecCompGrantedPermListUpdated(
+                tokenId_, permissionName, false);
             return RET_SUCCESS;
         }
     }
     // the permission has not been operated by user or the app has not applied for this permission in config.json
-    SecCompGrantedPermListUpdated(permissionName, isToGrant);
-    // If the app has applied for this permission and security component operation has taken effect.
-    SetPermissionFlag(permissionName, PERMISSION_COMPONENT_SET, isToGrant);
+    PermissionDataBrief::GetInstance().SecCompGrantedPermListUpdated(tokenId_, permissionName, isToGrant);
     return RET_SUCCESS;
 }
 
-int32_t PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
+int32_t PermissionPolicySet::UpdatePermissionStatus(
+    const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged)
 {
-    if (!IsPermGrantedBySecComp(flag)) {
-        return UpdatePermStateList(permissionName, isGranted, flag);
+    int32_t ret;
+    int32_t oldStatus = PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenId_, permissionName);
+    if (!ConstantCommon::IsPermGrantedBySecComp(flag)) {
+        ret = UpdatePermStateList(permissionName, isGranted, flag);
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is set by security component.");
+        ret = UpdateSecCompGrantedPermList(permissionName, isGranted);
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is set by security component.");
-    return UpdateSecCompGrantedPermList(permissionName, isGranted);
-}
-
-void PermissionPolicySet::ClearSecCompGrantedPerm(void)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    secCompGrantedPermList_.erase(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end());
-    for (auto& perm : permStateList_) {
-        if (perm.isGeneral) {
-            perm.grantFlags[0] = GetFlagWithoutSpecifiedElement(perm.grantFlags[0], PERMISSION_COMPONENT_SET);
-        }
-    }
+    int32_t newStatus = PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenId_, permissionName);
+    statusChanged = (oldStatus == newStatus) ? false : true;
+    return ret;
 }
 
 void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
@@ -480,61 +354,16 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
             continue;
         }
     }
+    std::vector<BriefPermData> list;
+    GetPermissionBriefData(list, permStateList_);
+    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId_, list);
+    PermissionDataBrief::GetInstance().ClearAllSecCompGrantedPermById(tokenId_);
 }
 
-void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull>& stateList)
+void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull>& permList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& state : permStateList_) {
-        stateList.emplace_back(state);
-    }
-}
-
-void PermissionPolicySet::GetGrantedPermissionList(std::vector<std::string>& permissionList)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.isGeneral && (perm.grantStatus[0] == PERMISSION_GRANTED)) {
-            permissionList.emplace_back(perm.permissionName);
-        }
-    }
-
-    for (const auto& permission : secCompGrantedPermList_) {
-        permissionList.emplace_back(permission);
-    }
-}
-
-void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.isGeneral) {
-            if (perm.grantStatus[0] == PERMISSION_GRANTED) {
-                permissionList.emplace_back(perm.permissionName);
-            }
-        }
-    }
-    for (const auto& permission : secCompGrantedPermList_) {
-        permissionList.emplace_back(permission);
-    }
-}
-
-void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList,
-    const std::vector<std::string>& constrainedList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.isGeneral) {
-            if ((perm.grantStatus[0] == PERMISSION_GRANTED) &&
-                (std::find(constrainedList.begin(), constrainedList.end(), perm.permissionName) ==
-                constrainedList.end())) {
-                permissionList.emplace_back(perm.permissionName);
-            }
-        }
-    }
-    for (const auto& permission : secCompGrantedPermList_) {
-        permissionList.emplace_back(permission);
-    }
+    permList.assign(permStateList_.begin(), permStateList_.end());
 }
 
 void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
@@ -549,45 +378,12 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeLi
     }
 }
 
-void PermissionPolicySet::RefreshPermStateToKernel(const std::vector<std::string>& permList,
-    bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& state : permStateList_) {
-        if (std::find(permList.begin(), permList.end(), state.permissionName) == permList.end()) {
-            continue;
-        }
-        uint32_t code;
-        if (TransferPermissionToOpcode(state.permissionName, code)) {
-            bool isGrantedCurr;
-            int32_t ret = GetPermissionFromKernel(tokenId, code, isGrantedCurr);
-            bool isGrantedToBe = (state.grantStatus[0] == PERMISSION_GRANTED) && hapUserIsActive;
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "SetPermissionToKernel err=%{public}d", ret);
-                continue;
-            }
-            ACCESSTOKEN_LOG_INFO(LABEL,
-                "id=%{public}u, opCode=%{public}u, isGranted=%{public}d, hapUserIsActive=%{public}d",
-                tokenId, code, isGrantedToBe, hapUserIsActive);
-            if (isGrantedCurr == isGrantedToBe) {
-                continue;
-            }
-            ret = SetPermissionToKernel(tokenId, code, isGrantedToBe);
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "SetPermissionToKernel err=%{public}d", ret);
-                continue;
-            }
-            refreshedPermList[state.permissionName] = isGrantedToBe;
-        }
-    }
-}
-
 uint32_t PermissionPolicySet::GetReqPermissionSize()
 {
     return static_cast<uint32_t>(permStateList_.size());
 }
 
-void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string& info) const
+void PermDefToString(const PermissionDef& def, std::string& info)
 {
     info.append(R"(    {)");
     info.append("\n");
@@ -604,7 +400,7 @@ void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string&
     info.append(R"(    })");
 }
 
-void PermissionPolicySet::PermStateFullToString(const PermissionStateFull& state, std::string& info) const
+void PermStateFullToString(const PermissionStateFull& state, std::string& info)
 {
     info.append(R"(    {)");
     info.append("\n");
@@ -664,6 +460,30 @@ void PermissionPolicySet::ToString(std::string& info)
     for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
         PermStateFullToString(*iter, info);
         if (iter != (permStateList_.end() - 1)) {
+            info.append(",\n");
+        }
+    }
+    info.append("\n  ]\n");
+}
+
+void PermissionPolicySet::ToString(std::string& info, const std::vector<PermissionDef>& permList,
+    const std::vector<PermissionStateFull>& permStateList)
+{
+    info.append(R"(  "permDefList": [)");
+    info.append("\n");
+    for (auto iter = permList.begin(); iter != permList.end(); iter++) {
+        PermDefToString(*iter, info);
+        if (iter != (permList.end() - 1)) {
+            info.append(",\n");
+        }
+    }
+    info.append("\n  ],\n");
+
+    info.append(R"(  "permStateList": [)");
+    info.append("\n");
+    for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
+        PermStateFullToString(*iter, info);
+        if (iter != (permStateList.end() - 1)) {
             info.append(",\n");
         }
     }

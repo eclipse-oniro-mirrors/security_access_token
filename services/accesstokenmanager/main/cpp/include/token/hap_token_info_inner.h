@@ -39,16 +39,16 @@ public:
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
     virtual ~HapTokenInfoInner();
 
-    void Update(const UpdateHapInfoParams& info,
+    int32_t Update(const UpdateHapInfoParams& info,
         const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl);
     void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& valueList) const;
-    void StorePermissionPolicy(std::vector<GenericValues>& permStateValues) const;
+    void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes);
 
-    std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
-    uint32_t GetReqPermissionSize() const;
+    void ClearHapInfoPermissionPolicySet();
+    uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
     int GetDlpType() const;
@@ -57,11 +57,30 @@ public:
     AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
     void SetPermissionPolicySet(std::shared_ptr<PermissionPolicySet>& policySet);
-    void ToString(std::string& info) const;
+    void ToString(std::string& info);
     bool IsRemote() const;
     void SetRemote(bool isRemote);
     bool IsPermDialogForbidden() const;
     void SetPermDialogForbidden(bool isForbidden);
+
+    int32_t UpdatePermissionStatus(
+        const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
+    int32_t GetPermissionStateList(std::vector<PermissionStateFull>& permList);
+    int32_t ResetUserGrantPermissionStatus(void);
+    void UpdateRemoteHapTokenInfo(AccessTokenID mapID,
+        const HapTokenInfo& baseInfo, std::vector<PermissionStateFull>& permStateList);
+
+    static void RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
+        bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
+    static int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName);
+    static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    static void GetPermStatusListByTokenId(AccessTokenID tokenID,
+        const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    static void GetGrantedPermByTokenId(AccessTokenID tokenID,
+        const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList);
+    static void ClearAllSecCompGrantedPerm();
+    static bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
 
     uint64_t permUpdateTimestamp_;
 private:
@@ -69,6 +88,8 @@ private:
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
+    bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList);
+    int32_t GetPermissionStateListFromBrief(std::vector<PermissionStateFull>& permList);
 
     HapTokenInfo tokenInfoBasic_;
 
@@ -77,6 +98,7 @@ private:
     /** permission dialog is forbidden */
     bool isPermDialogForbidden_ = false;
 
+    OHOS::Utils::RWLock policySetLock_;
     std::shared_ptr<PermissionPolicySet> permPolicySet_;
 };
 } // namespace AccessToken

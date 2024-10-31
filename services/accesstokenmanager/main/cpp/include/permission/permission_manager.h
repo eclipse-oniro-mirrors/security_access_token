@@ -48,7 +48,6 @@ struct LocationIndex {
     uint32_t accurateIndex = PERMISSION_NOT_REQUSET;
     uint32_t backIndex = PERMISSION_NOT_REQUSET;
 };
-
 class PermissionManager {
 public:
     static PermissionManager& GetInstance();
@@ -63,7 +62,7 @@ public:
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
-    int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
+    void GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
@@ -86,13 +85,12 @@ public:
     bool LocationPermissionSpecialHandle(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
-    void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    void AddPermToKernel(AccessTokenID tokenID);
     void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy);
-    void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy,
-        const std::vector<std::string>& permList);
+    void AddPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const std::string& appDistributionType,

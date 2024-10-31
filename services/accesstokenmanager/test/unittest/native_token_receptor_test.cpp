@@ -396,7 +396,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     GTEST_LOG_(INFO) <<"permPolicySet: " << permPolicySet;
 
     std::vector<PermissionStateFull> permList;
-    permPolicySet->GetPermissionStateFulls(permList);
+    permPolicySet->GetPermissionStateList(permList);
     for (const auto& perm : permList) {
         GTEST_LOG_(INFO) <<"perm.permissionName: " << perm.permissionName;
     }

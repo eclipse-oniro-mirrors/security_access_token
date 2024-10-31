@@ -171,25 +171,6 @@ HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level
 }
 
 /**
- * @tc.name: UpdateStatesToDatabase001
- * @tc.desc: Test AccessTokenInfoManager::UpdateStatesToDatabase
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerCoverageTest, UpdateStatesToDatabase001, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
-
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    std::vector<PermissionStateFull> stateChangeList = {g_permState};
-    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().UpdateStatesToDatabase(tokenId, stateChangeList));
-
-    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
-}
-
-/**
  * @tc.name: UpdateCapStateToDatabase001
  * @tc.desc: Test AccessTokenInfoManager::UpdateCapStateToDatabase
  * @tc.type: FUNC

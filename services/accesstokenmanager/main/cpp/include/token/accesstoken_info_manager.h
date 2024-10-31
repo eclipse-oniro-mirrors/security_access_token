@@ -53,10 +53,8 @@ public:
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
-    std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
-    int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInner);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
@@ -75,8 +73,6 @@ public:
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
     int32_t ClearUserPolicy();
     bool GetPermDialogCap(AccessTokenID tokenID);
-    int32_t ModifyHapPermStateFromDb(
-        AccessTokenID tokenID, const std::string& permission, const std::shared_ptr<HapTokenInfoInner>& hapInfo);
     void DumpToken();
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
@@ -86,6 +82,7 @@ public:
     bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    void ClearHapPolicy();
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -99,7 +96,6 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
 
-    bool UpdateStatesToDatabase(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList);
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
 
 private:

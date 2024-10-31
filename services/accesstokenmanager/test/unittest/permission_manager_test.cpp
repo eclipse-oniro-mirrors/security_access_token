@@ -912,7 +912,7 @@ HWTEST_F(PermissionManagerTest, GetDefPermissions001, TestSize.Level1)
     std::vector<PermissionDef> result;
 
     // permissionName is empty
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetDefPermissions(0, result));
+    PermissionManager::GetInstance().GetDefPermissions(0, result);
     ASSERT_TRUE(result.empty());
 }
 
@@ -932,7 +932,7 @@ HWTEST_F(PermissionManagerTest, GetDefPermissions002, TestSize.Level1)
     std::vector<PermissionDef> result;
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     // permissionName is empty
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetDefPermissions(tokenId, result));
+    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
     ASSERT_TRUE(!result.empty());
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
@@ -1211,7 +1211,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag001, TestSize.Level1)
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName;
     uint32_t flag = 0;
-
+    PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenID);
     // permissionName invalid
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
         permissionName, flag));

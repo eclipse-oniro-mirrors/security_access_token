@@ -116,7 +116,6 @@ int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValu
             ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
-
         int32_t res = db_->BatchInsert(outInsertNum, tableName, buckets);
         if (res != NativeRdb::E_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s, res is %{public}d.",

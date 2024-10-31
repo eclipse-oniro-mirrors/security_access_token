@@ -508,6 +508,12 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     std::string deviceID6 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
     PermissionStateFull infoManagerTestState6 = {
+        .permissionName = "ohos.permission.READ_AUDIO",
+        .isGeneral = true,
+        .resDeviceID = {"local4"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED}, // first grant
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+    PermissionStateFull infoManagerTestState7 = {
         .permissionName = "ohos.permission.test1",
         .isGeneral = true,
         .resDeviceID = {"local4"},
@@ -515,6 +521,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
         .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList6;
     permStateList6.emplace_back(infoManagerTestState6);
+    permStateList6.emplace_back(infoManagerTestState7);
 
     g_baseInfo.deviceID = deviceID6;
     HapTokenInfoForSync remoteTokenInfo6 = {
@@ -529,13 +536,14 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.READ_AUDIO", false);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::RevokePermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
+    ret = AccessTokenKit::RevokePermission(
+        mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.READ_AUDIO", false);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
@@ -554,7 +562,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     std::string deviceID7 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID7, 0x20100000);
     PermissionStateFull infoManagerTestState7 = {
-        .permissionName = "ohos.permission.test1",
+        .permissionName = "ohos.permission.READ_AUDIO",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
