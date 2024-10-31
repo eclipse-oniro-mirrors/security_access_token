@@ -12,17 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "el5_filekey_manager_death_recipient.h"
 
-#include "el5_filekey_manager_client.h"
+#ifndef TEST_FUZZTEST_INITHAPTOKENSTUB_FUZZER_H
+#define TEST_FUZZTEST_INITHAPTOKENSTUB_FUZZER_H
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-void El5FilekeyManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    El5FilekeyManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
-} // namespace Security
-}  // namespace OHOS
+#define FUZZ_PROJECT_NAME "inithaptokenstub_fuzzer"
+
+#endif // TEST_FUZZTEST_INITHAPTOKENSTUB_FUZZER_H

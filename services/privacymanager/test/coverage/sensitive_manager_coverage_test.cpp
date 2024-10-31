@@ -61,9 +61,9 @@ public:
     SensitiveManagerCoverageTestCb1() = default;
     virtual ~SensitiveManagerCoverageTestCb1() = default;
 
-    void OnForegroundApplicationChanged(const AppStateData &appStateData)
+    void OnAppStateChanged(const AppStateData &appStateData)
     {
-        GTEST_LOG_(INFO) << "OnForegroundApplicationChanged, state is "
+        GTEST_LOG_(INFO) << "OnAppStateChanged, state is "
             << appStateData.state;
     }
 };
@@ -85,7 +85,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&appData));
-    uint32_t code = 10;
+    uint32_t code = -1;
     ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // code default
 }
 
@@ -109,7 +109,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
     ASSERT_EQ(true, data.WriteParcelable(&appData));
     // code not default + state = 3
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
 }
 
 /**
@@ -132,7 +132,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
     ASSERT_EQ(true, data.WriteParcelable(&appData));
     // code not default + state = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
 }
 
 /*

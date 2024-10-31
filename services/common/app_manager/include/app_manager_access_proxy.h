@@ -30,13 +30,16 @@ class IApplicationStateObserver : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.appexecfwk.IApplicationStateObserver");
 
-    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) = 0;
+    virtual void OnProcessStateChanged(const ProcessData &processData) = 0;
     virtual void OnProcessDied(const ProcessData &processData) = 0;
-    virtual void OnApplicationStateChanged(const AppStateData &appStateData) = 0;
+    virtual void OnAppStateChanged(const AppStateData &appStateData) = 0;
+    virtual void OnAppStopped(const AppStateData &appStateData) = 0;
+
     enum class Message {
-        TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
+        TRANSACT_ON_PROCESS_STATE_CHANGED = 4,
         TRANSACT_ON_PROCESS_DIED = 5,
-        TRANSACT_ON_APPLICATION_STATE_CHANGED = 6,
+        TRANSACT_ON_APP_STATE_CHANGED = 7,
+        TRANSACT_ON_APP_STOPPED = 10,
     };
 };
 

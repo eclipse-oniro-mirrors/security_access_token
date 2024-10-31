@@ -1584,7 +1584,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     // grant temp permission
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -1593,7 +1593,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     // change to background
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     TempPermissionObserver::GetInstance().UnRegisterCallback();
@@ -1624,12 +1624,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // change to foreground
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     sleep(11);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
@@ -1666,7 +1666,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1697,7 +1697,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // create a form
@@ -1736,7 +1736,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // create a form
@@ -1787,7 +1787,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1818,7 +1818,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
@@ -1859,7 +1859,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove background task
@@ -1905,7 +1905,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1949,7 +1949,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // form change to invisible
@@ -1998,7 +1998,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove background tast
@@ -2044,7 +2044,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove form
@@ -2161,7 +2161,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     TempPermissionObserver::GetInstance().formTokenMap_.clear();
