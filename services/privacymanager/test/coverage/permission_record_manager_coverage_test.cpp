@@ -213,19 +213,19 @@ public:
 };
 
 /**
- * @tc.name: OnForegroundApplicationChanged001
+ * @tc.name: OnAppStateChanged001
  * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, OnForegroundApplicationChanged001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level1)
 {
     PrivacyAppStateObserver observer;
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    observer.OnForegroundApplicationChanged(appStateData);
+    observer.OnAppStateChanged(appStateData);
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
-    observer.OnForegroundApplicationChanged(appStateData);
+    observer.OnAppStateChanged(appStateData);
     ASSERT_EQ(static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND), appStateData.state);
 }
 
@@ -464,12 +464,12 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
 }
 
 /**
- * @tc.name: OnApplicationStateChanged001
+ * @tc.name: OnAppStopped001
  * @tc.desc: Test app state changed to APP_STATE_TERMINATED.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnAppStopped001, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -486,7 +486,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
     appStateData.accessTokenId = tokenId;
-    observer.OnApplicationStateChanged(appStateData);
+    observer.OnAppStopped(appStateData);
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);

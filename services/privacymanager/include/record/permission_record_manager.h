@@ -54,8 +54,8 @@ public:
     PrivacyAppStateObserver() = default;
     ~PrivacyAppStateObserver() = default;
     void OnProcessDied(const ProcessData &processData) override;
-    void OnApplicationStateChanged(const AppStateData &appStateData) override;
-    void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    void OnAppStopped(const AppStateData &appStateData) override;
+    void OnAppStateChanged(const AppStateData &appStateData) override;
     DISALLOW_COPY_AND_MOVE(PrivacyAppStateObserver);
 };
 
