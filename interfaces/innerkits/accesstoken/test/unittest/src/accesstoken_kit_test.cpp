@@ -2597,7 +2597,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     UpdateHapInfoParams info;
     info.appIDDesc = appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
