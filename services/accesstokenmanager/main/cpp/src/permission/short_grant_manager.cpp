@@ -83,7 +83,6 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         shortGrantData_.begin(), shortGrantData_.end(), [tokenID, permission](const PermTimerData& data) {
         return data.tokenID == tokenID && data.permissionName == permission;
     });
-
     if (iter == shortGrantData_.end()) {
         auto iterator = std::find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permission);
         if (iterator == g_shortGrantPermission.end()) {
@@ -106,8 +105,9 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
     }
 
     uint32_t maxRemainedTime = maxTime_ > (GetCurrentTime() - iter->firstGrantTimes) ?
-        maxTime_ - (GetCurrentTime() - iter->firstGrantTimes) : 0;
-    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? iter->revokeTimes - GetCurrentTime() : 0;
+        (maxTime_ - (GetCurrentTime() - iter->firstGrantTimes)) : 0;
+    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? 
+        (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
     if (cancelTimes > currRemainedTime) {
         iter->revokeTimes = GetCurrentTime() + cancelTimes;

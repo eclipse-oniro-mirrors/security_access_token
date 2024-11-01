@@ -41,7 +41,7 @@ group("fuzztest") {
     "gettokentypestub_fuzzer:GetTokenTypeStubFuzzTest",
     "getusergrantedpermissionusedtypestub_fuzzer:GetUserGrantedPermissionUsedTypeStubFuzzTest",
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
-    "initHapTokenstub_fuzzer:InitHapTokenStubFuzzTest",
+    "inithaptokenstub_fuzzer:InitHapTokenStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "reloadnativetokeninfostub_fuzzer:ReloadNativeTokenInfoStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",

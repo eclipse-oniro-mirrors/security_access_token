@@ -29,7 +29,9 @@
 #include "running_form_info.h"
 #include "token_setproc.h"
 
+using namespace testing;
 using namespace testing::ext;
+using namespace OHOS;
 
 namespace OHOS {
 namespace Security {

@@ -570,7 +570,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}d", id);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", id);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (infoPtr->IsRemote()) {
@@ -1128,7 +1128,7 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
 bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
     const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu,"
+    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
         "ACLRequestedList size %{public}zu.",
         policy.permStateList.size(), policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
 

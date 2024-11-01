@@ -531,7 +531,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Leve
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callback->type_);
 }
 
-#ifdef APP_SECURITY_PRIVACY_SERVICE
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * @tc.name: ShowGlobalDialog001
  * @tc.desc: ShowGlobalDialog function test
@@ -956,7 +956,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
         PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
 }
 
-#ifdef APP_SECURITY_PRIVACY_SERVICE
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * @tc.name: SetMutePolicyTest008
  * @tc.desc:

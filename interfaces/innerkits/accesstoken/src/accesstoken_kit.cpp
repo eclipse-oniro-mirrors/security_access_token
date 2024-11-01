@@ -130,7 +130,6 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
