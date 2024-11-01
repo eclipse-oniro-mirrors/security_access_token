@@ -273,7 +273,14 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
     }
 
     int32_t ret = statement.Step();
-    return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
+    if (ret != Statement::State::DONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Update table Type %{public}u failed, errCode is %{public}d, errMsg is %{public}s.", type, ret,
+            SpitError().c_str());
+        return FAILURE;
+    }
+
+    return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& conditionValue,
@@ -284,7 +291,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
     if (prepareSql.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid.", type);
         return FAILURE;
     }
 

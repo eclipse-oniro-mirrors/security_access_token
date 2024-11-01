@@ -29,8 +29,6 @@
 #include "active_status_callback_manager.h"
 #include "libraryloader.h"
 #include "permission_record_manager.h"
-#include "permission_record_repository.h"
-#include "permission_used_record_cache.h"
 #include "permission_used_record_db.h"
 #include "privacy_manager_service.h"
 #undef private
