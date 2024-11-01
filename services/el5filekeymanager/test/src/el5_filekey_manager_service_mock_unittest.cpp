@@ -22,6 +22,9 @@
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
+namespace {
+constexpr uint32_t SCREEN_ON_DELAY_TIME = 30;
+} // namespace
 
 void El5FilekeyManagerServiceMockTest::SetUpTestCase()
 {
@@ -29,6 +32,7 @@ void El5FilekeyManagerServiceMockTest::SetUpTestCase()
 
 void El5FilekeyManagerServiceMockTest::TearDownTestCase()
 {
+    sleep(SCREEN_ON_DELAY_TIME);
 }
 
 void El5FilekeyManagerServiceMockTest::SetUp()

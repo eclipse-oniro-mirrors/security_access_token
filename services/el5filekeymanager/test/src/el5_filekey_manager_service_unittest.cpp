@@ -21,6 +21,9 @@
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
+namespace {
+constexpr uint32_t SCREEN_ON_DELAY_TIME = 30;
+} // namespace
 
 void El5FilekeyManagerServiceTest::SetUpTestCase()
 {
@@ -28,6 +31,7 @@ void El5FilekeyManagerServiceTest::SetUpTestCase()
 
 void El5FilekeyManagerServiceTest::TearDownTestCase()
 {
+    sleep(SCREEN_ON_DELAY_TIME);
 }
 
 void El5FilekeyManagerServiceTest::SetUp()
@@ -38,12 +42,6 @@ void El5FilekeyManagerServiceTest::SetUp()
 
 void El5FilekeyManagerServiceTest::TearDown()
 {
-#ifndef EVENTHANDLER_ENABLE
-#define EVENTHANDLER_ENABLE
-    int32_t delayedTime = 1;
-    el5FilekeyManagerService_->PostDelayedUnloadTask(delayedTime);
-    el5FilekeyManagerService_->CancelDelayedUnloadTask();
-#endif
 }
 
 class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
