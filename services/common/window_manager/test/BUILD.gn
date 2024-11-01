@@ -41,7 +41,6 @@ ohos_unittest("libwindow_manager_test") {
     "${access_token_path}/services/common/window_manager/src/privacy_window_manager_client.cpp",
     "${access_token_path}/services/common/window_manager/src/privacy_window_manager_death_recipient.cpp",
     "${access_token_path}/services/common/window_manager/src/privacy_window_manager_proxy.cpp",
-    "${access_token_path}/services/common/window_manager/src/window_manager_loader.cpp",
     "unittest/window_manager_test.cpp",
   ]
 

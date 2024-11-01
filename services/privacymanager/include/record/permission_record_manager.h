@@ -38,6 +38,9 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "privacy_param.h"
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+#include "privacy_window_manager_agent.h"
+#endif
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
@@ -169,7 +172,6 @@ private:
     uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
     bool IsPidValid(int32_t pid) const;
     bool RegisterWindowCallback();
-    bool UnRegisterWindowCallback();
     void InitializeMuteState(const std::string& permissionName);
     int32_t GetAppStatus(AccessTokenID tokenId);
 
@@ -220,10 +222,10 @@ private:
     std::vector<uint32_t> foreTokenIdList_;
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    bool isAutoClose = false;
-    std::mutex windowLoaderMutex_;
+    std::mutex windowMutex_;
     bool isWmRegistered = false;
-    LibraryLoader* windowLoader_ = nullptr;
+    sptr<PrivacyWindowManagerAgent> floatWindowCallback_ = nullptr;
+    sptr<PrivacyWindowManagerAgent> pipWindowCallback_ = nullptr;
 
     std::mutex windowStatusMutex_;
     // camera float window
