@@ -141,13 +141,16 @@ void PrivacyAppManagerDeathCallback::NotifyAppManagerDeath()
     PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
-void PermissionRecordManager::AddRecordToCacheAndDb(const PermissionRecord& record, GenericValues& value)
+void PermissionRecordManager::AddRecToCacheAndValueVec(const PermissionRecord& record,
+    std::vector<GenericValues>& values)
 {
     PermissionRecordCache cache;
     cache.record = record;
     permUsedRecList_.emplace_back(cache);
 
+    GenericValues value;
     PermissionRecord::TranslationIntoGenericValues(record, value);
+    values.emplace_back(value);
 }
 
 static bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2)
@@ -181,12 +184,6 @@ static bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRe
     return true;
 }
 
-static void MergeRecord(PermissionRecord& record, const PermissionRecord& curRec)
-{
-    record.accessCount += curRec.accessCount;
-    record.rejectCount += curRec.rejectCount;
-}
-
 int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& record)
 {
     std::vector<GenericValues> insertRecords;
@@ -195,9 +192,7 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
         if (permUsedRecList_.empty()) {
             ACCESSTOKEN_LOG_INFO(LABEL, "First record in cache!");
 
-            GenericValues value;
-            AddRecordToCacheAndDb(record, value);
-            insertRecords.emplace_back(value);
+            AddRecToCacheAndValueVec(record, insertRecords);
         } else {
             bool mergeFlag = false;
             for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
@@ -206,21 +201,19 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
                         it->record.timestamp);
 
                     // merge new record to older one if match the merge condition
-                    MergeRecord(it->record, record);
+                    it->record.accessCount += record.accessCount;
+                    it->record.rejectCount += record.rejectCount;
 
                     // set update flag to true
-                    it->needUpdate = true;
+                    it->needUpdateToDb = true;
                     mergeFlag = true;
-
                     break;
                 }
             }
 
             if (!mergeFlag) {
                 // record can't merge store to database immediately and add to cache
-                GenericValues value;
-                AddRecordToCacheAndDb(record, value);
-                insertRecords.emplace_back(value);
+                AddRecToCacheAndValueVec(record, insertRecords);
             }
         }
     }
@@ -245,7 +238,7 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::UpdatePermissionUsedRecord(const PermissionRecord& record)
+bool PermissionRecordManager::UpdatePermissionUsedRecordToDb(const PermissionRecord& record)
 {
     GenericValues modifyValue;
     modifyValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
@@ -282,13 +275,19 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
             continue;
         }
 
-        // needUpdate flase means record not merge, when the timestamp of those records less than 1 min from now
-        // they can not merge any more, remove it
-        if ((!it->needUpdate) || (UpdatePermissionUsedRecord(it->record))) {
-            it = permUsedRecList_.erase(it);
-        } else {
-            ++it;
+        /*
+            needUpdateToDb:
+                - flase means record not merge, when the timestamp of those records less than 1 min from now
+                    they can not merge any more, remove them from cache
+                - true means record has merged, need to update database before remove from cache
+            whether update database succeed or not, recod remove from cache
+        */
+        if ((it->needUpdateToDb) && (!UpdatePermissionUsedRecordToDb(it->record))) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Record with timestamp %{public}" PRId64 "update database failed!",
+                it->record.timestamp);
         }
+
+        it = permUsedRecList_.erase(it);
     }
 
     return Constant::SUCCESS;
@@ -298,8 +297,8 @@ void PermissionRecordManager::UpdatePermRecImmediately()
 {
     std::lock_guard<std::mutex> lock(permUsedRecMutex_);
     for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
-        if (it->needUpdate) {
-            UpdatePermissionUsedRecord(it->record);
+        if (it->needUpdateToDb) {
+            UpdatePermissionUsedRecordToDb(it->record);
         }
     }
 }
@@ -491,8 +490,9 @@ static void TransferToOpcode(const std::vector<std::string>& permissionList, std
 {
     for (const auto& permission : permissionList) {
         int32_t opCode = Constant::OP_INVALID;
-        Constant::TransferPermissionToOpcode(permission, opCode);
-        opCodeList.insert(opCode);
+        if (Constant::TransferPermissionToOpcode(permission, opCode)) {
+            opCodeList.insert(opCode);
+        }
     }
 }
 
@@ -500,13 +500,13 @@ void PermissionRecordManager::GetMergedRecordsFromCache(std::vector<PermissionRe
 {
     std::lock_guard<std::mutex> lock(permUsedRecMutex_);
     for (const auto& cache : permUsedRecList_) {
-        if (cache.needUpdate) {
+        if (cache.needUpdateToDb) {
             mergedRecords.emplace_back(cache.record);
         }
     }
 }
 
-void PermissionRecordManager::InsteadMergedRecIfNessary(GenericValues& queryValue,
+void PermissionRecordManager::InsteadMergedRecIfNecessary(GenericValues& queryValue,
     std::vector<PermissionRecord>& mergedRecords)
 {
     uint32_t tokenId = static_cast<uint32_t>(queryValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
@@ -627,7 +627,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
     int32_t totalSuccCount = 0;
     int32_t totalFailCount = 0;
-    std::vector<GenericValues> findRecordsValues; // sumarry don't limit querry data num, detail do
+    std::vector<GenericValues> findRecordsValues; // summary don't limit querry data num, detail do
 
     std::set<int32_t> opCodeList;
     TransferToOpcode(request.permissionList, opCodeList);
@@ -648,7 +648,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     std::map<int32_t, int32_t> tokenIdToCountMap;
 
     for (auto& recordValue : findRecordsValues) {
-        InsteadMergedRecIfNessary(recordValue, mergedRecords);
+        InsteadMergedRecIfNecessary(recordValue, mergedRecords);
 
         int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
         if (tokenIdList.count(tokenId) == 0) {
@@ -897,7 +897,7 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
         }
         if (it->pidList.empty()) {
             status = it->status;
-            it = startRecordList_.erase(it);
+            startRecordList_.erase(it);
         }
         break;
     }
