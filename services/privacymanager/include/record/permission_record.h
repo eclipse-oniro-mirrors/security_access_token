@@ -47,6 +47,11 @@ struct ContinusPermissionRecord {
     int32_t status = 0;
     std::set<int32_t> pidList;
 };
+
+struct PermissionRecordCache {
+    PermissionRecord record;
+    bool needUpdateToDb = false;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

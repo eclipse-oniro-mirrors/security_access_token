@@ -19,10 +19,11 @@
 #include <set>
 
 #include "generic_values.h"
-#include "sqlite_helper.h"
+#include "permission_record.h"
 
 #include "nocopyable.h"
 #include "rwlock.h"
+#include "sqlite_helper.h"
 
 namespace OHOS {
 namespace Security {

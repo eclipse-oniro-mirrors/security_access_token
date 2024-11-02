@@ -19,7 +19,6 @@
 
 #include "common_event_subscribe_info.h"
 #include "permission_record_manager.h"
-#include "permission_used_record_cache.h"
 
 #include "want.h"
 
@@ -93,7 +92,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "");
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN) {
         // when receive shut down power event, store the cache data to database immediately
-        PermissionUsedRecordCache::GetInstance().PersistPendingRecordsImmediately();
+        PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Action is invalid.");
     }
