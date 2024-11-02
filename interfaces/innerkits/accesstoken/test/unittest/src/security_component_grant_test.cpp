@@ -42,7 +42,7 @@ PermissionStateFull g_infoManagerTestState1 = {
 
 HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
-    .bundleName = "accesstoken_test",
+    .bundleName = "security_component_grant_test",
     .instIndex = 0,
     .appIDDesc = "test5"
 };

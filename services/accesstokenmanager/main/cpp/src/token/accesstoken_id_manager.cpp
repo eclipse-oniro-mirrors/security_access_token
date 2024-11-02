@@ -77,18 +77,6 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     return RET_SUCCESS;
 }
 
-void AccessTokenIDManager::GetHapTokenIdList(std::vector<AccessTokenID>& idList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
-
-    for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
-        AccessTokenID tokenId = *it;
-        if (TOKEN_HAP == GetTokenIdTypeEnum(tokenId)) {
-            idList.emplace_back(*it);
-        }
-    }
-}
-
 AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag) const
 {
     unsigned int rand = GetRandomUint32();

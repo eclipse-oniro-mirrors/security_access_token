@@ -83,6 +83,7 @@ if (is_standard_system) {
       "main/cpp/src/form_manager/form_manager_access_proxy.cpp",
       "main/cpp/src/form_manager/form_manager_death_recipient.cpp",
       "main/cpp/src/form_manager/form_status_change_callback.cpp",
+      "main/cpp/src/permission/permission_data_brief.cpp",
       "main/cpp/src/permission/permission_definition_cache.cpp",
       "main/cpp/src/permission/permission_definition_parser.cpp",
       "main/cpp/src/permission/permission_grant_event.cpp",

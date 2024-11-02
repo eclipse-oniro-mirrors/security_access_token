@@ -111,9 +111,7 @@ void AccessTokenManagerService::OnStop()
 void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     if (systemAbilityId == SECURITY_COMPONENT_SERVICE_ID) {
-        std::vector<AccessTokenID> tokenIdList;
-        AccessTokenIDManager::GetInstance().GetHapTokenIdList(tokenIdList);
-        PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(tokenIdList);
+        HapTokenInfoInner::ClearAllSecCompGrantedPerm();
         return;
     }
 }
@@ -155,13 +153,13 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
     std::vector<PermissionDef> permVec;
-    int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
+    PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (const auto& perm : permVec) {
         PermissionDefParcel permParcel;
         permParcel.permissionDef = perm;
         permList.emplace_back(permParcel);
     }
-    return ret;
+    return RET_SUCCESS;
 }
 
 int AccessTokenManagerService::GetReqPermissions(
@@ -279,7 +277,11 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    return PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
+    if (flag == PermissionFlag::PERMISSION_USER_SET) {
+        AccessTokenInfoManager::GetInstance().ClearHapPolicy();
+    }
+    return ret;
 }
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
@@ -639,6 +641,7 @@ bool AccessTokenManagerService::Initialize()
 {
     ReportSysEventPerformance();
     AccessTokenInfoManager::GetInstance().Init();
+    AccessTokenInfoManager::GetInstance().ClearHapPolicy();
     NativeTokenReceptor::GetInstance().Init();
 
 #ifdef EVENTHANDLER_ENABLE

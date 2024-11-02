@@ -548,30 +548,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetHapPermissionPolicySet001
- * @tc.desc: Verify the GetHapPermissionPolicySet abnormal and normal branch.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapPermissionPolicySet001, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(permPolicySet, nullptr);
-
-    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-    permPolicySet = AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(permPolicySet != nullptr, true);
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
  * @tc.name: RemoveHapTokenInfo001
  * @tc.desc: Verify the RemoveHapTokenInfo abnormal branch tokenID type is not true.
  * @tc.type: FUNC
@@ -1805,33 +1781,6 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1
 }
 
 /**
- * @tc.name: VerifyPermissionStatus001
- * @tc.desc: PermissionPolicySet::VerifyPermissionStatus function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissionStatus001, TestSize.Level1)
-{
-    PermissionStateFull perm = {
-        .permissionName = "ohos.permission.TEST",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<PermissionStateFull> permStateList;
-    permStateList.emplace_back(perm);
-
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
-
-    // isGeneral is false
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED, policySet->VerifyPermissionStatus("ohos.permission.TEST"));
-}
-
-/**
  * @tc.name: QueryPermissionFlag001
  * @tc.desc: PermissionPolicySet::QueryPermissionFlag function test
  * @tc.type: FUNC
@@ -1906,12 +1855,13 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    bool changed = false;
     ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
-        isGranted, flag));
+        isGranted, flag, changed));
 
     // isGeneral is false
     ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
-        isGranted, flag));
+        isGranted, flag, changed));
 }
 
 /**
@@ -1961,8 +1911,9 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
     ASSERT_EQ(tokenId, policySet->tokenId_);
 
     std::string info;
+    std::vector<PermissionDef> permList;
     // iter != end - 1
-    policySet->PermStateFullToString(g_permState, info);
+    PermissionPolicySet::ToString(info, permList, permStateList);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -2237,22 +2188,6 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Lev
 
     // delete test token
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
-}
-
-/**
- * @tc.name: ClearAllSecCompGrantedPerm002
- * @tc.desc: PermissionManager::ClearAllSecCompGrantedPerm function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<AccessTokenID> idList;
-    idList.emplace_back(tokenId);
-    PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(idList); // permPolicySet is null
-    auto tokenInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-    ASSERT_EQ(tokenInfoPtr, nullptr);
 }
 
 /**

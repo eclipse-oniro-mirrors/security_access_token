@@ -155,11 +155,8 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     AccessTokenID tokenID = data.ReadUint32();
     std::vector<PermissionDefParcel> permList;
 
-    int result = this->GetDefPermissions(tokenID, permList);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
-    if (result != RET_SUCCESS) {
-        return;
-    }
+    this->GetDefPermissions(tokenID, permList);
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(RET_SUCCESS), "WriteInt32 failed.");
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
     IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
 

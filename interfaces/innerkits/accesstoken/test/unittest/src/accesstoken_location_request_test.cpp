@@ -45,7 +45,7 @@ PermissionStateFull g_locationTestStateSystemGrant = {
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 PermissionStateFull g_locationTestStateUserGrant = {
-    .permissionName = "ohos.permission.CAMERA",
+    .permissionName = "ohos.permission.APP_TRACKING_CONSENT",
     .isGeneral = true,
     .resDeviceID = {"device"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -1394,7 +1394,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Le
         .state = SETTING_OPER,
     };
     PermissionListState permUser27 = {
-        .permissionName = "ohos.permission.CAMERA",
+        .permissionName = "ohos.permission.APP_TRACKING_CONSENT",
         .state = SETTING_OPER,
     };
 
@@ -2348,7 +2348,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState050, TestSize.Le
         .state = SETTING_OPER,
     };
     PermissionListState permUser50 = {
-        .permissionName = "ohos.permission.CAMERA",
+        .permissionName = "ohos.permission.APP_TRACKING_CONSENT",
         .state = SETTING_OPER,
     };
 

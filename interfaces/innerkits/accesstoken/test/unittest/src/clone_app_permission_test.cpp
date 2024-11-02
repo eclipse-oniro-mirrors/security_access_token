@@ -27,7 +27,7 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static const std::string PERMISSION_ALL = "ohos.permission.CAMERA";
+static const std::string PERMISSION_ALL = "ohos.permission.APP_TRACKING_CONSENT";
 static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.WRITE_MEDIA";
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
@@ -84,7 +84,7 @@ PermissionStateFull g_stateFullControl = {
 };
 
 PermissionStateFull g_stateAll = {
-    .permissionName = "ohos.permission.CAMERA",
+    .permissionName = PERMISSION_ALL,
     .isGeneral = true,
     .resDeviceID = {"local"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},

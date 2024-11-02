@@ -33,8 +33,8 @@ namespace AccessToken {
 namespace {
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 const std::string CERT_PERMISSION = "ohos.permission.ACCESS_CERT_MANAGER";
-const std::string MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
-const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
+const std::string CALENDAR_PERMISSION = "ohos.permission.WRITE_CALENDAR";
+const std::string APP_TRACKING_PERMISSION = "ohos.permission.APP_TRACKING_CONSENT";
 const std::string ACCESS_BLUETOOTH_PERMISSION = "ohos.permission.ACCESS_BLUETOOTH";
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t MAX_PERM_LIST_SIZE = 1024;
@@ -65,7 +65,7 @@ PermissionStateFull g_tddPermRevoke = {
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 PermissionStateFull g_infoManagerCameraState = {
-    .permissionName = CAMERA_PERMISSION,
+    .permissionName = APP_TRACKING_PERMISSION,
     .isGeneral = true,
     .resDeviceID = {"local2"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -81,7 +81,7 @@ PermissionStateFull g_infoBlueToothManagerState = {
 };
 
 PermissionStateFull g_infoManagerMicrophoneState = {
-    .permissionName = MICROPHONE_PERMISSION,
+    .permissionName = CALENDAR_PERMISSION,
     .isGeneral = true,
     .resDeviceID = {"local2"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -243,11 +243,11 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level1)
     int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, res);
     int32_t ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_DENIED);
     uint32_t flag;
     AccessTokenKit::GetPermissionFlag(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, flag);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, flag);
     EXPECT_EQ(flag, PERMISSION_DEFAULT_FLAG);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
@@ -261,7 +261,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams = {
@@ -274,13 +274,13 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
     int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, res);
     int32_t ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_GRANTED);
     std::vector<PermissionStateFull> permStatList;
     res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
-    ASSERT_EQ(MICROPHONE_PERMISSION, permStatList[0].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
@@ -295,7 +295,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = true
     };
     HapPolicyParams testPolicyParams = {
@@ -308,14 +308,14 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level1)
     int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, res);
     int32_t ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_GRANTED);
 
     std::vector<PermissionStateFull> permStatList;
     res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
-    ASSERT_EQ(MICROPHONE_PERMISSION, permStatList[0].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
@@ -441,20 +441,21 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
     res = AccessTokenKit::InitHapToken(testHapInfoParams1, testPolicyParams, dlpFullTokenId1);
     EXPECT_EQ(RET_SUCCESS, res);
 
-    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(res, PERMISSION_DENIED);
 
-    (void)AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_SET);
+    (void)AccessTokenKit::GrantPermission(
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_SET);
     (void)AccessTokenKit::RevokePermission(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_SET);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_SET);
 
     testHapInfoParams1.instIndex++;
     AccessTokenIDEx dlpFullTokenId2;
     res = AccessTokenKit::InitHapToken(testHapInfoParams1, testPolicyParams, dlpFullTokenId2);
     EXPECT_EQ(RET_SUCCESS, res);
-    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId2.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId2.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(res, PERMISSION_GRANTED);
-    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(res, PERMISSION_GRANTED);
 
     std::vector<PermissionStateFull> permStatList1;
@@ -463,10 +464,10 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList2;
     res = AccessTokenKit::GetReqPermissions(dlpFullTokenId2.tokenIdExStruct.tokenID, permStatList2, false);
     ASSERT_EQ(permStatList2.size(), permStatList1.size());
-    EXPECT_EQ(CAMERA_PERMISSION, permStatList2[0].permissionName);
+    EXPECT_EQ(APP_TRACKING_PERMISSION, permStatList2[0].permissionName);
     EXPECT_EQ(permStatList2[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(permStatList2[0].grantFlags[0], PERMISSION_USER_SET);
-    EXPECT_EQ(MICROPHONE_PERMISSION, permStatList2[1].permissionName);
+    EXPECT_EQ(CALENDAR_PERMISSION, permStatList2[1].permissionName);
     EXPECT_EQ(permStatList2[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList2[1].grantFlags[0], PERMISSION_USER_SET);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -490,15 +491,15 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
     GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
     ret = AccessTokenKit::VerifyAccessToken(
         fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
-    ret = AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, 0);
+    ret = AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, 0);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
     ret = AccessTokenKit::GrantPermission(
     fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION, PERMISSION_SYSTEM_FIXED);
@@ -518,9 +519,9 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
     };
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
     ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
@@ -547,14 +548,14 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::RevokePermission(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStateFull> permStatList;
     int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
-    ASSERT_EQ(CAMERA_PERMISSION, permStatList[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_USER_FIXED);
 
@@ -573,10 +574,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
     res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList1.size());
-    ASSERT_EQ(CAMERA_PERMISSION, permStatList1[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList1[0].permissionName);
     EXPECT_EQ(permStatList1[0].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList1[0].grantFlags[0], PERMISSION_USER_FIXED);
-    ASSERT_EQ(MICROPHONE_PERMISSION, permStatList1[1].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, permStatList1[1].permissionName);
     EXPECT_EQ(permStatList1[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList1[1].grantFlags[0], PERMISSION_DEFAULT_FLAG);
 
@@ -601,7 +602,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
     GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
 
     UpdateHapInfoParams info;
@@ -609,7 +610,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     PreAuthorizationInfo info1 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = true
     };
     HapPolicyParams testPolicyParams2 = {
@@ -624,10 +625,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
     int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList1.size());
-    ASSERT_EQ(CAMERA_PERMISSION, permStatList1[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList1[0].permissionName);
     EXPECT_EQ(permStatList1[0].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList1[0].grantFlags[0], PERMISSION_DEFAULT_FLAG);
-    ASSERT_EQ(MICROPHONE_PERMISSION, permStatList1[1].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, permStatList1[1].permissionName);
     EXPECT_EQ(permStatList1[1].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(permStatList1[1].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
 
@@ -657,7 +658,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = true;
     PreAuthorizationInfo info1 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams2 = {
@@ -672,7 +673,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level1)
     int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
-    ASSERT_EQ(MICROPHONE_PERMISSION, state[1].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, state[1].permissionName);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_SYSTEM_FIXED);
 
@@ -865,7 +866,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = true;
     PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
+        .permissionName = APP_TRACKING_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams2 = {
@@ -880,7 +881,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
     int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), state.size());
-    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
 
@@ -910,7 +911,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = true;
     PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
+        .permissionName = APP_TRACKING_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams2 = {
@@ -925,7 +926,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
     int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), state.size());
-    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
 
@@ -950,10 +951,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::GrantPermission(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::RevokePermission(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     UpdateHapInfoParams info;
@@ -961,11 +962,11 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = true;
     PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
+        .permissionName = APP_TRACKING_PERMISSION,
         .userCancelable = false
     };
     PreAuthorizationInfo info2 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams2 = {
@@ -979,10 +980,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
     std::vector<PermissionStateFull> state;
     AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
-    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_USER_FIXED);
-    ASSERT_EQ(MICROPHONE_PERMISSION, state[1].permissionName);
+    ASSERT_EQ(CALENDAR_PERMISSION, state[1].permissionName);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED);
 
@@ -1000,11 +1001,11 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
+        .permissionName = APP_TRACKING_PERMISSION,
         .userCancelable = false
     };
     PreAuthorizationInfo info2 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = false
     };
     HapPolicyParams testPolicyParams1 = {
@@ -1018,10 +1019,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::GrantPermission(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_NE(RET_SUCCESS, ret);
     ret = AccessTokenKit::RevokePermission(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_NE(RET_SUCCESS, ret);
 
     UpdateHapInfoParams info;
@@ -1054,11 +1055,11 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
+        .permissionName = APP_TRACKING_PERMISSION,
         .userCancelable = true
     };
     PreAuthorizationInfo info2 = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = true
     };
     HapPolicyParams testPolicyParams1 = {
@@ -1072,7 +1073,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::RevokePermission(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     UpdateHapInfoParams info;
@@ -1137,7 +1138,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal002, TestSize.Level1)
         .aclRequestedList = {},
     };
     PreAuthorizationInfo info = {
-        .permissionName = MICROPHONE_PERMISSION,
+        .permissionName = CALENDAR_PERMISSION,
         .userCancelable = false
     };
     for (uint32_t i = 0; i < MAX_PERM_LIST_SIZE; i++) {

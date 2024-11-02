@@ -500,13 +500,10 @@ bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
         ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", tokenID);
         return false;
     }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+    if (infoPtr->GetPermissionStateList(permissionStateFullList) != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetPermissionStateList failed, token %{public}u!", tokenID);
         return false;
     }
-
-    permPolicySet->GetPermissionStateFulls(permissionStateFullList);
     return true;
 }
 

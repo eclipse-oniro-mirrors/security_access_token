@@ -89,36 +89,6 @@ void TestReleaseTokenId()
         }
     }
 }
-
-/**
- * @tc.name: RegisterTokenId001
- * @tc.desc: register 1000 id.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenMultiThreadTest, RegisterTokenId001, TestSize.Level1)
-{
-    SET_THREAD_NUM(10);
-    GTEST_RUN_TASK(TestRegisterTokenId);
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenIDManager::GetInstance().GetHapTokenIdList(tokenIdList);
-    EXPECT_EQ(MULTI_CYCLE_TIMES, tokenIdList.size());
-}
-
-/**
- * @tc.name: RegisterTokenId002
- * @tc.desc: release and register 1000 id.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenMultiThreadTest, RegisterTokenId002, TestSize.Level1)
-{
-    SET_THREAD_NUM(10);
-    GTEST_RUN_TASK(TestReleaseTokenId);
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenIDManager::GetInstance().GetHapTokenIdList(tokenIdList);
-    EXPECT_EQ(MULTI_CYCLE_TIMES, tokenIdList.size());
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

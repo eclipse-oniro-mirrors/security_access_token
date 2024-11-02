@@ -274,18 +274,17 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         "INSTINDEX", info->GetInstIndex());
 
     // add hap to kernel
-    std::shared_ptr<PermissionPolicySet> policySet = info->GetHapInfoPermissionPolicySet();
     int32_t userId = info->GetUserID();
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
-            PermissionManager::GetInstance().AddPermToKernel(id, policySet, permPolicyList_);
+            PermissionManager::GetInstance().AddPermToKernel(id, permPolicyList_);
             return RET_SUCCESS;
         }
     }
-    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
+    PermissionManager::GetInstance().AddPermToKernel(id);
     return RET_SUCCESS;
 }
 
@@ -359,8 +358,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
-    std::shared_ptr<PermissionPolicySet> policySet = hap->GetHapInfoPermissionPolicySet();
-    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
+    PermissionManager::GetInstance().AddPermToKernel(id);
     ACCESSTOKEN_LOG_INFO(LABEL, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
         " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
         hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());
@@ -405,17 +403,6 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
     }
     infoPtr->TranslateToHapTokenInfo(info);
     return RET_SUCCESS;
-}
-
-std::shared_ptr<PermissionPolicySet> AccessTokenInfoManager::GetHapPermissionPolicySet(AccessTokenID id)
-{
-    std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(id);
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is invalid.", id);
-        return nullptr;
-    }
-    return infoPtr->GetHapInfoPermissionPolicySet();
 }
 
 std::shared_ptr<NativeTokenInfoInner> AccessTokenInfoManager::GetNativeTokenInfoInner(AccessTokenID id)
@@ -535,7 +522,6 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "Remove native token %{public}u ok!", id);
-
     if (RemoveTokenInfoFromDb(id, false) != RET_SUCCESS) {
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
@@ -590,17 +576,18 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
+    AddHapTokenInfoToDb(tokenId, tokenInfo);
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
+        RemoveTokenInfoFromDb(tokenId, true);
         return ret;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
-    AddHapTokenInfoToDb(tokenId, tokenInfo);
     return RET_SUCCESS;
 }
 
@@ -749,9 +736,13 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     } else {
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
     }
+    PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(info, permStateList, apl);
+        int32_t ret = infoPtr->Update(info, permStateList, apl);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
         ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u bundle name %{public}s user %{public}d \
 inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
             infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
@@ -760,25 +751,23 @@ inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleNam
             HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", infoPtr->GetTokenID(), "USERID",
             infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
     }
-    PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
+
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
     // update hap to kernel
-    std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetHapInfoPermissionPolicySet();
     int32_t userId = infoPtr->GetUserID();
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
-            PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet, permPolicyList_);
-            ModifyHapTokenInfoFromDb(tokenID, infoPtr);
+            PermissionManager::GetInstance().AddPermToKernel(tokenID, permPolicyList_);
             return RET_SUCCESS;
         }
     }
-    PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
-    return ModifyHapTokenInfoFromDb(tokenID, infoPtr);
+    PermissionManager::GetInstance().AddPermToKernel(tokenID);
+    return RET_SUCCESS;
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -791,14 +780,7 @@ int AccessTokenInfoManager::GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoF
         return ERR_IDENTITY_CHECK_FAILED;
     }
     hapSync.baseInfo = infoPtr->GetHapInfoBasic();
-    std::shared_ptr<PermissionPolicySet> permSetPtr = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permSetPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u permSet is invalid.", tokenID);
-        return ERR_TOKEN_INVALID;
-    }
-    permSetPtr->GetPermissionStateList(hapSync.permStateList);
-    return RET_SUCCESS;
+    return infoPtr->GetPermissionStateList(hapSync.permStateList);
 }
 
 int AccessTokenInfoManager::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
@@ -816,17 +798,10 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
         ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is null or not remote, can not update!", mapID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
-
-    std::shared_ptr<PermissionPolicySet> newPermPolicySet =
-        PermissionPolicySet::BuildPolicySetWithoutDefCheck(mapID, hapSync.permStateList);
-
-    {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->SetTokenBaseInfo(hapSync.baseInfo);
-        infoPtr->SetPermissionPolicySet(newPermPolicySet);
-    }
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    infoPtr->UpdateRemoteHapTokenInfo(mapID, hapSync.baseInfo, hapSync.permStateList);
     // update remote hap to kernel
-    PermissionManager::GetInstance().AddPermToKernel(mapID, newPermPolicySet);
+    PermissionManager::GetInstance().AddPermToKernel(mapID);
     return RET_SUCCESS;
 }
 
@@ -1049,59 +1024,6 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
     return *instance;
 }
 
-int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(
-    AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInner)
-{
-    if (hapInner == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
-    // get new hap token info from cache
-    std::vector<GenericValues> hapInfoValues;
-    hapInner->StoreHapInfo(hapInfoValues); // only exsit one if empty something is wrong
-    if (hapInfoValues.empty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Hap token info is empty!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    // get new permission def from cache if exsits
-    std::vector<GenericValues> permDefValues;
-    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
-
-    // get new permission def from cache if exsits
-    std::vector<GenericValues> permStateValues;
-    hapInner->StorePermissionPolicy(permStateValues);
-
-    return AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenID, hapInfoValues, permDefValues,
-        permStateValues);
-}
-
-int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(
-    AccessTokenID tokenID, const std::string& permission, const std::shared_ptr<HapTokenInfoInner>& hapInfo)
-{
-    std::vector<GenericValues> permStateValues;
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
-    if (hapInfo == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u info is null!", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    hapInfo->StorePermissionPolicy(permStateValues);
-
-    for (size_t i = 0; i < permStateValues.size(); i++) {
-        if (permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME) != permission) {
-            continue;
-        }
-        GenericValues conditions;
-        conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permission);
-        AccessTokenDb::GetInstance().Modify(
-            AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
-    }
-    return RET_SUCCESS;
-}
-
 int AccessTokenInfoManager::AddHapTokenInfoToDb(
     AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo)
 {
@@ -1114,7 +1036,6 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(
     }
     hapInfo->StoreHapInfo(hapInfoValues);
     hapInfo->StorePermissionPolicy(permStateValues);
-
     PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
     AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues);
     AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
@@ -1147,11 +1068,6 @@ int AccessTokenInfoManager::RemoveTokenInfoFromDb(AccessTokenID tokenID, bool is
 
 void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id)
 {
-    std::shared_ptr<PermissionPolicySet> policy = info->GetHapInfoPermissionPolicySet();
-    if (policy == nullptr) {
-        return;
-    }
-
     std::vector<std::string> permissionList;
     int32_t userId = info->GetUserID();
     {
@@ -1159,9 +1075,10 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
-            policy->GetDeletedPermissionListToNotify(permissionList, permPolicyList_);
+            HapTokenInfoInner::GetGrantedPermByTokenId(id, permPolicyList_, permissionList);
         } else {
-            policy->GetDeletedPermissionListToNotify(permissionList);
+            std::vector<std::string> emptyList;
+            HapTokenInfoInner::GetGrantedPermByTokenId(id, emptyList, permissionList);
         }
     }
     if (permissionList.size() != 0) {
@@ -1356,50 +1273,30 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
         ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", id);
         return ERR_IDENTITY_CHECK_FAILED;
     }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
-        return ERR_PARAM_INVALID;
-    }
     std::vector<std::string> grantedPermListBefore;
-    permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
-    std::vector<PermissionStateFull> stateListBefore;
-    permPolicySet->GetPermissionStateList(stateListBefore);
+    std::vector<std::string> emptyList;
+    HapTokenInfoInner::GetGrantedPermByTokenId(id, emptyList, grantedPermListBefore);
 
     // reset permission.
-    permPolicySet->ResetUserGrantPermissionStatus();
-    // clear security component granted permission which is not requested in module.json.
-    permPolicySet->ClearSecCompGrantedPerm();
-
-#ifdef SUPPORT_SANDBOX_APP
-    // update permission status with dlp permission rule.
-    std::vector<PermissionStateFull> permListOfHap;
-    permPolicySet->GetPermissionStateFulls(permListOfHap);
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(infoPtr->GetDlpType(), permListOfHap);
-    permPolicySet->Update(permListOfHap);
-#endif
+    infoPtr->ResetUserGrantPermissionStatus();
 
     std::vector<std::string> grantedPermListAfter;
-    permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
-    std::vector<PermissionStateFull> stateListAfter;
-    permPolicySet->GetPermissionStateList(stateListAfter);
-    std::vector<PermissionStateFull> stateChangeList;
-    PermissionManager::GetInstance().GetStateOrFlagChangedList(stateListBefore, stateListAfter, stateChangeList);
-    if (!UpdateStatesToDatabase(id, stateChangeList)) {
-        return ERR_DATABASE_OPERATE_FAILED;
-    }
+    HapTokenInfoInner::GetGrantedPermByTokenId(id, emptyList, grantedPermListAfter);
 
     {
         int32_t userId = infoPtr->GetUserID();
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
-            PermissionManager::GetInstance().AddPermToKernel(id, permPolicySet, permPolicyList_);
+            PermissionManager::GetInstance().AddPermToKernel(id, permPolicyList_);
             PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
             return RET_SUCCESS;
         }
     }
-    PermissionManager::GetInstance().AddPermToKernel(id, permPolicySet);
+    PermissionManager::GetInstance().AddPermToKernel(id);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "grantedPermListBefore size %{public}u, grantedPermListAfter size %{public}u!",
+        grantedPermListBefore.size(), grantedPermListAfter.size());
     PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
     return RET_SUCCESS;
 }
@@ -1557,22 +1454,12 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::map<Acc
 {
     for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
         AccessTokenID tokenId = iter->first;
-        std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
-        if (infoPtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d infoPtr is nullptr.", tokenId);
-            continue;
-        }
         bool isActive = iter->second;
-        std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-        if (permPolicySet == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d permPolicySet is nullptr.", tokenId);
-            continue;
-        }
         // refresh under userPolicyLock_
         {
             Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
             std::map<std::string, bool> refreshedPermList;
-            permPolicySet->RefreshPermStateToKernel(permPolicyList_, isActive, tokenId, refreshedPermList);
+            HapTokenInfoInner::RefreshPermStateToKernel(permPolicyList_, isActive, tokenId, refreshedPermList);
 
             if (refreshedPermList.size() != 0) {
                 PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
@@ -1592,25 +1479,15 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::vector<
 {
     for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
         AccessTokenID tokenId = iter->first;
-        std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
-        if (infoPtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d infoPtr is nullptr.", tokenId);
-            continue;
-        }
         bool isActive = iter->second;
-        std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-        if (permPolicySet == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d permPolicySet is nullptr.", tokenId);
-            continue;
-        }
         std::map<std::string, bool> refreshedPermList;
-        permPolicySet->RefreshPermStateToKernel(permCodeList, isActive, tokenId, refreshedPermList);
+        HapTokenInfoInner::RefreshPermStateToKernel(permCodeList, isActive, tokenId, refreshedPermList);
 
         if (refreshedPermList.size() != 0) {
             PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
         }
         for (auto perm = refreshedPermList.begin(); perm != refreshedPermList.end(); ++perm) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Perm %{public}s refreshed by user policy, isactive %{public}d.",
+            ACCESSTOKEN_LOG_INFO(LABEL, "Perm %{public}s refreshed by user policy, isActive %{public}d.",
                 perm->first.c_str(), perm->second);
             PermStateChangeType change = perm->second ?
                 PermStateChangeType::STATE_CHANGE_GRANTED : PermStateChangeType::STATE_CHANGE_REVOKED;
@@ -1699,30 +1576,6 @@ bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
     return infoIter->second->IsPermDialogForbidden();
 }
 
-bool AccessTokenInfoManager::UpdateStatesToDatabase(AccessTokenID tokenID,
-    std::vector<PermissionStateFull>& stateChangeList)
-{
-    for (const auto& state : stateChangeList) {
-        GenericValues modifyValue;
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus[0]);
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlags[0]));
-
-        GenericValues conditionValue;
-        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, state.permissionName);
-
-        int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
-            conditionValue);
-        if (res != 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Update tokenID %{public}u permission %{public}s to database failed",
-                tokenID, state.permissionName.c_str());
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable)
 {
     GenericValues modifyValue;
@@ -1802,6 +1655,15 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, invalid tokenType!", tokenID);
     return PERMISSION_DENIED;
+}
+
+void AccessTokenInfoManager::ClearHapPolicy()
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", iter->first);
+        iter->second->ClearHapInfoPermissionPolicySet();
+    }
 }
 } // namespace AccessToken
 } // namespace Security

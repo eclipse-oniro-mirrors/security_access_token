@@ -37,6 +37,14 @@ public:
      * GetLocalDeviceId
      */
     static std::string GetLocalDeviceId();
+
+    /**
+     * Flag operate
+     */
+    static bool IsPermOperatedByUser(int32_t flag);
+    static bool IsPermOperatedBySystem(int32_t flag);
+    static bool IsPermGrantedBySecComp(int32_t flag);
+    static uint32_t GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag);
 };
 }
 }
