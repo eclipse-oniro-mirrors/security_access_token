@@ -122,9 +122,9 @@ private:
     bool IsAllowedUsingCamera(AccessTokenID tokenId);
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
 
-    void AddRecordToCacheAndDb(const PermissionRecord& record, GenericValues& value);
+    void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
-    bool UpdatePermissionUsedRecord(const PermissionRecord& record);
+    bool UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
     int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
@@ -135,7 +135,7 @@ private:
     int32_t DeletePermissionRecord(int32_t days);
 
     void GetMergedRecordsFromCache(std::vector<PermissionRecord>& mergedRecords);
-    void InsteadMergedRecIfNessary(GenericValues& mergedRecord, std::vector<PermissionRecord>& mergedRecords);
+    void InsteadMergedRecIfNecessary(GenericValues& mergedRecord, std::vector<PermissionRecord>& mergedRecords);
     void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
         PermissionUsedRecord& outRecord);
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,

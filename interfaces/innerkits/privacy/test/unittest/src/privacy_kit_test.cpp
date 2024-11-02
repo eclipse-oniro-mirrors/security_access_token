@@ -814,7 +814,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     permissionList.emplace_back("invalid permission");
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
 }
 
 /**

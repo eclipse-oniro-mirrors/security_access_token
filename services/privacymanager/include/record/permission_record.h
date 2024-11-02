@@ -50,7 +50,7 @@ struct ContinusPermissionRecord {
 
 struct PermissionRecordCache {
     PermissionRecord record;
-    bool needUpdate = false;
+    bool needUpdateToDb = false;
 };
 } // namespace AccessToken
 } // namespace Security
