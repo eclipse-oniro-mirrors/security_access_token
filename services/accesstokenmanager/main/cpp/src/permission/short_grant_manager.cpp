@@ -89,21 +89,38 @@ ShortGrantManager::~ShortGrantManager()
     UnRegisterAppStopListener();
 }
 
-void ShortGrantManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
+#ifdef EVENTHANDLER_ENABLE
+void ShortGrantManager::InitEventHandler()
 {
-    eventHandler_ = eventHandler;
+    auto eventRunner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!eventRunner) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner.");
+        return;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner);
 }
+
+std::shared_ptr<AccessEventHandler> ShortGrantManager::GetEventHandler()
+{
+    std::lock_guard<std::mutex> lock(eventHandlerLock_);
+    if (eventHandler_ == nullptr) {
+        InitEventHandler();
+    }
+    return eventHandler_;
+}
+#endif
 
 bool ShortGrantManager::CancelTaskOfPermissionRevoking(const std::string& taskName)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return false;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "Revoke permission task name:%{public}s", taskName.c_str());
-    eventHandler_->ProxyRemoveTask(taskName);
+    eventHandler->ProxyRemoveTask(taskName);
     return true;
 #else
     ACCESSTOKEN_LOG_WARN(LABEL, "EventHandler is not existed");
@@ -220,7 +237,8 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
     const std::string& taskName, uint32_t cancelTimes)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
@@ -233,7 +251,7 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
             "Token: %{public}d, permission: %{public}s, delay revoke permission end.", tokenID, permission.c_str());
     });
     ACCESSTOKEN_LOG_INFO(LABEL, "cancelTimes %{public}d", cancelTimes);
-    eventHandler_->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
+    eventHandler->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
     return;
 #else
     ACCESSTOKEN_LOG_WARN(LABEL, "eventHandler is not existed");

@@ -65,12 +65,9 @@ void ShortGrantManagerTest::TearDownTestCase()
 
 void ShortGrantManagerTest::SetUp()
 {
-    shortGrantEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (!shortGrantEventRunner_) {
-        return;
-    }
-    shortGrantEventHandler_ = std::make_shared<AccessEventHandler>(shortGrantEventRunner_);
-    ShortGrantManager::GetInstance().InitEventHandler(shortGrantEventHandler_);
+#ifdef EVENTHANDLER_ENABLE
+    ShortGrantManager::GetInstance().InitEventHandler();
+#endif
 
     PermissionDef permDefAlpha = {
         .permissionName = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO",

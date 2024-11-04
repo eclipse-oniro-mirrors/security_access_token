@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -583,16 +583,31 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
 }
 
 #ifdef EVENTHANDLER_ENABLE
-void TempPermissionObserver::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
+void TempPermissionObserver::InitEventHandler()
 {
-    eventHandler_ = eventHandler;
+    auto eventRunner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!eventRunner) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
+        return;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner);
+}
+
+std::shared_ptr<AccessEventHandler> TempPermissionObserver::GetEventHandler()
+{
+    std::lock_guard<std::mutex> lock(eventHandlerLock_);
+    if (eventHandler_ == nullptr) {
+        InitEventHandler();
+    }
+    return eventHandler_;
 }
 #endif
 
 bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID tokenID, const std::string& taskName)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return false;
     }
@@ -603,7 +618,7 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
         ACCESSTOKEN_LOG_INFO(LABEL, "Token: %{public}d, delay revoke permission end", tokenID);
     });
-    eventHandler_->ProxyPostTask(delayed, taskName, cancleTimes_);
+    eventHandler->ProxyPostTask(delayed, taskName, cancleTimes_);
     return true;
 #else
     ACCESSTOKEN_LOG_WARN(LABEL, "Eventhandler is not existed");
@@ -614,13 +629,14 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
 bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& taskName)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return false;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "Revoke permission task name:%{public}s", taskName.c_str());
-    eventHandler_->ProxyRemoveTask(taskName);
+    eventHandler->ProxyRemoveTask(taskName);
     return true;
 #else
     ACCESSTOKEN_LOG_WARN(LABEL, "Eventhandler is not existed");

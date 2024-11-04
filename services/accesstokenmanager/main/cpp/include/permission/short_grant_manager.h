@@ -66,7 +66,9 @@ public:
 
     void OnAppMgrRemoteDiedHandle();
 
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
+#ifdef EVENTHANDLER_ENABLE
+    void InitEventHandler();
+#endif
 
     int RefreshPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
 
@@ -88,7 +90,12 @@ private:
     uint32_t maxTime_;
     std::vector<PermTimerData> shortGrantData_;
     std::mutex shortGrantDataMutex_;
+
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::mutex eventHandlerLock_;
+#endif
     sptr<ShortPermAppStateObserver> appStopCallBack_;
     std::mutex appStopCallbackMutex_;
 
