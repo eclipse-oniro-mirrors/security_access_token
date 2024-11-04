@@ -74,7 +74,7 @@ void AppManagerAccessClient::InitProxy()
         return;
     }
 
-    proxy_ = iface_cast<IAppMgr>(appManagerSa);
+    proxy_ = new AppManagerAccessProxy(appManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

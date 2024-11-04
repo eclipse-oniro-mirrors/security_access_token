@@ -140,7 +140,7 @@ void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, 
     for (auto it = list.begin(); it != list.end(); ++it) {
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
         auto callbackSingle = [it, tokenID, permName, changeType]() {
-            auto callback = iface_cast<IPermissionStateCallback>(*it);
+            sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
             if (callback != nullptr) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
                 PermStateChangeInfo resInfo;
@@ -153,7 +153,7 @@ void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, 
         };
         ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
 #else
-        auto callback = iface_cast<IPermissionStateCallback>(*it);
+        sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
         if (callback != nullptr) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
             PermStateChangeInfo resInfo;

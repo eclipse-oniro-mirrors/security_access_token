@@ -782,7 +782,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.MICROPHONE";
+    info.permissionName = "ohos.permission.READ_MEDIA";
     info.successCount = 1;
     info.failCount = 0;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
@@ -814,7 +814,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     permissionList.emplace_back("invalid permission");
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
 }
 
 /**
@@ -827,7 +827,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.MICROPHONE";
+    info.permissionName = "ohos.permission.READ_MEDIA";
     info.successCount = 1;
     info.failCount = 0;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
@@ -931,7 +931,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.MICROPHONE";
+    info.permissionName = "ohos.permission.READ_MEDIA";
     info.successCount = 0;
     info.failCount = 1;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // fail:1, success:0

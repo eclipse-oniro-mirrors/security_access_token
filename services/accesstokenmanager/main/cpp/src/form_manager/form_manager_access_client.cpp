@@ -109,7 +109,7 @@ void FormManagerAccessClient::InitProxy()
         formManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<IFormMgr>(formManagerSa);
+    proxy_ = new FormManagerAccessProxy(formManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null.");
     }
