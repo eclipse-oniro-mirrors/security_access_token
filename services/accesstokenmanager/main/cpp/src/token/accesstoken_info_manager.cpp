@@ -733,7 +733,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is null, can not update!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid, can not update!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 

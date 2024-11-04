@@ -19,6 +19,7 @@
 #include "accesstoken_log.h"
 #include "ipc_skeleton.h"
 #include "memory_guard.h"
+#include "on_permission_used_record_callback_proxy.h"
 #include "privacy_error.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
@@ -232,7 +233,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
+    sptr<OnPermissionUsedRecordCallback> callback = new OnPermissionUsedRecordCallbackProxy(data.ReadRemoteObject());
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);

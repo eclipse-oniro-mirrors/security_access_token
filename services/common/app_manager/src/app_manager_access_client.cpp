@@ -123,7 +123,7 @@ void AppManagerAccessClient::InitProxy()
         appManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<IAppMgr>(appManagerSa);
+    proxy_ = new AppManagerAccessProxy(appManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

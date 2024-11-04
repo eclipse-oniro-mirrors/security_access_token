@@ -45,7 +45,7 @@ sptr<IAmsMgr> AppManagerAccessProxy::GetAmsMgr()
         return nullptr;
     }
     sptr<IRemoteObject> object = reply.ReadRemoteObject();
-    sptr<IAmsMgr> amsMgr = iface_cast<IAmsMgr>(object);
+    sptr<IAmsMgr> amsMgr = new AmsManagerAccessProxy(object);
     if (!amsMgr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Ability manager service instance is nullptr. ");
         return nullptr;

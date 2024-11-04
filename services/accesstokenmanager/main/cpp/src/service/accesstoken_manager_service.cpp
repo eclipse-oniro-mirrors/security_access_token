@@ -41,9 +41,6 @@
 #include "parameter.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
-#ifndef COMMON_EVENT_SERVICE_ENABLE
-#include "privacy_kit.h"
-#endif // COMMON_EVENT_SERVICE_ENABLE
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
@@ -353,9 +350,6 @@ int32_t AccessTokenManagerService::InitHapToken(
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
-#ifndef COMMON_EVENT_SERVICE_ENABLE
-    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
-#endif // COMMON_EVENT_SERVICE_ENABLE
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }

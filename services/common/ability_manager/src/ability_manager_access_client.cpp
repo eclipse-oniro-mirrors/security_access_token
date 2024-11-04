@@ -90,7 +90,7 @@ void AbilityManagerAccessClient::InitProxy()
         return;
     }
 
-    proxy_ = iface_cast<IAbilityManager>(abilityManagerSa);
+    proxy_ = new AbilityManagerAccessProxy(abilityManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

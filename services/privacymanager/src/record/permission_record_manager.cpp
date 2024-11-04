@@ -273,17 +273,19 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
             continue;
         }
 
-        // needUpdateToDb flase means record not merge, when the timestamp of those records less than 1 min from now
-        // they can not merge any more, remove them from cache
-        if (!it->needUpdateToDb) {
-            it = permUsedRecList_.erase(it);
-            continue;
+        /*
+            needUpdateToDb:
+                - flase means record not merge, when the timestamp of those records less than 1 min from now
+                    they can not merge any more, remove them from cache
+                - true means record has merged, need to update database before remove from cache
+            whether update database succeed or not, recod remove from cache
+        */
+        if ((it->needUpdateToDb) && (!UpdatePermissionUsedRecordToDb(it->record))) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Record with timestamp %{public}" PRId64 "update database failed!",
+                it->record.timestamp);
         }
 
-        // needUpdateToDb true means record has merged, remove from cache after successfully update database
-        if (UpdatePermissionUsedRecordToDb(it->record)) {
-            it = permUsedRecList_.erase(it);
-        }
+        it = permUsedRecList_.erase(it);
     }
 
     return Constant::SUCCESS;
