@@ -36,6 +36,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
+    "unittest/HapTokenTest/init_hap_token_test.cpp",
     "unittest/src/accesstoken_deny_test.cpp",
     "unittest/src/accesstoken_kit_extension_test.cpp",
     "unittest/src/accesstoken_kit_test.cpp",
