@@ -21,11 +21,8 @@
 #include "app_manager_access_proxy.h"
 #include "app_state_data.h"
 #define private public
-#include "audio_manager_privacy_client.h"
-#include "camera_manager_privacy_client.h"
+#include "audio_manager_adapter.h"
 #undef private
-#include "audio_manager_privacy_proxy.h"
-#include "camera_manager_privacy_proxy.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -133,30 +130,6 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
     // code not default + state = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
         IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
-}
-
-/*
- * @tc.name: AudioRemoteDiedHandle001
- * @tc.desc: test audio remote die
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerCoverageTest, AudioRemoteDiedHandle001, TestSize.Level1)
-{
-    AudioManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    EXPECT_EQ(AudioManagerPrivacyClient::GetInstance().proxy_, nullptr);
-}
-
-/*
- * @tc.name: CameraRemoteDiedHandle001
- * @tc.desc: test camera remote die
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerCoverageTest, CameraRemoteDiedHandle001, TestSize.Level1)
-{
-    CameraManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    EXPECT_EQ(CameraManagerPrivacyClient::GetInstance().proxy_, nullptr);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -147,14 +147,16 @@ private:
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status);
 
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
+    bool ShowGlobalDialog(const std::string& permissionName);
+#endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status);
 
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
-    bool ShowGlobalDialog(const std::string& permissionName);
     void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);
     bool GetMuteStatus(const std::string& permissionName, int32_t index);
 
@@ -241,9 +243,10 @@ private:
     // record config
     int32_t recordSizeMaximum_ = 0;
     int32_t recordAgingTime_ = 0;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     std::string globalDialogBundleName_;
     std::string globalDialogAbilityName_;
-
+#endif
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> deleteEventRunner_;
     std::shared_ptr<AccessEventHandler> deleteEventHandler_;

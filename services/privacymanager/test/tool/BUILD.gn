@@ -32,7 +32,6 @@ ohos_unittest("CreateCameraWindowTest") {
   external_deps = [
     "ability_base:configuration",
     "ability_runtime:ability_context_native",
-    "ability_runtime:ability_manager",
     "ability_runtime:abilitykit_native",
     "ability_runtime:ui_extension",
     "c_utils:utils",

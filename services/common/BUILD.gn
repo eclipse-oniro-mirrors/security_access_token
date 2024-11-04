@@ -84,18 +84,6 @@ ohos_static_library("accesstoken_service_common") {
     external_deps += [ "eventhandler:libeventhandler" ]
   }
 
-  if (ability_base_enable == true) {
-    include_dirs += [ "ability_manager/include" ]
-
-    sources += [
-      "ability_manager/src/ability_manager_access_client.cpp",
-      "ability_manager/src/ability_manager_access_death_recipient.cpp",
-      "ability_manager/src/ability_manager_access_proxy.cpp",
-    ]
-
-    external_deps += [ "ability_base:want" ]
-  }
-
   if (use_musl) {
     if (musl_use_jemalloc && musl_use_jemalloc_dfx_intf) {
       cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]

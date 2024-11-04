@@ -30,7 +30,6 @@ privacy_include_dirs = [
   "${access_token_path}/services/privacymanager/include/sensitive",
   "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
   "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
-  "${access_token_path}/services/common/ability_manager/include",
   "${access_token_path}/services/common/app_manager/include",
   "${access_token_path}/services/common/config_policy/include",
   "${access_token_path}/services/common/database/include",
@@ -54,6 +53,7 @@ privacy_external_deps = [
   "ability_base:want",
   "audio_framework:audio_client",
   "c_utils:utils",
+  "camera_framework:camera_framework",
   "hilog:libhilog",
   "hisysevent:libhisysevent",
   "init:libbegetutil",
@@ -84,12 +84,8 @@ privacy_sources = [
   "${access_token_path}/services/privacymanager/src/record/on_permission_used_record_callback_proxy.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record_manager.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
+  "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_adapter.cpp",
+  "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_adapter.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
 ]
@@ -138,4 +134,12 @@ if (theme_screenlock_mgr_enable) {
 if (eventhandler_enable == true) {
   privacy_cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
   privacy_external_deps += [ "eventhandler:libeventhandler" ]
+}
+
+if (access_token_app_security_privacy_service_enable) {
+  privacy_cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
+} else {
+  privacy_include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/ability_manager" ]
+  privacy_external_deps += [ "ability_runtime:ability_manager" ]
+  privacy_sources += [ "${access_token_path}/services/privacymanager/src/sensitive/ability_manager/ability_manager_adapter.cpp" ]
 }
