@@ -106,7 +106,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
 
     uint32_t maxRemainedTime = maxTime_ > (GetCurrentTime() - iter->firstGrantTimes) ?
         (maxTime_ - (GetCurrentTime() - iter->firstGrantTimes)) : 0;
-    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? 
+    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ?
         (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
     if (cancelTimes > currRemainedTime) {
