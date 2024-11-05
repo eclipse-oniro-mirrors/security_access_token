@@ -32,7 +32,6 @@ group("accesstoken_build_module_test") {
     ]
     if (ability_base_enable == true) {
       deps += [
-        "services/common/test:unittest",
         "services/el5filekeymanager/test:unittest",
         "services/privacymanager/test:unittest",
       ]

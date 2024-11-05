@@ -59,10 +59,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int32_t ERROR = -1;
 constexpr int TWO_ARGS = 2;
-const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
-const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
-const std::string PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
-const std::string GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
+const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
+const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
+const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
+const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
 }
 
 const bool REGISTER_RESULT =
