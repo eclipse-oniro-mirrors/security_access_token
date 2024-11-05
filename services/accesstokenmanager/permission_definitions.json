@@ -5025,6 +5025,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.GET_ETHERNET_LOCAL_MAC",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
