@@ -27,9 +27,6 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMProxy"};
 static const int MAX_PERMISSION_SIZE = 1000;
-#ifdef TOKEN_SYNC_ENABLE
-static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
-#endif
 }
 
 AccessTokenManagerProxy::AccessTokenManagerProxy(const sptr<IRemoteObject>& impl)
@@ -974,38 +971,6 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     return result;
 }
 
-int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoRes)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    uint32_t size = 0;
-    int32_t result = reply.ReadInt32();
-    if (result == RET_SUCCESS) {
-        size = reply.ReadUint32();
-        if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}d) is oversize.", size);
-            return ERR_OVERSIZE;
-        }
-        for (uint32_t i = 0; i < size; i++) {
-            sptr<NativeTokenInfoForSyncParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoForSyncParcel>();
-            if (nativeResult != nullptr) {
-                nativeTokenInfoRes.emplace_back(*nativeResult);
-            }
-        }
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, size=%{public}d).", result, size);
-    return result;
-}
-
 int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
@@ -1023,36 +988,6 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
-    return result;
-}
-
-int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteString(deviceID)) {
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteUint32(nativeTokenInfoForSyncParcel.size())) {
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    for (const NativeTokenInfoForSyncParcel& parcel : nativeTokenInfoForSyncParcel) {
-        if (!data.WriteParcelable(&parcel)) {
-            return ERR_WRITE_PARCEL_FAILED;
-        }
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO, data, reply)) {
         return ERR_SERVICE_ABNORMAL;
     }
 

@@ -355,27 +355,12 @@ public:
      */
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     /**
-     * @brief Get all native token infos.
-     * @param nativeTokenInfosRes NativeTokenInfoForSync list quote
-     *        as input and query result
-     * @return error code, see access_token_error.h
-     */
-    static int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
-    /**
      * @brief Set remote hap token info with remote deviceID.
      * @param deviceID remote deviceID
      * @param hapSync hap token info to set
      * @return error code, see access_token_error.h
      */
     static int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
-    /**
-     * @brief Set remote native token info list with remote deviceID.
-     * @param deviceID remote deviceID
-     * @param nativeTokenInfoList native token info list to set
-     * @return error code, see access_token_error.h
-     */
-    static int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     /**
      * @brief Delete remote token by remote deviceID and remote tokenID.
      * @param deviceID remote deviceID

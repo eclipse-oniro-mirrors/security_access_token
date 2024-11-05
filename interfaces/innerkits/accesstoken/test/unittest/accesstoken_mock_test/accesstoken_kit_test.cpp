@@ -475,18 +475,6 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: GetAllNativeTokenInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
-}
-
-/**
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: SetRemoteHapTokenInfo with proxy is null
  * @tc.type: FUNC
@@ -497,19 +485,6 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string device = "device";
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
-}
-
-/**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: SetRemoteNativeTokenInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string device = "device";
-    std::vector<NativeTokenInfoForSync> nativeToken;
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
 }
 
 /**

@@ -923,7 +923,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
             if (it->tokenId != tokenId || it->pidList.empty() || it->pidList.find(pid) == it->pidList.end()) {
-                it++;
+                ++it;
                 continue;
             }
             it->pidList.erase(pid);
