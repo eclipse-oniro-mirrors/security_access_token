@@ -2591,16 +2591,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.SET_PRIVACY_INDICATOR",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SYSTEM",
-            "since": 12,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.EXEMPT_PRIVACY_INDICATOR",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -3461,16 +3451,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.SET_SUPER_PRIVACY",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SYSTEM",
-            "since": 12,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.GET_BLUETOOTH_PEERS_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -3481,7 +3461,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name":"ohos.permission.WRITE_GTOKEN_POLICY",
+            "name": "ohos.permission.WRITE_GTOKEN_POLICY",
             "grantMode":"system_grant",
             "availableLevel":"system_core",
             "availableType": "SYSTEM",
@@ -3491,7 +3471,7 @@
             "distributedSceneEnable":false
         },
         {
-            "name":"ohos.permission.READ_GTOKEN_POLICY",
+            "name": "ohos.permission.READ_GTOKEN_POLICY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",
@@ -4527,7 +4507,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name":"ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
+            "name": "ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",
@@ -4537,7 +4517,7 @@
             "distributedSceneEnable":false
         },
         {
-            "name":"ohos.permission.ACCESS_LOCAL_BACKUP",
+            "name": "ohos.permission.ACCESS_LOCAL_BACKUP",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",

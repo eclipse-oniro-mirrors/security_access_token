@@ -21,7 +21,6 @@
 
 #include <iremote_proxy.h>
 #include "nocopyable.h"
-#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,10 +33,9 @@ private:
 
 public:
     static CameraManagerAdapter& GetInstance();
-
-    int32_t MuteCameraPersist(PolicyType policyType, bool muteMode);
     bool IsCameraMuted();
 
+#ifdef CAMERA_FRAMEWORK_ENABLE
 private:
     void InitProxy();
 
@@ -54,8 +52,9 @@ private:
     void ReleaseProxy(const wptr<IRemoteObject>& remote);
 
     std::mutex proxyMutex_;
-    sptr<IRemoteObject> proxy_;
-    sptr<IRemoteObject::DeathRecipient> deathRecipient_;
+    sptr<IRemoteObject> proxy_ = nullptr;
+    sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

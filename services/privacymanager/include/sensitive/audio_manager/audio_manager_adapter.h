@@ -21,7 +21,6 @@
 
 #include <iremote_proxy.h>
 #include "nocopyable.h"
-#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,9 +34,9 @@ private:
 public:
     static AudioManagerAdapter& GetInstance();
 
-    int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type);
     bool GetPersistentMicMuteState();
 
+#ifdef AUDIO_FRAMEWORK_ENABLE
 private:
     void InitProxy();
 
@@ -54,8 +53,9 @@ private:
     void ReleaseProxy(const wptr<IRemoteObject>& remote);
 
     std::mutex proxyMutex_;
-    sptr<IRemoteObject> proxy_;
-    sptr<IRemoteObject::DeathRecipient> deathRecipient_;
+    sptr<IRemoteObject> proxy_ = nullptr;
+    sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security
