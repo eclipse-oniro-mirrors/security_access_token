@@ -68,9 +68,7 @@ private:
 
 #ifdef TOKEN_SYNC_ENABLE
     void GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply);
-    void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
-    void SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);

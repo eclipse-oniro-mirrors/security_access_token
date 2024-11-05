@@ -19,7 +19,6 @@
 #include "access_event_handler.h"
 #endif
 #include "device_info_manager.h"
-#include "sync_remote_native_token_command.h"
 #include "remote_command_factory.h"
 #include "token_sync_manager_service.h"
 #include "accesstoken_kit.h"

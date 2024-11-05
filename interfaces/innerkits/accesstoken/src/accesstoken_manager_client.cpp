@@ -529,24 +529,6 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
     return res;
 }
 
-int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    std::vector<NativeTokenInfoForSyncParcel> parcelList;
-    int result = proxy->GetAllNativeTokenInfo(parcelList);
-    for (const auto& nativeTokenParcel : parcelList) {
-        NativeTokenInfoForSync native = nativeTokenParcel.nativeTokenInfoForSyncParams;
-        nativeTokenInfosRes.emplace_back(native);
-    }
-
-    return result;
-}
-
 int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync)
 {
     auto proxy = GetProxy();
@@ -559,25 +541,6 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
     hapSyncParcel.hapTokenInfoForSyncParams = hapSync;
 
     int res = proxy->SetRemoteHapTokenInfo(deviceID, hapSyncParcel);
-    return res;
-}
-
-int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfoParcels;
-    for (const auto& native : nativeTokenInfoList) {
-        NativeTokenInfoForSyncParcel nativeTokenInfoForSyncParcel;
-        nativeTokenInfoForSyncParcel.nativeTokenInfoForSyncParams = native;
-        nativeTokenInfoParcels.emplace_back(nativeTokenInfoForSyncParcel);
-    }
-    PermissionStateFullParcel permStateParcel;
-    int res = proxy->SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoParcels);
     return res;
 }
 

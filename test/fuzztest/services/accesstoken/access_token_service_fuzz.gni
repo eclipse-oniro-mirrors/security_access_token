@@ -112,7 +112,6 @@ token_sync_sources = [
   "${access_token_path}/services/tokensyncmanager/src/command/base_remote_command.cpp",
   "${access_token_path}/services/tokensyncmanager/src/command/delete_remote_token_command.cpp",
   "${access_token_path}/services/tokensyncmanager/src/command/sync_remote_hap_token_command.cpp",
-  "${access_token_path}/services/tokensyncmanager/src/command/sync_remote_native_token_command.cpp",
   "${access_token_path}/services/tokensyncmanager/src/command/update_remote_hap_token_command.cpp",
   "${access_token_path}/services/tokensyncmanager/src/common/constant.cpp",
   "${access_token_path}/services/tokensyncmanager/src/device/device_info_manager.cpp",

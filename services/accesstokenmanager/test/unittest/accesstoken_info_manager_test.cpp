@@ -1126,42 +1126,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level
 }
 
 /**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::SetRemoteNativeTokenInfo function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string deviceID;
-    std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
-
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
-        nativeTokenInfoList)); // deviceID invalid
-
-    deviceID = "dev-001";
-    NativeTokenInfo info;
-    info.apl = ATokenAplEnum::APL_NORMAL;
-    info.ver = DEFAULT_TOKEN_VERSION;
-    info.processName = "what's this";
-    info.dcap = {"what's this"};
-    info.tokenID = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    NativeTokenInfoForSync sync;
-    sync.baseInfo = info;
-    nativeTokenInfoList.emplace_back(sync);
-
-    AccessTokenRemoteDevice device;
-    device.DeviceID_ = deviceID;
-    // 672137215 is remoteID 123 is mapID
-    device.MappingTokenIDPairMap_.insert(std::pair<AccessTokenID, AccessTokenID>(672137215, 123));
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
-        nativeTokenInfoList)); // has maped
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
-}
-
-/**
  * @tc.name: DeleteRemoteToken002
  * @tc.desc: AccessTokenInfoManager::DeleteRemoteToken function test
  * @tc.type: FUNC
