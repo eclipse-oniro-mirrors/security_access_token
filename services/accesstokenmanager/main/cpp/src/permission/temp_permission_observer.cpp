@@ -444,7 +444,7 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
         return;
     }
     for (const auto& permissionState : tmpList) {
-        if (permissionState.grantFlags[0] == PERMISSION_ALLOW_THIS_TIME) {
+        if (permissionState.grantFlags[0] & PERMISSION_ALLOW_THIS_TIME) {
             if (PermissionManager::GetInstance().RevokePermission(
                 tokenID, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME) != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
@@ -462,7 +462,7 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
         std::vector<PermissionStateFull> tmpList;
         GetPermissionStateFull(iter->first, tmpList);
         for (const auto& permissionState : tmpList) {
-            if (permissionState.grantFlags[0] == PERMISSION_ALLOW_THIS_TIME) {
+            if (permissionState.grantFlags[0] & PERMISSION_ALLOW_THIS_TIME) {
                 PermissionManager::GetInstance().RevokePermission(
                     iter->first, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME);
             }

@@ -131,7 +131,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
             "ERROR_REASON", "permission grant status error");
         return ERR_PARAM_INVALID;
     }
-    if (grantFlag == PERMISSION_ALLOW_THIS_TIME) {
+    if (grantFlag & PERMISSION_ALLOW_THIS_TIME) {
         grantStatus = PERMISSION_DENIED;
     }
     outPermissionState.grantStatus.push_back(grantStatus);
