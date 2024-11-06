@@ -21,6 +21,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "app_manager_access_client.h"
 #include "permission_manager.h"
 
 namespace OHOS {
@@ -47,6 +48,13 @@ ShortGrantManager& ShortGrantManager::GetInstance()
     return *instance;
 }
 
+void ShortPermAppManagerDeathCallback::NotifyAppManagerDeath()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "ShortGrantManager AppManagerDeath called");
+
+    ShortGrantManager::GetInstance().OnAppMgrRemoteDiedHandle();
+}
+
 void ShortPermAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
@@ -55,6 +63,30 @@ void ShortPermAppStateObserver::OnAppStopped(const AppStateData &appStateData)
         
         ShortGrantManager::GetInstance().ClearShortPermissionByTokenID(tokenID);
     }
+}
+
+void ShortGrantManager::OnAppMgrRemoteDiedHandle()
+{
+    std::unique_lock<std::mutex> lck(shortGrantDataMutex_);
+    auto item = shortGrantData_.begin();
+    while (item != shortGrantData_.end()) {
+        if (PermissionManager::GetInstance().UpdatePermission(
+            item->tokenID, item->permissionName, false, PERMISSION_USER_FIXED, false) != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
+                item->tokenID, item->permissionName.c_str());
+        }
+        std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(item->tokenID) + item->permissionName;
+        ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
+        ++item;
+    }
+    shortGrantData_.clear();
+    ACCESSTOKEN_LOG_INFO(LABEL, "shortGrantData_ clear!");
+    appStopCallBack_ = nullptr;
+}
+
+ShortGrantManager::~ShortGrantManager()
+{
+    UnRegisterAppStopListener();
 }
 
 void ShortGrantManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
@@ -111,6 +143,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         }
         shortGrantData_.emplace_back(data);
         ShortGrantManager::GetInstance().ScheduleRevokeTask(tokenID, permission, taskName, onceTime);
+        RegisterAppStopListener();
         return RET_SUCCESS;
     }
 
@@ -129,6 +162,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         }
         ShortGrantManager::GetInstance().ScheduleRevokeTask(iter->tokenID, iter->permissionName, taskName, cancelTimes);
     }
+    RegisterAppStopListener();
     return RET_SUCCESS;
 }
 
@@ -147,6 +181,9 @@ void ShortGrantManager::ClearShortPermissionData(AccessTokenID tokenID, const st
             }
             // clear data
             shortGrantData_.erase(item);
+            if (shortGrantData_.empty()) {
+                UnRegisterAppStopListener();
+            }
             break;
         } else {
             ++item;
@@ -173,6 +210,9 @@ void ShortGrantManager::ClearShortPermissionByTokenID(AccessTokenID tokenID)
         } else {
             ++item;
         }
+    }
+    if (shortGrantData_.empty()) {
+        UnRegisterAppStopListener();
     }
 }
 
@@ -213,6 +253,47 @@ bool ShortGrantManager::IsShortGrantPermission(const std::string& permissionName
         return false;
     }
     return true;
+}
+
+void ShortGrantManager::RegisterAppStopListener()
+{
+    {
+        std::lock_guard<std::mutex> lock(appManagerDeathMutex_);
+        if (appManagerDeathCallback_ == nullptr) {
+            appManagerDeathCallback_ = std::make_shared<ShortPermAppManagerDeathCallback>();
+            if (appManagerDeathCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appManagerDeathCallback failed.");
+                return;
+            }
+            AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(appStopCallbackMutex_);
+        if (appStopCallBack_ == nullptr) {
+            appStopCallBack_ = new (std::nothrow) ShortPermAppStateObserver();
+            if (appStopCallBack_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appStopCallBack failed.");
+                return;
+            }
+            int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStopCallBack_);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "Register appStopCallBack %{public}d.", ret);
+            }
+        }
+    }
+}
+
+void ShortGrantManager::UnRegisterAppStopListener()
+{
+    std::lock_guard<std::mutex> lock(appStopCallbackMutex_);
+    if (appStopCallBack_ != nullptr) {
+        int32_t ret = AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStopCallBack_);
+        if (ret != ERR_OK) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStopCallback %{public}d.", ret);
+        }
+        appStopCallBack_= nullptr;
+    }
 }
 
 ShortGrantManager::ShortGrantManager() : maxTime_(DEFAULT_MAX_TIME_MILLISECONDS)
