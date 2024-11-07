@@ -20,7 +20,7 @@
 #include "privacy_error.h"
 #include "privacy_manager_proxy.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "sec_comp_enhance_data_parcel.h"
+#include "sec_comp_enhance_data.h"
 #endif
 
 namespace OHOS {
@@ -65,9 +65,7 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    AddPermParamInfoParcel infoParcel;
-    infoParcel.info = info;
-    return proxy->AddPermissionUsedRecord(infoParcel, asyncMode);
+    return proxy->AddPermissionUsedRecord(info, asyncMode);
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(
@@ -169,10 +167,8 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    PermissionUsedRequestParcel requestParcel;
     PermissionUsedResultParcel resultParcel;
-    requestParcel.request = request;
-    int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, resultParcel);
+    int32_t ret = proxy->GetPermissionUsedRecords(request, resultParcel);
     result = resultParcel.result;
     return ret;
 }
@@ -186,9 +182,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    PermissionUsedRequestParcel requestParcel;
-    requestParcel.request = request;
-    return proxy->GetPermissionUsedRecords(requestParcel, callback);
+    return proxy->GetPermissionUsedRecords(request, callback);
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
@@ -289,9 +283,7 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    SecCompEnhanceDataParcel registerParcel;
-    registerParcel.enhanceData = enhance;
-    return proxy->RegisterSecCompEnhance(registerParcel);
+    return proxy->RegisterSecCompEnhance(enhance);
 }
 
 int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
@@ -311,12 +303,10 @@ int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData&
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    SecCompEnhanceDataParcel parcel;
-    int32_t res = proxy->GetSecCompEnhance(pid, parcel);
+    int32_t res = proxy->GetSecCompEnhance(pid, enhance);
     if (res != RET_SUCCESS) {
         return res;
     }
-    enhance = parcel.enhanceData;
     return RET_SUCCESS;
 }
 
@@ -328,15 +318,7 @@ int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundle
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    std::vector<SecCompEnhanceDataParcel> parcelList;
-    int32_t res = proxy->GetSpecialSecCompEnhance(bundleName, parcelList);
-    if (res != RET_SUCCESS) {
-        return res;
-    }
-
-    std::transform(parcelList.begin(), parcelList.end(), std::back_inserter(enhanceList),
-        [](SecCompEnhanceDataParcel pair) { return pair.enhanceData; });
-    return RET_SUCCESS;
+    return proxy->GetSpecialSecCompEnhance(bundleName, enhanceList);
 }
 #endif
 

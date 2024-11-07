@@ -27,7 +27,6 @@
 #include "i_privacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
-#include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
 #include "securec.h"
 #include "token_sync_kit_interface.h"
@@ -70,7 +69,6 @@ public:
 
         SecCompEnhanceData secData;
         secData.callback = callback->AsObject();
-        secData.pid = fuzzData.GetData<int32_t>();
         secData.token = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
         secData.challenge = fuzzData.GetData<uint64_t>();
         secData.sessionId = fuzzData.GetData<uint32_t>();
@@ -82,17 +80,16 @@ public:
             return false;
         }
 
-        SecCompEnhanceDataParcel enhance;
-        enhance.enhanceData = secData;
-
         MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteParcelable(&enhance)) {
+        ;
+        if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor()) || !datas.WriteUint32(secData.token) ||
+            !datas.WriteUint64(secData.challenge) || !datas.WriteUint32(secData.sessionId) ||
+            !datas.WriteUint32(secData.seqNum) || !datas.WriteBuffer(secData.key, AES_KEY_STORAGE_LEN) ||
+            !datas.WriteRemoteObject(secData.callback)) {
             return false;
         }
 
         uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE);
-
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);

@@ -101,14 +101,13 @@ void PrivacySecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
 void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
-    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
-        if (iter->pid == pid) {
-            secCompEnhanceData_.erase(iter);
-            ACCESSTOKEN_LOG_INFO(LABEL, "Remove pid %{public}d data.", pid);
-            return;
-        }
+    auto iter = secCompEnhanceData_.find(pid);
+    if (iter == secCompEnhanceData_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not found pid %{public}d data.", pid);
+        return;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Not found pid %{public}d data.", pid);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove pid %{public}d data.", pid);
+    secCompEnhanceData_.erase(iter);
     return;
 }
 
@@ -117,22 +116,11 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
     int pid = IPCSkeleton::GetCallingPid();
-    if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
-        [pid](const auto& e) { return e.pid == pid; })) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Register sec comp enhance exist, pid %{public}d.", pid);
-            return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
-    }
-    SecCompEnhanceData enhance;
-    enhance.callback = enhanceData.callback;
-    enhance.pid = pid;
-    enhance.token = IPCSkeleton::GetCallingTokenID();
-    enhance.challenge = enhanceData.challenge;
-    enhance.sessionId = enhanceData.sessionId;
-    enhance.seqNum = enhanceData.seqNum;
-    if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
+    if (secCompEnhanceData_.find(pid) != secCompEnhanceData_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Register sec comp enhance exist, pid %{public}d.", pid);
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     }
-    secCompEnhanceData_.emplace_back(enhance);
+    secCompEnhanceData_[pid] = enhanceData;
     ACCESSTOKEN_LOG_INFO(LABEL, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;
@@ -142,27 +130,27 @@ int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, uint32_t s
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
-    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
-        if (iter->pid == pid) {
-            iter->seqNum = seqNum;
-            ACCESSTOKEN_LOG_INFO(LABEL, "Update pid=%{public}d data successful.", pid);
-            return RET_SUCCESS;
-        }
+    auto iter = secCompEnhanceData_.find(pid);
+    if (iter == secCompEnhanceData_.end()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "pid %{public}d is noexist.", pid);
+        return ERR_PARAM_INVALID;
     }
-    return ERR_PARAM_INVALID;
+    iter->second.seqNum = seqNum;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Update pid=%{public}d data successful.", pid);
+    return RET_SUCCESS;
 }
 
 int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
-    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
-        if (iter->pid == pid) {
-            enhanceData = *iter;
-            ACCESSTOKEN_LOG_INFO(LABEL, "Get pid %{public}d data.", pid);
-            return RET_SUCCESS;
-        }
+    auto iter = secCompEnhanceData_.find(pid);
+    if (iter == secCompEnhanceData_.end()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "pid %{public}d is noexist.", pid);
+        return ERR_PARAM_INVALID;
     }
+    enhanceData = iter->second;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get pid %{public}d data.", pid);
     return ERR_PARAM_INVALID;
 }
 
@@ -170,11 +158,11 @@ int32_t PrivacySecCompEnhanceAgent::GetSpecialSecCompEnhance(const std::string& 
     std::vector<SecCompEnhanceData>& enhanceList)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
-    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); iter++) {
+    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         HapTokenInfo info;
-        if (AccessTokenKit::GetHapTokenInfo(iter->token, info) == AccessTokenKitRet::RET_SUCCESS) {
+        if (AccessTokenKit::GetHapTokenInfo(iter->second.token, info) == AccessTokenKitRet::RET_SUCCESS) {
             if (bundleName == info.bundleName) {
-                enhanceList.emplace_back(*iter);
+                enhanceList.emplace_back(iter->second);
             }
         }
     }
