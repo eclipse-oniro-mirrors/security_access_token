@@ -111,9 +111,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
-      "audio_framework:audio_client",
       "c_utils:utils",
-      "camera_framework:camera_framework",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "init:libbegetutil",
@@ -122,6 +120,16 @@ if (is_standard_system && ability_base_enable == true) {
       "samgr:samgr_proxy",
       "sqlite:sqlite",
     ]
+
+    if (audio_framework_enable) {
+      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+      external_deps += [ "audio_framework:audio_client" ]
+    }
+
+    if (camera_framework_enable) {
+      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+      external_deps += [ "camera_framework:camera_framework" ]
+    }
 
     if (ohos_indep_compiler_enable) {
       external_deps += [

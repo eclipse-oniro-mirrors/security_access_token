@@ -54,8 +54,8 @@ private:
     void ReleaseProxy(const wptr<IRemoteObject>& remote);
 
     std::mutex proxyMutex_;
-    sptr<IRemoteObject> proxy_;
-    sptr<IRemoteObject::DeathRecipient> deathRecipient_;
+    sptr<IRemoteObject> proxy_ = nullptr;
+    sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

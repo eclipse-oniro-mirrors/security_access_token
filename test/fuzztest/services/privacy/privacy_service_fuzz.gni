@@ -51,9 +51,7 @@ privacy_deps = [
 
 privacy_external_deps = [
   "ability_base:want",
-  "audio_framework:audio_client",
   "c_utils:utils",
-  "camera_framework:camera_framework",
   "hilog:libhilog",
   "hisysevent:libhisysevent",
   "init:libbegetutil",
@@ -142,4 +140,14 @@ if (access_token_app_security_privacy_service_enable) {
   privacy_include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/ability_manager" ]
   privacy_external_deps += [ "ability_runtime:ability_manager" ]
   privacy_sources += [ "${access_token_path}/services/privacymanager/src/sensitive/ability_manager/ability_manager_adapter.cpp" ]
+}
+
+if (audio_framework_enable) {
+  privacy_cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+  privacy_external_deps += [ "audio_framework:audio_client" ]
+}
+
+if (camera_framework_enable) {
+  privacy_cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+  privacy_external_deps += [ "camera_framework:camera_framework" ]
 }

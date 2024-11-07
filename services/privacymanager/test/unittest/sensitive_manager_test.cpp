@@ -27,6 +27,7 @@
 #include "audio_policy_ipc_interface_code.h"
 #endif
 #include "camera_manager_adapter.h"
+#include "permission_record_manager.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -128,53 +129,6 @@ void SensitiveManagerServiceTest::TearDown()
                                                           g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-}
-
-/*
- * @tc.name: SetMicroMuteTest001
- * @tc.desc: test set/get mute staus of microphone
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerServiceTest, SetMicroMuteTest001, TestSize.Level1)
-{
-    bool initMute = AudioManagerAdapter::GetInstance().GetPersistentMicMuteState();
-
-    AudioManagerAdapter::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
-    EXPECT_EQ(false, AudioManagerAdapter::GetInstance().GetPersistentMicMuteState());
-
-    AudioManagerAdapter::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
-    EXPECT_EQ(true, AudioManagerAdapter::GetInstance().GetPersistentMicMuteState());
-
-    AudioManagerAdapter::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
-    EXPECT_EQ(false, AudioManagerAdapter::GetInstance().GetPersistentMicMuteState());
-
-    AudioManagerAdapter::GetInstance().SetMicrophoneMutePersistent(initMute, PolicyType::PRIVACY);
-}
-
-/*
- * @tc.name: SetCameraMuteTest001
- * @tc.desc: test set/get mute staus of camera
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerServiceTest, SetCameraMuteTest001, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-
-    bool initMute = CameraManagerAdapter::GetInstance().IsCameraMuted();
-
-    CameraManagerAdapter::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, false);
-    EXPECT_EQ(false, CameraManagerAdapter::GetInstance().IsCameraMuted());
-
-    CameraManagerAdapter::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, true);
-    EXPECT_EQ(true, CameraManagerAdapter::GetInstance().IsCameraMuted());
-
-    CameraManagerAdapter::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, false);
-    EXPECT_EQ(false, CameraManagerAdapter::GetInstance().IsCameraMuted());
-
-    CameraManagerAdapter::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, initMute);
 }
 
 /*

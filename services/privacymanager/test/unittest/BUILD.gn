@@ -74,7 +74,7 @@ if (is_standard_system && ability_base_enable == true) {
       "sensitive_manager_test.cpp",
     ]
 
-    cflags_cc = []
+    cflags_cc = [ "-DHILOG_ENABLE" ]
 
     configs = [ "${access_token_path}/config:coverage_flags" ]
 
@@ -92,9 +92,7 @@ if (is_standard_system && ability_base_enable == true) {
     external_deps = [
       "ability_base:want",
       "access_token:libaccesstoken_sdk",
-      "audio_framework:audio_client",
       "c_utils:utils",
-      "camera_framework:camera_framework",
       "googletest:gtest_main",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
@@ -104,6 +102,17 @@ if (is_standard_system && ability_base_enable == true) {
       "samgr:samgr_proxy",
       "sqlite:sqlite",
     ]
+
+    if (audio_framework_enable) {
+      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+      external_deps += [ "audio_framework:audio_client" ]
+    }
+
+    if (camera_framework_enable) {
+      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+      external_deps += [ "camera_framework:camera_framework" ]
+    }
+
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
       external_deps += [ "eventhandler:libeventhandler" ]
@@ -116,13 +125,6 @@ if (is_standard_system && ability_base_enable == true) {
     if (theme_screenlock_mgr_enable) {
       cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
       external_deps += [ "screenlock_mgr:screenlock_client" ]
-    }
-
-    if (audio_framework_enable) {
-      cflags_cc += [
-        "-DHILOG_ENABLE",
-        "-DFEATURE_DTMF_TONE",
-      ]
     }
 
     if (window_manager_enable && access_token_camera_float_window_enable) {

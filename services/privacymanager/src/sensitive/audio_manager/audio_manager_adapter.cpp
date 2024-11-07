@@ -14,9 +14,10 @@
  */
 
 #include "audio_manager_adapter.h"
-#include "access_token_error.h"
 #include "accesstoken_log.h"
+#ifdef AUDIO_FRAMEWORK_ENABLE
 #include "audio_policy_ipc_interface_code.h"
+#endif
 #include <iremote_proxy.h>
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -28,8 +29,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AudioManagerAdapter"
 };
-
-const std::u16string AUDIO_MGR_DESCRIPTOR = u"IAudioPolicy";
 }
 
 AudioManagerAdapter& AudioManagerAdapter::GetInstance()
@@ -44,66 +43,39 @@ AudioManagerAdapter::AudioManagerAdapter()
 AudioManagerAdapter::~AudioManagerAdapter()
 {}
 
-int32_t AudioManagerAdapter::SetMicrophoneMutePersistent(const bool isMute, const PolicyType type)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    if (!data.WriteInterfaceToken(AUDIO_MGR_DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteBool(isMute)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isMute.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteInt32(static_cast<int32_t>(type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write type.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    int32_t error = proxy->SendRequest(
-        static_cast<uint32_t>(AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE_PERSISTENT),
-        data, reply, option);
-    if (error != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
-        return error;
-    }
-    return reply.ReadInt32();
-}
-
 bool AudioManagerAdapter::GetPersistentMicMuteState()
 {
+#ifndef AUDIO_FRAMEWORK_ENABLE
+    ACCESSTOKEN_LOG_INFO(LABEL, "audio framework is not support.");
+    return false;
+#else
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+        return false;
     }
 
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
+    std::u16string AUDIO_MGR_DESCRIPTOR = u"IAudioPolicy";
     if (!data.WriteInterfaceToken(AUDIO_MGR_DESCRIPTOR)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+        return false;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AudioStandard::AudioPolicyInterfaceCode::GET_MICROPHONE_MUTE_PERSISTENT),
         data, reply, option);
     if (error != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
-        return error;
+        return false;
     }
     return reply.ReadBool();
+#endif
 }
 
+#ifdef AUDIO_FRAMEWORK_ENABLE
 void AudioManagerAdapter::InitProxy()
 {
     if (proxy_ != nullptr) {
@@ -156,6 +128,7 @@ void AudioManagerAdapter::AudioManagerDeathRecipient::OnRemoteDied(const wptr<IR
     ACCESSTOKEN_LOG_ERROR(LABEL, "AudioManagerDeathRecipient handle remote died.");
     AudioManagerAdapter::GetInstance().ReleaseProxy(remote);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

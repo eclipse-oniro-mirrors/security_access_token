@@ -14,9 +14,10 @@
  */
 
 #include "camera_manager_adapter.h"
-#include "access_token_error.h"
 #include "accesstoken_log.h"
+#ifdef CAMERA_FRAMEWORK_ENABLE
 #include "camera_service_ipc_interface_code.h"
+#endif
 #include <iremote_proxy.h>
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -28,7 +29,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CameraManagerAdapter"
 };
-const std::u16string CAMERA_MGR_DESCRIPTOR = u"ICameraService";
 }
 
 CameraManagerAdapter& CameraManagerAdapter::GetInstance()
@@ -43,66 +43,39 @@ CameraManagerAdapter::CameraManagerAdapter()
 CameraManagerAdapter::~CameraManagerAdapter()
 {}
 
-int32_t CameraManagerAdapter::MuteCameraPersist(PolicyType policyType, bool muteMode)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    if (!data.WriteInterfaceToken(CAMERA_MGR_DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteInt32(static_cast<int32_t>(policyType))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write policyType.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteBool(muteMode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write muteMode.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
-    }
-    int32_t error = proxy->SendRequest(
-        static_cast<uint32_t>(CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST),
-        data, reply, option);
-    if (error != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
-        return error;
-    }
-    return reply.ReadInt32();
-}
-
 bool CameraManagerAdapter::IsCameraMuted()
 {
+#ifndef CAMERA_FRAMEWORK_ENABLE
+    ACCESSTOKEN_LOG_INFO(LABEL, "camera framework is not support.");
+    return false;
+#else
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+        return false;
     }
 
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
+    std::u16string CAMERA_MGR_DESCRIPTOR = u"ICameraService";
     if (!data.WriteInterfaceToken(CAMERA_MGR_DESCRIPTOR)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+        return false;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
         data, reply, option);
     if (error != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
-        return error;
+        return false;
     }
     return reply.ReadBool();
+#endif
 }
 
+#ifdef CAMERA_FRAMEWORK_ENABLE
 void CameraManagerAdapter::InitProxy()
 {
     if (proxy_ != nullptr) {
@@ -155,6 +128,7 @@ void CameraManagerAdapter::CameraManagerDeathRecipient::OnRemoteDied(const wptr<
     ACCESSTOKEN_LOG_ERROR(LABEL, "CameraManagerDeathRecipient handle remote died.");
     CameraManagerAdapter::GetInstance().ReleaseProxy(remote);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
