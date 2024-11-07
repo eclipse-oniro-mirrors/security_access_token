@@ -645,23 +645,8 @@ bool AccessTokenManagerService::Initialize()
     NativeTokenReceptor::GetInstance().Init();
 
 #ifdef EVENTHANDLER_ENABLE
-    eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (!eventRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
-        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create temp eventRunner error.", ERROR);
-        return false;
-    }
-    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
-    TempPermissionObserver::GetInstance().InitEventHandler(eventHandler_);
-
-    shortGrantEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (!shortGrantEventRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner_.");
-        ReportSysEventServiceStartError(EVENTRUNNER_CREATE_ERROR, "Create short grant eventRunner error.", ERROR);
-        return false;
-    }
-    shortGrantEventHandler_ = std::make_shared<AccessEventHandler>(shortGrantEventRunner_);
-    ShortGrantManager::GetInstance().InitEventHandler(shortGrantEventHandler_);
+    TempPermissionObserver::GetInstance().InitEventHandler();
+    ShortGrantManager::GetInstance().InitEventHandler();
 #endif
 
 #ifdef SUPPORT_SANDBOX_APP
