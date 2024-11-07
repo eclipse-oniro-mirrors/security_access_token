@@ -1266,11 +1266,6 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
         return false;
     }
 
-    if (GetMuteStatus(permissionName, EDM)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
-        return false;
-    }
-
     if (permissionName == CAMERA_PERMISSION_NAME) {
         return IsAllowedUsingCamera(tokenId);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
