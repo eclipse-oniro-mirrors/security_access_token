@@ -5317,6 +5317,26 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_APP_KEEP_ALIVE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_APP_KEEP_ALIVE_INTERNAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
