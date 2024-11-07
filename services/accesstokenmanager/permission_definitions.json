@@ -1941,6 +1941,36 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MANAGE_RECOVERY_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.UTILIZE_RECOVERY_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.GET_RECOVERY_KEY_BRIEF_INFORMATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.securityguard.SET_MODEL_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
