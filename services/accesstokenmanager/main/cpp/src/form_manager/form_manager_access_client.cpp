@@ -110,7 +110,7 @@ void FormManagerAccessClient::InitProxy()
     }
 
     proxy_ = new FormManagerAccessProxy(formManagerSa);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null.");
     }
 }
@@ -124,7 +124,7 @@ void FormManagerAccessClient::OnRemoteDiedHandle()
 sptr<IFormMgr> FormManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;
