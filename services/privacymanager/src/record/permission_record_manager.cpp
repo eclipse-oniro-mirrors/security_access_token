@@ -124,7 +124,7 @@ void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData
 
 void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.state);
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
