@@ -2073,13 +2073,15 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level1)
     sleep(11);
     EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_PASTEBOARD"));
     // remove background tast
     backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
     sleep(11);
     EXPECT_EQ(PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_PASTEBOARD"));
     // remove hap
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

@@ -84,7 +84,6 @@ void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateD
             ACCESSTOKEN_LOG_WARN(LABEL, "%{public}d:tokenID has form, don't delayRevokePermission!", tokenID);
             return;
         }
-        TempPermissionObserver::GetInstance().RevokeTempPermission(tokenID, "ohos.permission.READ_PASTEBOARD");
         if (list[CONTINUOUS_TASK_FLAG]) {
             ACCESSTOKEN_LOG_WARN(LABEL, "%{public}d:tokenID has continuoustask, don't delayRevokePermission!", tokenID);
             return;
@@ -133,7 +132,6 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
                 ACCESSTOKEN_LOG_WARN(LABEL, "%{public}d:tokenID in foreground don't delayRevokePermission!", tokenID);
                 continue;
             }
-            TempPermissionObserver::GetInstance().RevokeTempPermission(tokenID, "ohos.permission.READ_PASTEBOARD");
             if (list[CONTINUOUS_TASK_FLAG]) {
                 ACCESSTOKEN_LOG_WARN(LABEL, "%{public}d:tokenID has task, don't delayRevokePermission!", tokenID);
                 continue;
