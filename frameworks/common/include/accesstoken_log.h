@@ -57,6 +57,14 @@ static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
             return; \
         } \
     } while (0)
+
+#define IF_FALSE_RETURN_VAL_LOG(label, cond, ret, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            ACCESSTOKEN_LOG_ERROR(label, fmt, ##__VA_ARGS__); \
+            return ret; \
+        } \
+    } while (0)
 #else
 
 #include <stdarg.h>
@@ -75,14 +83,6 @@ static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
     do { \
         if (!(cond)) { \
             ACCESSTOKEN_LOG_ERROR(fmt, ##__VA_ARGS__); \
-        } \
-    } while (0)
-
-#define IF_FALSE_RETURN_LOG(cond, fmt, ...) \
-    do { \
-        if (!(cond)) { \
-            ACCESSTOKEN_LOG_ERROR(fmt, ##__VA_ARGS__); \
-            return; \
         } \
     } while (0)
 #endif // HILOG_ENABLE

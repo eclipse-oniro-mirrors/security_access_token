@@ -25,7 +25,6 @@
 #include "i_privacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
-#include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -60,20 +59,26 @@ namespace OHOS {
             .endTimeMillis = fuzzData.GetData<int64_t>(),
             .flag = fuzzData.GenerateRandomEnmu<PermissionUsageFlag>(FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
-        PermissionUsedRequestParcel requestParcel;
-        requestParcel.request = request;
-
         MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteParcelable(&requestParcel)) {
+        if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor()) || !datas.WriteUint32(request.tokenId) ||
+            !datas.WriteString(request.deviceId) || !datas.WriteString(request.bundleName) ||
+            !datas.WriteUint32(request.permissionList.size())) {
             return false;
         }
-
+        for (const auto& permission : request.permissionList) {
+            if (!datas.WriteString(permission)) {
+                return false;
+            }
+        }
+        if (!datas.WriteInt64(request.beginTimeMillis) || !datas.WriteInt64(request.endTimeMillis) ||
+            !datas.WriteInt32(request.flag) || !datas.WriteString(request.bundleName) ||
+            !datas.WriteUint32(request.permissionList.size())) {
+            return false;
+        }
         sptr<TestCallBack> callback(new TestCallBack());
         if (!datas.WriteRemoteObject(callback->AsObject())) {
             return false;
         }
-
         uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
 
         MessageParcel reply;

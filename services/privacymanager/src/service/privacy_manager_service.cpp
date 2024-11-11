@@ -92,13 +92,10 @@ void PrivacyManagerService::OnStop()
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
-int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
-    bool asyncMode)
+int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d, perm: %{public}s, succCnt: %{public}d,"
-        " failCnt: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
-        infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
-    AddPermParamInfo info = infoParcel.info;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d, perm: %{public}s, succCnt: %{public}d, failCnt: %{public}d,"
+        " type: %{public}d", info.tokenId, info.permissionName.c_str(), info.successCount, info.failCount, info.type);
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
@@ -134,28 +131,28 @@ int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
-    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
+    const PermissionUsedRequest& request, PermissionUsedResultParcel& result)
 {
     std::string permissionList;
-    for (const auto& perm : request.request.permissionList) {
+    for (const auto& perm : request.permissionList) {
         permissionList.append(perm);
         permissionList.append(" ");
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, timestamp: [%{public}" PRId64 "-%{public}" PRId64
-        "], flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
-        request.request.endTimeMillis, request.request.flag, permissionList.c_str());
+        "], flag: %{public}d, perm: %{public}s", request.tokenId, request.beginTimeMillis,
+        request.endTimeMillis, request.flag, permissionList.c_str());
 
     PermissionUsedResult permissionRecord;
-    int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
+    int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, permissionRecord);
     result.result = permissionRecord;
     return ret;
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
-    const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+    const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d", request.request.tokenId);
-    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d", request.tokenId);
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request, callback);
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
@@ -166,10 +163,9 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Pid: %{public}d", enhanceParcel.enhanceData.pid);
-    return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
+    return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhance);
 }
 
 int32_t PrivacyManagerService::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
@@ -177,30 +173,20 @@ int32_t PrivacyManagerService::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum
     return PrivacySecCompEnhanceAgent::GetInstance().UpdateSecCompEnhance(pid, seqNum);
 }
 
-int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
+int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
-    SecCompEnhanceData enhanceData;
-    int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
+    int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhance);
     if (res != RET_SUCCESS) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Pid: %{public}d get enhance failed ", pid);
         return res;
     }
-
-    enhanceParcel.enhanceData = enhanceData;
     return RET_SUCCESS;
 }
 
 int32_t PrivacyManagerService::GetSpecialSecCompEnhance(const std::string& bundleName,
-    std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+    std::vector<SecCompEnhanceData>& enhanceList)
 {
-    std::vector<SecCompEnhanceData> enhanceList;
-    PrivacySecCompEnhanceAgent::GetInstance().GetSpecialSecCompEnhance(bundleName, enhanceList);
-    for (const auto& enhance : enhanceList) {
-        SecCompEnhanceDataParcel parcel;
-        parcel.enhanceData = enhance;
-        enhanceParcelList.emplace_back(parcel);
-    }
-    return RET_SUCCESS;
+    return PrivacySecCompEnhanceAgent::GetInstance().GetSpecialSecCompEnhance(bundleName, enhanceList);
 }
 #endif
 
