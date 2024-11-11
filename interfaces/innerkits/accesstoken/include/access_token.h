@@ -114,6 +114,7 @@ typedef enum TypeATokenAplEnum {
     APL_NORMAL = 1,
     APL_SYSTEM_BASIC = 2,
     APL_SYSTEM_CORE = 3,
+    APL_ENUM_BUTT,
 } ATokenAplEnum;
 
 /**
