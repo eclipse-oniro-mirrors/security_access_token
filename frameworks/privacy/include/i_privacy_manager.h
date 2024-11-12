@@ -19,18 +19,18 @@
 #include <string>
 
 #include "access_token.h"
-#include "add_perm_param_info.h"
+#include "add_perm_param_info_parcel.h"
 #include "errors.h"
 #include "iremote_broker.h"
 
 #include "on_permission_used_record_callback.h"
 #include "privacy_service_ipc_interface_code.h"
-#include "permission_used_request.h"
+#include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
 #include "permission_used_type_info_parcel.h"
 #include "privacy_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "sec_comp_enhance_data.h"
+#include "sec_comp_enhance_data_parcel.h"
 #endif
 
 /* SAID:3505 */
@@ -43,16 +43,16 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
-    virtual int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false) = 0;
+    virtual int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) = 0;
     virtual int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) = 0;
     virtual int32_t GetPermissionUsedRecords(
-        const PermissionUsedRequest& request, PermissionUsedResultParcel& result) = 0;
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) = 0;
     virtual int32_t GetPermissionUsedRecords(
-        const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
+        const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
     virtual int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
@@ -60,11 +60,11 @@ public:
     virtual int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) = 0;
     virtual int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) = 0;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    virtual int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance) = 0;
+    virtual int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) = 0;
     virtual int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) = 0;
-    virtual int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance) = 0;
+    virtual int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) = 0;
     virtual int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
-        std::vector<SecCompEnhanceData>& enhanceList) = 0;
+        std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) = 0;
 #endif
     virtual int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) = 0;

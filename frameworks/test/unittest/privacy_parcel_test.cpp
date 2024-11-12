@@ -22,6 +22,7 @@
 #include "parcel_utils.h"
 #include "perm_active_response_parcel.h"
 #include "permission_used_record_parcel.h"
+#include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
 #include "used_record_detail_parcel.h"
 
@@ -241,6 +242,47 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: PermissionUsedRequestParcel001
+ * @tc.desc: Verify the PermissionUsedRequestParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RUP1
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedRequestParcel001, TestSize.Level1)
+{
+    PermissionUsedRequestParcel permissionUsedRequestParcel;
+
+    permissionUsedRequestParcel.request = {
+        .tokenId = 100,
+        .isRemote = false,
+        .deviceId = "you guess",
+        .bundleName = "com.ohos.permissionmanager",
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+        .flag = FLAG_PERMISSION_USAGE_SUMMARY,
+    };
+    permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.CAMERA");
+    permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.LOCATION");
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedRequestParcel.Marshalling(parcel));
+
+    std::shared_ptr<PermissionUsedRequestParcel> readedData(PermissionUsedRequestParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    EXPECT_EQ(permissionUsedRequestParcel.request.tokenId, readedData->request.tokenId);
+    EXPECT_EQ(permissionUsedRequestParcel.request.isRemote, readedData->request.isRemote);
+    EXPECT_EQ(permissionUsedRequestParcel.request.deviceId, readedData->request.deviceId);
+    EXPECT_EQ(permissionUsedRequestParcel.request.bundleName, readedData->request.bundleName);
+    EXPECT_EQ(permissionUsedRequestParcel.request.beginTimeMillis, readedData->request.beginTimeMillis);
+    EXPECT_EQ(permissionUsedRequestParcel.request.endTimeMillis, readedData->request.endTimeMillis);
+    EXPECT_EQ(permissionUsedRequestParcel.request.flag, readedData->request.flag);
+
+    for (uint32_t i = 0; i < permissionUsedRequestParcel.request.permissionList.size(); i++) {
+        EXPECT_EQ(permissionUsedRequestParcel.request.permissionList[i], readedData->request.permissionList[i]);
+    }
+}
+
+/**
  * @tc.name: PermissionUsedResultParcel001
  * @tc.desc: Verify the PermissionUsedResultParcel Marshalling and Unmarshalling function.
  * @tc.type: FUNC
@@ -389,6 +431,40 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel002, TestSize.Level1)
     EXPECT_EQ(true, readedData2 == nullptr);
 }
 
+/**
+ * @tc.name: PermissionUsedRequestParcel002
+ * @tc.desc: Verify the PermissionUsedRequestParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RUP1
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedRequestParcel002, TestSize.Level1)
+{
+    PermissionUsedRequestParcel permissionUsedRequestParcel;
+
+    permissionUsedRequestParcel.request = {
+        .tokenId = 100,
+        .isRemote = false,
+        .deviceId = "deviceId",
+        .bundleName = "com.ohos.permissionmanager",
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+        .flag = FLAG_PERMISSION_USAGE_SUMMARY,
+    };
+    for (uint32_t i = 0; i < MAX_PERMLIST_SIZE; i++) {
+        permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.CAMERA");
+    }
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedRequestParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionUsedRequestParcel> readedData(PermissionUsedRequestParcel::Unmarshalling(parcel));
+    EXPECT_NE(readedData, nullptr);
+
+    permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.CAMERA");
+    Parcel parcel1;
+    EXPECT_EQ(true, permissionUsedRequestParcel.Marshalling(parcel1));
+    std::shared_ptr<PermissionUsedRequestParcel> readedData1(PermissionUsedRequestParcel::Unmarshalling(parcel1));
+    EXPECT_EQ(readedData1, nullptr);
+}
 
 /**
  * @tc.name: PermissionUsedResultParcel002

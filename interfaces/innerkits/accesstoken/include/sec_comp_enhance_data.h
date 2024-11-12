@@ -52,6 +52,10 @@ struct SecCompEnhanceData {
      */
     sptr<IRemoteObject> callback;
     /**
+     * pid for which used security component.
+     */
+    int32_t pid;
+    /**
      * token id for which used security component.
      */
     AccessTokenID token;
