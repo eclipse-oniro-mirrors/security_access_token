@@ -39,19 +39,12 @@ namespace OHOS {
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
-        if (!datas.WriteUint32(fuzzData.GetData<uint32_t>())) {
-            return false;
-        }
-        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
-            return false;
-        }
-        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
-            return false;
-        }
-        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
-            return false;
-        }
-        if (!datas.WriteUint32(fuzzData.GetData<uint32_t>())) {
+        AddPermParamInfoParcel infoParcel;
+        infoParcel.info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        infoParcel.info.permissionName = fuzzData.GenerateRandomString();
+        infoParcel.info.successCount = fuzzData.GetData<int32_t>();
+        infoParcel.info.failCount = fuzzData.GetData<int32_t>();
+        if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }
 

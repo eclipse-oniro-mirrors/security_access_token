@@ -29,26 +29,26 @@ public:
     explicit PrivacyManagerProxy(const sptr<IRemoteObject>& impl);
     ~PrivacyManagerProxy() override;
 
-    int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false) override;
+    int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) override;
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) override;
     int32_t GetPermissionUsedRecords(
-        const PermissionUsedRequest& request, PermissionUsedResultParcel& result) override;
-    int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request,
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) override;
+    int32_t GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
         const sptr<OnPermissionUsedRecordCallback>& callback) override;
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
     bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance) override;
+    int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhance) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
-    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance) override;
+    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
-        std::vector<SecCompEnhanceData>& enhanceList) override;
+        std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
 #endif
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;

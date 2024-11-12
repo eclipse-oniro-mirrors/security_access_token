@@ -20,9 +20,7 @@
 #include "ipc_skeleton.h"
 #include "memory_guard.h"
 #include "on_permission_used_record_callback_proxy.h"
-#include "parcel_utils.h"
 #include "privacy_error.h"
-#include "securec.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
@@ -123,13 +121,13 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AddPermParamInfo info;
-    info.tokenId = data.ReadUint32();
-    info.permissionName = data.ReadString();
-    info.successCount = data.ReadInt32();
-    info.failCount = data.ReadInt32();
-    info.type = static_cast<PermissionUsedType>(data.ReadUint32());
-    reply.WriteInt32(this->AddPermissionUsedRecord(info));
+    sptr<AddPermParamInfoParcel> infoParcel = data.ReadParcelable<AddPermParamInfoParcel>();
+    if (infoParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->AddPermissionUsedRecord(*infoParcel));
 }
 
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -208,27 +206,13 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    PermissionUsedRequest request;
-    request.tokenId = data.ReadUint32();
-    request.isRemote = data.ReadBool();
-    request.deviceId = data.ReadString();
-    request.bundleName = data.ReadString();
-
-    uint32_t permSize = data.ReadUint32();
-    if (permSize > MAX_PERMLIST_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permSize=%{public}d is over maxnum", permSize);
-        reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
+    sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
+    if (requestParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    for (uint32_t i = 0; i < permSize; i++) {
-        std::string perm = data.ReadString();
-        request.permissionList.emplace_back(perm);
-    }
-    request.beginTimeMillis = data.ReadInt64();
-    request.endTimeMillis = data.ReadInt64();
-    request.flag = static_cast<PermissionUsageFlagEnum>(data.ReadInt32());
-
-    int32_t result = this->GetPermissionUsedRecords(request, responseParcel);
+    int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 faild");
@@ -243,31 +227,19 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    PermissionUsedRequest request;
-    request.tokenId = data.ReadUint32();
-    request.isRemote = data.ReadBool();
-    request.deviceId = data.ReadString();
-    request.bundleName = data.ReadString();
-
-    uint32_t permSize = data.ReadUint32();
-    if (permSize > MAX_PERMLIST_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permSize=%{public}d is over maxnum", permSize);
-        reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
+    sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
+    if (requestParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    for (uint32_t i = 0; i < permSize; i++) {
-        request.permissionList.emplace_back(data.ReadString());
-    }
-    request.beginTimeMillis = data.ReadInt64();
-    request.endTimeMillis = data.ReadInt64();
-    request.flag = static_cast<PermissionUsageFlagEnum>(data.ReadInt32());
     sptr<OnPermissionUsedRecordCallback> callback = new OnPermissionUsedRecordCallbackProxy(data.ReadRemoteObject());
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    reply.WriteInt32(this->GetPermissionUsedRecords(request, callback));
+    reply.WriteInt32(this->GetPermissionUsedRecords(*requestParcel, callback));
 }
 
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -339,38 +311,6 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-static bool ReadEnhanceData(MessageParcel& in, SecCompEnhanceData& data)
-{
-    RETURN_IF_FALSE(in.ReadUint32(data.token));
-    RETURN_IF_FALSE(in.ReadUint64(data.challenge));
-    RETURN_IF_FALSE(in.ReadUint32(data.sessionId));
-    RETURN_IF_FALSE(in.ReadUint32(data.seqNum));
-    const uint8_t* ptr = in.ReadBuffer(AES_KEY_STORAGE_LEN);
-    if (ptr == nullptr) {
-        return false;
-    }
-    if (memcpy_s(data.key, AES_KEY_STORAGE_LEN, ptr, AES_KEY_STORAGE_LEN) != EOK) {
-        return false;
-    }
-
-    data.callback = (static_cast<MessageParcel*>(&in))->ReadRemoteObject();
-    if (data.callback == nullptr) {
-        return false;
-    }
-    return true;
-}
-
-static bool WriteEnhanceData(const SecCompEnhanceData& data, MessageParcel& out)
-{
-    RETURN_IF_FALSE(out.WriteUint32(data.token));
-    RETURN_IF_FALSE(out.WriteUint64(data.challenge));
-    RETURN_IF_FALSE(out.WriteUint32(data.sessionId));
-    RETURN_IF_FALSE(out.WriteUint32(data.seqNum));
-    RETURN_IF_FALSE(out.WriteBuffer(data.key, AES_KEY_STORAGE_LEN));
-    RETURN_IF_FALSE((static_cast<MessageParcel*>(&out))->WriteRemoteObject(data.callback));
-    return true;
-}
-
 void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
 {
 #ifdef HICOLLIE_ENABLE
@@ -378,8 +318,9 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
     int timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
         HiviewDFX::XCOLLIE_FLAG_LOG);
 #endif // HICOLLIE_ENABLE
-    SecCompEnhanceData enhanceData;
-    if (!ReadEnhanceData(data, enhanceData)) {
+
+    sptr<SecCompEnhanceDataParcel> requestParcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
+    if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
 
@@ -389,7 +330,7 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
 
         return;
     }
-    reply.WriteInt32(this->RegisterSecCompEnhance(enhanceData));
+    reply.WriteInt32(this->RegisterSecCompEnhance(*requestParcel));
 
 #ifdef HICOLLIE_ENABLE
     HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
@@ -416,14 +357,14 @@ void PrivacyManagerStub::GetSecCompEnhanceInner(MessageParcel& data, MessageParc
     }
 
     int32_t pid = data.ReadInt32();
-    SecCompEnhanceData enhance;
-    int32_t result = this->GetSecCompEnhance(pid, enhance);
+    SecCompEnhanceDataParcel parcel;
+    int32_t result = this->GetSecCompEnhance(pid, parcel);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
         return;
     }
 
-    (void)WriteEnhanceData(enhance, reply);
+    reply.WriteParcelable(&parcel);
 }
 
 void PrivacyManagerStub::GetSpecialSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
@@ -434,15 +375,15 @@ void PrivacyManagerStub::GetSpecialSecCompEnhanceInner(MessageParcel& data, Mess
     }
 
     std::string bundleName = data.ReadString();
-    std::vector<SecCompEnhanceData> enhanceList;
-    int32_t result = this->GetSpecialSecCompEnhance(bundleName, enhanceList);
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    int32_t result = this->GetSpecialSecCompEnhance(bundleName, parcelList);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
         return;
     }
-    reply.WriteUint32(enhanceList.size());
-    for (const auto& enc : enhanceList) {
-        (void)WriteEnhanceData(enc, reply);
+    reply.WriteUint32(parcelList.size());
+    for (const auto& parcel : parcelList) {
+        reply.WriteParcelable(&parcel);
     }
 }
 

@@ -23,6 +23,7 @@
 #undef private
 #include "i_privacy_manager.h"
 #include "permission_used_request.h"
+#include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -49,20 +50,12 @@ namespace OHOS {
             .endTimeMillis = fuzzData.GetData<int64_t>(),
             .flag = fuzzData.GenerateRandomEnmu<PermissionUsageFlag>(FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
+        PermissionUsedRequestParcel requestParcel;
+        requestParcel.request = request;
+
         MessageParcel datas;
-        if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor()) || !datas.WriteUint32(request.tokenId) ||
-            !datas.WriteBool(request.isRemote) || !datas.WriteString(request.deviceId) ||
-            !datas.WriteString(request.bundleName) || !datas.WriteUint32(request.permissionList.size())) {
-            return false;
-        }
-        for (const auto& permission : request.permissionList) {
-            if (!datas.WriteString(permission)) {
-                return false;
-            }
-        }
-        if (!datas.WriteInt64(request.beginTimeMillis) || !datas.WriteInt64(request.endTimeMillis) ||
-            !datas.WriteInt32(request.flag) || !datas.WriteString(request.bundleName) ||
-            !datas.WriteUint32(request.permissionList.size())) {
+        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+        if (!datas.WriteParcelable(&requestParcel)) {
             return false;
         }
 

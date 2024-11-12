@@ -189,19 +189,19 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 
     ASSERT_EQ(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
 
-    AddPermParamInfo info;
-    info.tokenId = tokenId;
-    info.permissionName = "ohos.permission.CAMERA";
-    info.successCount = 1;
-    info.failCount = 0;
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info.tokenId = tokenId;
+    infoParcel.info.permissionName = "ohos.permission.CAMERA";
+    infoParcel.info.successCount = 1;
+    infoParcel.info.failCount = 0;
 
     for (int32_t i = 0; i < PERMISSION_USAGE_RECORDS_MAX_NUM; i++) {
-        privacyManagerService_->AddPermissionUsedRecord(info);
+        privacyManagerService_->AddPermissionUsedRecord(infoParcel);
     }
 
     ASSERT_EQ(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
 
-    privacyManagerService_->AddPermissionUsedRecord(info);
+    privacyManagerService_->AddPermissionUsedRecord(infoParcel);
     ASSERT_EQ(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
 }
 
@@ -277,7 +277,7 @@ public:
     TestPrivacyManagerStub() = default;
     virtual ~TestPrivacyManagerStub() = default;
 
-    int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false)
+    int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false)
     {
         return RET_SUCCESS;
     }
@@ -299,12 +299,12 @@ public:
         return RET_SUCCESS;
     }
     int32_t GetPermissionUsedRecords(
-        const PermissionUsedRequest& request, PermissionUsedResultParcel& result)
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
     {
         return RET_SUCCESS;
     }
     int32_t GetPermissionUsedRecords(
-        const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+        const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
     {
         return RET_SUCCESS;
     }
@@ -335,15 +335,15 @@ public:
         return RET_SUCCESS;
     }
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
+    int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
     {
         return RET_SUCCESS;
     }
-    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
     {
         return RET_SUCCESS;
     }
-    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
+    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
     {
         return RET_SUCCESS;
     }
@@ -393,11 +393,12 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Le
     MessageOption option(MessageOption::TF_SYNC);
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
-    ASSERT_EQ(true, data.WriteInt32(successCount));
-    ASSERT_EQ(true, data.WriteInt32(failCount));
-    ASSERT_EQ(true, data.WriteUint32(0));
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info.tokenId = tokenID;
+    infoParcel.info.permissionName = permissionName;
+    infoParcel.info.successCount = successCount;
+    infoParcel.info.failCount = failCount;
+    ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
     // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
@@ -428,11 +429,12 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Le
     SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
-    ASSERT_EQ(true, data.WriteInt32(successCount));
-    ASSERT_EQ(true, data.WriteInt32(failCount));
-    ASSERT_EQ(true, data.WriteUint32(0));
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info.tokenId = tokenID;
+    infoParcel.info.permissionName = permissionName;
+    infoParcel.info.successCount = successCount;
+    infoParcel.info.failCount = failCount;
+    ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
     // callingTokenID is normal hap without need permission
@@ -461,11 +463,12 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
     SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
-    ASSERT_EQ(true, data.WriteInt32(successCount));
-    ASSERT_EQ(true, data.WriteInt32(failCount));
-    ASSERT_EQ(true, data.WriteUint32(0));
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info.tokenId = tokenID;
+    infoParcel.info.permissionName = permissionName;
+    infoParcel.info.successCount = successCount;
+    infoParcel.info.failCount = failCount;
+    ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
     // callingTokenID is system hap without need permission
@@ -773,22 +776,6 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSiz
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
 }
 
-static void WriteRequestParcelable(const PermissionUsedRequest& request, MessageParcel& data)
-{
-    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(request.tokenId));
-    ASSERT_EQ(true, data.WriteBool(request.isRemote));
-    ASSERT_EQ(true, data.WriteString(request.deviceId));
-    ASSERT_EQ(true, data.WriteString(request.bundleName));
-    ASSERT_EQ(true, data.WriteUint32(request.permissionList.size()));
-    for (const auto& perm : request.permissionList) {
-        ASSERT_EQ(true, data.WriteString(perm));
-    }
-    ASSERT_EQ(true, data.WriteInt64(request.beginTimeMillis));
-    ASSERT_EQ(true, data.WriteInt64(request.endTimeMillis));
-    ASSERT_EQ(true, data.WriteInt32(request.flag));
-}
-
 /**
  * @tc.name: GetPermissionUsedRecordsInner001
  * @tc.desc: GetPermissionUsedRecordsInner test.
@@ -797,15 +784,16 @@ static void WriteRequestParcelable(const PermissionUsedRequest& request, Message
  */
 HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.Level1)
 {
-    PermissionUsedRequest request;
-    request.isRemote = true;
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    WriteRequestParcelable(request, data);
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
     // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
@@ -820,8 +808,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.L
  */
 HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.Level1)
 {
-    PermissionUsedRequest request;
-    request.isRemote = true;
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -833,7 +821,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.L
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
 
-    WriteRequestParcelable(request, data);
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
     // callingTokenID is normal hap without need permission
@@ -848,8 +837,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.L
  */
 HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.Level1)
 {
-    PermissionUsedRequest request;
-    request.isRemote = true;
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -859,7 +848,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.L
     ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
     SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
 
-    WriteRequestParcelable(request, data);
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
     // callingTokenID is system hap without need permission
