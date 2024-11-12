@@ -65,21 +65,6 @@ TempPermissionObserver& TempPermissionObserver::GetInstance()
     return *instance;
 }
 
-void PermissionAppStateObserver::OnProcessDied(const ProcessData &processData)
-{
-    uint32_t tokenID = processData.accessTokenId;
-    std::vector<bool> list;
-    if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID:%{public}d not use temp permission", tokenID);
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID:%{public}d died.", tokenID);
-    // cancle task when process die
-    std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
-    TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
-}
-
 void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)
 {
     uint32_t tokenID = appStateData.accessTokenId;

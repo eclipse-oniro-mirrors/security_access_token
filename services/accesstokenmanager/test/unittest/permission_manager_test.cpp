@@ -2066,31 +2066,6 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     GTEST_LOG_(INFO) << "remove the token info";
 }
 #endif
-/**
- * @tc.name: GrantTempPermission0013
- * @tc.desc: Test grant temp permission process died
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0013, TestSize.Level1)
-{
-    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
-    AccessTokenID tokenID = CreateTempHapTokenInfo();
-    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
-    EXPECT_EQ(PERMISSION_GRANTED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-    ProcessData processData;
-    processData.accessTokenId = tokenID;
-    appStateObserver_->OnProcessDied(processData);
-    EXPECT_EQ(PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-    // remove hap
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
 
 /**
  * @tc.name: GrantTempPermission0014
