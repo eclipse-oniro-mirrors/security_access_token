@@ -43,7 +43,7 @@ public:
 
     void OnAppStopped(const AppStateData &appStateData) override;
     void OnAppStateChanged(const AppStateData &appStateData) override;
-    void OnProcessDied(const ProcessData &processData) override;
+
     DISALLOW_COPY_AND_MOVE(PermissionAppStateObserver);
 };
 
