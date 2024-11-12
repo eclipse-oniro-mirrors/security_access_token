@@ -84,7 +84,7 @@ int32_t AbilityManagerAdapter::StartAbility(const AAFwk::Want &want, const sptr<
 
 void AbilityManagerAdapter::InitProxy()
 {
-    if (proxy_ != nullptr) {
+    if (proxy_ != nullptr && (!proxy_->IsObjectDead())) {
         return;
     }
     sptr<ISystemAbilityManager> systemManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -113,7 +113,7 @@ void AbilityManagerAdapter::InitProxy()
 sptr<IRemoteObject> AbilityManagerAdapter::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;

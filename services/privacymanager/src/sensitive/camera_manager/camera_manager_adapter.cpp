@@ -78,7 +78,7 @@ bool CameraManagerAdapter::IsCameraMuted()
 #ifdef CAMERA_FRAMEWORK_ENABLE
 void CameraManagerAdapter::InitProxy()
 {
-    if (proxy_ != nullptr) {
+    if (proxy_ != nullptr && (!proxy_->IsObjectDead())) {
         return;
     }
     sptr<ISystemAbilityManager> systemManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -107,7 +107,7 @@ void CameraManagerAdapter::InitProxy()
 sptr<IRemoteObject> CameraManagerAdapter::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;

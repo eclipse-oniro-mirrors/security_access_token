@@ -121,7 +121,8 @@ void PrivacyWindowManagerClient::AddDeathCallback(void (*callback)())
 
 void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
 {
-    if (sessionManagerServiceProxy_) {
+    if (sessionManagerServiceProxy_ && sessionManagerServiceProxy_->AsObject() != nullptr &&
+        (!sessionManagerServiceProxy_->AsObject()->IsObjectDead())) {
         return;
     }
     sptr<ISystemAbilityManager> systemAbilityManager =
@@ -136,7 +137,8 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         return;
     }
     mockSessionManagerServiceProxy_ = new PrivacyMockSessionManagerProxy(remoteObject);
-    if (!mockSessionManagerServiceProxy_) {
+    if (!mockSessionManagerServiceProxy_  || mockSessionManagerServiceProxy_->AsObject() == nullptr ||
+        mockSessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Get mock session manager service proxy failed, nullptr");
         return;
     }
@@ -146,17 +148,20 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         return;
     }
     sessionManagerServiceProxy_ = new PrivacySessionManagerProxy(remoteObject2);
-    if (!sessionManagerServiceProxy_) {
+    if (!sessionManagerServiceProxy_ || sessionManagerServiceProxy_->AsObject() == nullptr ||
+        sessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
     }
 }
 
 void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
 {
-    if (sceneSessionManagerProxy_) {
+    if (sceneSessionManagerProxy_ && sceneSessionManagerProxy_->AsObject() != nullptr &&
+        (!sceneSessionManagerProxy_->AsObject()->IsObjectDead())) {
         return;
     }
-    if (!sessionManagerServiceProxy_) {
+    if (!sessionManagerServiceProxy_ || sessionManagerServiceProxy_->AsObject() == nullptr ||
+        sessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
         return;
     }
@@ -167,7 +172,8 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         return;
     }
     sceneSessionManagerProxy_ = new PrivacySceneSessionManagerProxy(remoteObject);
-    if (sceneSessionManagerProxy_ == nullptr) {
+    if (sceneSessionManagerProxy_ == nullptr || sceneSessionManagerProxy_->AsObject() == nullptr ||
+        sceneSessionManagerProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerProxy_ is null.");
         return;
     }
@@ -184,7 +190,8 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
 
 void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
 {
-    if (sceneSessionManagerLiteProxy_) {
+    if (sceneSessionManagerLiteProxy_ && sceneSessionManagerLiteProxy_->AsObject() != nullptr &&
+        (!sceneSessionManagerLiteProxy_->AsObject()->IsObjectDead())) {
         return;
     }
     if (!sessionManagerServiceProxy_) {
@@ -198,7 +205,8 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         return;
     }
     sceneSessionManagerLiteProxy_ = new PrivacySceneSessionManagerLiteProxy(remoteObject);
-    if (sceneSessionManagerLiteProxy_ == nullptr) {
+    if (sceneSessionManagerLiteProxy_ == nullptr || sceneSessionManagerLiteProxy_->AsObject() == nullptr ||
+        sceneSessionManagerLiteProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerLiteProxy_ is null.");
         return;
     }
@@ -231,7 +239,7 @@ sptr<ISceneSessionManagerLite> PrivacyWindowManagerClient::GetSSMLiteProxy()
 
 void PrivacyWindowManagerClient::InitWMSProxy()
 {
-    if (wmsProxy_) {
+    if (wmsProxy_ && wmsProxy_->AsObject() != nullptr && (!wmsProxy_->AsObject()->IsObjectDead())) {
         return;
     }
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -251,7 +259,7 @@ void PrivacyWindowManagerClient::InitWMSProxy()
     }
 
     wmsProxy_ = new PrivacyWindowManagerProxy(windowManagerSa);
-    if (wmsProxy_ == nullptr) {
+    if (wmsProxy_ == nullptr  || wmsProxy_->AsObject() == nullptr || wmsProxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WmsProxy_ is null.");
         return;
     }
