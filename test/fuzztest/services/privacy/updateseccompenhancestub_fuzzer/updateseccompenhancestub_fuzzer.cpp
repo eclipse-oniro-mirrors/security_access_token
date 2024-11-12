@@ -25,6 +25,7 @@
 #include "i_privacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
+#include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
 
 using namespace std;

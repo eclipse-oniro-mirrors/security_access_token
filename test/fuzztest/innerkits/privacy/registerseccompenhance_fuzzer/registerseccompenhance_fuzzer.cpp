@@ -38,6 +38,7 @@ namespace OHOS {
 
         SecCompEnhanceData secData;
         secData.callback = nullptr;
+        secData.pid = fuzzData.GetData<int32_t>();
         secData.token = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
         secData.challenge = fuzzData.GetData<uint64_t>();
         secData.sessionId = fuzzData.GetData<uint32_t>();

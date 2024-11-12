@@ -15,8 +15,8 @@
 #ifndef PERMISSION_SEC_COMP_ENHANCE_AGENT_H
 #define PERMISSION_SEC_COMP_ENHANCE_AGENT_H
 
-#include <map>
 #include <mutex>
+#include <vector>
 #include "app_manager_death_callback.h"
 #include "app_status_change_callback.h"
 #include "nocopyable.h"
@@ -65,7 +65,7 @@ private:
     sptr<PrivacyAppUsingSecCompStateObserver> observer_ = nullptr;
     std::shared_ptr<PrivacySecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
-    std::map<int32_t, SecCompEnhanceData> secCompEnhanceData_;
+    std::vector<SecCompEnhanceData> secCompEnhanceData_;
 };
 } // namespace AccessToken
 } // namespace Security
