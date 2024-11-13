@@ -66,7 +66,7 @@ void PermDenyTest::TearDown()
 {
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     AccessTokenKit::DeleteToken(g_testTokenId);
-    PrivacyKit::RemovePermissionUsedRecords(g_testTokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(g_testTokenId);
 }
 
 /**
@@ -89,7 +89,7 @@ HWTEST_F(PermDenyTest, AddPermissionUsedRecord001, TestSize.Level1)
  */
 HWTEST_F(PermDenyTest, RemovePermissionUsedRecords001, TestSize.Level1)
 {
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RemovePermissionUsedRecords(g_testTokenId, ""));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RemovePermissionUsedRecords(g_testTokenId));
 }
 
 class CbPermDenyTest : public StateCustomizedCbk {

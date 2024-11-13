@@ -74,7 +74,7 @@ public:
 
     void Init();
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
-    void RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID);
+    void RemovePermissionUsedRecords(AccessTokenID tokenId);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
@@ -154,7 +154,6 @@ private:
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status);
 
-    std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);

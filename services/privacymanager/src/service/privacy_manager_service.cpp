@@ -126,10 +126,10 @@ int32_t PrivacyManagerService::StopUsingPermission(
     return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName);
 }
 
-int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
+int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u", tokenId);
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     return Constant::SUCCESS;
 }
 

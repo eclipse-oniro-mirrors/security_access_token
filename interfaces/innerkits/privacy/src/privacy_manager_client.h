@@ -44,7 +44,7 @@ public:
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const std::shared_ptr<StateCustomizedCbk>& callback);
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
-    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
