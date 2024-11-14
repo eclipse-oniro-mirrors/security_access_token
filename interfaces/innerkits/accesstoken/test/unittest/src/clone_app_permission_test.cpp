@@ -32,8 +32,6 @@ static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.WRITE_MEDIA"
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string TEST_PERMISSION_REVOKE = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitExtensionTest"};
 
 HapInfoParams g_infoParmsCommon = {
     .userID = 1,
@@ -109,7 +107,7 @@ void CloneAppPermissionTest::TearDownTestCase()
 
 void CloneAppPermissionTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
 }
 
 void CloneAppPermissionTest::TearDown()
@@ -151,7 +149,7 @@ void CloneAppPermissionTest::SetUpTestCase()
     EXPECT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase ok.");
+    LOGI(AT_DOMAIN, AT_TAG, "SetUpTestCase ok.");
 }
 
 static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)

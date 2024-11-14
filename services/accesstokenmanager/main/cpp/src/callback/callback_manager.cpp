@@ -29,7 +29,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackManager"};
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
@@ -61,7 +60,7 @@ CallbackManager::~CallbackManager()
 int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "Input is nullptr");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
@@ -72,12 +71,12 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
     std::lock_guard<std::mutex> lock(mutex_);
 #endif
     if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback size has reached limitation");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback size has reached limitation");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
     int32_t ret = callback->AddDeathRecipient(callbackDeathRecipient_);
     if (ret != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "add death recipient failed ret is %{public}d", ret);
+        LOGE(AT_DOMAIN, AT_TAG, "add death recipient failed ret is %{public}d", ret);
     }
 
     CallbackRecord recordInstance;
@@ -86,14 +85,14 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
 
     callbackInfoList_.emplace_back(recordInstance);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "RecordInstance is added");
+    LOGI(AT_DOMAIN, AT_TAG, "RecordInstance is added");
     return RET_SUCCESS;
 }
 
 int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -105,7 +104,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Find callback");
+            LOGI(AT_DOMAIN, AT_TAG, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
@@ -114,7 +113,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
             break;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallbackInfoList_ %{public}u", (uint32_t)callbackInfoList_.size());
+    LOGI(AT_DOMAIN, AT_TAG, "CallbackInfoList_ %{public}u", (uint32_t)callbackInfoList_.size());
     return RET_SUCCESS;
 }
 
@@ -145,20 +144,20 @@ void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list,
         auto callbackSingle = [it, tokenID, permName, changeType]() {
             sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
             if (callback != nullptr) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
+                LOGI(AT_DOMAIN, AT_TAG, "Callback execute");
                 PermStateChangeInfo resInfo;
                 resInfo.permStateChangeType = changeType;
                 resInfo.permissionName = permName;
                 resInfo.tokenID = tokenID;
                 callback->PermStateChangeCallback(resInfo);
-                ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute end");
+                LOGI(AT_DOMAIN, AT_TAG, "Callback execute end");
             }
         };
         ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
 #else
         sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
         if (callback != nullptr) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
+            LOGI(AT_DOMAIN, AT_TAG, "Callback execute");
             PermStateChangeInfo resInfo;
             resInfo.permStateChangeType = changeType;
             resInfo.permissionName = permName;
@@ -183,12 +182,12 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         std::shared_ptr<PermStateChangeScope> scopePtr = (*it).scopePtr_;
         if (scopePtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ScopePtr is nullptr");
+            LOGE(AT_DOMAIN, AT_TAG, "ScopePtr is nullptr");
             continue;
         }
         if (!CalledAccordingToTokenIdLlist(scopePtr->tokenIDs, tokenID) ||
             !CalledAccordingToPermLlist(scopePtr->permList, permName)) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL,
+                LOGD(AT_DOMAIN, AT_TAG,
                     "tokenID is %{public}u, permName is  %{public}s", tokenID, permName.c_str());
                 continue;
         }
@@ -198,9 +197,9 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
 
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    LOGI(AT_DOMAIN, AT_TAG, "Entry");
     auto callbackStart = [this, tokenID, permName, changeType]() {
-        ACCESSTOKEN_LOG_INFO(LABEL, "CallbackStart");
+        LOGI(AT_DOMAIN, AT_TAG, "CallbackStart");
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
         std::string name = "AtmCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
@@ -218,7 +217,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
     std::packaged_task<void()> callbackTask(callbackStart);
     std::make_unique<std::thread>(std::move(callbackTask))->detach();
 #endif
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
+    LOGD(AT_DOMAIN, AT_TAG, "The callback execution is complete");
 }
 } // namespace AccessToken
 } // namespace Security

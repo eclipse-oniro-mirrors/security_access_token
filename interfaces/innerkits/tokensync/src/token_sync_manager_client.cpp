@@ -24,7 +24,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerClient"};
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -45,15 +44,15 @@ TokenSyncManagerClient::TokenSyncManagerClient()
 
 TokenSyncManagerClient::~TokenSyncManagerClient()
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "~TokenSyncManagerClient");
+    LOGE(AT_DOMAIN, AT_TAG, "~TokenSyncManagerClient");
 }
 
 int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
+    LOGD(AT_DOMAIN, AT_TAG, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -61,10 +60,10 @@ int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, A
 
 int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
+    LOGD(AT_DOMAIN, AT_TAG, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->DeleteRemoteHapTokenInfo(tokenID);
@@ -72,10 +71,10 @@ int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) cons
 
 int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
+    LOGD(AT_DOMAIN, AT_TAG, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->UpdateRemoteHapTokenInfo(tokenInfo);
@@ -85,20 +84,20 @@ sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy() const
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "GetSystemAbilityManager is null");
+        LOGW(AT_DOMAIN, AT_TAG, "GetSystemAbilityManager is null");
         return nullptr;
     }
 
     auto tokensyncSa = sam->GetSystemAbility(ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE);
     if (tokensyncSa == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "GetSystemAbility %{public}d is null",
+        LOGW(AT_DOMAIN, AT_TAG, "GetSystemAbility %{public}d is null",
             ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE);
         return nullptr;
     }
 
     auto proxy = new TokenSyncManagerProxy(tokensyncSa);
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Iface_cast get null");
+        LOGW(AT_DOMAIN, AT_TAG, "Iface_cast get null");
         return nullptr;
     }
     return proxy;

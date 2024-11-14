@@ -23,9 +23,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "FormManagerAccessClient"
-};
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -54,12 +51,12 @@ int32_t FormManagerAccessClient::RegisterAddObserver(
     const std::string &bundleName, const sptr<IRemoteObject> &callerToken)
 {
     if (callerToken == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
         return -1;
     }
     return proxy->RegisterAddObserver(bundleName, callerToken);
@@ -69,12 +66,12 @@ int32_t FormManagerAccessClient::RegisterRemoveObserver(
     const std::string &bundleName, const sptr<IRemoteObject> &callerToken)
 {
     if (callerToken == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
         return -1;
     }
     return proxy->RegisterRemoveObserver(bundleName, callerToken);
@@ -84,7 +81,7 @@ bool FormManagerAccessClient::HasFormVisible(const uint32_t tokenId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
         return false;
     }
     return proxy->HasFormVisible(tokenId);
@@ -94,12 +91,12 @@ void FormManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbilityManager is null.");
         return;
     }
     auto formManagerSa = sam->GetSystemAbility(FORM_MGR_SERVICE_ID);
     if (formManagerSa == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null.",
+        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbility %{public}d is null.",
             APP_MGR_SERVICE_ID);
         return;
     }
@@ -111,7 +108,7 @@ void FormManagerAccessClient::InitProxy()
 
     proxy_ = new FormManagerAccessProxy(formManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Iface_cast get null.");
     }
 }
 

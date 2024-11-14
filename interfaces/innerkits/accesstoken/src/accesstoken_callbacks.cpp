@@ -21,10 +21,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenCallbacks"
-};
-
 PermissionStateChangeCallback::PermissionStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback)
     : customizedCallback_(customizedCallback)
@@ -36,7 +32,7 @@ PermissionStateChangeCallback::~PermissionStateChangeCallback()
 void PermissionStateChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
 {
     if (customizedCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCallback_ is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "CustomizedCallback_ is nullptr");
         return;
     }
 
@@ -57,7 +53,7 @@ TokenSyncCallback::~TokenSyncCallback()
 int32_t TokenSyncCallback::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (tokenSyncCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get nullptr, name = tokenSyncCallback_.");
+        LOGE(AT_DOMAIN, AT_TAG, "Get nullptr, name = tokenSyncCallback_.");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
     return tokenSyncCallback_->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -66,7 +62,7 @@ int32_t TokenSyncCallback::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
 int32_t TokenSyncCallback::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
     if (tokenSyncCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get nullptr, name = tokenSyncCallback_.");
+        LOGE(AT_DOMAIN, AT_TAG, "Get nullptr, name = tokenSyncCallback_.");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
     return tokenSyncCallback_->DeleteRemoteHapTokenInfo(tokenID);
@@ -75,7 +71,7 @@ int32_t TokenSyncCallback::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 int32_t TokenSyncCallback::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
 {
     if (tokenSyncCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get nullptr, name = tokenSyncCallback_.");
+        LOGE(AT_DOMAIN, AT_TAG, "Get nullptr, name = tokenSyncCallback_.");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
     return tokenSyncCallback_->UpdateRemoteHapTokenInfo(tokenInfo);

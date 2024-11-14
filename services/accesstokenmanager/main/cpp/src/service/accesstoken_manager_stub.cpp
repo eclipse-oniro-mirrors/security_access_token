@@ -31,16 +31,15 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMStub"};
-const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
+constexpr const char* MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
-const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
-const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
-const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
-const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
+constexpr const char* GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+constexpr const char* REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+constexpr const char* GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+constexpr const char* DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
+constexpr const char* GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
 
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
@@ -53,10 +52,10 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
     MemoryGuard guard;
 
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Code %{public}u token %{public}u", code, callingTokenID);
+    LOGD(AT_DOMAIN, AT_TAG, "Code %{public}u id %{public}u", code, callingTokenID);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IAccessTokenManager::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        LOGE(AT_DOMAIN, AT_TAG, "Unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -92,42 +91,44 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(Id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
+            reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->DeleteToken(tokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG,
+            "Permission denied(PRI_DOMAIN, PRI_TAG=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
             reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE)),
             "WriteInt32 failed.");
         return;
     }
     uint32_t tokenID;
     if (!data.ReadUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
-        IF_FALSE_PRINT_LOG(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to read tokenID.");
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
             reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE)),
             "WriteInt32 failed.");
         return;
     }
     std::string permissionName;
     if (!data.ReadString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permissionName.");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to read permissionName.");
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(
             static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE)), "WriteInt32 failed.");
         return;
     }
     PermUsedTypeEnum result = this->GetPermissionUsedType(tokenID, permissionName);
     int32_t type = static_cast<int32_t>(result);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(type), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(type), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply)
@@ -135,7 +136,7 @@ void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, Message
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int result = this->VerifyAccessToken(tokenID, permissionName);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -143,11 +144,12 @@ void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageP
     std::string permissionName = data.ReadString();
     PermissionDefParcel permissionDefParcel;
     int result = this->GetDefPermission(permissionName, permissionDefParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&permissionDefParcel), "Write PermissionDefParcel fail.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
+        reply.WriteParcelable(&permissionDefParcel), "Write PermissionDefParcel fail.");
 }
 
 void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply)
@@ -156,12 +158,13 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     std::vector<PermissionDefParcel> permList;
 
     this->GetDefPermissions(tokenID, permList);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(RET_SUCCESS), "WriteInt32 failed.");
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(RET_SUCCESS), "WriteInt32 failed.");
+    LOGD(AT_DOMAIN, AT_TAG, "PermList size: %{public}zu", permList.size());
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
 
     for (const auto& permDef : permList) {
-        IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
+        IF_FALSE_RETURN_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
     }
 }
 
@@ -172,14 +175,15 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     std::vector<PermissionStateFullParcel> permList;
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size: %{public}zu", permList.size());
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(permList.size()), "WriteInt32 failed.");
+    LOGD(AT_DOMAIN, AT_TAG, "PermList size: %{public}zu", permList.size());
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(permList.size()), "WriteInt32 failed.");
     for (const auto& permDef : permList) {
-        IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
+        IF_FALSE_RETURN_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
     }
 }
 
@@ -188,13 +192,13 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
     std::vector<PermissionListStateParcel> permList;
     uint32_t size = 0;
     if (!data.ReadUint32(size)) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
         return;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size read from client data is %{public}d.", size);
+    LOGD(AT_DOMAIN, AT_TAG, "PermList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is invalid", size);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "PermList size %{public}d is invalid", size);
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
         return;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -205,26 +209,30 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
     }
     PermissionGrantInfoParcel infoParcel;
     PermissionOper result = this->GetSelfPermissionsState(permList, infoParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
     for (const auto& perm : permList) {
-        IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&perm), "WriteParcelable failed.");
+        IF_FALSE_RETURN_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteParcelable(&perm), "WriteParcelable failed.");
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&infoParcel), "WriteParcelable failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&infoParcel), "WriteParcelable failed.");
 }
 
 void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
@@ -232,13 +240,13 @@ void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, Mess
     std::vector<PermissionListStateParcel> permList;
     uint32_t size = 0;
     if (!data.ReadUint32(size)) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
         return;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size read from client data is %{public}d.", size);
+    LOGD(AT_DOMAIN, AT_TAG, "PermList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is oversize", size);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "PermList size %{public}d is oversize", size);
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_OPER), "WriteInt32 failed.");
         return;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -249,13 +257,14 @@ void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, Mess
     }
     int32_t result = this->GetPermissionsStatus(tokenID, permList);
 
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
     for (const auto& perm : permList) {
-        IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&perm), "WriteParcelable failed.");
+        IF_FALSE_RETURN_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteParcelable(&perm), "WriteParcelable failed.");
     }
 }
 
@@ -263,7 +272,8 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -272,25 +282,27 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
+            reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     uint32_t flag;
     int result = this->GetPermissionFlag(tokenID, permissionName, flag);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
 
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(flag), "WriteUint32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(flag), "WriteUint32 failed.");
 }
 
 void AccessTokenManagerStub::SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
 
@@ -301,19 +313,21 @@ void AccessTokenManagerStub::SetPermissionRequestToggleStatusInner(MessageParcel
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
             callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "SetToggleStatus");
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d).", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->SetPermissionRequestToggleStatus(permissionName, status, userID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
 
@@ -324,24 +338,26 @@ void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
             callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "GetToggleStatus");
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d).", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     uint32_t status;
     int32_t result = this->GetPermissionRequestToggleStatus(permissionName, status, userID);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(status), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(status), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -352,19 +368,21 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     int result = this->GrantPermission(tokenID, permissionName, flag);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -375,19 +393,21 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     int result = this->RevokePermission(tokenID, permissionName, flag);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -398,12 +418,13 @@ void AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner(MessageParcel&
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     int result = this->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply)
@@ -414,13 +435,14 @@ void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel&
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->ClearUserGrantedPermissionState(tokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParcel& reply)
@@ -429,16 +451,18 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", tokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", tokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     sptr<HapInfoParcel> hapInfoParcel = data.ReadParcelable<HapInfoParcel>();
     sptr<HapPolicyParcel> hapPolicyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (hapInfoParcel == nullptr || hapPolicyParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read hapPolicyParcel or hapInfoParcel fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read hapPolicyParcel or hapInfoParcel fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     res = this->AllocHapToken(*hapInfoParcel, *hapPolicyParcel);
@@ -450,64 +474,70 @@ void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParce
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", tokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", tokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     sptr<HapInfoParcel> hapInfoParcel = data.ReadParcelable<HapInfoParcel>();
     sptr<HapPolicyParcel> hapPolicyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (hapInfoParcel == nullptr || hapPolicyParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read hapPolicyParcel or hapInfoParcel fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read hapPolicyParcel or hapInfoParcel fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int32_t res;
     AccessTokenIDEx fullTokenId = { 0 };
     res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId);
     if (!reply.WriteInt32(res)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteInt32 fail");
     }
 
     if (res != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Res error %{public}d", res);
+        LOGE(AT_DOMAIN, AT_TAG, "Res error %{public}d", res);
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint64(fullTokenId.tokenIDEx), "WriteUint64 failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteUint64(fullTokenId.tokenIDEx), "WriteUint64 failed.");
 }
 
 void AccessTokenManagerStub::GetTokenTypeInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->GetTokenType(tokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
         return;
     }
     int userID = data.ReadInt32();
     std::string bundleName = data.ReadString();
     int instIndex = data.ReadInt32();
     AccessTokenIDEx tokenIdEx = this->GetHapTokenID(userID, bundleName, instIndex);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint64(tokenIdEx.tokenIDEx), "WriteUint64 failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteUint64(tokenIdEx.tokenIDEx), "WriteUint64 failed.");
 }
 
 void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
     if ((!IsNativeProcessCalling()) && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
         return;
     }
     std::string remoteDeviceID = data.ReadString();
     AccessTokenID remoteTokenID = data.ReadUint32();
     AccessTokenID result = this->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(result), "WriteUint32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(result), "WriteUint32 failed.");
 }
 
 void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply)
@@ -515,8 +545,9 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     UpdateHapInfoParams info;
@@ -529,253 +560,280 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
     tokenIdEx.tokenIdExStruct.tokenID = tokenID;
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (policyParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicyParcel read faild");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "PolicyParcel read faild");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->UpdateHapToken(tokenIdEx, info, *policyParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(tokenIdEx.tokenIdExStruct.tokenAttr), "WriteUint32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG,
+        reply.WriteUint32(tokenIdEx.tokenIdExStruct.tokenAttr), "WriteUint32 failed.");
 }
 
 void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->GetHapTokenInfo(tokenID, hapTokenInfoParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
 }
 
 void AccessTokenManagerStub::GetHapTokenInfoExtensionInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
     std::string appID;
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->GetHapTokenInfoExtension(tokenID, hapTokenInfoParcel, appID);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteString(appID), "Write string failed.");
+    IF_FALSE_RETURN_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&hapTokenInfoParcel), "Write parcel failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteString(appID), "Write string failed.");
 }
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     NativeTokenInfoParcel nativeTokenInfoParcel;
     int result = this->GetNativeTokenInfo(tokenID, nativeTokenInfoParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&nativeTokenInfoParcel), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&nativeTokenInfoParcel), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingTokenID);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
     if (scopeParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read scopeParcel fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read scopeParcel fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read callback fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read callback fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->RegisterPermStateChangeCallback(*scopeParcel, callback);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingToken) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read callback fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read callback fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->UnRegisterPermStateChangeCallback(callback);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteUint32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->ReloadNativeTokenInfo();
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 #endif
 
 void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(INVALID_TOKENID), "WriteUint32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteUint32(INVALID_TOKENID), "WriteUint32 failed.");
         return;
     }
     std::string processName;
     if (!data.ReadString(processName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString fail, processName=%{public}s", processName.c_str());
+        LOGE(AT_DOMAIN, AT_TAG, "ReadString fail, processName=%{public}s", processName.c_str());
         return;
     }
     AccessTokenID result = this->GetNativeTokenId(processName);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     HapTokenInfoForSyncParcel hapTokenParcel;
 
     int result = this->GetHapTokenInfoFromRemote(tokenID, hapTokenParcel);
-    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_RETURN_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&hapTokenParcel), "WriteParcelable failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&hapTokenParcel), "WriteParcelable failed.");
 }
 
 void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     std::string deviceID = data.ReadString();
     sptr<HapTokenInfoForSyncParcel> hapTokenParcel = data.ReadParcelable<HapTokenInfoForSyncParcel>();
     if (hapTokenParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenParcel read faild");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "HapTokenParcel read faild");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
 
     int result = this->DeleteRemoteToken(deviceID, tokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(INVALID_TOKENID), "WriteInt32 failed.");
         return;
     }
     std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
 
     AccessTokenID result = this->GetRemoteNativeTokenID(deviceID, tokenID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     std::string deviceID = data.ReadString();
 
     int result = this->DeleteRemoteDeviceTokens(deviceID);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::RegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, tokenID=%{public}d", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied, id=%{public}d", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback read failed.");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback read failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     int32_t result = this->RegisterTokenSyncCallback(callback);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::UnRegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, tokenID=%{public}d", IPCSkeleton::GetCallingTokenID());
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied, id=%{public}d", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     int32_t result = this->UnRegisterTokenSyncCallback();
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 #endif
 
@@ -783,38 +841,39 @@ void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel&
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingToken) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
         return;
     }
     uint32_t version;
     int32_t result = this->GetVersion(version);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
     if (result != RET_SUCCESS) {
         return;
     }
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(version), "WriteUint32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteUint32(version), "WriteUint32 failed.");
 }
 
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsShellProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", IPCSkeleton::GetCallingTokenID());
         reply.WriteString("");
         return;
     }
     sptr<AtmToolsParamInfoParcel> infoParcel = data.ReadParcelable<AtmToolsParamInfoParcel>();
     if (infoParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read infoParcel fail");
+        LOGE(AT_DOMAIN, AT_TAG, "Read infoParcel fail");
         reply.WriteString("read infoParcel fail");
         return;
     }
     std::string dumpInfo = "";
     this->DumpTokenInfo(*infoParcel, dumpInfo);
     if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "SetDataCapacity failed");
+        LOGW(AT_DOMAIN, AT_TAG, "SetDataCapacity failed");
     }
     if (!reply.WriteString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteString failed");
     }
 }
 
@@ -822,35 +881,39 @@ void AccessTokenManagerStub::SetPermDialogCapInner(MessageParcel& data, MessageP
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     sptr<HapBaseInfoParcel> hapBaseInfoParcel = data.ReadParcelable<HapBaseInfoParcel>();
     if (hapBaseInfoParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read hapBaseInfoParcel fail");
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Read hapBaseInfoParcel fail");
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
     bool enable = data.ReadBool();
     int32_t res = this->SetPermDialogCap(*hapBaseInfoParcel, enable);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(res), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(res), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     PermissionGrantInfoParcel infoParcel;
     this->GetPermissionManagerInfo(infoParcel);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteParcelable(&infoParcel), "WriteParcelable failed.");
+    IF_FALSE_PRINT_LOG(
+        AT_DOMAIN, AT_TAG, reply.WriteParcelable(&infoParcel), "WriteParcelable failed.");
 }
 
 void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     std::vector<UserState> userList;
@@ -858,20 +921,23 @@ void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessagePar
     uint32_t userSize = data.ReadUint32();
     uint32_t permSize = data.ReadUint32();
     if ((userSize > MAX_USER_POLICY_SIZE) || (permSize > MAX_USER_POLICY_SIZE)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_OVERSIZE), "WriteParcelable failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Size %{public}u is invalid", userSize);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_OVERSIZE), "WriteParcelable failed.");
         return;
     }
     for (uint32_t i = 0; i < userSize; i++) {
         UserState userInfo;
         if (!data.ReadInt32(userInfo.userId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
-            IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to read userId.");
+            IF_FALSE_PRINT_LOG(
+                AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
             return;
         }
         if (!data.ReadBool(userInfo.isActive)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
-            IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to read isActive.");
+            IF_FALSE_PRINT_LOG(
+                AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
             return;
         }
         userList.emplace_back(userInfo);
@@ -879,60 +945,65 @@ void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessagePar
     for (uint32_t i = 0; i < permSize; i++) {
         std::string permission;
         if (!data.ReadString(permission)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permission.");
-            IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to read permission.");
+            IF_FALSE_PRINT_LOG(
+                AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
             return;
         }
         permList.emplace_back(permission);
     }
     int32_t res = this->InitUserPolicy(userList, permList);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(res), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(res), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
     std::vector<UserState> userList;
     uint32_t userSize = data.ReadUint32();
     if (userSize > MAX_USER_POLICY_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_OVERSIZE), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Size %{public}u is invalid", userSize);
+        IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_OVERSIZE), "WriteInt32 failed.");
         return;
     }
     for (uint32_t i = 0; i < userSize; i++) {
         UserState userInfo;
         if (!data.ReadInt32(userInfo.userId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
-            IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to read userId.");
+            IF_FALSE_PRINT_LOG(
+                AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
             return;
         }
         if (!data.ReadBool(userInfo.isActive)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
-            IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to read isActive.");
+            IF_FALSE_PRINT_LOG(
+                AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
             return;
         }
         userList.emplace_back(userInfo);
     }
     int32_t res = this->UpdateUserPolicy(userList);
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(res), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(res), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Permission denied(id=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(
+            AT_DOMAIN, AT_TAG, reply.WriteInt32(ERR_PERMISSION_DENIED), "WriteInt32 failed.");
         return;
     }
 
     int32_t res = this->ClearUserPolicy();
-    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(res), "WriteInt32 failed.");
+    IF_FALSE_PRINT_LOG(AT_DOMAIN, AT_TAG, reply.WriteInt32(res), "WriteInt32 failed.");
 }
 
 bool AccessTokenManagerStub::IsPrivilegedCalling() const

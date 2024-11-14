@@ -76,7 +76,6 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_db_util.cpp",
       "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/data_translator.cpp",
-      "main/cpp/src/database/token_field_const.cpp",
       "main/cpp/src/dfx/hisysevent_adapter.cpp",
       "main/cpp/src/form_manager/form_instance.cpp",
       "main/cpp/src/form_manager/form_manager_access_client.cpp",

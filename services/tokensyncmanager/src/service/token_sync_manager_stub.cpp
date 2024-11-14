@@ -25,7 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerStub"};
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     static const int32_t ROOT_UID = 0;
 #endif
@@ -34,10 +33,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 int32_t TokenSyncManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}d", __func__, code);
+    LOGI(AT_DOMAIN, AT_TAG, "%{public}s called, code: %{public}d", __func__, code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenSyncManager::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        LOGE(AT_DOMAIN, AT_TAG, "Unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (code) {
@@ -60,7 +59,7 @@ bool TokenSyncManagerStub::IsNativeProcessCalling() const
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     uint32_t type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling type: %{public}d", type);
+    LOGD(AT_DOMAIN, AT_TAG, "Calling type: %{public}d", type);
     return type == TOKEN_NATIVE;
 }
 
@@ -68,7 +67,7 @@ bool TokenSyncManagerStub::IsRootCalling() const
 {
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int callingUid = IPCSkeleton::GetCallingUid();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling uid: %{public}d", callingUid);
+    LOGD(AT_DOMAIN, AT_TAG, "Calling uid: %{public}d", callingUid);
     return callingUid == ROOT_UID;
 #else
     return false;
@@ -78,7 +77,7 @@ bool TokenSyncManagerStub::IsRootCalling() const
 void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        LOGE(AT_DOMAIN, AT_TAG, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
@@ -94,7 +93,7 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        LOGE(AT_DOMAIN, AT_TAG, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
@@ -106,7 +105,7 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
 void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        LOGE(AT_DOMAIN, AT_TAG, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }

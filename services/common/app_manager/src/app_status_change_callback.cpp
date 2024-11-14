@@ -20,27 +20,21 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ApplicationStateObserverStub"
-};
-}
-
 ApplicationStateObserverStub::ApplicationStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub Instance create");
+    LOGI(AT_DOMAIN, AT_TAG, "ApplicationStateObserverStub Instance create");
 }
 
 ApplicationStateObserverStub::~ApplicationStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub Instance destroy");
+    LOGI(AT_DOMAIN, AT_TAG, "ApplicationStateObserverStub Instance destroy");
 }
 
 int32_t ApplicationStateObserverStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub: ReadInterfaceToken failed");
+        LOGI(AT_DOMAIN, AT_TAG, "ApplicationStateObserverStub: ReadInterfaceToken failed");
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
@@ -61,7 +55,7 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case, need check AudioListenerStub");
+            LOGD(AT_DOMAIN, AT_TAG, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
@@ -72,7 +66,7 @@ int32_t ApplicationStateObserverStub::HandleOnProcessStateChanged(MessageParcel 
 {
     std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
     if (processData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed");
         return -1;
     }
 
@@ -84,7 +78,7 @@ int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, M
 {
     std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
     if (processData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed");
         return -1;
     }
 
@@ -96,7 +90,7 @@ int32_t ApplicationStateObserverStub::HandleOnAppStateChanged(MessageParcel &dat
 {
     std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
     if (processData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed");
         return -1;
     }
 
@@ -108,7 +102,7 @@ int32_t ApplicationStateObserverStub::HandleOnAppStopped(MessageParcel &data, Me
 {
     std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
     if (appStateData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed");
         return -1;
     }
 

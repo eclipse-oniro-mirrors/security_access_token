@@ -22,7 +22,6 @@
 
 using namespace OHOS::Security::AccessToken;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusSocketMock"};
 static const int SERVER_COUNT_LIMIT = 10;
 static int g_serverCount = -1;
 static bool g_sendMessFlag = false;
@@ -38,7 +37,7 @@ bool IsServerCountOK()
 
 int SendBytes(int sessionId, const void *data, unsigned int len)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "len: %{public}d", len);
+    LOGD(AT_DOMAIN, AT_TAG, "len: %{public}d", len);
     if (sessionId == Constant::INVALID_SESSION) {
         return Constant::FAILURE;
     }
@@ -49,17 +48,17 @@ int SendBytes(int sessionId, const void *data, unsigned int len)
 
 void DecompressMock(const unsigned char *bytes, const int length)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "input length: %{public}d", length);
+    LOGD(AT_DOMAIN, AT_TAG, "input length: %{public}d", length);
     uLong len = 1048576;
     unsigned char *buf = static_cast<unsigned char *>(malloc(len + 1));
     if (buf == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory!");
+        LOGE(AT_DOMAIN, AT_TAG, "no enough memory!");
         return;
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
     int result = uncompress(buf, &len, const_cast<unsigned char *>(bytes), length);
     if (result != Z_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
             static_cast<int>(len), length);
         free(buf);
@@ -68,13 +67,13 @@ void DecompressMock(const unsigned char *bytes, const int length)
     buf[len] = '\0';
     std::string str(reinterpret_cast<char *>(buf));
     free(buf);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
+    LOGD(AT_DOMAIN, AT_TAG, "done, output: %{public}s", str.c_str());
 
     std::size_t id_post = str.find("\"id\":");
 
     std::string id_string = str.substr(id_post + 6, 9);
     g_uuid = id_string;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id_string: %{public}s", id_string.c_str());
+    LOGD(AT_DOMAIN, AT_TAG, "id_string: %{public}s", id_string.c_str());
     return;
 }
 
@@ -83,7 +82,7 @@ void CompressMock(const std::string &json, const unsigned char *compressedBytes,
     uLong len = compressBound(json.size());
     // length will not so that long
     if (compressedLength > 0 && (int) len > compressedLength) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG,
             "compress error. data length overflow, bound length: %{public}d, buffer length: %{public}d", (int) len,
             compressedLength);
         return ;
@@ -92,18 +91,18 @@ void CompressMock(const std::string &json, const unsigned char *compressedBytes,
     int result = compress(const_cast<Byte *>(compressedBytes), &len,
         reinterpret_cast<unsigned char *>(const_cast<char *>(json.c_str())), json.size() + 1);
     if (result != Z_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "compress failed! error code: %{public}d", result);
+        LOGE(AT_DOMAIN, AT_TAG, "compress failed! error code: %{public}d", result);
         return;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "compress complete. compress %{public}d bytes to %{public}d", compressedLength,
-        (int) len);
+    LOGD(AT_DOMAIN, AT_TAG,
+        "compress complete. compress %{public}d bytes to %{public}d", compressedLength, (int) len);
     compressedLength = len;
     return ;
 }
 
 std::string GetUuidMock()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetUuidMock called uuid: %{public}s", g_uuid.c_str());
+    LOGD(AT_DOMAIN, AT_TAG, "GetUuidMock called uuid: %{public}s", g_uuid.c_str());
     return g_uuid;
 }
 

@@ -42,10 +42,6 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptorTest"};
-}
-
 void NativeTokenReceptorTest::SetUpTestCase()
 {
     // delete all test 0x28100000 - 0x28100007
@@ -81,7 +77,7 @@ void NativeTokenReceptorTest::SetUp()
 
 void NativeTokenReceptorTest::TearDown()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test down!");
+    LOGI(AT_DOMAIN, AT_TAG, "test down!");
 }
 
 /**
@@ -92,7 +88,7 @@ void NativeTokenReceptorTest::TearDown()
  */
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData001!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ParserNativeRawData001!");
     std::string testStr = R"([)"\
         R"({"processName":"process6","APL":3,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
         R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]},)"\
@@ -121,7 +117,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData002!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ParserNativeRawData002!");
     std::string testStr = R"([{"processName":""}])";
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
@@ -184,7 +180,7 @@ namespace AccessToken {
  */
 HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test from_json001!");
+    LOGI(AT_DOMAIN, AT_TAG, "test from_json001!");
     nlohmann::json j = nlohmann::json{
         {"processName", "process6"},
         {"APL", APL_SYSTEM_CORE},
@@ -207,7 +203,7 @@ HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, from_json002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test from_json002!");
+    LOGI(AT_DOMAIN, AT_TAG, "test from_json002!");
     // version wrong
     nlohmann::json j = nlohmann::json{
         {"processName", "process6"}, {"APL", APL_SYSTEM_CORE},
@@ -272,7 +268,7 @@ HWTEST_F(NativeTokenReceptorTest, from_json002, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos001!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos001!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     // test process one
@@ -369,7 +365,7 @@ static void CompareGoalTokenInfo(const NativeTokenInfoBase &info)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos002!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos002!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     NativeTokenInfoBase info1;
     info1.apl = APL_NORMAL;
@@ -439,7 +435,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos003!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos003!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>();
@@ -456,7 +452,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos003, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos004!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos004!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info3 = {
@@ -503,7 +499,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos005!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos005!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info5 = {
@@ -553,7 +549,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos006!");
+    LOGI(AT_DOMAIN, AT_TAG, "test ProcessNativeTokenInfos006!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info7 = {
@@ -600,7 +596,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test init001!");
+    LOGI(AT_DOMAIN, AT_TAG, "test init001!");
 
     const char *dcaps[1];
     dcaps[0] = "AT_CAP_01";

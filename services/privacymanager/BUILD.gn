@@ -80,7 +80,6 @@ if (is_standard_system && ability_base_enable == true) {
       "src/common/constant.cpp",
       "src/database/data_translator.cpp",
       "src/database/permission_used_record_db.cpp",
-      "src/database/privacy_field_const.cpp",
       "src/record/on_permission_used_record_callback_proxy.cpp",
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",

@@ -27,9 +27,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerClient"
-};
 const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
@@ -53,7 +50,7 @@ PrivacyManagerClient::PrivacyManagerClient()
 
 PrivacyManagerClient::~PrivacyManagerClient()
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "~PrivacyManagerClient");
+    LOGE(PRI_DOMAIN, PRI_TAG, "~PrivacyManagerClient");
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
 }
@@ -62,7 +59,7 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     AddPermParamInfoParcel infoParcel;
@@ -75,7 +72,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->StartUsingPermission(tokenID, pid, permissionName);
@@ -87,12 +84,12 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
     std::lock_guard<std::mutex> lock(stateCbkMutex_);
     auto iter = stateChangeCallbackMap_.find(id);
     if (iter != stateChangeCallbackMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, " Callback has been used.");
+        LOGE(PRI_DOMAIN, PRI_TAG, " Callback has been used.");
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callbackWrap = new (std::nothrow) StateChangeCallback(callback);
         if (callbackWrap == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Memory allocation for callbackWrap failed!");
+            LOGE(PRI_DOMAIN, PRI_TAG, "Memory allocation for callbackWrap failed!");
             return PrivacyError::ERR_MALLOC_FAILED;
         }
     }
@@ -104,7 +101,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
     const std::shared_ptr<StateCustomizedCbk>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -117,7 +114,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -125,7 +122,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
-        ACCESSTOKEN_LOG_INFO(LABEL, "CallbackObject added.");
+        LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     }
     return result;
 }
@@ -135,7 +132,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     if (permissionName == CAMERA_PERMISSION_NAME) {
@@ -154,7 +151,7 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->RemovePermissionUsedRecords(tokenID);
@@ -165,7 +162,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -182,7 +179,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -217,20 +214,20 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCb is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "CustomizedCb is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
     int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap);
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create callback, err: %{public}d.", result);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
         return result;
     }
 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<std::string> permList;
@@ -243,7 +240,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
         activeCbkMap_[callback] = callbackWrap;
-        ACCESSTOKEN_LOG_INFO(LABEL, "CallbackObject added.");
+        LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     }
     return result;
 }
@@ -253,14 +250,14 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback == activeCbkMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GoalCallback already is not exist.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback already is not exist.");
         return PrivacyError::ERR_CALLBACK_NOT_EXIST;
     }
 
@@ -275,7 +272,7 @@ bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return false;
     }
     return proxy->IsAllowedUsingPermission(tokenID, permissionName);
@@ -286,7 +283,7 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     SecCompEnhanceDataParcel registerParcel;
@@ -298,7 +295,7 @@ int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return proxy->UpdateSecCompEnhance(pid, seqNum);
@@ -308,7 +305,7 @@ int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData&
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     SecCompEnhanceDataParcel parcel;
@@ -325,7 +322,7 @@ int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundle
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     std::vector<SecCompEnhanceDataParcel> parcelList;
@@ -345,7 +342,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -364,7 +361,7 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetMutePolicy(policyType, callerType, isMute);
@@ -374,7 +371,7 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetHapWithFGReminder(tokenId, isAllowed);
@@ -391,12 +388,12 @@ void PrivacyManagerClient::InitProxy()
     if (proxy_ == nullptr || proxy_->AsObject() || proxy_->AsObject()->IsObjectDead()) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
+            LOGD(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
             return;
         }
         auto privacySa = sam->CheckSystemAbility(IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
         if (privacySa == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckSystemAbility %{public}d is null",
+            LOGD(PRI_DOMAIN, PRI_TAG, "CheckSystemAbility %{public}d is null",
                 IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
             return;
         }
@@ -407,7 +404,7 @@ void PrivacyManagerClient::InitProxy()
         }
         proxy_ = new PrivacyManagerProxy(privacySa);
         if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Iface_cast get null");
+            LOGD(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
         }
     }
 }

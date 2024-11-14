@@ -23,9 +23,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PowerMgrClient"
-};
 std::mutex g_instanceMutex;
 } // namespace
 
@@ -52,10 +49,10 @@ PowerMgrClient::~PowerMgrClient()
 
 bool PowerMgrClient::IsScreenOn()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    LOGI(AT_DOMAIN, AT_TAG, "Entry");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
         return false;
     }
     return proxy->IsScreenOn();
@@ -65,12 +62,12 @@ void PowerMgrClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
         return;
     }
     auto powerManagerSa = sam->GetSystemAbility(POWER_MANAGER_SERVICE_ID);
     if (powerManagerSa == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbility %{public}d is null",
             POWER_MANAGER_SERVICE_ID);
         return;
     }
@@ -82,7 +79,7 @@ void PowerMgrClient::InitProxy()
 
     proxy_ = new PowerMgrProxy(powerManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
     }
 }
 
@@ -112,7 +109,7 @@ void PowerMgrClient::ReleaseProxy()
 
 void PowerMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnRemoteDied");
+    LOGI(PRI_DOMAIN, PRI_TAG, "OnRemoteDied");
     PowerMgrClient::GetInstance().OnRemoteDiedHandle();
 }
 } // namespace AccessToken

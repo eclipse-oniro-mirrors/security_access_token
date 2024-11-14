@@ -26,11 +26,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DeleteRemoteTokenCommand"};
-}
-
 DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
     const std::string &srcDeviceId, const std::string &dstDeviceId, AccessTokenID deleteID)
     : deleteTokenId_(deleteID)
@@ -48,7 +43,7 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
     deleteTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
+        LOGE(AT_DOMAIN, AT_TAG, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -62,7 +57,7 @@ std::string DeleteRemoteTokenCommand::ToJsonPayload()
 {
     nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
     if (j.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "J is invalid.");
+        LOGE(AT_DOMAIN, AT_TAG, "J is invalid.");
         return "";
     }
     j["tokenId"] = deleteTokenId_;
@@ -73,12 +68,12 @@ void DeleteRemoteTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "End as: DeleteRemoteTokenCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "End as: DeleteRemoteTokenCommand");
 }
 
 void DeleteRemoteTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: DeleteRemoteTokenCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "Execute: start as: DeleteRemoteTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -86,7 +81,7 @@ void DeleteRemoteTokenCommand::Execute()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Error: get remote uniqueDeviceId failed");
+        LOGI(AT_DOMAIN, AT_TAG, "Error: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
@@ -101,13 +96,13 @@ void DeleteRemoteTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: DeleteRemoteTokenCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "Execute: end as: DeleteRemoteTokenCommand");
 }
 
 void DeleteRemoteTokenCommand::Finish()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Finish: end as: DeleteUidPermissionCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "Finish: end as: DeleteUidPermissionCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security

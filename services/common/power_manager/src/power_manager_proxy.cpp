@@ -19,32 +19,28 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PowerMgrProxy"};
-}
-
 bool PowerMgrProxy::IsScreenOn()
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return false;
     }
     bool needPrintLog = true;
     if (!data.WriteBool(needPrintLog)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteBool failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteBool failed");
         return false;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service is null.");
         return false;
     }
     int32_t error = remote->SendRequest(static_cast<uint32_t>(IPowerMgr::Message::IS_SCREEN_ON), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "IsScreenOn failed, error: %{public}d", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "IsScreenOn failed, error: %{public}d", error);
         return false;
     }
     return reply.ReadBool();

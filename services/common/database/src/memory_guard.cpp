@@ -20,20 +20,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-#ifdef CONFIG_USE_JEMALLOC_DFX_INTF
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "MemoryGuard"
-};
-#endif
-}
-
 MemoryGuard::MemoryGuard()
 {
 #ifdef CONFIG_USE_JEMALLOC_DFX_INTF
     int32_t ret1 = mallopt(M_SET_THREAD_CACHE, M_THREAD_CACHE_DISABLE);
     int32_t ret2 = mallopt(M_DELAYED_FREE, M_DELAYED_FREE_DISABLE);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Disable tcache and delay free, result[%{public}d, %{public}d]", ret1, ret2);
+    LOGD(AT_DOMAIN, AT_TAG, "Disable tcache and delay free, ret[%{public}d, %{public}d]", ret1, ret2);
 #endif
 }
 
@@ -41,7 +33,7 @@ MemoryGuard::~MemoryGuard()
 {
 #ifdef CONFIG_USE_JEMALLOC_DFX_INTF
     int32_t err = mallopt(M_FLUSH_THREAD_CACHE, 0);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Flush cache, result: %{public}d", err);
+    LOGD(AT_DOMAIN, AT_TAG, "Flush cache, result: %{public}d", err);
 #endif
 }
 } // namespace AccessToken

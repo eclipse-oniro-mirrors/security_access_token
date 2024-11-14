@@ -25,12 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AudioManagerAdapter"
-};
-}
-
 AudioManagerAdapter& AudioManagerAdapter::GetInstance()
 {
     static AudioManagerAdapter *instance = new (std::nothrow) AudioManagerAdapter();
@@ -46,12 +40,12 @@ AudioManagerAdapter::~AudioManagerAdapter()
 bool AudioManagerAdapter::GetPersistentMicMuteState()
 {
 #ifndef AUDIO_FRAMEWORK_ENABLE
-    ACCESSTOKEN_LOG_INFO(LABEL, "audio framework is not support.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "audio framework is not support.");
     return false;
 #else
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetProxy.");
         return false;
     }
 
@@ -61,14 +55,14 @@ bool AudioManagerAdapter::GetPersistentMicMuteState()
 
     std::u16string AUDIO_MGR_DESCRIPTOR = u"IAudioPolicy";
     if (!data.WriteInterfaceToken(AUDIO_MGR_DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
         return false;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AudioStandard::AudioPolicyInterfaceCode::GET_MICROPHONE_MUTE_PERSISTENT),
         data, reply, option);
     if (error != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
         return false;
     }
     return reply.ReadBool();
@@ -83,22 +77,22 @@ void AudioManagerAdapter::InitProxy()
     }
     sptr<ISystemAbilityManager> systemManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemManager == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get system ability registry.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get system ability registry.");
         return;
     }
     sptr<IRemoteObject> remoteObj = systemManager->CheckSystemAbility(AUDIO_POLICY_SERVICE_ID);
     if (remoteObj == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to connect ability manager service.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to connect ability manager service.");
         return;
     }
 
     deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new (std::nothrow) AudioManagerDeathRecipient());
     if (deathRecipient_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create AudioManagerDeathRecipient!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create AudioManagerDeathRecipient!");
         return;
     }
     if ((remoteObj->IsProxyObject()) && (!remoteObj->AddDeathRecipient(deathRecipient_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient to AbilityManagerService failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add death recipient to AbilityManagerService failed.");
         return;
     }
     proxy_ = remoteObj;
@@ -125,7 +119,7 @@ void AudioManagerAdapter::ReleaseProxy(const wptr<IRemoteObject>& remote)
 
 void AudioManagerAdapter::AudioManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "AudioManagerDeathRecipient handle remote died.");
+    LOGE(PRI_DOMAIN, PRI_TAG, "AudioManagerDeathRecipient handle remote died.");
     AudioManagerAdapter::GetInstance().ReleaseProxy(remote);
 }
 #endif
