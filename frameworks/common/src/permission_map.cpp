@@ -551,6 +551,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_WEATHER_DATA",                   false},
     {"ohos.permission.MANAGE_APP_KEEP_ALIVE",               false},
     {"ohos.permission.MANAGE_APP_KEEP_ALIVE_INTERNAL",      false},
+    {"ohos.permission.ACCESS_VIRTUAL_KEYBOARD",             false},
     {"ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",   false},
 };
 

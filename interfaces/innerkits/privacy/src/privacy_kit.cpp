@@ -130,15 +130,15 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
 }
 
-int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
+    return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID);
 }
 
 static bool IsPermissionFlagValid(const PermissionUsedRequest& request)

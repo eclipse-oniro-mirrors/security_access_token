@@ -190,8 +190,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
     }
 
     AccessTokenID tokenId = data.ReadUint32();
-    std::string deviceID = data.ReadString();
-    reply.WriteInt32(this->RemovePermissionUsedRecords(tokenId, deviceID));
+    reply.WriteInt32(this->RemovePermissionUsedRecords(tokenId));
 }
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)

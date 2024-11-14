@@ -150,14 +150,14 @@ int32_t PrivacyManagerClient::StopUsingPermission(
     return proxy->StopUsingPermission(tokenID, pid, permissionName);
 }
 
-int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RemovePermissionUsedRecords(tokenID, deviceID);
+    return proxy->RemovePermissionUsedRecords(tokenID);
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(

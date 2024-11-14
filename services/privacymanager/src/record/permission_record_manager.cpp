@@ -61,7 +61,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
 static const int32_t VALUE_MAX_LEN = 32;
-constexpr const char* DEFAULT_DEVICEID = "0";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
@@ -428,15 +427,8 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
         info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
 }
 
-void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
+void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
-    // only support remove by tokenId(local)
-    std::string device = GetDeviceId(tokenId);
-    if (!deviceID.empty() && device != deviceID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeviceID mismatch");
-        return;
-    }
-
     {
         // remove from record cache
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
@@ -695,7 +687,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     }
     bundleRecord.tokenId = tokenId;
     bundleRecord.isRemote = false;
-    bundleRecord.deviceId = GetDeviceId(tokenId);
+    bundleRecord.deviceId = "";
     bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
 }
@@ -1009,7 +1001,7 @@ void PermissionRecordManager::CallbackExecute(
         "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
         tokenId, permissionName.c_str(), status);
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
+        tokenId, permissionName, "", (ActiveChangeType)status);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
@@ -1481,18 +1473,6 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     ACCESSTOKEN_LOG_INFO(LABEL, "Get %{public}zu permission used type records.", results.size());
 
     return Constant::SUCCESS;
-}
-
-std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
-{
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        return "";
-    }
-    if (tokenInfo.deviceID == DEFAULT_DEVICEID) { // local
-        return ConstantCommon::GetLocalDeviceId();
-    }
-    return tokenInfo.deviceID;
 }
 
 int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
