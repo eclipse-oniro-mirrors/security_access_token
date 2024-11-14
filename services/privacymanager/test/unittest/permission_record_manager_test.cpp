@@ -168,11 +168,11 @@ void PermissionRecordManagerTest::TearDown()
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
     appStateObserver_ = nullptr;
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
@@ -784,17 +784,6 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords001, TestSize.L
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-
-    std::string deviceID;
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID); // deviceID is empty
-
-    deviceID = "what's is";
-    // deviceID is not empty, but device which deps on tokenID is empty not equals deviceID
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(static_cast<AccessTokenID>(123), deviceID);
-
-    deviceID = "0";
-    // deviceID is not empty, device which deps on tokenID is not empty and equals deviceID
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
 }
 
 /*

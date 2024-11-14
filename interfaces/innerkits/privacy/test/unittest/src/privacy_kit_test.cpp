@@ -209,43 +209,43 @@ static void DeleteTestToken()
                                                           g_infoParmsA.bundleName,
                                                           g_infoParmsA.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID,
                                             g_infoParmsB.bundleName,
                                             g_infoParmsB.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsC.userID,
                                             g_infoParmsC.bundleName,
                                             g_infoParmsC.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID,
                                             g_infoParmsE.bundleName,
                                             g_infoParmsE.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsF.userID,
                                             g_infoParmsF.bundleName,
                                             g_infoParmsF.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_normalInfoParms.userID,
                                             g_normalInfoParms.bundleName,
                                             g_normalInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_systemInfoParms.userID,
                                             g_systemInfoParms.bundleName,
                                             g_systemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
 }
 
 void PrivacyKitTest::SetUpTestCase()
@@ -296,20 +296,12 @@ void PrivacyKitTest::TearDown()
     DeleteTestToken();
 }
 
-std::string PrivacyKitTest::GetLocalDeviceUdid()
-{
-    const int32_t DEVICE_UUID_LENGTH = 65;
-    char udid[DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(udid, DEVICE_UUID_LENGTH);
-    return udid;
-}
-
-void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId, const std::string &deviceId,
+void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId,
     const std::string &bundleName, const std::vector<std::string> &permissionList, PermissionUsedRequest &request)
 {
     request.tokenId = tokenId;
     request.isRemote = false;
-    request.deviceId = deviceId;
+    request.deviceId = "";
     request.bundleName = bundleName;
     request.permissionList = permissionList;
     request.beginTimeMillis = 0;
@@ -379,7 +371,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
@@ -411,11 +403,11 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_nativeToken, "", "", permissionList, request);
+    BuildQueryRequest(g_nativeToken, "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
@@ -438,7 +430,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_nativeToken, "", "", permissionList, request);
+    BuildQueryRequest(g_nativeToken, "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
@@ -471,7 +463,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
@@ -510,13 +502,13 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
 
-    BuildQueryRequest(g_tokenIdB, GetLocalDeviceUdid(), g_infoParmsB.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdB, g_infoParmsB.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
@@ -561,7 +553,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
@@ -626,7 +618,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
@@ -670,7 +662,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord010, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
@@ -681,18 +673,18 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord010, TestSize.Level1)
 
 /**
  * @tc.name: RemovePermissionUsedRecords001
- * @tc.desc: cannot RemovePermissionUsedRecords with illegal tokenId and deviceID.
+ * @tc.desc: cannot RemovePermissionUsedRecords with illegal tokenId.
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
 {
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(0, ""));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(0));
 }
 
 /**
  * @tc.name: RemovePermissionUsedRecords002
- * @tc.desc: RemovePermissionUsedRecords with invalid tokenId and deviceID.
+ * @tc.desc: RemovePermissionUsedRecords with invalid tokenId.
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
@@ -707,37 +699,9 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, "invalid_device"));
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(123, GetLocalDeviceUdid()));
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-}
-
-/**
- * @tc.name: RemovePermissionUsedRecords003
- * @tc.desc: RemovePermissionUsedRecords with valid tokenId and deviceID.
- * @tc.type: FUNC
- * @tc.require: issueI5P4IU
- */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
-{
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    info.successCount = 1;
-    info.failCount = 0;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
-
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, ""));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
@@ -759,7 +723,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.beginTimeMillis = -1;
     request.endTimeMillis = -1;
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::GetPermissionUsedRecords(request, result));
@@ -797,22 +761,22 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
     // query by tokenId
-    BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-    request.deviceId = GetLocalDeviceUdid();
+    request.deviceId = "";
     request.bundleName = g_infoParmsA.bundleName;
     CheckPermissionUsedResult(request, result, 3, 3, 0);
 
     // query by unmatched tokenId, deviceId and bundle Name
-    BuildQueryRequest(123, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(123, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 
     // query by invalid permission Name
     permissionList.clear();
     permissionList.emplace_back("invalid permission");
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
 }
@@ -841,7 +805,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 1, 4, 0);
@@ -858,7 +822,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
     info.permissionName = "ohos.permission.WRITE_CALENDAR";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 4, 7, 0);
@@ -892,7 +856,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(0, GetLocalDeviceUdid(), "", permissionList, request);
+    BuildQueryRequest(0, "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     if (result.bundleRecords.size() < static_cast<uint32_t>(2)) {
@@ -917,7 +881,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
     // query by tokenId
-    BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecords(request, result));
 }
 
@@ -940,10 +904,10 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
     PermissionUsedResult result1;
     std::vector<std::string> permissionList;
     // query by tokenId
-    BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result1));
     ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords.size());
-    request.deviceId = GetLocalDeviceUdid();
+    request.deviceId = "";
     request.bundleName = g_infoParmsA.bundleName;
     CheckPermissionUsedResult(request, result1, 1, 0, 1);
 
@@ -975,7 +939,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     PermissionUsedRequest request;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     request.beginTimeMillis = -1;
     request.endTimeMillis = -1;
     OHOS::sptr<TestCallBack> callback(new TestCallBack());
@@ -998,7 +962,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     PermissionUsedRequest request;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     OHOS::sptr<TestCallBack> callback(new TestCallBack());
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
@@ -1018,7 +982,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level1)
 
     PermissionUsedRequest request;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
+    BuildQueryRequest(g_tokenIdA, "", permissionList, request);
     OHOS::sptr<TestCallBack> callback(new TestCallBack());
     ASSERT_EQ(ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
@@ -1439,7 +1403,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdE, g_infoParmsE.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
@@ -1523,7 +1487,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
     std::string permissionName;
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(tokenId, permissionName));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(tokenId, permissionName));
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId));
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
 }
 
@@ -1722,7 +1686,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level1)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdE, g_infoParmsE.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
@@ -2385,7 +2349,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedTypeInfos(
         0, permissionName, results));
 
-    PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(0, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID)); // delete test hap
 }
 
@@ -2429,7 +2393,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_OVERSIZE, PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 
     for (const auto& id : tokenIdList) {
-        PrivacyKit::RemovePermissionUsedRecords(id, "");
+        PrivacyKit::RemovePermissionUsedRecords(id);
         ASSERT_EQ(0, AccessTokenKit::DeleteToken(id));
     }
 

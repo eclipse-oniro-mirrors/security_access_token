@@ -103,10 +103,9 @@ public:
     /**
      * @brief Remove input tokenID sensitive permission used records.
      * @param tokenID token id
-     * @param deviceID device id
      * @return error code, see privacy_error.h
      */
-    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
+    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     /**
      * @brief Get sensitive permission used records.
      * @param request PermissionUsedRequest quote

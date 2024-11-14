@@ -36,8 +36,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        return PrivacyKit::RemovePermissionUsedRecords(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateRandomString()) == 0;
+        return PrivacyKit::RemovePermissionUsedRecords(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>())) == 0;
     }
 }
 

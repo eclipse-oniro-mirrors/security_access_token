@@ -116,11 +116,11 @@ void PrivacyManagerServiceTest::TearDown()
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    privacyManagerService_->RemovePermissionUsedRecords(tokenId, "");
+    privacyManagerService_->RemovePermissionUsedRecords(tokenId);
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    privacyManagerService_->RemovePermissionUsedRecords(tokenId, "");
+    privacyManagerService_->RemovePermissionUsedRecords(tokenId);
     privacyManagerService_ = nullptr;
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
@@ -294,7 +294,7 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID)
     {
         return RET_SUCCESS;
     }
@@ -731,7 +731,6 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1
 HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
-    std::string deviceID = "abc"; // abc is random input
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -740,7 +739,6 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSiz
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(deviceID));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
     // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
@@ -756,7 +754,6 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSiz
 HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
-    std::string deviceID = "abc"; // abc is random input
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -769,7 +766,6 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSiz
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(deviceID));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
     // native token device_manager don't have request permission

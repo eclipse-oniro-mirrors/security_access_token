@@ -127,8 +127,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
 {
     AccessTokenID tokenId = 0xff;
-    std::string device = "device";
-    int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId, device);
+    int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId);
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
