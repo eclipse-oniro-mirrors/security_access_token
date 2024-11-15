@@ -31,12 +31,15 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "${access_token_path}/frameworks/tokensync/include",
     "../include",
     "../src",
+    "unittest/common",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
   ]
 
   sources = [
     "unittest/HapTokenTest/init_hap_token_test.cpp",
+    "unittest/HapTokenTest/update_hap_token_test.cpp",
+    "unittest/common/test_common.cpp",
     "unittest/src/accesstoken_deny_test.cpp",
     "unittest/src/accesstoken_kit_extension_test.cpp",
     "unittest/src/accesstoken_kit_test.cpp",

@@ -16,6 +16,9 @@ import("//build/ohos.gni")
 group("cj_packages") {
   deps = []
   if (support_jsapi) {
-    deps += [ "accesstoken:cj_ability_access_ctrl_ffi" ]
+    deps += [
+      "accesstoken:cj_ability_access_ctrl_ffi",
+      "screenlockfilemanager:cj_screen_lock_file_manager_ffi",
+    ]
   }
 }

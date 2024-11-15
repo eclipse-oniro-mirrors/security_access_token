@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,23 +13,16 @@
  * limitations under the License.
  */
 
+#ifndef OHOS_SCREEN_LOCK_FILE_MGR_FFI_H
+#define OHOS_SCREEN_LOCK_FILE_MGR_FFI_H
 
-#ifndef AUDIO_MGR_DEATH_RECIPIENT_H
-#define AUDIO_MGR_DEATH_RECIPIENT_H
+#include <cstdint>
 
-#include "iremote_object.h"
+#include "cj_common_ffi.h"
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-class AudioMgrDeathRecipient : public IRemoteObject::DeathRecipient {
-public:
-    AudioMgrDeathRecipient() {}
-    virtual ~AudioMgrDeathRecipient() override = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
-};
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
-#endif  // AUDIO_MGR_DEATH_RECIPIENT_H
+extern "C" {
+    FFI_EXPORT int32_t FfiOHOSScreenLockFileManagerAcquireAccess();
+    FFI_EXPORT int32_t FfiOHOSScreenLockFileManagerReleaseAccess();
+}
 
+#endif // OHOS_SCREEN_LOCK_FILE_MGR_FFI_H

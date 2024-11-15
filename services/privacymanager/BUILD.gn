@@ -60,7 +60,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/privacy/src",
-      "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/config_policy/include",
       "${access_token_path}/services/common/database/include",
@@ -85,12 +84,8 @@ if (is_standard_system && ability_base_enable == true) {
       "src/record/on_permission_used_record_callback_proxy.cpp",
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",
-      "src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
-      "src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
-      "src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
-      "src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
-      "src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
-      "src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
+      "src/sensitive/audio_manager/audio_manager_adapter.cpp",
+      "src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]
@@ -127,8 +122,13 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     if (audio_framework_enable) {
-      include_dirs +=
-          [ "${audio_framework_path}/services/audio_policy/common/include" ]
+      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+      external_deps += [ "audio_framework:audio_client" ]
+    }
+
+    if (camera_framework_enable) {
+      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+      external_deps += [ "camera_framework:camera_framework" ]
     }
 
     if (ohos_indep_compiler_enable) {
@@ -173,6 +173,10 @@ if (is_standard_system && ability_base_enable == true) {
 
     if (access_token_app_security_privacy_service_enable) {
       cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
+    } else {
+      include_dirs += [ "include/sensitive/ability_manager/" ]
+      sources += [ "src/sensitive/ability_manager/ability_manager_adapter.cpp" ]
+      external_deps += [ "ability_runtime:ability_manager" ]
     }
 
     if (hicollie_enable == true) {

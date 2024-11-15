@@ -23,7 +23,10 @@
 #include <string>
 
 #include "access_event_handler.h"
+#include "app_manager_death_callback.h"
+#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
+#include "permission_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -48,11 +51,24 @@ public:
     DISALLOW_COPY_AND_MOVE(ShortPermAppStateObserver);
 };
 
+class ShortPermAppManagerDeathCallback : public AppManagerDeathCallback {
+public:
+    ShortPermAppManagerDeathCallback() = default;
+    ~ShortPermAppManagerDeathCallback() = default;
+
+    void NotifyAppManagerDeath() override;
+    DISALLOW_COPY_AND_MOVE(ShortPermAppManagerDeathCallback);
+};
+
 class ShortGrantManager {
 public:
     static ShortGrantManager& GetInstance();
 
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
+    void OnAppMgrRemoteDiedHandle();
+
+#ifdef EVENTHANDLER_ENABLE
+    void InitEventHandler();
+#endif
 
     int RefreshPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
 
@@ -60,9 +76,12 @@ public:
 
     void ClearShortPermissionByTokenID(AccessTokenID tokenID);
 
+    void RegisterAppStopListener();
+
+    void UnRegisterAppStopListener();
 private:
     ShortGrantManager();
-    ~ShortGrantManager() = default;
+    ~ShortGrantManager();
     uint32_t GetCurrentTime();
     void ScheduleRevokeTask(AccessTokenID tokenID, const std::string& permission,
         const std::string& taskName, uint32_t cancelTimes);
@@ -71,7 +90,17 @@ private:
     uint32_t maxTime_;
     std::vector<PermTimerData> shortGrantData_;
     std::mutex shortGrantDataMutex_;
+
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::mutex eventHandlerLock_;
+#endif
+    sptr<ShortPermAppStateObserver> appStopCallBack_;
+    std::mutex appStopCallbackMutex_;
+
+    std::mutex appManagerDeathMutex_;
+    std::shared_ptr<ShortPermAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

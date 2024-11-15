@@ -34,7 +34,7 @@ ohos_shared_library("accesstoken_screenlock_manager") {
 
     sources = [ "src/screenlock_manager_loader.cpp" ]
 
-    cflags_cc = []
+    cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",

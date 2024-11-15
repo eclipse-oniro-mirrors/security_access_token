@@ -24,7 +24,7 @@
       "OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk::GetPermList(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>&) const";
       "OHOS::Security::AccessToken::PrivacyKit::RegisterPermActiveStatusCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::UnRegisterPermActiveStatusCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
-      "OHOS::Security::AccessToken::PrivacyKit::RemovePermissionUsedRecords(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+      "OHOS::Security::AccessToken::PrivacyKit::RemovePermissionUsedRecords(unsigned int)";
       "OHOS::Security::AccessToken::StateCustomizedCbk::StateCustomizedCbk()";
       "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::shared_ptr<OHOS::Security::AccessToken::StateCustomizedCbk> const&, int)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecords(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::sptr<OHOS::Security::AccessToken::OnPermissionUsedRecordCallback> const&)";

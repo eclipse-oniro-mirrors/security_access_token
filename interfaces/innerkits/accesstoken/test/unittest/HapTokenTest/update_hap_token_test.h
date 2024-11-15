@@ -12,37 +12,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ability_manager_access_loader.h"
 
-#include "ability_manager_client.h"
+#ifndef UPDATE_HAP_TOKEN_TEST_H
+#define UPDATE_HAP_TOKEN_TEST_H
+
+#include <gtest/gtest.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-int32_t AbilityManagerAccessLoader::StartAbility(
-    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int32_t requestCode, int32_t userId)
-{
-#ifdef ABILITY_RUNTIME_ENABLE
-    return AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want, callerToken, requestCode, userId);
-#else
-    return 0;
-#endif
-}
-
-extern "C" {
-void* Create()
-{
-    return reinterpret_cast<void*>(new AbilityManagerAccessLoader);
-}
-
-void Destroy(void* loaderPtr)
-{
-    AbilityManagerAccessLoaderInterface* loader = reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
-    if (loader != nullptr) {
-        delete loader;
-    }
-}
-}
+class UpdateHapTokenTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+#endif // UPDATE_HAP_TOKEN_TEST_H

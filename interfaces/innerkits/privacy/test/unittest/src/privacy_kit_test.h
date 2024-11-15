@@ -47,7 +47,7 @@ public:
         }
     };
     std::string GetLocalDeviceUdid();
-    void BuildQueryRequest(AccessTokenID tokenId, const std::string& deviceId, const std::string& bundleName,
+    void BuildQueryRequest(AccessTokenID tokenId, const std::string& bundleName,
         const std::vector<std::string>& permissionList, PermissionUsedRequest& request);
     void CheckPermissionUsedResult(const PermissionUsedRequest& request, const PermissionUsedResult& result,
         int32_t permRecordSize, int32_t totalSuccessCount, int32_t totalFailCount);

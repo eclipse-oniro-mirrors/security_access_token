@@ -99,7 +99,7 @@ public:
     void DelContinuousTask(AccessTokenID tokenID);
     bool FindContinuousTask(AccessTokenID tokenID);
 #ifdef EVENTHANDLER_ENABLE
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
+    void InitEventHandler();
     void GetConfigValue();
 #endif
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
@@ -116,7 +116,9 @@ public:
 
 private:
 #ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::mutex eventHandlerLock_;
 #endif
     int32_t cancleTimes_;
     std::mutex tempPermissionMutex_;

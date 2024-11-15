@@ -148,16 +148,12 @@ int32_t PrivacyManagerProxy::StopUsingPermission(
     return result;
 }
 
-int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteString(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(deviceID)");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 

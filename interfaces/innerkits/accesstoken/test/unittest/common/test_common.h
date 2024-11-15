@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,23 +13,23 @@
  * limitations under the License.
  */
 
+#ifndef TEST_COMMON_H
+#define TEST_COMMON_H
 
-#ifndef CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-#define CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-
-#include "iremote_object.h"
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class CameraManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
+class TestCommon {
 public:
-    CameraManagerPrivacyDeathRecipient() {}
-    virtual ~CameraManagerPrivacyDeathRecipient() override = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+    static constexpr int32_t DEFAULT_API_VERSION = 12;
+    static void GetHapParams(HapInfoParams& infoParams, HapPolicyParams& policyParams);
 };
 }  // namespace AccessToken
-} // namespace Security
+}  // namespace Security
 }  // namespace OHOS
-#endif  // CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-
+#endif  // TEST_COMMON_H

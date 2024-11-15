@@ -17,13 +17,11 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
-#include "audio_manager_privacy_client.h"
-#include "camera_manager_privacy_client.h"
+#include "audio_manager_adapter.h"
 #include "constant.h"
 #include "data_translator.h"
 #include "permission_record.h"
@@ -59,7 +57,6 @@ static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
-static bool g_isMicMute = false;
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
@@ -144,7 +141,6 @@ void PermissionRecordManagerTest::SetUpTestCase()
     g_isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
     PermissionRecordManager::GetInstance().isMicEdmMute_ = false;
     PermissionRecordManager::GetInstance().isMicMixMute_ = false;
-    g_isMicMute = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
 }
 
 void PermissionRecordManagerTest::TearDownTestCase()
@@ -160,7 +156,7 @@ void PermissionRecordManagerTest::SetUp()
 
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
     AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
     if (appStateObserver_ != nullptr) {
         return;
     }
@@ -169,15 +165,14 @@ void PermissionRecordManagerTest::SetUp()
 
 void PermissionRecordManagerTest::TearDown()
 {
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(g_isMicMute, PolicyType::PRIVACY);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenId);
     appStateObserver_ = nullptr;
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
@@ -224,11 +219,8 @@ public:
     void ActiveStatusChangeCallback(ActiveChangeResponse& result)
     {
         type_ = result.type;
-        GTEST_LOG_(INFO) << "PermActiveStatusChangeCallback ActiveChangeResponse";
-        GTEST_LOG_(INFO) << "PermActiveStatusChangeCallback tokenid " << result.tokenID;
-        GTEST_LOG_(INFO) << "PermActiveStatusChangeCallback permissionName " << result.permissionName;
-        GTEST_LOG_(INFO) << "PermActiveStatusChangeCallback deviceId " << result.deviceId;
-        GTEST_LOG_(INFO) << "PermActiveStatusChangeCallback type " << result.type;
+        GTEST_LOG_(INFO) << "ActiveStatusChange tokenid " << result.tokenID <<
+            ", permission " << result.permissionName << ", type " << result.type;
     }
 
     ActiveChangeType type_ = PERM_INACTIVE;
@@ -376,7 +368,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     SetParameter(EDM_MIC_MUTE_KEY, "false");
 
     ASSERT_EQ(RET_SUCCESS,
-        AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true));
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -392,11 +384,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
         PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
 
     usleep(500000); // 500000us = 0.5s
-#ifndef APP_SECURITY_PRIVACY_SERVICE
-    ASSERT_EQ(PERM_INACTIVE, callback->type_);
-#else
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
-#endif
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName));
     std::string str = isMute ? "true" : "false";
@@ -420,7 +408,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
     bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
     SetParameter(EDM_MIC_MUTE_KEY, "false");
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
@@ -460,7 +448,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
     bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
     SetParameter(EDM_MIC_MUTE_KEY, "true");
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
@@ -708,8 +696,7 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1
     bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
     SetParameter(EDM_MIC_MUTE_KEY, std::to_string(false).c_str());
 
-    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
@@ -719,7 +706,6 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, PERM_ACTIVE_IN_BACKGROUND);
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.MICROPHONE"));
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(isMuteMic, PolicyType::PRIVACY);
     std::string str = isMute ? "true" : "false";
     SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
@@ -798,17 +784,6 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords001, TestSize.L
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-
-    std::string deviceID;
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID); // deviceID is empty
-
-    deviceID = "what's is";
-    // deviceID is not empty, but device which deps on tokenID is empty not equals deviceID
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(static_cast<AccessTokenID>(123), deviceID);
-
-    deviceID = "0";
-    // deviceID is not empty, device which deps on tokenID is not empty and equals deviceID
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
 }
 
 /*

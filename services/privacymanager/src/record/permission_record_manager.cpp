@@ -19,14 +19,16 @@
 #include <cinttypes>
 #include <numeric>
 
-#include "ability_manager_access_client.h"
+#ifndef APP_SECURITY_PRIVACY_SERVICE
+#include "ability_manager_adapter.h"
+#endif
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #include "app_manager_access_client.h"
-#include "audio_manager_privacy_client.h"
-#include "camera_manager_privacy_client.h"
+#include "audio_manager_adapter.h"
+#include "camera_manager_adapter.h"
 #include "config_policy_loader.h"
 #include "constant.h"
 #include "constant_common.h"
@@ -59,14 +61,15 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
 static const int32_t VALUE_MAX_LEN = 32;
-constexpr const char* DEFAULT_DEVICEID = "0";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 constexpr const char* DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 constexpr const char* DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 constexpr const char* RESOURCE_KEY = "ohos.sensitive.resource";
+#endif
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
 static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
@@ -120,7 +123,7 @@ void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData
 
 void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.state);
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
@@ -424,15 +427,8 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
         info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
 }
 
-void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
+void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
-    // only support remove by tokenId(local)
-    std::string device = GetDeviceId(tokenId);
-    if (!deviceID.empty() && device != deviceID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeviceID mismatch");
-        return;
-    }
-
     {
         // remove from record cache
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
@@ -691,7 +687,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     }
     bundleRecord.tokenId = tokenId;
     bundleRecord.isRemote = false;
-    bundleRecord.deviceId = GetDeviceId(tokenId);
+    bundleRecord.deviceId = "";
     bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
 }
@@ -1005,7 +1001,7 @@ void PermissionRecordManager::CallbackExecute(
         "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
         tokenId, permissionName.c_str(), status);
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
+        tokenId, permissionName, "", (ActiveChangeType)status);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
@@ -1052,7 +1048,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
         CallbackExecute(record.tokenId, permissionName, record.status);
     }
 }
-#endif
+
 bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
 {
     std::string resource;
@@ -1068,13 +1064,14 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
-    ErrCode err = AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr);
+    ErrCode err = AbilityManagerAdapter::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
     }
     return true;
 }
+#endif
 
 void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
 {
@@ -1258,11 +1255,6 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Id(%{public}d) is not hap.", tokenId);
-        return false;
-    }
-
-    if (GetMuteStatus(permissionName, EDM)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
         return false;
     }
 
@@ -1483,18 +1475,6 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     return Constant::SUCCESS;
 }
 
-std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
-{
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        return "";
-    }
-    if (tokenInfo.deviceID == DEFAULT_DEVICEID) { // local
-        return ConstantCommon::GetLocalDeviceId();
-    }
-    return tokenInfo.deviceID;
-}
-
 int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
 {
     int32_t status = PERM_ACTIVE_IN_BACKGROUND;
@@ -1532,7 +1512,7 @@ bool PermissionRecordManager::Register()
             }
             int32_t result = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
             if (result != ERR_OK) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Register application state observer failed.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register application state observer failed(%{public}d).", result);
                 return false;
             }
         }
@@ -1616,7 +1596,7 @@ bool PermissionRecordManager::RegisterWindowCallback()
 void PermissionRecordManager::InitializeMuteState(const std::string& permissionName)
 {
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        bool isMicMute = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
+        bool isMicMute = AudioManagerAdapter::GetInstance().GetPersistentMicMuteState();
         ACCESSTOKEN_LOG_INFO(LABEL, "Mic mute state: %{public}d.", isMicMute);
         ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
         {
@@ -1632,7 +1612,7 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
             }
         }
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
-        bool isCameraMute = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+        bool isCameraMute = CameraManagerAdapter::GetInstance().IsCameraMuted();
         ACCESSTOKEN_LOG_INFO(LABEL, "Camera mute state: %{public}d.", isCameraMute);
         ModifyMuteStatus(CAMERA_PERMISSION_NAME, MIXED, isCameraMute);
         {
@@ -1770,8 +1750,10 @@ void PermissionRecordManager::SetDefaultConfigValue()
 {
     recordSizeMaximum_ = DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM;
     recordAgingTime_ = DEFAULT_PERMISSION_USED_RECORD_AGING_TIME;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     globalDialogBundleName_ = DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME;
     globalDialogAbilityName_ = DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY;
+#endif
 }
 
 void PermissionRecordManager::GetConfigValue()
@@ -1789,17 +1771,18 @@ void PermissionRecordManager::GetConfigValue()
             ? DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM : value.pConfig.sizeMaxImum;
         recordAgingTime_ = value.pConfig.agingTime == 0
             ? DEFAULT_PERMISSION_USED_RECORD_AGING_TIME : value.pConfig.agingTime;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
         globalDialogBundleName_ = value.pConfig.globalDialogBundleName.empty()
             ? DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME : value.pConfig.globalDialogBundleName;
         globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName.empty()
             ? DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY : value.pConfig.globalDialogAbilityName;
+#endif
     } else {
         SetDefaultConfigValue();
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d,"
-        " globalDialogBundleName_ is %{public}s, globalDialogAbilityName_ is %{public}s.",
-        recordSizeMaximum_, recordAgingTime_, globalDialogBundleName_.c_str(), globalDialogAbilityName_.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
+        recordSizeMaximum_, recordAgingTime_);
 }
 
 uint64_t PermissionRecordManager::GetUniqueId(uint32_t tokenId, int32_t pid) const

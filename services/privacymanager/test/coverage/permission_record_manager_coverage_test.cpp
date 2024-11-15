@@ -19,8 +19,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
-#include "audio_manager_privacy_client.h"
-#include "camera_manager_privacy_client.h"
+#include "camera_manager_adapter.h"
 #include "constant.h"
 #include "data_translator.h"
 #include "permission_record.h"
@@ -248,7 +247,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.CAMERA";
-    CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, false);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, false);
     PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, permission, status);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
@@ -956,8 +955,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
-    bool isMuteCamera = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
-    CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, true); // true means close
+    // true means close
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, true);
 
     auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
@@ -970,7 +969,6 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
         tokenId, PID, "ohos.permission.CAMERA", callbackWrap->AsObject()));
     sleep(3); // wait for dialog disappear
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.CAMERA"));
-    CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, isMuteCamera);
 }
 
 /*

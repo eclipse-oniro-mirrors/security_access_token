@@ -40,8 +40,6 @@ public:
     void TearDown();
 
     sptr<AccessTokenManagerService> accessTokenService_ = nullptr;
-    std::shared_ptr<AppExecFwk::EventRunner> shortGrantEventRunner_;
-    std::shared_ptr<AccessEventHandler> shortGrantEventHandler_;
     sptr<ShortPermAppStateObserver> appStateObserver_ = nullptr;
 };
 } // namespace AccessToken

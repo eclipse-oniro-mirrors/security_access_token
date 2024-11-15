@@ -1295,7 +1295,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
     }
     PermissionManager::GetInstance().AddPermToKernel(id);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "grantedPermListBefore size %{public}u, grantedPermListAfter size %{public}u!",
+        "grantedPermListBefore size %{public}zu, grantedPermListAfter size %{public}zu!",
         grantedPermListBefore.size(), grantedPermListAfter.size());
     PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
     return RET_SUCCESS;
@@ -1659,9 +1659,10 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
 
 void AccessTokenInfoManager::ClearHapPolicy()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", iter->first);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", iter->first);
         iter->second->ClearHapInfoPermissionPolicySet();
     }
 }

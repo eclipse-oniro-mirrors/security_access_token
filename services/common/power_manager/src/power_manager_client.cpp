@@ -81,7 +81,7 @@ void PowerMgrClient::InitProxy()
     }
 
     proxy_ = new PowerMgrProxy(powerManagerSa);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
@@ -95,7 +95,7 @@ void PowerMgrClient::OnRemoteDiedHandle()
 sptr<IPowerMgr> PowerMgrClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;

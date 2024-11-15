@@ -89,7 +89,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
         uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));
         ACCESSTOKEN_LOG_INFO(LABEL, "Receive package uninstall: tokenId=%{public}d.", tokenId);
-        PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "");
+        PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN) {
         // when receive shut down power event, store the cache data to database immediately
         PermissionRecordManager::GetInstance().UpdatePermRecImmediately();

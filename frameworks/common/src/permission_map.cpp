@@ -282,6 +282,9 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.FILE_GUARD_MANAGER",                  false},
     {"ohos.permission.SET_FILE_GUARD_POLICY",               false},
     {"ohos.permission.ENTERPRISE_RECOVERY_KEY",             false},
+    {"ohos.permission.MANAGE_RECOVERY_KEY",                 false},
+    {"ohos.permission.UTILIZE_RECOVERY_KEY",                false},
+    {"ohos.permission.GET_RECOVERY_KEY_BRIEF_INFORMATION",  false},
     {"ohos.permission.securityguard.SET_MODEL_STATE",       false},
     {"ohos.permission.hsdr.HSDR_ACCESS",                    false},
     {"ohos.permission.SUPPORT_USER_AUTH",                   false},
@@ -545,6 +548,11 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_WRITE_USB_DEV",                  false},
     {"ohos.permission.READ_WRITE_USER_FILE",                false},
     {"ohos.permission.USER_AUTH_FROM_BACKGROUND",           false},
+    {"ohos.permission.READ_WEATHER_DATA",                   false},
+    {"ohos.permission.MANAGE_APP_KEEP_ALIVE",               false},
+    {"ohos.permission.MANAGE_APP_KEEP_ALIVE_INTERNAL",      false},
+    {"ohos.permission.ACCESS_VIRTUAL_KEYBOARD",             false},
+    {"ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",   false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

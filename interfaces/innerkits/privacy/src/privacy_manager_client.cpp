@@ -150,14 +150,14 @@ int32_t PrivacyManagerClient::StopUsingPermission(
     return proxy->StopUsingPermission(tokenID, pid, permissionName);
 }
 
-int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RemovePermissionUsedRecords(tokenID, deviceID);
+    return proxy->RemovePermissionUsedRecords(tokenID);
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(
@@ -388,7 +388,7 @@ uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const
 
 void PrivacyManagerClient::InitProxy()
 {
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() || proxy_->AsObject()->IsObjectDead()) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
@@ -406,7 +406,7 @@ void PrivacyManagerClient::InitProxy()
             privacySa->AddDeathRecipient(serviceDeathObserver_);
         }
         proxy_ = new PrivacyManagerProxy(privacySa);
-        if (proxy_ == nullptr) {
+        if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Iface_cast get null");
         }
     }
@@ -422,7 +422,7 @@ void PrivacyManagerClient::OnRemoteDiedHandle()
 sptr<IPrivacyManager> PrivacyManagerClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;

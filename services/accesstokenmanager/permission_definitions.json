@@ -814,7 +814,7 @@
             "name": "ohos.permission.GET_WIFI_LOCAL_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
@@ -1941,6 +1941,36 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MANAGE_RECOVERY_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.UTILIZE_RECOVERY_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.GET_RECOVERY_KEY_BRIEF_INFORMATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.securityguard.SET_MODEL_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -2586,16 +2616,6 @@
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 11,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
-            "name": "ohos.permission.SET_PRIVACY_INDICATOR",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SYSTEM",
-            "since": 12,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -3461,16 +3481,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.SET_SUPER_PRIVACY",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SYSTEM",
-            "since": 12,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.GET_BLUETOOTH_PEERS_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -3481,7 +3491,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name":"ohos.permission.WRITE_GTOKEN_POLICY",
+            "name": "ohos.permission.WRITE_GTOKEN_POLICY",
             "grantMode":"system_grant",
             "availableLevel":"system_core",
             "availableType": "SYSTEM",
@@ -3491,7 +3501,7 @@
             "distributedSceneEnable":false
         },
         {
-            "name":"ohos.permission.READ_GTOKEN_POLICY",
+            "name": "ohos.permission.READ_GTOKEN_POLICY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",
@@ -3996,6 +4006,16 @@
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_VIRTUAL_KEYBOARD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -4527,7 +4547,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name":"ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
+            "name": "ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",
@@ -4537,7 +4557,7 @@
             "distributedSceneEnable":false
         },
         {
-            "name":"ohos.permission.ACCESS_LOCAL_BACKUP",
+            "name": "ohos.permission.ACCESS_LOCAL_BACKUP",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
             "availableType": "SYSTEM",
@@ -5120,7 +5140,7 @@
             "name": "ohos.permission.GET_ETHERNET_LOCAL_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
@@ -5274,6 +5294,46 @@
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.READ_WEATHER_DATA",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_APP_KEEP_ALIVE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_APP_KEEP_ALIVE_INTERNAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 14,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
