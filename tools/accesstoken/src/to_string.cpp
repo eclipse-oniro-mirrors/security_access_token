@@ -55,6 +55,7 @@ void ToString::PermissionUsedRecordToString(
         infos.append("\n");
         infos.append(R"(          "permissionName": ")" + perm.permissionName + R"(")" + ",\n");
         infos.append(R"(          "accessCount": ")" + std::to_string(perm.accessCount) + R"(")" + ",\n");
+        infos.append(R"(          "secAccessCount": ")" + std::to_string(perm.secAccessCount) + R"(")" + ",\n");
         infos.append(R"(          "rejectCount": )" + std::to_string(perm.rejectCount) + ",\n");
         infos.append(R"(          "lastAccessTime": )" + std::to_string(perm.lastAccessTime) + ",\n");
         infos.append(R"(          "lastRejectTime": )" + std::to_string(perm.lastRejectTime) + ",\n");
