@@ -21,6 +21,8 @@
 #include "cj_common_ffi.h"
 #include "ffi_remote_data.h"
 #include "at_manager_impl.h"
+#include "request_global_switch_on_setting.h"
+#include "request_permission_on_setting.h"
 
 extern "C" {
     FFI_EXPORT int32_t FfiOHOSAbilityAccessCtrlCheckAccessTokenSync(unsigned int tokenID, const char* cPermissionName);
@@ -36,6 +38,10 @@ extern "C" {
         CArrString cPermissionList, void (*callbackRef)(RetDataCPermissionRequestResult infoRef));
     FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRuntime::Context* context,
         CArrString cPermissionList, const std::function<void (RetDataCPermissionRequestResult)> *callbackPtr);
+    FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionOnSetting(OHOS::AbilityRuntime::Context* context,
+        CArrString cPermissionList, void (*callbackRef)(RetDataCArrI32 infoRef));
+    FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestGlobalSwitch(OHOS::AbilityRuntime::Context* context, int32_t type,
+        void (*callbackRef)(RetDataBool infoRef));
 }
 
 #endif // OHOS_ABILITY_ACCESS_CTRL_FFI_H

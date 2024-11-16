@@ -76,6 +76,22 @@ void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRu
     auto onChange = *callbackPtr;
     AtManagerImpl::RequestPermissionsFromUser(context, cPermissionList, onChange);
 }
+
+void FfiOHOSAbilityAccessCtrlRequestPermissionOnSetting(OHOS::AbilityRuntime::Context* context,
+    CArrString cPermissionList, void (*callbackRef)(RetDataCArrI32 infoRef))
+{
+    auto callback = [lambda = CJLambda::Create(callbackRef)]
+        (RetDataCArrI32 infoRef) -> void { lambda(infoRef); };
+    FfiRequestPermissionOnSetting::RequestPermissionOnSetting(context, cPermissionList, callback);
+}
+
+void FfiOHOSAbilityAccessCtrlRequestGlobalSwitch(OHOS::AbilityRuntime::Context* context, int32_t type,
+    void (*callbackRef)(RetDataBool infoRef))
+{
+    auto callback = [lambda = CJLambda::Create(callbackRef)]
+        (RetDataBool infoRef) -> void { lambda(infoRef); };
+    FfiRequestGlobalSwitchOnSetting::RequestGlobalSwitch(context, type, callback);
+}
 }
 } // namespace CJSystemapi
 } // namespace OHOS

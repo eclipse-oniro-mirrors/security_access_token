@@ -14,7 +14,7 @@
  */
 
 #include "at_manager_impl.h"
-
+#include "ability_access_ctrl_common.h"
 #include "ability.h"
 #include "ability_manager_client.h"
 #include "access_token.h"
@@ -38,8 +38,6 @@ static PermissionParamCache g_paramCache;
 std::mutex g_lockForPermRequestCallbacks;
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 
-const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
-const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const std::string PERMISSION_KEY = "ohos.user.grant.permission";
@@ -167,6 +165,19 @@ static int32_t* VectorToCArrInt32(const std::vector<int32_t>& vec)
     int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * vec.size()));
     if (result == nullptr) {
         LOGE("VectorToCArrInt32: malloc failed!");
+        return nullptr;
+    }
+    for (size_t i = 0; i < vec.size(); i++) {
+        result[i] = vec[i];
+    }
+    return result;
+}
+
+static bool* VectorToCArrBool(const std::vector<bool>& vec)
+{
+    bool* result = static_cast<bool*>(malloc(sizeof(bool) * vec.size()));
+    if (result == nullptr) {
+        LOGE("VectorToCArrBool: malloc failed!");
         return nullptr;
     }
     for (size_t i = 0; i < vec.size(); i++) {
@@ -356,16 +367,19 @@ int32_t AtManagerImpl::UnregisterPermStateChangeCallback(
     return CJ_OK;
 }
 
-static void fillRequestResult(CArrString& permissions, CArrI32& authResults, std::vector<std::string> permissionList,
-    std::vector<int32_t> permissionsState)
+static void fillRequestResult(CPermissionRequestResult& retData, std::vector<std::string> permissionList,
+    std::vector<int32_t> permissionsState, std::vector<bool> dialogShownResults)
 {
-    permissions.size = (int64_t)permissionList.size();
-    permissions.head = VectorToCArrString(permissionList);
-    if (permissions.head == nullptr) {
+    retData.permissions.size = static_cast<int64_t>(permissionList.size());
+    retData.permissions.head = VectorToCArrString(permissionList);
+    if (retData.permissions.head == nullptr) {
         return;
     }
-    authResults.size = (int64_t)permissionsState.size();
-    authResults.head = VectorToCArrInt32(permissionsState);
+    retData.authResults.size = static_cast<int64_t>(permissionsState.size());
+    retData.authResults.head = VectorToCArrInt32(permissionsState);
+
+    retData.dialogShownResults.size = static_cast<int64_t>(dialogShownResults.size());
+    retData.dialogShownResults.head = VectorToCArrBool(dialogShownResults);
 }
 
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
@@ -383,20 +397,19 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     const std::vector<int>& grantResults)
 {
     LOGI("AuthorizationResult::GrantResultsCallback");
-    RetDataCPermissionRequestResult ret = { .code = ERR_INVALID_INSTANCE_CODE,
-        .data = { .permissions = {.head = nullptr, .size = 0}, .authResults = {.head = nullptr, .size = 0} }};
-    fillRequestResult(ret.data.permissions, ret.data.authResults, permissions, grantResults);
+    RetDataCPermissionRequestResult ret{};
+    fillRequestResult(ret.data, permissions, grantResults, this->data_->dialogShownResults);
     ret.code = AT_PERM_OPERA_SUCC;
-    callbackRef_(ret);
+    data_->callbackRef(ret);
 }
 
 static int32_t StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext->callbackRef);
+    sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         return CjErrorCode::CJ_ERROR_INNER;
     }
-    
+
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -498,9 +511,8 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
     // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
     std::vector<int> newGrantResults;
     UpdateGrantPermissionResultOnly(permissionList, permissionStates, data->permissionsState, newGrantResults);
-    RetDataCPermissionRequestResult ret = { .code = ERR_INVALID_INSTANCE_CODE,
-        .data = { .permissions = {.head = nullptr, .size = 0}, .authResults = {.head = nullptr, .size = 0} }};
-    fillRequestResult(ret.data.permissions, ret.data.authResults, permissionList, newGrantResults);
+    RetDataCPermissionRequestResult ret{};
+    fillRequestResult(ret.data, permissionList, newGrantResults, data->dialogShownResults);
     ret.code = AT_PERM_OPERA_SUCC;
     data->callbackRef(ret);
 }
@@ -634,8 +646,11 @@ static int32_t StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContex
 void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
     const std::function<void(RetDataCPermissionRequestResult)>& callbackRef)
 {
-    RetDataCPermissionRequestResult ret = { .code = ERR_INVALID_INSTANCE_CODE, .data = {
-        .permissions = {.head = nullptr, .size = 0}, .authResults = {.head = nullptr, .size = 0} } };
+    RetDataCPermissionRequestResult ret = { .code = ERR_INVALID_INSTANCE_CODE,
+        .data = {
+            .permissions = { .head = nullptr, .size = 0 },
+            .authResults = { .head = nullptr, .size = 0 },
+            .dialogShownResults = { .head = nullptr, .size = 0 } } };
     // use handle to protect asyncContext
     std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>();
     if (!ParseRequestPermissionFromUser(context, cPermissionList, callbackRef, asyncContext)) {
@@ -654,9 +669,10 @@ void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* co
         callbackRef(ret);
         return;
     }
-    if (!IsDynamicRequest(asyncContext->permissionList, asyncContext->permissionsState, asyncContext->info)) {
-        fillRequestResult(ret.data.permissions, ret.data.authResults, asyncContext->permissionList,
-            asyncContext->permissionsState);
+    if (!IsDynamicRequest(asyncContext->permissionList, asyncContext->permissionsState,
+        asyncContext->dialogShownResults, asyncContext->info)) {
+        fillRequestResult(ret.data, asyncContext->permissionList, asyncContext->permissionsState,
+            asyncContext->dialogShownResults);
         ret.code = CJ_OK;
         callbackRef(ret);
         return;
@@ -838,7 +854,7 @@ bool AtManagerImpl::IsExistRegister(const RegisterPermStateChangeInfo* registerP
     std::vector<AccessTokenID> targetTokenIDs = targetScopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = targetScopeInfo.permList;
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
-    
+
     for (const auto& item : g_permStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
@@ -885,7 +901,7 @@ bool AtManagerImpl::IsExistRegister(const RegisterPermStateChangeInfo* registerP
 }
 
 bool AtManagerImpl::IsDynamicRequest(const std::vector<std::string>& permissions,
-    std::vector<int32_t>& permissionsState, PermissionGrantInfo& info)
+    std::vector<int32_t>& permissionsState, std::vector<bool>& dialogShownResults, PermissionGrantInfo& info)
 {
     std::vector<PermissionListState> permList;
     for (const auto& permission : permissions) {
@@ -904,6 +920,7 @@ bool AtManagerImpl::IsDynamicRequest(const std::vector<std::string>& permissions
         LOGI("permissions: %{public}s. permissionsState: %{public}u",
             permState.permissionName.c_str(), permState.state);
         permissionsState.emplace_back(permState.state);
+        dialogShownResults.emplace_back(permState.state == TypePermissionOper::DYNAMIC_OPER);
     }
     if (permList.size() != permissions.size()) {
         LOGE("Returned permList size: %{public}zu.", permList.size());
