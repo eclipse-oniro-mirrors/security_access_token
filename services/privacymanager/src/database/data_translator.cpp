@@ -78,17 +78,25 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const P
 {
     int32_t accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     int32_t rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
+
     std::string permission;
     int32_t opCode = inGenericValues.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     if (!Constant::TransferOpcodeToPermission(opCode, permission)) {
         return Constant::FAILURE;
     }
+    permissionRecord.permissionName = permission;
 
     int64_t timestamp = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
-    permissionRecord.permissionName = permission;
+    int32_t type = inGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
 
     if (accessCount != 0) {
         permissionRecord.accessCount = accessCount;
+
+        if ((type == static_cast<int32_t>(PermissionUsedType::PICKER_TYPE)) ||
+            (type == static_cast<int32_t>(PermissionUsedType::SECURITY_COMPONENT_TYPE))) {
+            permissionRecord.secAccessCount = accessCount;
+        }
+
         permissionRecord.lastAccessTime = timestamp;
         permissionRecord.lastAccessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
     }
@@ -107,7 +115,6 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const P
     int32_t lockScreenStatus = inGenericValues.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
     detail.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
-    int32_t type = inGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
     detail.type = static_cast<PermissionUsedType>(type);
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;

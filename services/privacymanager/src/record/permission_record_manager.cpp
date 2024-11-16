@@ -531,6 +531,7 @@ void PermissionRecordManager::MergeSamePermission(const PermissionUsageFlag& fla
     PermissionUsedRecord& outRecord)
 {
     outRecord.accessCount += inRecord.accessCount;
+    outRecord.secAccessCount += inRecord.secAccessCount;
     outRecord.rejectCount += inRecord.rejectCount;
 
     // update lastAccessTime、lastRejectTime and lastAccessDuration to the nearer one
