@@ -32,7 +32,6 @@
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
-#include "screenlock_manager_loader.h"
 #include "system_ability_definition.h"
 #include "string_ex.h"
 
@@ -327,17 +326,8 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
 #endif //COMMON_EVENT_SERVICE_ENABLE
 
     if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
-        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH);
-        ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
-            loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
-        if (screenlockManagerLoader != nullptr) {
-            int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-            if (screenlockManagerLoader->IsScreenLocked()) {
-                lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED;
-            }
-
-            PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
-        }
+        int32_t lockScreenStatus = PermissionRecordManager::GetInstance().GetLockScreenStatus(true);
+        PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
         return;
     }
 }

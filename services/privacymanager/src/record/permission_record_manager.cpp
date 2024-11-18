@@ -40,10 +40,10 @@
 #include "parameter.h"
 #include "parcel_utils.h"
 #include "permission_used_record_db.h"
-#include "power_manager_client.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
+#include "screenlock_manager_loader.h"
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
@@ -855,15 +855,25 @@ void PermissionRecordManager::SetLockScreenStatus(int32_t lockScreenStatus)
     lockScreenStatus_ = lockScreenStatus;
 }
 
-int32_t PermissionRecordManager::GetLockScreenStatus()
+int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
 {
-    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-    return lockScreenStatus_;
-}
+    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
-bool PermissionRecordManager::IsScreenOn()
-{
-    return PowerMgrClient::GetInstance().IsScreenOn();
+    if (isIpc) {
+        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH);
+        ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
+            loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
+        if (screenlockManagerLoader != nullptr) {
+            if (screenlockManagerLoader->IsScreenLocked()) {
+                lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED;
+            }
+        }
+    } else {
+        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
+        lockScreenStatus = lockScreenStatus_;
+    }
+
+    return lockScreenStatus;
 }
 
 int32_t PermissionRecordManager::RemoveRecordFromStartList(
@@ -1225,15 +1235,15 @@ int32_t PermissionRecordManager::PermissionListFilter(
 bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 {
     int32_t status = GetAppStatus(tokenId);
-    bool isScreenOn = IsScreenOn();
+    bool isScreenLocked = GetLockScreenStatus();
     bool isAllowedBackGround = false;
     if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
         isAllowedBackGround = true;
     }
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "Id(%{public}d), appStatus(%{public}d), isScreenOn(%{public}d, isAllowedBackGround(%{public}d)).",
-        tokenId, status, isScreenOn, isAllowedBackGround);
-    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenOn) || isAllowedBackGround;
+        "Id(%{public}d), appStatus(%{public}d), isScreenLocked(%{public}d, isAllowedBackGround(%{public}d)).",
+        tokenId, status, isScreenLocked, isAllowedBackGround);
+    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenLocked) || isAllowedBackGround;
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
