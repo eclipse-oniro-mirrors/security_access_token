@@ -99,8 +99,7 @@ public:
 
     void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
-    int32_t GetLockScreenStatus();
-    bool IsScreenOn();
+    int32_t GetLockScreenStatus(bool isIpc = false);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing);

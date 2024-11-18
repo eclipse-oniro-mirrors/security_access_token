@@ -78,12 +78,9 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     const auto action = want.GetAction();
     ACCESSTOKEN_LOG_INFO(LABEL, "Receive event(%{public}s)", action.c_str());
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
-        PermissionRecordManager::GetInstance()
-            .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+        PermissionRecordManager::GetInstance().SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
-        PermissionRecordManager::GetInstance()
-            .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
+        PermissionRecordManager::GetInstance().SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
         PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
