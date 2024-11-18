@@ -317,7 +317,7 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
-    if (!SendRequest(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE, data, reply, true)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
