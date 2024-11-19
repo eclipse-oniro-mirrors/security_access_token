@@ -84,6 +84,7 @@ struct ProcessData : public Parcelable {
     std::string exitMsg = "";
     int32_t childUid = -1;
     bool isPreload = false;
+    bool isPreloadModule = false;
 };
 }  // namespace AccessToken
 }  // namespace Security

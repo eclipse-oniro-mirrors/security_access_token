@@ -51,6 +51,7 @@ struct AppStateData : public Parcelable {
     bool isFloatingWindowMode = false;
     bool isSpecifyTokenId = false;
     int32_t appIndex = 0;
+    bool isPreloadModule = false;
 };
 }  // namespace AccessToken
 }  // namespace Security
