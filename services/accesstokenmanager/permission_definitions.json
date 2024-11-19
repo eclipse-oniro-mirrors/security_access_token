@@ -2211,6 +2211,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_UNREMOVABLE_NOTIFICATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
