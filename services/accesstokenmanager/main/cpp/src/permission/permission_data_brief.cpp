@@ -303,7 +303,8 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
     return false;
 }
 
-int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName,
+    uint32_t& flag)
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {

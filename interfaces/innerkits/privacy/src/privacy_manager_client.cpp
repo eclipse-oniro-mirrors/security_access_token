@@ -388,7 +388,7 @@ uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const
 
 void PrivacyManagerClient::InitProxy()
 {
-    if (proxy_ == nullptr || proxy_->AsObject() || proxy_->AsObject()->IsObjectDead()) {
+    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
