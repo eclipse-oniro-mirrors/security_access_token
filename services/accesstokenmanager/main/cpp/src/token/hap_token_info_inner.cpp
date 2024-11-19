@@ -497,7 +497,7 @@ PermUsedTypeEnum HapTokenInfoInner::GetPermissionUsedType(AccessTokenID tokenID,
     return PermissionDataBrief::GetInstance().GetPermissionUsedType(tokenID, code);
 }
 
-int32_t HapTokenInfoInner::QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int32_t HapTokenInfoInner::QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     return PermissionDataBrief::GetInstance().QueryPermissionFlag(tokenID, permissionName, flag);
 }

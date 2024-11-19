@@ -74,7 +74,7 @@ public:
         bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
     static int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName);
     static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
-    static int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    static int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     static void GetPermStatusListByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     static void GetGrantedPermByTokenId(AccessTokenID tokenID,

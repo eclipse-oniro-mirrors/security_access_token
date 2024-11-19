@@ -288,7 +288,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
             LABEL, "No definition for permission: %{public}s!", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
-    int32_t fullFlag;
+    uint32_t fullFlag;
     int32_t ret = HapTokenInfoInner::QueryPermissionFlag(tokenID, permissionName, fullFlag);
     if (ret == RET_SUCCESS) {
         flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);

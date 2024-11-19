@@ -58,7 +58,7 @@ public:
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission);
-    int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     void SecCompGrantedPermListUpdated(AccessTokenID tokenID,
         const std::string& permissionName, bool isAdded);
     void ClearAllSecCompGrantedPerm();
