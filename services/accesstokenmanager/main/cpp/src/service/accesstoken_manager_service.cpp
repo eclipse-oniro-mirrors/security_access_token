@@ -53,9 +53,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
-};
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int32_t ERROR = -1;
 constexpr int TWO_ARGS = 2;
@@ -71,40 +68,40 @@ const bool REGISTER_RESULT =
 AccessTokenManagerService::AccessTokenManagerService()
     : SystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService()");
+    LOGI(AT_DOMAIN, AT_TAG, "AccessTokenManagerService()");
 }
 
 AccessTokenManagerService::~AccessTokenManagerService()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "~AccessTokenManagerService()");
+    LOGI(AT_DOMAIN, AT_TAG, "~AccessTokenManagerService()");
 }
 
 void AccessTokenManagerService::OnStart()
 {
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService has already started!");
+        LOGI(AT_DOMAIN, AT_TAG, "AccessTokenManagerService has already started!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService is starting.");
+    LOGI(AT_DOMAIN, AT_TAG, "AccessTokenManagerService is starting.");
     if (!Initialize()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize.");
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to initialize.");
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to publish service!");
         ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
         return;
     }
     AccessTokenServiceParamSet();
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, AccessTokenManagerService start successfully!");
+    LOGI(AT_DOMAIN, AT_TAG, "Congratulations, AccessTokenManagerService start successfully!");
 }
 
 void AccessTokenManagerService::OnStop()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Stop service.");
+    LOGI(AT_DOMAIN, AT_TAG, "Stop service.");
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
@@ -119,7 +116,7 @@ void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, c
 PermUsedTypeEnum AccessTokenManagerService::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d, permission=%{public}s", tokenID, permissionName.c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "Id=%{public}d, permission=%{public}s", tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionUsedType(tokenID, permissionName);
 }
 
@@ -129,7 +126,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
 #endif
     int32_t res = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, permission: %{public}s, res %{public}d",
+    LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
     if ((res == PERMISSION_GRANTED) &&
         (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
@@ -145,13 +142,13 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Permission: %{public}s", permissionName.c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "Permission: %{public}s", permissionName.c_str());
     return PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult.permissionDef);
 }
 
 int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
+    LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
     std::vector<PermissionDef> permVec;
     PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (const auto& perm : permVec) {
@@ -190,7 +187,7 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList)
 {
     if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d does not exist", tokenID);
+        LOGE(AT_DOMAIN, AT_TAG, "Id=%{public}d does not exist", tokenID);
         return ERR_TOKENID_NOT_EXIST;
     }
     PermissionOper ret = GetPermissionsState(tokenID, reqPermList);
@@ -202,17 +199,17 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
 {
     int32_t apiVersion = 0;
     if (!PermissionManager::GetInstance().GetApiVersionByTokenId(tokenID, apiVersion)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get api version error");
+        LOGE(AT_DOMAIN, AT_TAG, "Get api version error");
         return INVALID_OPER;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
+    LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
 
     bool needRes = false;
     std::vector<PermissionStateFull> permsList;
     int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
     int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
     if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG,
             "GetReqPermissions failed, retUserGrant:%{public}d, retSysGrant:%{public}d",
             retUserGrant, retSysGrant);
         return INVALID_OPER;
@@ -238,11 +235,11 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Perm: %{public}s, state: %{public}d",
+        LOGD(AT_DOMAIN, AT_TAG, "Perm: %{public}s, state: %{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d is under control", tokenID);
+        LOGE(AT_DOMAIN, AT_TAG, "Id=%{public}d is under control", tokenID);
         uint32_t size = reqPermList.size();
         for (uint32_t i = 0; i < size; i++) {
             if (reqPermList[i].permsState.state != INVALID_OPER) {
@@ -298,7 +295,7 @@ int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
+    LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
     AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     return RET_SUCCESS;
@@ -317,14 +314,14 @@ int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<
 
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "BundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "BundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = 0LL;
 
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, tokenIdEx);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token info create failed");
+        LOGE(AT_DOMAIN, AT_TAG, "Hap token info create failed");
     }
     return tokenIdEx;
 }
@@ -332,7 +329,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 int32_t AccessTokenManagerService::InitHapToken(
     const HapInfoParcel& info, HapPolicyParcel& policy, AccessTokenIDEx& fullTokenId)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
     std::vector<PermissionStateFull> initializedList;
     if (info.hapInfoParameter.dlpType == DLP_COMMON) {
         if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
@@ -358,21 +355,21 @@ int32_t AccessTokenManagerService::InitHapToken(
 
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
+    LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", tokenID);
+    LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
 AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID: %{public}d, bundle: %{public}s, instIndex: %{public}d",
+    LOGD(AT_DOMAIN, AT_TAG, "UserID: %{public}d, bundle: %{public}s, instIndex: %{public}d",
         userID, bundleName.c_str(), instIndex);
     return AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -380,7 +377,7 @@ AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RemoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+    LOGI(AT_DOMAIN, AT_TAG, "RemoteDeviceID: %{public}s, remoteTokenID: %{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
     AccessTokenID tokenID = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
     return tokenID;
@@ -389,7 +386,7 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
 int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
+    LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
     std::vector<PermissionStateFull> InitializedList;
     if (!PermissionManager::GetInstance().InitPermissionList(
         info.appDistributionType, policyParcel.hapPolicyParameter, InitializedList)) {
@@ -402,7 +399,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", tokenID);
+    LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
@@ -410,10 +407,10 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d.", tokenID);
+    LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d.", tokenID);
     int ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes.hapTokenInfoParams);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get hap token info extenstion failed, ret is %{public}d.", ret);
+        LOGE(AT_DOMAIN, AT_TAG, "Get hap token info extenstion failed, ret is %{public}d.", ret);
         return ret;
     }
 
@@ -422,7 +419,7 @@ int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", tokenID);
+    LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d", tokenID);
     NativeTokenInfoBase baseInfo;
     int32_t ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, baseInfo);
     infoParcel.nativeTokenInfoParams.apl = baseInfo.apl;
@@ -447,7 +444,7 @@ AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& pro
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
+    LOGI(AT_DOMAIN, AT_TAG, "TokenID: %{public}d", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -456,7 +453,7 @@ int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "DeviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
     int ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
     return ret;
@@ -464,7 +461,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID: %{public}s, token id %{public}d",
+    LOGI(AT_DOMAIN, AT_TAG, "DeviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
@@ -472,7 +469,7 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID: %{public}s, token id %{public}d",
+    LOGI(AT_DOMAIN, AT_TAG, "DeviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
@@ -480,33 +477,33 @@ AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::strin
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
+    LOGI(AT_DOMAIN, AT_TAG, "DeviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
 
 int32_t AccessTokenManagerService::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Call token sync callback registed.");
+    LOGI(AT_DOMAIN, AT_TAG, "Call token sync callback registed.");
     return TokenModifyNotifier::GetInstance().RegisterTokenSyncCallback(callback);
 }
 
 int32_t AccessTokenManagerService::UnRegisterTokenSyncCallback()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Call token sync callback unregisted.");
+    LOGI(AT_DOMAIN, AT_TAG, "Call token sync callback unregisted.");
     return TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
 }
 #endif
 
 void AccessTokenManagerService::DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
+    LOGI(AT_DOMAIN, AT_TAG, "Called");
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpInfo);
 }
 
 int32_t AccessTokenManagerService::GetVersion(uint32_t& version)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
+    LOGI(AT_DOMAIN, AT_TAG, "Called");
     version = DEFAULT_TOKEN_VERSION;
     return RET_SUCCESS;
 }
@@ -590,13 +587,13 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
 {
     int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(1).c_str());
     if (res != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY 1 failed %{public}d", res);
+        LOGE(AT_DOMAIN, AT_TAG, "SetParameter 1 failed %{public}d", res);
         return;
     }
     // 2 is to tell others sa that at service is loaded.
     res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(2).c_str());
     if (res != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY 2 failed %{public}d", res);
+        LOGE(AT_DOMAIN, AT_TAG, "SetParameter 2 failed %{public}d", res);
         return;
     }
 }
@@ -606,7 +603,7 @@ void AccessTokenManagerService::GetConfigValue()
     LibraryLoader loader(CONFIG_POLICY_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "Dlopen libaccesstoken_config_policy failed.");
         return;
     }
     AccessTokenConfigValue value;
@@ -623,7 +620,7 @@ void AccessTokenManagerService::GetConfigValue()
         globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
             GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
     } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
+        LOGI(AT_DOMAIN, AT_TAG, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
         grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
         grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
@@ -631,7 +628,7 @@ void AccessTokenManagerService::GetConfigValue()
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \
+    LOGI(AT_DOMAIN, AT_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \
         permStateAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s",
         grantBundleName_.c_str(), grantAbilityName_.c_str(),
         permStateAbilityName_.c_str(), permStateAbilityName_.c_str());
@@ -655,7 +652,7 @@ bool AccessTokenManagerService::Initialize()
     PermissionDefinitionParser::GetInstance().Init();
     GetConfigValue();
     TempPermissionObserver::GetInstance().GetConfigValue();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
+    LOGI(AT_DOMAIN, AT_TAG, "Initialize success");
     return true;
 }
 } // namespace AccessToken

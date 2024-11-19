@@ -21,10 +21,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySceneSessionManagerProxy"};
-}
-
 int32_t PrivacySceneSessionManagerProxy::RegisterWindowManagerAgent(WindowManagerAgentType type,
     const sptr<IWindowManagerAgent>& windowManagerAgent)
 {
@@ -32,17 +28,17 @@ int32_t PrivacySceneSessionManagerProxy::RegisterWindowManagerAgent(WindowManage
     MessageParcel reply;
     MessageParcel data;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write InterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write InterfaceToken failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(static_cast<uint32_t>(type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write type failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write type failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteRemoteObject(windowManagerAgent->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write IWindowManagerAgent failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write IWindowManagerAgent failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -50,7 +46,7 @@ int32_t PrivacySceneSessionManagerProxy::RegisterWindowManagerAgent(WindowManage
         SceneSessionManagerMessage::TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, err=%{public}d.", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed, err=%{public}d.", error);
         return error;
     }
 
@@ -64,17 +60,17 @@ int32_t PrivacySceneSessionManagerProxy::UnregisterWindowManagerAgent(WindowMana
     MessageOption option;
     MessageParcel data;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write InterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write InterfaceToken failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(static_cast<uint32_t>(type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write type failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write type failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteRemoteObject(windowManagerAgent->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write IWindowManagerAgent failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write IWindowManagerAgent failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -82,7 +78,7 @@ int32_t PrivacySceneSessionManagerProxy::UnregisterWindowManagerAgent(WindowMana
         SceneSessionManagerMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, err=%{public}d.", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed, err=%{public}d.", error);
         return error;
     }
 

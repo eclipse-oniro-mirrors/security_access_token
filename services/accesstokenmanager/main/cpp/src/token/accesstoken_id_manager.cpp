@@ -25,7 +25,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenIDManager"};
 }
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
@@ -81,7 +80,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get random failed");
+        LOGE(AT_DOMAIN, AT_TAG, "Get random failed");
         return 0;
     }
 
@@ -104,7 +103,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
         tokenId = CreateTokenId(type, dlpFlag, cloneFlag);
         if (tokenId == INVALID_TOKENID) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Create tokenId failed");
+            LOGE(AT_DOMAIN, AT_TAG, "Create tokenId failed");
             return INVALID_TOKENID;
         }
 
@@ -112,9 +111,10 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Reigster tokenId failed(error=%{public}d), maybe repeat, retry.", ret);
+            LOGW(AT_DOMAIN, AT_TAG,
+                "Reigster tokenId failed(error=%{public}d), maybe repeat, retry.", ret);
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Reigster tokenId finally failed(error=%{public}d).", ret);
+            LOGE(AT_DOMAIN, AT_TAG, "Reigster tokenId finally failed(error=%{public}d).", ret);
             tokenId = INVALID_TOKENID;
         }
     }
@@ -125,7 +125,7 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
     if (tokenIdSet_.count(id) == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}x is not exist", id);
+        LOGI(AT_DOMAIN, AT_TAG, "Id %{public}x is not exist", id);
         return;
     }
     tokenIdSet_.erase(id);

@@ -21,26 +21,21 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermActiveStatusCallbackDeathRecipient"
-};
-}
 void PermActiveStatusCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Enter");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Enter");
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote object is nullptr");
         return;
     }
 
     sptr<IRemoteObject> object = remote.promote();
     if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Object is nullptr");
         return;
     }
     ActiveStatusCallbackManager::GetInstance().RemoveCallback(object);
-    ACCESSTOKEN_LOG_INFO(LABEL, "End");
+    LOGI(PRI_DOMAIN, PRI_TAG, "End");
 }
 } // namespace AccessToken
 } // namespace Security

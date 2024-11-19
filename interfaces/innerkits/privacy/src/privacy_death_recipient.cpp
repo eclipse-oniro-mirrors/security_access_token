@@ -20,15 +20,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyDeathRecipient"
-};
-} // namespace
-
 void PrivacyDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s called", __func__);
     PrivacyManagerClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken

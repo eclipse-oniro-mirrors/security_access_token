@@ -48,7 +48,7 @@ private:
     /**
      * The command name. Should be equal to class name.
      */
-    const std::string COMMAND_NAME = "SyncRemoteHapTokenCommand";
+    const char* COMMAND_NAME = "SyncRemoteHapTokenCommand";
     HapTokenInfoForSync hapTokenInfo_;
     AccessTokenID requestTokenId_;
 };

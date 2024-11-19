@@ -43,9 +43,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManagerTest"
-};
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static bool g_hasHapPermissionDefinition;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
@@ -243,7 +240,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "AddHapToken001 fill data");
+    LOGI(AT_DOMAIN, AT_TAG, "AddHapToken001 fill data");
 
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,

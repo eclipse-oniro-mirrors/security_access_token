@@ -38,8 +38,6 @@ const std::string APP_TRACKING_PERMISSION = "ohos.permission.APP_TRACKING_CONSEN
 const std::string ACCESS_BLUETOOTH_PERMISSION = "ohos.permission.ACCESS_BLUETOOTH";
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t MAX_PERM_LIST_SIZE = 1024;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "AppInstallationOptimizedTest"};
 
 PermissionStateFull g_tddPermReq = {
     .permissionName = MANAGE_HAP_TOKENID_PERMISSION,
@@ -174,7 +172,7 @@ void AppInstallationOptimizedTest::TearDownTestCase()
 
 void AppInstallationOptimizedTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
 }
 
 void AppInstallationOptimizedTest::TearDown()
