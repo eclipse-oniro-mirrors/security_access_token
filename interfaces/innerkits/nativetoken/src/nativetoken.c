@@ -134,6 +134,21 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     return ATRET_SUCCESS;
 }
 
+static void FreeTokenList(void)
+{
+    if (g_tokenListHead == NULL) {
+        return;
+    }
+    NativeTokenList *tmp = g_tokenListHead->next;
+    while (tmp != NULL) {
+        NativeTokenList *toFreeNode = tmp;
+        tmp = tmp->next;
+        free(toFreeNode);
+        toFreeNode = NULL;
+    }
+    g_tokenListHead->next = NULL;
+}
+
 static int32_t GetTokenList(const cJSON *object)
 {
     NativeTokenList *tmp = NULL;
@@ -143,21 +158,28 @@ static int32_t GetTokenList(const cJSON *object)
         return ATRET_FAILED;
     }
     int32_t arraySize = cJSON_GetArraySize(object);
+    if (arraySize <= 0) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:array is empty.", __func__);
+        return ATRET_FAILED;
+    }
 
     for (int32_t i = 0; i < arraySize; i++) {
         tmp = (NativeTokenList *)malloc(sizeof(NativeTokenList));
         if (tmp == NULL) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
+            FreeTokenList();
             return ATRET_FAILED;
         }
         cJSON *cjsonItem = cJSON_GetArrayItem(object, i);
         if (cjsonItem == NULL) {
             free(tmp);
+            FreeTokenList();
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
         if (GetNativeTokenFromJson(cjsonItem, tmp) != ATRET_SUCCESS) {
             free(tmp);
+            FreeTokenList();
             return ATRET_FAILED;
         }
 
@@ -190,9 +212,9 @@ static int32_t ParseTokenInfo(void)
     return ret;
 }
 
-static int32_t CreateCfgFile(void)
+static int32_t ClearOrCreateCfgFile(void)
 {
-    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
         return ATRET_FAILED;
@@ -226,20 +248,29 @@ int32_t AtlibInit(void)
         return ATRET_FAILED;
     }
     g_tokenListHead->next = NULL;
+    int32_t isClearOrCreate = 0;
 
     int32_t ret = ParseTokenInfo();
     if (ret != ATRET_SUCCESS) {
-        free(g_tokenListHead);
-        g_tokenListHead = NULL;
-        return ret;
+        if (g_tokenListHead->next != NULL) {
+            return ATRET_FAILED;
+        }
+        ret = ClearOrCreateCfgFile();
+        if (ret != ATRET_SUCCESS) {
+            free(g_tokenListHead);
+            g_tokenListHead = NULL;
+            return ret;
+        }
+        isClearOrCreate = 1;
     }
 
     if (g_tokenListHead->next == NULL) {
-        if (CreateCfgFile() != ATRET_SUCCESS) {
+        if (isClearOrCreate == 0 && ClearOrCreateCfgFile() != ATRET_SUCCESS) {
             free(g_tokenListHead);
             g_tokenListHead = NULL;
             return ATRET_FAILED;
         }
+        isClearOrCreate = 1;
     }
     g_isNativeTokenInited = 1;
 
