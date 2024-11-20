@@ -105,8 +105,10 @@ int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
     if (permPolicySet_ == nullptr) {
-        permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
-            permStateList);
+        std::vector<GenericValues> permStateRes;
+        GenericValues conditionValue;
+        AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+        permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
 
     permPolicySet_->Update(permStateList);
