@@ -14,6 +14,7 @@
  */
 
 #include "nativetoken_oper_test.h"
+#include <fstream>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
@@ -41,6 +42,7 @@ void TokenOperTest::TearDown()
 {}
 static const int32_t VALID_TIME = 100;
 static const int32_t DEFAULT_TIME = -1;
+static const char *TOKEN_ID_CFG_FILE_COPY_PATH = "/data/service/el0/access_token/nativetoken_copy.json";
 extern int g_getArrayItemTime;
 extern int g_getObjectItem;
 extern NativeTokenList *g_tokenListHead;
@@ -60,6 +62,45 @@ static void SetTimes(void)
     g_parse = VALID_TIME;
     g_getArraySize = VALID_TIME;
     g_printUnformatted = VALID_TIME;
+}
+
+static bool isFileEmpty(const std::string& fileName)
+{
+    FILE *file = fopen(fileName.c_str(), "r");
+    if (file == nullptr) {
+        std::cout << "fopen failed " << fileName << std::endl;
+        return false;
+    }
+    (void)fseek(file, 0, SEEK_END);
+    bool flag = false;
+    if (ftell(file) == 0) {
+        flag = true;
+    }
+    (void)fclose(file);
+    return flag;
+}
+
+static void CopyNativeTokenJson(const std::string& sourceFileName, const std::string& destFileName)
+{
+    // if dest file exists, remove it;
+    if (access(destFileName.c_str(), F_OK) == 0) {
+        if (remove(destFileName.c_str()) != 0) {
+            std::cout << "dest file exists, failed to remove dest file" << std::endl;
+            return;
+        }
+    }
+
+    std::ifstream sourceFile(sourceFileName, std::ios::binary);
+    std::ofstream destFile(destFileName, std::ios::binary);
+    if (!sourceFile.is_open()) {
+        std::cout << "open source file " << sourceFileName << "failed" << std::endl;
+        return;
+    }
+
+    destFile << sourceFile.rdbuf();
+
+    sourceFile.close();
+    destFile.close();
 }
 
 /**
@@ -352,26 +393,35 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
 HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
 {
     SetTimes();
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     g_parse = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArrayItemTime = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 8; // 8 times
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 17; // 17 times
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }
 
 static int32_t Start(const char *processName)
@@ -420,15 +470,21 @@ static int32_t Start(const char *processName)
 HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
 {
     SetTimes();
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
 
     NativeTokenInfoParams tokenInfo;
     g_parse = DEFAULT_TIME;
     EXPECT_EQ(GetAccessTokenId(&tokenInfo), 0);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    g_parse = VALID_TIME;
+    AtlibInit();
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     // UpdateInfoInCfgFile failed for SaveTokenIdToCfg
     // tokenNode->dcapsNum != dcapNumIn branch
-    g_parse = 8; // 8 times
+    g_parse = 9; // 8 times
     EXPECT_EQ(Start("foundation"), 0);
+    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     g_printUnformatted = DEFAULT_TIME;
     EXPECT_NE(Start("process1"), 0);
@@ -437,4 +493,5 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
     EXPECT_NE(Start("processUnique"), 0);
 
     EXPECT_NE(Start("processUnique1"), 0);
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }
