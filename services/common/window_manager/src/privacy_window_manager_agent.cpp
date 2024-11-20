@@ -19,12 +19,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerAgent"
-};
-}
-
 PrivacyWindowManagerAgent::PrivacyWindowManagerAgent(WindowChangeCallback callback)
 {
     callback_ = callback;
@@ -33,9 +27,9 @@ PrivacyWindowManagerAgent::PrivacyWindowManagerAgent(WindowChangeCallback callba
 int PrivacyWindowManagerAgent::OnRemoteRequest(uint32_t code, MessageParcel& data,
     MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}u", __func__, code);
+    LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s called, code: %{public}u", __func__, code);
     if (data.ReadInterfaceToken() != IWindowManagerAgent::GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, read desciptor error", __func__);
+        LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s called, read desciptor error", __func__);
         return ERROR_IPC_REQUEST_FAIL;
     }
     PrivacyWindowServiceInterfaceCode msgId = static_cast<PrivacyWindowServiceInterfaceCode>(code);
@@ -60,13 +54,13 @@ int PrivacyWindowManagerAgent::OnRemoteRequest(uint32_t code, MessageParcel& dat
 
 void PrivacyWindowManagerAgent::UpdateCameraFloatWindowStatus(uint32_t accessTokenId, bool isShowing)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(tokenId=%{public}d, isShow=%{public}d)", accessTokenId, isShowing);
+    LOGI(PRI_DOMAIN, PRI_TAG, "OnChange(tokenId=%{public}d, isShow=%{public}d)", accessTokenId, isShowing);
     callback_(accessTokenId, isShowing);
 }
 
 void PrivacyWindowManagerAgent::UpdateCameraWindowStatus(uint32_t accessTokenId, bool isShowing)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(tokenId=%{public}d, isShow=%{public}d)", accessTokenId, isShowing);
+    LOGI(PRI_DOMAIN, PRI_TAG, "OnChange(tokenId=%{public}d, isShow=%{public}d)", accessTokenId, isShowing);
     callback_(accessTokenId, isShowing);
 }
 } // namespace AccessToken

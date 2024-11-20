@@ -20,56 +20,51 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ContinuousTaskCallbackInfo"
-};
-} // namespace
 bool ContinuousTaskCallbackInfo::Marshalling(Parcel &parcel) const
 {
     if (!parcel.WriteUint32(typeId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteUint32 failed.");
         return false;
     }
 
     if (!parcel.WriteInt32(creatorUid_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteInt32 failed.");
         return false;
     }
 
     if (!parcel.WriteInt32(creatorPid_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteInt32 failed.");
         return false;
     }
 
     if (!parcel.WriteBool(isFromWebview_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteBool failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteBool failed.");
         return false;
     }
 
     std::u16string u16AbilityName = Str8ToStr16(abilityName_);
     if (!parcel.WriteString16(u16AbilityName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteString16 failed.");
         return false;
     }
 
     if (!parcel.WriteBool(isBatchApi_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteBool failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteBool failed.");
         return false;
     }
 
     if (!parcel.WriteUInt32Vector(typeIds_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUInt32Vector failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteUInt32Vector failed.");
         return false;
     }
 
     if (!parcel.WriteInt32(abilityId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteInt32 failed.");
         return false;
     }
 
     if (!parcel.WriteUint64(tokenId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint64 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "WriteUint64 failed.");
         return false;
     }
     return true;
@@ -89,51 +84,51 @@ ContinuousTaskCallbackInfo *ContinuousTaskCallbackInfo::Unmarshalling(Parcel &pa
 bool ContinuousTaskCallbackInfo::ReadFromParcel(Parcel &parcel)
 {
     if (!parcel.ReadUint32(typeId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadUint32 failed.");
         return false;
     }
 
     if (!parcel.ReadInt32(creatorUid_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadInt32 failed.");
         return false;
     }
 
     int32_t pid;
     if (!parcel.ReadInt32(pid)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadInt32 failed.");
         return false;
     }
     creatorPid_ = static_cast<pid_t>(pid);
 
     if (!parcel.ReadBool(isFromWebview_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadBool failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadBool failed.");
         return false;
     }
 
     std::u16string u16AbilityName;
     if (!parcel.ReadString16(u16AbilityName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadString16 failed.");
         return false;
     }
     abilityName_ = Str16ToStr8(u16AbilityName);
 
     if (!parcel.ReadBool(isBatchApi_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadBool failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadBool failed.");
         return false;
     }
 
     if (!parcel.ReadUInt32Vector(&typeIds_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUInt32Vector failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadUInt32Vector failed.");
         return false;
     }
 
     if (!parcel.ReadInt32(abilityId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadInt32 failed.");
         return false;
     }
 
     if (!parcel.ReadUint64(tokenId_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint64 failed.");
+        LOGE(AT_DOMAIN, AT_TAG, "ReadUint64 failed.");
         return false;
     }
     return true;

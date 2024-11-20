@@ -25,11 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "UpdateRemoteHapTokenCommand"};
-}
-
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
     const std::string &srcDeviceId, const std::string &dstDeviceId, const HapTokenInfoForSync& tokenInfo)
     : updateTokenInfo_(tokenInfo)
@@ -46,7 +41,7 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
 {
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
+        LOGE(AT_DOMAIN, AT_TAG, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -68,12 +63,12 @@ void UpdateRemoteHapTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "End as: UpdateRemoteHapTokenCommand");
+    LOGD(AT_DOMAIN, AT_TAG, "End as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: UpdateRemoteHapTokenCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "Execute: start as: UpdateRemoteHapTokenCommand");
 
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
@@ -82,7 +77,7 @@ void UpdateRemoteHapTokenCommand::Execute()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
+        LOGI(AT_DOMAIN, AT_TAG, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
@@ -96,14 +91,13 @@ void UpdateRemoteHapTokenCommand::Execute()
         remoteProtocol_.statusCode = Constant::SUCCESS;
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: UpdateRemoteHapTokenCommand");
+LOGI(AT_DOMAIN, AT_TAG, "Execute: end as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Finish()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Finish: end as: DeleteUidPermissionCommand");
+    LOGI(AT_DOMAIN, AT_TAG, "Finish: end as: DeleteUidPermissionCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security

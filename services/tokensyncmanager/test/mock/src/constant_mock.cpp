@@ -21,8 +21,6 @@ namespace AccessToken {
 namespace {
 static const std::string REPLACE_TARGET = "****";
 } // namespace
-const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
-const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
 
 const int32_t Constant::SUCCESS;
 const int32_t Constant::FAILURE;

@@ -26,9 +26,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const int32_t EXTENSION_PERMISSION_ID = 0;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionCache"
-};
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -55,7 +52,7 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(info.permissionName);
     if (it != permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Info for permission: %{public}s has been insert, please check!",
+        LOGD(AT_DOMAIN, AT_TAG, "Info for permission: %{public}s has been insert, please check!",
             info.permissionName.c_str());
         return false;
     }
@@ -93,7 +90,7 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(permissionName);
     if (it == permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Can not find definition info for permission: %{public}s",
+        LOGE(AT_DOMAIN, AT_TAG, "Can not find definition info for permission: %{public}s",
             permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
@@ -196,7 +193,7 @@ int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>
         AccessTokenID tokenId = (AccessTokenID)defValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         int32_t ret = DataTranslator::TranslationIntoPermissionDef(defValue, def);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0x%{public}x permDef is wrong.", tokenId);
+            LOGE(AT_DOMAIN, AT_TAG, "TokenId 0x%{public}x permDef is wrong.", tokenId);
             return ret;
         }
         Insert(def, tokenId);

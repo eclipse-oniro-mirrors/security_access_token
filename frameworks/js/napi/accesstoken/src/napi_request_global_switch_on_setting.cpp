@@ -25,9 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NapiRequestGlobalSwitch"
-};
 const std::string GLOBAL_SWITCH_KEY = "ohos.user.setting.global_switch";
 const std::string GLOBAL_SWITCH_RESULT_KEY = "ohos.user.setting.global_switch.result";
 const std::string RESULT_ERROR_KEY = "ohos.user.setting.error_code";
@@ -77,12 +74,12 @@ static napi_value GetContext(
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
     if (status != napi_ok || !stageMode) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is not a stage mode.");
+        LOGE(AT_DOMAIN, AT_TAG, "It is not a stage mode.");
         return nullptr;
     } else {
         auto context = AbilityRuntime::GetStageModeContext(env, value);
         if (context == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Get application context.");
+            LOGE(AT_DOMAIN, AT_TAG, "Failed to Get application context.");
             return nullptr;
         }
         asyncContext->abilityContext =
@@ -90,11 +87,11 @@ static napi_value GetContext(
         if (asyncContext->abilityContext != nullptr) {
             asyncContext->uiAbilityFlag = true;
         } else {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Failed to convert to ability context.");
+            LOGW(AT_DOMAIN, AT_TAG, "Failed to convert to ability context.");
             asyncContext->uiExtensionContext =
                 AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
             if (asyncContext->uiExtensionContext == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to convert to ui extension context.");
+                LOGE(AT_DOMAIN, AT_TAG, "Failed to convert to ui extension context.");
                 return nullptr;
             }
         }
@@ -123,7 +120,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    LOGI(AT_DOMAIN, AT_TAG, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
     return jsCode;
 }
 
@@ -131,13 +128,13 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
 {
     (void)status;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Uv_queue_work_with_qos input work is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "Uv_queue_work_with_qos input work is nullptr");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     SwitchOnSettingResultCallback *retCB = reinterpret_cast<SwitchOnSettingResultCallback*>(work->data);
     if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RetCB is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "RetCB is nullptr");
         return;
     }
     std::unique_ptr<SwitchOnSettingResultCallback> callbackPtr {retCB};
@@ -149,7 +146,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(asyncContext->env, &scope);
     if (scope == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_open_handle_scope failed");
+        LOGE(AT_DOMAIN, AT_TAG, "Napi_open_handle_scope failed");
         return;
     }
     napi_value requestResult = nullptr;
@@ -164,7 +161,7 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
 {
     auto* retCB = new (std::nothrow) SwitchOnSettingResultCallback();
     if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
+        LOGE(AT_DOMAIN, AT_TAG, "Insufficient memory for work!");
         return;
     }
 
@@ -176,12 +173,12 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(data->env, napi_get_uv_event_loop(data->env, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
+        LOGE(AT_DOMAIN, AT_TAG, "Insufficient memory for work!");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
@@ -198,17 +195,17 @@ void SwitchOnSettingUICallback::ReleaseHandler(int32_t code)
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
         if (this->reqContext_->releaseFlag) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Callback has executed.");
+            LOGW(AT_DOMAIN, AT_TAG, "Callback has executed.");
             return;
         }
         this->reqContext_->releaseFlag = true;
     }
     Ace::UIContent* uiContent = GetUIContent(this->reqContext_);
     if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+        LOGE(AT_DOMAIN, AT_TAG, "Get ui content failed!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
+    LOGI(AT_DOMAIN, AT_TAG, "Close uiextension component");
     uiContent->CloseModalUIExtension(this->sessionId_);
     if (code == -1) {
         this->reqContext_->errorCode = code;
@@ -238,7 +235,7 @@ void SwitchOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& 
 {
     this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->reqContext_->switchStatus = result.GetBoolParam(GLOBAL_SWITCH_RESULT_KEY, 0);
-    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d, switchStatus=%{public}d",
+    LOGI(AT_DOMAIN, AT_TAG, "ResultCode is %{public}d, errorCode=%{public}d, switchStatus=%{public}d",
         resultCode, this->reqContext_->errorCode, this->reqContext_->switchStatus);
     ReleaseHandler(0);
 }
@@ -248,7 +245,7 @@ void SwitchOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& 
  */
 void SwitchOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called!");
+    LOGI(AT_DOMAIN, AT_TAG, "Called!");
 }
 
 /*
@@ -257,7 +254,7 @@ void SwitchOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
  */
 void SwitchOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
+    LOGI(AT_DOMAIN, AT_TAG, "ReleaseCode is %{public}d", releaseCode);
 
     ReleaseHandler(-1);
 }
@@ -267,7 +264,7 @@ void SwitchOnSettingUICallback::OnRelease(int32_t releaseCode)
  */
 void SwitchOnSettingUICallback::OnError(int32_t code, const std::string& name, const std::string& message)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
+    LOGI(AT_DOMAIN, AT_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
     ReleaseHandler(-1);
@@ -279,7 +276,7 @@ void SwitchOnSettingUICallback::OnError(int32_t code, const std::string& name, c
  */
 void SwitchOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>& uiProxy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Connect to UIExtensionAbility successfully.");
+    LOGI(AT_DOMAIN, AT_TAG, "Connect to UIExtensionAbility successfully.");
 }
 
 /*
@@ -287,7 +284,7 @@ void SwitchOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUI
  */
 void SwitchOnSettingUICallback::OnDestroy()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    LOGI(AT_DOMAIN, AT_TAG, "UIExtensionAbility destructed.");
     ReleaseHandler(-1);
 }
 
@@ -295,7 +292,7 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestGlobal
 {
     Ace::UIContent* uiContent = GetUIContent(asyncContext);
     if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to get ui content!");
         asyncContext->result = RET_FAILED;
         return RET_FAILED;
     }
@@ -324,10 +321,11 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestGlobal
     Ace::ModalUIExtensionConfig config;
     config.isProhibitBack = true;
     int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d, switchType: %{public}d.",
+    LOGI(AT_DOMAIN, AT_TAG,
+        "Create end, sessionId: %{public}d, tokenId: %{public}d, switchType: %{public}d.",
         sessionId, asyncContext->tokenId, asyncContext->switchType);
     if (sessionId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
+        LOGE(AT_DOMAIN, AT_TAG, "Failed to create component, sessionId is 0.");
         asyncContext->result = RET_FAILED;
         return RET_FAILED;
     }
@@ -339,7 +337,7 @@ static int32_t StartUIExtension(std::shared_ptr<RequestGlobalSwitchAsyncContext>
 {
     AAFwk::Want want;
     AccessTokenKit::GetPermissionManagerInfo(asyncContext->info);
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s, globalSwitchAbilityName: %{public}s.",
+    LOGI(AT_DOMAIN, AT_TAG, "bundleName: %{public}s, globalSwitchAbilityName: %{public}s.",
         asyncContext->info.grantBundleName.c_str(), asyncContext->info.globalSwitchAbilityName.c_str());
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.globalSwitchAbilityName);
     want.SetParam(GLOBAL_SWITCH_KEY, asyncContext->switchType);
@@ -350,7 +348,7 @@ static int32_t StartUIExtension(std::shared_ptr<RequestGlobalSwitchAsyncContext>
 
 napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callback_info info)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestGlobalSwitch begin.");
+    LOGD(AT_DOMAIN, AT_TAG, "RequestGlobalSwitch begin.");
     // use handle to protect asyncContext
     std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext =
         std::make_shared<RequestGlobalSwitchAsyncContext>(env);
@@ -375,7 +373,7 @@ napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callb
     NAPI_CALL(env,
         napi_queue_async_work_with_qos(env, asyncContextHandle->asyncContextPtr->work, napi_qos_user_initiated));
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestGlobalSwitch end.");
+    LOGD(AT_DOMAIN, AT_TAG, "RequestGlobalSwitch end.");
     asyncContextHandle.release();
     return result;
 }
@@ -388,7 +386,7 @@ bool NapiRequestGlobalSwitch::ParseRequestGlobalSwitch(const napi_env& env,
     napi_value thisVar = nullptr;
 
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_get_cb_info failed");
+        LOGE(AT_DOMAIN, AT_TAG, "Napi_get_cb_info failed");
         return false;
     }
     if (argc < NapiContextCommon::MAX_PARAMS_TWO - 1) {
@@ -406,7 +404,8 @@ bool NapiRequestGlobalSwitch::ParseRequestGlobalSwitch(const napi_env& env,
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
+    LOGI(AT_DOMAIN, AT_TAG,
+        "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
 
     // argv[1] : type
     if (!ParseInt32(env, argv[1], asyncContext->switchType)) {
@@ -435,23 +434,23 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
     }
     static AccessTokenID currToken = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != currToken) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(AT_DOMAIN, AT_TAG,
             "The context(token=%{public}d) is not belong to the current application(currToken=%{public}d).",
             asyncContextHandle->asyncContextPtr->tokenId, currToken);
         asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Start to pop ui extension dialog");
+    LOGI(AT_DOMAIN, AT_TAG, "Start to pop ui extension dialog");
     StartUIExtension(asyncContextHandle->asyncContextPtr);
     if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Failed to pop uiextension dialog.");
+        LOGW(AT_DOMAIN, AT_TAG, "Failed to pop uiextension dialog.");
     }
 }
 
 void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_status status, void* data)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestGlobalSwitchComplete begin.");
+    LOGD(AT_DOMAIN, AT_TAG, "RequestGlobalSwitchComplete begin.");
     RequestGlobalSwitchAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestGlobalSwitchAsyncContextHandle*>(data);
     if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {

@@ -24,39 +24,33 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackDeathRecipients"
-};
-}
-
 void PermStateCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Enter");
+    LOGI(AT_DOMAIN, AT_TAG, "Enter");
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "Remote object is nullptr");
         return;
     }
 
     sptr<IRemoteObject> object = remote.promote();
     if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is nullptr");
+        LOGE(AT_DOMAIN, AT_TAG, "Object is nullptr");
         return;
     }
     CallbackManager::GetInstance().RemoveCallback(object);
-    ACCESSTOKEN_LOG_INFO(LABEL, "End");
+    LOGI(AT_DOMAIN, AT_TAG, "End");
 }
 
 #ifdef TOKEN_SYNC_ENABLE
 void TokenSyncCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Call OnRemoteDied.");
+    LOGI(AT_DOMAIN, AT_TAG, "Call OnRemoteDied.");
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Remote object is nullptr.");
         return;
     }
     TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Call UnRegisterTokenSyncCallback end.");
+    LOGI(AT_DOMAIN, AT_TAG, "Call UnRegisterTokenSyncCallback end.");
 }
 #endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken

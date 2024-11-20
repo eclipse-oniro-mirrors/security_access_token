@@ -27,10 +27,6 @@ namespace Security {
 namespace AccessToken {
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyCommonEventSubscriber"
-};
-
 static bool g_isRegistered = false;
 
 static std::shared_ptr<PrivacyCommonEventSubscriber> g_subscriber = nullptr;
@@ -38,9 +34,9 @@ static std::shared_ptr<PrivacyCommonEventSubscriber> g_subscriber = nullptr;
 
 void PrivacyCommonEventSubscriber::RegisterEvent()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterEvent start");
+    LOGI(PRI_DOMAIN, PRI_TAG, "RegisterEvent start");
     if (g_isRegistered) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Status observer already registered");
+        LOGD(PRI_DOMAIN, PRI_TAG, "Status observer already registered");
         return;
     }
 
@@ -55,7 +51,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     g_subscriber = std::make_shared<PrivacyCommonEventSubscriber>(*info);
     const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_subscriber);
     if (!result) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterEvent result is err");
+        LOGE(PRI_DOMAIN, PRI_TAG, "RegisterEvent result is err");
         return;
     }
     g_isRegistered = true;
@@ -63,10 +59,10 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
 
 void PrivacyCommonEventSubscriber::UnRegisterEvent()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UnregisterEvent start");
+    LOGI(PRI_DOMAIN, PRI_TAG, "UnregisterEvent start");
     const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(g_subscriber);
     if (!result) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterEvent result is err");
+        LOGE(PRI_DOMAIN, PRI_TAG, "UnregisterEvent result is err");
         return;
     }
     g_isRegistered = false;
@@ -76,7 +72,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
 {
     const auto want = event.GetWant();
     const auto action = want.GetAction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Receive event(%{public}s)", action.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Receive event(%{public}s)", action.c_str());
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
         PermissionRecordManager::GetInstance().SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
@@ -85,13 +81,13 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
         uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));
-        ACCESSTOKEN_LOG_INFO(LABEL, "Receive package uninstall: tokenId=%{public}d.", tokenId);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Receive package uninstall: tokenId=%{public}d.", tokenId);
         PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN) {
         // when receive shut down power event, store the cache data to database immediately
         PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Action is invalid.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Action is invalid.");
     }
 }
 #endif

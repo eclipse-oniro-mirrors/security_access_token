@@ -43,7 +43,7 @@ private:
     /**
      * The command name. Should be equal to class name.
      */
-    const std::string COMMAND_NAME = "DeleteRemoteTokenCommand";
+    const char* COMMAND_NAME = "DeleteRemoteTokenCommand";
     AccessTokenID deleteTokenId_;
 };
 }  // namespace AccessToken

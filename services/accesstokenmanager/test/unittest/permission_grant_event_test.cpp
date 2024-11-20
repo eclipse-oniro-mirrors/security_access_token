@@ -22,11 +22,6 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionGrantEventTest"};
-}
-
 void PermissionGrantEventTest::SetUpTestCase()
 {}
 
@@ -49,7 +44,7 @@ void PermissionGrantEventTest::TearDown()
  */
 HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "NotifyPermGrantStoreResult001!");
+    LOGI(AT_DOMAIN, AT_TAG, "NotifyPermGrantStoreResult001!");
     AccessTokenID tokenID = 0x100000;
     std::string permissionName = "testpremission";
     uint64_t time;
@@ -71,7 +66,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level
  */
 HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "NotifyPermGrantStoreResult002!");
+    LOGI(AT_DOMAIN, AT_TAG, "NotifyPermGrantStoreResult002!");
     AccessTokenID tokenID = 0x100000;
     std::string permissionName = "testpremission";
     uint64_t time;
@@ -93,7 +88,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level
  */
 HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "NotifyPermGrantStoreResult003!");
+    LOGI(AT_DOMAIN, AT_TAG, "NotifyPermGrantStoreResult003!");
     AccessTokenID tokenID = 0x100000;
     std::string permissionName = "testpremission";
     uint64_t time;

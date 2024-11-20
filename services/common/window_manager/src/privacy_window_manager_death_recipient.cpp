@@ -19,14 +19,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerDeathRecipient"};
-} // namespace
-
 void PrivacyWindowManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "WindowManger died.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "WindowManger died.");
     PrivacyWindowManagerClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken

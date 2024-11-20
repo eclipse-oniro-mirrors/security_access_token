@@ -46,7 +46,6 @@ public:
             GTEST_LOG_(INFO) << "TestCallBack, code :" << code << ", bundleSize :" << result.bundleRecords.size();
         }
     };
-    std::string GetLocalDeviceUdid();
     void BuildQueryRequest(AccessTokenID tokenId, const std::string& bundleName,
         const std::vector<std::string>& permissionList, PermissionUsedRequest& request);
     void CheckPermissionUsedResult(const PermissionUsedRequest& request, const PermissionUsedResult& result,

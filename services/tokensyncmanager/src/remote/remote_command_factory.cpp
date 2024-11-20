@@ -57,17 +57,13 @@ std::shared_ptr<UpdateRemoteHapTokenCommand> RemoteCommandFactory::NewUpdateRemo
 std::shared_ptr<BaseRemoteCommand> RemoteCommandFactory::NewRemoteCommandFromJson(
     const std::string &commandName, const std::string &commandJsonString)
 {
-    const std::string SYNC_HAP_COMMAND_NAME = "SyncRemoteHapTokenCommand";
-    const std::string DELETE_TOKEN_COMMAND_NAME = "DeleteRemoteTokenCommand";
-    const std::string UPDATE_HAP_COMMAND_NAME = "UpdateRemoteHapTokenCommand";
-
-    if (commandName == SYNC_HAP_COMMAND_NAME) {
+    if (commandName == "SyncRemoteHapTokenCommand") {
         return std::make_shared<SyncRemoteHapTokenCommand>(commandJsonString);
     }
-    if (commandName == DELETE_TOKEN_COMMAND_NAME) {
+    if (commandName == "DeleteRemoteTokenCommand") {
         return std::make_shared<DeleteRemoteTokenCommand>(commandJsonString);
     }
-    if (commandName == UPDATE_HAP_COMMAND_NAME) {
+    if (commandName == "UpdateRemoteHapTokenCommand") {
         return std::make_shared<UpdateRemoteHapTokenCommand>(commandJsonString);
     }
     return nullptr;

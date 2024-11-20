@@ -21,27 +21,25 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BaseRemoteCommand"};
-static const std::string JSON_COMMAND_NAME = "commandName";
-static const std::string JSON_UNIQUEID = "uniqueId";
-static const std::string JSON_REQUEST_VERSION = "requestVersion";
-static const std::string JSON_SRC_DEVICEID = "srcDeviceId";
-static const std::string JSON_SRC_DEVICE_LEVEL = "srcDeviceLevel";
-static const std::string JSON_DST_DEVICEID = "dstDeviceId";
-static const std::string JSON_DST_DEVICE_LEVEL = "dstDeviceLevel";
-static const std::string JSON_STATUS_CODE = "statusCode";
-static const std::string JSON_MESSAGE = "message";
-static const std::string JSON_RESPONSE_VERSION = "responseVersion";
-static const std::string JSON_RESPONSE_DEVICEID = "responseDeviceId";
-static const std::string JSON_VERSION = "version";
-static const std::string JSON_TOKENID = "tokenID";
-static const std::string JSON_TOKEN_ATTR = "tokenAttr";
-static const std::string JSON_USERID = "userID";
-static const std::string JSON_BUNDLE_NAME = "bundleName";
-static const std::string JSON_INST_INDEX = "instIndex";
-static const std::string JSON_DLP_TYPE = "dlpType";
-static const std::string JSON_APPID = "appID";
-static const std::string JSON_DEVICEID = "deviceID";
+constexpr const char* JSON_COMMAND_NAME = "commandName";
+constexpr const char* JSON_UNIQUEID = "uniqueId";
+constexpr const char* JSON_REQUEST_VERSION = "requestVersion";
+constexpr const char* JSON_SRC_DEVICEID = "srcDeviceId";
+constexpr const char* JSON_SRC_DEVICE_LEVEL = "srcDeviceLevel";
+constexpr const char* JSON_DST_DEVICEID = "dstDeviceId";
+constexpr const char* JSON_DST_DEVICE_LEVEL = "dstDeviceLevel";
+constexpr const char* JSON_STATUS_CODE = "statusCode";
+constexpr const char* JSON_MESSAGE = "message";
+constexpr const char* JSON_RESPONSE_VERSION = "responseVersion";
+constexpr const char* JSON_RESPONSE_DEVICEID = "responseDeviceId";
+constexpr const char* JSON_TOKENID = "tokenID";
+constexpr const char* JSON_TOKEN_ATTR = "tokenAttr";
+constexpr const char* JSON_USERID = "userID";
+constexpr const char* JSON_BUNDLE_NAME = "bundleName";
+constexpr const char* JSON_INST_INDEX = "instIndex";
+constexpr const char* JSON_DLP_TYPE = "dlpType";
+constexpr const char* JSON_APPID = "appID";
+constexpr const char* JSON_DEVICEID = "deviceID";
 }
 
 static void GetStringFromJson(const nlohmann::json& jsonObject, const std::string& tag, std::string& out)
@@ -125,7 +123,7 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
 void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const PermissionStateFull& state)
 {
     if (state.resDeviceID.size() != state.grantStatus.size() || state.resDeviceID.size() != state.grantFlags.size()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "State grant config size is invalid");
+        LOGD(AT_DOMAIN, AT_TAG, "State grant config size is invalid");
         return;
     }
     nlohmann::json permConfigsJson;
@@ -243,7 +241,7 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
     if (hapTokenInfo.baseInfo.tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token basic info is error.");
+        LOGE(AT_DOMAIN, AT_TAG, "Hap token basic info is error.");
         return;
     }
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);

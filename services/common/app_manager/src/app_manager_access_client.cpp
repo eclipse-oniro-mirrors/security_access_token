@@ -23,9 +23,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
-};
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -54,26 +51,26 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
         return -1;
     }
     sptr<IAmsMgr> amsService = proxy->GetAmsMgr();
     if (amsService == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AmsService is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "AmsService is null.");
     }
     return amsService->KillProcessesByAccessTokenId(accessTokenId);
 }
 
 int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    LOGI(AT_DOMAIN, AT_TAG, "Entry");
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
         return -1;
     }
     std::vector<std::string> bundleNameList;
@@ -83,12 +80,12 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
 int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
 {
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
         return -1;
     }
     return proxy->UnregisterApplicationStateObserver(observer);
@@ -98,7 +95,7 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
         return -1;
     }
     return proxy->GetForegroundApplications(list);
@@ -108,12 +105,12 @@ void AppManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbilityManager is null");
         return;
     }
     auto appManagerSa = sam->GetSystemAbility(APP_MGR_SERVICE_ID);
     if (appManagerSa == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
+        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbility %{public}d is null",
             APP_MGR_SERVICE_ID);
         return;
     }
@@ -125,7 +122,7 @@ void AppManagerAccessClient::InitProxy()
 
     proxy_ = new AppManagerAccessProxy(appManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
+        LOGE(AT_DOMAIN, AT_TAG, "Iface_cast get null");
     }
 }
 
@@ -133,7 +130,7 @@ void AppManagerAccessClient::RegisterDeathCallback(const std::shared_ptr<AppMana
 {
     std::lock_guard<std::mutex> lock(deathCallbackMutex_);
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: Callback is nullptr.");
+        LOGE(AT_DOMAIN, AT_TAG, "AppManagerAccessClient: Callback is nullptr.");
         return;
     }
     appManagerDeathCallbackList_.emplace_back(callback);
