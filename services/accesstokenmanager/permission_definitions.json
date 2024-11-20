@@ -5251,7 +5251,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 16,
+            "since": 17,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
