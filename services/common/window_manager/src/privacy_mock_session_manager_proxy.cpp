@@ -20,19 +20,23 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+    constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyMockSessionManagerProxy"};
+}
+
 sptr<IRemoteObject> PrivacyMockSessionManagerProxy::GetSessionManagerService()
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return nullptr;
     }
     if (Remote()->SendRequest(static_cast<uint32_t>(
         MockSessionManagerServiceMessage::TRANS_ID_GET_SESSION_MANAGER_SERVICE),
         data, reply, option) != ERR_NONE) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed");
         return nullptr;
     }
     sptr<IRemoteObject> remoteObject = reply.ReadRemoteObject();

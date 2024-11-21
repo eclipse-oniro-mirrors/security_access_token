@@ -28,6 +28,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ActiveStatusCallbackManager"
+};
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
 std::recursive_mutex g_instanceMutex;
 }
@@ -65,13 +68,13 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Input is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input is nullptr");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (callbackDataList_.size() >= MAX_CALLBACK_SIZE) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "List size has reached max value");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "List size has reached max value");
         return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
     callback->AddDeathRecipient(callbackDeathRecipient_);
@@ -83,15 +86,15 @@ int32_t ActiveStatusCallbackManager::AddCallback(
 
     callbackDataList_.emplace_back(recordInstance);
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "RecordInstance is added");
+    ACCESSTOKEN_LOG_INFO(LABEL, "RecordInstance is added");
     return RET_SUCCESS;
 }
 
 int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     if (callback == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -99,7 +102,7 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
 
     for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Find callback");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
@@ -130,7 +133,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, permName)) {
-                LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, perm %{public}s", tokenId, permName.c_str());
+                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, perm %{public}s", tokenId, permName.c_str());
                 continue;
             }
             list.emplace_back((*it).callbackObject_);
@@ -144,7 +147,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
             resInfo.permissionName = permName;
             resInfo.tokenID = tokenId;
             resInfo.deviceId = deviceId;
-            LOGI(PRI_DOMAIN, PRI_TAG,
+            ACCESSTOKEN_LOG_INFO(LABEL,
                 "callback execute tokenId %{public}u, permision %{public}s changeType %{public}d",
                 tokenId, permName.c_str(), changeType);
             callback->ActiveStatusChangeCallback(resInfo);
@@ -163,22 +166,22 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
 
 #ifdef EVENTHANDLER_ENABLE
     if (eventHandler_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
     std::string taskName = permName + std::to_string(tokenId);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([tokenId, permName, deviceId, changeType]() {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(tokenId, permName, deviceId, changeType);
-        LOGI(PRI_DOMAIN, PRI_TAG,
+        ACCESSTOKEN_LOG_INFO(LABEL,
             "Token: %{public}u, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
             tokenId, permName.c_str(), changeType);
     });
     eventHandler_->ProxyPostTask(task, taskName);
-    LOGI(PRI_DOMAIN, PRI_TAG, "The callback execution is complete");
+    ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");
     return;
 #else
-    LOGI(PRI_DOMAIN, PRI_TAG, "Event handler is unenabled");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Event handler is unenabled");
     return;
 #endif
 }

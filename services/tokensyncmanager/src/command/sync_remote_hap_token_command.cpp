@@ -24,6 +24,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SyncRemoteHapTokenCommand"};
+}
+
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     const std::string &srcDeviceId, const std::string &dstDeviceId, AccessTokenID id) : requestTokenId_(id)
 {
@@ -61,7 +66,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        LOGE(AT_DOMAIN, AT_TAG, "JsonObject is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -87,12 +92,12 @@ void SyncRemoteHapTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    LOGD(AT_DOMAIN, AT_TAG, " end as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, " end as: SyncRemoteHapTokenCommand");
 }
 
 void SyncRemoteHapTokenCommand::Execute()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Execute: start as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: SyncRemoteHapTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -105,18 +110,18 @@ void SyncRemoteHapTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    LOGI(AT_DOMAIN, AT_TAG, "Execute: end as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: SyncRemoteHapTokenCommand");
 }
 
 void SyncRemoteHapTokenCommand::Finish()
 {
     if (remoteProtocol_.statusCode != Constant::SUCCESS) {
-        LOGE(AT_DOMAIN, AT_TAG, "Finish: end as: SyncRemoteHapTokenCommand get remote result error.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Finish: end as: SyncRemoteHapTokenCommand get remote result error.");
         return;
     }
     AccessTokenKit::SetRemoteHapTokenInfo(remoteProtocol_.dstDeviceId, hapTokenInfo_);
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    LOGI(AT_DOMAIN, AT_TAG, "Finish: end as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Finish: end as: SyncRemoteHapTokenCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security

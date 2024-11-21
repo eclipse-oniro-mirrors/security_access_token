@@ -16,51 +16,75 @@
 #ifndef ACCESSTOKEN_LOG_H
 #define ACCESSTOKEN_LOG_H
 
+#ifdef HILOG_ENABLE
+
 #include "hilog/log.h"
 
-#define AT_DOMAIN 0xD005A01
-#define AT_TAG "ATM"
+/* define LOG_TAG as "security_*" at your submodule, * means your submodule name such as "security_dac" */
+#undef LOG_TAG
+#undef LOG_DOMAIN
 
-#define PRI_DOMAIN 0xD005A02
-#define PRI_TAG "PRIVACY"
+static constexpr unsigned int SECURITY_DOMAIN_ACCESSTOKEN = 0xD005A01;
+static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
 
-#define LOGF(domain, tag, fmt, ...)            \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_FATAL, domain, tag, \
-    "[%{upblic}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
-#define LOGE(domain, tag, fmt, ...)            \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, \
+#define ACCESSTOKEN_LOG_FATAL(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_FATAL, label.domain, label.tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
-#define LOGW(domain, tag, fmt, ...)            \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_WARN, domain, tag, \
+#define ACCESSTOKEN_LOG_ERROR(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_ERROR, label.domain, label.tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
-#define LOGI(domain, tag, fmt, ...)            \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_INFO, domain, tag, \
+#define ACCESSTOKEN_LOG_WARN(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
-#define LOGD(domain, tag, fmt, ...)            \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, domain, tag, \
+#define ACCESSTOKEN_LOG_INFO(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_INFO, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define ACCESSTOKEN_LOG_DEBUG(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 
-#define IF_FALSE_PRINT_LOG(domain, tag, cond, fmt, ...) \
+#define IF_FALSE_PRINT_LOG(label, cond, fmt, ...) \
     do { \
         if (!(cond)) { \
-            LOGE(domain, tag, fmt, ##__VA_ARGS__); \
+            ACCESSTOKEN_LOG_ERROR(label, fmt, ##__VA_ARGS__); \
         } \
     } while (0)
 
-#define IF_FALSE_RETURN_LOG(domain, tag, cond, fmt, ...) \
+#define IF_FALSE_RETURN_LOG(label, cond, fmt, ...) \
     do { \
         if (!(cond)) { \
-            LOGE(domain, tag, fmt, ##__VA_ARGS__); \
+            ACCESSTOKEN_LOG_ERROR(label, fmt, ##__VA_ARGS__); \
             return; \
         } \
     } while (0)
+#else
 
-#define IF_FALSE_RETURN_VAL_LOG(domain, tag, cond, ret, fmt, ...) \
+#include <stdarg.h>
+#include <stdio.h>
+
+/* define LOG_TAG as "security_*" at your submodule, * means your submodule name such as "security_dac" */
+#undef LOG_TAG
+
+#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) printf("[%s] debug: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_INFO(fmt, ...) printf("[%s] info: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_WARN(fmt, ...) printf("[%s] warn: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_ERROR(fmt, ...) printf("[%s] error: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_FATAL(fmt, ...) printf("[%s] fatal: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+
+#define IF_FALSE_PRINT_LOG(cond, fmt, ...) \
     do { \
         if (!(cond)) { \
-            LOGE(domain, tag, fmt, ##__VA_ARGS__); \
-            return ret; \
+            ACCESSTOKEN_LOG_ERROR(fmt, ##__VA_ARGS__); \
         } \
     } while (0)
+
+#define IF_FALSE_RETURN_LOG(cond, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            ACCESSTOKEN_LOG_ERROR(fmt, ##__VA_ARGS__); \
+            return; \
+        } \
+    } while (0)
+#endif // HILOG_ENABLE
 
 #endif // ACCESSTOKEN_LOG_H

@@ -27,6 +27,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DlpPermissionSetManager"};
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -53,7 +54,7 @@ void DlpPermissionSetManager::ProcessDlpPermInfos(const std::vector<PermissionDl
     for (auto iter = dlpPermInfos.begin(); iter != dlpPermInfos.end(); iter++) {
         auto it = dlpPermissionModeMap_.find(iter->permissionName);
         if (it != dlpPermissionModeMap_.end()) {
-            LOGW(AT_DOMAIN, AT_TAG,
+            ACCESSTOKEN_LOG_WARN(LABEL,
                 "info for permission: %{public}s dlpMode %{public}d has been insert, please check!",
                 iter->permissionName.c_str(), iter->dlpMode);
             continue;
@@ -66,7 +67,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 {
     auto it = dlpPermissionModeMap_.find(permissionName);
     if (it == dlpPermissionModeMap_.end()) {
-        LOGD(AT_DOMAIN, AT_TAG, "Can not find permission: %{public}s in dlp permission cfg",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Can not find permission: %{public}s in dlp permission cfg",
             permissionName.c_str());
         return DLP_PERM_ALL;
     }
@@ -76,7 +77,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
     std::vector<PermissionStateFull>& permStateList)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "DlpType: %{public}d", hapDlpType);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d", hapDlpType);
     for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
         if (iter->grantStatus[0] == PERMISSION_DENIED) {
             continue;
@@ -98,7 +99,7 @@ bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,
 
 bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "DlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
 
     /* permission is available to all dlp hap */
     if ((hapDlpType == DLP_COMMON) || (permDlpMode == DLP_PERM_ALL)) {

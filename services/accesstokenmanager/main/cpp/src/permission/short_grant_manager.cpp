@@ -27,10 +27,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ShortGrantManager"};
 std::recursive_mutex g_instanceMutex;
 static constexpr int32_t DEFAULT_MAX_TIME_MILLISECONDS = 30 * 60; // 30 minutes
 static constexpr int32_t DEFAULT_MAX_ONCE_TIME_MILLISECONDS = 5 * 60; // 5 minutes
-constexpr const char* TASK_NAME_SHORT_GRANT_PERMISSION = "atm_permission_manager_short_grant";
+static const std::string TASK_NAME_SHORT_GRANT_PERMISSION = "atm_permission_manager_short_grant";
 static const std::vector<std::string> g_shortGrantPermission = {
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
@@ -49,7 +50,7 @@ ShortGrantManager& ShortGrantManager::GetInstance()
 
 void ShortPermAppManagerDeathCallback::NotifyAppManagerDeath()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "ShortGrantManager AppManagerDeath called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "ShortGrantManager AppManagerDeath called");
 
     ShortGrantManager::GetInstance().OnAppMgrRemoteDiedHandle();
 }
@@ -58,7 +59,7 @@ void ShortPermAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
         uint32_t tokenID = appStateData.accessTokenId;
-        LOGI(AT_DOMAIN, AT_TAG, "TokenID:%{public}d died.", tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID:%{public}d died.", tokenID);
         
         ShortGrantManager::GetInstance().ClearShortPermissionByTokenID(tokenID);
     }
@@ -71,7 +72,7 @@ void ShortGrantManager::OnAppMgrRemoteDiedHandle()
     while (item != shortGrantData_.end()) {
         if (PermissionManager::GetInstance().UpdatePermission(
             item->tokenID, item->permissionName, false, PERMISSION_USER_FIXED, false) != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "TokenID:%{public}d revoke permission:%{public}s failed!",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
                 item->tokenID, item->permissionName.c_str());
         }
         std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(item->tokenID) + item->permissionName;
@@ -79,7 +80,7 @@ void ShortGrantManager::OnAppMgrRemoteDiedHandle()
         ++item;
     }
     shortGrantData_.clear();
-    LOGI(AT_DOMAIN, AT_TAG, "shortGrantData_ clear!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "shortGrantData_ clear!");
     appStopCallBack_ = nullptr;
 }
 
@@ -93,7 +94,7 @@ void ShortGrantManager::InitEventHandler()
 {
     auto eventRunner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!eventRunner) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create a shortGrantEventRunner.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner.");
         return;
     }
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner);
@@ -114,15 +115,15 @@ bool ShortGrantManager::CancelTaskOfPermissionRevoking(const std::string& taskNa
 #ifdef EVENTHANDLER_ENABLE
     auto eventHandler = GetEventHandler();
     if (eventHandler == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return false;
     }
 
-    LOGI(AT_DOMAIN, AT_TAG, "Revoke permission task name:%{public}s", taskName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Revoke permission task name:%{public}s", taskName.c_str());
     eventHandler->ProxyRemoveTask(taskName);
     return true;
 #else
-    LOGW(AT_DOMAIN, AT_TAG, "EventHandler is not existed");
+    ACCESSTOKEN_LOG_WARN(LABEL, "EventHandler is not existed");
     return false;
 #endif
 }
@@ -130,19 +131,21 @@ bool ShortGrantManager::CancelTaskOfPermissionRevoking(const std::string& taskNa
 int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::string& permission, uint32_t onceTime)
 {
     if (tokenID == 0 || onceTime == 0 || onceTime > DEFAULT_MAX_ONCE_TIME_MILLISECONDS || onceTime > maxTime_) {
-        LOGE(AT_DOMAIN, AT_TAG, "Invalid param, id: %{public}d, onceTime %{public}u!", tokenID, onceTime);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input invalid, tokenID: %{public}d, onceTime %{public}u!", tokenID, onceTime);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(tokenID) + permission;
     std::unique_lock<std::mutex> lck(shortGrantDataMutex_);
+
     auto iter = std::find_if(
         shortGrantData_.begin(), shortGrantData_.end(), [tokenID, permission](const PermTimerData& data) {
         return data.tokenID == tokenID && data.permissionName == permission;
     });
+
     if (iter == shortGrantData_.end()) {
         auto iterator = std::find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permission);
         if (iterator == g_shortGrantPermission.end()) {
-            LOGE(AT_DOMAIN, AT_TAG, "Permission is not available to short grant: %{public}s!", permission.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Permission is not available to short grant: %{public}s!", permission.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         PermTimerData data;
@@ -152,7 +155,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         data.revokeTimes = data.firstGrantTimes + onceTime;
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "GrantPermission failed result %{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GrantPermission failed result %{public}d", ret);
             return ret;
         }
         shortGrantData_.emplace_back(data);
@@ -164,14 +167,14 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
     uint32_t maxRemainedTime = maxTime_ - (GetCurrentTime() - iter->firstGrantTimes);
     uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
-    LOGI(AT_DOMAIN, AT_TAG, "currRemainedTime %{public}d", currRemainedTime);
+    ACCESSTOKEN_LOG_INFO(LABEL, "currRemainedTime %{public}d", currRemainedTime);
     if (cancelTimes > currRemainedTime) {
         iter->revokeTimes = GetCurrentTime() + cancelTimes;
-        LOGI(AT_DOMAIN, AT_TAG, "iter->revokeTimes %{public}d", iter->revokeTimes);
+        ACCESSTOKEN_LOG_INFO(LABEL, "iter->revokeTimes %{public}d", iter->revokeTimes);
         ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "GrantPermission failed result %{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GrantPermission failed result %{public}d", ret);
             return ret;
         }
         ShortGrantManager::GetInstance().ScheduleRevokeTask(iter->tokenID, iter->permissionName, taskName, cancelTimes);
@@ -189,7 +192,7 @@ void ShortGrantManager::ClearShortPermissionData(AccessTokenID tokenID, const st
             // revoke without kill the app
             if (PermissionManager::GetInstance().UpdatePermission(
                 tokenID, permission, false, PERMISSION_USER_FIXED, false) != RET_SUCCESS) {
-                LOGE(AT_DOMAIN, AT_TAG, "TokenID:%{public}d revoke permission:%{public}s failed!",
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
                     tokenID, permission.c_str());
                 return;
             }
@@ -213,7 +216,7 @@ void ShortGrantManager::ClearShortPermissionByTokenID(AccessTokenID tokenID)
         if (item->tokenID == tokenID) {
             if (PermissionManager::GetInstance().UpdatePermission(
                 tokenID, item->permissionName, false, PERMISSION_USER_FIXED, false) != RET_SUCCESS) {
-                LOGE(AT_DOMAIN, AT_TAG, "TokenID:%{public}d revoke permission:%{public}s failed!",
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
                     tokenID, item->permissionName.c_str());
                 return;
             }
@@ -236,22 +239,22 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
 #ifdef EVENTHANDLER_ENABLE
     auto eventHandler = GetEventHandler();
     if (eventHandler == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
 
-    LOGI(AT_DOMAIN, AT_TAG, "Add permission task name:%{public}s", taskName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add permission task name:%{public}s", taskName.c_str());
 
     std::function<void()> delayed = ([tokenID, permission]() {
         ShortGrantManager::GetInstance().ClearShortPermissionData(tokenID, permission);
-        LOGI(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_INFO(LABEL,
             "Token: %{public}d, permission: %{public}s, delay revoke permission end.", tokenID, permission.c_str());
     });
-    LOGI(AT_DOMAIN, AT_TAG, "cancelTimes %{public}d", cancelTimes);
+    ACCESSTOKEN_LOG_INFO(LABEL, "cancelTimes %{public}d", cancelTimes);
     eventHandler->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
     return;
 #else
-    LOGW(AT_DOMAIN, AT_TAG, "eventHandler is not existed");
+    ACCESSTOKEN_LOG_WARN(LABEL, "eventHandler is not existed");
     return;
 #endif
 }
@@ -277,7 +280,7 @@ void ShortGrantManager::RegisterAppStopListener()
         if (appManagerDeathCallback_ == nullptr) {
             appManagerDeathCallback_ = std::make_shared<ShortPermAppManagerDeathCallback>();
             if (appManagerDeathCallback_ == nullptr) {
-                LOGE(AT_DOMAIN, AT_TAG, "Register appManagerDeathCallback failed.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appManagerDeathCallback failed.");
                 return;
             }
             AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
@@ -288,12 +291,12 @@ void ShortGrantManager::RegisterAppStopListener()
         if (appStopCallBack_ == nullptr) {
             appStopCallBack_ = new (std::nothrow) ShortPermAppStateObserver();
             if (appStopCallBack_ == nullptr) {
-                LOGE(AT_DOMAIN, AT_TAG, "Register appStopCallBack failed.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appStopCallBack failed.");
                 return;
             }
             int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStopCallBack_);
             if (ret != ERR_OK) {
-                LOGI(AT_DOMAIN, AT_TAG, "Register appStopCallBack %{public}d.", ret);
+                ACCESSTOKEN_LOG_INFO(LABEL, "Register appStopCallBack %{public}d.", ret);
             }
         }
     }
@@ -305,7 +308,7 @@ void ShortGrantManager::UnRegisterAppStopListener()
     if (appStopCallBack_ != nullptr) {
         int32_t ret = AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStopCallBack_);
         if (ret != ERR_OK) {
-            LOGI(AT_DOMAIN, AT_TAG, "Unregister appStopCallback %{public}d.", ret);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Unregister appStopCallback %{public}d.", ret);
         }
         appStopCallBack_= nullptr;
     }

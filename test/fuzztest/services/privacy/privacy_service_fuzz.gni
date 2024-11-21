@@ -75,6 +75,7 @@ privacy_sources = [
   "${access_token_path}/services/privacymanager/src/common/constant.cpp",
   "${access_token_path}/services/privacymanager/src/database/data_translator.cpp",
   "${access_token_path}/services/privacymanager/src/database/permission_used_record_db.cpp",
+  "${access_token_path}/services/privacymanager/src/database/privacy_field_const.cpp",
   "${access_token_path}/services/privacymanager/src/record/on_permission_used_record_callback_proxy.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record_manager.cpp",

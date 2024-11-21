@@ -68,6 +68,7 @@ if (token_sync_enable == true) {
       "src/command/delete_remote_token_command.cpp",
       "src/command/sync_remote_hap_token_command.cpp",
       "src/command/update_remote_hap_token_command.cpp",
+      "src/common/constant.cpp",
       "src/device/device_info_manager.cpp",
       "src/device/device_info_repository.cpp",
       "src/remote/remote_command_executor.cpp",

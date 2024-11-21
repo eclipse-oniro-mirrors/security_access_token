@@ -23,6 +23,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "TokenCallbackStub"
+};
 static const int32_t LIST_SIZE_MAX = 200;
 static const int32_t FAILED = -1;
 }
@@ -35,10 +38,10 @@ static std::string to_utf8(std::u16string str16)
 int32_t TokenCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Entry, code: 0x%{public}x", code);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenCallback::GetDescriptor()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -46,7 +49,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
         uint32_t permListSize = data.ReadUint32();
         if (permListSize > LIST_SIZE_MAX) {
-            LOGE(AT_DOMAIN, AT_TAG, "Read permListSize fail %{public}u", permListSize);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
@@ -58,7 +61,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
 
         uint32_t statusListSize = data.ReadUint32();
         if (statusListSize != permListSize) {
-            LOGE(AT_DOMAIN, AT_TAG, "Read statusListSize fail %{public}u", statusListSize);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read statusListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;

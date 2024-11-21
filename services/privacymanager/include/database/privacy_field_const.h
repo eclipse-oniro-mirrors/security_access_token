@@ -23,22 +23,22 @@ namespace Security {
 namespace AccessToken {
 class PrivacyFiledConst {
 public:
-    inline static constexpr const char* FIELD_TOKEN_ID = "token_id";
-    inline static constexpr const char* FIELD_DEVICE_ID = "device_id";
-    inline static constexpr const char* FIELD_OP_CODE = "op_code";
-    inline static constexpr const char* FIELD_STATUS = "status";
-    inline static constexpr const char* FIELD_TIMESTAMP = "timestamp";
-    inline static constexpr const char* FIELD_ACCESS_DURATION = "access_duration";
-    inline static constexpr const char* FIELD_ACCESS_COUNT = "access_count";
-    inline static constexpr const char* FIELD_REJECT_COUNT = "reject_count";
+    const static std::string FIELD_TOKEN_ID;
+    const static std::string FIELD_DEVICE_ID;
+    const static std::string FIELD_OP_CODE;
+    const static std::string FIELD_STATUS;
+    const static std::string FIELD_TIMESTAMP;
+    const static std::string FIELD_ACCESS_DURATION;
+    const static std::string FIELD_ACCESS_COUNT;
+    const static std::string FIELD_REJECT_COUNT;
 
-    inline static constexpr const char* FIELD_TIMESTAMP_BEGIN = "timestamp_begin";
-    inline static constexpr const char* FIELD_TIMESTAMP_END = "timestamp_end";
-    inline static constexpr const char* FIELD_FLAG = "flag";
-    inline static constexpr const char* FIELD_LOCKSCREEN_STATUS = "lockScreenStatus";
+    const static std::string FIELD_TIMESTAMP_BEGIN;
+    const static std::string FIELD_TIMESTAMP_END;
+    const static std::string FIELD_FLAG;
+    const static std::string FIELD_LOCKSCREEN_STATUS;
 
-    inline static constexpr const char* FIELD_PERMISSION_CODE = "permission_code";
-    inline static constexpr const char* FIELD_USED_TYPE = "used_type";
+    const static std::string FIELD_PERMISSION_CODE;
+    const static std::string FIELD_USED_TYPE;
 };
 } // namespace AccessToken
 } // namespace Security

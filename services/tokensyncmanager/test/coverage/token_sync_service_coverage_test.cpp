@@ -54,6 +54,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
+
 static DistributedHardware::DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
@@ -112,7 +114,7 @@ void TokenSyncServiceTest::SetUp()
 }
 void TokenSyncServiceTest::TearDown()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "TearDown start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
     tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
@@ -131,7 +133,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
-    LOGI(AT_DOMAIN, AT_TAG,
+    ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
@@ -142,7 +144,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(udid);
         DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
     } else {
-        LOGE(AT_DOMAIN, AT_TAG, "uuid or udid is empty, offline failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, offline failed.");
     }
 }
 
