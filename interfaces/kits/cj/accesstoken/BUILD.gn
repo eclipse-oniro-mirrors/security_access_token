@@ -41,6 +41,8 @@ ohos_shared_library("cj_ability_access_ctrl_ffi") {
     sources = [
       "src/ability_access_ctrl_ffi.cpp",
       "src/at_manager_impl.cpp",
+      "src/request_global_switch_on_setting.cpp",
+      "src/request_permission_on_setting.cpp",
     ]
 
     deps = [

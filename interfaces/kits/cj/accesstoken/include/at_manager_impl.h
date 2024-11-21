@@ -32,9 +32,15 @@
 #include "ui_content.h"
 #include "ui_extension_context.h"
 
+struct CArrBool {
+    void* head;
+    int64_t size;
+};
+
 struct CPermissionRequestResult {
     CArrString permissions;
     CArrI32 authResults;
+    CArrBool dialogShownResults;
 };
 
 struct RetDataCPermissionRequestResult {
@@ -75,6 +81,7 @@ struct RequestAsyncContext {
     int32_t result = AT_PERM_OPERA_SUCC;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
+    std::vector<bool> dialogShownResults;
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
@@ -102,14 +109,13 @@ private:
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    explicit AuthorizationResult(std::function<void(RetDataCPermissionRequestResult)> callbackRef)
-        : callbackRef_(callbackRef) {}
+    explicit AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
     ~AuthorizationResult() override = default;
     void GrantResultsCallback(const std::vector<std::string>& permissions,
         const std::vector<int>& grantResults) override;
 
 private:
-    std::function<void(RetDataCPermissionRequestResult)> callbackRef_;
+    std::shared_ptr<RequestAsyncContext> data_ = nullptr;
 };
 
 class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
@@ -142,23 +148,6 @@ typedef PermStateChangeContext RegisterPermStateChangeInfo;
 struct UnregisterPermStateChangeInfo : public PermStateChangeContext {
     PermStateChangeScope scopeInfo;
 };
-
-typedef enum {
-    CJ_OK = 0,
-    CJ_ERROR_PERMISSION_DENIED = 201,
-    CJ_ERROR_NOT_SYSTEM_APP = 202,
-    CJ_ERROR_PARAM_ILLEGAL = 401,
-    CJ_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
-    CJ_ERROR_PARAM_INVALID = 12100001,
-    CJ_ERROR_TOKENID_NOT_EXIST,
-    CJ_ERROR_PERMISSION_NOT_EXIST,
-    CJ_ERROR_NOT_USE_TOGETHER,
-    CJ_ERROR_REGISTERS_EXCEED_LIMITATION,
-    CJ_ERROR_PERMISSION_OPERATION_NOT_ALLOWED,
-    CJ_ERROR_SERVICE_NOT_RUNNING,
-    CJ_ERROR_OUT_OF_MEMORY,
-    CJ_ERROR_INNER,
-} CjErrorCode;
 
 class AtManagerImpl {
 public:
@@ -194,7 +183,7 @@ private:
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
     static bool IsDynamicRequest(const std::vector<std::string>& permissions,
-        std::vector<int32_t>& permissionsState, PermissionGrantInfo& info);
+        std::vector<int32_t>& permissionsState, std::vector<bool>& dialogShownResults, PermissionGrantInfo& info);
     static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo,
         std::vector<RegisterPermStateChangeInfo*>& batchPermStateChangeRegisters);
     static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, int64_t subscriberRef);
