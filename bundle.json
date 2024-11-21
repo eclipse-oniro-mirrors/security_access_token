@@ -180,12 +180,18 @@
           }
         },
         {
-          "name": "//base/security/access_token/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk",
+          "name": "//base/security/access_token/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
           "header": {
             "header_files": [
+              "el5_filekey_manager_kit.h",
+              "app_key_info.h",
+              "data_lock_type.h",
+              "el5_filekey_callback_interface.h",
+              "el5_filekey_callback_stub.h",
+              "el5_filekey_manager_error.h",
               "el5_filekey_manager_kit.h"
             ],
-            "header_base": "//base/security/access_token/interfaces/innerkits/el5filekeymanager/include"
+            "header_base": "//base/security/access_token/interfaces/inner_api/el5filekeymanager/include"
           }
         },
         {

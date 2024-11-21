@@ -26,8 +26,8 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
   }
   branch_protector_ret = "pac_ret"
   include_dirs = [
-    "${access_token_path}/frameworks/el5filekeymanager/include",
-    "${access_token_path}/interfaces/innerkits/el5filekeymanager/include",
+    "${access_token_path}/frameworks/inner_api/el5filekeymanager/include",
+    "${access_token_path}/interfaces/inner_api/el5filekeymanager/include",
     "${access_token_path}/interfaces/kits/cj/access_token/include",
   ]
 
@@ -37,7 +37,7 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
 
   sources = [ "src/screen_lock_file_manager_ffi.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk" ]
+  deps = [ "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk" ]
 
   external_deps = [
     "hilog:libhilog",

@@ -23,14 +23,14 @@ ohos_shared_library("screenlockfilemanager") {
   branch_protector_ret = "pac_ret"
 
   include_dirs = [
-    "${access_token_path}/frameworks/el5filekeymanager/include",
-    "${access_token_path}/interfaces/innerkits/el5filekeymanager/include",
+    "${access_token_path}/frameworks/inner_api/el5filekeymanager/include",
+    "${access_token_path}/interfaces/inner_api/el5filekeymanager/include",
     "${access_token_path}/interfaces/kits/js/napi/el5filekeymanager/include",
   ]
 
   sources = [ "src/el5_filekey_manager_napi.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk" ]
+  deps = [ "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk" ]
 
   external_deps = [
     "hilog:libhilog",
