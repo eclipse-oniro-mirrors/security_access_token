@@ -99,30 +99,29 @@ void AccessTokenInfoManager::Init()
     ACCESSTOKEN_LOG_INFO(LABEL, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
         hapSize, nativeSize, pefDefSize);
 
-#ifdef TOKEN_SYNC_ENABLE
-    std::function<void()> runner = []() {
-        std::string name = "AtmInfoMgrInit";
-        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
-        auto sleepTime = std::chrono::milliseconds(1000);
-        std::shared_ptr<AccessTokenDmInitCallback> ptrDmInitCallback = std::make_shared<AccessTokenDmInitCallback>();
-        while (1) {
-            int32_t ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME,
-                ptrDmInitCallback);
-            if (ret != ERR_OK) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
-                std::this_thread::sleep_for(sleepTime);
-                continue;
-            }
-            return;
-        }
-    };
-    std::thread initThread(runner);
-    initThread.detach();
-#endif
-
     hasInited_ = true;
     ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
 }
+
+#ifdef TOKEN_SYNC_ENABLE
+void AccessTokenInfoManager::InitDmCallback(void)
+{
+    std::function<void()> runner = []() {
+        std::string name = "AtmInfoMgrInit";
+        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
+        std::shared_ptr<AccessTokenDmInitCallback> ptrDmInitCallback = std::make_shared<AccessTokenDmInitCallback>();
+        int32_t ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME,
+            ptrDmInitCallback);
+        if (ret != ERR_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "device manager part init end");
+        return;
+    };
+    std::thread initThread(runner);
+    initThread.detach();
+}
+#endif
 
 void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
 {
