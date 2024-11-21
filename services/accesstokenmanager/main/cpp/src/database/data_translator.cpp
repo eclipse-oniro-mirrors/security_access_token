@@ -27,6 +27,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DataTranslator"};
+}
+
 int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues)
 {
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionDef.permissionName);
@@ -51,7 +55,7 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.grantMode = inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_MODE);
     int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Apl is wrong.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
         return ERR_PARAM_INVALID;
     }
     outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
@@ -72,7 +76,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
 {
     if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
         grantIndex >= inPermissionState.grantFlags.size()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Perm status grant size is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Perm status grant size is wrong");
         return ERR_PARAM_INVALID;
     }
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
@@ -91,7 +95,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission name is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
@@ -100,7 +104,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     std::string devID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(devID)) {
-        LOGE(AT_DOMAIN, AT_TAG, "DevID is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "DevID is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission deviceId error");
@@ -110,7 +114,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
-        LOGE(AT_DOMAIN, AT_TAG, "GrantFlag is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantFlag is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant flag error");
@@ -121,7 +125,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
-        LOGE(AT_DOMAIN, AT_TAG, "GrantStatus is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantStatus is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant status error");

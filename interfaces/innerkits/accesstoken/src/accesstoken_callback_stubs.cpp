@@ -30,6 +30,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenCallbackStubs"
+};
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t ACCESSTOKEN_UID = 3020;
 #endif // TOKEN_SYNC_ENABLE
@@ -38,11 +41,10 @@ static const int32_t ACCESSTOKEN_UID = 3020;
 int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "Entry, code: 0x%{public}x", code);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPermissionStateCallback::GetDescriptor()) {
-        LOGE(AT_DOMAIN, AT_TAG,
-            "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -51,7 +53,7 @@ int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
         PermStateChangeInfo result;
         sptr<PermissionStateChangeInfoParcel> resultSptr = data.ReadParcelable<PermissionStateChangeInfoParcel>();
         if (resultSptr == nullptr) {
-            LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
             return ERR_READ_PARCEL_FAILED;
         }
 
@@ -66,10 +68,10 @@ int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
 int32_t TokenSyncCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Called.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called.");
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenSyncCallback::GetDescriptor()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Get unexpect descriptor, descriptor = %{public}s",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor, descriptor = %{public}s",
             Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
@@ -93,7 +95,7 @@ int32_t TokenSyncCallbackStub::OnRemoteRequest(
 void TokenSyncCallbackStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission denied, func = %{public}s", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, func = %{public}s", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
@@ -108,7 +110,7 @@ void TokenSyncCallbackStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Mess
 void TokenSyncCallbackStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission denied, func = %{public}s", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, func = %{public}s", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
@@ -121,7 +123,7 @@ void TokenSyncCallbackStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, M
 void TokenSyncCallbackStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission denied, func = %{public}s", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, func = %{public}s", __func__);
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }

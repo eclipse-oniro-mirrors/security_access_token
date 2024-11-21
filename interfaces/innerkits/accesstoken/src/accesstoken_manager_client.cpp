@@ -30,11 +30,14 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerClient"
+};
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 std::recursive_mutex g_instanceMutex;
-static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 } // namespace
+static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
 {
@@ -54,7 +57,7 @@ AccessTokenManagerClient::AccessTokenManagerClient()
 
 AccessTokenManagerClient::~AccessTokenManagerClient()
 {
-    LOGE(AT_DOMAIN, AT_TAG, "~AccessTokenManagerClient");
+    ACCESSTOKEN_LOG_ERROR(LABEL, "~AccessTokenManagerClient");
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
 }
@@ -64,7 +67,7 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     return proxy->GetPermissionUsedType(tokenID, permissionName);
@@ -79,15 +82,15 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, "", value, VALUE_MAX_LEN - 1);
     if ((ret < 0) || (static_cast<uint64_t>(std::atoll(value)) != 0)) {
-        LOGE(AT_DOMAIN, AT_TAG, "At service has been started, ret=%{public}d.", ret);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "At service has been started, ret=%{public}d.", ret);
         return PERMISSION_DENIED;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
     if (static_cast<ATokenTypeEnum>(idInner->type) == TOKEN_NATIVE) {
-        LOGI(AT_DOMAIN, AT_TAG, "At service has not been started.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "At service has not been started.");
         return PERMISSION_GRANTED;
     }
-    LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
     return PERMISSION_DENIED;
 }
 
@@ -96,7 +99,7 @@ int AccessTokenManagerClient::GetDefPermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     PermissionDefParcel permissionDefParcel;
@@ -109,7 +112,7 @@ int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vect
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionDefParcel> parcelList;
@@ -126,7 +129,7 @@ int AccessTokenManagerClient::GetReqPermissions(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionStateFullParcel> parcelList;
@@ -143,7 +146,7 @@ int AccessTokenManagerClient::GetPermissionFlag(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GetPermissionFlag(tokenID, permissionName, flag);
@@ -154,13 +157,13 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return INVALID_OPER;
     }
 
     size_t len = permList.size();
     if (len == 0) {
-        LOGD(AT_DOMAIN, AT_TAG, "Len is zero.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Len is zero.");
         return PASS_OPER;
     }
 
@@ -188,13 +191,13 @@ int32_t AccessTokenManagerClient::GetPermissionsStatus(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     size_t len = permList.size();
     if (len == 0) {
-        LOGE(AT_DOMAIN, AT_TAG, "Len is zero.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Len is zero.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -221,7 +224,7 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GrantPermission(tokenID, permissionName, flag);
@@ -231,7 +234,7 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->RevokePermission(tokenID, permissionName, flag);
@@ -242,7 +245,7 @@ int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
@@ -252,7 +255,7 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ClearUserGrantedPermissionState(tokenID);
@@ -263,7 +266,7 @@ int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::st
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetPermissionRequestToggleStatus(permissionName, status, userID);
@@ -274,7 +277,7 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
@@ -286,18 +289,18 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
-        LOGE(AT_DOMAIN, AT_TAG, "The maximum number of callback has been reached");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "The maximum number of callback has been reached");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
 
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback != callbackMap_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Already has the same callback");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Already has the same callback");
         return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
         if (!callback) {
-            LOGE(AT_DOMAIN, AT_TAG, "Memory allocation for callback failed!");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Memory allocation for callback failed!");
             return AccessTokenError::ERR_SERVICE_ABNORMAL;
         }
     }
@@ -308,7 +311,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
 {
     if (customizedCb == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "CustomizedCb is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCb is nullptr");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -319,7 +322,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -328,7 +331,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 
     if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
         scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
-        LOGE(AT_DOMAIN, AT_TAG, "Scope oversize");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope oversize");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
@@ -344,14 +347,14 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     std::lock_guard<std::mutex> lock(callbackMutex_);
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback == callbackMap_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "GoalCallback already is not exist");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GoalCallback already is not exist");
         return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
     }
 
@@ -367,7 +370,7 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     AccessTokenIDEx tokenIdEx = { 0 };
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return tokenIdEx;
     }
     HapInfoParcel hapInfoParcel;
@@ -383,7 +386,7 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapInfoParcel hapInfoParcel;
@@ -398,7 +401,7 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->DeleteToken(tokenID);
@@ -408,7 +411,7 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return TOKEN_INVALID;
     }
     return static_cast<ATokenTypeEnum>(proxy->GetTokenType(tokenID));
@@ -420,7 +423,7 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     AccessTokenIDEx result = {0};
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return result;
     }
     return proxy->GetHapTokenID(userID, bundleName, instIndex);
@@ -431,7 +434,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return INVALID_TOKENID;
     }
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
@@ -442,7 +445,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapPolicyParcel hapPolicyParcel;
@@ -454,7 +457,7 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
@@ -468,7 +471,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     NativeTokenInfoParcel nativeTokenInfoParcel;
@@ -482,7 +485,7 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ReloadNativeTokenInfo();
@@ -493,7 +496,7 @@ int AccessTokenManagerClient::GetHapTokenInfoExtension(AccessTokenID tokenID, Ha
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -507,7 +510,7 @@ AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& proc
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return INVALID_TOKENID;
     }
     return proxy->GetNativeTokenId(processName);
@@ -518,7 +521,7 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -532,7 +535,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -547,7 +550,7 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -559,7 +562,7 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return INVALID_TOKENID;
     }
 
@@ -571,7 +574,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -584,12 +587,12 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     if (syncCallback == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Input callback is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input callback is null.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     
@@ -608,7 +611,7 @@ int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
@@ -625,7 +628,7 @@ void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std:
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return;
     }
 
@@ -638,7 +641,7 @@ int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -650,13 +653,13 @@ void AccessTokenManagerClient::InitProxy()
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
-            LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbilityManager is null");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
             return;
         }
         sptr<IRemoteObject> accesstokenSa =
             sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
         if (accesstokenSa == nullptr) {
-            LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbility %{public}d is null",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
                 IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
             return;
         }
@@ -667,7 +670,7 @@ void AccessTokenManagerClient::InitProxy()
         }
         proxy_ = new AccessTokenManagerProxy(accesstokenSa);
         if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-            LOGE(AT_DOMAIN, AT_TAG, "Iface_cast get null");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
         }
     }
 }
@@ -700,7 +703,7 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapBaseInfoParcel hapBaseInfoParcel;
@@ -712,7 +715,7 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return;
     }
     PermissionGrantInfoParcel infoParcel;
@@ -725,7 +728,7 @@ int32_t AccessTokenManagerClient::InitUserPolicy(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->InitUserPolicy(userList, permList);
@@ -735,7 +738,7 @@ int32_t AccessTokenManagerClient::ClearUserPolicy()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ClearUserPolicy();
@@ -745,7 +748,7 @@ int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>&
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->UpdateUserPolicy(userList);

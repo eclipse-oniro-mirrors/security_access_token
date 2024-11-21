@@ -25,6 +25,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ConfigPolicLoader"};
 static constexpr const char* ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 
 static constexpr const char* PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
@@ -48,7 +49,7 @@ void ConfigPolicLoader::GetConfigFilePathList(std::vector<std::string>& pathList
 {
     CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
     if (dirs == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Can't get cfg file path.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Can't get cfg file path.");
         return;
     }
 
@@ -57,7 +58,7 @@ void ConfigPolicLoader::GetConfigFilePathList(std::vector<std::string>& pathList
             continue;
         }
 
-        LOGI(AT_DOMAIN, AT_TAG, "Accesstoken cfg dir: %{public}s.", path);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Accesstoken cfg dir: %{public}s.", path);
         pathList.emplace_back(path);
     }
 
@@ -122,7 +123,7 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const st
 {
     nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
     if (jsonRes.is_discarded()) {
-        LOGE(AT_DOMAIN, AT_TAG, "JsonRes is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
         return false;
     }
 
@@ -163,13 +164,13 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
         std::string fileContent;
         int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
         if (res != 0) {
-            LOGE(AT_DOMAIN, AT_TAG, "Read Cfg file [%{public}s] failed, error(%{public}d).",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read Cfg file [%{public}s] failed, error(%{public}d).",
                 filePath.c_str(), res);
             continue;
         }
 
         if (GetConfigValueFromFile(type, fileContent, config)) {
-            LOGI(AT_DOMAIN, AT_TAG, "Get valid config value!");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Get valid config value!");
             successFlag = true;
             break; // once get the config value, break the loop
         }

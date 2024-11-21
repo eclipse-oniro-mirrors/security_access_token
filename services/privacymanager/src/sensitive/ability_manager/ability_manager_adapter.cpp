@@ -25,6 +25,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AbilityManagerAdapter"
+};
 const int32_t DEFAULT_INVAL_VALUE = -1;
 const std::u16string ABILITY_MGR_DESCRIPTOR = u"ohos.aafwk.AbilityManager";
 }
@@ -45,7 +48,7 @@ int32_t AbilityManagerAdapter::StartAbility(const AAFwk::Want &want, const sptr<
 {
     auto abms = GetProxy();
     if (abms == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetProxy.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -54,26 +57,26 @@ int32_t AbilityManagerAdapter::StartAbility(const AAFwk::Want &want, const sptr<
     MessageOption option;
 
     if (!data.WriteInterfaceToken(ABILITY_MGR_DESCRIPTOR)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteParcelable(&want)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Want write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Want write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(DEFAULT_INVAL_VALUE)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "UserId write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserId write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(DEFAULT_INVAL_VALUE)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "RequestCode write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RequestCode write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     int32_t error = abms->SendRequest(static_cast<uint32_t>(AbilityManagerInterfaceCode::START_ABILITY),
         data, reply, option);
     if (error != NO_ERROR) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
         return error;
     }
     return reply.ReadInt32();
@@ -86,22 +89,22 @@ void AbilityManagerAdapter::InitProxy()
     }
     sptr<ISystemAbilityManager> systemManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemManager == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get system ability registry.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get system ability registry.");
         return;
     }
     sptr<IRemoteObject> remoteObj = systemManager->CheckSystemAbility(ABILITY_MGR_SERVICE_ID);
     if (remoteObj == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to connect ability manager service.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to connect ability manager service.");
         return;
     }
 
     deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new (std::nothrow) AbilityMgrDeathRecipient());
     if (deathRecipient_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create AbilityMgrDeathRecipient!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create AbilityMgrDeathRecipient!");
         return;
     }
     if ((remoteObj->IsProxyObject()) && (!remoteObj->AddDeathRecipient(deathRecipient_))) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Add death recipient to AbilityManagerService failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient to AbilityManagerService failed.");
         return;
     }
     proxy_ = remoteObj;
@@ -128,7 +131,7 @@ void AbilityManagerAdapter::ReleaseProxy(const wptr<IRemoteObject>& remote)
 
 void AbilityManagerAdapter::AbilityMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    LOGE(PRI_DOMAIN, PRI_TAG, "AbilityMgrDeathRecipient handle remote died.");
+    ACCESSTOKEN_LOG_ERROR(LABEL, "AbilityMgrDeathRecipient handle remote died.");
     AbilityManagerAdapter::GetInstance().ReleaseProxy(remote);
 }
 } // namespace AccessToken

@@ -44,6 +44,8 @@ static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
 static const int TEST_USER_ID = 0;
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitExtensionTest"};
 
 PermissionStateFull g_getPermissionReq = {
     .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
@@ -494,7 +496,7 @@ void AccessTokenKitExtensionTest::SetUp()
                                                           g_infoManagerTestInfoParms.bundleName,
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
-    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void AccessTokenKitExtensionTest::TearDown()
@@ -2090,19 +2092,19 @@ public:
 
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
     {
-        LOGI(AT_DOMAIN, AT_TAG, "GetRemoteHapTokenInfo called.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
     {
-        LOGI(AT_DOMAIN, AT_TAG, "DeleteRemoteHapTokenInfo called.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
     {
-        LOGI(AT_DOMAIN, AT_TAG, "UpdateRemoteHapTokenInfo called.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 };

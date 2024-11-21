@@ -25,6 +25,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenRemoteTokenManager"};
 }
 AccessTokenRemoteTokenManager::AccessTokenRemoteTokenManager()
 {}
@@ -49,13 +51,14 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
     AccessTokenID remoteID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsTokenIDValid(remoteID)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s or token %{public}x is invalid.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s or token %{public}x is invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return 0;
     }
     ATokenTypeEnum tokeType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(remoteID);
     if ((tokeType <= TOKEN_INVALID) || (tokeType >= TOKEN_TYPE_BUTT)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Token %{public}x type is invalid.", remoteID);
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "Token %{public}x type is invalid.", remoteID);
         return 0;
     }
     int32_t dlpFlag = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(remoteID);
@@ -68,8 +71,8 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         AccessTokenRemoteDevice& device = remoteDeviceMap_[deviceID];
         if (device.MappingTokenIDPairMap_.count(remoteID) > 0) {
             mapID = device.MappingTokenIDPairMap_[remoteID];
-            LOGE(AT_DOMAIN, AT_TAG,
-                "Device %{public}s token %{public}x has already mapped, map tokenID is %{public}x.",
+            ACCESSTOKEN_LOG_ERROR(
+                LABEL, "Device %{public}s token %{public}x has already mapped, map tokenID is %{public}x.",
                 ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
             return mapID;
         }
@@ -83,7 +86,8 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
 
     mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpFlag, cloneFlag);
     if (mapID == 0) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s token %{public}x map local Token failed.",
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "Device %{public}s token %{public}x map local Token failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return 0;
     }
@@ -95,13 +99,12 @@ int AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID(const std::string& 
     std::vector<AccessTokenID>& remoteIDs)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        LOGE(AT_DOMAIN, AT_TAG,
-            "Device %{public}s is valid.", ConstantCommon::EncryptDevId(deviceID).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s is valid.", ConstantCommon::EncryptDevId(deviceID).c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s has not mapping.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return AccessTokenError::ERR_DEVICE_NOT_EXIST;
     }
@@ -118,7 +121,7 @@ AccessTokenID AccessTokenRemoteTokenManager::GetDeviceMappingTokenID(const std::
     AccessTokenID remoteID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsTokenIDValid(remoteID)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s or token %{public}x is invalid.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s or token %{public}x is invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return 0;
     }
@@ -126,7 +129,7 @@ AccessTokenID AccessTokenRemoteTokenManager::GetDeviceMappingTokenID(const std::
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1 ||
         remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.count(remoteID) < 1) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s has not mapping.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
     }
@@ -138,7 +141,7 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
     AccessTokenID remoteID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsTokenIDValid(remoteID)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s or token %{public}x is invalid.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s or token %{public}x is invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return ERR_PARAM_INVALID;
     }
@@ -146,7 +149,7 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1 ||
         remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.count(remoteID) < 1) {
-        LOGE(AT_DOMAIN, AT_TAG, "Device %{public}s has not mapping.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return ERR_TOKEN_MAP_FAILED;
     }

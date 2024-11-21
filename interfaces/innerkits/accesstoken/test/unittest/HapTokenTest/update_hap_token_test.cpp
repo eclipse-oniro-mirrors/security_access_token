@@ -43,6 +43,8 @@ const std::string OVER_SIZE_STR =
     "FBSURBVDiN7ZQ/S8NQFMVPxU/QCx06GBzrkqUZ42rBbHWUBDqYxSnUoTxXydCSycVsgltfBiFDR8HNdHGxY4nQQAPvMzwHsWn+KM"
     "vj3He5vIaUEjV0UAfe85X83KMBT7N75JEXVdSlfEAVfPRyZ5yfIrBoUkVlMU82Hkp8wu9ddt1vFew4sIiIiKwgzcXIvN7GTZOvpZ"
     "D3I1NZvmdCXz+XOv5wJANKHOVYjRTAghxIyh0FHKb+0QQH5+kXf2zkYGAG0oFr5RfnK8DAGkwY19wliRT2L448vjv0YGQFVa8VKd";
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+    SECURITY_DOMAIN_ACCESSTOKEN, "UpdateHapTokenTest"};
 
 PermissionStateFull g_testPermReq = {
     .permissionName = "ohos.permission.MANAGE_HAP_TOKENID",
@@ -119,7 +121,7 @@ void UpdateHapTokenTest::TearDownTestCase()
 
 void UpdateHapTokenTest::SetUp()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void UpdateHapTokenTest::TearDown()

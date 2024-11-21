@@ -35,6 +35,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DatabaseTest"};
 static constexpr int32_t GET_INT64_TRUE_VALUE = -1;
 static const int32_t DEFAULT_VALUE = -1;
 static const int32_t TEST_TOKEN_ID = 100;
@@ -156,7 +157,7 @@ static void RemoveTestTokenHapInfo()
  */
 HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageAddTest001 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 begin");
 
     RemoveTestTokenHapInfo();
 
@@ -177,7 +178,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
     EXPECT_EQ(0, AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageAddTest001 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 end");
 }
 
 /*
@@ -188,7 +189,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageAddTest002 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 begin");
 
     RemoveTestTokenHapInfo();
 
@@ -199,7 +200,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
     values.emplace_back(genericValues);
     EXPECT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
         AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageAddTest002 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 end");
 }
 
 /*
@@ -210,7 +211,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageModifyTest001 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageModifyTest001 begin");
 
     RemoveTestTokenHapInfo();
 
@@ -254,7 +255,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
         }
     }
     EXPECT_TRUE(modifySuccess);
-    LOGI(AT_DOMAIN, AT_TAG, "SqliteStorageModifyTest001 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageModifyTest001 end");
 }
 
 /*
@@ -265,7 +266,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionDefTest001 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionDefTest001 begin");
 
     RemoveTestTokenHapInfo();
 
@@ -275,7 +276,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
 
     PermissionDef outPermissionDef;
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionDef(genericValues, outPermissionDef));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionDefTest001 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionDefTest001 end");
 }
 
 /*
@@ -286,7 +287,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues001 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 begin");
     PermissionStateFull grantPermissionReq = {
         .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
         .isGeneral = true,
@@ -298,7 +299,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.L
     GenericValues genericValues;
     ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues001 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 end");
 }
 
 /*
@@ -309,7 +310,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.L
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues002 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 begin");
     PermissionStateFull grantPermissionReq = {
         .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
         .isGeneral = true,
@@ -321,7 +322,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.L
     GenericValues genericValues;
     ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues002 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 end");
 }
 
 /*
@@ -332,7 +333,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.L
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues003 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 begin");
     PermissionStateFull grantPermissionReq = {
         .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
         .isGeneral = true,
@@ -344,7 +345,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.L
     GenericValues genericValues;
     ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoGenericValues003 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 end");
 }
 
 /*
@@ -355,7 +356,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.L
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest001 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 begin");
 
     PermissionStateFull outPermissionState;
 
@@ -365,7 +366,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, Test
 
     PermissionDef outPermissionDef;
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest001 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 end");
 }
 
 /*
@@ -376,7 +377,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, Test
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest002 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 begin");
 
     PermissionStateFull outPermissionState;
 
@@ -387,7 +388,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, Test
 
     PermissionDef outPermissionDef;
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest002 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 end");
 }
 
 /*
@@ -398,7 +399,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, Test
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest003 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 begin");
 
     PermissionStateFull outPermissionState;
 
@@ -410,7 +411,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, Test
 
     PermissionDef outPermissionDef;
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest003 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 end");
 }
 
 /*
@@ -421,7 +422,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, Test
  */
 HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, TestSize.Level1)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest004 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 begin");
 
     PermissionStateFull outPermissionState;
 
@@ -434,7 +435,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
 
     PermissionDef outPermissionDef;
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    LOGI(AT_DOMAIN, AT_TAG, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
 }
 } // namespace AccessToken
 } // namespace Security

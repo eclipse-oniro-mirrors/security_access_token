@@ -37,6 +37,8 @@ static std::set<AccessTokenID> g_tokenIdSet;
 static constexpr int32_t TEST_TOKEN_ID_1 = 537800000;
 static constexpr int32_t TEST_TOKEN_ID_2 = 537900000;
 static constexpr int32_t MULTI_CYCLE_TIMES = 1000;
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenMultiThreadTest"};
 }
 
 void AccessTokenMultiThreadTest::SetUpTestCase()
@@ -49,7 +51,7 @@ void AccessTokenMultiThreadTest::TearDownTestCase()
 
 void AccessTokenMultiThreadTest::SetUp()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
     g_tokenIdSet = AccessTokenIDManager::GetInstance().tokenIdSet_;
     AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
 }

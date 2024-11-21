@@ -20,6 +20,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AmsManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
 }
 int32_t AmsManagerAccessProxy::KillProcessesByAccessTokenId(const uint32_t accessTokenId)
@@ -28,23 +29,23 @@ int32_t AmsManagerAccessProxy::KillProcessesByAccessTokenId(const uint32_t acces
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        LOGE(AT_DOMAIN, AT_TAG, "WriteInterfaceToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
         return ERROR;
     }
 
     if (!data.WriteInt32(accessTokenId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "WriteInt32 failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Remote service is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IAmsMgr::Message::FORCE_KILL_APPLICATION_BY_ACCESS_TOKEN_ID), data, reply, option);
     if (error != ERR_NONE) {
-        LOGE(AT_DOMAIN, AT_TAG, "KillProcessesByAccessTokenId failed, error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "KillProcessesByAccessTokenId failed, error: %{public}d", error);
         return ERROR;
     }
     return reply.ReadInt32();

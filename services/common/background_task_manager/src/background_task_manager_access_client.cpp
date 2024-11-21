@@ -22,6 +22,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgourndTaskManagerAccessClient"
+};
 static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
 } // namespace
@@ -50,12 +53,12 @@ BackgourndTaskManagerAccessClient::~BackgourndTaskManagerAccessClient()
 int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
     if (subscriber == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERROR;
     }
     return proxy->SubscribeBackgroundTask(subscriber);
@@ -64,12 +67,12 @@ int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IB
 int32_t BackgourndTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
     if (subscriber == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Callback is nullptr.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERROR;
     }
     return proxy->UnsubscribeBackgroundTask(subscriber);
@@ -80,7 +83,7 @@ int32_t BackgourndTaskManagerAccessClient::GetContinuousTaskApps(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERROR;
     }
     return proxy->GetContinuousTaskApps(list);
@@ -90,12 +93,12 @@ void BackgourndTaskManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbilityManager is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
         return;
     }
     auto backgroundTaskManagerSa = sam->GetSystemAbility(BACKGROUND_TASK_MANAGER_SERVICE_ID);
     if (backgroundTaskManagerSa == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "GetSystemAbility %{public}d is null",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
             BACKGROUND_TASK_MANAGER_SERVICE_ID);
         return;
     }
@@ -107,7 +110,7 @@ void BackgourndTaskManagerAccessClient::InitProxy()
 
     proxy_ = new BackgroundTaskManagerAccessProxy(backgroundTaskManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

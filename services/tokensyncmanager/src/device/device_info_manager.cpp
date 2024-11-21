@@ -20,6 +20,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DeviceInfoManager"};
 std::recursive_mutex g_instanceMutex;
 }
 DeviceInfoManager &DeviceInfoManager::GetInstance()
@@ -52,7 +53,7 @@ void DeviceInfoManager::AddDeviceInfo(const std::string &networkId, const std::s
     if (!DataValidator::IsDeviceIdValid(networkId) ||
         !DataValidator::IsDeviceIdValid(universallyUniqueId) ||
         !DataValidator::IsDeviceIdValid(uniqueDeviceId) || deviceName.empty() || deviceType.empty()) {
-        LOGE(AT_DOMAIN, AT_TAG, "AddDeviceInfo: input param is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddDeviceInfo: input param is invalid");
         return;
     }
     DeviceInfoRepository::GetInstance().SaveDeviceInfo(
@@ -73,7 +74,7 @@ void DeviceInfoManager::RemoveAllRemoteDeviceInfo()
 void DeviceInfoManager::RemoveRemoteDeviceInfo(const std::string &nodeId, DeviceIdType deviceIdType)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "RemoveDeviceInfoByNetworkId: nodeId is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RemoveDeviceInfoByNetworkId: nodeId is invalid");
     } else {
         DeviceInfo deviceInfo;
         std::string localDevice = ConstantCommon::GetLocalDeviceId();
@@ -89,7 +90,7 @@ std::string DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch(const std::st
 {
     std::string result;
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "ConvertToUniversallyUniqueIdOrFetch: nodeId is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertToUniversallyUniqueIdOrFetch: nodeId is invalid.");
         return result;
     }
     DeviceInfo deviceInfo;
@@ -112,7 +113,7 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
 {
     std::string result;
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "ConvertToUniqueDeviceIdOrFetch: nodeId is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertToUniqueDeviceIdOrFetch: nodeId is invalid.");
         return result;
     }
     DeviceInfo deviceInfo;
@@ -123,29 +124,29 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
             if (!udid.empty()) {
                 result = udid;
             } else {
-                LOGD(AT_DOMAIN, AT_TAG,
+                ACCESSTOKEN_LOG_DEBUG(LABEL,
                     "FindDeviceInfo succeed, udid and local udid is empty, nodeId(%{public}s)",
                     ConstantCommon::EncryptDevId(nodeId).c_str());
             }
         } else {
-            LOGD(AT_DOMAIN, AT_TAG,
+            ACCESSTOKEN_LOG_DEBUG(LABEL,
                 "FindDeviceInfo succeed, udid is empty, nodeId(%{public}s) ",
                 ConstantCommon::EncryptDevId(nodeId).c_str());
             result = uniqueDeviceId;
         }
     } else {
-        LOGD(
-            AT_DOMAIN, AT_TAG, "FindDeviceInfo failed, nodeId(%{public}s)",
+        ACCESSTOKEN_LOG_DEBUG(
+            LABEL, "FindDeviceInfo failed, nodeId(%{public}s)",
             ConstantCommon::EncryptDevId(nodeId).c_str());
         auto list = DeviceInfoRepository::GetInstance().ListDeviceInfo();
         auto iter = list.begin();
         for (; iter != list.end(); iter++) {
             DeviceInfo info = (*iter);
-            LOGD(AT_DOMAIN, AT_TAG,
-                ">>> DeviceInfoRepository device name: %{public}s", info.deviceName.c_str());
-            LOGD(AT_DOMAIN, AT_TAG,
-                ">>> DeviceInfoRepository device type: %{public}s", info.deviceType.c_str());
-            LOGD(AT_DOMAIN, AT_TAG,
+            ACCESSTOKEN_LOG_DEBUG(
+                LABEL, ">>> DeviceInfoRepository device name: %{public}s", info.deviceName.c_str());
+            ACCESSTOKEN_LOG_DEBUG(
+                LABEL, ">>> DeviceInfoRepository device type: %{public}s", info.deviceType.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL,
                 ">>> DeviceInfoRepository device network id: %{public}s",
                 ConstantCommon::EncryptDevId(info.deviceId.networkId).c_str());
         }
@@ -156,7 +157,7 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
 bool DeviceInfoManager::IsDeviceUniversallyUniqueId(const std::string &nodeId) const
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "IsDeviceUniversallyUniqueId: nodeId is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "IsDeviceUniversallyUniqueId: nodeId is invalid");
         return false;
     }
     DeviceInfo deviceInfo;

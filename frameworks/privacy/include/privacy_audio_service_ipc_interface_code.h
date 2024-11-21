@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,23 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#ifndef PRIVACY_AUDIO_SERVICE_IPC_INTERFACE_CODE_H
+#define PRIVACY_AUDIO_SERVICE_IPC_INTERFACE_CODE_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
-
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
+enum PrivacyAudioPolicyInterfaceCode {
+#ifdef FEATURE_DTMF_TONE
+    SET_MICROPHONE_MUTE_PERSISTENT = 120,
+    GET_MICROPHONE_MUTE_PERSISTENT = 121,
+#else
+    SET_MICROPHONE_MUTE_PERSISTENT = 118,
+    GET_MICROPHONE_MUTE_PERSISTENT = 119,
+#endif
+};
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS
+
+#endif // PRIVACY_AUDIO_SERVICE_IPC_INTERFACE_CODE_H

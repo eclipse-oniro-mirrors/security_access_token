@@ -52,7 +52,7 @@ public:
     virtual void OnUpdate(int32_t version) = 0;
 
 private:
-    inline static constexpr const char* PRAGMA_VERSION_COMMAND = "PRAGMA user_version";
+    inline static const std::string PRAGMA_VERSION_COMMAND = "PRAGMA user_version";
     static const int32_t GENERAL_ERROR = -1;
 
     const std::string dbName_;
