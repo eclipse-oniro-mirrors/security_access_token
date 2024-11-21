@@ -255,26 +255,21 @@ void SoftBusManager::Initialize()
     std::function<void()> runner = [this]() {
         std::string name = "SoftBusMagInit";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
-        auto sleepTime = std::chrono::milliseconds(1000);
-        while (1) {
-            std::unique_lock<std::mutex> lock(mutex_);
-            
-            int ret = DeviceInit();
-            if (ret != ERR_OK) {
-                std::this_thread::sleep_for(sleepTime);
-                continue;
-            }
-
-            ret = ServiceSocketInit();
-            if (ret != ERR_OK) {
-                std::this_thread::sleep_for(sleepTime);
-                continue;
-            }
-
-            isSoftBusServiceBindSuccess_ = true;
-            this->FulfillLocalDeviceInfo();
+        std::unique_lock<std::mutex> lock(mutex_);
+        
+        int ret = DeviceInit();
+        if (ret != ERR_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize thread started");
             return;
         }
+
+        ret = ServiceSocketInit();
+        if (ret != ERR_OK) {
+            return;
+        }
+
+        isSoftBusServiceBindSuccess_ = true;
+        this->FulfillLocalDeviceInfo();
     };
 
     std::thread initThread(runner);

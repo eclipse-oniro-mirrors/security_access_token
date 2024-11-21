@@ -23,6 +23,7 @@
 #include "device_info.h"
 #include "remote_command_manager.h"
 #include "soft_bus_manager.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace Security {
@@ -62,6 +63,7 @@ void TokenSyncManagerService::OnStart()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
         return;
     }
+    (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
     ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, TokenSyncManagerService start successfully!");
 }
 
@@ -70,6 +72,13 @@ void TokenSyncManagerService::OnStop()
     ACCESSTOKEN_LOG_INFO(LABEL, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
     SoftBusManager::GetInstance().Destroy();
+}
+
+void TokenSyncManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    if (systemAbilityId == DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID) {
+        SoftBusManager::GetInstance().Initialize();
+    }
 }
 
 #ifdef EVENTHANDLER_ENABLE
@@ -187,7 +196,6 @@ bool TokenSyncManagerService::Initialize()
 
     recvHandler_ = std::make_shared<AccessEventHandler>(recvRunner_);
 #endif
-    SoftBusManager::GetInstance().Initialize();
     return true;
 }
 } // namespace AccessToken

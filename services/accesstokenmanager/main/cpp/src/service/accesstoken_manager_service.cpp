@@ -99,6 +99,9 @@ void AccessTokenManagerService::OnStart()
     }
     AccessTokenServiceParamSet();
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
+#ifdef TOKEN_SYNC_ENABLE
+    (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+#endif
     ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, AccessTokenManagerService start successfully!");
 }
 
@@ -106,6 +109,15 @@ void AccessTokenManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Stop service.");
     state_ = ServiceRunningState::STATE_NOT_START;
+}
+
+void AccessTokenManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+#ifdef TOKEN_SYNC_ENABLE
+    if (systemAbilityId == DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID) {
+        AccessTokenInfoManager::GetInstance().InitDmCallback();
+    }
+#endif
 }
 
 void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
