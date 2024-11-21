@@ -83,6 +83,7 @@ public:
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
+    void InitDmCallback(void);
     int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSync& hapSync);
