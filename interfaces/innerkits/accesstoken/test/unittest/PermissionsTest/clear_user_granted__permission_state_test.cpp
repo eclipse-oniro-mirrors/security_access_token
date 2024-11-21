@@ -58,7 +58,8 @@ void ClearUserGrantedPermissionStateTest::SetUpTestCase()
                                             g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, TestCommon::GetTestPolicyParams());
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms,
+                                                              TestCommon::GetTestPolicyParams());
     SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
