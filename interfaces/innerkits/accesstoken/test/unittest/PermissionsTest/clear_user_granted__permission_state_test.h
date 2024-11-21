@@ -35,7 +35,6 @@ public:
     static unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
 
     uint64_t selfTokenId_;
-
 };
 } // namespace AccessToken
 } // namespace Security
