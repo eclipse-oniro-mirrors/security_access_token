@@ -65,7 +65,8 @@ void RevokePermissionTest::SetUpTestCase()
                                             g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, TestCommon::GetTestPolicyParams());
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
+                                                              TestCommon::GetTestPolicyParams());
     SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
