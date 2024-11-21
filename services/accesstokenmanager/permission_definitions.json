@@ -4029,6 +4029,26 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_UDMF_APP_SHARE_OPTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
