@@ -29,15 +29,19 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const char* ACCESSTOKEN_PACKAGE_NAME = "ohos.security.distributed_access_token";
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusDeviceConnectionListener"};
 }
+
+const std::string ACCESSTOKEN_PACKAGE_NAME = "ohos.security.distributed_access_token";
+
 SoftBusDeviceConnectionListener::SoftBusDeviceConnectionListener()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "SoftBusDeviceConnectionListener()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SoftBusDeviceConnectionListener()");
 }
 SoftBusDeviceConnectionListener::~SoftBusDeviceConnectionListener()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "~SoftBusDeviceConnectionListener()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "~SoftBusDeviceConnectionListener()");
 }
 
 void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::DmDeviceInfo &info)
@@ -46,7 +50,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
 
-    LOGI(AT_DOMAIN, AT_TAG,
+    ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
         ConstantCommon::EncryptDevId(networkId).c_str(),
         ConstantCommon::EncryptDevId(uuid).c_str(),
@@ -57,7 +61,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::
             networkId, uuid, udid, info.deviceName, std::to_string(info.deviceTypeId));
         RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
     } else {
-        LOGE(AT_DOMAIN, AT_TAG, "Uuid or udid is empty, online failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid or udid is empty, online failed.");
     }
     // no need to load local permissions by now.
 }
@@ -66,12 +70,12 @@ void SoftBusDeviceConnectionListener::UnloadTokensyncService()
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Get samgr failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get samgr failed.");
         return ;
     }
     int32_t ret = samgr->UnloadSystemAbility(TOKEN_SYNC_MANAGER_SERVICE_ID);
     if (ret != ERR_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Remove system ability failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remove system ability failed.");
     }
 }
 
@@ -81,11 +85,11 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware:
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
     if ((uuid == "") || (udid == "")) {
-        LOGE(AT_DOMAIN, AT_TAG, "Uuid or udid is empty, offline failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid or udid is empty, offline failed.");
         return;
     }
 
-    LOGI(AT_DOMAIN, AT_TAG, "NetworkId: %{public}s,  uuid: %{public}s, udid: %{public}s.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s,  uuid: %{public}s, udid: %{public}s.",
         ConstantCommon::EncryptDevId(networkId).c_str(),
         ConstantCommon::EncryptDevId(uuid).c_str(),
         ConstantCommon::EncryptDevId(udid).c_str());
@@ -101,12 +105,12 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware:
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().GetTrustedDeviceList(packageName,
         extra, deviceList);
     if (ret != Constant::SUCCESS) {
-        LOGE(AT_DOMAIN, AT_TAG, "GetTrustedDeviceList error, result: %{public}d", ret);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetTrustedDeviceList error, result: %{public}d", ret);
         return;
     }
 
     if (deviceList.empty()) {
-        LOGI(AT_DOMAIN, AT_TAG, "There is no remote decice online, exit tokensync process");
+        ACCESSTOKEN_LOG_INFO(LABEL, "There is no remote decice online, exit tokensync process");
 
         UnloadTokensyncService();
     }
@@ -115,13 +119,13 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware:
 void SoftBusDeviceConnectionListener::OnDeviceReady(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = std::string(info.networkId);
-    LOGI(AT_DOMAIN, AT_TAG, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 
 void SoftBusDeviceConnectionListener::OnDeviceChanged(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = std::string(info.networkId);
-    LOGI(AT_DOMAIN, AT_TAG, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 }  // namespace AccessToken
 }  // namespace Security

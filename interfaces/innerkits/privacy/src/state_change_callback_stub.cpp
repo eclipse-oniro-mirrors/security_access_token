@@ -23,13 +23,19 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "StateChangeCallbackStub"
+};
+}
+
 int32_t StateChangeCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    LOGD(PRI_DOMAIN, PRI_TAG, "Entry, code: 0x%{public}x", code);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IStateChangeCallback::GetDescriptor()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 

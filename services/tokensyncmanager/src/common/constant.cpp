@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,23 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+#include "constant.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
+static const std::string REPLACE_TARGET = "****";
 } // namespace
-
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
+const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
+const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS

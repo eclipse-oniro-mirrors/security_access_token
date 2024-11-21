@@ -28,16 +28,17 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RemoteCommandManager"};
 std::recursive_mutex g_instanceMutex;
 }
 RemoteCommandManager::RemoteCommandManager() : executors_(), mutex_()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "RemoteCommandManager()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "RemoteCommandManager()");
 }
 
 RemoteCommandManager::~RemoteCommandManager()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "~RemoteCommandManager()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "~RemoteCommandManager()");
 }
 
 RemoteCommandManager &RemoteCommandManager::GetInstance()
@@ -54,92 +55,89 @@ RemoteCommandManager &RemoteCommandManager::GetInstance()
 
 void RemoteCommandManager::Init()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "Init()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Init()");
 }
 
 int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command)
 {
     if (udid.empty() || command == nullptr) {
-        LOGW(AT_DOMAIN, AT_TAG, "Invalid udid, or null command");
+        ACCESSTOKEN_LOG_WARN(LABEL, "Invalid udid, or null command");
         return Constant::FAILURE;
     }
-    LOGI(AT_DOMAIN, AT_TAG, "Add uniqueId");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add uniqueId");
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Cannot get or create remote command executor");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get or create remote command executor");
         return Constant::FAILURE;
     }
 
     int result = executor->AddCommand(command);
-    LOGI(AT_DOMAIN, AT_TAG, "Add command result: %{public}d ", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add command result: %{public}d ", result);
     return result;
 }
 
 void RemoteCommandManager::RemoveCommand(const std::string &udid)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Remove command");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove command");
     executors_.erase(udid);
 }
 
 int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command)
 {
     if (udid.empty() || command == nullptr) {
-        LOGW(AT_DOMAIN, AT_TAG, "Invalid udid: %{public}s, or null command",
+        ACCESSTOKEN_LOG_WARN(LABEL, "Invalid udid: %{public}s, or null command",
             ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
     std::string uniqueId = command->remoteProtocol_.uniqueId;
-    LOGI(AT_DOMAIN, AT_TAG, "Start with udid: %{public}s , uniqueId: %{public}s ",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Start with udid: %{public}s , uniqueId: %{public}s ",
         ConstantCommon::EncryptDevId(udid).c_str(), ConstantCommon::EncryptDevId(uniqueId).c_str());
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Cannot get or create remote command executor");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get or create remote command executor");
         return Constant::FAILURE;
     }
 
     int result = executor->ProcessOneCommand(command);
-    LOGI(AT_DOMAIN, AT_TAG, "RemoteCommandExecutor processOneCommand result:%{public}d ", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor processOneCommand result:%{public}d ", result);
     return result;
 }
 
 int RemoteCommandManager::ProcessDeviceCommandImmediately(const std::string &udid)
 {
     if (udid.empty()) {
-        LOGW(AT_DOMAIN, AT_TAG,
-            "Invalid udid: %{public}s", ConstantCommon::EncryptDevId(udid).c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "Invalid udid: %{public}s", ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
-    LOGI(AT_DOMAIN, AT_TAG,
-        "Start with udid:%{public}s ", ConstantCommon::EncryptDevId(udid).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Start with udid:%{public}s ", ConstantCommon::EncryptDevId(udid).c_str());
 
     std::unique_lock<std::mutex> lock(mutex_);
     auto executorIt = executors_.find(udid);
     if (executorIt == executors_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG,
-            "No executor found, udid:%{public}s", ConstantCommon::EncryptDevId(udid).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No executor found, udid:%{public}s", ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
 
     auto executor = executorIt->second;
     if (executor == nullptr) {
-        LOGI(AT_DOMAIN, AT_TAG, "RemoteCommandExecutor is null for udid %{public}s ",
+        ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor is null for udid %{public}s ",
             ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
 
     int result = executor->ProcessBufferedCommands();
-    LOGI(AT_DOMAIN, AT_TAG, "ProcessBufferedCommands result: %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ProcessBufferedCommands result: %{public}d", result);
     return result;
 }
 
 int RemoteCommandManager::Loop()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Start");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Start");
     std::unique_lock<std::mutex> lock(mutex_);
     for (auto it = executors_.begin(); it != executors_.end(); it++) {
-        LOGI(AT_DOMAIN, AT_TAG, "Udid:%{public}s", ConstantCommon::EncryptDevId(it->first).c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Udid:%{public}s", ConstantCommon::EncryptDevId(it->first).c_str());
         (*it).second->ProcessBufferedCommandsWithThread();
     }
     return Constant::SUCCESS;
@@ -150,7 +148,7 @@ int RemoteCommandManager::Loop()
  */
 void RemoteCommandManager::Clear()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Remove all remote command executors.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove all remote command executors.");
 
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>> dummy;
     std::unique_lock<std::mutex> lock(mutex_);
@@ -164,24 +162,23 @@ void RemoteCommandManager::Clear()
 int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return Constant::FAILURE;
     }
-    LOGI(AT_DOMAIN, AT_TAG, "Operation start with nodeId:  %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Operation start with nodeId:  %{public}s",
         ConstantCommon::EncryptDevId(nodeId).c_str());
 
     auto executor = GetOrCreateRemoteCommandExecutor(nodeId);
     std::unique_lock<std::mutex> lock(mutex_);
     if (executor == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Cannot get or create remote command executor");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get or create remote command executor");
         return Constant::FAILURE;
     }
 
     if (executor->GetChannel() == nullptr) {
         auto channel = RemoteCommandExecutor::CreateChannel(nodeId);
         if (channel == nullptr) {
-            LOGE(AT_DOMAIN, AT_TAG, "Create channel failed.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Create channel failed.");
             return Constant::FAILURE;
         }
         executor->SetChannel(channel);
@@ -198,11 +195,10 @@ int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return Constant::FAILURE;
     }
-    LOGI(AT_DOMAIN, AT_TAG, "Operation start with nodeId:  %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Operation start with nodeId:  %{public}s",
         ConstantCommon::EncryptDevId(nodeId).c_str());
 
     auto channel = GetExecutorChannel(nodeId);
@@ -217,7 +213,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
     DeviceInfo devInfo;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(nodeId, DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        LOGI(AT_DOMAIN, AT_TAG, "Get remote networkId failed");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Get remote networkId failed");
         return Constant::FAILURE;
     }
     std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
@@ -229,19 +225,19 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return Constant::FAILURE;
     }
     handler->ProxyPostTask(delayed, "HandleDeviceOffline");
 #endif
 
-    LOGI(AT_DOMAIN, AT_TAG, "Complete");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Complete");
     return Constant::SUCCESS;
 }
 
 std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCommandExecutor(const std::string &nodeId)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "Begin, nodeId %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Begin, nodeId %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
 
     std::unique_lock<std::mutex> lock(mutex_);
     auto executorIter = executors_.find(nodeId);
@@ -251,8 +247,7 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
 
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
     executors_.insert(std::pair<std::string, std::shared_ptr<RemoteCommandExecutor>>(nodeId, executor));
-    LOGD(AT_DOMAIN, AT_TAG,
-        "Executor added, nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Executor added, nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
     return executor;
 }
 
@@ -261,24 +256,23 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
  */
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {
-    LOGD(AT_DOMAIN, AT_TAG,
-        "Convert udid start, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Convert udid start, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
     if (!DataValidator::IsDeviceIdValid(udid)) {
-        LOGW(AT_DOMAIN, AT_TAG,
-            "Converted udid is invalid, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+        ACCESSTOKEN_LOG_WARN(
+            LABEL, "Converted udid is invalid, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return nullptr;
     }
 
     std::unique_lock<std::mutex> lock(mutex_);
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>>::iterator iter = executors_.find(udid);
     if (iter == executors_.end()) {
-        LOGI(AT_DOMAIN, AT_TAG, "Executor not found");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Executor not found");
         return nullptr;
     }
     std::shared_ptr<RemoteCommandExecutor> executor = iter->second;
     if (executor == nullptr) {
-        LOGI(AT_DOMAIN, AT_TAG, "Executor is null");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Executor is null");
         return nullptr;
     }
     return executor->GetChannel();

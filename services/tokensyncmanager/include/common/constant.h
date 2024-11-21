@@ -67,12 +67,12 @@ public:
     /**
      * Command result string, indicates success.
      */
-    inline static constexpr const char* COMMAND_RESULT_SUCCESS = "success";
+    static const std::string COMMAND_RESULT_SUCCESS;
 
     /**
      * Command result string, indicates failed.
      */
-    inline static constexpr const char* COMMAND_RESULT_FAILED = "execute command failed";
+    static const std::string COMMAND_RESULT_FAILED;
     const static int32_t DELAY_SYNC_TOKEN_MS = 3000;
 };
 } // namespace AccessToken

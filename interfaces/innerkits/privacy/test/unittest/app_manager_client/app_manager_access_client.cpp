@@ -23,6 +23,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
+};
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -51,7 +54,7 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->GetForegroundApplications(list);
@@ -61,19 +64,19 @@ void AppManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
         return;
     }
     auto appManagerSa = sam->GetSystemAbility(APP_MGR_SERVICE_ID);
     if (appManagerSa == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbility %{public}d is null",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
             APP_MGR_SERVICE_ID);
         return;
     }
 
     proxy_ = new AppManagerAccessProxy(appManagerSa);
     if (proxy_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

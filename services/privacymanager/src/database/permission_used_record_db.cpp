@@ -26,6 +26,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordDb"
+};
 constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
@@ -54,14 +57,14 @@ PermissionUsedRecordDb::~PermissionUsedRecordDb()
 
 void PermissionUsedRecordDb::OnCreate()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     CreatePermissionRecordTable();
     CreatePermissionUsedTypeTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     if (version == DataBaseVersion::VERISION_1) {
         InsertLockScreenStatusColumn();
         InsertPermissionUsedTypeColumn();
@@ -122,7 +125,7 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     if (prepareSql.empty()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
 
@@ -136,17 +139,17 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
         }
         int32_t ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed, errorMsg: %{public}s", SpitError().c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, errorMsg: %{public}s", SpitError().c_str());
             isAddSuccessfully = false;
         }
         statement.Reset();
     }
     if (!isAddSuccessfully) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "Commit transaction.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Commit transaction.");
     CommitTransaction();
     return SUCCESS;
 }
@@ -157,7 +160,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     if (prepareSql.empty()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
 
@@ -178,7 +181,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
     std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(tokenId, type, opCodeList, andColumns,
         databaseQueryCount);
     if (prepareSql.empty()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
 
@@ -255,7 +258,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
     if (prepareSql.empty()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
 
@@ -271,7 +274,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
 
     int32_t ret = statement.Step();
     if (ret != Statement::State::DONE) {
-        LOGE(PRI_DOMAIN, PRI_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "Update table Type %{public}u failed, errCode is %{public}d, errMsg is %{public}s.", type, ret,
             SpitError().c_str());
         return FAILURE;
@@ -288,7 +291,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
     if (prepareSql.empty()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid.", type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid.", type);
         return FAILURE;
     }
 
@@ -570,7 +573,7 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" +
         std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     int32_t checkResult = ExecuteSql(checkSql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -581,7 +584,7 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         .append(" integer default ")
         .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
     int32_t insertResult = ExecuteSql(sql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d", insertResult);
     return insertResult;
 }
 
@@ -595,7 +598,7 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
         PrivacyFiledConst::FIELD_USED_TYPE + "=" +
         std::to_string(PermissionUsedType::NORMAL_TYPE);
     int32_t checkResult = ExecuteSql(checkSql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -606,7 +609,7 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
         .append(" integer default ")
         .append(std::to_string(PermissionUsedType::NORMAL_TYPE));
     int32_t insertResult = ExecuteSql(sql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d", insertResult);
     return insertResult;
 }
 
@@ -661,7 +664,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
 
     int32_t createNewRes = ExecuteSql(createNewSql); // 1、create new table with new primary key
     if (createNewRes != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
             createNewRes, SpitError().c_str());
         return FAILURE;
     }
@@ -669,7 +672,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     std::string copyDataSql = "insert into " + newTableName + " select * from " + tableName;
     int32_t copyDataRes = ExecuteSql(copyDataSql); // 2、copy data from old table to new table
     if (copyDataRes != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Copy data from old table failed, err is %{public}d, errMsg is %{public}s.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Copy data from old table failed, errCode is %{public}d, errMsg is %{public}s.",
             copyDataRes, SpitError().c_str());
         RollbackTransaction();
         return FAILURE;
@@ -678,7 +681,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     std::string dropOldSql = "drop table " + tableName;
     int32_t dropOldRes = ExecuteSql(dropOldSql); // 3、drop old table
     if (dropOldRes != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Drop old table failed, errCode is %{public}d, errMsg is %{public}s.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Drop old table failed, errCode is %{public}d, errMsg is %{public}s.",
             dropOldRes, SpitError().c_str());
         RollbackTransaction();
         return FAILURE;
@@ -687,7 +690,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     std::string renameSql = "alter table " + newTableName + " rename to " + tableName;
     int32_t renameRes = ExecuteSql(renameSql); // 4、rename new table to old
     if (renameRes != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Rename table failed, errCode is %{public}d, errMsg is %{public}s.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rename table failed, errCode is %{public}d, errMsg is %{public}s.",
             renameRes, SpitError().c_str());
         RollbackTransaction();
         return FAILURE;

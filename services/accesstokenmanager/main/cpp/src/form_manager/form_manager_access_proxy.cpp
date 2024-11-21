@@ -20,6 +20,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "FormManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
 }
 
@@ -30,26 +31,26 @@ int32_t FormManagerAccessProxy::RegisterAddObserver(
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        LOGE(AT_DOMAIN, AT_TAG, "WriteInterfaceToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
         return ERROR;
     }
     if (!data.WriteString(bundleName)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Write bundleName failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write bundleName failed.");
         return ERROR;
     }
     if (!data.WriteRemoteObject(callerToken)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Write callerToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Remote service is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_REGISTER_ADD_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
-        LOGE(AT_DOMAIN, AT_TAG, "RegisterAddObserver failed, error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterAddObserver failed, error: %{public}d", error);
         return ERROR;
     }
     return reply.ReadInt32();
@@ -62,26 +63,26 @@ int32_t FormManagerAccessProxy::RegisterRemoveObserver(
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        LOGE(AT_DOMAIN, AT_TAG, "WriteInterfaceToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
         return ERROR;
     }
     if (!data.WriteString(bundleName)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Write bundleName failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write bundleName failed.");
         return ERROR;
     }
     if (!data.WriteRemoteObject(callerToken)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Write callerToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Remote service is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_REGISTER_REMOVE_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
-        LOGE(AT_DOMAIN, AT_TAG, "UnregisterAddObserver failed, error: %d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterAddObserver failed, error: %d", error);
         return error;
     }
     return reply.ReadInt32();
@@ -93,23 +94,23 @@ bool FormManagerAccessProxy::HasFormVisible(const uint32_t tokenId)
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        LOGE(AT_DOMAIN, AT_TAG, "WriteInterfaceToken failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
         return false;
     }
     if (!data.WriteUint32(tokenId)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to write tokenId.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenId.");
         return false;
     }
 
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Remote service is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
         return false;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_HAS_FORM_VISIBLE_WITH_TOKENID), data, reply, option);
     if (error != ERR_NONE) {
-        LOGE(AT_DOMAIN, AT_TAG, "Get form visibility failed, error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get form visibility failed, error: %{public}d", error);
         return false;
     }
     return reply.ReadBool();

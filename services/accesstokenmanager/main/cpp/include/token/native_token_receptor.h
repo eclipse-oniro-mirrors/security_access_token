@@ -30,6 +30,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const std::string NATIVE_TOKEN_CONFIG_FILE = "/data/service/el0/access_token/nativetoken.json";
+constexpr int MAX_NATIVE_CONFIG_FILE_SIZE = 5 * 1024 * 1024; // 5M
+constexpr size_t BUFFER_SIZE = 1024;
 class NativeTokenReceptor final {
 public:
     static NativeTokenReceptor& GetInstance();

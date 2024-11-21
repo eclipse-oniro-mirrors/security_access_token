@@ -24,16 +24,19 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "OnPermissionUsedRecordCallbackStub"
+};
 static constexpr int32_t RET_NOK = -1;
 }
 
 int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "Entry, code: 0x%{public}x", code);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != OnPermissionUsedRecordCallback::GetDescriptor()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -47,10 +50,10 @@ int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
         }
         sptr<PermissionUsedResultParcel> resultSptr = data.ReadParcelable<PermissionUsedResultParcel>();
         if (resultSptr == nullptr) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
             return RET_NOK;
         }
-        LOGI(AT_DOMAIN, AT_TAG, "ErrCode: %{public}d", errCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "ErrCode: %{public}d", errCode);
         OnQueried(errCode, resultSptr->result);
     } else {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
