@@ -34,7 +34,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         int32_t result = AccessTokenKit::SetPermissionRequestToggleStatus(
-            fuzzData.GenerateRandomString(), fuzzData.GetData<uint32_t>(), fuzzData.GetData<int32_t>());
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<uint32_t>(), fuzzData.GetData<int32_t>());
 
         return result == RET_SUCCESS;
     }

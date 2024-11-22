@@ -40,7 +40,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
         AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         int userID = fuzzData.GetData<int>();
-        std::string bundleName(fuzzData.GenerateRandomString());
+        std::string bundleName(fuzzData.GenerateStochasticString());
         int instIndex = static_cast<int>(size);
 
         MessageParcel sendData;

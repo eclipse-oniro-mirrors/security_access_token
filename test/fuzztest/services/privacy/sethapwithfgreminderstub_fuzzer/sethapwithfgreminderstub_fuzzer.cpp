@@ -69,7 +69,7 @@ size_t g_baseFuzzPos = 0;
 
         if (size > sizeof(uint32_t) + sizeof(bool)) {
             uint32_t tokenId = fuzzData.GetData<uint32_t>();
-            bool isAllowed = fuzzData.GenerateRandomBool();
+            bool isAllowed = fuzzData.GenerateStochasticBool();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());

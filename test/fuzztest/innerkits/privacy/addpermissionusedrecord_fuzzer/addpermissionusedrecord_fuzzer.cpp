@@ -38,10 +38,10 @@ namespace OHOS {
 
         AddPermParamInfo info;
         info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
-        info.permissionName = fuzzData.GenerateRandomString();
+        info.permissionName = fuzzData.GenerateStochasticString();
         info.successCount = fuzzData.GetData<int32_t>();
         info.failCount = fuzzData.GetData<int32_t>();
-        info.type = fuzzData.GenerateRandomEnmu<PermissionUsedType>(PERM_USED_TYPE_BUTT);
+        info.type = fuzzData.GenerateStochasticEnmu<PermissionUsedType>(PERM_USED_TYPE_BUTT);
 
         return PrivacyKit::AddPermissionUsedRecord(info) == 0;
     }

@@ -34,7 +34,7 @@ bool GetPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
     }
     AccessTokenFuzzData fuzzData(data, size);
     PermUsedTypeEnum type = AccessTokenKit::GetPermissionUsedType(
-        fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateRandomString());
+        fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateStochasticString());
 
     return type != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
 }

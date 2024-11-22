@@ -51,7 +51,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         PermStateChangeScope scopeInfo;
-        scopeInfo.permList = { fuzzData.GenerateRandomString() };
+        scopeInfo.permList = { fuzzData.GenerateStochasticString() };
         scopeInfo.tokenIDs = { fuzzData.GetData<AccessTokenID>() };
         auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
         int32_t result = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);

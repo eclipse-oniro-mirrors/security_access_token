@@ -35,7 +35,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
         uint32_t flag;
         int32_t result = AccessTokenKit::GetPermissionFlag(
-            fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateRandomString(), flag);
+            fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateStochasticString(), flag);
 
         return result == RET_SUCCESS;
     }

@@ -34,7 +34,7 @@ namespace OHOS {
         }
 
         AccessTokenFuzzData fuzzData(data, size);
-        std::string permissionName(fuzzData.GenerateRandomString());
+        std::string permissionName(fuzzData.GenerateStochasticString());
         int32_t result = AccessTokenKit::GrantPermissionForSpecifiedTime(
             fuzzData.GetData<AccessTokenID>(), permissionName, fuzzData.GetData<uint32_t>());
         return result == RET_SUCCESS;

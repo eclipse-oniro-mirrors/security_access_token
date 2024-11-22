@@ -37,7 +37,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         tokenId = AccessTokenKit::GetRemoteNativeTokenID(
-            fuzzData.GenerateRandomString(), fuzzData.GetData<AccessTokenID>());
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<AccessTokenID>());
 #endif
         return tokenId != 0;
     }
