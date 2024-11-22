@@ -39,33 +39,33 @@ namespace OHOS {
         }
 
         AccessTokenFuzzData fuzzData(data, size);
-        std::string permissionName(fuzzData.GenerateRandomString());
-        std::string bundleName(fuzzData.GenerateRandomString());
+        std::string permissionName(fuzzData.GenerateStochasticString());
+        std::string bundleName(fuzzData.GenerateStochasticString());
         PermissionDef testPermDef;
         testPermDef.permissionName = permissionName;
         testPermDef.bundleName = bundleName;
         testPermDef.grantMode = 1;
         testPermDef.availableLevel = APL_NORMAL;
-        testPermDef.label = fuzzData.GenerateRandomString();
+        testPermDef.label = fuzzData.GenerateStochasticString();
         testPermDef.labelId = 1;
-        testPermDef.description = fuzzData.GenerateRandomString();
+        testPermDef.description = fuzzData.GenerateStochasticString();
         testPermDef.descriptionId = 1;
 
         PermissionStateFull testState;
         testState.permissionName = permissionName;
         testState.isGeneral = true;
-        testState.resDeviceID = {fuzzData.GenerateRandomString()};
+        testState.resDeviceID = {fuzzData.GenerateStochasticString()};
         testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
         testState.grantFlags = {1};
         HapInfoParams TestInfoParms = {
             .userID = 1,
             .bundleName = bundleName,
             .instIndex = 0,
-            .appIDDesc = fuzzData.GenerateRandomString()
+            .appIDDesc = fuzzData.GenerateStochasticString()
         };
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
-            .domain = fuzzData.GenerateRandomString(),
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}
         };

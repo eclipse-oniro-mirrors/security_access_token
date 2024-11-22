@@ -40,7 +40,7 @@ bool GetPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t size)
 
     AccessTokenFuzzData fuzzData(data, size);
     AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-    std::string permissionName(fuzzData.GenerateRandomString());
+    std::string permissionName(fuzzData.GenerateStochasticString());
 
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

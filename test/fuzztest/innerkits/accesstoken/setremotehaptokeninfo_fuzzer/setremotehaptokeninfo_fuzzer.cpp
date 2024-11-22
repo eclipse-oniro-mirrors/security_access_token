@@ -38,10 +38,10 @@ namespace OHOS {
             .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
-            .bundleName = fuzzData.GenerateRandomString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = fuzzData.GenerateRandomString(),
-            .deviceID = fuzzData.GenerateRandomString(),
+            .appID = fuzzData.GenerateStochasticString(),
+            .deviceID = fuzzData.GenerateStochasticString(),
             .tokenID = fuzzData.GetData<AccessTokenID>(),
             .tokenAttr = 0
         };
@@ -49,8 +49,8 @@ namespace OHOS {
             .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .isGeneral = true,
-            .permissionName = fuzzData.GenerateRandomString(),
-            .resDeviceID = {fuzzData.GenerateRandomString()}};
+            .permissionName = fuzzData.GenerateStochasticString(),
+            .resDeviceID = {fuzzData.GenerateStochasticString()}};
         std::vector<PermissionStateFull> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
@@ -58,7 +58,7 @@ namespace OHOS {
             .permStateList = permStateList
         };
 
-        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(fuzzData.GenerateRandomString(), remoteTokenInfo);
+        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(fuzzData.GenerateStochasticString(), remoteTokenInfo);
         return result == RET_SUCCESS;
 #else
         return true;

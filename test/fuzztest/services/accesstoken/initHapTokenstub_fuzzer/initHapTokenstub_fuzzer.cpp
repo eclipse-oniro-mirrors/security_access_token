@@ -34,21 +34,21 @@ static const int32_t ROOT_UID = 0;
 namespace OHOS {
     void ConstructorParam(AccessTokenFuzzData& fuzzData, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
     {
-        std::string permissionName = fuzzData.GenerateRandomString();
-        std::string bundleName = fuzzData.GenerateRandomString();
+        std::string permissionName = fuzzData.GenerateStochasticString();
+        std::string bundleName = fuzzData.GenerateStochasticString();
         PermissionDef testPermDef = {
             .permissionName = permissionName,
             .bundleName = bundleName,
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = fuzzData.GenerateRandomString(),
+            .label = fuzzData.GenerateStochasticString(),
             .labelId = 1,
-            .description = fuzzData.GenerateRandomString(),
+            .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
         PermissionStateFull TestState = {
             .permissionName = permissionName,
             .isGeneral = true,
-            .resDeviceID = {fuzzData.GenerateRandomString()},
+            .resDeviceID = {fuzzData.GenerateStochasticString()},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .grantFlags = {1},
         };
@@ -56,14 +56,14 @@ namespace OHOS {
             .userID = 1,
             .bundleName = bundleName,
             .instIndex = 0,
-            .appIDDesc = fuzzData.GenerateRandomString()};
+            .appIDDesc = fuzzData.GenerateStochasticString()};
         PreAuthorizationInfo info1 = {
             .permissionName = permissionName,
             .userCancelable = true
         };
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
-            .domain = fuzzData.GenerateRandomString(),
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {TestState},
             .aclRequestedList = {permissionName},

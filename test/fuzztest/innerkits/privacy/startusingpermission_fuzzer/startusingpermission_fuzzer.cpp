@@ -37,7 +37,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
 
         return PrivacyKit::StartUsingPermission(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateRandomString(), fuzzData.GetData<uint32_t>()) == 0;
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<uint32_t>()) == 0;
     }
 }
 

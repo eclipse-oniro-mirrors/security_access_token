@@ -34,7 +34,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
         HapBaseInfo baseInfo;
         baseInfo.userID = fuzzData.GetData<int32_t>();
-        baseInfo.bundleName = fuzzData.GenerateRandomString();
+        baseInfo.bundleName = fuzzData.GenerateStochasticString();
         baseInfo.instIndex = fuzzData.GetData<int32_t>();
 
         int32_t result = AccessTokenKit::SetPermDialogCap(baseInfo, false);

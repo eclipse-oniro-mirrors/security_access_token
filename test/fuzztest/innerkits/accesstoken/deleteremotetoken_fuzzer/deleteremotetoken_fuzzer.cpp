@@ -35,7 +35,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         int32_t result = AccessTokenKit::DeleteRemoteToken(
-            fuzzData.GenerateRandomString(), fuzzData.GetData<AccessTokenID>());
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<AccessTokenID>());
         return result == RET_SUCCESS;
 #else
         return true;

@@ -41,7 +41,7 @@ namespace OHOS {
 
         AddPermParamInfoParcel infoParcel;
         infoParcel.info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
-        infoParcel.info.permissionName = fuzzData.GenerateRandomString();
+        infoParcel.info.permissionName = fuzzData.GenerateStochasticString();
         infoParcel.info.successCount = fuzzData.GetData<int32_t>();
         infoParcel.info.failCount = fuzzData.GetData<int32_t>();
         if (!datas.WriteParcelable(&infoParcel)) {

@@ -39,15 +39,15 @@ namespace OHOS {
     void ConstructorParam(
         AccessTokenFuzzData& fuzzData, AccessTokenID tokenId, HapTokenInfoForSyncParcel& hapSyncParcel)
     {
-        std::string permissionName(fuzzData.GenerateRandomString());
+        std::string permissionName(fuzzData.GenerateStochasticString());
         HapTokenInfo baseInfo = {
             .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
-            .bundleName = fuzzData.GenerateRandomString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = fuzzData.GenerateRandomString(),
-            .deviceID = fuzzData.GenerateRandomString(),
+            .appID = fuzzData.GenerateStochasticString(),
+            .deviceID = fuzzData.GenerateStochasticString(),
             .tokenID = tokenId,
             .tokenAttr = 0
         };
@@ -56,13 +56,13 @@ namespace OHOS {
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .isGeneral = true,
             .permissionName = permissionName,
-            .resDeviceID = {fuzzData.GenerateRandomString()}};
+            .resDeviceID = {fuzzData.GenerateStochasticString()}};
         PermissionStateFull infoManagerTestState2 = {
             .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
             .grantStatus = {PermissionState::PERMISSION_DENIED},
             .isGeneral = true,
             .permissionName = permissionName,
-            .resDeviceID = {fuzzData.GenerateRandomString()}};
+            .resDeviceID = {fuzzData.GenerateStochasticString()}};
         std::vector<PermissionStateFull> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
@@ -87,7 +87,7 @@ namespace OHOS {
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
         if (!datas.WriteParcelable(&hapSyncParcel)) {

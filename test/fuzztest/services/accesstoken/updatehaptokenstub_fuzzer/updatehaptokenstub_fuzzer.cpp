@@ -34,22 +34,22 @@ static const int32_t ROOT_UID = 0;
 namespace OHOS {
     void ConstructorParam(AccessTokenFuzzData& fuzzData, HapPolicyParcel& hapPolicyParcel)
     {
-        std::string permissionName(fuzzData.GenerateRandomString());
+        std::string permissionName(fuzzData.GenerateStochasticString());
         PermissionDef testPermDef = {.permissionName = permissionName,
-            .bundleName = fuzzData.GenerateRandomString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = fuzzData.GenerateRandomString(),
+            .label = fuzzData.GenerateStochasticString(),
             .labelId = 1,
-            .description = fuzzData.GenerateRandomString(),
+            .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
         PermissionStateFull testState = {.permissionName = permissionName,
             .isGeneral = true,
-            .resDeviceID = {fuzzData.GenerateRandomString()},
+            .resDeviceID = {fuzzData.GenerateStochasticString()},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .grantFlags = {1}};
         HapPolicyParams policy = {.apl = APL_NORMAL,
-            .domain = fuzzData.GenerateRandomString(),
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}};
         hapPolicyParcel.hapPolicyParameter = policy;
@@ -73,7 +73,7 @@ namespace OHOS {
         if (!datas.WriteBool(false)) {
             return false;
         }
-        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
         if (!datas.WriteInt32(apiVersion)) {

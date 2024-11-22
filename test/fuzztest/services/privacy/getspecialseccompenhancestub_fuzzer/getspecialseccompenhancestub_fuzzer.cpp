@@ -42,7 +42,7 @@ namespace OHOS {
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
 

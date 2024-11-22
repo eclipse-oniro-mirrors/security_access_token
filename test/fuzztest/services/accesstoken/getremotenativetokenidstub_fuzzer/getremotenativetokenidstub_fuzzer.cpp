@@ -41,7 +41,7 @@ namespace OHOS {
         }
 
         AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(fuzzData.GenerateRandomString());
+        std::string testName(fuzzData.GenerateStochasticString());
         AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         
         MessageParcel datas;
