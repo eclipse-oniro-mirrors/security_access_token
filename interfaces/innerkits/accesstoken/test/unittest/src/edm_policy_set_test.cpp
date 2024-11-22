@@ -122,6 +122,8 @@ HapPolicyParams g_tddPolicyParams = {
     .domain = "test.domain2",
     .permStateList = {g_tddPermReq, g_tddPermGet, g_tddPermRevoke}
 };
+
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "EdmPolicySetTest"};
 }
 
 void EdmPolicySetTest::TearDownTestCase()
@@ -134,7 +136,7 @@ void EdmPolicySetTest::TearDownTestCase()
 
 void EdmPolicySetTest::SetUp()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "SetUp ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void EdmPolicySetTest::TearDown()
@@ -146,7 +148,7 @@ void EdmPolicySetTest::SetUpTestCase()
     g_selfShellTokenId = GetSelfTokenID();
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_tddHapInfoParams, g_tddPolicyParams);
     SetSelfTokenID(tokenIdEx.tokenIDEx);
-    LOGI(AT_DOMAIN, AT_TAG, "SetUpTestCase ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase ok.");
 }
 
 /**

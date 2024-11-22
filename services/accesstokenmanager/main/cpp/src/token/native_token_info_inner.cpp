@@ -25,6 +25,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenInfoInner"};
+}
+
 NativeTokenInfoInner::NativeTokenInfoInner()
 {
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
@@ -43,7 +47,7 @@ NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfoBase& native,
 
 NativeTokenInfoInner::~NativeTokenInfoInner()
 {
-    LOGD(AT_DOMAIN, AT_TAG, "TokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
 }
 
 std::string NativeTokenInfoInner::DcapToString(const std::vector<std::string>& dcap) const
@@ -76,7 +80,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     tokenInfoBasic_.tokenID = tokenId;
     tokenInfoBasic_.processName = inGenericValues.GetString(TokenFiledConst::FIELD_PROCESS_NAME);
     if (!DataValidator::IsProcessNameValid(tokenInfoBasic_.processName)) {
-        LOGE(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
@@ -85,7 +89,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     }
     int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
-        LOGE(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u apl is error, value %{public}d",
             tokenInfoBasic_.tokenID, aplNum);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -96,7 +100,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
-        LOGE(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",

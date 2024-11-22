@@ -21,6 +21,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermActiveStatusChangeCallbackProxy"
+};
+}
+
 PermActiveStatusChangeCallbackProxy::PermActiveStatusChangeCallbackProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<IPermActiveStatusCallback>(impl) {
 }
@@ -36,7 +42,7 @@ void PermActiveStatusChangeCallbackProxy::ActiveStatusChangeCallback(ActiveChang
     ActiveChangeResponseParcel resultParcel;
     resultParcel.changeResponse = result;
     if (!data.WriteParcelable(&resultParcel)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteParcelable");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable");
         return;
     }
 
@@ -44,13 +50,13 @@ void PermActiveStatusChangeCallbackProxy::ActiveStatusChangeCallback(ActiveChang
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE), data, reply, option);
     if (requestResult != NO_ERROR) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Send request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return;
     }
 }

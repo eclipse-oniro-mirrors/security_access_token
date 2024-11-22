@@ -23,35 +23,35 @@ namespace Security {
 namespace AccessToken {
 class TokenFiledConst {
 public:
-    inline static constexpr const char* FIELD_TOKEN_ID = "token_id";
-    inline static constexpr const char* FIELD_USER_ID = "user_id";
-    inline static constexpr const char* FIELD_BUNDLE_NAME = "bundle_name";
-    inline static constexpr const char* FIELD_INST_INDEX = "inst_index";
-    inline static constexpr const char* FIELD_DLP_TYPE = "dlp_type";
-    inline static constexpr const char* FIELD_APP_ID = "app_id";
-    inline static constexpr const char* FIELD_DEVICE_ID = "device_id";
-    inline static constexpr const char* FIELD_APL = "apl";
-    inline static constexpr const char* FIELD_TOKEN_VERSION = "token_version";
-    inline static constexpr const char* FIELD_TOKEN_ATTR = "token_attr";
-    inline static constexpr const char* FIELD_API_VERSION = "api_version";
-    inline static constexpr const char* FIELD_FORBID_PERM_DIALOG = "perm_dialog_cap_state";
-    inline static constexpr const char* FIELD_PROCESS_NAME = "process_name";
-    inline static constexpr const char* FIELD_DCAP = "dcap";
-    inline static constexpr const char* FIELD_NATIVE_ACLS = "native_acls";
-    inline static constexpr const char* FIELD_PERMISSION_NAME = "permission_name";
-    inline static constexpr const char* FIELD_GRANT_MODE = "grant_mode";
-    inline static constexpr const char* FIELD_AVAILABLE_LEVEL = "available_level";
-    inline static constexpr const char* FIELD_PROVISION_ENABLE = "provision_enable";
-    inline static constexpr const char* FIELD_DISTRIBUTED_SCENE_ENABLE = "distributed_scene_enable";
-    inline static constexpr const char* FIELD_LABEL = "label";
-    inline static constexpr const char* FIELD_LABEL_ID = "label_id";
-    inline static constexpr const char* FIELD_DESCRIPTION = "description";
-    inline static constexpr const char* FIELD_DESCRIPTION_ID = "description_id";
-    inline static constexpr const char* FIELD_AVAILABLE_TYPE = "available_type";
-    inline static constexpr const char* FIELD_GRANT_IS_GENERAL = "is_general";
-    inline static constexpr const char* FIELD_GRANT_STATE = "grant_state";
-    inline static constexpr const char* FIELD_GRANT_FLAG = "grant_flag";
-    inline static constexpr const char* FIELD_REQUEST_TOGGLE_STATUS = "status";
+    const static std::string FIELD_TOKEN_ID;
+    const static std::string FIELD_USER_ID;
+    const static std::string FIELD_BUNDLE_NAME;
+    const static std::string FIELD_INST_INDEX;
+    const static std::string FIELD_DLP_TYPE;
+    const static std::string FIELD_APP_ID;
+    const static std::string FIELD_DEVICE_ID;
+    const static std::string FIELD_APL;
+    const static std::string FIELD_TOKEN_VERSION;
+    const static std::string FIELD_TOKEN_ATTR;
+    const static std::string FIELD_API_VERSION;
+    const static std::string FIELD_FORBID_PERM_DIALOG;
+    const static std::string FIELD_PROCESS_NAME;
+    const static std::string FIELD_DCAP;
+    const static std::string FIELD_NATIVE_ACLS;
+    const static std::string FIELD_PERMISSION_NAME;
+    const static std::string FIELD_GRANT_MODE;
+    const static std::string FIELD_AVAILABLE_LEVEL;
+    const static std::string FIELD_PROVISION_ENABLE;
+    const static std::string FIELD_DISTRIBUTED_SCENE_ENABLE;
+    const static std::string FIELD_LABEL;
+    const static std::string FIELD_LABEL_ID;
+    const static std::string FIELD_DESCRIPTION;
+    const static std::string FIELD_DESCRIPTION_ID;
+    const static std::string FIELD_AVAILABLE_TYPE;
+    const static std::string FIELD_GRANT_IS_GENERAL;
+    const static std::string FIELD_GRANT_STATE;
+    const static std::string FIELD_GRANT_FLAG;
+    const static std::string FIELD_REQUEST_TOGGLE_STATUS;
 };
 } // namespace AccessToken
 } // namespace Security

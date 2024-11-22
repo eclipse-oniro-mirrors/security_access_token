@@ -29,6 +29,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDataBrief"};
 std::recursive_mutex g_briefInstanceMutex;
 
 PermissionDataBrief& PermissionDataBrief::GetInstance()
@@ -49,11 +50,11 @@ int32_t PermissionDataBrief::AddBriefPermDataByTokenId(
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter != requestedPermData_.end()) {
-        LOGI(AT_DOMAIN, AT_TAG, "TokenID %{public}d is cleared first.", tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID %{public}d is cleared first.", tokenID);
         requestedPermData_.erase(tokenID);
     }
     requestedPermData_[tokenID] = listInput;
-    LOGI(AT_DOMAIN, AT_TAG, "TokenID %{public}d is set.", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID %{public}d is set.", tokenID);
     return RET_SUCCESS;
 }
 
@@ -62,7 +63,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID %{public}d is not exist.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID %{public}d is not exist.", tokenID);
         return ERR_TOKEN_INVALID;
     }
     requestedPermData_.erase(tokenID);
@@ -74,7 +75,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
             secCompData = secCompList_.erase(secCompData);
         }
     }
-    LOGI(AT_DOMAIN, AT_TAG, "TokenID %{public}u is deleted.", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID %{public}u is deleted.", tokenID);
     return RET_SUCCESS;
 }
 
@@ -83,7 +84,7 @@ int32_t PermissionDataBrief::SetBriefPermData(AccessTokenID tokenID, int32_t opC
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID %{public}d is not exist.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID %{public}d is not exist.", tokenID);
         return ERR_TOKEN_INVALID;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](BriefPermData data) {
@@ -96,7 +97,7 @@ int32_t PermissionDataBrief::SetBriefPermData(AccessTokenID tokenID, int32_t opC
     }
 
     if (flag != PERMISSION_COMPONENT_SET) {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission is not requested.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission is not requested.");
         return ERR_PERMISSION_NOT_EXIST;
     }
     // Set secComp permission without existing in state list.
@@ -122,7 +123,7 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenId(AccessTokenID tokenID, st
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID %{public}d is not exist.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID %{public}d is not exist.", tokenID);
         return ERR_TOKEN_INVALID;
     }
     for (const auto& data : iter->second) {
@@ -137,7 +138,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID %{public}d is not exist.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID %{public}d is not exist.", tokenID);
         return;
     }
     for (const auto& data : iter->second) {
@@ -147,7 +148,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
             if (constrainedList.empty() ||
                 (std::find(constrainedList.begin(), constrainedList.end(), permission) == constrainedList.end())) {
                 permissionList.emplace_back(permission);
-                LOGD(AT_DOMAIN, AT_TAG, "Permission %{public}s is granted.", permission.c_str());
+                ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission %{public}s is granted.", permission.c_str());
             }
         }
     }
@@ -157,8 +158,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
             std::string permission;
             (void)TransferOpcodeToPermission(secCompData->permCode, permission);
             permissionList.emplace_back(permission);
-            LOGD(AT_DOMAIN, AT_TAG,
-                "Permission %{public}s is granted by secComp.", permission.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission %{public}s is granted by secComp.", permission.c_str());
         }
     }
     return;
@@ -170,7 +170,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID %{public}d is not exist.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID %{public}d is not exist.", tokenID);
         return;
     }
     for (const auto& data : iter->second) {
@@ -206,7 +206,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID is not exist %{public}d.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](BriefPermData data) {
@@ -217,7 +217,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
         if (it->status == 0) {
-            LOGE(AT_DOMAIN, AT_TAG, "Perm of %{public}d is requested, but not granted.", tokenID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Permission of %{public}d is requested, but not granted.", tokenID);
             return PermUsedTypeEnum::INVALID_USED_TYPE;
         }
         return PermUsedTypeEnum::NORMAL_TYPE;
@@ -233,17 +233,17 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
 
 int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission)
 {
-    LOGD(AT_DOMAIN, AT_TAG, "Id %{public}d, permission %{public}s.", tokenID, permission.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID %{public}d, permissionName %{public}s.", tokenID, permission.c_str());
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permission, opCode)) {
-        LOGE(AT_DOMAIN, AT_TAG, "PermissionName is invalid %{public}s.", permission.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid %{public}s.", permission.c_str());
         return PERMISSION_DENIED;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Id is not exist %{public}d.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
         return PERMISSION_DENIED;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](BriefPermData data) {
@@ -251,7 +251,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
     });
     if (it != iter->second.end()) {
         if (ConstantCommon::IsPermGrantedBySecComp(it->flag)) {
-            LOGD(AT_DOMAIN, AT_TAG, "Id: %{public}d, permission is granted by secComp", tokenID);
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, permission is granted by secComp", tokenID);
             return PERMISSION_GRANTED;
         }
         if (it->status) {
@@ -263,8 +263,8 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
     std::list<BriefSecCompData>::iterator secCompData;
     for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
         if ((secCompData->tokenId == tokenID) && (secCompData->permCode == opCode)) {
-            LOGD(AT_DOMAIN, AT_TAG,
-                "Id: %{public}d, permission is not requested. While it is granted by secComp", tokenID);
+            ACCESSTOKEN_LOG_DEBUG(LABEL,
+                "TokenID: %{public}d, permission is not requested. While it is granted by secComp", tokenID);
             return PERMISSION_GRANTED;
         }
     }
@@ -275,14 +275,14 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(AT_DOMAIN, AT_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return false;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Id is not exist %{public}d.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
         return false;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](BriefPermData data) {
@@ -290,7 +290,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
     });
     if (it != iter->second.end()) {
         if (ConstantCommon::IsPermGrantedBySecComp(it->flag)) {
-            LOGI(AT_DOMAIN, AT_TAG, "Id: %{public}d, permission is granted by secComp", tokenID);
+            ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission is granted by secComp", tokenID);
             return true;
         }
     }
@@ -308,14 +308,14 @@ int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const st
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(AT_DOMAIN, AT_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Id is invalid %{public}u.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid %{public}u.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](BriefPermData data) {
@@ -325,7 +325,7 @@ int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const st
         flag = it->flag;
         return RET_SUCCESS;
     }
-    LOGE(AT_DOMAIN, AT_TAG, "Permission(%{public}s) is not in requestList .", permissionName.c_str());
+    ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is not in requestedPerm list %{public}s.", permissionName.c_str());
     return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
 }
 
@@ -334,14 +334,14 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(AT_DOMAIN, AT_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "Id is invalid %{public}u.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid %{public}u.", tokenID);
         return;
     }
 
@@ -368,7 +368,7 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
         uint32_t newFlag =
             isAdded ? (oldFlag | PERMISSION_COMPONENT_SET) : (oldFlag & (~PERMISSION_COMPONENT_SET));
         it->flag = newFlag;
-        LOGI(AT_DOMAIN, AT_TAG, "Update newFlag %{public}u, oldFlag %{public}u .", newFlag, oldFlag);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Update flag newFlag %{public}u, oldFlag %{public}u .", newFlag, oldFlag);
     }
     return;
 }
@@ -388,7 +388,7 @@ void PermissionDataBrief::ClearAllSecCompGrantedPermById(AccessTokenID tokenID)
     std::list<BriefSecCompData>::iterator secCompData;
     for (secCompData = secCompList_.begin(); secCompData != secCompList_.end();) {
         if (secCompData->tokenId == tokenID) {
-            LOGI(AT_DOMAIN, AT_TAG, "Id is cleared %{public}u.", tokenID);
+            ACCESSTOKEN_LOG_INFO(LABEL, "TokenID is cleared %{public}u.", tokenID);
             secCompData = secCompList_.erase(secCompData);
         } else {
             secCompData++;
@@ -405,18 +405,18 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         if (TransferPermissionToOpcode(perm, code)) {
             constrainedCodeList.emplace_back(code);
         } else {
-            LOGW(AT_DOMAIN, AT_TAG, "Perm %{public}s is not exist.", perm.c_str());
+            ACCESSTOKEN_LOG_WARN(LABEL, "Perm %{public}s is not exist.", perm.c_str());
         }
     }
     if (constrainedCodeList.empty()) {
-        LOGD(AT_DOMAIN, AT_TAG, "constrainedCodeList is null.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "constrainedCodeList is null.");
         return RET_SUCCESS;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenId);
     if (iter == requestedPermData_.end()) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID is not exist in requestedPermData_ %{public}u.", tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist in requestedPermData_ %{public}u.", tokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -428,19 +428,19 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         bool isGrantedCurr;
         int32_t ret = GetPermissionFromKernel(tokenId, data.permCode, isGrantedCurr);
         if (ret != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "GetPermissionToKernel err=%{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetPermissionToKernel err=%{public}d", ret);
             continue;
         }
         bool isGrantedToBe = (data.status) && hapUserIsActive;
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Id=%{public}u, opCode=%{public}u, isGranted=%{public}d, hapUserIsActive=%{public}d",
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "id=%{public}u, opCode=%{public}u, isGranted=%{public}d, hapUserIsActive=%{public}d",
             tokenId, data.permCode, isGrantedToBe, hapUserIsActive);
         if (isGrantedCurr == isGrantedToBe) {
             continue;
         }
         ret = SetPermissionToKernel(tokenId, data.permCode, isGrantedToBe);
         if (ret != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "SetPermissionToKernel err=%{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "SetPermissionToKernel err=%{public}d", ret);
             continue;
         }
         std::string permission;

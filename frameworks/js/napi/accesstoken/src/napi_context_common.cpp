@@ -17,6 +17,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AtManagerAsyncWorkData"
+};
+}
+
 int32_t NapiContextCommon::GetJsErrorCode(int32_t errCode)
 {
     int32_t jsCode;
@@ -62,8 +68,7 @@ int32_t NapiContextCommon::GetJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_INNER;
             break;
     }
-    LOGD(AT_DOMAIN, AT_TAG,
-        "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
     return jsCode;
 }
 
@@ -75,7 +80,7 @@ AtManagerAsyncWorkData::AtManagerAsyncWorkData(napi_env envValue)
 AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
 {
     if (env == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Invalid env");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid env");
         return;
     }
     std::unique_ptr<uv_work_t> workPtr = std::make_unique<uv_work_t>();
@@ -83,7 +88,7 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
     uv_loop_s *loop = nullptr;
     napi_get_uv_event_loop(env, &loop);
     if ((loop == nullptr) || (workPtr == nullptr) || (workDataRel == nullptr)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Fail to init execution environment");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to init execution environment");
         return;
     }
     workDataRel->env = env;
@@ -93,12 +98,12 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
     NAPI_CALL_RETURN_VOID(env, uv_queue_work_with_qos(loop, workPtr.get(), [] (uv_work_t *work) {},
         [] (uv_work_t *work, int status) {
             if (work == nullptr) {
-                LOGE(AT_DOMAIN, AT_TAG, "Work is nullptr");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Work is nullptr");
                 return;
             }
             auto workDataRel = reinterpret_cast<AtManagerAsyncWorkDataRel *>(work->data);
             if (workDataRel == nullptr) {
-                LOGE(AT_DOMAIN, AT_TAG, "WorkDataRel is nullptr");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "WorkDataRel is nullptr");
                 delete work;
                 return;
             }

@@ -32,9 +32,13 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionPolicySet"};
+}
+
 PermissionPolicySet::~PermissionPolicySet()
 {
-    LOGD(AT_DOMAIN, AT_TAG,
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
         "%{public}s called, tokenID: 0x%{public}x destruction", __func__, tokenId_);
 }
 
@@ -74,7 +78,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPolicySetWithoutD
     PermissionValidator::FilterInvalidPermissionState(
         TOKEN_TYPE_BUTT, false, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
-    LOGI(AT_DOMAIN, AT_TAG, "TokenID: %{public}d, permStateList_ size: %{public}zu",
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permStateList_ size: %{public}zu",
         tokenId, policySet->permStateList_.size());
     std::vector<BriefPermData> list;
     GetPermissionBriefData(list, policySet->permStateList_);
@@ -95,7 +99,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
             if (ret == RET_SUCCESS) {
                 MergePermissionStateFull(policySet->permStateList_, state);
             } else {
-                LOGE(AT_DOMAIN, AT_TAG, "TokenId 0%{public}u permState is wrong.", tokenId);
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0%{public}u permState is wrong.", tokenId);
             }
         }
     }
@@ -130,7 +134,7 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
 {
     std::vector<PermissionStateFull> permStateFilterList;
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
-    LOGI(AT_DOMAIN, AT_TAG, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
 
     for (PermissionStateFull& permStateNew : permStateFilterList) {
@@ -166,7 +170,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
             if (ret == RET_SUCCESS) {
                 MergePermissionStateFull(policySet->permStateList_, state);
             } else {
-                LOGE(AT_DOMAIN, AT_TAG, "TokenId 0x%{public}x permState is wrong.", tokenId);
+                ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0x%{public}x permState is wrong.", tokenId);
             }
         }
     }
@@ -186,18 +190,18 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
             iter->grantStatus.emplace_back(state.grantStatus[0]);
             iter->grantFlags.emplace_back(state.grantFlags[0]);
-            LOGD(AT_DOMAIN, AT_TAG, "Update permission: %{public}s.", state.permissionName.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Update permission: %{public}s.", state.permissionName.c_str());
             return;
         }
     }
-    LOGD(AT_DOMAIN, AT_TAG, "Add permission: %{public}s.", state.permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Add permission: %{public}s.", state.permissionName.c_str());
     permStateList.emplace_back(state);
 }
 
 void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& valueList) const
 {
     for (const auto& permissionState : permStateList_) {
-        LOGD(AT_DOMAIN, AT_TAG, "PermissionName: %{public}s", permissionState.permissionName.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName: %{public}s", permissionState.permissionName.c_str());
         if (permissionState.isGeneral) {
             GenericValues genericValues;
             genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
@@ -236,12 +240,12 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
                 flag = perm.grantFlags[0];
                 return RET_SUCCESS;
             } else {
-                LOGE(AT_DOMAIN, AT_TAG, "Permission %{public}s is invalid", permissionName.c_str());
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission %{public}s is invalid", permissionName.c_str());
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
         }
     }
-    LOGE(AT_DOMAIN, AT_TAG, "Invalid params!");
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
     return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
 }
 
@@ -261,20 +265,20 @@ int32_t PermissionPolicySet::UpdatePermStateList(
         });
     if (iter != permStateList_.end()) {
         if ((static_cast<uint32_t>(iter->grantFlags[0]) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
-            LOGE(AT_DOMAIN, AT_TAG, "Permission fixed by system!");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Permission fixed by system!");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
         iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
         uint32_t opCode;
         if (!TransferPermissionToOpcode(permissionName, opCode)) {
-            LOGE(AT_DOMAIN, AT_TAG, "permissionName is invalid %{public}s.", permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid %{public}s.", permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         bool status = (iter->grantStatus[0] == PERMISSION_GRANTED) ? 1 : 0;
         return PermissionDataBrief::GetInstance().SetBriefPermData(tokenId_, opCode, status, iter->grantFlags[0]);
     } else {
-        LOGE(AT_DOMAIN, AT_TAG, "Permission not request!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return RET_SUCCESS;
@@ -286,10 +290,10 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(
     int32_t flag = 0;
     int32_t ret = QueryPermissionFlag(permissionName, flag);
 
-    LOGD(AT_DOMAIN, AT_TAG, "Ret is %{public}d. flag is %{public}d", ret, flag);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Ret is %{public}d. flag is %{public}d", ret, flag);
     // if the permission has been operated by user or the permission has been granted by system.
     if ((ConstantCommon::IsPermOperatedByUser(flag) || ConstantCommon::IsPermOperatedBySystem(flag))) {
-        LOGD(AT_DOMAIN, AT_TAG, "The permission has been operated.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission has been operated.");
         if (isToGrant) {
             // The data included in requested perm list.
             int32_t status = PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenId_, permissionName);
@@ -297,7 +301,7 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(
             if (status == PERMISSION_GRANTED) {
                 return RET_SUCCESS;
             } else {
-                LOGE(AT_DOMAIN, AT_TAG, "Permission has been revoked by user.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission has been revoked by user.");
                 return ERR_PERMISSION_DENIED;
             }
         } else {
@@ -320,7 +324,7 @@ int32_t PermissionPolicySet::UpdatePermissionStatus(
     if (!ConstantCommon::IsPermGrantedBySecComp(flag)) {
         ret = UpdatePermStateList(permissionName, isGranted, flag);
     } else {
-        LOGD(AT_DOMAIN, AT_TAG, "Permission is set by security component.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is set by security component.");
         ret = UpdateSecCompGrantedPermList(permissionName, isGranted);
     }
     int32_t newStatus = PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenId_, permissionName);

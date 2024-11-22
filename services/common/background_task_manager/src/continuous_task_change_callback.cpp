@@ -22,21 +22,27 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgroundTaskSubscriberStub"
+};
+}
+
 BackgroundTaskSubscriberStub::BackgroundTaskSubscriberStub()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "BackgroundTaskSubscriberStub Instance create.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub Instance create.");
 }
 
 BackgroundTaskSubscriberStub::~BackgroundTaskSubscriberStub()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "BackgroundTaskSubscriberStub Instance destroy.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub Instance destroy.");
 }
 
 int32_t BackgroundTaskSubscriberStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        LOGE(AT_DOMAIN, AT_TAG, "BackgroundTaskSubscriberStub: ReadInterfaceToken failed.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub: ReadInterfaceToken failed.");
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IBackgroundTaskSubscriber::Message>(code)) {
@@ -49,7 +55,7 @@ int32_t BackgroundTaskSubscriberStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            LOGD(AT_DOMAIN, AT_TAG, "Default case code: %{public}d.", code);
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case code: %{public}d.", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
@@ -61,7 +67,7 @@ void BackgroundTaskSubscriberStub::HandleOnContinuousTaskStart(MessageParcel &da
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo(
         data.ReadParcelable<ContinuousTaskCallbackInfo>());
     if (continuousTaskCallbackInfo == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
         return;
     }
     OnContinuousTaskStart(continuousTaskCallbackInfo);
@@ -72,7 +78,7 @@ void BackgroundTaskSubscriberStub::HandleOnContinuousTaskStop(MessageParcel &dat
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo(
         data.ReadParcelable<ContinuousTaskCallbackInfo>());
     if (continuousTaskCallbackInfo == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "ReadParcelable failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
         return;
     }
     OnContinuousTaskStop(continuousTaskCallbackInfo);

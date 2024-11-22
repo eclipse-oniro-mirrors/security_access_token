@@ -24,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenOpenCallback"};
 constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
 // back up name is xxx_slave fixed, can not be changed
@@ -194,35 +195,35 @@ int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(Native
 
 int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
 {
-    LOGI(AT_DOMAIN, AT_TAG, "DB OnCreate.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnCreate.");
 
     int32_t res = CreateHapTokenInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create table hap_token_info_table.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table hap_token_info_table.");
         return res;
     }
 
     res = CreateNativeTokenInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create table native_token_info_table.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table native_token_info_table.");
         return res;
     }
     
     res = CreatePermissionDefinitionTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create table permission_definition_table.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table permission_definition_table.");
         return res;
     }
     
     res = CreatePermissionStateTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create table permission_state_table.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table permission_state_table.");
         return res;
     }
     
     res = CreatePermissionRequestToggleStatusTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Failed to create table permission_request_toggle_status_table.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table permission_request_toggle_status_table.");
         return res;
     }
 
@@ -232,14 +233,14 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
     }
 
     // if OnCreate solution found back up db, restore from backup, may be origin db has lost
-    LOGW(AT_DOMAIN, AT_TAG, "Detech origin database disappear, restore from backup!");
+    ACCESSTOKEN_LOG_WARN(LABEL, "Detech origin database disappear, restore from backup!");
 
     res = rdbStore.Restore("");
     if (res != NativeRdb::E_OK) {
-        LOGE(AT_DOMAIN, AT_TAG, "Db restore failed, res is %{public}d.", res);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
     }
 
-    LOGW(AT_DOMAIN, AT_TAG, "Database restore from backup success!");
+    ACCESSTOKEN_LOG_WARN(LABEL, "Database restore from backup success!");
 
     return 0;
 }
@@ -254,7 +255,7 @@ int32_t AccessTokenOpenCallback::AddAvailableTypeColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_AVAILABLE_TYPE + "=" + std::to_string(ATokenAvailableTypeEnum::NORMAL);
 
     int32_t checkRes = rdbStore.ExecuteSql(checkSql);
-    LOGI(AT_DOMAIN, AT_TAG, "Check result is %{public}d.", checkRes);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result is %{public}d.", checkRes);
     if (checkRes == NativeRdb::E_OK) {
         // success means there exsit column available_type in table
         return NativeRdb::E_OK;
@@ -265,7 +266,7 @@ int32_t AccessTokenOpenCallback::AddAvailableTypeColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_AVAILABLE_TYPE + " integer default " + std::to_string(ATokenAvailableTypeEnum::NORMAL);
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(AT_DOMAIN, AT_TAG, "Insert column result is %{public}d.", res);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result is %{public}d.", res);
 
     return res;
 }
@@ -280,7 +281,7 @@ int32_t AccessTokenOpenCallback::AddRequestToggleStatusColumn(NativeRdb::RdbStor
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + "=" + std::to_string(0);
 
     int32_t checkRes = rdbStore.ExecuteSql(checkSql);
-    LOGI(AT_DOMAIN, AT_TAG, "Check result is %{public}d.", checkRes);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result is %{public}d.", checkRes);
     if (checkRes == NativeRdb::E_OK) {
         // success means there exsit column status in table
         return NativeRdb::E_OK;
@@ -291,7 +292,7 @@ int32_t AccessTokenOpenCallback::AddRequestToggleStatusColumn(NativeRdb::RdbStor
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + " integer default " + std::to_string(0); // 0: close
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(AT_DOMAIN, AT_TAG, "Insert column result is %{public}d.", res);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result is %{public}d.", res);
 
     return res;
 }
@@ -306,7 +307,7 @@ int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_FORBID_PERM_DIALOG + "=" + std::to_string(0);
 
     int32_t checkRes = rdbStore.ExecuteSql(checkSql);
-    LOGI(AT_DOMAIN, AT_TAG, "Check result is %{public}d.", checkRes);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result is %{public}d.", checkRes);
     if (checkRes == NativeRdb::E_OK) {
         // success means there exsit column perm_dialog_cap_state in table
         return NativeRdb::E_OK;
@@ -317,7 +318,7 @@ int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_FORBID_PERM_DIALOG + " integer default " + std::to_string(false);
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(AT_DOMAIN, AT_TAG, "Insert column result is %{public}d.", res);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result is %{public}d.", res);
 
     return res;
 }
@@ -329,13 +330,13 @@ int32_t AccessTokenOpenCallback::HandleUpdateWithFlag(NativeRdb::RdbStore& rdbSt
     if ((flag & FLAG_HANDLE_FROM_ONE_TO_TWO) == FLAG_HANDLE_FROM_ONE_TO_TWO) {
         res = AddAvailableTypeColumn(rdbStore);
         if (res != NativeRdb::E_OK) {
-            LOGE(AT_DOMAIN, AT_TAG, "Failed to add column available_type.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add column available_type.");
             return res;
         }
 
         res = AddPermDialogCapColumn(rdbStore);
         if (res != NativeRdb::E_OK) {
-            LOGE(AT_DOMAIN, AT_TAG, "Failed to add column perm_dialog_cap_state.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add column perm_dialog_cap_state.");
             return res;
         }
     }
@@ -343,7 +344,7 @@ int32_t AccessTokenOpenCallback::HandleUpdateWithFlag(NativeRdb::RdbStore& rdbSt
     if ((flag & FLAG_HANDLE_FROM_TWO_TO_THREE) == FLAG_HANDLE_FROM_TWO_TO_THREE) {
         res = CreatePermissionRequestToggleStatusTable(rdbStore);
         if (res != NativeRdb::E_OK) {
-            LOGE(AT_DOMAIN, AT_TAG, "Failed to create table permission_request_toggle_status_table.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create table permission_request_toggle_status_table.");
             return res;
         }
     }
@@ -351,7 +352,7 @@ int32_t AccessTokenOpenCallback::HandleUpdateWithFlag(NativeRdb::RdbStore& rdbSt
     if ((flag & FLAG_HANDLE_FROM_THREE_TO_FOUR) == FLAG_HANDLE_FROM_THREE_TO_FOUR) {
         res = AddRequestToggleStatusColumn(rdbStore);
         if (res != NativeRdb::E_OK) {
-            LOGE(AT_DOMAIN, AT_TAG, "Failed to add column status.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add column status.");
             return res;
         }
     }
@@ -448,8 +449,8 @@ int32_t AccessTokenOpenCallback::UpdateFromVersionThree(NativeRdb::RdbStore& rdb
 
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
-    LOGI(AT_DOMAIN, AT_TAG,
-        "DB OnUpgrade from currentVersion %{public}d to targetVersion %{public}d.", currentVersion, targetVersion);
+    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnUpgrade from currentVersion %{public}d to targetVersion %{public}d.",
+        currentVersion, targetVersion);
 
     int32_t res = 0;
 

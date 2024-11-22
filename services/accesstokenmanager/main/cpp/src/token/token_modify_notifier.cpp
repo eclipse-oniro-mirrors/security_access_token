@@ -30,6 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenModifyNotifier"};
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -52,7 +53,7 @@ TokenModifyNotifier::~TokenModifyNotifier()
 void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
 {
     if (AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID) != TOKEN_HAP) {
-        LOGI(AT_DOMAIN, AT_TAG, "Observation token is not hap token");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Observation token is not hap token");
         return;
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
@@ -65,7 +66,7 @@ void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     if (observationSet_.count(tokenID) <= 0) {
-        LOGD(AT_DOMAIN, AT_TAG, "Hap token is not observed");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Hap token is not observed");
         return;
     }
     observationSet_.erase(tokenID);
@@ -77,7 +78,7 @@ void TokenModifyNotifier::NotifyTokenModify(AccessTokenID tokenID)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     if (observationSet_.count(tokenID) <= 0) {
-        LOGD(AT_DOMAIN, AT_TAG, "Hap token is not observed");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Hap token is not observed");
         return;
     }
     modifiedTokenList_.emplace_back(tokenID);
@@ -109,13 +110,13 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
 
 void TokenModifyNotifier::NotifyTokenSyncTask()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Called!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called!");
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Dlopen libtokensync_sdk failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
         return;
     }
     for (AccessTokenID deleteToken : deleteTokenList_) {
@@ -125,7 +126,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         }
         ret = tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
         if (ret != TOKEN_SYNC_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "Fail to delete remote haptoken info, ret is %{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to delete remote haptoken info, ret is %{public}d", ret);
         }
     }
 
@@ -133,7 +134,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         HapTokenInfoForSync hapSync;
         int ret = AccessTokenInfoManager::GetInstance().GetHapTokenSync(modifyToken, hapSync);
         if (ret != RET_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "hap 0x%{public}x need to sync is not found!", modifyToken);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "The hap token 0x%{public}x need to sync is not found!", modifyToken);
             continue;
         }
         if (tokenSyncCallbackObject_ != nullptr) {
@@ -141,13 +142,13 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         }
         ret = tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
         if (ret != TOKEN_SYNC_SUCCESS) {
-            LOGE(AT_DOMAIN, AT_TAG, "Fail to update remote haptoken info, ret is %{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to update remote haptoken info, ret is %{public}d", ret);
         }
     }
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
 
-    LOGI(AT_DOMAIN, AT_TAG, "Over!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Over!");
 }
 
 int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
@@ -163,7 +164,7 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
-        LOGE(AT_DOMAIN, AT_TAG, "Dlopen libtokensync_sdk failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
         return ERR_LOAD_SO_FAILED;
     }
     return tokenSyncKit->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -175,7 +176,7 @@ int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>
     tokenSyncCallbackObject_ = new TokenSyncCallbackProxy(callback);
     tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
-    LOGI(AT_DOMAIN, AT_TAG, "Register token sync callback successful.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Register token sync callback successful.");
     return ERR_OK;
 }
 
@@ -187,7 +188,7 @@ int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
     }
     tokenSyncCallbackObject_ = nullptr;
     tokenSyncCallbackDeathRecipient_ = nullptr;
-    LOGI(AT_DOMAIN, AT_TAG, "Unregister token sync callback successful.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Unregister token sync callback successful.");
     return ERR_OK;
 }
 
@@ -199,13 +200,13 @@ int32_t TokenModifyNotifier::GetCurTaskNum()
 
 void TokenModifyNotifier::AddCurTaskNum()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Add task!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add task!");
     curTaskNum_++;
 }
 
 void TokenModifyNotifier::ReduceCurTaskNum()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "Reduce task!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Reduce task!");
     curTaskNum_--;
 }
 #endif
@@ -214,7 +215,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     if (GetCurTaskNum() > 1) {
-        LOGI(AT_DOMAIN, AT_TAG, "Has notify task! taskNum is %{public}d.", GetCurTaskNum());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Has notify task! taskNum is %{public}d.", GetCurTaskNum());
         return;
     }
 
@@ -227,8 +228,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
     AddCurTaskNum();
 #else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
+        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
         return;
     }
 

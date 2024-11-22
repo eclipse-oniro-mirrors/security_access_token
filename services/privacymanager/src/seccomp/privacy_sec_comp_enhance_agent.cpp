@@ -26,17 +26,20 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySecCompEnhanceAgent"
+};
 std::recursive_mutex g_instanceMutex;
 }
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OnProcessDied pid %{public}d", processData.pid);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnProcessDied pid %{public}d", processData.pid);
     PrivacySecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
 }
 
 void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "AppManagerDeath called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AppManagerDeath called");
 
     PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
 }
@@ -60,11 +63,11 @@ void PrivacySecCompEnhanceAgent::InitAppObserver()
     }
     observer_ = new (std::nothrow) PrivacyAppUsingSecCompStateObserver();
     if (observer_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "New observer failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New observer failed.");
         return;
     }
     if (AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_) != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Register observer failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Register observer failed.");
         observer_ = nullptr;
         return;
     }
@@ -89,7 +92,7 @@ PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
 
 void PrivacySecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OnAppMgrRemoteDiedHandle.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnAppMgrRemoteDiedHandle.");
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     secCompEnhanceData_.clear();
     observer_ = nullptr;
@@ -101,11 +104,11 @@ void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             secCompEnhanceData_.erase(iter);
-            LOGI(PRI_DOMAIN, PRI_TAG, "Remove pid %{public}d data.", pid);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Remove pid %{public}d data.", pid);
             return;
         }
     }
-    LOGE(PRI_DOMAIN, PRI_TAG, "Not found pid %{public}d data.", pid);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Not found pid %{public}d data.", pid);
     return;
 }
 
@@ -116,7 +119,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     int pid = IPCSkeleton::GetCallingPid();
     if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
         [pid](const auto& e) { return e.pid == pid; })) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Register sec comp enhance exist, pid %{public}d.", pid);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Register sec comp enhance exist, pid %{public}d.", pid);
             return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     }
     SecCompEnhanceData enhance;
@@ -130,7 +133,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     }
     secCompEnhanceData_.emplace_back(enhance);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;
 }
@@ -142,7 +145,7 @@ int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, uint32_t s
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             iter->seqNum = seqNum;
-            LOGI(PRI_DOMAIN, PRI_TAG, "Update pid=%{public}d data successful.", pid);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Update pid=%{public}d data successful.", pid);
             return RET_SUCCESS;
         }
     }
@@ -156,7 +159,7 @@ int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanc
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             enhanceData = *iter;
-            LOGI(PRI_DOMAIN, PRI_TAG, "Get pid %{public}d data.", pid);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Get pid %{public}d data.", pid);
             return RET_SUCCESS;
         }
     }

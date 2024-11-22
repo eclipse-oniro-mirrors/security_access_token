@@ -57,6 +57,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
+};
 static const int32_t VALUE_MAX_LEN = 32;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
@@ -106,7 +109,7 @@ PermissionRecordManager::~PermissionRecordManager()
 
 void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)
 {
-    LOGD(PRI_DOMAIN, PRI_TAG, "OnChange(id=%{public}d, pid=%{public}d, state=%{public}d).",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, pid=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.pid, appStateData.state);
 
     ActiveChangeType status = PERM_INACTIVE;
@@ -120,7 +123,7 @@ void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData
 
 void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OnChange(id=%{public}d, state=%{public}d).",
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.state);
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
@@ -130,7 +133,7 @@ void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 
 void PrivacyAppStateObserver::OnProcessDied(const ProcessData &processData)
 {
-    LOGD(PRI_DOMAIN, PRI_TAG, "OnChange(id=%{public}u, pid=%{public}d, state=%{public}d).",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}u, pid=%{public}d, state=%{public}d).",
         processData.accessTokenId, processData.pid, processData.state);
 
     PermissionRecordManager::GetInstance().RemoveRecordFromStartListByPid(processData.accessTokenId, processData.pid);
@@ -190,14 +193,14 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     {
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
         if (permUsedRecList_.empty()) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "First record in cache!");
+            ACCESSTOKEN_LOG_INFO(LABEL, "First record in cache!");
 
             AddRecToCacheAndValueVec(record, insertRecords);
         } else {
             bool mergeFlag = false;
             for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
                 if (RecordMergeCheck(it->record, record)) {
-                    LOGI(PRI_DOMAIN, PRI_TAG, "Merge record, ori timestamp is %{public}" PRId64 ".",
+                    ACCESSTOKEN_LOG_INFO(LABEL, "Merge record, ori timestamp is %{public}" PRId64 ".",
                         it->record.timestamp);
 
                     // merge new record to older one if match the merge condition
@@ -226,11 +229,11 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     int32_t res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_RECORD,
         insertRecords);
     if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Add permission_record_table failed!");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Add permission_record_table failed!");
         return res;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Add, id %{public}d, op %{public}d, status: %{public}d, sucCnt: %{public}d, "
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add record, id %{public}d, op %{public}d, status: %{public}d, sucCnt: %{public}d, "
         "failCnt: %{public}d, lockScreenStatus %{public}d, timestamp %{public}" PRId64 ", type %{public}d.",
         record.tokenId, record.opCode, record.status, record.accessCount, record.rejectCount, record.lockScreenStatus,
         record.timestamp, record.type);
@@ -283,7 +286,7 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
             whether update database succeed or not, recod remove from cache
         */
         if ((it->needUpdateToDb) && (!UpdatePermissionUsedRecordToDb(it->record))) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Record with timestamp %{public}" PRId64 "update database failed!",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Record with timestamp %{public}" PRId64 "update database failed!",
                 it->record.timestamp);
         }
 
@@ -306,12 +309,12 @@ void PermissionRecordManager::UpdatePermRecImmediately()
 int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
 {
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", info.tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not hap(%{public}d).", info.tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(info.permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", info.permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", info.permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (GetMuteStatus(info.permissionName, EDM)) {
@@ -327,7 +330,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     record.type = info.type;
-    LOGD(PRI_DOMAIN, PRI_TAG, "Record status: %{public}d", record.status);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Record status: %{public}d", record.status);
     return Constant::SUCCESS;
 }
 
@@ -361,7 +364,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
     if (results.empty()) {
         // empty means there is no permission used type record, add it
-        LOGD(PRI_DOMAIN, PRI_TAG, "No exsit record, add it.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "No exsit record, add it.");
 
         GenericValues recordValue;
         recordValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -378,18 +381,18 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
     } else {
         // not empty means there is permission used type record exsit, update it if needed
         uint32_t dbType = static_cast<uint32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
-        LOGD(PRI_DOMAIN, PRI_TAG, "Record exsit, type is %{public}u.", dbType);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Record exsit, type is %{public}u.", dbType);
 
         if ((dbType & inputType) == inputType) {
             // true means visitTypeEnum has exsits, no need to add
-            LOGD(PRI_DOMAIN, PRI_TAG, "Used type has add.");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type has add.");
             return true;
         } else {
             results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
             dbType |= inputType;
 
             // false means visitTypeEnum not exsits, update record
-            LOGD(PRI_DOMAIN, PRI_TAG, "Used type not add, generate new %{public}u.", dbType);
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type not add, generate new %{public}u.", dbType);
 
             GenericValues newValue;
             newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(dbType));
@@ -459,7 +462,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
     ExecuteDeletePermissionRecordTask();
 
     if (!request.isRemote && !GetRecordsFromLocalDB(request, result)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetRecordsFromLocalDB");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromLocalDB");
         return  PrivacyError::ERR_PARAM_INVALID;
     }
     return Constant::SUCCESS;
@@ -469,7 +472,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     auto task = [request, callback]() {
-        LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordsAsync task called");
+        ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;
         int32_t retCode = PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
         callback->OnQueried(retCode, result);
@@ -576,7 +579,7 @@ bool PermissionRecordManager::FillBundleUsedRecord(const GenericValues& value, c
     // translate database value into PermissionUsedRecord value
     PermissionUsedRecord record;
     if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(flag, value, record) != Constant::SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to transform op(%{public}d)",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform op(%{public}d)",
             value.GetInt(PrivacyFiledConst::FIELD_OP_CODE));
         return false;
     }
@@ -603,7 +606,7 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
         tokenTotalSuccCount += permissionRecord.accessCount;
         tokenTotalFailCount += permissionRecord.rejectCount;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
         " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), queryCount, tokenTotalSuccCount,
         tokenTotalFailCount);
     totalSuccCount += tokenTotalSuccCount;
@@ -614,7 +617,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
 {
     GenericValues andConditionValues;
     if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues) != Constant::SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Query time or flag is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Query time or flag is invalid");
         return false;
     }
 
@@ -630,7 +633,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
 
     uint32_t currentCount = findRecordsValues.size(); // handle query result
     if (currentCount == 0) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "No record match the condition.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "No record match the condition.");
         return true;
     }
 
@@ -669,7 +672,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     }
 
     if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Total success count is %{public}d, total failure count is %{public}d",
+        ACCESSTOKEN_LOG_INFO(LABEL, "Total success count is %{public}d, total failure count is %{public}d",
             totalSuccCount, totalFailCount);
     }
 
@@ -680,7 +683,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GetHapTokenInfo failed, tokenId is %{public}u.", tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo failed, tokenId is %{public}u.", tokenId);
         return false;
     }
     bundleRecord.tokenId = tokenId;
@@ -694,19 +697,19 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 {
 #ifdef EVENTHANDLER_ENABLE
     if (GetCurDeleteTaskNum() > 1) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Has delete task!");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Has delete task!");
         return;
     }
     AddDeleteTaskNum();
     if (deleteEventHandler_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get EventHandler.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler.");
         ReduceDeleteTaskNum();
         return;
     }
 
     std::function<void()> delayed = ([this]() {
         DeletePermissionRecord(recordAgingTime_);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Delete record end.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Delete record end.");
         // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
         ReduceDeleteTaskNum();
@@ -760,7 +763,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
     int32_t ret = Constant::SUCCESS;
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
@@ -778,7 +781,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
             break;
         }
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id(%{public}u), pid(%{public}d), opCode(%{public}d),\
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id(%{public}u), pid(%{public}d), opCode(%{public}d),\
         hasTokenStarted(%{public}d), hasPidStarted(%{public}d).",
         tokenId, pid, opCode, hasTokenStarted, hasPidStarted);
     if (!hasTokenStarted) {
@@ -818,14 +821,14 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
             }
             if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
                 (!isShow) && (!isAllowedBackGround)) {
-                LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
+                ACCESSTOKEN_LOG_INFO(LABEL, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 continue;
             }
 
             // update status to input and timestamp to now in cache
             it->status = status;
-            LOGD(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
         }
     }
 
@@ -840,14 +843,14 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
 */
 void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}u, pid %{public}d, status %{public}d", tokenId, pid, status);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}u, pid %{public}d, status %{public}d", tokenId, pid, status);
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
     ExecuteAndUpdateRecord(tokenId, pid, status);
 }
 
 void PermissionRecordManager::SetLockScreenStatus(int32_t lockScreenStatus)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "LockScreenStatus %{public}d", lockScreenStatus);
+    ACCESSTOKEN_LOG_INFO(LABEL, "LockScreenStatus %{public}d", lockScreenStatus);
     std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
     lockScreenStatus_ = lockScreenStatus;
 }
@@ -878,11 +881,11 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "Id %{public}u, pid %{public}d, perm %{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Id %{public}u, pid %{public}d, perm %{public}s",
         tokenId, pid, permissionName.c_str());
     int32_t status = PERM_INACTIVE;
     bool isFind = false;
@@ -910,7 +913,7 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
     }
     if (!isFind) {
         ret = PrivacyError::ERR_PERMISSION_NOT_START_USING;
-        LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, opCode=%{public}d",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No records started, tokenId=%{public}u, pid=%{public}d, opCode=%{public}d",
             tokenId, pid, opCode);
     }
     return ret;
@@ -922,7 +925,7 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 */
 void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, pid %{public}d", tokenId, pid);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, pid %{public}d", tokenId, pid);
     bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
@@ -955,7 +958,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 */
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u", tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u", tokenId);
     bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
@@ -982,7 +985,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OpCode %{public}d", opCode);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OpCode %{public}d", opCode);
     std::string perm;
     Constant::TransferOpcodeToPermission(opCode, perm);
     {
@@ -1005,7 +1008,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 void PermissionRecordManager::CallbackExecute(
     AccessTokenID tokenId, const std::string& permissionName, int32_t status)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG,
+    ACCESSTOKEN_LOG_INFO(LABEL,
         "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
         tokenId, permissionName.c_str(), status);
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
@@ -1018,10 +1021,10 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         isOpen = !isMicMixMute_;
-        LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s, status is %{public}d", permissionName.c_str(), isOpen);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         isOpen = !isCamMixMute_;
-        LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s, status is %{public}d", permissionName.c_str(), isOpen);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     }
     return isOpen;
 }
@@ -1042,11 +1045,11 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
             continue;
         }
         if (switchStatus) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Global switch is open, update record from inactive");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Global switch is open, update record from inactive");
             // no need to store in database when status from inactive to foreground or background
             record.status = GetAppStatus(record.tokenId);
         } else {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Global switch is close, update record to inactive");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Global switch is close, update record to inactive");
             record.status = PERM_INACTIVE;
         }
         recordList.emplace_back(*it);
@@ -1065,7 +1068,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         resource = "microphone";
     } else {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Invalid permissionName(%{public}s).", permissionName.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Invalid permissionName(%{public}s).", permissionName.c_str());
         return true;
     }
 
@@ -1074,7 +1077,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     want.SetParam(RESOURCE_KEY, resource);
     ErrCode err = AbilityManagerAdapter::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to StartAbility, err:%{public}d", err);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
     }
     return true;
@@ -1083,13 +1086,13 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
 void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteAllCameraExecuteCallback called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "ExecuteAllCameraExecuteCallback called");
     auto it = [&](uint64_t id, sptr<IRemoteObject> cameraCallback) {
         auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
         AccessTokenID tokenId = static_cast<AccessTokenID>(id);
         if (callback != nullptr) {
-            LOGI(PRI_DOMAIN, PRI_TAG,
-                "CameraCallback tokenId %{public}d changeType %{public}d.", tokenId, PERM_INACTIVE);
+            ACCESSTOKEN_LOG_INFO(
+                LABEL, "CameraCallback tokenId %{public}d changeType %{public}d.", tokenId, PERM_INACTIVE);
             callback->StateChangeNotify(tokenId, false);
         }
     };
@@ -1098,15 +1101,14 @@ void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
 
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t pid)
 {
-    LOGD(PRI_DOMAIN, PRI_TAG, "Entry.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry.");
     auto task = [tokenId, pid, this]() {
         uint64_t uniqueId = GetUniqueId(tokenId, pid);
-        LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCameraCallbackAsync task called.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "ExecuteCameraCallbackAsync task called.");
         auto it = [&](uint64_t id, sptr<IRemoteObject> cameraCallback) {
             auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
             if ((uniqueId == id) && (callback != nullptr)) {
-                LOGI(PRI_DOMAIN, PRI_TAG,
-                    "CameraCallback tokenId(%{public}u) pid( %{public}d) changeType %{public}d",
+                ACCESSTOKEN_LOG_INFO(LABEL, "CameraCallback tokenId(%{public}u) pid( %{public}d) changeType %{public}d",
                     tokenId, pid, PERM_INACTIVE);
                 callback->StateChangeNotify(tokenId, false);
             }
@@ -1115,20 +1117,20 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
     };
     std::thread executeThread(task);
     executeThread.detach();
-    LOGD(PRI_DOMAIN, PRI_TAG, "The cameraCallback execution is complete.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "The cameraCallback execution is complete.");
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     InitializeMuteState(permissionName);
     if (GetMuteStatus(permissionName, EDM)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
         return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
     }
     if (!Register()) {
@@ -1151,13 +1153,13 @@ int32_t PermissionRecordManager::StartUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const sptr<IRemoteObject>& callback)
 {
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     InitializeMuteState(permissionName);
     if (GetMuteStatus(permissionName, EDM)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
         return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
     }
 
@@ -1192,7 +1194,7 @@ int32_t PermissionRecordManager::StopUsingPermission(
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -1204,7 +1206,7 @@ void PermissionRecordManager::PermListToString(const std::vector<std::string>& p
     std::string permStr;
     permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "PermStr =%{public}s.", permStr.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermStr =%{public}s.", permStr.c_str());
 }
 
 int32_t PermissionRecordManager::PermissionListFilter(
@@ -1220,10 +1222,10 @@ int32_t PermissionRecordManager::PermissionListFilter(
             permSet.insert(perm);
             continue;
         }
-        LOGE(PRI_DOMAIN, PRI_TAG, "Permission %{public}s invalid!", perm.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission %{public}s invalid!", perm.c_str());
     }
     if ((listRes.empty()) && (!listSrc.empty())) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Valid permission size is 0!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Valid permission size is 0!");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     PermListToString(listRes);
@@ -1238,8 +1240,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
     if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
         isAllowedBackGround = true;
     }
-
-    LOGI(PRI_DOMAIN, PRI_TAG,
+    ACCESSTOKEN_LOG_INFO(LABEL,
         "Id(%{public}d), appStatus(%{public}d), isScreenLocked(%{public}d, isAllowedBackGround(%{public}d)).",
         tokenId, status, isScreenLocked, isAllowedBackGround);
     return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenLocked) || isAllowedBackGround;
@@ -1248,7 +1249,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
 {
     int32_t status = GetAppStatus(tokenId);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, status is %{public}d.", tokenId, status);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, status is %{public}d.", tokenId, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
@@ -1264,7 +1265,7 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", tokenId);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Id(%{public}d) is not hap.", tokenId);
         return false;
     }
 
@@ -1273,7 +1274,7 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         return IsAllowedUsingMicrophone(tokenId);
     }
-    LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s).", permissionName.c_str());
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
 }
 
@@ -1305,22 +1306,22 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
 int32_t PermissionRecordManager::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
     std::lock_guard<std::mutex> lock(foreReminderMutex_);
     auto iter = std::find(foreTokenIdList_.begin(), foreTokenIdList_.end(), tokenId);
     if (iter == foreTokenIdList_.end() && isAllowed) {
         foreTokenIdList_.emplace_back(tokenId);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Set hap(%{public}d) foreground.", tokenId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Set hap(%{public}d) foreground.", tokenId);
         return RET_SUCCESS;
     }
     if (iter != foreTokenIdList_.end() && !isAllowed) {
         foreTokenIdList_.erase(iter);
-        LOGI(PRI_DOMAIN, PRI_TAG, "cancel hap(%{public}d) foreground.", tokenId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "cancel hap(%{public}d) foreground.", tokenId);
         return RET_SUCCESS;
     }
-    LOGE(PRI_DOMAIN, PRI_TAG, "(%{public}d) is invalid to be operated.", tokenId);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "(%{public}d) is invalid to be operated.", tokenId);
     return PrivacyError::ERR_PARAM_INVALID;
 }
 
@@ -1389,7 +1390,7 @@ void PermissionRecordManager::ModifyMuteStatus(const std::string& permissionName
             isCamMixMute_ = isMute;
         }
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d.",
         permissionName.c_str(), isMute, index);
 }
 
@@ -1405,7 +1406,7 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     } else {
         return false;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "perm: %{public}s, isMute: %{public}d, index: %{public}d.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "perm: %{public}s, isMute: %{public}d, index: %{public}d.",
         permissionName.c_str(), isMute, index);
     return isMute;
 }
@@ -1455,7 +1456,7 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     if (tokenId != INVALID_TOKENID) {
         HapTokenInfo tokenInfo;
         if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Invalid tokenId(%{public}d).", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d).", tokenId);
             return PrivacyError::ERR_TOKENID_NOT_EXIST;
         }
         value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -1464,7 +1465,7 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     if (!permissionName.empty()) {
         int32_t opCode;
         if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Invalid (%{public}s).", permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid (%{public}s).", permissionName.c_str());
             return PrivacyError::ERR_PERMISSION_NOT_EXIST;
         }
         value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
@@ -1480,7 +1481,7 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
         AddDataValueToResults(valueResult, results);
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Get %{public}zu permission used type records.", results.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get %{public}zu permission used type records.", results.size());
 
     return Constant::SUCCESS;
 }
@@ -1505,7 +1506,7 @@ bool PermissionRecordManager::Register()
         if (appManagerDeathCallback_ == nullptr) {
             appManagerDeathCallback_ = std::make_shared<PrivacyAppManagerDeathCallback>();
             if (appManagerDeathCallback_ == nullptr) {
-                LOGE(PRI_DOMAIN, PRI_TAG, "Register appManagerDeathCallback failed.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appManagerDeathCallback failed.");
                 return false;
             }
             AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
@@ -1517,12 +1518,12 @@ bool PermissionRecordManager::Register()
         if (appStateCallback_ == nullptr) {
             appStateCallback_ = new (std::nothrow) PrivacyAppStateObserver();
             if (appStateCallback_ == nullptr) {
-                LOGE(PRI_DOMAIN, PRI_TAG, "Register appStateCallback failed.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register appStateCallback failed.");
                 return false;
             }
             int32_t result = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
             if (result != ERR_OK) {
-                LOGE(PRI_DOMAIN, PRI_TAG, "Register application state observer failed(%{public}d).", result);
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Register application state observer failed(%{public}d).", result);
                 return false;
             }
         }
@@ -1559,21 +1560,21 @@ void HandleWindowDied()
 bool PermissionRecordManager::RegisterWindowCallback()
 {
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    LOGI(PRI_DOMAIN, PRI_TAG, "Begin to RegisterWindowCallback.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Begin to RegisterWindowCallback.");
 
     std::lock_guard<std::mutex> lock(windowMutex_);
     WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
     if (floatWindowCallback_ == nullptr) {
         floatWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(floatCallback);
         if (floatWindowCallback_ == nullptr) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to new PrivacyWindowManagerAgent.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new PrivacyWindowManagerAgent.");
             return false;
         }
     }
     ErrCode err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
         WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
     if (err != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to register float window listener, err:%{public}d", err);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register float window listener, err:%{public}d", err);
         return false;
     }
 
@@ -1583,7 +1584,7 @@ bool PermissionRecordManager::RegisterWindowCallback()
         if (pipWindowCallback_ == nullptr) {
             pipWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(pipCallback);
             if (floatWindowCallback_ == nullptr) {
-                LOGE(PRI_DOMAIN, PRI_TAG, "Failed to new PrivacyWindowManagerAgent.");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new PrivacyWindowManagerAgent.");
                 return false;
             }
         }
@@ -1591,7 +1592,7 @@ bool PermissionRecordManager::RegisterWindowCallback()
         err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
             WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW, pipWindowCallback_);
         if (err != ERR_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to register pip window listener, err:%{public}d", err);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register pip window listener, err:%{public}d", err);
             PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
                 WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
             return false;
@@ -1607,15 +1608,15 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
 {
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         bool isMicMute = AudioManagerAdapter::GetInstance().GetPersistentMicMuteState();
-        LOGI(PRI_DOMAIN, PRI_TAG, "Mic mute state: %{public}d.", isMicMute);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Mic mute state: %{public}d.", isMicMute);
         ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
         {
             std::lock_guard<std::mutex> lock(micLoadMutex_);
             if (!isMicLoad_) {
-                LOGI(PRI_DOMAIN, PRI_TAG, "Mic mute state: %{public}d.", isMicLoad_);
+                ACCESSTOKEN_LOG_INFO(LABEL, "Mic mute state: %{public}d.", isMicLoad_);
                 bool isEdmMute = false;
                 if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
-                    LOGE(PRI_DOMAIN, PRI_TAG, "Get param failed");
+                    ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
                     return;
                 }
                 ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
@@ -1623,14 +1624,14 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
         }
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         bool isCameraMute = CameraManagerAdapter::GetInstance().IsCameraMuted();
-        LOGI(PRI_DOMAIN, PRI_TAG, "Camera mute state: %{public}d.", isCameraMute);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Camera mute state: %{public}d.", isCameraMute);
         ModifyMuteStatus(CAMERA_PERMISSION_NAME, MIXED, isCameraMute);
         {
             std::lock_guard<std::mutex> lock(camLoadMutex_);
             if (!isCamLoad_) {
                 bool isEdmMute = false;
                 if (!GetMuteParameter(EDM_CAMERA_MUTE_KEY, isEdmMute)) {
-                    LOGE(PRI_DOMAIN, PRI_TAG, "Get camera param failed");
+                    ACCESSTOKEN_LOG_ERROR(LABEL, "Get camera param failed");
                     return;
                 }
                 ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
@@ -1654,12 +1655,12 @@ bool PermissionRecordManager::GetMuteParameter(const char* key, bool& isMute)
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(key, "", value, VALUE_MAX_LEN - 1);
     if (ret < 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Return default value, ret=%{public}d", ret);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
         return false;
     }
     isMute = false;
     if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "EDM not allow.");
         isMute = true;
     }
     return true;
@@ -1667,14 +1668,14 @@ bool PermissionRecordManager::GetMuteParameter(const char* key, bool& isMute)
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Handle app fwk died.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle app fwk died.");
     std::lock_guard<std::mutex> lock(appStateMutex_);
     appStateCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Handle audio fwk died.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle audio fwk died.");
     {
         std::lock_guard<std::mutex> lock(micLoadMutex_);
         isMicLoad_ = false;
@@ -1684,7 +1685,7 @@ void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Handle camera fwk died.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle camera fwk died.");
     {
         std::lock_guard<std::mutex> lock(camLoadMutex_);
         isCamLoad_ = false;
@@ -1712,7 +1713,7 @@ bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
  */
 void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Update window, isPip(%{public}d), id(%{public}u), status(%{public}d)",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Update window, isPip(%{public}d), id(%{public}u), status(%{public}d)",
         isPip, tokenId, isShowing);
     {
         std::lock_guard<std::mutex> lock(windowStatusMutex_);
@@ -1725,12 +1726,11 @@ void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID
         }
     }
     if (isShowing) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is showing!");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Camera float window is showing!");
     } else {
         if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) &&
             !IsCameraWindowShow(tokenId)) {
-            LOGI(PRI_DOMAIN, PRI_TAG,
-                "Token(%{public}d) is background, pip and float window is not show.", tokenId);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Token(%{public}d) is background, pip and float window is not show.", tokenId);
             ExecuteCameraCallbackAsync(tokenId, -1);
         }
     }
@@ -1738,7 +1738,7 @@ void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID
 
 void PermissionRecordManager::ClearWindowShowing()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Clear window show status.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Clear window show status.");
     {
         std::lock_guard<std::mutex> lock(windowStatusMutex_);
         camFloatWindowShowing_ = false;
@@ -1752,7 +1752,7 @@ void PermissionRecordManager::ClearWindowShowing()
 /* Handle window manager die */
 void PermissionRecordManager::OnWindowMgrRemoteDied()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Handle window manager died.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle window manager died.");
     ClearWindowShowing();
 }
 #endif
@@ -1772,7 +1772,7 @@ void PermissionRecordManager::GetConfigValue()
     LibraryLoader loader(CONFIG_POLICY_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Dlopen libaccesstoken_config_policy failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
         return;
     }
     AccessTokenConfigValue value;
@@ -1792,7 +1792,7 @@ void PermissionRecordManager::GetConfigValue()
         SetDefaultConfigValue();
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
         recordSizeMaximum_, recordAgingTime_);
 }
 
@@ -1812,7 +1812,7 @@ void PermissionRecordManager::Init()
     if (hasInited_) {
         return;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Init");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Init");
     hasInited_ = true;
 
 #ifdef EVENTHANDLER_ENABLE

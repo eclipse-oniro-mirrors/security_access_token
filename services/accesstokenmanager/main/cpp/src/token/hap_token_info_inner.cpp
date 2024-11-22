@@ -34,7 +34,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const char* DEFAULT_DEVICEID = "0";
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "HapTokenInfoInner"};
+static const std::string DEFAULT_DEVICEID = "0";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 }
 
@@ -88,7 +89,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
 
 HapTokenInfoInner::~HapTokenInfoInner()
 {
-    LOGI(AT_DOMAIN, AT_TAG, "TokenID: %{public}d destruction", tokenInfoBasic_.tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d destruction", tokenInfoBasic_.tokenID);
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
@@ -114,8 +115,7 @@ int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     permPolicySet_->Update(permStateList);
 
     if (isRemote_) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return RET_SUCCESS;
     }
 
@@ -132,7 +132,7 @@ int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenInfoBasic_.tokenID, hapInfoValues, permDefValues,
         permStateValues);
     if (ret != RET_SUCCESS) {
-        LOGE(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "TokenID %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenInfoBasic_.tokenID, ret);
     }
     return ret;
@@ -164,7 +164,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.userID = inGenericValues.GetInt(TokenFiledConst::FIELD_USER_ID);
     tokenInfoBasic_.bundleName = inGenericValues.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
-        LOGE(AT_DOMAIN, AT_TAG, "Id: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "bundleName error");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -175,7 +175,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(TokenFiledConst::FIELD_DLP_TYPE);
     tokenInfoBasic_.appID = inGenericValues.GetString(TokenFiledConst::FIELD_APP_ID);
     if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "appID error");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -183,7 +183,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 
     tokenInfoBasic_.deviceID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
-        LOGE(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
@@ -193,7 +193,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     if (DataValidator::IsAplNumValid(aplNum)) {
         tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     } else {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID: 0x%{public}x apl is error, value %{public}d",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x apl is error, value %{public}d",
             tokenInfoBasic_.tokenID, aplNum);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
@@ -201,7 +201,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
-        LOGE(AT_DOMAIN, AT_TAG, "TokenID: 0x%{public}x version is error, version %{public}d",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
@@ -229,8 +229,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
 void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList) const
 {
     if (isRemote_) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Token %{public}u is remote hap token, will not store", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store", tokenInfoBasic_.tokenID);
         return;
     }
     GenericValues genericValues;
@@ -241,8 +240,7 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList) cons
 void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permStateValues)
 {
     if (isRemote_) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return;
     }
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->policySetLock_);
@@ -254,7 +252,7 @@ void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permSt
 void HapTokenInfoInner::ClearHapInfoPermissionPolicySet()
 {
     if (isRemote_) {
-        LOGI(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}x is a remote hap token, permPolicySet_ should be remained", tokenInfoBasic_.tokenID);
         return;
     }
@@ -326,7 +324,7 @@ void HapTokenInfoInner::SetRemote(bool isRemote)
 
 bool HapTokenInfoInner::IsPermDialogForbidden() const
 {
-    LOGI(AT_DOMAIN, AT_TAG, "%{public}d", isPermDialogForbidden_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}d", isPermDialogForbidden_);
     return isPermDialogForbidden_;
 }
 
@@ -372,13 +370,12 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         return ret;
     }
     if (ShortGrantManager::GetInstance().IsShortGrantPermission(permissionName)) {
-        LOGI(AT_DOMAIN, AT_TAG,
+        ACCESSTOKEN_LOG_INFO(LABEL,
             "Short grant permission %{public}s should not be notified to db.", permissionName.c_str());
         return RET_SUCCESS;
     }
     if (isRemote_) {
-        LOGI(AT_DOMAIN, AT_TAG,
-            "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return RET_SUCCESS;
     }
     std::vector<GenericValues> permStateValues;
@@ -444,7 +441,7 @@ bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<Perm
         int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
             conditionValue);
         if (res != 0) {
-            LOGE(AT_DOMAIN, AT_TAG,
+            ACCESSTOKEN_LOG_ERROR(LABEL,
                 "Update tokenID %{public}u permission %{public}s to database failed, err %{public}d ",
                 tokenID, state.permissionName.c_str(), res);
             return false;
@@ -496,7 +493,7 @@ PermUsedTypeEnum HapTokenInfoInner::GetPermissionUsedType(AccessTokenID tokenID,
 {
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
-        LOGE(AT_DOMAIN, AT_TAG, "permissionName is invalid %{public}s.", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid %{public}s.", permissionName.c_str());
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     return PermissionDataBrief::GetInstance().GetPermissionUsedType(tokenID, code);
