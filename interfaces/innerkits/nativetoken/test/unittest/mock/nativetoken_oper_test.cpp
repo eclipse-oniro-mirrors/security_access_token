@@ -80,11 +80,22 @@ static bool isFileEmpty(const std::string& fileName)
     return flag;
 }
 
+static int32_t ClearFile(const char* fileName)
+{
+    int32_t fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        return -1;
+    }
+
+    close(fd);
+    return 0;
+}
+
 static void CopyNativeTokenJson(const std::string& sourceFileName, const std::string& destFileName)
 {
-    // if dest file exists, remove it;
+    // if dest file exists, clear it;
     if (access(destFileName.c_str(), F_OK) == 0) {
-        if (remove(destFileName.c_str()) != 0) {
+        if (ClearFile(destFileName.c_str()) != 0) {
             std::cout << "dest file exists, failed to remove dest file" << std::endl;
             return;
         }
