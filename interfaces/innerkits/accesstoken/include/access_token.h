@@ -232,6 +232,27 @@ typedef enum TypePermissionOper {
     BUTT_OPER,
 } PermissionOper;
 
+
+/**
+ * @brief Permission operation result details
+ */
+typedef enum TypePermissionErrorReason {
+    /** The operation is successful */
+    REQ_SUCCESS = 0,
+    /** The permission name is invalid */
+    PERM_INVALID = 1,
+    /** The requested has not been declared */
+    PERM_NOT_DECLEARED = 2,
+    /** The conditions for requesting the permission are not met */
+    CONDITIONS_NOT_MET = 3,
+    /** The user does not agree to the Privacy Statement */
+    PRIVACY_STATEMENT_NOT_AGREED = 4,
+    /** The permission cannot be requested in a pop-up window */
+    UNABLE_POP_UP = 5,
+    /** The service is abnormal */
+    SERVICE_ABNORMAL = 12,
+} PermissionErrorReason;
+
 /**
  * @brief Dlp types
  */
