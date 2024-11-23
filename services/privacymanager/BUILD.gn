@@ -171,9 +171,8 @@ if (is_standard_system && ability_base_enable == true) {
     if (access_token_app_security_privacy_service_enable) {
       cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
     } else {
-      include_dirs += [ "include/sensitive/ability_manager/" ]
-      sources += [ "src/sensitive/ability_manager/ability_manager_adapter.cpp" ]
-      external_deps += [ "ability_runtime:ability_manager" ]
+      include_dirs +=
+          [ "${access_token_path}/services/common/ability_manager/include" ]
     }
 
     if (hicollie_enable == true) {
