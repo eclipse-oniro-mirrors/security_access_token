@@ -43,6 +43,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
+    std::vector<int32_t> errorReasons;
     std::vector<bool> dialogShownResults;
     std::vector<int32_t> permissionQueryResults;
     PermissionGrantInfo info;
@@ -97,6 +98,7 @@ private:
 struct ResultCallback {
     std::vector<std::string> permissions;
     std::vector<int32_t> grantResults;
+    std::vector<int32_t> errorReasons;
     std::vector<bool> dialogShownResults;
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };

@@ -226,7 +226,8 @@ static napi_value GetContext(
 }
 
 static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::string>& permissions,
-    const std::vector<int>& grantResults, const std::vector<bool>& dialogShownResults)
+    const std::vector<int>& grantResults, const std::vector<bool>& dialogShownResults,
+    const std::vector<int>& errorReasons)
 {
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_object(env, &result));
@@ -257,6 +258,15 @@ static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::
         NAPI_CALL(env, napi_set_element(env, objDialogShown, i, nDialogShown));
     }
     NAPI_CALL(env, napi_set_named_property(env, result, "dialogShownResults", objDialogShown));
+
+    napi_value objErrorReason;
+    NAPI_CALL(env, napi_create_array(env, &objErrorReason));
+    for (size_t i = 0; i < grantResults.size(); i++) {
+        napi_value nErrorReason = nullptr;
+        NAPI_CALL(env, napi_create_int32(env, errorReasons[i], &nErrorReason));
+        NAPI_CALL(env, napi_set_element(env, objErrorReason, i, nErrorReason));
+    }
+    NAPI_CALL(env, napi_set_named_property(env, result, "errorReasons", objErrorReason));
 
     return result;
 }
@@ -292,7 +302,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
         return;
     }
     napi_value requestResult = WrapRequestResult(
-        retCB->data->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults);
+        retCB->data->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults, retCB->errorReasons);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Wrap requestResult failed");
         result = RET_FAILED;
@@ -337,6 +347,7 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
     retCB->permissions = permissionList;
     retCB->grantResults = newGrantResults;
     retCB->dialogShownResults = data->dialogShownResults;
+    retCB->errorReasons = data->errorReasons;
     retCB->data = data;
 
     uv_loop_s* loop = nullptr;
@@ -438,12 +449,14 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
         PermissionListState permState;
         permState.permissionName = permission;
         permState.state = INVALID_OPER;
+        permState.errorReason = SERVICE_ABNORMAL;
         permList.emplace_back(permState);
     }
     auto ret = AccessTokenKit::GetSelfPermissionsState(permList, asyncContext->info);
     if (ret == FORBIDDEN_OPER) { // if app is under control, change state from default -1 to 2
         for (auto& perm : permList) {
             perm.state = INVALID_OPER;
+            perm.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
         }
     }
     ACCESSTOKEN_LOG_INFO(LABEL,
@@ -452,10 +465,11 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
         asyncContext->info.grantAbilityName.c_str(), asyncContext->info.grantServiceAbilityName.c_str());
 
     for (const auto& permState : permList) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Permission: %{public}s: state: %{public}d",
-            permState.permissionName.c_str(), permState.state);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission: %{public}s: state: %{public}d, errorReason: %{public}d",
+            permState.permissionName.c_str(), permState.state, permState.errorReason);
         asyncContext->permissionsState.emplace_back(permState.state);
         asyncContext->dialogShownResults.emplace_back(permState.state == TypePermissionOper::DYNAMIC_OPER);
+        asyncContext->errorReasons.emplace_back(permState.errorReason);
     }
     if (permList.size() != asyncContext->permissionList.size()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Returned permList size: %{public}zu.", permList.size());
@@ -730,7 +744,8 @@ void NapiRequestPermission::RequestPermissionsFromUserComplete(napi_env env, nap
         asyncContextHandle->asyncContextPtr->result = RET_FAILED;
     }
     napi_value requestResult = WrapRequestResult(env, asyncContextHandle->asyncContextPtr->permissionList,
-        asyncContextHandle->asyncContextPtr->permissionsState, asyncContextHandle->asyncContextPtr->dialogShownResults);
+        asyncContextHandle->asyncContextPtr->permissionsState, asyncContextHandle->asyncContextPtr->dialogShownResults,
+        asyncContextHandle->asyncContextPtr->errorReasons);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Wrap requestResult failed");
         if (asyncContextHandle->asyncContextPtr->result == JsErrorCode::JS_OK) {
@@ -866,6 +881,7 @@ void RequestAsyncInstanceControl::CheckDynamicRequest(
 {
     asyncContext->permissionsState.clear();
     asyncContext->dialogShownResults.clear();
+    asyncContext->errorReasons.clear();
     if (!NapiRequestPermission::IsDynamicRequest(asyncContext)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "It does not need to request permission exsion");
         RequestResultsHandler(asyncContext->permissionList, asyncContext->permissionsState, asyncContext);
