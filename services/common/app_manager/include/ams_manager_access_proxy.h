@@ -20,7 +20,6 @@
 
 #include "app_state_data.h"
 #include "process_data.h"
-#include "service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

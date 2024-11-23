@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,18 +12,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ability_manager_access_loader.h"
 
-#ifndef SERVICE_IPC_INTERFACE_CODE_H
-#define SERVICE_IPC_INTERFACE_CODE_H
+#include "ability_manager_adapter.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class AccessAbilityServiceInterfaceCode {
-    START_ABILITY_ADD_CALLER = 1005,
-};
+int32_t AbilityManagerAccessLoader::StartAbility(
+    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken)
+{
+#ifdef ABILITY_RUNTIME_ENABLE
+    return AbilityManagerAdapter::GetInstance().StartAbility(want, callerToken);
+#else
+    return 0;
+#endif
+}
+
+void* Create()
+{
+    return reinterpret_cast<void*>(new AbilityManagerAccessLoader);
+}
+
+void Destroy(void* loaderPtr)
+{
+    AbilityManagerAccessLoaderInterface* loader = reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // SERVICE_IPC_INTERFACE_CODE_H
