@@ -60,6 +60,10 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
             HandleOnAppStopped(data, reply);
             return NO_ERROR;
         }
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED: {
+            HandleOnAppCacheStateChanged(data, reply);
+            return NO_ERROR;
+        }
         default: {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -113,6 +117,18 @@ int32_t ApplicationStateObserverStub::HandleOnAppStopped(MessageParcel &data, Me
     }
 
     OnAppStopped(*appStateData);
+    return NO_ERROR;
+}
+
+int32_t ApplicationStateObserverStub::HandleOnAppCacheStateChanged(MessageParcel &data, MessageParcel &reply)
+{
+    std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
+    if (appStateData == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        return -1;
+    }
+
+    OnAppCacheStateChanged(*appStateData);
     return NO_ERROR;
 }
 } // namespace AccessToken
