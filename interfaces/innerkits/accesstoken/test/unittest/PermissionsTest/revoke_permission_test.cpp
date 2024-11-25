@@ -52,7 +52,7 @@ void RevokePermissionTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
 
     // clean up test cases
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
@@ -72,7 +72,7 @@ void RevokePermissionTest::SetUpTestCase()
 
 void RevokePermissionTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
@@ -92,6 +92,7 @@ void RevokePermissionTest::SetUp()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 
+    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -114,11 +115,6 @@ void RevokePermissionTest::TearDown()
 {
 }
 
-unsigned int RevokePermissionTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
-{
-    return AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
-}
-
 /**
  * @tc.name: RevokePermissionFuncTest001
  * @tc.desc: Revoke permission that has ohos.permission.REVOKE_SENSITIVE_PERMISSIONS
@@ -127,7 +123,9 @@ unsigned int RevokePermissionTest::GetAccessTokenID(int userID, std::string bund
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -153,7 +151,9 @@ HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.GAMMA", PERMISSION_USER_FIXED);
@@ -171,7 +171,9 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest002");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
@@ -199,7 +201,9 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest003");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int invalidFlag = -1;
     int32_t ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", invalidFlag);
@@ -216,7 +220,9 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
@@ -241,12 +247,14 @@ HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest002, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest002");
+
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
@@ -263,12 +271,14 @@ HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest002, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest003, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest003");
+
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);

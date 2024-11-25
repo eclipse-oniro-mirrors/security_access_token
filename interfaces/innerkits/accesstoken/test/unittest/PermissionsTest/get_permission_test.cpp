@@ -51,7 +51,7 @@ void GetPermissionTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
 
     // clean up test cases
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
@@ -66,7 +66,7 @@ void GetPermissionTest::SetUpTestCase()
 
 void GetPermissionTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
@@ -81,6 +81,7 @@ void GetPermissionTest::SetUp()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 
+    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -103,11 +104,6 @@ void GetPermissionTest::TearDown()
 {
 }
 
-unsigned int GetPermissionTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
-{
-    return AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
-}
-
 /**
  * @tc.name: GetPermissionUsedTypeAbnormalTest001
  * @tc.desc: Get hap permission visit type return invalid.
@@ -116,11 +112,14 @@ unsigned int GetPermissionTest::GetAccessTokenID(int userID, std::string bundleN
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeAbnormalTest001");
+
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
         AccessTokenKit::GetPermissionUsedType(g_selfTokenId, accessBluetooth));
     AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
         AccessTokenKit::GetPermissionUsedType(0, accessBluetooth));
@@ -145,6 +144,8 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeFuncTest001");
+
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
     std::string sendMessages = "ohos.permission.SEND_MESSAGES";
     std::string writeCalendar = "ohos.permission.WRITE_CALENDAR";
@@ -175,6 +176,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
         .permStateList = {testState1, testState2, testState3}
     };
     AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, testPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
         AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
@@ -198,6 +200,8 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionFuncTest001");
+
     PermissionDef permDefResultAlpha;
     int ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -217,6 +221,8 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionAbnormalTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionAbnormalTest001");
+
     PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission("ohos.permission.GAMMA", permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
@@ -237,6 +243,8 @@ HWTEST_F(GetPermissionTest, GetDefPermissionAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionSpecTest001, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionSpecTest001");
+
     for (int j = 0; j < CYCLE_TIMES; j++) {
         PermissionDef permDefResultAlpha;
         int32_t ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
@@ -253,7 +261,9 @@ HWTEST_F(GetPermissionTest, GetDefPermissionSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest001, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
@@ -272,13 +282,15 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest002, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsFuncTest002");
+
     HapPolicyParams testPolicyPrams = g_infoManagerTestPolicyPrams;
     testPolicyPrams.permList.clear();
     AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, testPolicyPrams);
 
-    AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                               g_infoManagerTestInfoParms.bundleName,
-                               g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+                                                          g_infoManagerTestInfoParms.bundleName,
+                                                          g_infoManagerTestInfoParms.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionDef> permDefList;
@@ -298,7 +310,9 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest002, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsAbnormalTest001, TestSize.Level1)
 {
-    AccessTokenID tokenId = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsAbnormalTest001");
+
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     int ret = AccessTokenKit::DeleteToken(tokenId);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -316,7 +330,9 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsSpecTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsSpecTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionDef> permDefList;
@@ -335,7 +351,9 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
@@ -357,7 +375,9 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest002");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
@@ -379,6 +399,8 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest003");
+
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -420,7 +442,9 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsAbnormalTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionStateFull> permStatList;
@@ -442,7 +466,9 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsSpecTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionStateFull> permStatList;
@@ -462,6 +488,8 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionManagerInfoFuncTest001");
+
     PermissionGrantInfo info;
     AccessTokenKit::GetPermissionManagerInfo(info);
     ASSERT_EQ(false, info.grantBundleName.empty());

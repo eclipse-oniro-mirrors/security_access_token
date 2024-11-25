@@ -122,6 +122,7 @@ void InitHapTokenTest::TearDownTestCase()
 void InitHapTokenTest::SetUp()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    setuid(0);
 }
 
 void InitHapTokenTest::TearDown()
@@ -136,6 +137,8 @@ void InitHapTokenTest::TearDown()
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest001");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -143,7 +146,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapTokenInfo hapInfo;
@@ -168,13 +170,14 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest002");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapTokenInfo hapInfo;
@@ -199,6 +202,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest003");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -223,7 +228,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACCESS_CERT_MANAGER");
     EXPECT_EQ(PERMISSION_GRANTED, ret);
@@ -241,9 +245,10 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest004");
+
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullTokenId);
-    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
@@ -257,6 +262,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest005");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -318,6 +325,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest001");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -344,7 +353,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.RUN_DYN_CODE");
@@ -363,6 +371,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest002");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -387,8 +397,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
     policyParams.permStateList = {permissionStateFull001, permissionStateFull002};
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
 }
 
@@ -400,6 +408,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest003");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -426,7 +436,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.READ_HEALTH_MOTION");
@@ -453,6 +462,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest004");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -487,7 +498,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACCESS_NEARLINK");
@@ -496,8 +506,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     std::vector<PermissionStateFull> permStatList;
-    int32_t res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatList, false));
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
     ASSERT_EQ("ohos.permission.ACCESS_NEARLINK", permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantStatus[0], PERMISSION_GRANTED);
@@ -517,6 +526,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest005");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -543,6 +554,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest006");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -559,7 +572,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
@@ -581,6 +593,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest007");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -596,7 +610,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
@@ -611,6 +624,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest008");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -627,7 +642,6 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
@@ -649,6 +663,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest001");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -683,6 +699,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest002");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -715,6 +733,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest003");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -754,6 +774,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest004");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
@@ -809,6 +831,8 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest005, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest005");
+
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);

@@ -88,7 +88,7 @@ HapPolicyParams TestCommon::GetInfoManagerTestPolicyPrams()
         .isGeneral = true,
         .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
     };
 
     PermissionStateFull g_infoManagerTestState2 = {
@@ -96,7 +96,7 @@ HapPolicyParams TestCommon::GetInfoManagerTestPolicyPrams()
         .isGeneral = false,
         .resDeviceID = {"device 1", "device 2"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1, 2}
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET, PermissionFlag::PERMISSION_USER_FIXED}
     };
 
     HapPolicyParams g_infoManagerTestPolicyPrams = {
