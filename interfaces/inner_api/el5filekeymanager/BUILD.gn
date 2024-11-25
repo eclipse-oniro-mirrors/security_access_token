@@ -18,7 +18,7 @@ config("efm_innerkits") {
   visibility = [ ":*" ]
   include_dirs = [
     "include",
-    "${access_token_path}/frameworks/el5filekeymanager/include/",
+    "${access_token_path}/frameworks/inner_api/el5filekeymanager/include/",
   ]
 }
 
@@ -34,7 +34,7 @@ ohos_shared_library("el5_filekey_manager_sdk") {
 
   include_dirs = [
     "${access_token_path}/frameworks/common/include",
-    "src",
+    "${access_token_path}/frameworks/inner_api/el5filekeymanager/include/",
   ]
 
   sources = [
