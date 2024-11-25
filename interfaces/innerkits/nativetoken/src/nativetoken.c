@@ -270,7 +270,6 @@ int32_t AtlibInit(void)
             g_tokenListHead = NULL;
             return ATRET_FAILED;
         }
-        isClearOrCreate = 1;
     }
     g_isNativeTokenInited = 1;
 

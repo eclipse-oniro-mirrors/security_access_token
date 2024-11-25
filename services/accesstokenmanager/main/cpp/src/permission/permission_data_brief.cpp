@@ -70,7 +70,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
     std::list<BriefSecCompData>::iterator secCompData;
     for (secCompData = secCompList_.begin(); secCompData != secCompList_.end();) {
         if (secCompData->tokenId != tokenID) {
-            secCompData++;
+            ++secCompData;
         } else {
             secCompData = secCompList_.erase(secCompData);
         }
@@ -108,7 +108,7 @@ int32_t PermissionDataBrief::SetBriefPermData(AccessTokenID tokenID, int32_t opC
         secCompList_.push_back(secCompData);
     } else {
         std::list<BriefSecCompData>::iterator secCompData;
-        for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+        for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
             if (secCompData->tokenId == tokenID && secCompData->permCode == opCode) {
                 secCompList_.erase(secCompData);
                 break;
@@ -153,7 +153,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
         }
     }
     std::list<BriefSecCompData>::iterator secCompData;
-    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if (secCompData->tokenId == tokenID) {
             std::string permission;
             (void)TransferOpcodeToPermission(secCompData->permCode, permission);
@@ -192,7 +192,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
     }
     /* Only an application can be granted by secComp. */
     std::list<BriefSecCompData>::iterator secCompData;
-    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if (secCompData->tokenId == tokenID) {
             opCodeList.emplace_back(secCompData->permCode);
             statusList.emplace_back(true);
@@ -223,7 +223,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
         return PermUsedTypeEnum::NORMAL_TYPE;
     }
     std::list<BriefSecCompData>::iterator secCompData;
-    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if ((secCompData->tokenId == tokenID) && (secCompData->permCode == opCode)) {
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
@@ -261,7 +261,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
     }
 
     std::list<BriefSecCompData>::iterator secCompData;
-    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if ((secCompData->tokenId == tokenID) && (secCompData->permCode == opCode)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 "TokenID: %{public}d, permission is not requested. While it is granted by secComp", tokenID);
@@ -295,7 +295,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
         }
     }
     std::list<BriefSecCompData>::iterator secCompData;
-    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+    for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if (secCompData->tokenId == tokenID && secCompData->permCode == opCode) {
             return true;
         }
@@ -352,7 +352,7 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
         secCompList_.push_back(secCompData);
     } else {
         std::list<BriefSecCompData>::iterator secCompData;
-        for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); secCompData++) {
+        for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
             if (secCompData->tokenId == tokenID && secCompData->permCode == opCode) {
                 secCompList_.erase(secCompData);
                 break;
@@ -391,7 +391,7 @@ void PermissionDataBrief::ClearAllSecCompGrantedPermById(AccessTokenID tokenID)
             ACCESSTOKEN_LOG_INFO(LABEL, "TokenID is cleared %{public}u.", tokenID);
             secCompData = secCompList_.erase(secCompData);
         } else {
-            secCompData++;
+            ++secCompData;
         }
     }
 }
