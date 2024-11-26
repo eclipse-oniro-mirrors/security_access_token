@@ -315,6 +315,17 @@ int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<
     return PermissionManager::GetInstance().RemovePermStateChangeCallback(callback);
 }
 
+int32_t AccessTokenManagerService::RegisterSelfPermStateChangeCallback(
+    const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
+{
+    return PermissionManager::GetInstance().AddPermStateChangeCallback(scope.scope, callback);
+}
+
+int32_t AccessTokenManagerService::UnRegisterSelfPermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    return PermissionManager::GetInstance().RemovePermStateChangeCallback(callback);
+}
+
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "BundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
