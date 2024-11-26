@@ -21,7 +21,6 @@
 #include "ams_manager_access_proxy.h"
 #include "app_state_data.h"
 #include "process_data.h"
-#include "service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

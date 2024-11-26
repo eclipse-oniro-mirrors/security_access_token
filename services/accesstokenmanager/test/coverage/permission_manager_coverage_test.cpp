@@ -38,6 +38,7 @@ namespace {
 static const std::string FORM_VISIBLE_NAME = "#1";
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static constexpr int INVALID_IPC_CODE = 0;
 
 static PermissionStateFull g_permState = {
     .permissionName = "ohos.permission.CAMERA",
@@ -153,21 +154,26 @@ HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level
     EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(static_cast<uint32_t>(
         IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE), data1, reply, option));
 
-    MessageParcel data2;
-    data2.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor());
-    ASSERT_EQ(true, data2.WriteString(FORM_VISIBLE_NAME));
+    OHOS::MessageParcel data2;
+    ASSERT_EQ(true, data2.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    EXPECT_NE(RET_SUCCESS, callback.OnRemoteRequest(static_cast<uint32_t>(INVALID_IPC_CODE), data2, reply, option));
+
+    MessageParcel data3;
+    data3.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor());
+    data3.WriteInt32(0);
+    ASSERT_EQ(true, data3.WriteString(FORM_VISIBLE_NAME));
     std::vector<FormInstance> formInstances;
     FormInstance formInstance;
     formInstances.emplace_back(formInstance);
-    ASSERT_EQ(true, data2.WriteInt32(formInstances.size()));
+    ASSERT_EQ(true, data3.WriteInt32(formInstances.size()));
     for (auto &parcelable: formInstances) {
-        ASSERT_EQ(true, data2.WriteParcelable(&parcelable));
+        ASSERT_EQ(true, data3.WriteParcelable(&parcelable));
     }
     EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE), data2, reply, option));
+        IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE), data3, reply, option));
 
     uint32_t code = -1;
-    EXPECT_NE(RET_SUCCESS, callback.OnRemoteRequest(code, data2, reply, option));
+    EXPECT_NE(RET_SUCCESS, callback.OnRemoteRequest(code, data3, reply, option));
 }
 
 /**

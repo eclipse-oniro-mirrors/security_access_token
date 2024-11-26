@@ -19,7 +19,6 @@
 #include <iremote_proxy.h>
 
 #include "continuous_task_callback_info.h"
-#include "service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

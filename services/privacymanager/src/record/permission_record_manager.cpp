@@ -20,7 +20,7 @@
 #include <numeric>
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
-#include "ability_manager_adapter.h"
+#include "ability_manager_access_loader.h"
 #endif
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -1075,7 +1075,19 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
-    ErrCode err = AbilityManagerAdapter::GetInstance().StartAbility(want, nullptr);
+
+    std::lock_guard<std::mutex> lock(abilityManagerMutex_);
+    if (abilityManagerLoader_ == nullptr) {
+        abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+    }
+
+    AbilityManagerAccessLoaderInterface* abilityManager =
+        abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
+    if (abilityManager == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AbilityManager is nullptr!");
+        return false;
+    }
+    ErrCode err = abilityManager->StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
