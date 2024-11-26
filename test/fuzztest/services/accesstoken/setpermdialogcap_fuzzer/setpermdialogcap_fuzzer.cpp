@@ -64,7 +64,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
         HapBaseInfoParcel baseInfoParcel;
         baseInfoParcel.hapBaseInfo.userID = fuzzData.GetData<int32_t>();
-        baseInfoParcel.hapBaseInfo.bundleName = fuzzData.GenerateRandomString();
+        baseInfoParcel.hapBaseInfo.bundleName = fuzzData.GenerateStochasticString();
         baseInfoParcel.hapBaseInfo.instIndex = fuzzData.GetData<int32_t>();
 
         MessageParcel datas;

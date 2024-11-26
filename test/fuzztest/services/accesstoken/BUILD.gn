@@ -43,12 +43,10 @@ group("fuzztest") {
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "initHapTokenstub_fuzzer:InitHapTokenStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
-    "reloadnativetokeninfostub_fuzzer:ReloadNativeTokenInfoStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
-    "unregisterpermstatechangecallbackstub_fuzzer:UnRegisterPermStateChangeCallbackStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
   ]
@@ -57,9 +55,6 @@ group("fuzztest") {
     deps += [
       "deleteremotehaptokeninfostub_fuzzer:DeleteRemoteHapTokenInfoStubFuzzTest",
       "getremotehaptokeninfostub_fuzzer:GetRemoteHapTokenInfoStubFuzzTest",
-      "registertokensynccallbackstub_fuzzer:RegisterTokenSyncCallbackStubFuzzTest",
-      "unregistertokensynccallbackstub_fuzzer:UnRegisterTokenSyncCallbackStubFuzzTest",
-      "updateremotehaptokeninfostub_fuzzer:UpdateRemoteHapTokenInfoStubFuzzTest",
     ]
   }
   if (is_standard_system) {

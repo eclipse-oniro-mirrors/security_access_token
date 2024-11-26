@@ -42,7 +42,7 @@ namespace OHOS {
             .aplStr = "system_core",
         };
         infoInstance.dcapsNum = 0;
-        std::string processName(fuzzData.GenerateRandomString());
+        std::string processName(fuzzData.GenerateStochasticString());
         char name[MAX_PROCESS_NAME_LEN] = { 0 };
         if (strcpy_s(name, MAX_PROCESS_NAME_LEN, processName.c_str()) != EOK) {
             return false;

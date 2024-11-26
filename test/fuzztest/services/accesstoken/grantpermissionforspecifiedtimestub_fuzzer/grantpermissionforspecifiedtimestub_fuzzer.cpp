@@ -40,7 +40,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-        std::string permissionName(fuzzData.GenerateRandomString());
+        std::string permissionName(fuzzData.GenerateStochasticString());
         uint32_t onceTime = fuzzData.GetData<uint32_t>();
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

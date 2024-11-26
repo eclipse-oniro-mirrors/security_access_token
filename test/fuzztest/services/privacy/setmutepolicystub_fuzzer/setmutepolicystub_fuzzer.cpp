@@ -70,7 +70,7 @@ size_t g_baseFuzzPos = 0;
         if (size > sizeof(uint32_t) + sizeof(bool)) {
             uint32_t policyType = fuzzData.GetData<uint32_t>();
             uint32_t callerType = fuzzData.GetData<uint32_t>();
-            bool isMute = fuzzData.GenerateRandomBool();
+            bool isMute = fuzzData.GenerateStochasticBool();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());

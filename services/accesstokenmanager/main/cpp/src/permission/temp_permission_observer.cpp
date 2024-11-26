@@ -105,6 +105,21 @@ void PermissionAppStateObserver::OnAppStopped(const AppStateData &appStateData)
     }
 }
 
+void PermissionAppStateObserver::OnAppCacheStateChanged(const AppStateData &appStateData)
+{
+    uint32_t tokenID = appStateData.accessTokenId;
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID is %{public}d, state is %{public}d.", tokenID, appStateData.state);
+
+    /*
+        warm start application shut down application do not means kill process,
+        actually this operation means application turn background with OnAppCacheStateChanged callback,
+        so temporary authorization should be cancle as OnAppStopped when receive this callback
+     */
+    std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+    TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+    TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
+}
+
 int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
     const std::string &bundleName, std::vector<FormInstance> &formInstances)
 {

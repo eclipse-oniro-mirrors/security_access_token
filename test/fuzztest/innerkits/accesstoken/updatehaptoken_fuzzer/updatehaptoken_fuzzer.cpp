@@ -38,31 +38,31 @@ namespace OHOS {
             .tokenIdExStruct.tokenAttr = fuzzData.GetData<AccessTokenAttr>(),
         };
 
-        std::string permissionName = fuzzData.GenerateRandomString();
+        std::string permissionName = fuzzData.GenerateStochasticString();
         PermissionDef testPermDef;
         testPermDef.permissionName = permissionName;
-        testPermDef.bundleName = fuzzData.GenerateRandomString();
+        testPermDef.bundleName = fuzzData.GenerateStochasticString();
         testPermDef.grantMode = 1;
         testPermDef.availableLevel = APL_NORMAL;
-        testPermDef.label = fuzzData.GenerateRandomString();
+        testPermDef.label = fuzzData.GenerateStochasticString();
         testPermDef.labelId = 1;
-        testPermDef.description = fuzzData.GenerateRandomString();
+        testPermDef.description = fuzzData.GenerateStochasticString();
         testPermDef.descriptionId = 1;
 
         PermissionStateFull testState;
         testState.permissionName = permissionName;
         testState.isGeneral = true;
-        testState.resDeviceID = {fuzzData.GenerateRandomString()};
+        testState.resDeviceID = {fuzzData.GenerateStochasticString()};
         testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
         testState.grantFlags = {1};
         HapPolicyParams TestPolicyParams = {
             .apl = APL_NORMAL,
-            .domain = fuzzData.GenerateRandomString(),
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}
         };
         UpdateHapInfoParams info;
-        info.appIDDesc = fuzzData.GenerateRandomString();
+        info.appIDDesc = fuzzData.GenerateStochasticString();
         info.apiVersion = 8; // 8 means the version
         info.isSystemApp = false;
 

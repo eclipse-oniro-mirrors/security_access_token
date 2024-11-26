@@ -67,7 +67,7 @@ namespace OHOS {
         if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
             return false;
         }
-        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
         if (!datas.WriteRemoteObject(callbackWrap->AsObject())) {

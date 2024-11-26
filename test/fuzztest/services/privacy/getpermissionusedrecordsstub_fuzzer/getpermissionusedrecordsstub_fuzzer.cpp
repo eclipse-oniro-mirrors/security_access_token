@@ -38,17 +38,18 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        std::vector<std::string> permissionList = {fuzzData.GenerateRandomString()};
+        std::vector<std::string> permissionList = {fuzzData.GenerateStochasticString()};
 
         PermissionUsedRequest request = {
             .tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            .isRemote = fuzzData.GenerateRandomBool(),
-            .deviceId = fuzzData.GenerateRandomString(),
-            .bundleName = fuzzData.GenerateRandomString(),
+            .isRemote = fuzzData.GenerateStochasticBool(),
+            .deviceId = fuzzData.GenerateStochasticString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .permissionList = permissionList,
             .beginTimeMillis = fuzzData.GetData<int64_t>(),
             .endTimeMillis = fuzzData.GetData<int64_t>(),
-            .flag = fuzzData.GenerateRandomEnmu<PermissionUsageFlag>(FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
+            .flag = fuzzData.GenerateStochasticEnmu<PermissionUsageFlag>(
+                FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
         PermissionUsedRequestParcel requestParcel;
         requestParcel.request = request;

@@ -36,6 +36,7 @@ public:
     virtual void OnProcessDied(const ProcessData &processData) override {}
     virtual void OnAppStateChanged(const AppStateData &appStateData) override {}
     virtual void OnAppStopped(const AppStateData &appStateData) override {}
+    virtual void OnAppCacheStateChanged(const AppStateData &appStateData) override {}
 
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
@@ -43,6 +44,7 @@ private:
     int32_t HandleOnProcessDied(MessageParcel &data, MessageParcel &reply);
     int32_t HandleOnAppStateChanged(MessageParcel &data, MessageParcel &reply);
     int32_t HandleOnAppStopped(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleOnAppCacheStateChanged(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AccessToken
 } // namespace Security

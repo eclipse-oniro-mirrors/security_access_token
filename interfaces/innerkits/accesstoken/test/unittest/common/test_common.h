@@ -18,8 +18,10 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,7 +29,16 @@ namespace AccessToken {
 class TestCommon {
 public:
     static constexpr int32_t DEFAULT_API_VERSION = 12;
+
     static void GetHapParams(HapInfoParams& infoParams, HapPolicyParams& policyParams);
+    static void TestPreparePermStateList(HapPolicyParams &policy);
+    static void TestPreparePermDefList(HapPolicyParams &policy);
+    static HapPolicyParams GetTestPolicyParams();
+    static HapInfoParams GetInfoManagerTestInfoParms();
+    static HapInfoParams GetInfoManagerTestNormalInfoParms();
+    static HapInfoParams GetInfoManagerTestSystemInfoParms();
+    static HapPolicyParams GetInfoManagerTestPolicyPrams();
+    static AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy);
 };
 }  // namespace AccessToken
 }  // namespace Security

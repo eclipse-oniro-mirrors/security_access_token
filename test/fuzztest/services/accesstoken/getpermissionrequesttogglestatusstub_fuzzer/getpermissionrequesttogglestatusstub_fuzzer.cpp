@@ -37,7 +37,7 @@ namespace OHOS {
             return false;
         }
         AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(fuzzData.GenerateRandomString());
+        std::string testName(fuzzData.GenerateStochasticString());
         int32_t userID = fuzzData.GetData<int32_t>();
         MessageParcel sendData;
         if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor()) ||

@@ -35,7 +35,7 @@ namespace OHOS {
         }
         AccessTokenFuzzData fuzzData(data, size);
         PermissionListState perm = {
-            .permissionName = fuzzData.GenerateRandomString(),
+            .permissionName = fuzzData.GenerateStochasticString(),
             .state = SETTING_OPER,
         };
         PermissionListStateParcel permParcel;

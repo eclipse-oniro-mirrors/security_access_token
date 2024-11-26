@@ -47,7 +47,7 @@ public:
         return object;
     }
 
-    std::string GenerateRandomString()
+    std::string GenerateStochasticString()
     {
         uint8_t strlen = GetData<uint8_t>();
 
@@ -65,13 +65,13 @@ public:
         return str;
     }
 
-    template <class T> T GenerateRandomEnmu(T enmuMax)
+    template <class T> T GenerateStochasticEnmu(T enmuMax)
     {
         T enmuData = static_cast<T>(GetData<uint32_t>() % (static_cast<uint32_t>(enmuMax) + 1));
         return enmuData;
     }
 
-    bool GenerateRandomBool()
+    bool GenerateStochasticBool()
     {
         return (GetData<uint32_t>() % BOOL_MODULO_NUM) == 0;
     }

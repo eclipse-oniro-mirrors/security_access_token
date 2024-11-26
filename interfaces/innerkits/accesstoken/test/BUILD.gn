@@ -37,8 +37,15 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
+    "unittest/HapTokenTest/delete_token_test.cpp",
+    "unittest/HapTokenTest/get_hap_token_test.cpp",
+    "unittest/HapTokenTest/get_token_type_test.cpp",
     "unittest/HapTokenTest/init_hap_token_test.cpp",
     "unittest/HapTokenTest/update_hap_token_test.cpp",
+    "unittest/PermissionsTest/clear_user_granted__permission_state_test.cpp",
+    "unittest/PermissionsTest/get_permission_test.cpp",
+    "unittest/PermissionsTest/grant_permission_test.cpp",
+    "unittest/PermissionsTest/revoke_permission_test.cpp",
     "unittest/common/test_common.cpp",
     "unittest/src/accesstoken_deny_test.cpp",
     "unittest/src/accesstoken_kit_extension_test.cpp",

@@ -32,7 +32,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         int32_t result = AccessTokenKit::GetHapTokenID(
-            fuzzData.GetData<int>(), fuzzData.GenerateRandomString(), fuzzData.GetData<int>());
+            fuzzData.GetData<int>(), fuzzData.GenerateStochasticString(), fuzzData.GetData<int>());
 
         return result == RET_SUCCESS;
     }

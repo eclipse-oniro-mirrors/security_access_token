@@ -38,7 +38,7 @@ namespace OHOS {
         std::vector<PermissionUsedTypeInfo> results;
 
         return PrivacyKit::GetPermissionUsedTypeInfos(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateRandomString(), results) == 0;
+            fuzzData.GenerateStochasticString(), results) == 0;
     }
 }
 

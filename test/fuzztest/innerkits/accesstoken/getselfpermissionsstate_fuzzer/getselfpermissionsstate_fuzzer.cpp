@@ -35,7 +35,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
         std::vector<PermissionListState> permsList1;
         PermissionListState perm1 = {
-            .permissionName = fuzzData.GenerateRandomString(),
+            .permissionName = fuzzData.GenerateStochasticString(),
             .state = SETTING_OPER,
         };
         permsList1.emplace_back(perm1);

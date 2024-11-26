@@ -59,7 +59,7 @@ namespace OHOS {
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
-        std::vector<std::string> permList = {fuzzData.GenerateRandomString()};
+        std::vector<std::string> permList = {fuzzData.GenerateStochasticString()};
         auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
 

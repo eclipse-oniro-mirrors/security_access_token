@@ -244,6 +244,8 @@ private:
 #ifndef APP_SECURITY_PRIVACY_SERVICE
     std::string globalDialogBundleName_;
     std::string globalDialogAbilityName_;
+    std::mutex abilityManagerMutex_;
+    std::shared_ptr<LibraryLoader> abilityManagerLoader_;
 #endif
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> deleteEventRunner_;
