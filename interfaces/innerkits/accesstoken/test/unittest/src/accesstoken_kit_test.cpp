@@ -578,12 +578,12 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain"
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -1174,13 +1174,13 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain",
         .permList = permDefList,
         .permStateList = permStatList
     };
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -1636,13 +1636,10 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
     ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
     ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
     ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
-
-    ASSERT_EQ(hapTokenInfoRes.appID, "appIDDesc");
 
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
 }
@@ -2554,9 +2551,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, info.appIDDesc);
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_SYSTEM_BASIC);
-
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
@@ -2607,8 +2601,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, g_infoManagerTestInfoParms.appIDDesc);
-
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
@@ -2637,8 +2629,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
-
-    ASSERT_EQ(hapTokenInfoRes.apl, apl);
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));

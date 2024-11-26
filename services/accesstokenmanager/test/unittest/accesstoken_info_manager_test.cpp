@@ -182,13 +182,10 @@ HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
 {
     AccessTokenID id = 0x20240112;
     HapTokenInfo info = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "deviceId",
         .tokenID = id,
         .tokenAttr = 0
     };
@@ -863,13 +860,10 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     std::string deviceID = "deviceId";
     HapTokenInfo rightBaseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "deviceId",
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -877,13 +871,6 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string wrongStr(10241, 'x');
 
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest("", wrongBaseInfo));
-
-    wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.userID = -1; // wrong userID
@@ -895,10 +882,6 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.tokenID = 0; // wrong tokenID
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.appID = wrongStr; // wrong appID
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
@@ -2087,13 +2070,12 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;
-    int aplNum = static_cast<int>(ATokenAplEnum::APL_INVALID);
     int version = 10; // 10 is random input which only need not equal 1
     HapPolicyParams policy;
     UpdateHapInfoParams hapInfo;
     hapInfo.apiVersion = DEFAULT_API_VERSION;
     hapInfo.isSystemApp = false;
-    hap->Update(hapInfo, policy.permStateList, policy.apl); // permPolicySet_ is null
+    hap->Update(hapInfo, policy.permStateList); // permPolicySet_ is null
 
     std::string info;
     hap->ToString(info); // permPolicySet_ is null
@@ -2111,26 +2093,6 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     bundleName = "com.ohos.permissionmanger";
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
-    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
-    // appID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(TokenFiledConst::FIELD_APP_ID);
-
-    appIDDesc = "what's this";
-    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
-    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
-    // deviceID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(TokenFiledConst::FIELD_DEVICE_ID);
-
-    deviceID = "dev-001";
-    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
-    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
-    // apl invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-
-    aplNum = static_cast<int>(ATokenAplEnum::APL_NORMAL);
-    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
     tokenValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));

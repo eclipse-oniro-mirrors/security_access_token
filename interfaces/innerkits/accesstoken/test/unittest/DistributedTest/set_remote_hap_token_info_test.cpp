@@ -36,12 +36,10 @@ static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
 
 HapTokenInfo g_baseInfo = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .appID = "test4",
     .tokenID = 0x20100000,
     .tokenAttr = 0
 };
@@ -152,7 +150,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.L
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState2);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo1 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1
@@ -169,13 +166,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.L
     HapTokenInfo resultInfo;
     ret = AccessTokenKit::GetHapTokenInfo(mapID, resultInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(resultInfo.apl, remoteTokenInfo1.baseInfo.apl);
     ASSERT_EQ(resultInfo.ver, remoteTokenInfo1.baseInfo.ver);
     ASSERT_EQ(resultInfo.userID, remoteTokenInfo1.baseInfo.userID);
     ASSERT_EQ(resultInfo.bundleName, remoteTokenInfo1.baseInfo.bundleName);
     ASSERT_EQ(resultInfo.instIndex, remoteTokenInfo1.baseInfo.instIndex);
-    ASSERT_EQ(resultInfo.appID, remoteTokenInfo1.baseInfo.appID);
-    ASSERT_EQ(resultInfo.deviceID, remoteTokenInfo1.baseInfo.deviceID);
     ASSERT_NE(resultInfo.tokenID, remoteTokenInfo1.baseInfo.tokenID); // tokenID already is map tokenID
     ASSERT_EQ(resultInfo.tokenAttr, remoteTokenInfo1.baseInfo.tokenAttr);
 
@@ -192,21 +186,9 @@ void SetRemoteHapTokenInfoWithWrongInfo1(HapTokenInfo &wrongBaseInfo, const HapT
     std::string wrongStr(10241, 'x'); // 10241 means the invalid string length
 
     wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.appID = wrongStr; // wrong appID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    EXPECT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
     remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    EXPECT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     EXPECT_NE(ret, RET_SUCCESS);
 
     wrongBaseInfo = rightBaseInfo;
@@ -228,20 +210,16 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.L
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
     HapTokenInfo rightBaseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "test4",
-        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
 
     HapTokenInfo wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
-
+    wrongBaseInfo.dlpType = static_cast<HapDlpType>(1000000);
     PermissionStateFull infoManagerTestState_2 = {
         .permissionName = "ohos.permission.test1",
         .isGeneral = true,
@@ -284,7 +262,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
     std::vector<PermissionStateFull> permStateList3;
     permStateList3.emplace_back(infoManagerTestState_3);
 
-    g_baseInfo.deviceID = deviceID3;
     HapTokenInfoForSync remoteTokenInfo3 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList3
@@ -324,7 +301,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
     std::vector<PermissionStateFull> permStateList4;
     permStateList4.emplace_back(infoManagerTestState_4);
 
-    g_baseInfo.deviceID = deviceID4;
     HapTokenInfoForSync remoteTokenInfo4 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList4
@@ -371,7 +347,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
     std::vector<PermissionStateFull> permStateList5;
     permStateList5.emplace_back(infoManagerTestState5);
 
-    g_baseInfo.deviceID = deviceID5;
     HapTokenInfoForSync remoteTokenInfo5 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList5
@@ -424,7 +399,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
     permStateList6.emplace_back(infoManagerTestState6);
     permStateList6.emplace_back(infoManagerTestState7);
 
-    g_baseInfo.deviceID = deviceID6;
     HapTokenInfoForSync remoteTokenInfo6 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList6
@@ -471,7 +445,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
     std::vector<PermissionStateFull> permStateList7;
     permStateList7.emplace_back(infoManagerTestState7);
 
-    g_baseInfo.deviceID = deviceID7;
     HapTokenInfoForSync remoteTokenInfo7 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList7
@@ -512,7 +485,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
     std::vector<PermissionStateFull> permStateList8;
     permStateList8.emplace_back(infoManagerTestState8);
 
-    g_baseInfo.deviceID = deviceID8;
     HapTokenInfoForSync remoteTokenInfo8 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList8
@@ -560,7 +532,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
     std::vector<PermissionStateFull> permStateList9;
     permStateList9.emplace_back(infoManagerTestState9);
 
-    g_baseInfo.deviceID = deviceID9;
     HapTokenInfoForSync remoteTokenInfo9 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList9
@@ -597,13 +568,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.L
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest006 start.");
     std::string deviceID = udid_;
     HapTokenInfo baseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = udid_,
         .tokenID = 0x28100000,
         .tokenAttr = 0
     };

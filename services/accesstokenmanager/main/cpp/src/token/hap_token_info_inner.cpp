@@ -48,7 +48,6 @@ HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(fals
     tokenInfoBasic_.apiVersion = 0;
     tokenInfoBasic_.instIndex = 0;
     tokenInfoBasic_.dlpType = 0;
-    tokenInfoBasic_.apl = APL_NORMAL;
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
@@ -65,9 +64,6 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
-    tokenInfoBasic_.appID = info.appIDDesc;
-    tokenInfoBasic_.deviceID = DEFAULT_DEVICEID;
-    tokenInfoBasic_.apl = policy.apl;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permStateList);
 }
 
@@ -93,12 +89,10 @@ HapTokenInfoInner::~HapTokenInfoInner()
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
-int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
-    const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl)
+void HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
+    const std::vector<PermissionStateFull>& permStateList)
 {
-    tokenInfoBasic_.appID = info.appIDDesc;
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
-    tokenInfoBasic_.apl = apl;
     if (info.isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
@@ -113,29 +107,6 @@ int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     }
 
     permPolicySet_->Update(permStateList);
-
-    if (isRemote_) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
-        return RET_SUCCESS;
-    }
-
-    // get new hap token info from cache
-    std::vector<GenericValues> hapInfoValues;
-    StoreHapInfo(hapInfoValues);
-    // get new permission def from cache if exist
-    std::vector<GenericValues> permDefValues;
-    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenInfoBasic_.tokenID, permDefValues);
-    // get new permission status from cache if exist
-    std::vector<GenericValues> permStateValues;
-    permPolicySet_->StorePermissionPolicySet(permStateValues);
-
-    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenInfoBasic_.tokenID, hapInfoValues, permDefValues,
-        permStateValues);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "TokenID %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenInfoBasic_.tokenID, ret);
-    }
-    return ret;
 }
 
 void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
@@ -151,9 +122,6 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
     outGenericValues.Put(TokenFiledConst::FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
     outGenericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
-    outGenericValues.Put(TokenFiledConst::FIELD_APP_ID, tokenInfoBasic_.appID);
-    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
-    outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
     outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
@@ -173,32 +141,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.apiVersion = GetApiVersion(inGenericValues.GetInt(TokenFiledConst::FIELD_API_VERSION));
     tokenInfoBasic_.instIndex = inGenericValues.GetInt(TokenFiledConst::FIELD_INST_INDEX);
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(TokenFiledConst::FIELD_DLP_TYPE);
-    tokenInfoBasic_.appID = inGenericValues.GetString(TokenFiledConst::FIELD_APP_ID);
-    if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "appID error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
 
-    tokenInfoBasic_.deviceID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
-    if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
-    if (DataValidator::IsAplNumValid(aplNum)) {
-        tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x apl is error, value %{public}d",
-            tokenInfoBasic_.tokenID, aplNum);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x version is error, version %{public}d",
@@ -538,8 +481,6 @@ void HapTokenInfoInner::ToString(std::string& info)
     info.append(R"(  "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")" + ",\n");
     info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
     info.append(R"(  "dlpType": )" + std::to_string(tokenInfoBasic_.dlpType) + ",\n");
-    info.append(R"(  "appID": ")" + tokenInfoBasic_.appID + R"(")" + ",\n");
-    info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
     info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
 

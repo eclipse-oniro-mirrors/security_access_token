@@ -33,12 +33,10 @@ static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
 
 HapTokenInfo g_baseInfo = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .appID = "test4",
     .tokenID = 0x20100000,
     .tokenAttr = 0
 };
@@ -149,7 +147,6 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState_1);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo1 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1

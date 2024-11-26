@@ -250,15 +250,12 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel001, TestSize.Level1)
     HapTokenInfoForSyncParcel hapTokenInfoSync;
 
     HapTokenInfo hapTokenInfo;
-    hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
     hapTokenInfo.bundleName = "bundle1";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "test1";
-    hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
     hapTokenInfoSync.hapTokenInfoForSyncParams.baseInfo = hapTokenInfo;
@@ -309,15 +306,12 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     HapTokenInfoForSyncParcel hapTokenInfoSync;
 
     HapTokenInfo hapTokenInfo;
-    hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
     hapTokenInfo.bundleName = "bundle2";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "test2";
-    hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
 
@@ -330,7 +324,7 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     EXPECT_NE(nullptr, readedData);
 
     Parcel out1;
-    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
+    WriteParcelable(out1, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
     std::shared_ptr<HapTokenInfoForSyncParcel> readedData1(HapTokenInfoForSyncParcel::Unmarshalling(out1));
     EXPECT_EQ(true, readedData1 == nullptr);
 }
