@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef GET_PERMISSION_TEST_H
-#define GET_PERMISSION_TEST_H
+#ifndef DELETE_TOKEN_TEST_H
+#define DELETE_TOKEN_TEST_H
 
 #include <gtest/gtest.h>
 
@@ -26,7 +26,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class GetPermissionTest : public testing::Test {
+class DeleteTokenTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
@@ -36,4 +36,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // GET_PERMISSION_TEST_H
+#endif // DELETE_TOKEN_TEST_H

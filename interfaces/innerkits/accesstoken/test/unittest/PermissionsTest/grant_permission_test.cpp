@@ -52,7 +52,7 @@ void GrantPermissionTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
 
     // clean up test cases
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
@@ -72,7 +72,7 @@ void GrantPermissionTest::SetUpTestCase()
 
 void GrantPermissionTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
@@ -92,6 +92,7 @@ void GrantPermissionTest::SetUp()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 
+    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -114,11 +115,6 @@ void GrantPermissionTest::TearDown()
 {
 }
 
-unsigned int GrantPermissionTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
-{
-    return AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
-}
-
 /**
  * @tc.name: GrantPermissionFuncTest001
  * @tc.desc: Grant permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
@@ -127,7 +123,9 @@ unsigned int GrantPermissionTest::GetAccessTokenID(int userID, std::string bundl
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -152,7 +150,9 @@ HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionAbnormalTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GAMMA", PERMISSION_USER_FIXED);
@@ -183,7 +183,9 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionAbnormalTest002");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int32_t invalidFlag = -1;
     int32_t ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", invalidFlag);
@@ -199,7 +201,9 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
@@ -224,12 +228,14 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest002, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest002");
+
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
@@ -245,12 +251,14 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest002, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest003, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest003");
+
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);

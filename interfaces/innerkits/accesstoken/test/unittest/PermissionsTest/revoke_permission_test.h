@@ -32,7 +32,6 @@ public:
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
-    static unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
 };
 } // namespace AccessToken
 } // namespace Security

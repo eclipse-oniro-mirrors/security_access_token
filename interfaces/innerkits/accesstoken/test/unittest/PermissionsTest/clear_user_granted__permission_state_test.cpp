@@ -50,7 +50,7 @@ void ClearUserGrantedPermissionStateTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
 
     // clean up test cases
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
@@ -65,7 +65,7 @@ void ClearUserGrantedPermissionStateTest::SetUpTestCase()
 
 void ClearUserGrantedPermissionStateTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
@@ -80,6 +80,7 @@ void ClearUserGrantedPermissionStateTest::SetUp()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 
+    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -102,11 +103,6 @@ void ClearUserGrantedPermissionStateTest::TearDown()
 {
 }
 
-unsigned int ClearUserGrantedPermissionStateTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
-{
-    return AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
-}
-
 /**
  * @tc.name: ClearUserGrantedPermissionStateFuncTest001
  * @tc.desc: Clear user/system granted permission after ClearUserGrantedPermissionState has been invoked.
@@ -115,7 +111,9 @@ unsigned int ClearUserGrantedPermissionStateTest::GetAccessTokenID(int userID, s
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFuncTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -138,6 +136,8 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFuncTest002, TestSize.Level0)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateFuncTest002");
+
     PermissionDef g_infoManagerTestPermDef1 = {
         .permissionName = "ohos.permission.test1",
         .bundleName = "accesstoken_test",
@@ -149,7 +149,6 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
         .descriptionId = 1,
         .availableType = MDM
     };
-    AccessTokenIDEx tokenIdEx = {0};
     OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState1 = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
@@ -177,8 +176,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
         .permList = {g_infoManagerTestPermDef1},
         .permStateList = {infoManagerTestState1, infoManagerTestState2, infoManagerTestState3}
     };
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
@@ -200,7 +198,9 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbnormalTest001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateAbnormalTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(TEST_TOKENID_INVALID);
@@ -221,7 +221,9 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbn
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateSpecTets001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateSpecTets001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     for (int i = 0; i < CYCLE_TIMES; i++) {
         int32_t ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
