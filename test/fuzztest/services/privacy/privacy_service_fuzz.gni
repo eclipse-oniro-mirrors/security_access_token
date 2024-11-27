@@ -134,9 +134,8 @@ if (eventhandler_enable == true) {
 if (access_token_app_security_privacy_service_enable) {
   privacy_cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
 } else {
-  privacy_include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/ability_manager" ]
-  privacy_external_deps += [ "ability_runtime:ability_manager" ]
-  privacy_sources += [ "${access_token_path}/services/privacymanager/src/sensitive/ability_manager/ability_manager_adapter.cpp" ]
+  privacy_include_dirs +=
+      [ "${access_token_path}/services/common/ability_manager/include" ]
 }
 
 if (audio_framework_enable) {

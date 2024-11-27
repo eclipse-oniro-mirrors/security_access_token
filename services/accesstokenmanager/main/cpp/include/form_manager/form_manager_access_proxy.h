@@ -18,7 +18,6 @@
 
 #include <iremote_proxy.h>
 #include "form_instance.h"
-#include "service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
