@@ -2251,6 +2251,36 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.RECEIVE_ENTERPRISE_POLICY_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_UNREMOVABLE_NOTIFICATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
