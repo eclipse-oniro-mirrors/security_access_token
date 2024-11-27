@@ -65,9 +65,13 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
-    std::vector<BriefPermData> list;
-    GetPermissionBriefData(list, policySet->permStateList_);
-    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
+
+    if (tokenType == TOKEN_HAP) {
+        std::vector<BriefPermData> list;
+        GetPermissionBriefData(list, policySet->permStateList_);
+        PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
+    }
+
     return policySet;
 }
 
@@ -174,9 +178,14 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
             }
         }
     }
-    std::vector<BriefPermData> list;
-    GetPermissionBriefData(list, policySet->permStateList_);
-    PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
+
+    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
+    if (tokenType == TOKEN_HAP) {
+        std::vector<BriefPermData> list;
+        GetPermissionBriefData(list, policySet->permStateList_);
+        PermissionDataBrief::GetInstance().AddBriefPermDataByTokenId(tokenId, list);
+    }
+
     return policySet;
 }
 
