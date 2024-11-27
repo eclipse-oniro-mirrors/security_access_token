@@ -25,6 +25,7 @@
 #include "remote_command_executor.h"
 #include "token_sync_manager_service.h"
 #include "soft_bus_manager.h"
+#include "soft_bus_channel.h"
 #undef private
 
 #include "gtest/gtest.h"
@@ -182,8 +183,27 @@ HWTEST_F(TokenSyncServiceTest, CloseSocket001, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level1)
 {
+    SoftBusManager::GetInstance().Initialize();
+    SoftBusManager::GetInstance().SetDefaultConfigValue();
     ASSERT_EQ("", SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(""));
     ASSERT_EQ("", SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(""));
+}
+
+/**
+ * @tc.name: InsertCallbackAndExcute001
+ * @tc.desc: Ond
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level1)
+{
+    SoftBusDeviceConnectionListener listener;
+    listener.OnDeviceOffline(g_devInfo);
+    SoftBusChannel channel("test");
+    std::string test("test");
+    channel.InsertCallback(0, test);
+    ASSERT_EQ(true, channel.isSocketUsing_);
+    ASSERT_EQ("", channel.ExecuteCommand("test", "test"));
 }
 }  // namespace AccessToken
 }  // namespace Security
