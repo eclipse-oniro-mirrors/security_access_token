@@ -679,6 +679,8 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
     const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
+    std::vector<GenericValues> permStateValues;
+    std::vector<GenericValues> nativeTokenValues;
     for (const auto& infoPtr: tokenInfos) {
         if (infoPtr == nullptr) {
             ACCESSTOKEN_LOG_WARN(LABEL, "Token info from libat is null");
@@ -702,13 +704,11 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
                 ACCESSTOKEN_LOG_ERROR(LABEL,
                     "Token %{public}u process name %{public}s add to manager failed!", id, processName.c_str());
             }
-            std::vector<GenericValues> permStateValues;
-            std::vector<GenericValues> nativeTokenValues;
             infoPtr->TransferNativeInfo(nativeTokenValues);
             infoPtr->TransferPermissionPolicy(permStateValues);
-            AddNativeTokenInfoToDb(nativeTokenValues, permStateValues);
         }
     }
+    AddNativeTokenInfoToDb(nativeTokenValues, permStateValues);
 }
 
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
