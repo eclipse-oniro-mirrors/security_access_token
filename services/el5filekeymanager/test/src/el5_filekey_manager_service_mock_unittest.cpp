@@ -113,6 +113,11 @@ public:
     {
         return EFM_SUCCESS;
     }
+
+    void UnInit()
+    {
+        GTEST_LOG_(INFO) << "UnInit.";
+    }
 };
 
 /**
