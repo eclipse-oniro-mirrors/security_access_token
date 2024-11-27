@@ -75,7 +75,10 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
 void El5FilekeyManagerServiceAbility::OnStop()
 {
     LOG_INFO("onStop called.");
-    service_ = nullptr;
+    if (service_) {
+        service_->UnInit();
+        service_ = nullptr;
+    }
 }
 }  // namespace AccessToken
 }  // namespace Security

@@ -119,6 +119,14 @@ int32_t El5FilekeyManagerService::Init()
     return EFM_SUCCESS;
 }
 
+void El5FilekeyManagerService::UnInit()
+{
+    LOG_INFO("UnInit start");
+    if (service_) {
+        service_->UnInit();
+    }
+}
+
 void El5FilekeyManagerService::PostDelayedUnloadTask(uint32_t delayedTime)
 {
 #ifdef EVENTHANDLER_ENABLE

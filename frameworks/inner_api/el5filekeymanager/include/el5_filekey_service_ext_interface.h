@@ -37,6 +37,7 @@ public:
     virtual int32_t SetPolicyScreenLocked() = 0;
     virtual int32_t DumpData(int fd, const std::vector<std::u16string>& args) = 0;
     virtual int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) = 0;
+    virtual void UnInit() = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security

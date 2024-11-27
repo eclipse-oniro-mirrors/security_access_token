@@ -40,6 +40,7 @@ public:
     virtual ~El5FilekeyManagerService();
 
     int32_t Init();
+    void UnInit();
 
     int32_t AcquireAccess(DataLockType type) override;
     int32_t ReleaseAccess(DataLockType type) override;
