@@ -84,7 +84,10 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
   ]
 
-  sources = [ "permission_manager_coverage_test.cpp" ]
+  sources = [
+    "accesstoken_database_coverage_test.cpp",
+    "permission_manager_coverage_test.cpp",
+  ]
   sources += accesstoken_manager_service_source
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
