@@ -524,6 +524,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ALLOW_UPGRADE_GUIDE_ACCESS",          false},
     {"ohos.permission.MANAGE_RGM",                          false},
     {"ohos.permission.ACCESS_PROTOCOL_DFX_DATA",            false},
+    {"ohos.permission.ACCESS_CMAP_SERVICE",                 false},
     {"ohos.permission.GET_NEARLINK_LOCAL_MAC",              false},
     {"ohos.permission.MANAGE_NEARLINK",                     false},
     {"ohos.permission.UNINSTALL_QUICK_FIX_BUNDLE",          false},
