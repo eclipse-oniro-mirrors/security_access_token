@@ -53,7 +53,7 @@ public:
     int32_t CreateActiveStatusChangeCbk(
         const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
         sptr<PermActiveStatusChangeCallback>& callbackWrap);
-    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid);
     void OnRemoteDiedHandle();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);

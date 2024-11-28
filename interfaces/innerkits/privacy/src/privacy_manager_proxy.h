@@ -42,7 +42,7 @@ public:
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
-    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid) override;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhance) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;

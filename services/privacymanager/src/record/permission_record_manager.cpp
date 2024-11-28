@@ -373,7 +373,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
         std::vector<GenericValues> recordValues;
         recordValues.emplace_back(recordValue);
-        int32_t res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
+        res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
             recordValues);
         if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
             return false;
@@ -1244,9 +1244,9 @@ int32_t PermissionRecordManager::PermissionListFilter(
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
+bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
-    int32_t status = GetAppStatus(tokenId);
+    int32_t status = GetAppStatus(tokenId, pid);
     bool isScreenLocked = GetLockScreenStatus();
     bool isAllowedBackGround = false;
     if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
@@ -1258,9 +1258,9 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
     return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenLocked) || isAllowedBackGround;
 }
 
-bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
+bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
 {
-    int32_t status = GetAppStatus(tokenId);
+    int32_t status = GetAppStatus(tokenId, pid);
     ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, status is %{public}d.", tokenId, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
@@ -1274,7 +1274,8 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
     return false;
 }
 
-bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t pid)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Id(%{public}d) is not hap.", tokenId);
@@ -1282,9 +1283,9 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     }
 
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsAllowedUsingCamera(tokenId);
+        return IsAllowedUsingCamera(tokenId, pid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        return IsAllowedUsingMicrophone(tokenId);
+        return IsAllowedUsingMicrophone(tokenId, pid);
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
@@ -1498,13 +1499,19 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
+int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId, int32_t pid)
 {
     int32_t status = PERM_ACTIVE_IN_BACKGROUND;
     std::vector<AppStateData> foreGroundAppList;
     AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
-        [=](const auto& foreGroundApp) { return foreGroundApp.accessTokenId == tokenId; })) {
+        [=](const auto& foreGroundApp) {
+        if (pid == -1) {
+            return foreGroundApp.accessTokenId == tokenId;
+        }
+
+        return ((foreGroundApp.accessTokenId == tokenId) && (foreGroundApp.pid == pid));
+    })) {
         status = PERM_ACTIVE_IN_FOREGROUND;
     }
     return status;

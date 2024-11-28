@@ -139,7 +139,7 @@ public:
      * @param permissionName permission nanme
      * @return true means allow to user the permission, false means not allow
      */
-    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     /**

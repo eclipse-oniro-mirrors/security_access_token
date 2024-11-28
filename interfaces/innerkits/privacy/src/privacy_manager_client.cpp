@@ -272,14 +272,15 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     return result;
 }
 
-bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t pid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return false;
     }
-    return proxy->IsAllowedUsingPermission(tokenID, permissionName);
+    return proxy->IsAllowedUsingPermission(tokenID, permissionName, pid);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

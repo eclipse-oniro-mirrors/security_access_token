@@ -275,10 +275,12 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
     return PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
-bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t pid)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, perm: %{public}s, pid: %{public}d.",
+        tokenId, permissionName.c_str(), pid);
+    return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
 }
 
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
