@@ -180,6 +180,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     for (uint32_t i = 0; i < len; i++) {
         PermissionListState perm = parcelList[i].permsState;
         permList[i].state = perm.state;
+        permList[i].errorReason = perm.errorReason;
     }
 
     info = infoParcel.info;

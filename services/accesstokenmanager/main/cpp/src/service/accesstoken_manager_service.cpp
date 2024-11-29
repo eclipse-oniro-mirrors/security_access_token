@@ -247,6 +247,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         for (uint32_t i = 0; i < size; i++) {
             if (reqPermList[i].permsState.state != INVALID_OPER) {
                 reqPermList[i].permsState.state = FORBIDDEN_OPER;
+                reqPermList[i].permsState.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
             }
         }
         return FORBIDDEN_OPER;

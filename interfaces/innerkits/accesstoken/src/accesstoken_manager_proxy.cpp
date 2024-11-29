@@ -353,6 +353,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
         sptr<PermissionListStateParcel> permissionReq = reply.ReadParcelable<PermissionListStateParcel>();
         if (permissionReq != nullptr) {
             permListParcel[i].permsState.state = permissionReq->permsState.state;
+            permListParcel[i].permsState.errorReason = permissionReq->permsState.errorReason;
         }
     }
 
