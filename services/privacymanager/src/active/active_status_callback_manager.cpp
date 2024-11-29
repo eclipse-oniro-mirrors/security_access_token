@@ -140,7 +140,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
         }
     }
     for (auto it = list.begin(); it != list.end(); ++it) {
-        auto callback = new PermActiveStatusChangeCallbackProxy(*it);
+        sptr<IPermActiveStatusCallback> callback = new PermActiveStatusChangeCallbackProxy(*it);
         if (callback != nullptr) {
             ActiveChangeResponse resInfo;
             resInfo.type = changeType;

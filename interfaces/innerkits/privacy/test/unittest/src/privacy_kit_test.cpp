@@ -61,6 +61,7 @@ static constexpr int32_t RESULT_NUM_TWO = 2;
 static constexpr int32_t RESULT_NUM_THREE = 3;
 // if change this, origin value in privacy_manager_proxy.cpp should change together
 const static uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
+const static int32_t NOT_EXSIT_PID = 99999999;
 
 static PermissionStateFull g_infoManagerTestStateA = {
     .permissionName = "ohos.permission.CAMERA",
@@ -625,7 +626,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
     for (int32_t i = 0; i < permRecordSize; i++) {
-        if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.CAMERA") {
+        if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.READ_CONTACTS") {
             ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
             ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
             ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[i].accessRecords[0].count);
@@ -716,7 +717,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.MICROPHONE";
+    info.permissionName = "ohos.permission.READ_CONTACTS";
     info.successCount = 1;
     info.failCount = 0;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
@@ -912,7 +913,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
     CheckPermissionUsedResult(request, result1, 1, 0, 1);
 
     usleep(200000); // 200000us = 200ms
-    info.permissionName = "ohos.permission.CAMERA";
+    info.permissionName = "ohos.permission.READ_CONTACTS";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // fail:1, success:0
     info.successCount = 1;
     info.failCount = 0;
@@ -1393,7 +1394,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
 {
-    std::string permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.READ_CONTACTS";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
@@ -1675,9 +1676,9 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level1)
 {
-    std::string permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.READ_CONTACTS";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
     usleep(500000); // 500000us = 0.5s
@@ -2452,6 +2453,32 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission011, TestSize.Level1)
     }
     uint32_t tokenIdForeground = list[0].accessTokenId;
     ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName));
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermission012
+ * @tc.desc: IsAllowedUsingPermission with valid pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission012, TestSize.Level1)
+{
+    std::vector<AppStateData> list;
+    ASSERT_EQ(0, AppManagerAccessClient::GetInstance().GetForegroundApplications(list));
+    if (list.empty()) {
+        GTEST_LOG_(INFO) << "GetForegroundApplications empty ";
+        return;
+    }
+
+    uint32_t tokenIdForeground = list[0].accessTokenId;
+    int32_t pidForground = list[0].pid;
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
+
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
 }
 
 /**

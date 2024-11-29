@@ -56,7 +56,7 @@ public:
     virtual int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
-    virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid) = 0;
     virtual int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) = 0;
     virtual int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) = 0;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

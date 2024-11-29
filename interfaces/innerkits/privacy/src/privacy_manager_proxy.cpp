@@ -277,7 +277,8 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
     return result;
 }
 
-bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t pid)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -293,8 +294,12 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
         return false;
     }
+    if (!data.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32(%{public}d)", pid);
+        return false;
+    }
     if (!SendRequest(PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply)) {
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
+        return false;
     }
 
     bool result = reply.ReadBool();

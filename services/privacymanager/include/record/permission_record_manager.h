@@ -88,7 +88,7 @@ public:
 
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
-    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
     int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute);
@@ -118,8 +118,8 @@ private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    bool IsAllowedUsingCamera(AccessTokenID tokenId);
-    bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
+    bool IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid);
+    bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
@@ -174,7 +174,7 @@ private:
     bool IsPidValid(int32_t pid) const;
     bool RegisterWindowCallback();
     void InitializeMuteState(const std::string& permissionName);
-    int32_t GetAppStatus(AccessTokenID tokenId);
+    int32_t GetAppStatus(AccessTokenID tokenId, int32_t pid = -1);
 
     bool RegisterAppStatusListener();
     bool Register();

@@ -298,10 +298,12 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
         reply.WriteBool(false);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
 
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    bool result = this->IsAllowedUsingPermission(tokenId, permissionName);
+    int32_t pid = data.ReadInt32();
+
+    bool result = this->IsAllowedUsingPermission(tokenId, permissionName, pid);
     if (!reply.WriteBool(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}s)", permissionName.c_str());
         reply.WriteBool(false);
