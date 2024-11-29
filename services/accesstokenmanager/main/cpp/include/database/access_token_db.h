@@ -41,26 +41,32 @@ public:
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
     int32_t DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
         const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
+    std::shared_ptr<NativeRdb::RdbStore> GetRdb();
 
 private:
     AccessTokenDb();
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);
 
     int32_t RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
-        const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets);
+        const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets,
+        const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
-        const NativeRdb::RdbPredicates& predicates);
+        const NativeRdb::RdbPredicates& predicates, const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
-        const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates);
+        const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates,
+        const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
-        const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet);
+        const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
+        const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t DeleteAndAddSingleTable(const GenericValues delCondition, const std::string& tableName,
-        const std::vector<GenericValues>& addValues);
+        const std::vector<GenericValues>& addValues, const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t DeleteAndAddRecord(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
         const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
+    void InitRdb();
 
     OHOS::Utils::RWLock rwLock_;
     std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;
+    std::mutex dbLock_;
 };
 } // namespace AccessToken
 } // namespace Security
