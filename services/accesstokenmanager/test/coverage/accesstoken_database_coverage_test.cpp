@@ -142,7 +142,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Add001, TestSize.Level1)
         AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
 
     resultCode = NativeRdb::E_SQLITE_CORRUPT;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
+    ASSERT_EQ(NativeRdb::E_OK,
+        AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
 }
 
 /*
