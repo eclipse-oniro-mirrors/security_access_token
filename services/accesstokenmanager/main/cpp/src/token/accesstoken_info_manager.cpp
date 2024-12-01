@@ -317,11 +317,15 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
 
 std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    auto iter = hapTokenInfoMap_.find(id);
-    if (iter != hapTokenInfoMap_.end()) {
-        return iter->second;
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        auto iter = hapTokenInfoMap_.find(id);
+        if (iter != hapTokenInfoMap_.end()) {
+            return iter->second;
+        }
     }
+
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     GenericValues conditionValue;
     if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
         std::vector<GenericValues> permDefRes;
