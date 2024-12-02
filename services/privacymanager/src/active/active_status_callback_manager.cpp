@@ -22,6 +22,7 @@
 
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
+#include "ipc_skeleton.h"
 #include "privacy_error.h"
 
 namespace OHOS {
@@ -124,16 +125,16 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
 }
 
 
-void ActiveStatusCallbackManager::ActiveStatusChange(
-    AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
+void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
 {
     std::vector<sptr<IRemoteObject>> list;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
-            if (!NeedCalled(permList, permName)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, perm %{public}s", tokenId, permName.c_str());
+            if (!NeedCalled(permList, info.permissionName)) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, perm %{public}s", info.tokenID,
+                    info.permissionName.c_str());
                 continue;
             }
             list.emplace_back((*it).callbackObject_);
@@ -142,26 +143,20 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
     for (auto it = list.begin(); it != list.end(); ++it) {
         auto callback = new PermActiveStatusChangeCallbackProxy(*it);
         if (callback != nullptr) {
-            ActiveChangeResponse resInfo;
-            resInfo.type = changeType;
-            resInfo.permissionName = permName;
-            resInfo.tokenID = tokenId;
-            resInfo.deviceId = deviceId;
-            ACCESSTOKEN_LOG_INFO(LABEL,
-                "callback execute tokenId %{public}u, permision %{public}s changeType %{public}d",
-                tokenId, permName.c_str(), changeType);
-            callback->ActiveStatusChangeCallback(resInfo);
+            ACCESSTOKEN_LOG_INFO(LABEL, "callback execute callingTokenId %{public}u, tokenId %{public}u, "
+                "permision %{public}s, changeType %{public}d, usedType %{public}d", info.callingTokenID,
+                info.tokenID, info.permissionName.c_str(), info.type, info.usedType);
+            callback->ActiveStatusChangeCallback(info);
         }
     }
 }
 
-void ActiveStatusCallbackManager::ExecuteCallbackAsync(
-    AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
+void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& info)
 {
-    if (changeType == PERM_ACTIVE_IN_BACKGROUND) {
+    if (info.type == PERM_ACTIVE_IN_BACKGROUND) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,
-            "CALLER_TOKENID", tokenId, "PERMISSION_NAME", permName, "REASON", "background call");
+            "CALLER_TOKENID", info.tokenID, "PERMISSION_NAME", info.permissionName, "REASON", "background call");
     }
 
 #ifdef EVENTHANDLER_ENABLE
@@ -169,13 +164,13 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
-    std::string taskName = permName + std::to_string(tokenId);
+    std::string taskName = info.permissionName + std::to_string(info.tokenID);
     ACCESSTOKEN_LOG_INFO(LABEL, "Add permission task name:%{public}s", taskName.c_str());
-    std::function<void()> task = ([tokenId, permName, deviceId, changeType]() {
-        ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(tokenId, permName, deviceId, changeType);
+    std::function<void()> task = ([info]() mutable {
+        ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info);
         ACCESSTOKEN_LOG_INFO(LABEL,
             "Token: %{public}u, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
-            tokenId, permName.c_str(), changeType);
+            info.tokenID, info.permissionName.c_str(), info.type);
     });
     eventHandler_->ProxyPostTask(task, taskName);
     ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");

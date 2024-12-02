@@ -102,19 +102,19 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
-        tokenId, pid, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
+        tokenId, pid, permissionName.c_str(), type);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, type);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const sptr<IRemoteObject>& callback)
+int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
+    const std::string& permissionName, const sptr<IRemoteObject>& callback, PermissionUsedType type)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
-        tokenId, pid, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, callback);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
+        tokenId, pid, permissionName.c_str(), type);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, callback, type);
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(
