@@ -1246,16 +1246,16 @@ int32_t PermissionRecordManager::PermissionListFilter(
 
 bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
+    // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
-    bool isScreenLocked = GetLockScreenStatus();
     bool isAllowedBackGround = false;
     if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
         isAllowedBackGround = true;
     }
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "Id(%{public}d), appStatus(%{public}d), isScreenLocked(%{public}d, isAllowedBackGround(%{public}d)).",
-        tokenId, status, isScreenLocked, isAllowedBackGround);
-    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenLocked) || isAllowedBackGround;
+        "Id(%{public}d), appStatus(%{public}d), isAllowedBackGround(%{public}d)).",
+        tokenId, status, isAllowedBackGround);
+    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) || isAllowedBackGround);
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
