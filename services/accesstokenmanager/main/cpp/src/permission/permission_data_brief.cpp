@@ -38,7 +38,8 @@ PermissionDataBrief& PermissionDataBrief::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_briefInstanceMutex);
         if (instance == nullptr) {
-            instance = new PermissionDataBrief();
+            PermissionDataBrief* tmp = new PermissionDataBrief();
+            instance = std::move(tmp);
         }
     }
     return *instance;
