@@ -37,6 +37,12 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
+    "unittest/DistributedTest/alloc_local_token_id_test.cpp",
+    "unittest/DistributedTest/delete_remote_token_test.cpp",
+    "unittest/DistributedTest/get_hap_token_info_from_remote_test.cpp",
+    "unittest/DistributedTest/get_remote_native_tokenid_test.cpp",
+    "unittest/DistributedTest/register_token_sync_callback_test.cpp",
+    "unittest/DistributedTest/set_remote_hap_token_info_test.cpp",
     "unittest/HapTokenTest/delete_token_test.cpp",
     "unittest/HapTokenTest/get_hap_token_test.cpp",
     "unittest/HapTokenTest/get_token_type_test.cpp",
