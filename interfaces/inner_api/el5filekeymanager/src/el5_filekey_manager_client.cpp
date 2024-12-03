@@ -124,7 +124,7 @@ sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
     }
 
     for (int i = 0; i <= LOAD_SA_RETRY_TIMES; i++) {
-        el5FilekeyService =
+        auto el5FilekeyService =
             systemAbilityManager->LoadSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID, LOAD_SA_TIMEOUT_SECOND);
         if (el5FilekeyService != nullptr) {
             LOG_INFO("load el5 filekey manager success");
