@@ -78,15 +78,17 @@ public:
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback);
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
+    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
@@ -151,7 +153,8 @@ private:
     bool ShowGlobalDialog(const std::string& permissionName);
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
-    int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status);
+    int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);

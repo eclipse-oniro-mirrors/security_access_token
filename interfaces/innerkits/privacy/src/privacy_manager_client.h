@@ -38,11 +38,12 @@ public:
     virtual ~PrivacyManagerClient();
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        PermissionUsedType type);
     int32_t CreateStateChangeCbk(uint64_t id, const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        const std::shared_ptr<StateCustomizedCbk>& callback);
+        const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type);
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
