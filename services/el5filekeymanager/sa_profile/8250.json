@@ -18,9 +18,6 @@
                     },
                     {
                         "name": "usual.event.USER_STOPPED"
-                    },
-                    {
-                        "name":"usual.event.BOOT_COMPLETED"
                     }
                 ]
             }
