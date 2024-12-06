@@ -35,7 +35,8 @@ BackgourndTaskManagerAccessClient& BackgourndTaskManagerAccessClient::GetInstanc
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new BackgourndTaskManagerAccessClient();
+            BackgourndTaskManagerAccessClient* tmp = new BackgourndTaskManagerAccessClient();
+            instance = std::move(tmp);
         }
     }
     return *instance;

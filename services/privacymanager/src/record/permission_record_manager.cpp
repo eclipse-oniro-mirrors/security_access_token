@@ -84,7 +84,8 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new PermissionRecordManager();
+            PermissionRecordManager* tmp = new PermissionRecordManager();
+            instance = std::move(tmp);
         }
     }
     return *instance;
@@ -936,7 +937,9 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
                 continue;
             }
             it->pidList.erase(pid);
-            isUsingCamera = (it->opCode == Constant::OP_CAMERA);
+            if (it->opCode == Constant::OP_CAMERA) {
+                isUsingCamera = true;
+            }
             if (it->pidList.empty()) {
                 std::string perm;
                 Constant::TransferOpcodeToPermission(it->opCode, perm);
@@ -968,7 +971,9 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
                 ++it;
                 continue;
             }
-            isUsingCamera = (it->opCode == Constant::OP_CAMERA);
+            if (it->opCode == Constant::OP_CAMERA) {
+                isUsingCamera = true;
+            }
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             permList.emplace_back(perm);

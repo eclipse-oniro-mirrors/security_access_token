@@ -13,23 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_CALLBACK_STUB_H
-#define EL5_FILEKEY_CALLBACK_STUB_H
+#ifndef GET_HAP_DLP_FLAG_TEST_H
+#define GET_HAP_DLP_FLAG_TEST_H
 
-#include "el5_filekey_callback_interface.h"
-#include "iremote_stub.h"
+#include <gtest/gtest.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class El5FilekeyCallbackStub : public IRemoteStub<El5FilekeyCallbackInterface> {
+class GetHapDlpFlagTest : public testing::Test {
 public:
-    El5FilekeyCallbackStub();
-    virtual ~El5FilekeyCallbackStub();
-
-    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
 };
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
-#endif // EL5_FILEKEY_CALLBACK_STUB_H
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // GET_HAP_DLP_FLAG_TEST_H

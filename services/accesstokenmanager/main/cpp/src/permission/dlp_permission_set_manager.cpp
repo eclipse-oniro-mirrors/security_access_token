@@ -37,7 +37,8 @@ DlpPermissionSetManager& DlpPermissionSetManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new DlpPermissionSetManager();
+            DlpPermissionSetManager* tmp = new DlpPermissionSetManager();
+            instance = std::move(tmp);
         }
     }
     return *instance;

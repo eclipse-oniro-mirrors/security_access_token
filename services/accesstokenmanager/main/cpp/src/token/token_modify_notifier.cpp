@@ -91,7 +91,8 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new TokenModifyNotifier();
+            TokenModifyNotifier* tmp = new TokenModifyNotifier();
+            instance = std::move(tmp);
         }
     }
 

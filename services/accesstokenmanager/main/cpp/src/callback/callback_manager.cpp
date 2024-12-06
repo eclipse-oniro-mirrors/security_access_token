@@ -43,7 +43,8 @@ CallbackManager& CallbackManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new CallbackManager();
+            CallbackManager* tmp = new CallbackManager();
+            instance = std::move(tmp);
         }
     }
     return *instance;
