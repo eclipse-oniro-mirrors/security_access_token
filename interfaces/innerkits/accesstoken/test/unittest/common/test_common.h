@@ -39,6 +39,7 @@ public:
     static HapInfoParams GetInfoManagerTestSystemInfoParms();
     static HapPolicyParams GetInfoManagerTestPolicyPrams();
     static AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy);
+    static uint64_t GetNativeToken(const char *processName, const char **perms, int32_t permNum);
 };
 }  // namespace AccessToken
 }  // namespace Security
