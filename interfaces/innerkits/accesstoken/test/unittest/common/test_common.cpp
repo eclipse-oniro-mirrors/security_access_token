@@ -211,6 +211,32 @@ AccessTokenID TestCommon::AllocTestToken(
     tokenIdEx = AccessTokenKit::AllocHapToken(hapInfo, hapPolicy);
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
+
+void TestCommon::GetNativeTokenTest()
+{
+    uint64_t tokenId;
+    const char **perms = new const char *[4];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // 2 means the second permission
+    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 4,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.processName = "TestCase";
+    tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    AccessTokenKit::ReloadNativeTokenInfo();
+    delete[] perms;
+}
 }  // namespace SecurityComponent
 }  // namespace Security
 }  // namespace OHOS
