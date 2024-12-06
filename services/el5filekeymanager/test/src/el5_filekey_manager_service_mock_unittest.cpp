@@ -510,3 +510,61 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Le
     int userId = 1;
     ASSERT_EQ(el5FilekeyManagerService_->HandleUserCommonEvent(eventName, userId), EFM_SUCCESS);
 }
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: El5FilekeyCallbackStub function test OnRemoteRequest001.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level1)
+{
+    TestEl5FilekeyCallback testEl5FilekeyCallback;
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    uint32_t code = static_cast<uint32_t>(El5FilekeyCallbackInterface::Code::ON_REGENERATE_APP_KEY);
+
+    ASSERT_EQ(data.WriteInterfaceToken(El5FilekeyCallbackInterface::GetDescriptor()), true);
+    data.WriteUint32(1); // infosSize
+    data.WriteInt32(1);  // AppKeyInfo size
+    data.WriteUint32(1000);
+    std::string bundleName = "ohos.permission.test";
+    data.WriteString(bundleName);
+    data.WriteInt32(100);
+    ASSERT_EQ(testEl5FilekeyCallback.OnRemoteRequest(code, data, reply, option), OHOS::NO_ERROR);
+}
+
+/**
+ * @tc.name: Marshalling001
+ * @tc.desc: AppKeyInfo function test Marshalling.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, Marshalling001, TestSize.Level1)
+{
+    AppKeyInfo appKeyInfo;
+    appKeyInfo.uid = 1000;
+    appKeyInfo.bundleName = "test";
+    appKeyInfo.userId = 200;
+    OHOS::Parcel parcel;
+    ASSERT_EQ(appKeyInfo.Marshalling(parcel), true);
+}
+
+/**
+ * @tc.name: Unmarshalling001
+ * @tc.desc: AppKeyInfo function test Marshalling.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, Unmarshalling001, TestSize.Level1)
+{
+    AppKeyInfo appKeyInfo;
+    OHOS::Parcel parcel;
+    parcel.WriteUint32(1000);
+    parcel.WriteString("ohos.permission.test");
+    parcel.WriteInt32(100);
+    auto info = appKeyInfo.Unmarshalling(parcel);
+    ASSERT_EQ(info != nullptr, true);
+    ASSERT_EQ(info->bundleName, "ohos.permission.test");
+}
