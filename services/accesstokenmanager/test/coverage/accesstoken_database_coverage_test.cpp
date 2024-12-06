@@ -239,8 +239,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level1)
     type = AtmDataType::ACCESSTOKEN_HAP_INFO;
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
     AccessTokenDb::GetInstance().db_ = nullptr;
-    ASSERT_EQ(NativeRdb::E_OK,
-        AccessTokenDb::GetInstance().Find(type, conditionValue, results));
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance().Find(type, conditionValue, results));
     AccessTokenDb::GetInstance().db_ = db;
 
     conditionValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
