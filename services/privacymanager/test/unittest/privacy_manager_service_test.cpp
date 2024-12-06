@@ -179,7 +179,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 {
-    int32_t fd = 123; // 123: invalid fd
+    int32_t fd = 1; // 1: std output
     std::vector<std::u16string> args;
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
