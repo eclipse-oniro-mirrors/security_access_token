@@ -5057,6 +5057,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WINDOW_TOPMOST",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_IDM_WIDGET",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
