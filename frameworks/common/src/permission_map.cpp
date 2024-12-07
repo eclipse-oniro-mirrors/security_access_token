@@ -519,6 +519,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.INSTALL_INTERNALTESTING_BUNDLE",     false},
     {"ohos.permission.MANAGE_UDMF_APP_SHARE_OPTION",        false},
     {"ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",  false},
+    {"ohos.permission.ENABLE_EXPERIENCE_HBM",               false},
     {"ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION", false},
     {"ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY",   false},
     {"ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", false},

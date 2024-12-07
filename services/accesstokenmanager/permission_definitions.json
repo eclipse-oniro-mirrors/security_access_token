@@ -4081,6 +4081,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENABLE_EXPERIENCE_HBM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -5348,7 +5358,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
-        {   
+        {
             "name": "ohos.permission.SET_PAC_URL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
