@@ -26,6 +26,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
 };
+static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -56,11 +57,12 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
-        return -1;
+        return ERROR;
     }
     sptr<IAmsMgr> amsService = proxy->GetAmsMgr();
     if (amsService == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AmsService is null.");
+        return ERROR;
     }
     return amsService->KillProcessesByAccessTokenId(accessTokenId);
 }
@@ -70,12 +72,12 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     if (observer == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
+        return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
-        return -1;
+        return ERROR;
     }
     std::vector<std::string> bundleNameList;
     return proxy->RegisterApplicationStateObserver(observer, bundleNameList);
@@ -85,12 +87,12 @@ int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IA
 {
     if (observer == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
+        return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
+        return ERROR;
     }
     return proxy->UnregisterApplicationStateObserver(observer);
 }
@@ -100,7 +102,7 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
+        return ERROR;
     }
     return proxy->GetForegroundApplications(list);
 }

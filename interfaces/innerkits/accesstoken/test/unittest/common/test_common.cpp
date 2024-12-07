@@ -212,6 +212,25 @@ AccessTokenID TestCommon::AllocTestToken(
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
+uint64_t TestCommon::GetNativeToken(const char *processName, const char **perms, int32_t permNum)
+{
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = permNum,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .aplStr = "system_core",
+        .processName = processName,
+    };
+
+    tokenId = GetAccessTokenId(&infoInstance);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    return tokenId;
+}
+
 void TestCommon::GetNativeTokenTest()
 {
     uint64_t tokenId;
