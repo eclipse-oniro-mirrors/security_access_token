@@ -927,7 +927,6 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, pid %{public}d", tokenId, pid);
-    bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
@@ -937,9 +936,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
                 continue;
             }
             it->pidList.erase(pid);
-            if (it->opCode == Constant::OP_CAMERA) {
-                isUsingCamera = true;
-            }
             if (it->pidList.empty()) {
                 std::string perm;
                 Constant::TransferOpcodeToPermission(it->opCode, perm);
@@ -951,9 +947,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
             CallbackExecute(tokenId, perm, PERM_INACTIVE);
         }
     }
-    if (isUsingCamera) {
-        cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
-    }
+    cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
 }
 
 /*
@@ -962,7 +956,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u", tokenId);
-    bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
@@ -970,9 +963,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
             if (it->tokenId != tokenId) {
                 ++it;
                 continue;
-            }
-            if (it->opCode == Constant::OP_CAMERA) {
-                isUsingCamera = true;
             }
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
@@ -983,9 +973,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
             CallbackExecute(tokenId, perm, PERM_INACTIVE);
         }
     }
-    if (isUsingCamera) {
-        cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
-    }
+    cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
@@ -1253,14 +1241,13 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
 {
     // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
-    bool isAllowedBackGround = false;
-    if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
-        isAllowedBackGround = true;
+    if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
+        return true;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "Id(%{public}d), appStatus(%{public}d), isAllowedBackGround(%{public}d)).",
-        tokenId, status, isAllowedBackGround);
-    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) || isAllowedBackGround);
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, appStatus %{public}d.", tokenId, status);
+
+    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
