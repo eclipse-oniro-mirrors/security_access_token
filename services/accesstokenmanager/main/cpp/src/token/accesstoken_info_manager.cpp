@@ -1666,7 +1666,6 @@ void AccessTokenInfoManager::ClearHapPolicy()
     ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d", iter->first);
         iter->second->ClearHapInfoPermissionPolicySet();
     }
 }

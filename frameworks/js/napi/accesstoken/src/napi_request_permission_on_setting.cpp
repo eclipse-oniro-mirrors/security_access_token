@@ -447,13 +447,21 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env 
     // asyncContext release in complete
     RequestOnSettingAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestOnSettingAsyncContextHandle*>(data);
-    if (asyncContextHandle == nullptr) {
+    if ((asyncContextHandle == nullptr) || (asyncContextHandle->asyncContextPtr == nullptr)) {
         return;
     }
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
+        if ((asyncContextHandle->asyncContextPtr->abilityContext == nullptr) ||
+            (asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo() == nullptr)) {
+            return;
+        }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
     } else {
+        if ((asyncContextHandle->asyncContextPtr->uiExtensionContext == nullptr) ||
+            (asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo() == nullptr)) {
+            return;
+        }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
     }
