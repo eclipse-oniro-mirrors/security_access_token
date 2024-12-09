@@ -204,7 +204,8 @@ static napi_value GetContext(
         }
         asyncContext->abilityContext =
             AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-        if (asyncContext->abilityContext != nullptr) {
+        if ((asyncContext->abilityContext != nullptr) &&
+            (asyncContext->abilityContext->GetApplicationInfo() != nullptr)) {
             asyncContext->uiAbilityFlag = true;
             asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
             asyncContext->bundleName = asyncContext->abilityContext->GetApplicationInfo()->bundleName;
@@ -212,7 +213,8 @@ static napi_value GetContext(
             ACCESSTOKEN_LOG_WARN(LABEL, "Convert to ability context failed");
             asyncContext->uiExtensionContext =
                 AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-            if (asyncContext->uiExtensionContext == nullptr) {
+            if ((asyncContext->uiExtensionContext == nullptr) ||
+                (asyncContext->uiExtensionContext->GetApplicationInfo() == nullptr)) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Convert to ui extension context failed");
                 return nullptr;
             }
@@ -389,6 +391,9 @@ void AuthorizationResult::WindowShownCallback()
 
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if ((asyncContext == nullptr) || (asyncContext->abilityContext == nullptr)) {
+        return;
+    }
     if (!asyncContext->uiAbilityFlag) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
