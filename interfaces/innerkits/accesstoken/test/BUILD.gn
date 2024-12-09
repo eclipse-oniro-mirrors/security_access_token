@@ -38,6 +38,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
 
   sources = [
     "unittest/DistributedTest/alloc_local_token_id_test.cpp",
+    "unittest/DistributedTest/delete_remote_device_tokens_test.cpp",
     "unittest/DistributedTest/delete_remote_token_test.cpp",
     "unittest/DistributedTest/get_hap_token_info_from_remote_test.cpp",
     "unittest/DistributedTest/get_remote_native_tokenid_test.cpp",
@@ -58,6 +59,8 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "unittest/PermissionsTest/get_permission_test.cpp",
     "unittest/PermissionsTest/grant_permission_test.cpp",
     "unittest/PermissionsTest/revoke_permission_test.cpp",
+    "unittest/RegisterCallbackTest/register_perm_state_change_callback_test.cpp",
+    "unittest/RegisterCallbackTest/un_register_perm_state_change_callback_test.cpp",
     "unittest/common/test_common.cpp",
     "unittest/src/accesstoken_deny_test.cpp",
     "unittest/src/accesstoken_kit_extension_test.cpp",
