@@ -135,14 +135,14 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdAbnormalTest003");
-    int32_t g_selfUid = getuid();
+    int32_t gSelfUid = getuid();
     setuid(1234); // 1234: UID
 
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
 
-    setuid(g_selfUid);
+    setuid(gSelfUid);
     ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(g_selfTokenId));
 }
 
