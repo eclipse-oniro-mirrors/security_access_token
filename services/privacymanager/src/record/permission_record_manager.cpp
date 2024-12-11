@@ -62,6 +62,7 @@ constexpr const char* DEFAULT_DEVICEID = "0";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
+constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 constexpr const char* DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 constexpr const char* DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 constexpr const char* RESOURCE_KEY = "ohos.sensitive.resource";
@@ -1620,6 +1621,10 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
             std::lock_guard<std::mutex> lock(camLoadMutex_);
             if (!isCamLoad_) {
                 bool isEdmMute = false;
+                if (!GetMuteParameter(EDM_CAMERA_MUTE_KEY, isEdmMute)) {
+                    ACCESSTOKEN_LOG_ERROR(LABEL, "Get camera param failed");
+                    return;
+                }
                 ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
             }
         }
