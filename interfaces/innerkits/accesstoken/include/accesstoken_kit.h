@@ -429,6 +429,20 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t ClearUserPolicy();
+
+    /**
+     * @brief Whether it is a system application
+     * @param tokenId token id.
+     * @return bool
+     */
+    static bool IsSystemAppByFullTokenID(uint64_t tokenId);
+
+    /**
+     * @brief Gets the render process tokenId.
+     * @param tokenId token id.
+     * @return tokenId
+     */
+    static uint64_t GetRenderTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security

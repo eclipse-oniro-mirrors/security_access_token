@@ -596,6 +596,16 @@ int32_t AccessTokenKit::ClearUserPolicy()
     ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy();
 }
+
+bool AccessTokenKit::IsSystemAppByFullTokenID(uint64_t tokenId)
+{
+    return TokenIdKit::IsSystemAppByFullTokenID(tokenId);
+}
+
+uint64_t AccessTokenKit::GetRenderTokenID(uint64_t tokenId)
+{
+    return TokenIdKit::GetRenderTokenID(tokenId);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
