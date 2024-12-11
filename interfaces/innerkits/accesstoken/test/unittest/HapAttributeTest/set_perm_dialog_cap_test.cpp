@@ -34,8 +34,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-// static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-//     SECURITY_DOMAIN_ACCESSTOKEN, "SetPermDialogCapTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
+    SECURITY_DOMAIN_ACCESSTOKEN, "SetPermDialogCapTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
@@ -153,13 +153,14 @@ void SetPermDialogCapTest::TearDown()
 }
 
 /**
- * @tc.name: SetPermDialogCap001
+ * @tc.name: SetPermDialogCapAbnormalTest001
  * @tc.desc: Set permission dialog capability with noexist app.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(SetPermDialogCapTest, SetPermDialogCap001, TestSize.Level1)
+HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermDialogCapAbnormalTest001");
     HapBaseInfo hapBaseInfo = {
         .userID = 111, // 111: user id
         .bundleName = "noexist bundle",
@@ -171,13 +172,14 @@ HWTEST_F(SetPermDialogCapTest, SetPermDialogCap001, TestSize.Level1)
 }
 
 /**
- * @tc.name: SetPermDialogCap002
+ * @tc.name: SetPermDialogCapFuncTest001
  * @tc.desc: Set permission dialog capability, and get set permissionState.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SetPermDialogCapTest, SetPermDialogCap002, TestSize.Level1)
+HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level1)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermDialogCapFuncTest001");
     AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     HapBaseInfo hapBaseInfo = {
         .userID = g_infoManagerTestInfoParms.userID,
