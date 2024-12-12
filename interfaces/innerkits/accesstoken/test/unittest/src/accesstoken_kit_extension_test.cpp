@@ -2062,6 +2062,38 @@ HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest002, TestSize.Level1)
     ASSERT_EQ(invalidTokenID, retTokenId);
 }
 
+/**
+ * @tc.name: IsSystemAppByFullTokenIDTest003
+ * @tc.desc: check systemapp level by TokenIDEx after AllocHapToken function set isSystemApp false.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, IsSystemAppByFullTokenIDTest003, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    bool res = AccessTokenKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: GetRenderTokenIDTest003
+ * @tc.desc: AccessTokenKit::GetRenderTokenID function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest003, TestSize.Level1)
+{
+    uint64_t invalidTokenID = 0;
+    uint64_t retTokenId = 1;    /* 1, for testing purposes */
+
+    retTokenId = AccessTokenKit::GetRenderTokenID(invalidTokenID);
+    ASSERT_EQ(invalidTokenID, retTokenId);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 namespace {
 class TokenSyncCallbackStubTest : public TokenSyncCallbackStub {
