@@ -247,10 +247,6 @@ private:
     std::mutex abilityManagerMutex_;
     std::shared_ptr<LibraryLoader> abilityManagerLoader_;
 #endif
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventRunner> deleteEventRunner_;
-    std::shared_ptr<AccessEventHandler> deleteEventHandler_;
-#endif
     std::atomic_int32_t deleteTaskNum_ = 0;
 
     std::mutex permUsedRecMutex_;

@@ -696,17 +696,11 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
 
 void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 {
-#ifdef EVENTHANDLER_ENABLE
     if (GetCurDeleteTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Has delete task!");
         return;
     }
     AddDeleteTaskNum();
-    if (deleteEventHandler_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler.");
-        ReduceDeleteTaskNum();
-        return;
-    }
 
     std::function<void()> delayed = ([this]() {
         DeletePermissionRecord(recordAgingTime_);
@@ -716,8 +710,8 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
         ReduceDeleteTaskNum();
     });
 
-    deleteEventHandler_->ProxyPostTask(delayed);
-#endif
+    std::thread deleteThread(delayed);
+    deleteThread.detach();
 }
 
 int32_t PermissionRecordManager::GetCurDeleteTaskNum()
@@ -1825,13 +1819,6 @@ void PermissionRecordManager::Init()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Init");
     hasInited_ = true;
-
-#ifdef EVENTHANDLER_ENABLE
-    deleteEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (deleteEventRunner_ != nullptr) {
-        deleteEventHandler_ = std::make_shared<AccessEventHandler>(deleteEventRunner_);
-    }
-#endif
 
     GetConfigValue();
 }
