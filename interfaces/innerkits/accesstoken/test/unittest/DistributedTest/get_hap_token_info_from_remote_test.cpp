@@ -37,12 +37,10 @@ HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoPar
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
 
 HapTokenInfo g_baseInfo = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .appID = "test4",
     .tokenID = 0x20100000,
     .tokenAttr = 0
 };
@@ -160,7 +158,6 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(infoSync.baseInfo.apl, g_infoManagerTestPolicyPrams.apl);
     ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
     ASSERT_EQ(infoSync.permStateList[1].grantFlags.size(), static_cast<uint32_t>(2));
 
@@ -183,7 +180,6 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
     ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
     ASSERT_EQ(infoSync.baseInfo.instIndex, g_infoManagerTestInfoParms.instIndex);
-    ASSERT_EQ(infoSync.baseInfo.appID, g_infoManagerTestInfoParms.appIDDesc);
     ASSERT_EQ(infoSync.baseInfo.ver, 1);
     ASSERT_EQ(infoSync.baseInfo.tokenID, localTokenID);
     ASSERT_EQ(infoSync.baseInfo.tokenAttr, 0);
@@ -211,7 +207,6 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, Te
     std::vector<PermissionStateFull> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
-    g_baseInfo.deviceID = deviceID2;
     HapTokenInfoForSync remoteTokenInfo2 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList2

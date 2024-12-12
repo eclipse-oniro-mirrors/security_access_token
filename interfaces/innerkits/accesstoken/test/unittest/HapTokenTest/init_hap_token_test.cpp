@@ -150,14 +150,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(0, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
@@ -182,14 +184,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(1, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }

@@ -35,13 +35,10 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         HapTokenInfo baseInfo = {
-            .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
             .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = fuzzData.GenerateStochasticString(),
-            .deviceID = fuzzData.GenerateStochasticString(),
             .tokenID = fuzzData.GetData<AccessTokenID>(),
             .tokenAttr = 0
         };

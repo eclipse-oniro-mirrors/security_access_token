@@ -579,7 +579,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
-    AddHapTokenInfoToDb(tokenId, tokenInfo);
+    AddHapTokenInfoToDb(tokenId, tokenInfo, info.appIDDesc, policy.apl);
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
@@ -715,6 +715,70 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
     AddNativeTokenInfoToDb(nativeTokenValues, permStateValues);
 }
 
+void AccessTokenInfoManager::StoreHapInfo(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+    const std::string& appId, ATokenAplEnum apl,
+    std::vector<GenericValues>& valueList)
+{
+    if (hapInfo == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token ptr is null");
+        return;
+    }
+
+    if (hapInfo->IsRemote()) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", hapInfo->GetTokenID());
+        return;
+    }
+    hapInfo->StoreHapInfo(valueList);
+    if (valueList.empty()) {
+        return;
+    }
+    GenericValues &outGenericValues = valueList.at(valueList.size() - 1);
+    outGenericValues.Put(TokenFiledConst::FIELD_APP_ID, appId);
+    outGenericValues.Put(TokenFiledConst::FIELD_APL, static_cast<int32_t>(apl));
+    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
+}
+
+int32_t AccessTokenInfoManager::ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenInfoInner>& infoPtr,
+    const std::vector<PermissionStateFull>& permStateList,
+    const UpdateHapInfoParams& info, ATokenAplEnum apl)
+{
+    infoPtr->Update(info, permStateList);
+    AccessTokenID tokenId = infoPtr->GetTokenID();
+    if (infoPtr->IsRemote()) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", tokenId);
+        return RET_SUCCESS;
+    }
+
+    // get new hap token info from cache
+    std::vector<GenericValues> hapInfoValues;
+    StoreHapInfo(infoPtr, info.appIDDesc, apl, hapInfoValues);
+    // get new permission def from cache if exist
+    std::vector<GenericValues> permDefValues;
+    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenId, permDefValues);
+    // get new permission status from cache if exist
+    std::vector<GenericValues> permStateValues;
+    infoPtr->StorePermissionPolicy(permStateValues);
+
+    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenId, hapInfoValues, permDefValues,
+        permStateValues);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "TokenID %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenId, ret);
+        return ret;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u bundle name %{public}s user %{public}d \
+inst %{public}d tokenAttr %{public}d update ok!", infoPtr->GetTokenID(), infoPtr->GetBundleName().c_str(),
+        infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", infoPtr->GetTokenID(), "USERID",
+        infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
     const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
     const std::vector<PermissionDef>& permList)
@@ -742,17 +806,10 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        int32_t ret = infoPtr->Update(info, permStateList, apl);
+        int32_t ret = ModifyHapTokenInfoToDb(infoPtr, permStateList, info, apl);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u bundle name %{public}s user %{public}d \
-inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
-            infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
-        // DFX
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
-            HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", infoPtr->GetTokenID(), "USERID",
-            infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
     }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -825,18 +882,14 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, const HapTokenInfoForSync& hapSync)
 {
     std::string errReason;
-    if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsDeviceIdValid(hapSync.baseInfo.deviceID)) {
+    if (!DataValidator::IsDeviceIdValid(deviceID)) {
         errReason = "respond deviceID error";
     } else if (!DataValidator::IsUserIdValid(hapSync.baseInfo.userID)) {
         errReason = "respond userID error";
     } else if (!DataValidator::IsBundleNameValid(hapSync.baseInfo.bundleName)) {
         errReason = "respond bundleName error";
-    } else if (!DataValidator::IsAplNumValid(hapSync.baseInfo.apl)) {
-        errReason = "respond apl error";
     } else if (!DataValidator::IsTokenIDValid(hapSync.baseInfo.tokenID)) {
         errReason = "respond tokenID error";
-    } else if (!DataValidator::IsAppIDDescValid(hapSync.baseInfo.appID)) {
-        errReason = "respond appID error";
     } else if (!DataValidator::IsDlpTypeValid(hapSync.baseInfo.dlpType)) {
         errReason = "respond dlpType error";
     } else if (hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION) {
@@ -867,7 +920,6 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         // update remote token mapping id
         hapSync.baseInfo.tokenID = mapID;
-        hapSync.baseInfo.deviceID = deviceID;
         return UpdateRemoteHapTokenInfo(mapID, hapSync);
     }
 
@@ -880,7 +932,6 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 
     // update remote token mapping id
     hapSync.baseInfo.tokenID = mapID;
-    hapSync.baseInfo.deviceID = deviceID;
     int ret = CreateRemoteHapTokenInfo(mapID, hapSync);
     if (ret != RET_SUCCESS) {
         int result = AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
@@ -1029,7 +1080,8 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
 }
 
 int AccessTokenInfoManager::AddHapTokenInfoToDb(
-    AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo)
+    AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+    const std::string& appId, ATokenAplEnum apl)
 {
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permDefValues;
@@ -1038,7 +1090,7 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u info is null!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    hapInfo->StoreHapInfo(hapInfoValues);
+    StoreHapInfo(hapInfo, appId, apl, hapInfoValues);
     hapInfo->StorePermissionPolicy(permStateValues);
     PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
     AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues);

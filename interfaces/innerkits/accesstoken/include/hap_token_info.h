@@ -91,11 +91,6 @@ public:
  */
 class HapTokenInfo final {
 public:
-    /**
-     * apl level, for details about the valid values,
-     * see the definition of ATokenAplEnum in the access_token.h file.
-     */
-    ATokenAplEnum apl;
     char ver;
     int userID;
     std::string bundleName;
@@ -108,8 +103,6 @@ public:
      * see the definition of HapDlpType in the access_token.h file.
      */
     int dlpType;
-    std::string appID;
-    std::string deviceID;
     AccessTokenID tokenID;
     /** token attribute */
     AccessTokenAttr tokenAttr;

@@ -99,12 +99,10 @@ HapPolicyParams g_infoManagerTestPolicyPramsBak = {
 };
 
 HapTokenInfo g_baseInfo = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .appID = "test4",
     .tokenID = 0x20100000,
     .tokenAttr = 0
 };
@@ -251,7 +249,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState2);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo1 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1
@@ -268,13 +265,10 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     HapTokenInfo resultInfo;
     ret = AccessTokenKit::GetHapTokenInfo(mapID, resultInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(resultInfo.apl, remoteTokenInfo1.baseInfo.apl);
     ASSERT_EQ(resultInfo.ver, remoteTokenInfo1.baseInfo.ver);
     ASSERT_EQ(resultInfo.userID, remoteTokenInfo1.baseInfo.userID);
     ASSERT_EQ(resultInfo.bundleName, remoteTokenInfo1.baseInfo.bundleName);
     ASSERT_EQ(resultInfo.instIndex, remoteTokenInfo1.baseInfo.instIndex);
-    ASSERT_EQ(resultInfo.appID, remoteTokenInfo1.baseInfo.appID);
-    ASSERT_EQ(resultInfo.deviceID, remoteTokenInfo1.baseInfo.deviceID);
     ASSERT_NE(resultInfo.tokenID, remoteTokenInfo1.baseInfo.tokenID); // tokenID already is map tokenID
     ASSERT_EQ(resultInfo.tokenAttr, remoteTokenInfo1.baseInfo.tokenAttr);
 
@@ -291,21 +285,9 @@ void SetRemoteHapTokenInfoWithWrongInfo(HapTokenInfo &wrongBaseInfo, const HapTo
     std::string wrongStr(10241, 'x'); // 10241 means the invalid string length
 
     wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.appID = wrongStr; // wrong appID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    EXPECT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
     remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    EXPECT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     EXPECT_NE(ret, RET_SUCCESS);
 
     wrongBaseInfo = rightBaseInfo;
@@ -327,19 +309,16 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
     HapTokenInfo rightBaseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "test4",
-        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
 
     HapTokenInfo wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
+    wrongBaseInfo.userID = -11; // wrong userid
 
     PermissionStateFull infoManagerTestState_2 = {
         .permissionName = "ohos.permission.test1",
@@ -383,7 +362,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList3;
     permStateList3.emplace_back(infoManagerTestState_3);
 
-    g_baseInfo.deviceID = deviceID3;
     HapTokenInfoForSync remoteTokenInfo3 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList3
@@ -423,7 +401,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList4;
     permStateList4.emplace_back(infoManagerTestState_4);
 
-    g_baseInfo.deviceID = deviceID4;
     HapTokenInfoForSync remoteTokenInfo4 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList4
@@ -470,7 +447,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList5;
     permStateList5.emplace_back(infoManagerTestState5);
 
-    g_baseInfo.deviceID = deviceID5;
     HapTokenInfoForSync remoteTokenInfo5 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList5
@@ -523,7 +499,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     permStateList6.emplace_back(infoManagerTestState6);
     permStateList6.emplace_back(infoManagerTestState7);
 
-    g_baseInfo.deviceID = deviceID6;
     HapTokenInfoForSync remoteTokenInfo6 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList6
@@ -570,7 +545,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList7;
     permStateList7.emplace_back(infoManagerTestState7);
 
-    g_baseInfo.deviceID = deviceID7;
     HapTokenInfoForSync remoteTokenInfo7 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList7
@@ -611,7 +585,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList8;
     permStateList8.emplace_back(infoManagerTestState8);
 
-    g_baseInfo.deviceID = deviceID8;
     HapTokenInfoForSync remoteTokenInfo8 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList8
@@ -659,7 +632,6 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList9;
     permStateList9.emplace_back(infoManagerTestState9);
 
-    g_baseInfo.deviceID = deviceID9;
     HapTokenInfoForSync remoteTokenInfo9 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList9
@@ -696,13 +668,10 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo009 start.");
     std::string deviceID = udid_;
     HapTokenInfo baseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = udid_,
         .tokenID = 0x28100000,
         .tokenAttr = 0
     };
@@ -745,7 +714,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState_3);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo11 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1
@@ -788,7 +756,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList2;
     permStateList2.emplace_back(infoManagerTestState_2);
 
-    g_baseInfo.deviceID = deviceID2;
     HapTokenInfoForSync remoteTokenInfo2 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList2
@@ -851,7 +818,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState4);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo1 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1
@@ -902,7 +868,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
-    g_baseInfo.deviceID = deviceID2;
     HapTokenInfoForSync remoteTokenInfo2 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList2
@@ -945,7 +910,6 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(infoSync.baseInfo.apl, g_infoManagerTestPolicyPrams.apl);
     ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
     ASSERT_EQ(infoSync.permStateList[1].grantFlags.size(), static_cast<uint32_t>(2));
 
@@ -968,7 +932,6 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
     ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
     ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
     ASSERT_EQ(infoSync.baseInfo.instIndex, g_infoManagerTestInfoParms.instIndex);
-    ASSERT_EQ(infoSync.baseInfo.appID, g_infoManagerTestInfoParms.appIDDesc);
     ASSERT_EQ(infoSync.baseInfo.ver, 1);
     ASSERT_EQ(infoSync.baseInfo.tokenID, localTokenID);
     ASSERT_EQ(infoSync.baseInfo.tokenAttr, 0);
@@ -996,7 +959,6 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
-    g_baseInfo.deviceID = deviceID2;
     HapTokenInfoForSync remoteTokenInfo2 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList2
@@ -1049,7 +1011,6 @@ HWTEST_F(RemoteTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
     std::vector<PermissionStateFull> permStateList1;
     permStateList1.emplace_back(infoManagerTestState_1);
 
-    g_baseInfo.deviceID = deviceID1;
     HapTokenInfoForSync remoteTokenInfo1 = {
         .baseInfo = g_baseInfo,
         .permStateList = permStateList1

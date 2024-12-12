@@ -252,13 +252,10 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoFuncTest001, TestSize.Level0)
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
     ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
     ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
     ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
-
-    ASSERT_EQ(hapTokenInfoRes.appID, "appIDDesc");
 
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
