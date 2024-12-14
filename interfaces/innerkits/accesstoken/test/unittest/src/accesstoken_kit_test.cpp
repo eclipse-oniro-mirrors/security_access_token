@@ -1191,6 +1191,100 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 }
 
 /**
+ * @tc.name: VerifyAccessTokenWithList001
+ * @tc.desc: Verify permission with list.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+
+    std::vector<int32_t> permStateList;
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (int i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (int i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (int i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (int i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+}
+
+/**
+ * @tc.name: VerifyAccessTokenWithList002
+ * @tc.desc: Verify permission that tokenID or permission is invalid.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList002, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_GAMMA);
+    std::vector<int32_t> permStateList;
+    int ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, false);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back("");
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
+    permissionList.clear();
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[1]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[2]);
+}
+
+/**
  * @tc.name: GrantPermission001
  * @tc.desc: Grant permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
  * @tc.type: FUNC

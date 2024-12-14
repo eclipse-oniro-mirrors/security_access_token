@@ -154,6 +154,17 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     return res;
 }
 
+int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    permStateList.clear();
+    permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+    for (int i = 0; i < permissionList.size(); i++) {
+        permStateList[i] = VerifyAccessToken(tokenID, permissionList[i]);
+    }
+    return RET_SUCCESS;
+}
+
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {

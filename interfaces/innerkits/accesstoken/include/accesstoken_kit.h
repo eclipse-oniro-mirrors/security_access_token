@@ -192,7 +192,7 @@ public:
      */
     static int VerifyAccessToken(
         AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
-        /**
+    /**
      * @brief Check if the input tokenID has been granted the input permission.
      * @param tokenID token id
      * @param permissionName permission to be checked
@@ -210,6 +210,16 @@ public:
      */
     static int VerifyAccessToken(AccessTokenID callerTokenID,
         AccessTokenID firstTokenID, const std::string& permissionName, bool crossIpc);
+    /**
+     * @brief Check if the input tokenID has been granted the input permission list.
+     * @param tokenID token id
+     * @param permissionList permission list to be checked
+     * @param permStateList enum PermissionState list, as result
+     * @param crossIpc whether to cross ipc
+     * @return error code, see access_token_error.h
+     */
+    static int VerifyAccessToken(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+        std::vector<int32_t>& permStateList, bool crossIpc = false);
 
     /**
      * @brief Get permission definition by permission name.

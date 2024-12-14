@@ -114,6 +114,36 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     return result;
 }
 
+int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteStringVector(permissionList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteStringVector failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN_WITH_LIST, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    if (!reply.ReadInt32Vector(&permStateList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32Vector failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+
+    return ERR_OK;
+}
+
 int AccessTokenManagerProxy::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {

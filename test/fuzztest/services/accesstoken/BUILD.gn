@@ -49,6 +49,7 @@ group("fuzztest") {
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
+    "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
   ]
 
   if (is_standard_system && token_sync_enable == true) {

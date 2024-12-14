@@ -313,6 +313,50 @@ int AccessTokenKit::VerifyAccessToken(
     return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
+int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+    std::vector<int32_t>& permStateList, bool crossIpc)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionlist.size=%{public}zu, crossIpc=%{public}d.",
+        tokenID, permissionList.size(), crossIpc);
+    permStateList.clear();
+    if (crossIpc) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionList, permStateList);
+    }
+
+    permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+    std::vector<std::string> permListCrossIpc;
+    std::unordered_map<int, int> permToState;
+    for (int i = 0; i < permissionList.size(); i++) {
+        bool isGranted = false;
+        uint32_t code;
+        if (!TransferPermissionToOpcode(permissionList[i], code)) {
+            permStateList[i] = PERMISSION_DENIED;
+            continue;
+        }
+        int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
+        if (ret != 0) {
+            permToState[permListCrossIpc.size()] = i;
+            permListCrossIpc.emplace_back(permissionList[i]);
+            continue;
+        }
+        permStateList[i] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    }
+    if (!permListCrossIpc.empty()) {
+        std::vector<int32_t> permStateCrossIpc;
+        int ret = AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID,
+            permListCrossIpc, permStateCrossIpc);
+        if (ret != ERR_OK) {
+            return ret;
+        }
+        for (int i = 0; i < permStateCrossIpc.size(); i++) {
+            if (permToState.find(i) != permToState.end()) {
+                permStateList[permToState[i]] = permStateCrossIpc[i];
+            }
+        }
+    }
+    return ERR_OK;
+}
+
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName=%{public}s.", permissionName.c_str());
