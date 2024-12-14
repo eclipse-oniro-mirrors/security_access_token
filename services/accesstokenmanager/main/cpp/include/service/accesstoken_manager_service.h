@@ -75,9 +75,12 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx,
         const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
-    int32_t RegisterPermStateChangeCallback(
-        const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
+    int32_t RegisterPermStateChangeCallback(const PermStateChangeScopeParcel& scope,
+        const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
+    int32_t RegisterSelfPermStateChangeCallback(const PermStateChangeScopeParcel& scope,
+        const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterSelfPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
 #endif
