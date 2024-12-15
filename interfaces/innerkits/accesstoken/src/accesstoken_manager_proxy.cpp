@@ -579,6 +579,67 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
         AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
         return ERR_SERVICE_ABNORMAL;
     }
+        if (!SendRequest(
+            AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+            return ERR_SERVICE_ABNORMAL;
+        }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::RegisterSelfPermStateChangeCallback(
+    const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteParcelable(&scope)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t ret;
+    if (!reply.ReadInt32(ret)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", ret);
+    return ret;
+}
+
+int32_t AccessTokenManagerProxy::UnRegisterSelfPermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(
+        AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
