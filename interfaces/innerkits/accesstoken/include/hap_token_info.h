@@ -164,6 +164,22 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
 };
 
+/**
+ * @brief Declares the result after failing to update or install hap
+ */
+class PermissionInfoCheckResult final {
+public:
+    std::string permissionName;
+    PermissionRulesEnum rule;
+};
+
+class HapInfoCheckResult final {
+public:
+    /**
+     * permission detail after failing to install or update hap
+     */
+    PermissionInfoCheckResult permCheckResult;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

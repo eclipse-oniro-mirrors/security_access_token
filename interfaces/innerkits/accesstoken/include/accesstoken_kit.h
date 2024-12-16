@@ -98,6 +98,15 @@ public:
      */
     static int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);
     /**
+     * @brief Create a unique hap token by input values and init the permission state.
+     * @param info struct HapInfoParams quote, see hap_token_info.h
+     * @param policy struct HapPolicyParams quote, see hap_token_info.h
+     * @param result struct HapInfoCheckResult, see hap_token_info.h
+     * @return union AccessTokenIDEx, see access_token.h
+     */
+    static int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
+    /**
      * @brief Create a unique mapping token binding remote tokenID and DeviceID.
      * @param remoteDeviceID remote device deviceID
      * @param remoteTokenID remote device tokenID
@@ -115,6 +124,18 @@ public:
      */
     static int32_t UpdateHapToken(
         AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy);
+    /**
+     * @brief Update hap token info.
+     * @param tokenIdEx union AccessTokenIDEx quote, see access_token.h
+     * @param isSystemApp is system app or not
+     * @param appIDDesc app id description quote
+     * @param apiVersion app api version
+     * @param policy struct HapPolicyParams quote, see hap_token_info.h
+     * @param result struct HapInfoCheckResult, see hap_token_info.h
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParams& policy, HapInfoCheckResult& result);
     /**
      * @brief Delete token info.
      * @param tokenID token id
