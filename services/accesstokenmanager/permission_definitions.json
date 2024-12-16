@@ -4035,7 +4035,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
-            "since": 14,
+            "since": 13,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
