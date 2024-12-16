@@ -5477,6 +5477,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
