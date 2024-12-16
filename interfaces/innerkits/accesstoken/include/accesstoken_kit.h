@@ -318,6 +318,20 @@ public:
      */
     static int32_t UnRegisterPermStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
     /**
+     * @brief Register permission state change callback for app.
+     * @param callback smart point of class PermStateChangeCallbackCustomize quote
+     * @return error code, see access_token_error.h
+     */
+    static int32_t RegisterSelfPermStateChangeCallback(
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
+    /**
+     * @brief Unregister permission state change callback for app.
+     * @param callback smart point of class PermStateChangeCallbackCustomize quote
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UnRegisterSelfPermStateChangeCallback(
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
+    /**
      * @brief Get current version.
      * @param version access token version.
      * @return error code, see access_token_error.h

@@ -508,6 +508,18 @@ int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
     return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);
 }
 
+int32_t AccessTokenKit::RegisterSelfPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
+{
+    return RET_FAILED;
+}
+
+int32_t AccessTokenKit::UnRegisterSelfPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
+{
+    return RET_FAILED;
+}
+
 int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
