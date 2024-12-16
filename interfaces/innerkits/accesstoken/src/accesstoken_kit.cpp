@@ -99,6 +99,12 @@ permList: %{public}zu, stateList: %{public}zu",
     return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId);
 }
 
+int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
+{
+    return RET_SUCCESS;
+}
+
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID=%{public}s, tokenID=%{public}d",
@@ -125,6 +131,12 @@ permList: %{public}zu, stateList: %{public}zu",
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy);
+}
+
+int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParams& policy, HapInfoCheckResult& result)
+{
+    return RET_SUCCESS;
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)

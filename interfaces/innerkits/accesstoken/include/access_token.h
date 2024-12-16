@@ -284,6 +284,14 @@ typedef enum TypeOptType {
     /** get toggle status */
     TOGGLE_GET,
 } OptType;
+
+/**
+ * @brief PermssionRule
+ */
+typedef enum TypePermissionRulesEnum {
+    PERMISSION_EDM_RULE = 0,
+    PERMISSION_ACL_RULE
+} PermissionRulesEnum;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
