@@ -309,7 +309,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
 }
 
 int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type)
 {
     if (customizedCb == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCb is nullptr");
@@ -330,12 +330,23 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     PermStateChangeScopeParcel scopeParcel;
     customizedCb->GetScope(scopeParcel.scope);
 
-    if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
-        scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope oversize");
+    if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList scope oversize");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+    if (type == SYSTEM_REGISTER_TYPE) {
+        if (scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenIDs scope oversize");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+    } else {
+        if (scopeParcel.scope.tokenIDs.size() != 1) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenIDs scope invalid");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        result = proxy->RegisterSelfPermStateChangeCallback(scopeParcel, callback->AsObject());
+    }
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(callbackMutex_);
         callbackMap_[customizedCb] = callback;
@@ -344,7 +355,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 }
 
 int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -358,8 +369,12 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
         ACCESSTOKEN_LOG_ERROR(LABEL, "GoalCallback already is not exist");
         return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
     }
-
-    int32_t result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+    int32_t result;
+    if (type == SYSTEM_REGISTER_TYPE) {
+        result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+    } else {
+        result = proxy->UnRegisterSelfPermStateChangeCallback(goalCallback->second->AsObject());
+    }
     if (result == RET_SUCCESS) {
         callbackMap_.erase(goalCallback);
     }
