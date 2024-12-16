@@ -305,6 +305,13 @@ typedef enum TypeOptType {
     /** get toggle status */
     TOGGLE_GET,
 } OptType;
+
+typedef enum RegisterPermissionChangeType {
+    /** system app register permissions state change info of selected haps */
+    SYSTEM_REGISTER_TYPE = 0,
+    /** app register permissions state change info of itself */
+    SELF_REGISTER_TYPE = 1,
+} RegisterPermChangeType;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
