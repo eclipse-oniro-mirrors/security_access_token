@@ -281,12 +281,13 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
     {
         return RET_SUCCESS;
     }
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid,  const std::string& permissionName,
-        const sptr<IRemoteObject>& callback)
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
     {
         return RET_SUCCESS;
     }

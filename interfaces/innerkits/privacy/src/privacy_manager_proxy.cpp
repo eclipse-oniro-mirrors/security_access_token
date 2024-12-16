@@ -59,7 +59,7 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParce
 }
 
 int32_t PrivacyManagerProxy::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
     MessageParcel startData;
     startData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -75,6 +75,11 @@ int32_t PrivacyManagerProxy::StartUsingPermission(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
+    uint32_t usedType = static_cast<uint32_t>(type);
+    if (!startData.WriteUint32(usedType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write type");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
 
     MessageParcel reply;
     if (!SendRequest(PrivacyInterfaceCode::START_USING_PERMISSION, startData, reply)) {
@@ -88,7 +93,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(
 
 int32_t PrivacyManagerProxy::StartUsingPermission(
     AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-    const sptr<IRemoteObject>& callback)
+    const sptr<IRemoteObject>& callback, PermissionUsedType type)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -106,6 +111,11 @@ int32_t PrivacyManagerProxy::StartUsingPermission(
     }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    uint32_t usedType = static_cast<uint32_t>(type);
+    if (!data.WriteUint32(usedType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write type");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
