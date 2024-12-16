@@ -953,8 +953,8 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
     return true;
 }
 
-bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
-    const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
+bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicyParams& policy,
+    std::vector<PermissionStateFull>& initializedList, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
         "ACLRequestedList size %{public}zu.",
@@ -970,12 +970,16 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
             continue;
         }
         if (!IsAclSatisfied(permDef, policy)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_ACL_RULE;
             ACCESSTOKEN_LOG_ERROR(LABEL, "Acl of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
 
         // edm check
         if (!IsPermAvailableRangeSatisfied(permDef, appDistributionType)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_EDM_RULE;
             ACCESSTOKEN_LOG_ERROR(LABEL, "Available range of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
