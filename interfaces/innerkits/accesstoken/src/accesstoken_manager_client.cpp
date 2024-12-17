@@ -94,6 +94,17 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
     return PERMISSION_DENIED;
 }
 
+int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->VerifyAccessToken(tokenID, permissionList, permStateList);
+}
+
 int AccessTokenManagerClient::GetDefPermission(
     const std::string& permissionName, PermissionDef& permissionDefResult)
 {

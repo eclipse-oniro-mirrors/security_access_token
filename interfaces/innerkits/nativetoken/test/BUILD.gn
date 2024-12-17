@@ -64,6 +64,7 @@ ohos_unittest("libnativetoken_mock_test") {
     "../src/nativetoken_json_oper.c",
     "../src/nativetoken_klog.c",
     "mock/src/cJSON.c",
+    "mock/src/secure_function.c",
     "unittest/mock/nativetoken_oper_test.cpp",
   ]
 

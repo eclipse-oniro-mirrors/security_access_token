@@ -49,6 +49,8 @@ public:
     virtual PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(

@@ -138,6 +138,20 @@ void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, Message
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
+void AccessTokenManagerStub::VerifyAccessTokenWithListInner(MessageParcel& data, MessageParcel& reply)
+{
+    AccessTokenID tokenID;
+    IF_FALSE_RETURN_LOG(LABEL, data.ReadUint32(tokenID), "ReadUint32 failed.");
+    
+    std::vector<std::string> permissionList;
+    IF_FALSE_RETURN_LOG(LABEL, data.ReadStringVector(&permissionList), "ReadStringVector failed.");
+
+    std::vector<int32_t> permStateList;
+    this->VerifyAccessToken(tokenID, permissionList, permStateList);
+
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32Vector(permStateList), "WriteInt32Vector failed.");
+}
+
 void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     std::string permissionName = data.ReadString();
@@ -1039,6 +1053,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::GetPermissionUsedTypeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN_WITH_LIST)] =
+        &AccessTokenManagerStub::VerifyAccessTokenWithListInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
         &AccessTokenManagerStub::GetDefPermissionInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS)] =

@@ -50,6 +50,8 @@ public:
 
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(

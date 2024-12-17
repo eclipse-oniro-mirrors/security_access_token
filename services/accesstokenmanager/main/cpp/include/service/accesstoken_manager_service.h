@@ -51,6 +51,8 @@ public:
     int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
         AccessTokenIDEx& fullTokenId) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
+    int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(

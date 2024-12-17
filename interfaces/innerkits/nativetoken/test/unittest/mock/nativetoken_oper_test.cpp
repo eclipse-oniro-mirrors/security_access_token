@@ -45,6 +45,7 @@ static const int32_t DEFAULT_TIME = -1;
 static const char *TOKEN_ID_CFG_FILE_COPY_PATH = "/data/service/el0/access_token/nativetoken_copy.json";
 extern int g_getArrayItemTime;
 extern int g_getObjectItem;
+extern int g_strcpyTime;
 extern NativeTokenList *g_tokenListHead;
 
 static void SetTimes(void)
@@ -62,6 +63,7 @@ static void SetTimes(void)
     g_parse = VALID_TIME;
     g_getArraySize = VALID_TIME;
     g_printUnformatted = VALID_TIME;
+    g_strcpyTime = VALID_TIME;
 }
 
 static bool isFileEmpty(const std::string& fileName)
@@ -185,6 +187,12 @@ HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level1)
     tokenNode.dcapsNum = 1;
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
+    tokenNode.dcaps = static_cast<char **>(malloc(tokenNode.dcapsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    tokenNode.perms = static_cast<char **>(malloc(tokenNode.permsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.perms, nullptr);
+    tokenNode.acls = static_cast<char **>(malloc(tokenNode.aclsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.acls, nullptr);
 
     std::string stringJson1 = R"([)"\
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
@@ -213,10 +221,15 @@ HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
     SetTimes();
     NativeTokenList tokenNode;
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
+    int32_t newDcapsNum = 2;
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
-    tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
-    EXPECT_NE(tokenNode.dcaps[0], nullptr);
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * newDcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    for (int32_t i = 0; i < newDcapsNum; ++i) {
+        tokenNode.dcaps[i] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
+        EXPECT_NE(tokenNode.dcaps[i], nullptr);
+    }
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
@@ -245,7 +258,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
 
     cJSON_Delete(jsonRoot);
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, newDcapsNum - 1);
 }
 
 /**
@@ -259,10 +272,15 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
     SetTimes();
     NativeTokenList tokenNode;
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
+    int32_t newDcapsNum = 2;
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
-    tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
-    EXPECT_NE(tokenNode.dcaps[0], nullptr);
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * newDcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    for (int32_t i = 0; i < newDcapsNum; ++i) {
+        tokenNode.dcaps[i] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
+        EXPECT_NE(tokenNode.dcaps[i], nullptr);
+    }
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
@@ -276,18 +294,29 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
 
     // perms update failed
     tokenNode.permsNum = 1;
+    tokenNode.perms = static_cast<char **>(malloc(sizeof(char *) * tokenNode.permsNum));
+    EXPECT_NE(tokenNode.perms, nullptr);
+    tokenNode.perms[0] = nullptr;
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
-    // perms update failed
-    tokenNode.aclsNum = 1;
+    // acls update failed
     tokenNode.perms[0] = static_cast<char *>(malloc(sizeof(char) * MAX_PERM_LEN));
-    EXPECT_NE(tokenNode.perms[0], nullptr);
     (void)strcpy_s(tokenNode.perms[0], MAX_PERM_LEN, "x");
+    tokenNode.aclsNum = 1;
+    tokenNode.acls = static_cast<char **>(malloc(sizeof(char *) * tokenNode.aclsNum));
+    EXPECT_NE(tokenNode.acls, nullptr);
+    tokenNode.acls[0] = nullptr;
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
+
+    tokenNode.acls[0] = static_cast<char *>(malloc(sizeof(char) * MAX_PERM_LEN));
+    EXPECT_NE(tokenNode.acls[0], nullptr);
+    (void)strcpy_s(tokenNode.acls[0], MAX_PERM_LEN, "x");
+    EXPECT_EQ(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
     cJSON_Delete(json);
-    free(tokenNode.dcaps[0]);
-    free(tokenNode.perms[0]);
+    FreeStrArray(&tokenNode.dcaps, newDcapsNum - 1);
+    FreeStrArray(&tokenNode.perms, tokenNode.permsNum - 1);
+    FreeStrArray(&tokenNode.acls, tokenNode.aclsNum - 1);
 }
 
 /**
@@ -312,6 +341,8 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * tokenNode.dcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
     tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
     EXPECT_NE(tokenNode.dcaps[0], nullptr);
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
@@ -354,7 +385,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
     g_addItemToObject = 35; // 35 times
     EXPECT_EQ(CreateNativeTokenJsonObject(&tokenNode), nullptr);
 
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, tokenNode.dcapsNum - 1);
 }
 
 /**
@@ -371,6 +402,8 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * tokenNode.dcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
     tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
     EXPECT_NE(tokenNode.dcaps[0], nullptr);
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "y");
@@ -392,7 +425,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
     // cJSON_AddItemToObject failed 172
     g_addItemToObject = 44; // 44 times
     EXPECT_EQ(CreateNativeTokenJsonObject(&tokenNode), nullptr);
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, tokenNode.dcapsNum - 1);
 }
 
 /**
@@ -493,7 +526,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
 
     // UpdateInfoInCfgFile failed for SaveTokenIdToCfg
     // tokenNode->dcapsNum != dcapNumIn branch
-    g_parse = 9; // 8 times
+    g_parse = 9; // 9 times
     EXPECT_EQ(Start("foundation"), 0);
     EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
@@ -504,5 +537,34 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
     EXPECT_NE(Start("processUnique"), 0);
 
     EXPECT_NE(Start("processUnique1"), 0);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
+}
+
+/**
+ * @tc.name: RemoveNodeFromList001
+ * @tc.desc: GetInfoArrFromJson successfully.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level1)
+{
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
+    AtlibInit();
+    EXPECT_NE(g_tokenListHead, nullptr);
+    g_strcpyTime = 0;
+    EXPECT_EQ(Start("foundation"), 0);
+
+    // check the node whether exsits in the list
+    NativeTokenList *node = g_tokenListHead->next;
+    while (node != nullptr) {
+        if (strcmp(node->processName, "foundation") == 0) {
+            break;
+        }
+        node = node->next;
+    }
+    EXPECT_EQ(node, nullptr);
+
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
     std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }
