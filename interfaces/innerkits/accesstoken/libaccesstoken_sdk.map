@@ -17,8 +17,10 @@
         "OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenIDEx(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
