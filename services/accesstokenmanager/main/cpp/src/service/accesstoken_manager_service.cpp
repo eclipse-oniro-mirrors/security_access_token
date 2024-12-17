@@ -159,7 +159,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID,
 {
     permStateList.clear();
     permStateList.resize(permissionList.size(), PERMISSION_DENIED);
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         permStateList[i] = VerifyAccessToken(tokenID, permissionList[i]);
     }
     return RET_SUCCESS;
