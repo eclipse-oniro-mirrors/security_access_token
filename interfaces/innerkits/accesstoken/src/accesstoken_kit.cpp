@@ -87,6 +87,13 @@ permList: %{public}zu, stateList: %{public}zu",
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
     AccessTokenIDEx& fullTokenId)
 {
+    HapInfoCheckResult result;
+    return InitHapToken(info, policy, fullTokenId, result);
+}
+
+int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
+{
     ACCESSTOKEN_LOG_INFO(LABEL, "UserID: %{public}d, bundleName :%{public}s, \
 permList: %{public}zu, stateList: %{public}zu",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
@@ -96,13 +103,7 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId);
-}
-
-int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
-    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
-{
-    return RET_SUCCESS;
+    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId, result);
 }
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
@@ -122,6 +123,13 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
+    HapInfoCheckResult result;
+    return UpdateHapToken(tokenIdEx, info, policy, result);
+}
+
+int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParams& policy, HapInfoCheckResult& result)
+{
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, isSystemApp: %{public}d, \
 permList: %{public}zu, stateList: %{public}zu",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size());
@@ -130,13 +138,7 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy);
-}
-
-int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const HapPolicyParams& policy, HapInfoCheckResult& result)
-{
-    return RET_SUCCESS;
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy, result);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
@@ -338,7 +340,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
     permStateList.resize(permissionList.size(), PERMISSION_DENIED);
     std::vector<std::string> permListCrossIpc;
     std::unordered_map<int, int> permToState;
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         bool isGranted = false;
         uint32_t code;
         if (!TransferPermissionToOpcode(permissionList[i], code)) {
@@ -360,7 +362,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
         if (ret != ERR_OK) {
             return ret;
         }
-        for (int i = 0; i < permStateCrossIpc.size(); i++) {
+        for (size_t i = 0; i < permStateCrossIpc.size(); i++) {
             if (permToState.find(i) != permToState.end()) {
                 permStateList[permToState[i]] = permStateCrossIpc[i];
             }

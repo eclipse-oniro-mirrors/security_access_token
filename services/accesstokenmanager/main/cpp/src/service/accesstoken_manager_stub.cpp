@@ -478,13 +478,20 @@ void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParce
     }
     int32_t res;
     AccessTokenIDEx fullTokenId = { 0 };
-    res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId);
+    HapInfoCheckResult result;
+    res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId, result);
     if (!reply.WriteInt32(res)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail");
     }
 
     if (res != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Res error %{public}d", res);
+        if (!result.permCheckResult.permissionName.empty()) {
+            IF_FALSE_RETURN_LOG(
+                LABEL, reply.WriteString(result.permCheckResult.permissionName), "WriteString failed.");
+            IF_FALSE_RETURN_LOG(
+                LABEL, reply.WriteInt32(result.permCheckResult.rule),  "WriteInt32 failed.");
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Res error %{public}d.", res);
         return;
     }
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint64(fullTokenId.tokenIDEx), "WriteUint64 failed.");
@@ -547,9 +554,20 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
         IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
-    int32_t result = this->UpdateHapToken(tokenIdEx, info, *policyParcel);
+    HapInfoCheckResult resultInfo;
+    int32_t result = this->UpdateHapToken(tokenIdEx, info, *policyParcel, resultInfo);
     IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteUint32(tokenIdEx.tokenIdExStruct.tokenAttr), "WriteUint32 failed.");
+    if (result != RET_SUCCESS) {
+        if (!resultInfo.permCheckResult.permissionName.empty()) {
+            IF_FALSE_RETURN_LOG(
+                LABEL, reply.WriteString(resultInfo.permCheckResult.permissionName), "WriteString failed.");
+            IF_FALSE_RETURN_LOG(
+                LABEL, reply.WriteInt32(resultInfo.permCheckResult.rule),  "WriteInt32 failed.");
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Res error %{public}d", result);
+        return;
+    }
 }
 
 void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)

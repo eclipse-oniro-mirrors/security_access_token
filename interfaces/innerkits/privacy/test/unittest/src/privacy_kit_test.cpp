@@ -1333,6 +1333,46 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback011, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
 }
 
+class CbCustomizeTest5 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest5(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {}
+    ~CbCustomizeTest5()
+    {}
+
+    // change callingTokenID_ and usedType_ to result
+    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    {
+        callingTokenID_ = result.callingTokenID;
+        usedType_ = result.usedType;
+    }
+
+    AccessTokenID callingTokenID_ = INVALID_TOKENID;
+    PermissionUsedType usedType_ = INVALID_USED_TYPE;
+};
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback012
+ * @tc.desc: detect callback modify private member.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_CALL_LOG"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest5>(permList);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_CALL_LOG"));
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_NE(INVALID_TOKENID, callbackPtr->callingTokenID_);
+    ASSERT_NE(INVALID_USED_TYPE, callbackPtr->usedType_);
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
 /**
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
@@ -1361,7 +1401,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
 }
 /**
  * @tc.name: StartUsingPermission001
- * @tc.desc: StartUsingPermission with invalid tokenId or permission.
+ * @tc.desc: StartUsingPermission with invalid tokenId or permission or usedType.
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
@@ -1369,6 +1409,8 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "permissionName"));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(
+        g_tokenIdE, "ohos.permission.READ_CALL_LOG", -1, PermissionUsedType::INVALID_USED_TYPE));
 }
 
 /**
@@ -1443,7 +1485,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
 
 /**
  * @tc.name: StartUsingPermission006
- * @tc.desc: StartUsingPermission with invalid tokenId or permission or callback.
+ * @tc.desc: StartUsingPermission with invalid tokenId or permission or callback or usedType.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
@@ -1456,6 +1498,8 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level1)
         PrivacyKit::StartUsingPermission(g_tokenIdE, "", callbackPtr));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(
+        g_tokenIdE, "ohos.permission.READ_CALL_LOG", callbackPtr, -1, PermissionUsedType::INVALID_USED_TYPE));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "permissionName", callbackPtr));
 }

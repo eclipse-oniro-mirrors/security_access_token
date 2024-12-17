@@ -70,10 +70,10 @@ public:
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) override;
     int32_t InitHapToken(const HapInfoParcel& hapInfoParcel, HapPolicyParcel& policyParcel,
-        AccessTokenIDEx& fullTokenId) override;
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& resultInfo) override;
     int DeleteToken(AccessTokenID tokenID) override;
-    int32_t UpdateHapToken(
-        AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
+    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParcel& policyParcel, HapInfoCheckResult& resultInfo) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
