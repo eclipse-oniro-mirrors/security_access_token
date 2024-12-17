@@ -568,6 +568,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENABLE_EXPERIENCE_HBM",               false},
     {"ohos.permission.USE_USER_ACCESS_MANAGER",        false},
     {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
+    {"ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE", false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
