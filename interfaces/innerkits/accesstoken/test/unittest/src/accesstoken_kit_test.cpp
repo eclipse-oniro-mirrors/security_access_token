@@ -1211,13 +1211,13 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level0)
 
     std::vector<int32_t> permStateList;
     ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
     }
 
     permStateList.clear();
     ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
     }
 
@@ -1228,13 +1228,13 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level0)
 
     permStateList.clear();
     ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
     }
 
     permStateList.clear();
     ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
     }
 }

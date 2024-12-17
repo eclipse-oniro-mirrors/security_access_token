@@ -338,7 +338,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
     permStateList.resize(permissionList.size(), PERMISSION_DENIED);
     std::vector<std::string> permListCrossIpc;
     std::unordered_map<int, int> permToState;
-    for (int i = 0; i < permissionList.size(); i++) {
+    for (size_t i = 0; i < permissionList.size(); i++) {
         bool isGranted = false;
         uint32_t code;
         if (!TransferPermissionToOpcode(permissionList[i], code)) {
@@ -360,7 +360,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
         if (ret != ERR_OK) {
             return ret;
         }
-        for (int i = 0; i < permStateCrossIpc.size(); i++) {
+        for (size_t i = 0; i < permStateCrossIpc.size(); i++) {
             if (permToState.find(i) != permToState.end()) {
                 permStateList[permToState[i]] = permStateCrossIpc[i];
             }
