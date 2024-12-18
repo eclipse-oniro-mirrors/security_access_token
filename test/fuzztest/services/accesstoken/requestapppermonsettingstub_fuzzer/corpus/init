@@ -11,11 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-group("unittest") {
-  testonly = true
-  deps = [
-    "coverage:libaccesstoken_manager_service_coverage_test",
-    "mock:libpermission_manager_mock_test",
-    "unittest:libaccesstoken_manager_service_standard_test",
-  ]
-}
+FUZZ

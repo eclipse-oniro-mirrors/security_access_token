@@ -34,6 +34,7 @@ static constexpr const char* GRANT_SERVICE_ABILITY_NAME_KEY = "grant_service_abi
 static constexpr const char* PERMISSION_STATE_SHEET_ABILITY_NAME_KEY = "permission_state_sheet_ability_name";
 static constexpr const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_switch_sheet_ability_name";
 static constexpr const char* TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
+static constexpr const char* APPLICATION_SETTING_ABILITY_NAME_KEY = "application_setting_ability_name";
 
 static constexpr const char* RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static constexpr const char* RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
@@ -88,6 +89,10 @@ void from_json(const nlohmann::json& j, AccessTokenServiceConfig& a)
     }
 
     if (!JsonParser::GetIntFromJson(j, TEMP_PERM_CANCLE_TIME_KEY, a.cancleTime)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName)) {
         return;
     }
 }

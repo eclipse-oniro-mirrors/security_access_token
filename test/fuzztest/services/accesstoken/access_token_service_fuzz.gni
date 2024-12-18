@@ -33,6 +33,7 @@ access_token_include_dirs = [
   "${access_token_path}/frameworks/accesstoken/include",
   "${access_token_path}/interfaces/innerkits/privacy/include",
   "${access_token_path}/interfaces/innerkits/tokensync/src",
+  "${access_token_path}/services/common/ability_manager/include",
   "${access_token_path}/services/common/app_manager/include",
   "${access_token_path}/services/common/config_policy/include",
   "${access_token_path}/services/common/database/include",
@@ -59,6 +60,7 @@ access_token_deps = [
 ]
 
 access_token_external_deps = [
+  "ability_base:want",
   "c_utils:utils",
   "device_manager:devicemanagersdk",
   "dsoftbus:softbus_client",

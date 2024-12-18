@@ -63,6 +63,7 @@ const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
 const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
+const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainAbility";
 }
 
 const bool REGISTER_RESULT =
@@ -297,6 +298,18 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
     const std::string& permissionName, uint32_t& status, int32_t userID = 0)
 {
     return PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    HapTokenInfo hapInfo;
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo failed, err=%{public}d.", ret);
+        return ret;
+    }
+    return PermissionManager::GetInstance().RequestAppPermOnSetting(hapInfo,
+        grantBundleName_, applicationSettingAbilityName_);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
@@ -657,6 +670,8 @@ void AccessTokenManagerService::GetConfigValue()
             PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
         globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
             GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
+        applicationSettingAbilityName_ = value.atConfig.applicationSettingAbilityName.empty() ?
+            APPLICATION_SETTING_ABILITY_NAME : value.atConfig.applicationSettingAbilityName;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
@@ -664,6 +679,7 @@ void AccessTokenManagerService::GetConfigValue()
         grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
         permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+        applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \

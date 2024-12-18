@@ -47,7 +47,7 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
-ohos_unittest("libaccesstoken_manager_service_coverage_test") {
+ohos_unittest("libpermission_manager_mock_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
@@ -86,9 +86,10 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   ]
 
   sources = [
-    "accesstoken_database_coverage_test.cpp",
-    "permission_manager_coverage_test.cpp",
+    "library_loader_mock.cpp",
+    "permission_manager_mock_test.cpp",
   ]
+
   sources += accesstoken_manager_service_source
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -122,33 +123,8 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "samgr:samgr_proxy",
   ]
 
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
-    ]
-    include_dirs += [
-      "${access_token_path}/interfaces/innerkits/tokensync/include",
-      "${access_token_path}/frameworks/ineer_api/tokensync/src",
-    ]
-    external_deps += [ "device_manager:devicemanagersdk" ]
-  }
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (access_token_background_task_mgr_continuous_task_enable == true) {
-    cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
-    include_dirs += [
-      "${access_token_path}/services/common/background_task_manager/include",
-    ]
-    sources += [
-      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_client.cpp",
-      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_proxy.cpp",
-      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_death_recipient.cpp",
-      "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
-      "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
-    ]
   }
 }

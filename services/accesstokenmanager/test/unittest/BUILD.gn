@@ -68,6 +68,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/main/cpp/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/src",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/services/common/ability_manager/include",
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/config_policy/include",
     "${access_token_path}/services/common/database/include",
@@ -122,6 +123,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   ]
 
   external_deps = [
+    "ability_base:want",
     "c_utils:utils",
     "googletest:gmock",
     "googletest:gtest_main",

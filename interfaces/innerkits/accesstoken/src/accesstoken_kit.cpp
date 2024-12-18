@@ -529,6 +529,16 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
     return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenKit::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=%{public}d.", tokenID);
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().RequestAppPermOnSetting(tokenID);
+}
+
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {

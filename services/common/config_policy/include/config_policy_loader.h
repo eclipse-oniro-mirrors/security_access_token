@@ -30,6 +30,7 @@ struct AccessTokenServiceConfig final {
     std::string permStateAbilityName;
     std::string globalSwitchAbilityName;
     int32_t cancleTime;
+    std::string applicationSettingAbilityName;
 };
 
 struct PrivacyServiceConfig final {

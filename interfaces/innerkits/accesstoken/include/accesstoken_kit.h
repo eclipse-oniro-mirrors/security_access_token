@@ -291,6 +291,12 @@ public:
     static int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID);
     /**
+     * @brief Starts the permission manager page of an application.
+     * @param tokenID token id
+     * @return error code, see access_token_error.h
+     */
+    static int32_t RequestAppPermOnSetting(AccessTokenID tokenID);
+    /**
      * @brief Get requsted permission grant result
      * @param permList PermissionListState list quote, as input and query result
      * @return enum PermissionOper, see access_token.h
