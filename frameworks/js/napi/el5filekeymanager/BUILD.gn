@@ -33,6 +33,7 @@ ohos_shared_library("screenlockfilemanager") {
   deps = [ "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk" ]
 
   external_deps = [
+    "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
     "napi:ace_napi",
