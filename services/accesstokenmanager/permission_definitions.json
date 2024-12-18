@@ -5499,7 +5499,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.CAPTURE_SCREEN_AUTHORIZE_EXEMPT",
+            "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
