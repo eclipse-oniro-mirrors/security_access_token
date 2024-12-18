@@ -16,7 +16,6 @@
 #include "accesstoken_kit.h"
 #include <string>
 #include <vector>
-#include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "accesstoken_manager_client.h"
