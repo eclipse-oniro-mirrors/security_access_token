@@ -69,6 +69,7 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
