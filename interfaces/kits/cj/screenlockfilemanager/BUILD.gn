@@ -41,7 +41,7 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
 
   external_deps = [
     "hilog:libhilog",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "napi:cj_bind_ffi",
   ]
 
