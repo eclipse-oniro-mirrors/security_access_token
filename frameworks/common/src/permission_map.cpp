@@ -569,6 +569,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.USE_USER_ACCESS_MANAGER",        false},
     {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
     {"ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", false},
+    {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
     {"ohos.permission.SET_LAUNCH_REASON_MESSAGE",           false},
 };
 
