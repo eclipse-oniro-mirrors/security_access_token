@@ -40,6 +40,7 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
   deps = [ "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk" ]
 
   external_deps = [
+    "ipc:ipc_core"
     "hilog:libhilog",
     "napi:cj_bind_ffi",
   ]
