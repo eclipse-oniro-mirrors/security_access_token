@@ -94,6 +94,10 @@ uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, 
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:size = %d is invalid.", __func__, size);
         return ATRET_FAILED;
     }
+    if (size == 0) {
+        *strArr = NULL;
+        return ATRET_SUCCESS;
+    }
     *strNum = size;
     *strArr = (char **)malloc(size * sizeof(char *));
     if (*strArr == NULL) {
