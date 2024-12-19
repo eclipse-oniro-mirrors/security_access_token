@@ -425,7 +425,8 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
     hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
     hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
     AccessTokenIDEx tokenIdEx;
-    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
 }
 
 /**
@@ -450,7 +451,9 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
     hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
     hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
     AccessTokenIDEx tokenIdEx;
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+        atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
 }
 
 /**
@@ -480,13 +483,6 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
         .grantFlags = {1}
     };
     PermissionStateFull permissionStateB = {
-        .permissionName = "ohos.permission.PRELOAD_APPLICATION",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {1},
-        .grantFlags = {1}
-    };
-    PermissionStateFull permissionStateC = {
         .permissionName = "ohos.permission.test",
         .isGeneral = true,
         .resDeviceID = {"local"},
@@ -497,14 +493,20 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
         .apl = APL_NORMAL,
         .domain = "test",
         .permList = {},
-        .permStateList = { permissionStateA }
+        .permStateList = { permissionStateA, permissionStateB }
     };
     AccessTokenIDEx fullTokenId = {0};
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId));
+    HapInfoCheckResult result;
 
-    policy.hapPolicyParameter.permStateList = { permissionStateB, permissionStateC };
-    policy.hapPolicyParameter.aclRequestedList = { "ohos.permission.PRELOAD_APPLICATION" };
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId));
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
+    permissionStateA.permissionName = "ohos.permission.ENTERPRISE_MANAGE_SETTINGS";
+    policy.hapPolicyParameter.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
+    policy.hapPolicyParameter.permStateList = { permissionStateA, permissionStateB };
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
 }
 
 /**

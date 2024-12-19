@@ -58,6 +58,12 @@ public:
      * see the definition of PermissionOper in the access_token.h file.
      */
     PermissionOper state;
+
+    /**
+     * permission request state, for details about the valid values,
+     * see the definition of PermissionErrorReason in the access_token.h file.
+     */
+    PermissionErrorReason errorReason;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -189,10 +189,12 @@ int PermissionManager::GetReqPermissions(
 }
 
 static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& permsList,
-    const std::string &permission, int32_t& status, uint32_t& flag)
+    PermissionListState& permState, int32_t& status, uint32_t& flag)
 {
+    const std::string permission = permState.permissionName;
     if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permission)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "No definition for hap permission: %{public}s!", permission.c_str());
+        permState.errorReason = PERM_INVALID;
         return false;
     }
     auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStateFull& perm) {
@@ -200,6 +202,7 @@ static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& p
     });
     if (iter == permsList.end()) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Can not find permission: %{public}s define!", permission.c_str());
+        permState.errorReason = PERM_NOT_DECLEARED;
         return false;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
@@ -243,14 +246,16 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
     // api8 require vague location permission refuse directly because there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
         permState.state = INVALID_OPER;
+        permState.errorReason = CONDITIONS_NOT_MET;
         return;
     }
-    if (!IsPermissionRequestedInHap(permsList, permState.permissionName, goalGrantStatus, goalGrantFlag)) {
+    if (!IsPermissionRequestedInHap(permsList, permState, goalGrantStatus, goalGrantFlag)) {
         permState.state = INVALID_OPER;
         return;
     }
     if (IsPermissionRestrictedByRules(permState.permissionName)) {
         permState.state = INVALID_OPER;
+        permState.errorReason = UNABLE_POP_UP;
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: status: %{public}d, flag: %{public}d",
@@ -258,20 +263,24 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
 
         if ((goalGrantFlag == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlag & PERMISSION_USER_SET) != 0) ||
             ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0) || ((goalGrantFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
             permState.state = DYNAMIC_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
         if ((goalGrantFlag & PERMISSION_USER_FIXED) != 0) {
             permState.state = SETTING_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
     }
     permState.state = PASS_OPER;
+    permState.errorReason = REQ_SUCCESS;
     return;
 }
 
@@ -725,6 +734,7 @@ bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
             // vague permissoion is not pop and permission status os not granted
             if (!needVagueDynamic && !isVagueGranted) {
                 reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.accurateIndex].permsState.errorReason = CONDITIONS_NOT_MET;
                 needAccurateDynamic = false;
             }
         }
@@ -736,11 +746,14 @@ bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
             // with back and vague permission, request back can not pop dynamic dialog
             if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
                 reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.vagueIndex].permsState.errorReason = CONDITIONS_NOT_MET;
             }
             if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
                 reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.accurateIndex].permsState.errorReason = CONDITIONS_NOT_MET;
             }
             reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+            reqPermList[locationIndex.backIndex].permsState.errorReason = CONDITIONS_NOT_MET;
             return false;
         }
         // with back and vague permission
@@ -749,8 +762,10 @@ bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
         if (reqPermList[locationIndex.backIndex].permsState.state == DYNAMIC_OPER) {
             if (needAccurateDynamic || needVagueDynamic) {
                 reqPermList[locationIndex.backIndex].permsState.state = SETTING_OPER;
+                reqPermList[locationIndex.backIndex].permsState.errorReason = REQ_SUCCESS;
             } else {
                 reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.backIndex].permsState.errorReason = CONDITIONS_NOT_MET;
             }
         }
     }
@@ -953,8 +968,8 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
     return true;
 }
 
-bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
-    const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
+bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicyParams& policy,
+    std::vector<PermissionStateFull>& initializedList, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
         "ACLRequestedList size %{public}zu.",
@@ -970,12 +985,16 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
             continue;
         }
         if (!IsAclSatisfied(permDef, policy)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_ACL_RULE;
             ACCESSTOKEN_LOG_ERROR(LABEL, "Acl of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
 
         // edm check
         if (!IsPermAvailableRangeSatisfied(permDef, appDistributionType)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_EDM_RULE;
             ACCESSTOKEN_LOG_ERROR(LABEL, "Available range of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
