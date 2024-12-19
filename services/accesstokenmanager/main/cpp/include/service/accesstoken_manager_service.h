@@ -49,8 +49,10 @@ public:
     PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) override;
     int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
-        AccessTokenIDEx& fullTokenId) override;
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
+    int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
@@ -74,10 +76,10 @@ public:
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
-    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-        const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
-    int32_t RegisterPermStateChangeCallback(const PermStateChangeScopeParcel& scope,
-        const sptr<IRemoteObject>& callback) override;
+    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParcel& policyParcel, HapInfoCheckResult& result) override;
+    int32_t RegisterPermStateChangeCallback(
+        const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
     int32_t RegisterSelfPermStateChangeCallback(const PermStateChangeScopeParcel& scope,
         const sptr<IRemoteObject>& callback) override;

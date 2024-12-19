@@ -34,7 +34,8 @@ TokenSyncManagerClient& TokenSyncManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new TokenSyncManagerClient();
+            TokenSyncManagerClient* tmp = new TokenSyncManagerClient();
+            instance = std::move(tmp);
         }
     }
     return *instance;

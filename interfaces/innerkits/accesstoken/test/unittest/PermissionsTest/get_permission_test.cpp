@@ -410,12 +410,12 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain"
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);

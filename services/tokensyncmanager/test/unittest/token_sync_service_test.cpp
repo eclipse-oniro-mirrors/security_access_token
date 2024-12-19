@@ -437,7 +437,6 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
 HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
 {
     NativeTokenInfoForSync native1 = {
-        .baseInfo.apl = APL_NORMAL,
         .baseInfo.ver = 1,
         .baseInfo.processName = "token_sync_test",
         .baseInfo.dcap = {"AT_CAP"},
@@ -458,13 +457,10 @@ HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
 HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
 {
     HapTokenInfo baseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "id",
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -508,7 +504,6 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
     cmd->ToPermStateJson(permStateJson, state2);
 
     EXPECT_EQ(hap.baseInfo.tokenID, remoteTokenInfo.baseInfo.tokenID);
-    EXPECT_EQ(hap.baseInfo.apl, remoteTokenInfo.baseInfo.apl);
 }
 
 /**
@@ -555,8 +550,8 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    nlohmann::json hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+    nlohmann::json hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"grantConfig\\\":[{\\\"resDeviceID\\\":\\\"device\\\", "
         "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
@@ -564,22 +559,22 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
     cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
     cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
     cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"isGeneral\\\":1, \\\"grantConfig\\\":[{"
         "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
@@ -604,8 +599,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":";
@@ -654,9 +649,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // apl is error
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":11,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -687,9 +681,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // lost tokenID
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -720,9 +713,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // instIndex is not number
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":\\\"aaa\\\","
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
@@ -754,8 +746,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // mock_token_sync lost \\\"
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync,\\\"deviceID\\\":"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync,"
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
@@ -789,9 +780,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // statusCode error
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":11,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -829,8 +819,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     // tokenID is not exist
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":";
@@ -1463,13 +1453,10 @@ PermissionStateFull g_infoManagerTestUpdateState2 = {
 };
 
 HapTokenInfo g_remoteHapInfoBasic = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 1,
-    .appID = "testtesttesttest",
-    .deviceID = "0",
     .tokenID = 0x20000001,
     .tokenAttr = 0
 };

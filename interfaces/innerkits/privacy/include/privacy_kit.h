@@ -81,7 +81,8 @@ public:
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
+    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     /**
      * @brief Input tokenID start using input permission and return by callback,
      *        only those services which has float window such as camera or
@@ -92,7 +93,8 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-        const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid = -1);
+        const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid = -1,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     /**
      * @brief Input tokenID stop using input permission.
      * @param tokenID token id
@@ -139,7 +141,7 @@ public:
      * @param permissionName permission nanme
      * @return true means allow to user the permission, false means not allow
      */
-    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     /**

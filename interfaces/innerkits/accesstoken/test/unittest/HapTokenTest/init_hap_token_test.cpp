@@ -150,14 +150,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(0, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
@@ -182,14 +184,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(1, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
@@ -318,6 +322,33 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapTokenFuncTest006
+ * @tc.desc: Install normal app success with input param result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest006");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.isSystemApp = false;
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    result.permCheckResult.permissionName = "test"; // invalid Name
+    result.permCheckResult.rule = static_cast<PermissionRulesEnum>(-1); // invalid reasan
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "test");
+    ASSERT_EQ(result.permCheckResult.rule, -1);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
  * @tc.name: InitHapTokenSpecsTest001
  * @tc.desc: Test the high-level permission authorized by acl.
  * @tc.type: FUNC
@@ -398,6 +429,12 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ACCESS_DDK_USB");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
 }
 
 /**
@@ -607,10 +644,18 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
         .grantFlags = {PERMISSION_SYSTEM_FIXED}
     };
     policyParams.permStateList = {permissionStateFull001};
+    policyParams.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
     EXPECT_EQ(PERMISSION_DENIED, ret);

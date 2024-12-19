@@ -423,13 +423,21 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
     // asyncContext release in complete
     RequestGlobalSwitchAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestGlobalSwitchAsyncContextHandle*>(data);
-    if (asyncContextHandle == nullptr) {
+    if ((asyncContextHandle == nullptr) || (asyncContextHandle->asyncContextPtr == nullptr)) {
         return;
     }
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
+        if ((asyncContextHandle->asyncContextPtr->abilityContext == nullptr) ||
+            (asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo() == nullptr)) {
+            return;
+        }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
     } else {
+        if ((asyncContextHandle->asyncContextPtr->uiExtensionContext == nullptr) ||
+            (asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo() == nullptr)) {
+            return;
+        }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
     }

@@ -41,13 +41,10 @@ namespace OHOS {
     {
         std::string permissionName(fuzzData.GenerateStochasticString());
         HapTokenInfo baseInfo = {
-            .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
             .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = fuzzData.GenerateStochasticString(),
-            .deviceID = fuzzData.GenerateStochasticString(),
             .tokenID = tokenId,
             .tokenAttr = 0
         };

@@ -30,9 +30,10 @@ public:
     ~PrivacyManagerProxy() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback) override;
+        PermissionUsedType type) override;
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback, PermissionUsedType type) override;
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID) override;
     int32_t GetPermissionUsedRecords(
@@ -42,7 +43,7 @@ public:
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
-    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid) override;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhance) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;

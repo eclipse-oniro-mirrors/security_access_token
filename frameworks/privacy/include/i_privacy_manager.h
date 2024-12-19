@@ -44,9 +44,10 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
     virtual int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) = 0;
-    virtual int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback) = 0;
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE) = 0;
+    virtual int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE) = 0;
     virtual int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) = 0;
     virtual int32_t RemovePermissionUsedRecords(AccessTokenID tokenID) = 0;
     virtual int32_t GetPermissionUsedRecords(
@@ -56,7 +57,7 @@ public:
     virtual int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
-    virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid) = 0;
     virtual int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) = 0;
     virtual int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) = 0;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

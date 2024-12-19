@@ -40,8 +40,6 @@ static const std::string JSON_USERID = "userID";
 static const std::string JSON_BUNDLE_NAME = "bundleName";
 static const std::string JSON_INST_INDEX = "instIndex";
 static const std::string JSON_DLP_TYPE = "dlpType";
-static const std::string JSON_APPID = "appID";
-static const std::string JSON_DEVICEID = "deviceID";
 }
 
 static void GetStringFromJson(const nlohmann::json& jsonObject, const std::string& tag, std::string& out)
@@ -161,9 +159,6 @@ nlohmann::json BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync&
         {"bundleName", tokenInfo.baseInfo.bundleName},
         {"instIndex", tokenInfo.baseInfo.instIndex},
         {"dlpType", tokenInfo.baseInfo.dlpType},
-        {"appID", tokenInfo.baseInfo.appID},
-        {"deviceID", tokenInfo.baseInfo.deviceID},
-        {"apl", tokenInfo.baseInfo.apl},
         {"permState", permStatesJson}
     };
     return hapTokensJson;
@@ -182,15 +177,6 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
     GetStringFromJson(hapTokenJson, JSON_BUNDLE_NAME, hapTokenBasicInfo.bundleName);
     GetIntFromJson(hapTokenJson, JSON_INST_INDEX, hapTokenBasicInfo.instIndex);
     GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
-    GetStringFromJson(hapTokenJson, JSON_APPID, hapTokenBasicInfo.appID);
-    GetStringFromJson(hapTokenJson, JSON_DEVICEID, hapTokenBasicInfo.deviceID);
-
-    if (hapTokenJson.find("apl") != hapTokenJson.end() && hapTokenJson.at("apl").is_number()) {
-        int apl = hapTokenJson.at("apl").get<int>();
-        if (DataValidator::IsAplNumValid(apl)) {
-            hapTokenBasicInfo.apl = static_cast<ATokenAplEnum>(apl);
-        }
-    }
 }
 
 void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson,

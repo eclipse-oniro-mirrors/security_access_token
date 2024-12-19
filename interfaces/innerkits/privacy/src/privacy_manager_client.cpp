@@ -42,7 +42,8 @@ PrivacyManagerClient& PrivacyManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new PrivacyManagerClient();
+            PrivacyManagerClient* tmp = new PrivacyManagerClient();
+            instance = std::move(tmp);
         }
     }
     return *instance;
@@ -71,14 +72,14 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->StartUsingPermission(tokenID, pid, permissionName);
+    return proxy->StartUsingPermission(tokenID, pid, permissionName, type);
 }
 
 int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
@@ -99,9 +100,8 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerClient::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-    const std::shared_ptr<StateCustomizedCbk>& callback)
+int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
+    const std::string& permissionName, const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type)
 {
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
@@ -121,7 +121,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    result = proxy->StartUsingPermission(tokenId, pid, permissionName, callbackWrap->AsObject());
+    result = proxy->StartUsingPermission(tokenId, pid, permissionName, callbackWrap->AsObject(), type);
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
@@ -271,14 +271,15 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     return result;
 }
 
-bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t pid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return false;
     }
-    return proxy->IsAllowedUsingPermission(tokenID, permissionName);
+    return proxy->IsAllowedUsingPermission(tokenID, permissionName, pid);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

@@ -73,6 +73,8 @@ enum class AccessTokenInterfaceCode {
     GET_HAP_TOKENINFO_EXT,
     REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK,
     UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK,
+
+    VERIFY_ACCESSTOKEN_WITH_LIST = 0x0050,
 };
 } // namespace AccessToken
 } // namespace Security

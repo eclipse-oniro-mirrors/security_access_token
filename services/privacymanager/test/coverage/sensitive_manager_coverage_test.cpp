@@ -107,6 +107,38 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
     // code not default + state = 3
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
         IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
+    
+    OHOS::MessageParcel data2;
+    OHOS::MessageParcel reply2;
+    ASSERT_EQ(true, data2.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data2.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED), data2, reply2, option));
+
+    OHOS::MessageParcel data3;
+    OHOS::MessageParcel reply3;
+    ASSERT_EQ(true, data3.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data3.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED), data3, reply3, option));
+    
+    OHOS::MessageParcel data4;
+    OHOS::MessageParcel reply4;
+    ASSERT_EQ(true, data4.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data4.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED), data4, reply4, option));
+    
+    OHOS::MessageParcel data5;
+    OHOS::MessageParcel reply5;
+    ASSERT_EQ(true, data5.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data5.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED), data5, reply5, option));
 }
 
 /**
@@ -130,6 +162,45 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
     // code not default + state = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
         IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
+}
+
+/**
+ * @tc.name: OnRemoteRequest004
+ * @tc.desc: ApplicationStateObserverStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
+{
+    SensitiveManagerCoverageTestCb1 callback;
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+
+    OHOS::MessageParcel data1;
+    ASSERT_EQ(true, data1.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data1, reply, option);
+    
+    OHOS::MessageParcel data2;
+    ASSERT_EQ(true, data2.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED), data2, reply, option);
+
+    OHOS::MessageParcel data3;
+    ASSERT_EQ(true, data3.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED), data3, reply, option);
+    
+    OHOS::MessageParcel data4;
+    ASSERT_EQ(true, data4.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED), data4, reply, option);
+    
+    OHOS::MessageParcel data5;
+    ASSERT_EQ(true, data5.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED), data5, reply, option);
 }
 } // namespace AccessToken
 } // namespace Security

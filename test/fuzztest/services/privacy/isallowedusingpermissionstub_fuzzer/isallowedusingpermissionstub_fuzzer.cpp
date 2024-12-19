@@ -44,6 +44,9 @@ namespace OHOS {
         if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
+        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
+            return false;
+        }
 
         uint32_t code = static_cast<uint32_t>(
             PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION);

@@ -52,13 +52,17 @@ HWTEST_F(TokenOperTest, FreeStrArray001, TestSize.Level1)
         test[i] = reinterpret_cast<char *>(malloc(sizeof(char)));
         ASSERT_NE(test[i], nullptr);
     }
-    FreeStrArray(test, testSize - 1);
-    EXPECT_EQ(test[0], nullptr);
-    FreeStrArray(test, testSize - 1); // arr[i] == nullptr
-    for (int32_t i = 0; i < testSize; i++) {
-        free(test[i]);
+    FreeStrArray(&test, testSize - 1);
+    EXPECT_EQ(test, nullptr);
+    FreeStrArray(&test, testSize - 1); // arr[i] == nullptr
+    if (test != nullptr) {
+        for (int32_t i = 0; i < testSize; i++) {
+            if (test[i] != nullptr) {
+                free(test[i]);
+            }
+        }
+        free(test);
     }
-    free(test);
 }
 
 /**
@@ -179,27 +183,29 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
     attr.strKey = "dcaps";
     attr.maxStrNum = 1;
     attr.maxStrLen = 10;
-    char *test[testSize];
+    char **test = static_cast<char **>(malloc(testSize * sizeof(char *)));
     const char *stringJson1 = "{\"processName\":\"partitionslot_host\","
         "\"dcaps\":[\"DCAPS_AT\",\"DCAPS_AT\", \"DCAPS_AT\",\"DCAPS_AT\"],"
         "\"permissions\":[],\"nativeAcls\":[]}";
     cJSON* jsonroot = cJSON_Parse(stringJson1);
-    EXPECT_NE(GetInfoArrFromJson(jsonroot, test, &resSize, &attr), 0);
+    EXPECT_NE(GetInfoArrFromJson(jsonroot, &test, &resSize, &attr), 0);
     cJSON_Delete(jsonroot);
 
     stringJson1 = "{\"processName\":\"partitionslot_host\","
         "\"APL\":2,\"version\":1,\"tokenId\":672003577,\"tokenAttr\":0,\"dcaps\":[1],"
         "\"permissions\":[],\"nativeAcls\":[]}";
     jsonroot = cJSON_Parse(stringJson1);
-    EXPECT_NE(GetInfoArrFromJson(jsonroot, test, &resSize, &attr), 0);
+    EXPECT_NE(GetInfoArrFromJson(jsonroot, &test, &resSize, &attr), 0);
     cJSON_Delete(jsonroot);
 
     stringJson1 = "{\"processName\":\"partitionslot_host\","
         "\"APL\":2,\"version\":1,\"tokenId\":672003577,\"tokenAttr\":0,\"dcaps\":[\"DCAPSAAAAAAAA_AT\"],"
         "\"permissions\":[],\"nativeAcls\":[]}";
     jsonroot = cJSON_Parse(stringJson1);
-    EXPECT_NE(GetInfoArrFromJson(jsonroot, test, &resSize, &attr), 0);
+    EXPECT_NE(GetInfoArrFromJson(jsonroot, &test, &resSize, &attr), 0);
     cJSON_Delete(jsonroot);
+    free(test);
+    test = nullptr;
 }
 
 /**

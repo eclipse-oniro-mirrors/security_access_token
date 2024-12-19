@@ -38,11 +38,12 @@ public:
     virtual ~PrivacyManagerClient();
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        PermissionUsedType type);
     int32_t CreateStateChangeCbk(uint64_t id, const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        const std::shared_ptr<StateCustomizedCbk>& callback);
+        const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type);
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
@@ -53,7 +54,7 @@ public:
     int32_t CreateActiveStatusChangeCbk(
         const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
         sptr<PermActiveStatusChangeCallback>& callbackWrap);
-    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid);
     void OnRemoteDiedHandle();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);

@@ -578,12 +578,12 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain"
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -1174,13 +1174,13 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain",
         .permList = permDefList,
         .permStateList = permStatList
     };
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -1188,6 +1188,100 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_MICRO, false);
     ASSERT_EQ(PERMISSION_GRANTED, ret);
+}
+
+/**
+ * @tc.name: VerifyAccessTokenWithList001
+ * @tc.desc: Verify permission with list.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+
+    std::vector<int32_t> permStateList;
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+}
+
+/**
+ * @tc.name: VerifyAccessTokenWithList002
+ * @tc.desc: Verify permission that tokenID or permission is invalid.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList002, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_GAMMA);
+    std::vector<int32_t> permStateList;
+    int ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, false);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back("");
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
+    permissionList.clear();
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[1]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[2]);
 }
 
 /**
@@ -1636,13 +1730,10 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
     ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
     ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
     ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
-
-    ASSERT_EQ(hapTokenInfoRes.appID, "appIDDesc");
 
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
 }
@@ -2554,9 +2645,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, info.appIDDesc);
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_SYSTEM_BASIC);
-
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
@@ -2607,8 +2695,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, g_infoManagerTestInfoParms.appIDDesc);
-
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
@@ -2637,8 +2723,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
-
-    ASSERT_EQ(hapTokenInfoRes.apl, apl);
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
@@ -3234,6 +3318,222 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     SetSelfTokenID(tokenID);
     PermissionGrantInfo info;
     ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+}
+
+HapPolicyParams GetPolicyParam()
+{
+    //test REQ_SUCCESS
+    PermissionStateFull permState1 = {
+        .permissionName = "ohos.permission.READ_HEALTH_DATA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    PermissionStateFull permState2 = {
+        .permissionName = "ohos.permission.DISTRIBUTED_DATASYNC",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+    };
+    //test UNABLE_POP_UP
+    PermissionStateFull permState3 = {
+        .permissionName = "ohos.permission.READ_MESSAGES",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    //test CONDITIONS_NOT_MET
+    PermissionStateFull permState4 = {
+        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    //test REQ_SUCCESS
+    PermissionStateFull permState5 = {
+        .permissionName = "ohos.permission.WRITE_MEDIA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    HapPolicyParams policyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permStateList = {permState1, permState2, permState3, permState4, permState5}
+    };
+    return policyParam;
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState002
+ * @tc.desc: The test function GetSelfPermissionsState returns the object property field errorReason.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
+{
+    HapPolicyParams policyParam = GetPolicyParam();
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, policyParam);
+    
+    PermissionListState permInvalid = {
+        .permissionName = "ohos.permission.WU_ERROR_REASON",
+        .state = FORBIDDEN_OPER
+    };
+    PermissionListState permNotConfig = {
+        .permissionName = "ohos.permission.READ_MEDIA",
+        .state = FORBIDDEN_OPER
+    };
+    std::vector<PermissionListState> permsList;
+    permsList.emplace_back(permInvalid);
+    permsList.emplace_back(permNotConfig);
+    for (auto& perm : policyParam.permStateList) {
+        PermissionListState tmp = {
+            .permissionName = perm.permissionName,
+            .state = FORBIDDEN_OPER
+        };
+        permsList.emplace_back(tmp);
+    }
+    SetSelfTokenID(tokenID);
+    PermissionGrantInfo info;
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].errorReason, PERM_INVALID);
+    EXPECT_EQ(permsList[1].errorReason, PERM_NOT_DECLEARED);
+    EXPECT_EQ(permsList[2].errorReason, REQ_SUCCESS);
+    EXPECT_EQ(permsList[3].errorReason, REQ_SUCCESS);
+    EXPECT_EQ(permsList[4].errorReason, UNABLE_POP_UP);
+    EXPECT_EQ(permsList[5].errorReason, CONDITIONS_NOT_MET);
+    EXPECT_EQ(permsList[6].errorReason, REQ_SUCCESS);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState003
+ * @tc.desc: If the user does not agree to the privacy statement, the test function GetSelfPermissionsState returns
+ *  the object attribute field errorReason.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
+{
+    HapPolicyParams policyParam = GetPolicyParam();
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, policyParam);
+    HapBaseInfo hapBaseInfo = {
+        .userID = g_infoManagerTestInfoParms.userID,
+        .bundleName = g_infoManagerTestInfoParms.bundleName,
+        .instIndex = g_infoManagerTestInfoParms.instIndex,
+    };
+    std::vector<PermissionListState> permsList;
+    for (auto& perm : policyParam.permStateList) {
+        PermissionListState tmp = {
+            .permissionName = perm.permissionName,
+            .state = FORBIDDEN_OPER
+        };
+        permsList.emplace_back(tmp);
+    }
+    ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+    SetSelfTokenID(tokenID);
+    PermissionGrantInfo info;
+    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
+    EXPECT_EQ(permsList[1].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
+    EXPECT_EQ(permsList[2].errorReason, UNABLE_POP_UP);
+    EXPECT_EQ(permsList[3].errorReason, CONDITIONS_NOT_MET);
+    EXPECT_EQ(permsList[4].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+HapPolicyParams getHapPolicyLocationParams(const std::vector<std::string>& permissions)
+{
+    HapPolicyParams policyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permStateList = {}
+    };
+    for (auto& perm : permissions) {
+        PermissionStateFull location = {
+            .permissionName = perm,
+            .isGeneral = true,
+            .resDeviceID = {"local3"},
+            .grantStatus = {PermissionState::PERMISSION_DENIED},
+            .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+        };
+        policyParam.permStateList.emplace_back(location);
+    }
+    return policyParam;
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState004
+ * @tc.desc: The test position-related permission function GetSelfPermissionsState returns the object property
+ *  field errorReason.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
+{
+    std::string location = "ohos.permission.LOCATION";
+    std::string vague = "ohos.permission.APPROXIMATELY_LOCATION";
+    std::string background = "ohos.permission.LOCATION_IN_BACKGROUND";
+    std::vector<std::string> permissions = {location, vague};
+    HapPolicyParams policyParam = getHapPolicyLocationParams(permissions);
+    HapInfoParams hapInfo = g_infoManagerTestInfoParms;
+    hapInfo.apiVersion = 14;
+    AccessTokenID tokenID = AllocTestToken(hapInfo, policyParam);
+    std::vector<PermissionListState> permsList;
+    PermissionListState locationState = {
+        .permissionName = vague,
+        .state = FORBIDDEN_OPER
+    };
+    permsList.emplace_back(locationState);
+    SetSelfTokenID(tokenID);
+    PermissionGrantInfo info;
+
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].errorReason, REQ_SUCCESS);
+
+    locationState.permissionName = location;
+    permsList.emplace_back(locationState);
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].errorReason, REQ_SUCCESS);
+    EXPECT_EQ(permsList[1].errorReason, REQ_SUCCESS);
+
+    permsList[1].permissionName = background;
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].errorReason, CONDITIONS_NOT_MET);
+    EXPECT_EQ(permsList[1].errorReason, CONDITIONS_NOT_MET);
+
+    std::vector<PermissionListState> locationPermsList = {locationState};
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(locationPermsList, info));
+    EXPECT_EQ(locationPermsList[0].errorReason, CONDITIONS_NOT_MET);
+
+    SetSelfTokenID(selfTokenId_);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, vague, PERMISSION_USER_FIXED));
+    SetSelfTokenID(tokenID);
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(locationPermsList, info));
+    EXPECT_EQ(locationPermsList[0].errorReason, REQ_SUCCESS);
+
+    locationState.permissionName = background;
+    std::vector<PermissionListState> backgroundPermsList = {locationState};
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(backgroundPermsList, info));
+    EXPECT_EQ(backgroundPermsList[0].errorReason, CONDITIONS_NOT_MET);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+
+    std::vector<std::string> vaguePermissions = {vague};
+    policyParam = getHapPolicyLocationParams(vaguePermissions);
+    tokenID = AllocTestToken(hapInfo, policyParam);
+    SetSelfTokenID(tokenID);
+
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(locationPermsList, info));
+    EXPECT_EQ(locationPermsList[0].errorReason, PERM_NOT_DECLEARED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**

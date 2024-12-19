@@ -40,9 +40,10 @@ public:
     void OnStop() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
-    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName) override;
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback) override;
+        PermissionUsedType type) override;
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE) override;
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenId) override;
     int32_t GetPermissionUsedRecords(
@@ -59,7 +60,7 @@ public:
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
 #endif
-    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid) override;
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;

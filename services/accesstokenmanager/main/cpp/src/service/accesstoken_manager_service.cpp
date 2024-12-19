@@ -154,6 +154,17 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     return res;
 }
 
+int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    permStateList.clear();
+    permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        permStateList[i] = VerifyAccessToken(tokenID, permissionList[i]);
+    }
+    return RET_SUCCESS;
+}
+
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
@@ -259,6 +270,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         for (uint32_t i = 0; i < size; i++) {
             if (reqPermList[i].permsState.state != INVALID_OPER) {
                 reqPermList[i].permsState.state = FORBIDDEN_OPER;
+                reqPermList[i].permsState.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
             }
         }
         return FORBIDDEN_OPER;
@@ -352,14 +364,14 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     return tokenIdEx;
 }
 
-int32_t AccessTokenManagerService::InitHapToken(
-    const HapInfoParcel& info, HapPolicyParcel& policy, AccessTokenIDEx& fullTokenId)
+int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
     std::vector<PermissionStateFull> initializedList;
     if (info.hapInfoParameter.dlpType == DLP_COMMON) {
         if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
-            policy.hapPolicyParameter, initializedList)) {
+            policy.hapPolicyParameter, initializedList, result)) {
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     } else {
@@ -409,13 +421,13 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     return tokenID;
 }
 
-int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
+int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParcel& policyParcel, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
     std::vector<PermissionStateFull> InitializedList;
     if (!PermissionManager::GetInstance().InitPermissionList(
-        info.appDistributionType, policyParcel.hapPolicyParameter, InitializedList)) {
+        info.appDistributionType, policyParcel.hapPolicyParameter, InitializedList, result)) {
         return ERR_PERM_REQUEST_CFG_FAILED;
     }
     int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,

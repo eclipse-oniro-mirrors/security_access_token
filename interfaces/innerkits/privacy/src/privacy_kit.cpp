@@ -96,27 +96,32 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     return RET_SUCCESS;
 }
 
-int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
+int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,
+    PermissionUsedType type)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+    if ((!DataValidator::IsTokenIDValid(tokenID)) ||
+        (!DataValidator::IsPermissionNameValid(permissionName)) ||
+        (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-    const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid)
+    const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid, PermissionUsedType type)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+    if ((!DataValidator::IsTokenIDValid(tokenID)) ||
+        (!DataValidator::IsPermissionNameValid(permissionName)) ||
+        (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback, type);
 }
 
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
@@ -178,12 +183,12 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
     return PrivacyManagerClient::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
-bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsPermissionNameValid(permissionName)) {
         return false;
     }
-    return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName);
+    return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName, pid);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

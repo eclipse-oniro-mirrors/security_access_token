@@ -179,7 +179,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 {
-    int32_t fd = 123; // 123: invalid fd
+    int32_t fd = 1; // 1: std output
     std::vector<std::u16string> args;
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -191,7 +191,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 
     AddPermParamInfoParcel infoParcel;
     infoParcel.info.tokenId = tokenId;
-    infoParcel.info.permissionName = "ohos.permission.CAMERA";
+    infoParcel.info.permissionName = "ohos.permission.READ_CONTACTS";
     infoParcel.info.successCount = 1;
     infoParcel.info.failCount = 0;
 
@@ -219,18 +219,18 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME));
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME, -1));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME, -1));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // not pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     // pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 #endif
 }
 
@@ -244,16 +244,16 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
     // invalid tokenId
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME, -1));
 
     // native tokenId
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 
     // invalid permission
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, "test"));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, "test", -1));
 }
 
 /*
@@ -269,7 +269,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level1
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 }
 
 class TestPrivacyManagerStub : public PrivacyManagerStub {
@@ -281,12 +281,13 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
     {
         return RET_SUCCESS;
     }
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid,  const std::string& permissionName,
-        const sptr<IRemoteObject>& callback)
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
     {
         return RET_SUCCESS;
     }
@@ -317,7 +318,7 @@ public:
     {
         return RET_SUCCESS;
     }
-    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
     {
         return true;
     }

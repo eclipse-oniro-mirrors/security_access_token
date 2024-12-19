@@ -84,7 +84,8 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new PermissionRecordManager();
+            PermissionRecordManager* tmp = new PermissionRecordManager();
+            instance = std::move(tmp);
         }
     }
     return *instance;
@@ -373,7 +374,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
         std::vector<GenericValues> recordValues;
         recordValues.emplace_back(recordValue);
-        int32_t res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
+        res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
             recordValues);
         if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
             return false;
@@ -695,17 +696,11 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
 
 void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 {
-#ifdef EVENTHANDLER_ENABLE
     if (GetCurDeleteTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Has delete task!");
         return;
     }
     AddDeleteTaskNum();
-    if (deleteEventHandler_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler.");
-        ReduceDeleteTaskNum();
-        return;
-    }
 
     std::function<void()> delayed = ([this]() {
         DeletePermissionRecord(recordAgingTime_);
@@ -715,8 +710,8 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
         ReduceDeleteTaskNum();
     });
 
-    deleteEventHandler_->ProxyPostTask(delayed);
-#endif
+    std::thread deleteThread(delayed);
+    deleteThread.detach();
 }
 
 int32_t PermissionRecordManager::GetCurDeleteTaskNum()
@@ -758,9 +753,8 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 }
 
 int32_t PermissionRecordManager::AddRecordToStartList(
-    uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status)
+    uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status, PermissionUsedType type)
 {
-    int32_t ret = Constant::SUCCESS;
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
@@ -794,11 +788,13 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         }
         startRecordList_.emplace_back(record);
     }
-    CallbackExecute(tokenId, permissionName, status);
     if (hasTokenStarted && hasPidStarted) {
-        ret = PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
+        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
-    return ret;
+
+    CallbackExecute(tokenId, permissionName, status, type);
+    
+    return Constant::SUCCESS;
 }
 
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
@@ -926,7 +922,6 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, pid %{public}d", tokenId, pid);
-    bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
@@ -936,7 +931,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
                 continue;
             }
             it->pidList.erase(pid);
-            isUsingCamera = (it->opCode == Constant::OP_CAMERA);
             if (it->pidList.empty()) {
                 std::string perm;
                 Constant::TransferOpcodeToPermission(it->opCode, perm);
@@ -948,9 +942,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
             CallbackExecute(tokenId, perm, PERM_INACTIVE);
         }
     }
-    if (isUsingCamera) {
-        cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
-    }
+    cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
 }
 
 /*
@@ -959,7 +951,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u", tokenId);
-    bool isUsingCamera = false;
     {
         std::vector<std::string> permList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
@@ -968,7 +959,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
                 ++it;
                 continue;
             }
-            isUsingCamera = (it->opCode == Constant::OP_CAMERA);
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             permList.emplace_back(perm);
@@ -978,9 +968,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
             CallbackExecute(tokenId, perm, PERM_INACTIVE);
         }
     }
-    if (isUsingCamera) {
-        cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
-    }
+    cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
@@ -1006,13 +994,21 @@ void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 }
 
 void PermissionRecordManager::CallbackExecute(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t status)
+    AccessTokenID tokenId, const std::string& permissionName, int32_t status, PermissionUsedType type)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
-        tokenId, permissionName.c_str(), status);
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, "", (ActiveChangeType)status);
+        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d, type %{public}d",
+        tokenId, permissionName.c_str(), status, type);
+
+    ActiveChangeResponse info;
+    info.callingTokenID = IPCSkeleton::GetCallingTokenID();
+    info.tokenID = tokenId;
+    info.permissionName = permissionName;
+    info.deviceId = "";
+    info.type = static_cast<ActiveChangeType>(status);
+    info.usedType = type;
+
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
@@ -1133,7 +1129,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
@@ -1158,11 +1154,11 @@ int32_t PermissionRecordManager::StartUsingPermission(
         status = PERM_INACTIVE;
     }
 #endif
-    return AddRecordToStartList(tokenId, pid, permissionName, status);
+    return AddRecordToStartList(tokenId, pid, permissionName, status, type);
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const sptr<IRemoteObject>& callback)
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
+    const std::string& permissionName, const sptr<IRemoteObject>& callback, PermissionUsedType type)
 {
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
@@ -1193,7 +1189,7 @@ int32_t PermissionRecordManager::StartUsingPermission(
         cameraCallbackMap_.Erase(id);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
-    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status);
+    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status, type);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }
@@ -1244,23 +1240,22 @@ int32_t PermissionRecordManager::PermissionListFilter(
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
+bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
-    int32_t status = GetAppStatus(tokenId);
-    bool isScreenLocked = GetLockScreenStatus();
-    bool isAllowedBackGround = false;
-    if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
-        isAllowedBackGround = true;
+    // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
+    int32_t status = GetAppStatus(tokenId, pid);
+    if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
+        return true;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "Id(%{public}d), appStatus(%{public}d), isScreenLocked(%{public}d, isAllowedBackGround(%{public}d)).",
-        tokenId, status, isScreenLocked, isAllowedBackGround);
-    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenLocked) || isAllowedBackGround;
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, appStatus %{public}d.", tokenId, status);
+
+    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
 }
 
-bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
+bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
 {
-    int32_t status = GetAppStatus(tokenId);
+    int32_t status = GetAppStatus(tokenId, pid);
     ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, status is %{public}d.", tokenId, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
@@ -1274,7 +1269,8 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
     return false;
 }
 
-bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t pid)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Id(%{public}d) is not hap.", tokenId);
@@ -1282,9 +1278,9 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     }
 
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsAllowedUsingCamera(tokenId);
+        return IsAllowedUsingCamera(tokenId, pid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        return IsAllowedUsingMicrophone(tokenId);
+        return IsAllowedUsingMicrophone(tokenId, pid);
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
@@ -1498,13 +1494,19 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
+int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId, int32_t pid)
 {
     int32_t status = PERM_ACTIVE_IN_BACKGROUND;
     std::vector<AppStateData> foreGroundAppList;
     AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
-        [=](const auto& foreGroundApp) { return foreGroundApp.accessTokenId == tokenId; })) {
+        [=](const auto& foreGroundApp) {
+        if (pid == -1) {
+            return foreGroundApp.accessTokenId == tokenId;
+        }
+
+        return ((foreGroundApp.accessTokenId == tokenId) && (foreGroundApp.pid == pid));
+    })) {
         status = PERM_ACTIVE_IN_FOREGROUND;
     }
     return status;
@@ -1826,13 +1828,6 @@ void PermissionRecordManager::Init()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Init");
     hasInited_ = true;
-
-#ifdef EVENTHANDLER_ENABLE
-    deleteEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (deleteEventRunner_ != nullptr) {
-        deleteEventHandler_ = std::make_shared<AccessEventHandler>(deleteEventRunner_);
-    }
-#endif
 
     GetConfigValue();
 }

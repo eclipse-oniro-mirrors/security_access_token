@@ -98,6 +98,15 @@ public:
      */
     static int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);
     /**
+     * @brief Create a unique hap token by input values and init the permission state.
+     * @param info struct HapInfoParams quote, see hap_token_info.h
+     * @param policy struct HapPolicyParams quote, see hap_token_info.h
+     * @param result struct HapInfoCheckResult, see hap_token_info.h
+     * @return union AccessTokenIDEx, see access_token.h
+     */
+    static int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
+    /**
      * @brief Create a unique mapping token binding remote tokenID and DeviceID.
      * @param remoteDeviceID remote device deviceID
      * @param remoteTokenID remote device tokenID
@@ -115,6 +124,18 @@ public:
      */
     static int32_t UpdateHapToken(
         AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy);
+    /**
+     * @brief Update hap token info.
+     * @param tokenIdEx union AccessTokenIDEx quote, see access_token.h
+     * @param isSystemApp is system app or not
+     * @param appIDDesc app id description quote
+     * @param apiVersion app api version
+     * @param policy struct HapPolicyParams quote, see hap_token_info.h
+     * @param result struct HapInfoCheckResult, see hap_token_info.h
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParams& policy, HapInfoCheckResult& result);
     /**
      * @brief Delete token info.
      * @param tokenID token id
@@ -192,7 +213,7 @@ public:
      */
     static int VerifyAccessToken(
         AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
-        /**
+    /**
      * @brief Check if the input tokenID has been granted the input permission.
      * @param tokenID token id
      * @param permissionName permission to be checked
@@ -210,6 +231,16 @@ public:
      */
     static int VerifyAccessToken(AccessTokenID callerTokenID,
         AccessTokenID firstTokenID, const std::string& permissionName, bool crossIpc);
+    /**
+     * @brief Check if the input tokenID has been granted the input permission list.
+     * @param tokenID token id
+     * @param permissionList permission list to be checked
+     * @param permStateList enum PermissionState list, as result
+     * @param crossIpc whether to cross ipc
+     * @return error code, see access_token_error.h
+     */
+    static int VerifyAccessToken(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+        std::vector<int32_t>& permStateList, bool crossIpc = false);
 
     /**
      * @brief Get permission definition by permission name.
@@ -443,6 +474,20 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t ClearUserPolicy();
+
+    /**
+     * @brief Whether it is a system application
+     * @param tokenId token id.
+     * @return bool
+     */
+    static bool IsSystemAppByFullTokenID(uint64_t tokenId);
+
+    /**
+     * @brief Gets the render process tokenId.
+     * @param tokenId token id.
+     * @return tokenId
+     */
+    static uint64_t GetRenderTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security

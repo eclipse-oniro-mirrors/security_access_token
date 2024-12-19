@@ -93,8 +93,8 @@ public:
     void AddPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
-    bool InitPermissionList(const std::string& appDistributionType,
-        const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList);
+    bool InitPermissionList(const std::string& appDistributionType, const HapPolicyParams& policy,
+        std::vector<PermissionStateFull>& initializedList, HapInfoCheckResult& result);
     bool InitDlpPermissionList(const std::string& bundleName, int32_t userId,
         std::vector<PermissionStateFull>& initializedList);
     void GetStateOrFlagChangedList(std::vector<PermissionStateFull>& stateListBefore,

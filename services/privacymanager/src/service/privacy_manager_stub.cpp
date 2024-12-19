@@ -144,7 +144,9 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
     AccessTokenID tokenId = data.ReadUint32();
     int32_t pid = data.ReadInt32();
     std::string permissionName = data.ReadString();
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName));
+    uint32_t usedType = data.ReadUint32();
+    PermissionUsedType type = static_cast<PermissionUsedType>(usedType);
+    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, type));
 }
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -162,7 +164,9 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, callback));
+    uint32_t usedType = data.ReadUint32();
+    PermissionUsedType type = static_cast<PermissionUsedType>(usedType);
+    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, callback, type));
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -298,10 +302,12 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
         reply.WriteBool(false);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
 
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    bool result = this->IsAllowedUsingPermission(tokenId, permissionName);
+    int32_t pid = data.ReadInt32();
+
+    bool result = this->IsAllowedUsingPermission(tokenId, permissionName, pid);
     if (!reply.WriteBool(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}s)", permissionName.c_str());
         reply.WriteBool(false);

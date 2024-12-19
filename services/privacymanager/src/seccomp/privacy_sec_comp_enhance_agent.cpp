@@ -50,7 +50,8 @@ PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new PrivacySecCompEnhanceAgent();
+            PrivacySecCompEnhanceAgent* tmp = new PrivacySecCompEnhanceAgent();
+            instance = std::move(tmp);
         }
     }
     return *instance;

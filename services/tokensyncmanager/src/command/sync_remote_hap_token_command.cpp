@@ -38,10 +38,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     remoteProtocol_.dstDeviceId = dstDeviceId;
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
     remoteProtocol_.requestVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
-    hapTokenInfo_.baseInfo.apl = APL_NORMAL;
-    hapTokenInfo_.baseInfo.appID = "";
     hapTokenInfo_.baseInfo.bundleName = "";
-    hapTokenInfo_.baseInfo.deviceID = "";
     hapTokenInfo_.baseInfo.instIndex = 0;
     hapTokenInfo_.baseInfo.dlpType = 0;
     hapTokenInfo_.baseInfo.tokenAttr = 0;
@@ -53,10 +50,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 {
     requestTokenId_ = 0;
-    hapTokenInfo_.baseInfo.apl = APL_INVALID;
-    hapTokenInfo_.baseInfo.appID = "";
     hapTokenInfo_.baseInfo.bundleName = "";
-    hapTokenInfo_.baseInfo.deviceID = "";
     hapTokenInfo_.baseInfo.instIndex = 0;
     hapTokenInfo_.baseInfo.dlpType = 0;
     hapTokenInfo_.baseInfo.tokenAttr = 0;

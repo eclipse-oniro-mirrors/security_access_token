@@ -78,17 +78,19 @@ public:
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback);
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
+    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
-    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
     int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute);
@@ -118,8 +120,8 @@ private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    bool IsAllowedUsingCamera(AccessTokenID tokenId);
-    bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
+    bool IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid);
+    bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
@@ -151,7 +153,8 @@ private:
     bool ShowGlobalDialog(const std::string& permissionName);
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid, const std::string& permissionName);
-    int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status);
+    int32_t AddRecordToStartList(uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
@@ -174,7 +177,7 @@ private:
     bool IsPidValid(int32_t pid) const;
     bool RegisterWindowCallback();
     void InitializeMuteState(const std::string& permissionName);
-    int32_t GetAppStatus(AccessTokenID tokenId);
+    int32_t GetAppStatus(AccessTokenID tokenId, int32_t pid = -1);
 
     bool RegisterAppStatusListener();
     bool Register();
@@ -246,10 +249,6 @@ private:
     std::string globalDialogAbilityName_;
     std::mutex abilityManagerMutex_;
     std::shared_ptr<LibraryLoader> abilityManagerLoader_;
-#endif
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventRunner> deleteEventRunner_;
-    std::shared_ptr<AccessEventHandler> deleteEventHandler_;
 #endif
     std::atomic_int32_t deleteTaskNum_ = 0;
 

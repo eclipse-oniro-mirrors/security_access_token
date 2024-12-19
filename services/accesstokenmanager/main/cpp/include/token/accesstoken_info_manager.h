@@ -111,10 +111,17 @@ private:
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo);
+    int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const std::string& appId, ATokenAplEnum apl);
     int AddNativeTokenInfoToDb(
         const std::vector<GenericValues>& nativeInfoValues, const std::vector<GenericValues>& permStateValues);
     int RemoveTokenInfoFromDb(AccessTokenID tokenID, bool isHap = true);
+    void StoreHapInfo(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const std::string& appId, ATokenAplEnum apl,
+        std::vector<GenericValues>& valueList);
+    int32_t ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenInfoInner>& infoPtr,
+        const std::vector<PermissionStateFull>& permStateList,
+        const UpdateHapInfoParams& info, ATokenAplEnum apl);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
