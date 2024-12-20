@@ -512,6 +512,10 @@ static uint32_t CreateStrArray(int32_t num, const char **strArr, char ***strArrR
     if (num > MAX_PERM_NUM) {
         return ATRET_FAILED;
     }
+    if (num == 0) {
+        *strArrRes = NULL;
+        return ATRET_SUCCESS;
+    }
     *strArrRes = (char **)malloc(num * sizeof(char *));
     if (*strArrRes == NULL) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]: strArrRes malloc failed.", __func__);
