@@ -50,6 +50,7 @@ if (is_standard_system && ability_base_enable == true) {
       "include/active",
       "include/common",
       "include/database",
+      "include/proxy",
       "include/record",
       "include/service",
       "include/sensitive",
@@ -78,9 +79,11 @@ if (is_standard_system && ability_base_enable == true) {
       "src/database/data_translator.cpp",
       "src/database/permission_used_record_db.cpp",
       "src/database/privacy_field_const.cpp",
+      "src/proxy/privacy_manager_proxy_death_param.cpp",
       "src/record/on_permission_used_record_callback_proxy.cpp",
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",
+      "src/record/permission_record_set.cpp",
       "src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "src/service/privacy_manager_service.cpp",
@@ -103,6 +106,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/services/common:accesstoken_service_common",
+      "${access_token_path}/services/common/proxy_death:proxy_death_handler",
       "${access_token_path}/services/privacymanager:privacy.rc",
     ]
 

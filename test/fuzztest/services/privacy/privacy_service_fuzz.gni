@@ -27,6 +27,7 @@ privacy_include_dirs = [
   "${access_token_path}/services/privacymanager/include/record",
   "${access_token_path}/services/privacymanager/include/seccomp",
   "${access_token_path}/services/privacymanager/include/service",
+  "${access_token_path}/services/privacymanager/include/proxy",
   "${access_token_path}/services/privacymanager/include/sensitive",
   "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
   "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
@@ -46,6 +47,7 @@ privacy_deps = [
   "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
   "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   "${access_token_path}/services/common:accesstoken_service_common",
+  "${access_token_path}/services/common/proxy_death:proxy_death_handler",
 ]
 
 privacy_external_deps = [
@@ -76,9 +78,11 @@ privacy_sources = [
   "${access_token_path}/services/privacymanager/src/database/data_translator.cpp",
   "${access_token_path}/services/privacymanager/src/database/permission_used_record_db.cpp",
   "${access_token_path}/services/privacymanager/src/database/privacy_field_const.cpp",
+  "${access_token_path}/services/privacymanager/src/proxy/privacy_manager_proxy_death_param.cpp",
   "${access_token_path}/services/privacymanager/src/record/on_permission_used_record_callback_proxy.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record_manager.cpp",
+  "${access_token_path}/services/privacymanager/src/record/permission_record_set.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_adapter.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_adapter.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",

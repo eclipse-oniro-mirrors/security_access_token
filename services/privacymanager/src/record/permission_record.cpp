@@ -48,6 +48,65 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     record.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
 }
+
+bool ContinusPermissionRecord::IsPidValid(int32_t pid)
+{
+    return pid > 0;
+}
+
+bool ContinusPermissionRecord::operator < (const ContinusPermissionRecord& other) const
+{
+    if (tokenId != other.tokenId) {
+        return tokenId < other.tokenId;
+    } else if (opCode != other.opCode) {
+        return opCode < other.opCode;
+    } else if (pid != other.pid) {
+        return pid < other.pid;
+    }
+    return callerPid < other.callerPid;
+}
+
+uint64_t ContinusPermissionRecord::GetTokenIdAndPermCode() const
+{
+    // 32 bit
+    return (static_cast<uint64_t>(this->tokenId) << 32) | (static_cast<uint64_t>(this->opCode) & 0xFFFFFFFF);
+}
+
+uint64_t ContinusPermissionRecord::GetTokenIdAndPid() const
+{
+    uint32_t tmpPid = (pid <= 0) ? 0 : (uint32_t)pid;
+    return ((uint64_t)tmpPid << 32) | ((uint64_t)tokenId & 0xFFFFFFFF); // 32: bit
+}
+
+bool ContinusPermissionRecord::IsEqualRecord(const ContinusPermissionRecord& record) const
+{
+    return IsEqualTokenIdAndPid(record) && IsEqualPermCode(record) && IsEqualCallerPid(record);
+}
+
+bool ContinusPermissionRecord::IsEqualTokenId(const ContinusPermissionRecord& record) const
+{
+    return tokenId == record.tokenId;
+}
+
+bool ContinusPermissionRecord::IsEqualPermCode(const ContinusPermissionRecord& record) const
+{
+    return record.opCode == opCode;
+}
+
+bool ContinusPermissionRecord::IsEqualCallerPid(const ContinusPermissionRecord& record) const
+{
+    return record.callerPid == callerPid;
+}
+
+bool ContinusPermissionRecord::IsEqualPid(const ContinusPermissionRecord& record) const
+{
+    return !IsPidValid(record.pid) || record.pid == pid;
+}
+
+bool ContinusPermissionRecord::IsEqualTokenIdAndPid(const ContinusPermissionRecord& record) const
+{
+    return tokenId == record.tokenId && IsEqualPid(record);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
