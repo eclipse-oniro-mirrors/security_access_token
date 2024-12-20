@@ -102,6 +102,7 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
@@ -304,6 +305,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
@@ -400,6 +402,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
