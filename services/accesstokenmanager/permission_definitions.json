@@ -5017,6 +5017,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INPUT_DEVICE_CONTROLLER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
