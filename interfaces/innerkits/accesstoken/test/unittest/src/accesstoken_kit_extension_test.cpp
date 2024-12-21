@@ -2763,6 +2763,7 @@ HWTEST_F(AccessTokenKitExtensionTest, PermStateChangeCallback001, TestSize.Level
 
     callback->PermStateChangeCallback(result);
     ASSERT_EQ(callback->customizedCallback_, nullptr);
+    callback->Stop();
 }
 
 class TestCallBack : public PermissionStateChangeCallbackStub {
