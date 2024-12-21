@@ -84,9 +84,9 @@ public:
     int GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type);
     int32_t UnRegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type);
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);

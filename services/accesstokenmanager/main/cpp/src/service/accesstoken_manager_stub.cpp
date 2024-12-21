@@ -673,6 +673,48 @@ void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParce
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
+void AccessTokenManagerStub::RegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (this->GetTokenType(callingTokenID) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not hap.");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PARAM_INVALID), "WriteInt32 failed.");
+        return;
+    }
+    sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
+    if (scopeParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read scopeParcel fail");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        return;
+    }
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read callback fail");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        return;
+    }
+    int32_t result = this->RegisterSelfPermStateChangeCallback(*scopeParcel, callback);
+    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+}
+
+void AccessTokenManagerStub::UnRegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (this->GetTokenType(callingToken) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not hap.");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PARAM_INVALID), "WriteInt32 failed.");
+        return;
+    }
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read callback fail");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        return;
+    }
+    int32_t result = this->UnRegisterSelfPermStateChangeCallback(callback);
+    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+}
+
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -1107,6 +1149,12 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::SetPermissionRequestToggleStatusInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_REQUEST_TOGGLE_STATUS)] =
         &AccessTokenManagerStub::GetPermissionRequestToggleStatusInner;
+    requestFuncMap_[
+        static_cast<uint32_t>(AccessTokenInterfaceCode::REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)] =
+        &AccessTokenManagerStub::RegisterSelfPermStateChangeCallbackInner;
+    requestFuncMap_[
+        static_cast<uint32_t>(AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)] =
+        &AccessTokenManagerStub::UnRegisterSelfPermStateChangeCallbackInner;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()
