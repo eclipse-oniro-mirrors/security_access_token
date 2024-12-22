@@ -57,5 +57,6 @@ group("fuzztest") {
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
     "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
+    "verifyaccesstokenwithlist_fuzzer:VerifyAccessTokenWithListFuzzTest",
   ]
 }

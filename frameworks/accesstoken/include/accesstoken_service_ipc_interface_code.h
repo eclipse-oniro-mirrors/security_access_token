@@ -71,6 +71,8 @@ enum class AccessTokenInterfaceCode {
     UPDATE_USER_POLICY,
     CLEAR_USER_POLICY,
     GET_HAP_TOKENINFO_EXT,
+
+    VERIFY_ACCESSTOKEN_WITH_LIST = 0x0050,
 };
 } // namespace AccessToken
 } // namespace Security

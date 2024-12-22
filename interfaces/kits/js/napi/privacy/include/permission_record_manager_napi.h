@@ -37,6 +37,7 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     std::string     permissionName;
     int32_t         successCount = 0;
     int32_t         failCount = 0;
+    int32_t         pid = -1;
     PermissionUsedType type = PermissionUsedType::NORMAL_TYPE;
     PermissionUsedRequest request;
     PermissionUsedResult result;

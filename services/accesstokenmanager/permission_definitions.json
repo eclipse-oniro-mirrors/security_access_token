@@ -803,8 +803,8 @@
         {
             "name": "ohos.permission.GET_WIFI_PEERS_MAC",
             "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SYSTEM",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
@@ -5017,6 +5017,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INPUT_DEVICE_CONTROLLER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5459,6 +5469,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.CAPTURE_PLAYBACK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ENABLE_EXPERIENCE_HBM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5469,7 +5489,57 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.CAPTURE_PLAYBACK",
+            "name": "ohos.permission.USE_USER_ACCESS_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SYSTEM",

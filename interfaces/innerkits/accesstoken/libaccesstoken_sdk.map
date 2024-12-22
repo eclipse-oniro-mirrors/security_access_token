@@ -17,8 +17,10 @@
         "OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenIDEx(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
@@ -72,6 +74,7 @@
         "OHOS::Security::AccessToken::TokenSyncCallback::~TokenSyncCallback()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::TokenSyncKitInterface()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::~TokenSyncKitInterface()";
+        "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<int, std::__h::allocator<int>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermissionForSpecifiedTime(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoExtension(unsigned int, OHOS::Security::AccessToken::HapTokenInfoExt&)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;

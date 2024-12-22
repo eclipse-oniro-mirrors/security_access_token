@@ -753,9 +753,8 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 }
 
 int32_t PermissionRecordManager::AddRecordToStartList(
-    uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status)
+    uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status, PermissionUsedType type)
 {
-    int32_t ret = Constant::SUCCESS;
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
@@ -789,11 +788,13 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         }
         startRecordList_.emplace_back(record);
     }
-    CallbackExecute(tokenId, permissionName, status);
     if (hasTokenStarted && hasPidStarted) {
-        ret = PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
+        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
-    return ret;
+
+    CallbackExecute(tokenId, permissionName, status, type);
+    
+    return Constant::SUCCESS;
 }
 
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
@@ -993,13 +994,21 @@ void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 }
 
 void PermissionRecordManager::CallbackExecute(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t status)
+    AccessTokenID tokenId, const std::string& permissionName, int32_t status, PermissionUsedType type)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
-        tokenId, permissionName.c_str(), status);
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, "", (ActiveChangeType)status);
+        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d, type %{public}d",
+        tokenId, permissionName.c_str(), status, type);
+
+    ActiveChangeResponse info;
+    info.callingTokenID = IPCSkeleton::GetCallingTokenID();
+    info.tokenID = tokenId;
+    info.permissionName = permissionName;
+    info.deviceId = "";
+    info.type = static_cast<ActiveChangeType>(status);
+    info.usedType = type;
+
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
@@ -1120,7 +1129,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
@@ -1145,11 +1154,11 @@ int32_t PermissionRecordManager::StartUsingPermission(
         status = PERM_INACTIVE;
     }
 #endif
-    return AddRecordToStartList(tokenId, pid, permissionName, status);
+    return AddRecordToStartList(tokenId, pid, permissionName, status, type);
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const sptr<IRemoteObject>& callback)
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
+    const std::string& permissionName, const sptr<IRemoteObject>& callback, PermissionUsedType type)
 {
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
@@ -1180,7 +1189,7 @@ int32_t PermissionRecordManager::StartUsingPermission(
         cameraCallbackMap_.Erase(id);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
-    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status);
+    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status, type);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }

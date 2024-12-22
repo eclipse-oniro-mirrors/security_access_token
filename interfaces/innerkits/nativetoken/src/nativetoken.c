@@ -109,29 +109,57 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     ret |= GetAplFromJson(cjsonItem, tokenNode);
 
     StrAttrSet(&attr, MAX_DCAP_LEN, MAX_DCAPS_NUM, DCAPS_KEY_NAME);
-    ret |= GetInfoArrFromJson(cjsonItem, tokenNode->dcaps, &(tokenNode->dcapsNum), &attr);
+    ret |= GetInfoArrFromJson(cjsonItem, &tokenNode->dcaps, &(tokenNode->dcapsNum), &attr);
     if (ret != ATRET_SUCCESS) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for dcaps.", __func__);
         return ATRET_FAILED;
     }
 
     StrAttrSet(&attr, MAX_PERM_LEN, MAX_PERM_NUM, PERMS_KEY_NAME);
-    ret = GetInfoArrFromJson(cjsonItem, tokenNode->perms, &(tokenNode->permsNum), &attr);
+    ret = GetInfoArrFromJson(cjsonItem, &tokenNode->perms, &(tokenNode->permsNum), &attr);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for perms.", __func__);
         return ATRET_FAILED;
     }
 
     StrAttrSet(&attr, MAX_PERM_LEN, MAX_PERM_NUM, ACLS_KEY_NAME);
-    ret = GetInfoArrFromJson(cjsonItem, tokenNode->acls, &(tokenNode->aclsNum), &attr);
+    ret = GetInfoArrFromJson(cjsonItem, &tokenNode->acls, &(tokenNode->aclsNum), &attr);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenNode->permsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for acls.", __func__);
         return ATRET_FAILED;
     }
     return ATRET_SUCCESS;
+}
+
+static void FreeTokenNode(NativeTokenList **node)
+{
+    if (node == NULL || *node == NULL) {
+        return;
+    }
+    FreeStrArray(&(*node)->dcaps, (*node)->dcapsNum - 1);
+    FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
+    FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
+    free(*node);
+    *node = NULL;
+}
+
+static void RemoveNodeFromList(NativeTokenList **node)
+{
+    if (node == NULL || *node == NULL || g_tokenListHead == NULL) {
+        return;
+    }
+    NativeTokenList *tmp = g_tokenListHead->next;
+    while (tmp != NULL) {
+        if (tmp->next == *node) {
+            tmp->next = (*node)->next;
+            FreeTokenNode(node);
+            return;
+        }
+        tmp = tmp->next;
+    }
 }
 
 static void FreeTokenList(void)
@@ -143,8 +171,7 @@ static void FreeTokenList(void)
     while (tmp != NULL) {
         NativeTokenList *toFreeNode = tmp;
         tmp = tmp->next;
-        free(toFreeNode);
-        toFreeNode = NULL;
+        FreeTokenNode(&toFreeNode);
     }
     g_tokenListHead->next = NULL;
 }
@@ -480,16 +507,30 @@ static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplR
     return ATRET_SUCCESS;
 }
 
-static uint32_t CreateStrArray(int32_t num, const char **strArr, char **strArrRes)
+static uint32_t CreateStrArray(int32_t num, const char **strArr, char ***strArrRes)
 {
+    if (num > MAX_PERM_NUM) {
+        return ATRET_FAILED;
+    }
+    if (num == 0) {
+        *strArrRes = NULL;
+        return ATRET_SUCCESS;
+    }
+    *strArrRes = (char **)malloc(num * sizeof(char *));
+    if (*strArrRes == NULL) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]: strArrRes malloc failed.", __func__);
+        return ATRET_FAILED;
+    }
     for (int32_t i = 0; i < num; i++) {
-        strArrRes[i] = (char *)malloc(sizeof(char) * (strlen(strArr[i]) + 1));
-        if (strArrRes[i] == NULL ||
-            (strcpy_s(strArrRes[i], strlen(strArr[i]) + 1, strArr[i]) != EOK)) {
+        size_t length = strlen(strArr[i]);
+        (*strArrRes)[i] = (char *)malloc(sizeof(char) * length + 1);
+        if ((*strArrRes)[i] == NULL ||
+            (strcpy_s((*strArrRes)[i], length + 1, strArr[i]) != EOK)) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
             FreeStrArray(strArrRes, i);
             return ATRET_FAILED;
         }
+        (*strArrRes)[i][length] = '\0';
     }
     return ATRET_SUCCESS;
 }
@@ -521,18 +562,18 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     tokenNode->permsNum = tokenInfo->permsNum;
     tokenNode->aclsNum = tokenInfo->aclsNum;
 
-    if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, tokenNode->dcaps) != ATRET_SUCCESS) {
+    if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, &tokenNode->dcaps) != ATRET_SUCCESS) {
         free(tokenNode);
         return ATRET_FAILED;
     }
-    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, tokenNode->perms) != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenInfo->dcapsNum - 1);
+    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, &tokenNode->perms) != ATRET_SUCCESS) {
+        FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
         free(tokenNode);
         return ATRET_FAILED;
     }
-    if (CreateStrArray(tokenInfo->aclsNum, tokenInfo->acls, tokenNode->acls) != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenInfo->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenInfo->permsNum - 1);
+    if (CreateStrArray(tokenInfo->aclsNum, tokenInfo->acls, &tokenNode->acls) != ATRET_SUCCESS) {
+        FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenInfo->permsNum - 1);
         free(tokenNode);
         return ATRET_FAILED;
     }
@@ -577,29 +618,19 @@ static int32_t ComparePermsInfo(const NativeTokenList *tokenNode,
     return 0;
 }
 
-static uint32_t UpdateStrArrayInList(char *strArr[], int32_t *strNum,
+static uint32_t UpdateStrArrayInList(char **strArr[], int32_t *strNum,
     const char **strArrNew, int32_t strNumNew)
 {
     if (strNum == NULL) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strNum length is invalid.", __func__);
         return ATRET_FAILED;
     }
-    for (int32_t i = 0; i < *strNum; i++) {
-        free(strArr[i]);
-        strArr[i] = NULL;
-    }
+
+    FreeStrArray(strArr, *strNum - 1);
 
     *strNum = strNumNew;
-    for (int32_t i = 0; i < strNumNew; i++) {
-        size_t len = strlen(strArrNew[i]) + 1;
-        strArr[i] = (char *)malloc(sizeof(char) * len);
-        if (strArr[i] == NULL || (strcpy_s(strArr[i], len, strArrNew[i]) != EOK)) {
-            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
-            FreeStrArray(strArr, i);
-            return ATRET_FAILED;
-        }
-    }
-    return ATRET_SUCCESS;
+
+    return CreateStrArray(strNumNew, strArrNew, strArr);
 }
 
 static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
@@ -607,21 +638,22 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
 {
     tokenNode->apl = GetAplLevel(tokenInfo->aplStr);
 
-    uint32_t ret = UpdateStrArrayInList(tokenNode->dcaps, &(tokenNode->dcapsNum),
+    uint32_t ret = UpdateStrArrayInList(&tokenNode->dcaps, &(tokenNode->dcapsNum),
         tokenInfo->dcaps, tokenInfo->dcapsNum);
     if (ret != ATRET_SUCCESS) {
         return ret;
     }
-    ret = UpdateStrArrayInList(tokenNode->perms, &(tokenNode->permsNum),
+    ret = UpdateStrArrayInList(&tokenNode->perms, &(tokenNode->permsNum),
         tokenInfo->perms, tokenInfo->permsNum);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        return ret;
     }
-    ret = UpdateStrArrayInList(tokenNode->acls, &(tokenNode->aclsNum),
+    ret = UpdateStrArrayInList(&tokenNode->acls, &(tokenNode->aclsNum),
         tokenInfo->acls, tokenInfo->aclsNum);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenNode->permsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
     }
     return ret;
 }
@@ -692,7 +724,11 @@ uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
         int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
         if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
             ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
-            ret |= UpdateInfoInCfgFile(tokenNode);
+            if (ret != ATRET_SUCCESS) {
+                RemoveNodeFromList(&tokenNode);
+                return INVALID_TOKEN_ID;
+            }
+            ret = UpdateInfoInCfgFile(tokenNode);
         }
     }
     if (ret != ATRET_SUCCESS) {
