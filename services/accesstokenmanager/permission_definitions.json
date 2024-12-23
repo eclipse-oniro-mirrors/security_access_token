@@ -3525,7 +3525,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
-            "since": 13,
+            "since": 16,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -3535,7 +3535,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
-            "since": 13,
+            "since": 16,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
