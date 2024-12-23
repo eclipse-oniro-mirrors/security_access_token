@@ -48,19 +48,15 @@ namespace OHOS {
             .tokenID = tokenId,
             .tokenAttr = 0
         };
-        PermissionStateFull infoManagerTestState = {
-            .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .isGeneral = true,
-            .permissionName = permissionName,
-            .resDeviceID = {fuzzData.GenerateStochasticString()}};
-        PermissionStateFull infoManagerTestState2 = {
-            .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-            .grantStatus = {PermissionState::PERMISSION_DENIED},
-            .isGeneral = true,
-            .permissionName = permissionName,
-            .resDeviceID = {fuzzData.GenerateStochasticString()}};
-        std::vector<PermissionStateFull> permStateList;
+        PermissionStatus infoManagerTestState = {
+            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .permissionName = permissionName};
+        PermissionStatus infoManagerTestState2 = {
+            .grantFlag = PermissionFlag::PERMISSION_USER_SET,
+            .grantStatus = PermissionState::PERMISSION_DENIED,
+            .permissionName = permissionName};
+        std::vector<PermissionStatus> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,

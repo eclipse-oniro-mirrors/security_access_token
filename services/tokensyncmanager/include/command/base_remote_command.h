@@ -21,7 +21,7 @@
 #include "hap_token_info.h"
 #include "native_token_info_base.h"
 #include "nlohmann/json.hpp"
-#include "permission_state_full.h"
+#include "permission_status.h"
 #include "remote_protocol.h"
 
 namespace OHOS {
@@ -36,7 +36,7 @@ public:
     /** native token info */
     NativeTokenInfoBase baseInfo;
     /** permission state list */
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
 };
 
 /**
@@ -60,9 +60,9 @@ public:
     nlohmann::json ToRemoteProtocolJson();
     void FromRemoteProtocolJson(const nlohmann::json& jsonObject);
 
-    void ToPermStateJson(nlohmann::json& permStateJson, const PermissionStateFull& state);
+    void ToPermStateJson(nlohmann::json& permStateJson, const PermissionStatus& state);
     void FromPermStateListJson(const nlohmann::json& hapTokenJson,
-        std::vector<PermissionStateFull>& permStateList);
+        std::vector<PermissionStatus>& permStateList);
 
     void FromHapTokenBasicInfoJson(const nlohmann::json& hapTokenJson,
         HapTokenInfo& hapTokenBasicInfo);

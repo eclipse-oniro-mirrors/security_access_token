@@ -280,106 +280,37 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
 }
 
 /*
- * @tc.name: DataTranslatorTranslationIntoGenericValues001
- * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
+ * @tc.name: DataTranslatorTranslationIntoPermissionStatus001
+ * @tc.desc: TranslationIntoPermissionStatus function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 begin");
-    PermissionStateFull grantPermissionReq = {
-        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-        .isGeneral = true,
-        .resDeviceID = {"device1"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-    };
-    int grantIndex = 1;
-    GenericValues genericValues;
-    ASSERT_NE(RET_SUCCESS,
-        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 end");
-}
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus001 begin");
 
-/*
- * @tc.name: DataTranslatorTranslationIntoGenericValues002
- * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 begin");
-    PermissionStateFull grantPermissionReq = {
-        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-        .isGeneral = true,
-        .resDeviceID = {"device1", "device2"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-    };
-    int grantIndex = 1;
-    GenericValues genericValues;
-    ASSERT_NE(RET_SUCCESS,
-        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 end");
-}
-
-/*
- * @tc.name: DataTranslatorTranslationIntoGenericValues003
- * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 begin");
-    PermissionStateFull grantPermissionReq = {
-        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-        .isGeneral = true,
-        .resDeviceID = {"device1", "device2"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-    };
-    int grantIndex = 1;
-    GenericValues genericValues;
-    ASSERT_NE(RET_SUCCESS,
-        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 end");
-}
-
-/*
- * @tc.name: DataTranslatorTranslationIntoPermissionStateFull001
- * @tc.desc: TranslationIntoPermissionStateFull function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 begin");
-
-    PermissionStateFull outPermissionState;
+    PermissionStatus outPermissionState;
 
     GenericValues inGenericValues;
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
     inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "");
 
     PermissionDef outPermissionDef;
-    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 end");
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus001 end");
 }
 
 /*
- * @tc.name: DataTranslatorTranslationIntoPermissionStateFull002
- * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.name: DataTranslatorTranslationIntoPermissionStatus002
+ * @tc.desc: TranslationIntoPermissionStatus function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus002 begin");
 
-    PermissionStateFull outPermissionState;
+    PermissionStatus outPermissionState;
 
     GenericValues inGenericValues;
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -387,21 +318,21 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, Test
     inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
 
     PermissionDef outPermissionDef;
-    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 end");
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus002 end");
 }
 
 /*
- * @tc.name: DataTranslatorTranslationIntoPermissionStateFull003
- * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.name: DataTranslatorTranslationIntoPermissionStatus003
+ * @tc.desc: TranslationIntoPermissionStatus function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus003 begin");
 
-    PermissionStateFull outPermissionState;
+    PermissionStatus outPermissionState;
 
     GenericValues inGenericValues;
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -410,21 +341,21 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, Test
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, 100);
 
     PermissionDef outPermissionDef;
-    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 end");
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus003 end");
 }
 
 /*
- * @tc.name: DataTranslatorTranslationIntoPermissionStateFull004
- * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.name: DataTranslatorTranslationIntoPermissionStatus004
+ * @tc.desc: TranslationIntoPermissionStatus function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 begin");
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus004 begin");
 
-    PermissionStateFull outPermissionState;
+    PermissionStatus outPermissionState;
 
     GenericValues inGenericValues;
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -434,8 +365,8 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, 100);
 
     PermissionDef outPermissionDef;
-    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStatus004 end");
 }
 } // namespace AccessToken
 } // namespace Security

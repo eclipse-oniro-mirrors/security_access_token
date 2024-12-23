@@ -138,13 +138,11 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "AllocLocalTokenIDFuncTest001 start.");
     std::string deviceID1 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
-    PermissionStateFull infoManagerTestState_1 = {
+    PermissionStatus infoManagerTestState_1 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local4"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList1;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList1;
     permStateList1.emplace_back(infoManagerTestState_1);
 
     HapTokenInfoForSync remoteTokenInfo1 = {

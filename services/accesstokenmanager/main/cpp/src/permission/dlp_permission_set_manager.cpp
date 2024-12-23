@@ -76,17 +76,17 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 }
 
 void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
-    std::vector<PermissionStateFull>& permStateList)
+    std::vector<PermissionStatus>& permStateList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d", hapDlpType);
     for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
-        if (iter->grantStatus[0] == PERMISSION_DENIED) {
+        if (iter->grantStatus == PERMISSION_DENIED) {
             continue;
         }
         int32_t permissionDlpMode = GetPermDlpMode(iter->permissionName);
         bool res = IsPermDlpModeAvailableToDlpHap(hapDlpType, permissionDlpMode);
         if (!res) {
-            iter->grantStatus[0] = PERMISSION_DENIED;
+            iter->grantStatus = PERMISSION_DENIED;
         }
     }
 }

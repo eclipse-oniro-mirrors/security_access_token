@@ -56,12 +56,12 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
-    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
+    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-        const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
+        const std::vector<PermissionStatus>& permStateList, ATokenAplEnum apl,
         const std::vector<PermissionDef>& permList);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     bool IsTokenIdExist(AccessTokenID id);
@@ -120,7 +120,7 @@ private:
         const std::string& appId, ATokenAplEnum apl,
         std::vector<GenericValues>& valueList);
     int32_t ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenInfoInner>& infoPtr,
-        const std::vector<PermissionStateFull>& permStateList,
+        const std::vector<PermissionStatus>& permStateList,
         const UpdateHapInfoParams& info, ATokenAplEnum apl);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);

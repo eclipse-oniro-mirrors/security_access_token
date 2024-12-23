@@ -51,7 +51,7 @@ HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(fals
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
-    const HapInfoParams &info, const HapPolicyParams &policy) : permUpdateTimestamp_(0), isRemote_(false)
+    const HapInfoParams &info, const HapPolicy &policy) : permUpdateTimestamp_(0), isRemote_(false)
 {
     tokenInfoBasic_.tokenID = id;
     tokenInfoBasic_.userID = info.userID;
@@ -68,7 +68,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
-    const HapTokenInfo &info, const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
+    const HapTokenInfo &info, const std::vector<PermissionStatus>& permStateList) : isRemote_(false)
 {
     permUpdateTimestamp_ = 0;
     tokenInfoBasic_ = info;
@@ -89,8 +89,7 @@ HapTokenInfoInner::~HapTokenInfoInner()
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
-void HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
-    const std::vector<PermissionStateFull>& permStateList)
+void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList)
 {
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     if (info.isSystemApp) {
@@ -290,7 +289,7 @@ int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 }
 
 void HapTokenInfoInner::UpdateRemoteHapTokenInfo(AccessTokenID mapID,
-    const HapTokenInfo& baseInfo, std::vector<PermissionStateFull>& permStateList)
+    const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList)
 {
     std::shared_ptr<PermissionPolicySet> newPermPolicySet =
         PermissionPolicySet::BuildPolicySetWithoutDefCheck(mapID, permStateList);
@@ -339,7 +338,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     return RET_SUCCESS;
 }
 
-int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<PermissionStateFull>& permList)
+int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<PermissionStatus>& permList)
 {
     std::vector<BriefPermData> briefPermDataList;
     int32_t ret = PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
@@ -348,19 +347,16 @@ int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<Permissio
         return ret;
     }
     for (const auto& perm : briefPermDataList) {
-        PermissionStateFull fullData;
-        fullData.isGeneral = true;
+        PermissionStatus fullData;
         (void)TransferOpcodeToPermission(perm.permCode, fullData.permissionName);
-        fullData.resDeviceID.emplace_back("PHONE-001");
-        int32_t status = perm.status ? PERMISSION_GRANTED : PERMISSION_DENIED;
-        fullData.grantStatus.emplace_back(status);
-        fullData.grantFlags.emplace_back(perm.flag);
+        fullData.grantStatus = perm.status ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        fullData.grantFlag = perm.flag;
         permList.emplace_back(fullData);
     }
     return RET_SUCCESS;
 }
 
-int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStateFull>& permList)
+int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStatus>& permList)
 {
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->policySetLock_);
@@ -372,12 +368,12 @@ int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStateFul
     return GetPermissionStateListFromBrief(permList);
 }
 
-bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList)
+bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList)
 {
     for (const auto& state : stateChangeList) {
         GenericValues modifyValue;
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus[0]);
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlags[0]));
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus);
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlag));
 
         GenericValues conditionValue;
         conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
@@ -409,7 +405,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 
     permPolicySet_->ResetUserGrantPermissionStatus();
 
-    std::vector<PermissionStateFull> permListOfHap;
+    std::vector<PermissionStatus> permListOfHap;
     permPolicySet_->GetPermissionStateList(permListOfHap);
 
 #ifdef SUPPORT_SANDBOX_APP
@@ -489,7 +485,7 @@ void HapTokenInfoInner::ToString(std::string& info)
 
     std::vector<PermissionDef> permList;
     PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenInfoBasic_.tokenID);
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     (void)GetPermissionStateListFromBrief(permStateList);
     PermissionPolicySet::ToString(info, permList, permStateList);
     info.append("}");

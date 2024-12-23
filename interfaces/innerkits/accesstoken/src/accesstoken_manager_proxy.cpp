@@ -214,7 +214,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
 }
 
 int AccessTokenManagerProxy::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -246,7 +246,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
-        sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
+        sptr<PermissionStatusParcel> permissionReq = reply.ReadParcelable<PermissionStatusParcel>();
         if (permissionReq != nullptr) {
             reqPermList.emplace_back(*permissionReq);
         }

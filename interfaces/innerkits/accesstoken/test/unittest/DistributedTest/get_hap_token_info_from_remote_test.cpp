@@ -159,23 +159,14 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags.size(), static_cast<uint32_t>(2));
 
     ASSERT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
-    ASSERT_EQ(infoSync.permStateList[0].grantFlags[0], g_infoManagerTestPolicyPrams.permStateList[0].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[0].grantStatus[0], g_infoManagerTestPolicyPrams.permStateList[0].grantStatus[0]);
-    ASSERT_EQ(infoSync.permStateList[0].resDeviceID[0], g_infoManagerTestPolicyPrams.permStateList[0].resDeviceID[0]);
-    ASSERT_EQ(infoSync.permStateList[0].isGeneral, g_infoManagerTestPolicyPrams.permStateList[0].isGeneral);
+    ASSERT_EQ(infoSync.permStateList[0].grantFlag, g_infoManagerTestPolicyPrams.permStateList[0].grantFlags[0]);
+    ASSERT_EQ(infoSync.permStateList[0].grantStatus, g_infoManagerTestPolicyPrams.permStateList[0].grantStatus[0]);
 
     ASSERT_EQ(infoSync.permStateList[1].permissionName, g_infoManagerTestPolicyPrams.permStateList[1].permissionName);
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags[0], g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[1].grantStatus[0], g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[0]);
-    ASSERT_EQ(infoSync.permStateList[1].resDeviceID[0], g_infoManagerTestPolicyPrams.permStateList[1].resDeviceID[0]);
-    ASSERT_EQ(infoSync.permStateList[1].isGeneral, g_infoManagerTestPolicyPrams.permStateList[1].isGeneral);
-
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags[1], g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[1]);
-    ASSERT_EQ(infoSync.permStateList[1].grantStatus[1], g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[1]);
-    ASSERT_EQ(infoSync.permStateList[1].resDeviceID[1], g_infoManagerTestPolicyPrams.permStateList[1].resDeviceID[1]);
+    ASSERT_EQ(infoSync.permStateList[1].grantFlag, g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[0]);
+    ASSERT_EQ(infoSync.permStateList[1].grantStatus, g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[0]);
 
     ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
     ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
@@ -198,13 +189,11 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, Te
     ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemoteFuncTest002 start.");
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
-    PermissionStateFull infoManagerTestState2 = {
+    PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList2;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
     HapTokenInfoForSync remoteTokenInfo2 = {

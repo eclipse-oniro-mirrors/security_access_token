@@ -120,26 +120,11 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
     return nativeTokenJson;
 }
 
-void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const PermissionStateFull& state)
+void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const PermissionStatus& state)
 {
-    if (state.resDeviceID.size() != state.grantStatus.size() || state.resDeviceID.size() != state.grantFlags.size()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "State grant config size is invalid");
-        return;
-    }
-    nlohmann::json permConfigsJson;
-    uint32_t size = state.resDeviceID.size();
-    for (uint32_t i = 0; i < size; i++) {
-        nlohmann::json permConfigJson = nlohmann::json {
-            {"resDeviceID", state.resDeviceID[i]},
-            {"grantStatus", state.grantStatus[i]},
-            {"grantFlags", state.grantFlags[i]},
-        };
-        permConfigsJson.emplace_back(permConfigJson);
-    }
-
     permStateJson["permissionName"] = state.permissionName;
-    permStateJson["isGeneral"] = state.isGeneral;
-    permStateJson["grantConfig"] = permConfigsJson;
+    permStateJson["grantStatus"] = state.grantStatus;
+    permStateJson["grantFlag"] = state.grantFlag;
 }
 
 nlohmann::json BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
@@ -180,46 +165,25 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
 }
 
 void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson,
-    std::vector<PermissionStateFull>& permStateList)
+    std::vector<PermissionStatus>& permStateList)
 {
     if (hapTokenJson.find("permState") != hapTokenJson.end()
         && hapTokenJson.at("permState").is_array()
         && !hapTokenJson.at("permState").empty()) {
         nlohmann::json permissionsJson = hapTokenJson.at("permState").get<nlohmann::json>();
         for (const auto& permissionJson : permissionsJson) {
-            PermissionStateFull permission;
+            PermissionStatus permission;
             if (permissionJson.find("permissionName") == permissionJson.end() ||
                 !permissionJson.at("permissionName").is_string() ||
-                permissionJson.find("isGeneral") == permissionJson.end() ||
-                !permissionJson.at("isGeneral").is_boolean() ||
-                permissionJson.find("grantConfig") == permissionJson.end() ||
-                !permissionJson.at("grantConfig").is_array() ||
-                permissionJson.at("grantConfig").empty()) {
+                permissionJson.find("grantStatus") == permissionJson.end() ||
+                !permissionJson.at("grantStatus").is_number() ||
+                permissionJson.find("grantFlag") == permissionJson.end() ||
+                !permissionJson.at("grantFlag").is_number()) {
                 continue;
             }
             permissionJson.at("permissionName").get_to(permission.permissionName);
-            permissionJson.at("isGeneral").get_to(permission.isGeneral);
-            nlohmann::json grantConfigsJson = permissionJson.at("grantConfig").get<nlohmann::json>();
-            for (const auto& grantConfigJson :grantConfigsJson) {
-                if (grantConfigJson.find("resDeviceID") == grantConfigJson.end() ||
-                    !grantConfigJson.at("resDeviceID").is_string() ||
-                    grantConfigJson.find("grantStatus") == grantConfigJson.end() ||
-                    !grantConfigJson.at("grantStatus").is_number() ||
-                    grantConfigJson.find("grantFlags") == grantConfigJson.end() ||
-                    !grantConfigJson.at("grantFlags").is_number()) {
-                    continue;
-                }
-                std::string deviceID;
-                grantConfigJson.at("resDeviceID").get_to(deviceID);
-                int grantStatus;
-                grantConfigJson.at("grantStatus").get_to(grantStatus);
-                int grantFlags;
-                grantConfigJson.at("grantFlags").get_to(grantFlags);
-                permission.resDeviceID.emplace_back(deviceID);
-                permission.grantStatus.emplace_back(grantStatus);
-                permission.grantFlags.emplace_back(grantFlags);
-            }
-            permStateList.emplace_back(permission);
+            permissionJson.at("grantStatus").get_to(permission.grantStatus);
+            permissionJson.at("grantFlag").get_to(permission.grantFlag);
         }
     }
 }

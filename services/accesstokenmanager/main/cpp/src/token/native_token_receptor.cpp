@@ -45,7 +45,7 @@ static const std::string JSON_ACLS = "nativeAcls";
 }
 
 int32_t NativeReqPermsGet(
-    const nlohmann::json& j, std::vector<PermissionStateFull>& permStateList)
+    const nlohmann::json& j, std::vector<PermissionStatus>& permStateList)
 {
     std::vector<std::string> permReqList;
     if (j.find(JSON_PERMS) == j.end() || (!j.at(JSON_PERMS).is_array())) {
@@ -59,15 +59,13 @@ int32_t NativeReqPermsGet(
     }
     std::set<std::string> permRes;
     for (const auto& permReq : permReqList) {
-        PermissionStateFull permState;
+        PermissionStatus permState;
         if (permRes.count(permReq) != 0) {
             continue;
         }
         permState.permissionName = permReq;
-        permState.isGeneral = true;
-        permState.resDeviceID.push_back(DEFAULT_DEVICEID);
-        permState.grantStatus.push_back(PERMISSION_GRANTED);
-        permState.grantFlags.push_back(PERMISSION_SYSTEM_FIXED);
+        permState.grantStatus = PERMISSION_GRANTED;
+        permState.grantFlag = PERMISSION_SYSTEM_FIXED;
         permStateList.push_back(permState);
         permRes.insert(permReq);
     }
@@ -130,7 +128,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     if (NativeReqPermsGet(j, permStateList) != RET_SUCCESS) {
         return;
     }

@@ -109,6 +109,7 @@
               "permission_list_state.h",
               "permission_state_change_info.h",
               "permission_state_full.h",
+              "permission_status.h",
               "sec_comp_enhance_data.h",
               "token_sync_kit_interface.h",
               "tokenid_kit.h",

@@ -31,7 +31,7 @@
 #include "access_token_error.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 #include "token_field_const.h"
 #define private public
 #include "nativetoken_kit.h"
@@ -285,7 +285,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
         .tokenAttr = 0
     };
 
-    std::vector<PermissionStateFull> permStateList = {};
+    std::vector<PermissionStatus> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
     tokenInfos.emplace_back(nativeToken);
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
@@ -322,30 +322,24 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
-static void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
+static void PermStateListSet(std::vector<PermissionStatus> &permStateList)
 {
-    PermissionStateFull infoManagerTestState1 = {
+    PermissionStatus infoManagerTestState1 = {
         .permissionName = "ohos.permission.ACCELEROMETER",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {0},
-        .grantFlags = {0}
+        .grantStatus = 0,
+        .grantFlag = 0
     };
 
-    PermissionStateFull infoManagerTestState2 = {
+    PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.MANAGE_USER_IDM",
-        .isGeneral = true,
-        .resDeviceID = {"device 1", "device 2"},
-        .grantStatus = {0, 0},
-        .grantFlags = {0, 2}
+        .grantStatus = 0,
+        .grantFlag = 0
     };
 
-    PermissionStateFull infoManagerTestState3 = {
+    PermissionStatus infoManagerTestState3 = {
         .permissionName = "ohos.permission.USER_TEAT",
-        .isGeneral = true,
-        .resDeviceID = {"device 1", "device 2"},
-        .grantStatus = {0, 0},
-        .grantFlags = {0, 2}
+        .grantStatus = 0,
+        .grantFlag = 0
     };
     permStateList.emplace_back(infoManagerTestState1);
     permStateList.emplace_back(infoManagerTestState2);
@@ -387,7 +381,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     info2.tokenID = 0x28100002;
     info2.tokenAttr = 0;
 
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     PermStateListSet(permStateList);
     std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
 
@@ -395,7 +389,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
         nativeToken1->GetNativeInfoPermissionPolicySet();
     GTEST_LOG_(INFO) <<"permPolicySet: " << permPolicySet;
 
-    std::vector<PermissionStateFull> permList;
+    std::vector<PermissionStatus> permList;
     permPolicySet->GetPermissionStateList(permList);
     for (const auto& perm : permList) {
         GTEST_LOG_(INFO) <<"perm.permissionName: " << perm.permissionName;
@@ -476,7 +470,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
         .tokenID = 0x28100003,
         .tokenAttr = 0
     };
-    std::vector<PermissionStateFull> permStateList = {};
+    std::vector<PermissionStatus> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info3, permStateList);
     tokenInfos.emplace_back(nativeToken3);
 
@@ -523,7 +517,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
         .tokenID = 0x28100006,
         .tokenAttr = 0
     };
-    std::vector<PermissionStateFull> permStateList = {};
+    std::vector<PermissionStatus> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken5 = std::make_shared<NativeTokenInfoInner>(info5, permStateList);
     tokenInfos.emplace_back(nativeToken5);
 
@@ -573,7 +567,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
         .tokenID = 0x28100007,
         .tokenAttr = 0
     };
-    std::vector<PermissionStateFull> permStateList = {};
+    std::vector<PermissionStatus> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken7 = std::make_shared<NativeTokenInfoInner>(info7, permStateList);
     tokenInfos.emplace_back(nativeToken7);
 

@@ -33,7 +33,7 @@
 #include "permission_def_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_list_state_parcel.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 #include "permission_state_change_scope_parcel.h"
 #include "system_ability_definition.h"
 
@@ -54,7 +54,7 @@ public:
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
     virtual int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
         int32_t userID = 0) = 0;

@@ -183,7 +183,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 {
     AccessTokenID tokenID = data.ReadUint32();
     int isSystemGrant = data.ReadInt32();
-    std::vector<PermissionStateFullParcel> permList;
+    std::vector<PermissionStatusParcel> permList;
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
     IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");

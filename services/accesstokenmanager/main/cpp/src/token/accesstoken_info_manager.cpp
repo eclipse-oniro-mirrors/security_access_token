@@ -535,7 +535,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
 }
 
 #ifdef SUPPORT_SANDBOX_APP
-static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& policyNew)
+static void GetPolicyCopied(const HapPolicy& policy, HapPolicy& policyNew)
 {
     policyNew.apl = policy.apl;
     policyNew.domain = policy.domain;
@@ -550,7 +550,7 @@ static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& poli
 #endif
 
 int AccessTokenInfoManager::CreateHapTokenInfo(
-    const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
+    const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx)
 {
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
@@ -569,7 +569,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #ifdef SUPPORT_SANDBOX_APP
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     if (info.dlpType != DLP_COMMON) {
-        HapPolicyParams policyNew;
+        HapPolicy policyNew;
         GetPolicyCopied(policy, policyNew);
         DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(info.dlpType, policyNew.permStateList);
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
@@ -740,7 +740,7 @@ void AccessTokenInfoManager::StoreHapInfo(const std::shared_ptr<HapTokenInfoInne
 }
 
 int32_t AccessTokenInfoManager::ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenInfoInner>& infoPtr,
-    const std::vector<PermissionStateFull>& permStateList,
+    const std::vector<PermissionStatus>& permStateList,
     const UpdateHapInfoParams& info, ATokenAplEnum apl)
 {
     infoPtr->Update(info, permStateList);
@@ -780,7 +780,7 @@ inst %{public}d tokenAttr %{public}d update ok!", infoPtr->GetTokenID(), infoPtr
 }
 
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
+    const std::vector<PermissionStatus>& permStateList, ATokenAplEnum apl,
     const std::vector<PermissionDef>& permList)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

@@ -25,7 +25,7 @@
 #include "nlohmann/json.hpp"
 #include "nocopyable.h"
 #include "permission_policy_set.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
