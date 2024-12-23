@@ -4089,7 +4089,17 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        }
+        },
+        {
+            "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
     ],
     "userGrantPermissions": [
         {
@@ -5522,16 +5532,6 @@
             "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": 16,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
-            "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 16,
             "deprecated": "",
