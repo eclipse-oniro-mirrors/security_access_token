@@ -483,6 +483,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_FACTORY_OTA_DIR",   false},
     {"ohos.permission.MICROPHONE_CONTROL",   false},
     {"ohos.permission.MANAGE_MOUSE_CURSOR",                 false},
+    {"ohos.permission.INPUT_DEVICE_CONTROLLER",             false},
     {"ohos.permission.FILTER_INPUT_EVENT",                  false},
     {"ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",        false},
     {"ohos.permission.RECEIVE_FUSION_MESSAGES",             false},
@@ -572,6 +573,9 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
     {"ohos.permission.SET_LAUNCH_REASON_MESSAGE",           false},
     {"ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",     false},
+    {"ohos.permission.GET_DOMAIN_ACCOUNT_SERVER_CONFIGS",   false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNT_SERVER_CONFIGS", false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNTS",              false},
     {"ohos.permission.ANTI_FRAUD",                          false},
 };
 

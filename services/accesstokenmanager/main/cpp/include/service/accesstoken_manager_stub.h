@@ -60,6 +60,8 @@ private:
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void RegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void UnRegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);
