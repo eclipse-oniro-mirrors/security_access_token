@@ -204,7 +204,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
 
 PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
@@ -241,7 +241,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
         return PERMISSION_DENIED;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
@@ -280,7 +280,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
         return false;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is not exist %{public}d.", tokenID);
@@ -313,7 +313,7 @@ int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const st
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid %{public}u.", tokenID);

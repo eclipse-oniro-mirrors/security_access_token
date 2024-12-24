@@ -2671,6 +2671,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.EXEMPT_MICROPHONE_PRIVACY_INDICATOR",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -3324,7 +3334,7 @@
             "name": "ohos.permission.STORAGE_MANAGER_CRYPT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SERVICE",
+            "availableType": "SYSTEM",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
@@ -4033,7 +4043,7 @@
         {
             "name": "ohos.permission.SET_TELEPHONY_ESIM_STATE_OPEN",
             "grantMode": "system_grant",
-            "availableLevel": "normal",
+            "availableLevel": "system_basic",
             "availableType": "NORMAL",
             "since": 13,
             "deprecated": "",
@@ -4086,6 +4096,16 @@
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
             "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -4846,6 +4866,16 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
+		{
+            "name": "ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
         {
             "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
             "grantMode": "system_grant",
@@ -5012,6 +5042,16 @@
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INPUT_DEVICE_CONTROLLER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -5499,6 +5539,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5509,10 +5559,30 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE",
+            "name": "ohos.permission.GET_DOMAIN_ACCOUNT_SERVER_CONFIGS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_DOMAIN_ACCOUNT_SERVER_CONFIGS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_DOMAIN_ACCOUNTS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,

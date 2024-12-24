@@ -338,7 +338,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
 
     permStateList.resize(permissionList.size(), PERMISSION_DENIED);
     std::vector<std::string> permListCrossIpc;
-    std::unordered_map<int, int> permToState;
+    std::unordered_map<size_t, size_t> permToState;
     for (size_t i = 0; i < permissionList.size(); i++) {
         bool isGranted = false;
         uint32_t code;
@@ -511,26 +511,26 @@ int32_t AccessTokenKit::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback);
+    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);
+    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::RegisterSelfPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    return RET_FAILED;
+    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback, SELF_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::UnRegisterSelfPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    return RET_FAILED;
+    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback, SELF_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)

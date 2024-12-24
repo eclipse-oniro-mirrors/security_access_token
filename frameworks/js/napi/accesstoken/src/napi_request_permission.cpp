@@ -685,7 +685,7 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
 {
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
-    AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
+    static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.",
             asyncContextHandle->asyncContextPtr->tokenId, selfTokenID);

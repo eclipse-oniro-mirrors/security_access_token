@@ -32,6 +32,8 @@
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize(OHOS::Security::AccessToken::PermStateChangeScope const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RegisterSelfPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterSelfPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(OHOS::Security::AccessToken::AtmToolsParamInfo const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
@@ -59,6 +61,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetVersion(unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionManagerInfo(OHOS::Security::AccessToken::PermissionGrantInfo&)";
         "OHOS::Security::AccessToken::PermissionStateChangeCallback::PermissionStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::PermissionStateChangeCallback::Stop()";
         "OHOS::Security::AccessToken::PermissionStateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::GetInstance()";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::InitProxy()";

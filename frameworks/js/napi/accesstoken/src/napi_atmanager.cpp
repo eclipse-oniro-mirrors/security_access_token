@@ -35,6 +35,11 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
 };
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static const char* REGISTER_PERMISSION_STATE_CHANGE_TYPE = "permissionStateChange";
+static const char* REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE = "selfPermissionStateChange";
+constexpr uint32_t THIRD_PARAM = 2;
+constexpr uint32_t FORTH_PARAM = 3;
+
 static void ReturnPromiseResult(napi_env env, int32_t contextResult, napi_deferred deferred, napi_value result)
 {
     if (contextResult != RET_SUCCESS) {
@@ -1124,6 +1129,49 @@ napi_value NapiAtManager::GetPermissionRequestToggleStatus(napi_env env, napi_ca
     return result;
 }
 
+bool NapiAtManager::GetPermStateChangeType(const napi_env env, const size_t argc, const napi_value* argv,
+    std::string& type)
+{
+    std::string errMsg;
+    if (argc == 0) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    // 0: the first parameter of argv
+    if (!ParseString(env, argv[0], type)) {
+        errMsg = GetParamErrorMsg("type", "permissionStateChange or selfPermissionStateChange");
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+        return false;
+    }
+    if ((type != REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (type != REGISTER_PERMISSION_STATE_CHANGE_TYPE)) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "type is invalid"));
+        return false;
+    }
+    return true;
+}
+
+bool NapiAtManager::FillPermStateChangeScope(const napi_env env, const napi_value* argv,
+    const std::string& type, PermStateChangeScope& scopeInfo)
+{
+    std::string errMsg;
+    int index = 1;
+    if (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+        if (!ParseAccessTokenIDArray(env, argv[index++], scopeInfo.tokenIDs)) {
+            errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+            return false;
+        }
+    } else if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+        scopeInfo.tokenIDs = {GetSelfTokenID()};
+    }
+    if (!ParseStringArray(env, argv[index++], scopeInfo.permList)) {
+        errMsg = GetParamErrorMsg("permissionNameList", "Array<string>");
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+        return false;
+    }
+    return true;
+}
+
 bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
     const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
@@ -1131,42 +1179,33 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
     std::string errMsg;
     napi_ref callback = nullptr;
 
-    // 1: the second parameter of argv
-    if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
-        errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+    if (!FillPermStateChangeScope(env, argv, type, scopeInfo)) {
         return false;
     }
-    // 2: the third parameter of argv
-    if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
-        errMsg = GetParamErrorMsg("tokenIDList", "Array<string>");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
-        return false;
+    uint32_t index;
+    if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+        index = THIRD_PARAM;
+    } else {
+        index = FORTH_PARAM;
     }
-    // 3: the fourth parameter of argv
-    if (!ParseCallback(env, argv[3], callback)) {
-        errMsg = GetParamErrorMsg("tokenIDList", "Callback<PermissionStateChangeInfo>");
+    if (!ParseCallback(env, argv[index], callback)) {
+        errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
-    registerPermStateChangeInfo.env = env;
     registerPermStateChangeInfo.callbackRef = callback;
-    registerPermStateChangeInfo.permStateChangeType = type;
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
     registerPermStateChangeInfo.subscriber->SetEnv(env);
     registerPermStateChangeInfo.subscriber->SetCallbackRef(callback);
-    registerPermStateChangeInfo.threadId_ = std::this_thread::get_id();
     std::shared_ptr<RegisterPermStateChangeScopePtr> *subscriber =
         new (std::nothrow) std::shared_ptr<RegisterPermStateChangeScopePtr>(
             registerPermStateChangeInfo.subscriber);
     if (subscriber == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create subscriber");
         return false;
     }
     napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber), [](napi_env nev, void *data, void *hint) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "RegisterPermStateChangeScopePtr delete");
         std::shared_ptr<RegisterPermStateChangeScopePtr>* subscriber =
             static_cast<std::shared_ptr<RegisterPermStateChangeScopePtr>*>(data);
         if (subscriber != nullptr && *subscriber != nullptr) {
@@ -1185,10 +1224,6 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_value argv[NapiContextCommon::MAX_PARAMS_FOUR] = {nullptr};
     napi_value thisVar = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_FOUR) {
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-        return false;
-    }
     if (thisVar == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ThisVar is nullptr");
         return false;
@@ -1199,17 +1234,24 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
         ACCESSTOKEN_LOG_ERROR(LABEL, "ThisVar is undefined");
         return false;
     }
-    // 0: the first parameter of argv
     std::string type;
-    if (!ParseString(env, argv[0], type)) {
-        std::string errMsg = GetParamErrorMsg("type", "string");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+    if (!GetPermStateChangeType(env, argc, argv, type)) {
         return false;
     }
+    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_THREE)) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_FOUR)) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    registerPermStateChangeInfo.env = env;
+    registerPermStateChangeInfo.permStateChangeType = type;
+    registerPermStateChangeInfo.threadId_ = std::this_thread::get_id();
     if (!FillPermStateChangeInfo(env, argv, type, thisVar, registerPermStateChangeInfo)) {
         return false;
     }
-
     return true;
 }
 
@@ -1231,7 +1273,12 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    int32_t result = AccessTokenKit::RegisterPermStateChangeCallback(registerPermStateChangeInfo->subscriber);
+    int32_t result;
+    if (registerPermStateChangeInfo->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+        result = AccessTokenKit::RegisterPermStateChangeCallback(registerPermStateChangeInfo->subscriber);
+    } else {
+        result = AccessTokenKit::RegisterSelfPermStateChangeCallback(registerPermStateChangeInfo->subscriber);
+    }
     if (result != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermStateChangeCallback failed");
         registerPermStateChangeInfo->errCode = result;
@@ -1263,33 +1310,30 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         return false;
     }
     // 1: off required minnum argc
-    if (argc < NapiContextCommon::MAX_PARAMS_FOUR - 1) {
+    if (argc == 0) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
-    // 0: the first parameter of argv
     std::string type;
-    if (!ParseString(env, argv[0], type)) {
-        errMsg = GetParamErrorMsg("type", "permissionStateChange");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+    if (!GetPermStateChangeType(env, argc, argv, type)) {
+        return false;
+    }
+    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_THREE - 1)) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_FOUR - 1)) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
     PermStateChangeScope scopeInfo;
-    // 1: the second parameter of argv
-    if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
-        errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+    if (!FillPermStateChangeScope(env, argv, type, scopeInfo)) {
         return false;
     }
-    // 2: the third parameter of argv
-    if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
-        errMsg = GetParamErrorMsg("permissionNameList", "Array<string>");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
-        return false;
-    }
-    if (argc == NapiContextCommon::MAX_PARAMS_FOUR) {
-        // 3: the fourth parameter of argv
-        if (!ParseCallback(env, argv[3], callback)) {
+    if (((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc == NapiContextCommon::MAX_PARAMS_FOUR)) ||
+        ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc == NapiContextCommon::MAX_PARAMS_THREE))) {
+        int callbackIndex = (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) ? FORTH_PARAM : THIRD_PARAM;
+        if (!ParseCallback(env, argv[callbackIndex], callback)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
             return false;
@@ -1329,7 +1373,12 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     for (const auto& item : batchPermStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
-        int32_t result = AccessTokenKit::UnRegisterPermStateChangeCallback(item->subscriber);
+        int32_t result;
+        if (unregisterPermStateChangeInfo->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+            result = AccessTokenKit::UnRegisterPermStateChangeCallback(item->subscriber);
+        } else {
+            result = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(item->subscriber);
+        }
         if (result == RET_SUCCESS) {
             DeleteRegisterFromVector(scopeInfo, env, item->callbackRef);
         } else {

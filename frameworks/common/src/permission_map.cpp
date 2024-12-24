@@ -448,6 +448,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.OPERATE_FINDNETWORK",                 false},
     {"ohos.permission.QUERY_FINDNETWORK_LOCATION",          false},
     {"ohos.permission.REGISTER_FINDNETWORK_ACCESSORY",      false},
+    {"ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",      false},
     {"ohos.permission.INJECT_INPUT_EVENT",              false},
     {"ohos.permission.ACCESS_SUBSCRIPTION_CAPSULE_DATA",              false},
     {"ohos.permission.PRE_START_ATOMIC_SERVICE",            false},
@@ -483,6 +484,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_FACTORY_OTA_DIR",   false},
     {"ohos.permission.MICROPHONE_CONTROL",   false},
     {"ohos.permission.MANAGE_MOUSE_CURSOR",                 false},
+    {"ohos.permission.INPUT_DEVICE_CONTROLLER",             false},
     {"ohos.permission.FILTER_INPUT_EVENT",                  false},
     {"ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",        false},
     {"ohos.permission.RECEIVE_FUSION_MESSAGES",             false},
@@ -570,7 +572,12 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
     {"ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE", false},
     {"ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", false},
+    {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
     {"ohos.permission.SET_LAUNCH_REASON_MESSAGE",           false},
+    {"ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",     false},
+    {"ohos.permission.GET_DOMAIN_ACCOUNT_SERVER_CONFIGS",   false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNT_SERVER_CONFIGS", false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNTS",              false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
