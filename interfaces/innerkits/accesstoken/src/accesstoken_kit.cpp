@@ -338,7 +338,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
 
     permStateList.resize(permissionList.size(), PERMISSION_DENIED);
     std::vector<std::string> permListCrossIpc;
-    std::unordered_map<int, int> permToState;
+    std::unordered_map<size_t, size_t> permToState;
     for (size_t i = 0; i < permissionList.size(); i++) {
         bool isGranted = false;
         uint32_t code;

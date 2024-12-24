@@ -61,6 +61,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetVersion(unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionManagerInfo(OHOS::Security::AccessToken::PermissionGrantInfo&)";
         "OHOS::Security::AccessToken::PermissionStateChangeCallback::PermissionStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::PermissionStateChangeCallback::Stop()";
         "OHOS::Security::AccessToken::PermissionStateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::GetInstance()";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::InitProxy()";
