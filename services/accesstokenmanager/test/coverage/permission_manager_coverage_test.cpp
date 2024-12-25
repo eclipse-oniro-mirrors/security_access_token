@@ -27,6 +27,7 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#include "token_field_const.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -40,12 +41,10 @@ static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
 static constexpr int INVALID_IPC_CODE = 0;
 
-static PermissionStateFull g_permState = {
+static PermissionStatus g_permState = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
 };
 
 static HapInfoParams g_info = {
@@ -55,7 +54,7 @@ static HapInfoParams g_info = {
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_policy = {
+static HapPolicy g_policy = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permStateList = {g_permState}
@@ -192,6 +191,49 @@ HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestS
     ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().UpdateCapStateToDatabase(tokenId, false));
 
     AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: RestorePermissionPolicy001
+ * @tc.desc: PermissionPolicySet::RestorePermissionPolicy function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value1.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<PermissionState>(3));
+    value1.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<GenericValues> permStateRes1;
+    permStateRes1.emplace_back(value1);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::RestorePermissionPolicy(tokenId,
+        permStateRes1); // ret != RET_SUCCESS
+
+    ASSERT_EQ(tokenId, policySet->tokenId_);
+
+    GenericValues value2;
+    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value2.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value2.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    GenericValues value3;
+    value3.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value3.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.MICROPHONE");
+    value3.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value3.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+
+    std::vector<GenericValues> permStateRes2;
+    permStateRes2.emplace_back(value2);
+    permStateRes2.emplace_back(value3);
+
+    std::shared_ptr<PermissionPolicySet> policySet2 = PermissionPolicySet::RestorePermissionPolicy(tokenId,
+        permStateRes2); // state.permissionName == iter->permissionName
+    ASSERT_EQ(static_cast<uint32_t>(2), policySet2->permStateList_.size());
 }
 } // namespace AccessToken
 } // namespace Security

@@ -465,13 +465,11 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
         .tokenAttr = 0
     };
 
-    PermissionStateFull infoManagerTestState = {
+    PermissionStatus infoManagerTestState = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
-    std::vector<PermissionStateFull> permStateList;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
     HapTokenInfoForSync remoteTokenInfo = {
@@ -486,21 +484,17 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
     cmd->FromHapTokenBasicInfoJson(hapTokenJson, hap.baseInfo);
     cmd->FromPermStateListJson(hapTokenJson, hap.permStateList);
 
-    PermissionStateFull state1 = {
+    PermissionStatus state1 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local", "local1"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
     nlohmann::json permStateJson;
     cmd->ToPermStateJson(permStateJson, state1);
 
-    PermissionStateFull state2 = {
+    PermissionStatus state2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED, PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
     cmd->ToPermStateJson(permStateJson, state2);
 
     EXPECT_EQ(hap.baseInfo.tokenID, remoteTokenInfo.baseInfo.tokenID);
@@ -552,31 +546,27 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
 
     nlohmann::json hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"grantConfig\\\":[{\\\"resDeviceID\\\":\\\"device\\\", "
-        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
+        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    std::vector<PermissionStateFull> permStateListNull;
+    std::vector<PermissionStatus> permStateListNull;
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+
+    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+
+    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
     cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
     hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
-    EXPECT_EQ(permStateListNull.size(), 0);
-
-    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
-    EXPECT_EQ(permStateListNull.size(), 0);
-
-    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1, \\\"grantConfig\\\":[{"
-        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
+        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
     cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
@@ -1436,20 +1426,16 @@ HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommandsWithThread001, TestSize.Le
 }
 
 namespace {
-PermissionStateFull g_infoManagerTestUpdateState1 = {
+PermissionStatus g_infoManagerTestUpdateState1 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {1}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = 1
 };
 
-PermissionStateFull g_infoManagerTestUpdateState2 = {
+PermissionStatus g_infoManagerTestUpdateState2 = {
     .permissionName = "ohos.permission.ANSWER_CALL",
-    .isGeneral = false,
-    .resDeviceID = {"device 1", "device 2"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-    .grantFlags = {1, 2}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = 1
 };
 
 HapTokenInfo g_remoteHapInfoBasic = {

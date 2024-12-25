@@ -32,7 +32,7 @@
 #include "permission_def_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_list_state_parcel.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -50,7 +50,7 @@ public:
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
         int32_t userID) override;

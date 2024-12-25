@@ -92,7 +92,7 @@ public:
         const std::string& bundleName, const std::string& permissionName, const std::vector<bool>& list);
     void RevokeAllTempPermission(AccessTokenID tokenID);
     void RevokeTempPermission(AccessTokenID tokenID, const std::string& permissionName);
-    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& permissionStateFullList);
+    bool GetPermissionState(AccessTokenID tokenID, std::vector<PermissionStatus>& permissionStateList);
     bool GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list);
     void ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag);
     bool GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID);

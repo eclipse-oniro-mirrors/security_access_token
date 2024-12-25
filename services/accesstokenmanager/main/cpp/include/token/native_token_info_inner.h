@@ -22,7 +22,7 @@
 #include "generic_values.h"
 #include "native_token_info_base.h"
 #include "permission_policy_set.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,7 +34,7 @@ class NativeTokenInfoInner final {
 public:
     NativeTokenInfoInner();
     NativeTokenInfoInner(NativeTokenInfoBase& info,
-        const std::vector<PermissionStateFull>& permStateList);
+        const std::vector<PermissionStatus>& permStateList);
     virtual ~NativeTokenInfoInner();
 
     void TransferNativeInfo(std::vector<GenericValues>& valueList) const;

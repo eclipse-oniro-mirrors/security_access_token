@@ -140,13 +140,11 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, Test
     std::string deviceID1 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100001);
-    PermissionStateFull infoManagerTestState4 = {
+    PermissionStatus infoManagerTestState4 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local4"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList1;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList1;
     permStateList1.emplace_back(infoManagerTestState4);
 
     HapTokenInfoForSync remoteTokenInfo1 = {
@@ -190,13 +188,11 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, Test
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100001);
-    PermissionStateFull infoManagerTestState2 = {
+    PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList2;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
     HapTokenInfoForSync remoteTokenInfo2 = {

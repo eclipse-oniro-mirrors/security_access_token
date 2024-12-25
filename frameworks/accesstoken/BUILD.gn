@@ -60,7 +60,7 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
     "src/permission_state_change_scope_parcel.cpp",
-    "src/permission_state_full_parcel.cpp",
+    "src/permission_status_parcel.cpp",
   ]
 
   external_deps = [ "c_utils:utils" ]

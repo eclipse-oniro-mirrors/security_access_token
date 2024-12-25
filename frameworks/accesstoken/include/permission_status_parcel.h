@@ -16,22 +16,22 @@
 #ifndef INTERFACES_INNER_KITS_PERMISSION_PERMISSION_STATE_FULL_PARCEL_H
 #define INTERFACES_INNER_KITS_PERMISSION_PERMISSION_STATE_FULL_PARCEL_H
 
-#include "permission_state_full.h"
+#include "permission_status.h"
 #include "parcel.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionStateFullParcel final : public Parcelable {
-    PermissionStateFullParcel() = default;
+struct PermissionStatusParcel final : public Parcelable {
+    PermissionStatusParcel() = default;
 
-    ~PermissionStateFullParcel() override = default;
+    ~PermissionStatusParcel() override = default;
 
     bool Marshalling(Parcel &out) const override;
 
-    static PermissionStateFullParcel *Unmarshalling(Parcel &in);
+    static PermissionStatusParcel *Unmarshalling(Parcel &in);
 
-    PermissionStateFull permStatFull;
+    PermissionStatus permState;
 };
 }  // namespace AccessToken
 }  // namespace Security

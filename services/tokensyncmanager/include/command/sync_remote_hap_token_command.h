@@ -21,7 +21,7 @@
 #include "access_token.h"
 #include "base_remote_command.h"
 #include "hap_token_info.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {

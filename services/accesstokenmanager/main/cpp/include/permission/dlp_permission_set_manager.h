@@ -21,7 +21,7 @@
 
 #include "nocopyable.h"
 #include "permission_dlp_mode.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,7 +31,7 @@ public:
     static DlpPermissionSetManager& GetInstance();
     virtual ~DlpPermissionSetManager();
 
-    void UpdatePermStateWithDlpInfo(int32_t hapDlpType, std::vector<PermissionStateFull>& permStateList);
+    void UpdatePermStateWithDlpInfo(int32_t hapDlpType, std::vector<PermissionStatus>& permStateList);
     bool IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode);
     void ProcessDlpPermInfos(const std::vector<PermissionDlpMode>& info);
     int32_t GetPermDlpMode(const std::string& permissionName);

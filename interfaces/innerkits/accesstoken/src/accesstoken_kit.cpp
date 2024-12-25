@@ -68,6 +68,22 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
     return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
 }
 
+static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& policyOut)
+{
+    policyOut.apl = policyIn.apl;
+    policyOut.domain = policyIn.domain;
+    policyOut.permList.assign(policyIn.permList.begin(), policyIn.permList.end());
+    policyOut.aclRequestedList.assign(policyIn.aclRequestedList.begin(), policyIn.aclRequestedList.end());
+    policyOut.preAuthorizationInfo.assign(policyIn.preAuthorizationInfo.begin(), policyIn.preAuthorizationInfo.end());
+    for (const auto& perm : policyIn.permStateList) {
+        PermissionStatus tmp;
+        tmp.permissionName = perm.permissionName;
+        tmp.grantStatus = perm.grantStatus[0];
+        tmp.grantFlag = perm.grantFlags[0];
+        policyOut.permStateList.emplace_back(tmp);
+    }
+}
+
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
@@ -80,7 +96,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return res;
     }
-    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, newPolicy);
 }
 
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
@@ -102,7 +120,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId, result);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().InitHapToken(info, newPolicy, fullTokenId, result);
 }
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
@@ -137,7 +157,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy, result);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
