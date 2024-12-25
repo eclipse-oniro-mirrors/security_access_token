@@ -297,8 +297,7 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
     AccessTokenID id = info->GetTokenID();
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     if (nativeTokenInfoMap_.count(id) > 0) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u has exist.", id);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u has exist.", id);
         return AccessTokenError::ERR_TOKENID_HAS_EXISTED;
     }
 
@@ -626,63 +625,177 @@ AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std:
     return tokenIdEx;
 }
 
-bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr)
+void AccessTokenInfoManager::IdFalseWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+    AccessTokenID cfgTokenId, std::string& cfgProcessName, AccessTokenID oriTokenId)
 {
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Info is null.");
-        return false;
+        return;
     }
 
+    // remove old tokenId from cache
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(oriTokenId);
+
+    // add new tokenId to cache
+    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(cfgTokenId);
+    int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(cfgTokenId, type);
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token id register fail, res is %{public}d.", res);
+        return;
+    }
+
+    // remove old native token info from cache
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-    AccessTokenID id = infoPtr->GetTokenID();
-    std::string processName = infoPtr->GetProcessName();
-    AccessTokenID findId = INVALID_TOKENID;
-    bool idExist = (nativeTokenInfoMap_.count(id) > 0);
-    bool processExist = false;
-    for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); ++iter) {
-        if (iter->second.processName == processName) {
-            processExist = true;
-            findId = iter->first;
-            break;
-        }
-    }
-    // id is exist, but it is not this process, so neither update nor add.
-    if (idExist && !processExist) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Id(%{public}u) is exist, process(%{public}s) is noexist, can not update.", id, processName.c_str());
-        return true;
+    if (nativeTokenInfoMap_.count(oriTokenId) > 0) {
+        nativeTokenInfoMap_.erase(oriTokenId);
     }
 
-    // this process is exist, but id is not same, perhaps libat lose his data, we need delete old, add new later.
-    if (!idExist && processExist) {
-        if (nativeTokenInfoMap_.count(findId) > 0) {
-            nativeTokenInfoMap_.erase(findId);
-        }
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(findId);
-        return false;
-    }
-
-    if (!idExist && !processExist) {
-        return false;
-    }
-
-    nativeTokenInfoMap_[id].processName = processName;
-    nativeTokenInfoMap_[id].apl = ATokenAplEnum(infoPtr->GetApl());
-    nativeTokenInfoMap_[id].opCodeList.clear();
-    nativeTokenInfoMap_[id].statusList.clear();
+    // add new native token info to cache
+    NativeTokenInfoCache cache;
+    cache.processName = cfgProcessName;
+    cache.apl = static_cast<ATokenAplEnum>(infoPtr->GetApl());
 
     std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetNativeInfoPermissionPolicySet();
     if (policySet != nullptr) {
-        policySet->GetPermissionStateList(nativeTokenInfoMap_[id].opCodeList, nativeTokenInfoMap_[id].statusList);
+        policySet->GetPermissionStateList(cache.opCodeList, cache.statusList);
     }
 
-    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
-    return true;
+    nativeTokenInfoMap_[cfgTokenId] = cache;
+    PermissionManager::GetInstance().AddPermToKernel(cfgTokenId, policySet);
+}
+
+void AccessTokenInfoManager::IdFalseWithProcessFalseCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+    AccessTokenID cfgTokenId, std::string& cfgProcessName)
+{
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Info is null.");
+        return;
+    }
+
+    // add new tokenId to cache
+    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(cfgTokenId);
+    int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(cfgTokenId, type);
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token id register fail, res is %{public}d.", res);
+        return;
+    }
+
+    // add new native token info to cache
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    NativeTokenInfoCache cache;
+    cache.processName = cfgProcessName;
+    cache.apl = static_cast<ATokenAplEnum>(infoPtr->GetApl());
+
+    std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetNativeInfoPermissionPolicySet();
+    if (policySet != nullptr) {
+        policySet->GetPermissionStateList(cache.opCodeList, cache.statusList);
+    }
+
+    nativeTokenInfoMap_[cfgTokenId] = cache;
+    PermissionManager::GetInstance().AddPermToKernel(cfgTokenId, policySet);
+}
+
+void AccessTokenInfoManager::IdTrueWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+    AccessTokenID cfgTokenId, std::string& cfgProcessName)
+{
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Info is null.");
+        return;
+    }
+
+    // update new native token info to cache
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    nativeTokenInfoMap_[cfgTokenId].apl = static_cast<ATokenAplEnum>(infoPtr->GetApl());
+    nativeTokenInfoMap_[cfgTokenId].opCodeList.clear();
+    nativeTokenInfoMap_[cfgTokenId].statusList.clear();
+
+    std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetNativeInfoPermissionPolicySet();
+    if (policySet != nullptr) {
+        policySet->GetPermissionStateList(nativeTokenInfoMap_[cfgTokenId].opCodeList,
+            nativeTokenInfoMap_[cfgTokenId].statusList);
+    }
+
+    PermissionManager::GetInstance().AddPermToKernel(cfgTokenId, policySet);
+}
+
+// idExist true  + processExist false : do nothing
+// idExist false + processExist true  : delete native from cache and db + add tokenId and native to cache and db
+// idExist false + processExist false : add tokenId and native cache + add native db
+// idExist true  + processExist true  : update native cache
+// db operation handle out of this function
+void AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+    std::vector<AccessTokenID>& deleteTokenList, std::vector<GenericValues>& nativeTokenValues,
+    std::vector<GenericValues>& permStateValues)
+{
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Info is null.");
+        return;
+    }
+
+    AccessTokenID cfgTokenId = infoPtr->GetTokenID();
+    std::string cfgProcessName = infoPtr->GetProcessName();
+    AccessTokenID oriTokenId = INVALID_TOKENID;
+    bool idExist = false;
+    bool processExist = false;
+
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        idExist = (nativeTokenInfoMap_.count(cfgTokenId) > 0);
+        for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); ++iter) {
+            if (iter->second.processName == cfgProcessName) {
+                processExist = true;
+                oriTokenId = iter->first;
+                break;
+            }
+        }
+    }
+
+    if (idExist && processExist && (cfgTokenId != oriTokenId)) {
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(cfgTokenId);
+        idExist = false;
+    }
+
+    if (idExist && !processExist) { // id is exist, but it is not this process, so neither update nor add
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is old and process %{public}s is new, can not update.",
+            cfgTokenId, cfgProcessName.c_str());
+        return;
+    }
+
+    if (!idExist && processExist) { // this process is exist, but id is not same, perhaps libat lose his data
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is new, process name %{public}s is old, "
+            "delete origin and add new to cache and database!", cfgTokenId, cfgProcessName.c_str());
+
+        IdFalseWithProcessTrueCache(infoPtr, cfgTokenId, cfgProcessName, oriTokenId);
+
+        deleteTokenList.emplace_back(oriTokenId);
+        infoPtr->TransferNativeInfo(nativeTokenValues); // get new native token info
+        infoPtr->TransferPermissionPolicy(permStateValues); // get new permission state
+
+        return;
+    }
+
+    if (!idExist && !processExist) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u and process %{public}s is new, add to cache and database!",
+            cfgTokenId, cfgProcessName.c_str());
+
+        IdFalseWithProcessFalseCache(infoPtr, cfgTokenId, cfgProcessName);
+
+        infoPtr->TransferNativeInfo(nativeTokenValues); // get new native token info
+        infoPtr->TransferPermissionPolicy(permStateValues); // get new permission state
+
+        return;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u and process %{public}s is old, update cache!",
+        cfgTokenId, cfgProcessName.c_str());
+
+    IdTrueWithProcessTrueCache(infoPtr, cfgTokenId, cfgProcessName);
 }
 
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
     const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
+    std::vector<AccessTokenID> deleteTokenList;
     std::vector<GenericValues> permStateValues;
     std::vector<GenericValues> nativeTokenValues;
     for (const auto& infoPtr: tokenInfos) {
@@ -690,29 +803,33 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
             ACCESSTOKEN_LOG_WARN(LABEL, "Token info from libat is null");
             continue;
         }
-        if (!TryUpdateExistNativeToken(infoPtr)) {
-            AccessTokenID id = infoPtr->GetTokenID();
-            std::string processName = infoPtr->GetProcessName();
-            ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(id);
-            ACCESSTOKEN_LOG_INFO(LABEL,
-                "Token %{public}u process name %{public}s is new, add to manager!", id, processName.c_str());
 
-            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, type);
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id register fail, err=%{public}d.", ret);
-                continue;
-            }
-            ret = AddNativeTokenInfo(infoPtr);
-            if (ret != RET_SUCCESS) {
-                AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-                ACCESSTOKEN_LOG_ERROR(LABEL,
-                    "Token %{public}u process name %{public}s add to manager failed!", id, processName.c_str());
-            }
-            infoPtr->TransferNativeInfo(nativeTokenValues);
-            infoPtr->TransferPermissionPolicy(permStateValues);
-        }
+        TryUpdateExistNativeToken(infoPtr, deleteTokenList, nativeTokenValues, permStateValues);
     }
-    AddNativeTokenInfoToDb(nativeTokenValues, permStateValues);
+
+    std::vector<AtmDataType> deleteDataTypes;
+    std::vector<GenericValues> deleteValues;
+    for (const auto& tokenId : deleteTokenList) {
+        GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+
+        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_NATIVE_INFO);
+        deleteValues.emplace_back(conditionValue);
+    }
+
+    std::vector<AtmDataType> addDataTypes;
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_NATIVE_INFO);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+
+    std::vector<std::vector<GenericValues>> addValues;
+    addValues.emplace_back(nativeTokenValues);
+    addValues.emplace_back(permStateValues);
+
+    int32_t res = AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+        addValues);
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertNative failed!");
+    }
 }
 
 void AccessTokenInfoManager::StoreHapInfo(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
@@ -754,15 +871,40 @@ int32_t AccessTokenInfoManager::ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenI
     // get new hap token info from cache
     std::vector<GenericValues> hapInfoValues;
     StoreHapInfo(infoPtr, info.appIDDesc, apl, hapInfoValues);
+
     // get new permission def from cache if exist
     std::vector<GenericValues> permDefValues;
     PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenId, permDefValues);
+
     // get new permission status from cache if exist
     std::vector<GenericValues> permStateValues;
     infoPtr->StorePermissionPolicy(permStateValues);
 
-    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenId, hapInfoValues, permDefValues,
-        permStateValues);
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+
+    std::vector<AtmDataType> deleteDataTypes;
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+
+    std::vector<GenericValues> deleteValues;
+    deleteValues.emplace_back(conditionValue);
+    deleteValues.emplace_back(conditionValue);
+    deleteValues.emplace_back(conditionValue);
+
+    std::vector<AtmDataType> addDataTypes;
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+
+    std::vector<std::vector<GenericValues>> addValues;
+    addValues.emplace_back(hapInfoValues);
+    addValues.emplace_back(permDefValues);
+    addValues.emplace_back(permStateValues);
+
+    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+        addValues);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "TokenID %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenId, ret);
