@@ -1455,14 +1455,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, TryUpdateExistNativeToken001, TestSize.Level1)
 {
     std::shared_ptr<NativeTokenInfoInner> infoPtr = nullptr;
-    std::vector<AccessTokenID> deleteTokenList;
-    std::vector<GenericValues> permStateValues;
-    std::vector<GenericValues> nativeTokenValues;
-    AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr, deleteTokenList,
-        permStateValues, nativeTokenValues); // infoPtr is null
-    ASSERT_EQ(0, deleteTokenList.size());
-    ASSERT_EQ(0, permStateValues.size());
-    ASSERT_EQ(0, nativeTokenValues.size());
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr)); // infoPtr is null
 }
 
 /**
