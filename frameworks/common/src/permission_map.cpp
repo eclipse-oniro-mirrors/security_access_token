@@ -600,6 +600,16 @@ bool TransferOpcodeToPermission(uint32_t opCode, std::string& permission)
     permission = g_permMap[opCode].first;
     return true;
 }
+
+bool IsUserGrantPermission(const std::string& permission)
+{
+    for (const auto& perm : g_permMap) {
+        if (permission == perm.first && perm.second == true) {
+            return true;
+        }
+    }
+    return false;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
