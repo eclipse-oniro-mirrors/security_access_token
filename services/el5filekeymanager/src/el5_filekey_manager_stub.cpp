@@ -58,7 +58,7 @@ int32_t El5FilekeyManagerStub::OnRemoteRequest(uint32_t code, MessageParcel &dat
     MessageOption &option)
 {
     if (data.ReadInterfaceToken() != El5FilekeyManagerInterface::GetDescriptor()) {
-        LOG_ERROR("get unexpected descriptor");
+        LOG_ERROR("Get unexpected descriptor");
         return EFM_ERR_IPC_TOKEN_INVALID;
     }
 
