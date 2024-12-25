@@ -502,6 +502,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CONNECT_VOIP_EXTENSION",              false},
     {"ohos.permission.ACCESS_IDM_WIDGET",                   false},
     {"ohos.permission.ACCESS_ANALYTICS",                    false},
+    {"ohos.permission.WINDOW_TOPMOST",                      false},
     {"ohos.permission.GET_ETHERNET_LOCAL_MAC",              false},
     {"ohos.permission.NETWORK_DHCP",                        false},
     {"ohos.permission.INSTALL_INTERNALTESTING_BUNDLE",     false},
