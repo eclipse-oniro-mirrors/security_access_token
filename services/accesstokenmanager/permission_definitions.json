@@ -5519,6 +5519,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.CAPTURE_PLAYBACK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ENABLE_EXPERIENCE_HBM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5603,6 +5613,16 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ANTI_FRAUD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
