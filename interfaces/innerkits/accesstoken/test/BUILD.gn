@@ -77,6 +77,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "unittest/src/app_installation_optimized_test.cpp",
     "unittest/src/clone_app_permission_test.cpp",
     "unittest/src/edm_policy_set_test.cpp",
+    "unittest/src/get_self_permission_state_test.cpp",
     "unittest/src/remote_token_kit_test.cpp",
     "unittest/src/security_component_grant_test.cpp",
   ]
