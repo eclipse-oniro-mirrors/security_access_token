@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,19 +13,34 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_CODE_H
-#define PERMISSION_CODE_H
+#ifndef CHECK_PERMISSION_MAP_TEST_H
+#define CHECK_PERMISSION_MAP_TEST_H
 
-#include <map>
-#include <string>
+#include <gtest/gtest.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
+#include "nlohmann/json.hpp"
+#include "nocopyable.h"
+#include "permission_def.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
-bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
-bool IsUserGrantPermission(const std::string& permission);
+struct PermissionDefParseRet {
+    PermissionDef permDef;
+    bool isSuccessful = false;
+};
+class CheckPermissionMapTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_CODE_H
+#endif // CHECK_PERMISSION_MAP_TEST_H
