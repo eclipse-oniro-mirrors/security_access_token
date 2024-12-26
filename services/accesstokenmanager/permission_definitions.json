@@ -5097,6 +5097,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WINDOW_TOPMOST",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_IDM_WIDGET",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5122,6 +5132,26 @@
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 14,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
