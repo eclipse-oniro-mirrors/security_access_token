@@ -308,6 +308,62 @@ int32_t El5FilekeyManagerService::RegisterCallback(const sptr<El5FilekeyCallback
     return service_->RegisterCallback(callback);
 }
 
+int32_t El5FilekeyManagerService::GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+{
+    LOG_INFO("Generate groupID for %{public}s.", groupID.c_str());
+    if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
+        LOG_ERROR("Generate groupID permission denied.");
+        return EFM_ERR_NO_PERMISSION;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+
+    return service_->GenerateGroupIDKey(userId, groupID, keyId);
+}
+
+int32_t El5FilekeyManagerService::DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+{
+    LOG_INFO("Delete %{public}d's %{public}s app key.", userId, groupID.c_str());
+    if (userId < 0) {
+        LOG_ERROR("UserId is invalid!");
+        return EFM_ERR_INVALID_PARAMETER;
+    }
+    if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
+        LOG_ERROR("Delete app key permission denied.");
+        return EFM_ERR_NO_PERMISSION;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+
+    return service_->DeleteGroupIDKey(userId, groupID);
+}
+
+int32_t El5FilekeyManagerService::QueryAppKeyState(DataLockType type)
+{
+    LOG_INFO("Query type %{public}d.", type);
+    bool isApp = true;
+    int32_t ret = CheckReqLockPermission(type, isApp);
+    if (ret != EFM_SUCCESS) {
+        return ret;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+
+    return service_->QueryAppKeyState(type, isApp);
+}
+
 bool El5FilekeyManagerService::IsSystemApp()
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();

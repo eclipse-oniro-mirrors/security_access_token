@@ -36,6 +36,9 @@ public:
     int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos);
     int32_t SetFilePathPolicy();
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
+    int32_t GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId);
+    int32_t DeleteGroupIDKey(int32_t userId, const std::string &groupID);
+    int32_t QueryAppKeyState(DataLockType type);
     int32_t CallProxyWithRetry(const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func,
         const char *funcName, int32_t def = EFM_ERR_REMOTE_CONNECTION);
     bool IsRequestNeedRetry(int32_t ret);
