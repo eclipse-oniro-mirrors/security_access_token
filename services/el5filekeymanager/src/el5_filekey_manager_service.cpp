@@ -377,7 +377,7 @@ bool El5FilekeyManagerService::VerifyHapCallingProcess(int32_t userId, const std
 
 int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
 {
-    LOG_INFO("service SetPolicyScreenLocked");
+    LOG_INFO("Service SetPolicyScreenLocked");
     if (service_ == nullptr) {
         LOG_ERROR("Failed to get policy.");
         PostDelayedUnloadTask(API_DELAY_TIME);
@@ -388,7 +388,7 @@ int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
 
 int32_t El5FilekeyManagerService::HandleUserCommonEvent(const std::string &eventName, int32_t userId)
 {
-    LOG_INFO("service handle event:%{public}s userId:%{public}d", eventName.c_str(), userId);
+    LOG_INFO("Service handle event:%{public}s userId:%{public}d", eventName.c_str(), userId);
     if (service_ == nullptr) {
         LOG_ERROR("Failed to get policy.");
         PostDelayedUnloadTask(API_DELAY_TIME);
@@ -419,7 +419,7 @@ int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& ar
         PostDelayedUnloadTask(API_DELAY_TIME);
         return EFM_SUCCESS;
     }
-    LOG_INFO("start dump data");
+    LOG_INFO("Start dump data");
     service_->DumpData(fd, args);
 
     return EFM_SUCCESS;

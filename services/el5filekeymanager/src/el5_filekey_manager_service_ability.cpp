@@ -59,10 +59,10 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
         std::string strUserId = startReason.GetValue();
         int32_t userId = 0;
         if (StrToInt(strUserId, userId)) {
-            LOG_INFO("el5 manager start, common event:%{public}s userId:%{public}d", reasonName.c_str(), userId);
+            LOG_INFO("El5 manager start, common event:%{public}s userId:%{public}d", reasonName.c_str(), userId);
             service_->HandleUserCommonEvent(reasonName, userId);
         } else {
-            LOG_ERROR("el5 manager start, invalid userId:%{public}s", strUserId.c_str());
+            LOG_ERROR("El5 manager start, invalid userId:%{public}s", strUserId.c_str());
         }
     }
 
@@ -74,7 +74,7 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
 
 void El5FilekeyManagerServiceAbility::OnStop()
 {
-    LOG_INFO("onStop called.");
+    LOG_INFO("OnStop called.");
     if (service_) {
         service_->UnInit();
         service_ = nullptr;
