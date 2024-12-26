@@ -610,10 +610,6 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
         AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
         return ERR_SERVICE_ABNORMAL;
     }
-        if (!SendRequest(
-            AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
-            return ERR_SERVICE_ABNORMAL;
-        }
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
