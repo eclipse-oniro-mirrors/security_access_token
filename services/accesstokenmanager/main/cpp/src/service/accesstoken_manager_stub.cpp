@@ -351,6 +351,20 @@ void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(status), "WriteInt32 failed.");
 }
 
+void AccessTokenManagerStub::RequestAppPermOnSettingInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsSystemAppCalling()) {
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        return;
+    }
+
+    AccessTokenID tokenID;
+    IF_FALSE_RETURN_LOG(LABEL, data.ReadUint32(tokenID), "ReadUint32 failed.");
+
+    int result = this->RequestAppPermOnSetting(tokenID);
+    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+}
+
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -1155,6 +1169,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
     requestFuncMap_[
         static_cast<uint32_t>(AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)] =
         &AccessTokenManagerStub::UnRegisterSelfPermStateChangeCallbackInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REQUEST_APP_PERM_ON_SETTING)] =
+        &AccessTokenManagerStub::RequestAppPermOnSettingInner;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()

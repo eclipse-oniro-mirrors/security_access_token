@@ -65,6 +65,7 @@ public:
         int32_t userID) override;
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID) override;
+    int32_t RequestAppPermOnSetting(AccessTokenID tokenID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int GrantPermissionForSpecifiedTime(
@@ -123,6 +124,7 @@ private:
     std::string grantServiceAbilityName_;
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
+    std::string applicationSettingAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security

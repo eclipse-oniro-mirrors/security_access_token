@@ -300,6 +300,16 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
     return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->RequestAppPermOnSetting(tokenID);
+}
+
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
     sptr<PermissionStateChangeCallback>& callback)

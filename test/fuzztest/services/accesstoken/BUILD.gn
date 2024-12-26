@@ -43,6 +43,7 @@ group("fuzztest") {
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "initHapTokenstub_fuzzer:InitHapTokenStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
+    "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",

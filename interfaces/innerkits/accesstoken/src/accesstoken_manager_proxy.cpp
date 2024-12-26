@@ -315,6 +315,32 @@ int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::str
     return result;
 }
 
+int32_t AccessTokenManagerProxy::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::REQUEST_APP_PERM_ON_SETTING, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     MessageParcel sendData;

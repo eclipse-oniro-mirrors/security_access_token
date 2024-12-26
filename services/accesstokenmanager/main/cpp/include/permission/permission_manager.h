@@ -23,6 +23,7 @@
 #include "access_token.h"
 #include "hap_token_info_inner.h"
 #include "iremote_broker.h"
+#include "libraryloader.h"
 #include "permission_def.h"
 #include "permission_grant_event.h"
 #include "permission_list_state.h"
@@ -68,6 +69,8 @@ public:
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
+    int32_t RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
+        const std::string& bundleName, const std::string& abilityName);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag);
     int32_t UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
@@ -127,6 +130,9 @@ private:
 
     OHOS::Utils::RWLock permToggleStateLock_;
     DISALLOW_COPY_AND_MOVE(PermissionManager);
+
+    std::mutex abilityManagerMutex_;
+    std::shared_ptr<LibraryLoader> abilityManagerLoader_;
 };
 } // namespace AccessToken
 } // namespace Security

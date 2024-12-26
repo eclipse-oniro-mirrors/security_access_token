@@ -599,6 +599,18 @@ HWTEST_F(AccessTokenKitTest, GrantPermissionForSpecifiedTime001, TestSize.Level1
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
 }
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest001
+ * @tc.desc: RequestAppPermOnSetting with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RequestAppPermOnSetting(tokenId));
+}
 }  // namespace AccessToken
 }  // namespace Security
 }
