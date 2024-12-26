@@ -76,7 +76,7 @@ static int32_t GetPermissionDefList(const nlohmann::json& json, const std::strin
     nlohmann::json JsonData = json.at(type).get<nlohmann::json>();
     for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
         result.permissionName = it->at("name").get<std::string>();
-        result.grantMode = GetPermissionGrantMode(it->at("grantMode").get<std::string>());;
+        result.grantMode = GetPermissionGrantMode(it->at("grantMode").get<std::string>());
         permDefList.emplace_back(result);
     }
     return RET_SUCCESS;
