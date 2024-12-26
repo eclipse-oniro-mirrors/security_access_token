@@ -17,6 +17,8 @@
 
 #include <map>
 
+#include "token_field_const.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
