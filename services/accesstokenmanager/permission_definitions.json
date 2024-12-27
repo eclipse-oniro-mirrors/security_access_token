@@ -2671,6 +2671,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.EXEMPT_MICROPHONE_PRIVACY_INDICATOR",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
