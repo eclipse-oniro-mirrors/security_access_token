@@ -80,7 +80,7 @@ int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
         return proxy->GetUserAppKey(userId, getAllFlag, keyInfos);
     };
-    return CallProxyWithRetry(func, __FUNCTION__);
+    return CallProxyWithRetry(func, __FUNCTION__, EFM_SUCCESS);
 }
 
 int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
@@ -137,7 +137,7 @@ sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
 }
 
 int32_t El5FilekeyManagerClient::CallProxyWithRetry(
-    const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func, const char *funcName)
+    const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func, const char *funcName, int32_t def)
 {
     LOG_INFO("call proxy with retry function:%s", funcName);
     auto proxy = GetProxy();
@@ -164,7 +164,7 @@ int32_t El5FilekeyManagerClient::CallProxyWithRetry(
         LOG_WARN("Call %{public}s failed, retry time = %{public}d, result = %{public}d", funcName, i, ret);
     }
     LOG_ERROR("Retry call service %{public}s error, tried %{public}d times.", funcName, SA_REQUEST_RETRY_TIMES);
-    return EFM_ERR_REMOTE_CONNECTION;
+    return def;
 }
 
 bool El5FilekeyManagerClient::IsRequestNeedRetry(int32_t ret)

@@ -37,7 +37,7 @@ public:
     int32_t SetFilePathPolicy();
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
     int32_t CallProxyWithRetry(const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func,
-        const char *funcName);
+        const char *funcName, int32_t def = EFM_ERR_REMOTE_CONNECTION);
     bool IsRequestNeedRetry(int32_t ret);
 
 private:
