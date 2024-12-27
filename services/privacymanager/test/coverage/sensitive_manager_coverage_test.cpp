@@ -18,7 +18,6 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "app_manager_access_client.h"
-#include "app_manager_access_proxy.h"
 #include "app_state_data.h"
 #define private public
 #include "audio_manager_adapter.h"

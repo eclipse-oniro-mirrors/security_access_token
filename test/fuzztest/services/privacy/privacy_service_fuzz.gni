@@ -62,8 +62,6 @@ privacy_external_deps = [
 
 privacy_sources = [
   "${access_token_path}/services/common/app_manager/src/app_manager_access_client.cpp",
-  "${access_token_path}/services/common/app_manager/src/app_manager_access_proxy.cpp",
-  "${access_token_path}/services/common/app_manager/src/app_manager_death_recipient.cpp",
   "${access_token_path}/services/common/app_manager/src/app_state_data.cpp",
   "${access_token_path}/services/common/app_manager/src/app_status_change_callback.cpp",
   "${access_token_path}/services/common/app_manager/src/process_data.cpp",
