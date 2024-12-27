@@ -2281,6 +2281,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.START_PROVISIONING_MESSAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_UNREMOVABLE_NOTIFICATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
