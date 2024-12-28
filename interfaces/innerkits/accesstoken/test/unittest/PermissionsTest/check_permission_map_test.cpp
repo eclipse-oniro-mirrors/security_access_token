@@ -18,7 +18,7 @@
 #include <thread>
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
 #include "json_parser.h"
@@ -32,8 +32,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "CheckPermissionMapTest"};
 static const std::string DEFINE_PERMISSION_FILE = "/system/etc/access_token/permission_definitions.json";
 static const std::string SYSTEM_GRANT_DEFINE_PERMISSION = "systemGrantPermissions";
 static const std::string USER_GRANT_DEFINE_PERMISSION = "userGrantPermissions";
@@ -68,7 +66,7 @@ static int32_t GetPermissionDefList(const nlohmann::json& json, const std::strin
     const std::string& type, std::vector<PermissionDef>& permDefList)
 {
     if ((json.find(type) == json.end()) || (!json.at(type).is_array())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Json is not array.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Json is not array.");
         return ERR_PARAM_INVALID;
     }
 
@@ -87,22 +85,22 @@ static int32_t ParserPermsRawData(const std::string& permsRawData,
 {
     nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
 
     int32_t ret = GetPermissionDefList(jsonRes, permsRawData, SYSTEM_GRANT_DEFINE_PERMISSION, permDefList);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get system_grant permission def list failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get system_grant permission def list failed.");
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get system_grant permission size=%{public}zu.", permDefList.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get system_grant permission size=%{public}zu.", permDefList.size());
     ret = GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get user_grant permission def list failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get user_grant permission def list failed.");
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get permission size=%{public}zu.", permDefList.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get permission size=%{public}zu.", permDefList.size());
     return RET_SUCCESS;
 }
 
@@ -114,7 +112,7 @@ static int32_t ParserPermsRawData(const std::string& permsRawData,
  */
 HWTEST_F(CheckPermissionMapTest, CheckPermissionMapFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CheckPermissionMapFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckPermissionMapFuncTest001");
 
     std::string permsRawData;
     int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);

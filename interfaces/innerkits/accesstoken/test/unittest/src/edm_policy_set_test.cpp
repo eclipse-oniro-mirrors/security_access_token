@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "permission_map.h"
 #include "perm_setproc.h"
@@ -122,8 +122,6 @@ HapPolicyParams g_tddPolicyParams = {
     .domain = "test.domain2",
     .permStateList = {g_tddPermReq, g_tddPermGet, g_tddPermRevoke}
 };
-
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "EdmPolicySetTest"};
 }
 
 void EdmPolicySetTest::TearDownTestCase()
@@ -136,7 +134,7 @@ void EdmPolicySetTest::TearDownTestCase()
 
 void EdmPolicySetTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void EdmPolicySetTest::TearDown()
@@ -148,7 +146,7 @@ void EdmPolicySetTest::SetUpTestCase()
     g_selfShellTokenId = GetSelfTokenID();
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_tddHapInfoParams, g_tddPolicyParams);
     SetSelfTokenID(tokenIdEx.tokenIDEx);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
 }
 
 /**

@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "i_accesstoken_manager.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"

@@ -28,7 +28,7 @@
 
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
@@ -84,7 +84,6 @@ static DistributedHardware::DmDeviceInfo g_devInfo = {
 };
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
 static constexpr int MAX_RETRY_TIMES = 10;
 static constexpr int32_t DEVICEID_MAX_LEN = 256;
 }
@@ -119,7 +118,7 @@ void TokenSyncServiceTest::SetUp()
 }
 void TokenSyncServiceTest::TearDown()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "TearDown start.");
     tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
@@ -138,7 +137,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
@@ -149,7 +148,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(udid);
         DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, offline failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "uuid or udid is empty, offline failed.");
     }
 }
 
@@ -580,7 +579,7 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo002 start.");
 
     ResetUuidMock();
 
@@ -635,7 +634,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo003 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo003 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // apl is error
     g_jsonAfter =
@@ -667,7 +666,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo004 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo004 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // lost tokenID
     g_jsonAfter =
@@ -699,7 +698,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo005 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo005 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // instIndex is not number
     g_jsonAfter =
@@ -732,7 +731,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo006 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo006 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // mock_token_sync lost \\\"
     g_jsonAfter =
@@ -766,7 +765,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo007 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo007 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // statusCode error
     g_jsonAfter =
@@ -799,7 +798,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo008 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo008 start.");
     // create local token
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,

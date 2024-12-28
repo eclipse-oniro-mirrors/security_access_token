@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "VerifyAccessTokenTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
@@ -88,7 +86,7 @@ void VerifyAccessTokenTest::TearDownTestCase()
 
 void VerifyAccessTokenTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -121,7 +119,7 @@ void VerifyAccessTokenTest::TearDown()
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest001");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
@@ -149,7 +147,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest001, TestSize.Level0)
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest002");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SET_WIFI_INFO", PERMISSION_USER_FIXED);
@@ -177,7 +175,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest002, TestSize.Level0)
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenFuncTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest003");
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -222,7 +220,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest003, TestSize.Level0)
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenAbnormalTest001");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GAMMA", false);
@@ -258,7 +256,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenAbnormalTest001, TestSize.Level
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenWithListFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenWithListFuncTest001");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
@@ -308,7 +306,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListFuncTest001, TestSize.L
  */
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyAccessTokenWithListAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenWithListAbnormalTest001");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 

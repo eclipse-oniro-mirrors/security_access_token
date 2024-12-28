@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "SetPermDialogCapTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
@@ -160,7 +158,7 @@ void SetPermDialogCapTest::TearDown()
  */
 HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermDialogCapAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermDialogCapAbnormalTest001");
     HapBaseInfo hapBaseInfo = {
         .userID = 111, // 111: user id
         .bundleName = "noexist bundle",
@@ -179,7 +177,7 @@ HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermDialogCapFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermDialogCapFuncTest001");
     AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     HapBaseInfo hapBaseInfo = {
         .userID = g_infoManagerTestInfoParms.userID,

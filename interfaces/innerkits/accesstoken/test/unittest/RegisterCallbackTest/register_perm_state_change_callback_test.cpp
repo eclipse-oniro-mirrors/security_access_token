@@ -18,7 +18,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
@@ -38,8 +38,6 @@ namespace AccessToken {
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "RegisterPermStateChangeCallbackTest"};
 
 HapInfoParams g_locationTestInfo = {
     .userID = TEST_USER_ID,
@@ -113,7 +111,7 @@ void RegisterPermStateChangeCallbackTest::SetUp()
                                                           g_infoManagerTestInfoParms.bundleName,
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void RegisterPermStateChangeCallbackTest::TearDown()
@@ -185,7 +183,7 @@ public:
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
     scopeInfo.tokenIDs = {};
@@ -256,7 +254,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest002");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.GET_BUNDLE_INFO"};
     scopeInfo.tokenIDs = {};
@@ -314,7 +312,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest003");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -380,7 +378,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest004");
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
@@ -447,7 +445,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest005, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest005");
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
@@ -471,7 +469,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest006, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackFuncTest006");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest006");
     static HapPolicyParams policyPrams = {
         .apl = APL_SYSTEM_CORE,
         .domain = "test.domain",
@@ -510,7 +508,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.GET_BUNDLE_INFO", "ohos.permission.CAMERA"};
     scopeInfo.tokenIDs = {555555}; // 555555为模拟的tokenid
@@ -575,7 +573,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest002");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.INVALID"};
     scopeInfo.tokenIDs = {};
@@ -626,7 +624,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest003");
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(nullptr);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 }
@@ -639,7 +637,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -667,7 +665,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackSpecTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest002");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -711,7 +709,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackSpecTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest003");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -745,7 +743,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackSpecTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest004");
     PermStateChangeScope scopeInfo;
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -805,7 +803,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  */
 HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermStateChangeCallbackSpecTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest005");
     PermStateChangeScope scopeInfo;
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.READ_MEDIA",

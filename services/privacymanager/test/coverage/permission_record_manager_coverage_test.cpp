@@ -18,7 +18,6 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
 #include "camera_manager_adapter.h"
 #include "constant.h"
 #include "data_translator.h"

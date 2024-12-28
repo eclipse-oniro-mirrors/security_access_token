@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "DeleteTokenTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
@@ -78,7 +76,7 @@ void DeleteTokenTest::TearDownTestCase()
 
 void DeleteTokenTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -111,7 +109,7 @@ void DeleteTokenTest::TearDown()
  */
 HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteTokenFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -137,7 +135,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level1)
  */
 HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteTokenFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenFuncTest002");
 
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -161,7 +159,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest002, TestSize.Level1)
  */
 HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteTokenAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenAbnormalTest001");
 
     int ret = AccessTokenKit::DeleteToken(TEST_TOKENID_INVALID);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -175,7 +173,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(DeleteTokenTest, DeleteTokenSpecTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteTokenSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenSpecTest001");
 
     AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenID);

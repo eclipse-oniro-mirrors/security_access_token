@@ -18,7 +18,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
@@ -38,8 +38,6 @@ namespace AccessToken {
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "UnRegisterPermStateChangeCallbackTest"};
 
 HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
@@ -94,7 +92,7 @@ void UnRegisterPermStateChangeCallbackTest::SetUp()
         .domain = "domain"
     };
     AccessTokenKit::AllocHapToken(info, policy);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void UnRegisterPermStateChangeCallbackTest::TearDown()
@@ -161,7 +159,7 @@ public:
  */
 HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UnRegisterPermStateChangeCallbackAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UnRegisterPermStateChangeCallbackAbnormalTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -180,7 +178,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbac
  */
 HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackSpecTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UnRegisterPermStateChangeCallbackSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UnRegisterPermStateChangeCallbackSpecTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};
@@ -205,7 +203,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbac
  */
 HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UnRegisterPermStateChangeCallbackFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UnRegisterPermStateChangeCallbackFuncTest001");
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {};
     scopeInfo.tokenIDs = {};

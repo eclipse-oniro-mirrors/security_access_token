@@ -47,8 +47,6 @@ namespace {
 static bool g_hasHapPermissionDefinition;
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static const int32_t EXTENSION_PERMISSION_ID = 0;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionParserTest"};
 static const std::string SYSTEM_PERMISSION_A = "ohos.permission.PermDefParserTestA";
 static const std::string USER_PERMISSION_B = "ohos.permission.PermDefParserTestB";
 }
@@ -73,7 +71,7 @@ void PermissionDefinitionParserTest::TearDown()
 {
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
     PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = g_hasHapPermissionDefinition;
-    ACCESSTOKEN_LOG_INFO(LABEL, "test down!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test down!");
 }
 
 /**

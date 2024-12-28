@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetNativeTokenInfoTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
@@ -61,7 +59,7 @@ void GetNativeTokenInfoTest::TearDownTestCase()
 
 void GetNativeTokenInfoTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -94,7 +92,7 @@ void GetNativeTokenInfoTest::TearDown()
  */
 HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenInfoAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest001");
     AccessTokenID tokenID = 0;
     NativeTokenInfo findInfo;
     int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
@@ -109,7 +107,7 @@ HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest001, TestSize.Lev
  */
 HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenInfoAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest002");
     g_selfUid = getuid();
     setuid(1234); // 1234: UID
 
@@ -128,7 +126,7 @@ HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest002, TestSize.Lev
  */
 HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenInfoFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoFuncTest001");
     AccessTokenID tokenHap = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenHap);
 

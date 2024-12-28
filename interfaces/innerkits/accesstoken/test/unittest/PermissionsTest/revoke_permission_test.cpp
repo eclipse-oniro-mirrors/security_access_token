@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "RevokePermissionTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
@@ -90,7 +88,7 @@ void RevokePermissionTest::TearDownTestCase()
 
 void RevokePermissionTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -123,7 +121,7 @@ void RevokePermissionTest::TearDown()
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -151,7 +149,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -171,7 +169,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest002");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -201,7 +199,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest003");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -220,7 +218,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionSpecsTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -247,7 +245,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest001, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionSpecsTest002");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
@@ -271,7 +269,7 @@ HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest002, TestSize.Level0)
  */
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokePermissionSpecsTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionSpecsTest003");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);

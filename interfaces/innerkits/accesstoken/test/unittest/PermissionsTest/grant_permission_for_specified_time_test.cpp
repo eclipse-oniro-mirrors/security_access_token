@@ -16,7 +16,7 @@
 #include "grant_permission_for_specified_time_test.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "test_common.h"
@@ -25,8 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GrantPermissionForSpecifiedTimeTest"};
 static const int32_t INDEX_ZERO = 0;
 static AccessTokenID g_selfTokenId = 0;
 static int32_t g_selfUid;
@@ -108,7 +106,7 @@ void GrantPermissionForSpecifiedTimeTest::TearDown()
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest001");
     AccessTokenID tokenId = INVALID_TOKENID;
     uint32_t onceTime = 0;
 
@@ -146,7 +144,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest002");
     HapPolicyParams policyPrams = g_policyPrams;
     HapInfoParams infoParms = g_infoParms;
     policyPrams.permStateList.clear();
@@ -170,7 +168,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest003");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
                                                           g_infoParms.bundleName,
                                                           g_infoParms.instIndex);
@@ -190,7 +188,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeAbnormalTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest004");
     setuid(1234);
     AccessTokenID tokenId = 123;
     std::string permission = "permission";
@@ -209,7 +207,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeSpecsTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest001");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
                                                           g_infoParms.bundleName,
                                                           g_infoParms.instIndex);
@@ -236,7 +234,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpe
  */
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionForSpecifiedTimeSpecsTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest002");
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
                                                           g_infoParms.bundleName,
                                                           g_infoParms.instIndex);

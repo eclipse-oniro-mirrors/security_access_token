@@ -19,7 +19,6 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "audio_manager_adapter.h"
 #include "constant.h"
