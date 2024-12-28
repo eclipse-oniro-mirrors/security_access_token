@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetHapDlpFlagTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const std::string TEST_BUNDLE_NAME = "ohos";
@@ -78,7 +76,7 @@ void GetHapDlpFlagTest::TearDownTestCase()
 
 void GetHapDlpFlagTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -111,7 +109,7 @@ void GetHapDlpFlagTest::TearDown()
  */
 HWTEST_F(GetHapDlpFlagTest, GetHapDlpFlagFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapDlpFlagFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapDlpFlagFuncTest001");
 
     AccessTokenID tokenID = 0;
     int32_t ret = AccessTokenKit::GetHapDlpFlag(tokenID);

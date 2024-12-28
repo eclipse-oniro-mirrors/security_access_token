@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "PermissionRequestToggleStatusTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
@@ -88,7 +86,7 @@ void PermissionRequestToggleStatusTest::TearDownTestCase()
 
 void PermissionRequestToggleStatusTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -121,7 +119,7 @@ void PermissionRequestToggleStatusTest::TearDown()
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionRequestToggleStatusAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatusAbnormalTest001");
 
     int32_t userID = 100;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -150,7 +148,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbno
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionRequestToggleStatus001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatus001");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
@@ -171,7 +169,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001,
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionRequestToggleStatus002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatus002");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
@@ -203,7 +201,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002,
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpecTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionRequestToggleStatusSpecTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatusSpecTest003");
 
     AccessTokenIDEx tokenIdEx = {0};
 
@@ -263,7 +261,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpec
  */
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionRequestToggleStatusAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusAbnormalTest001");
 
     int32_t userID = 100;
     uint32_t status;
@@ -286,7 +284,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbno
  */
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionRequestToggleStatusSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest001");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
@@ -307,7 +305,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
  */
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionRequestToggleStatusSpecTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest002");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
@@ -390,7 +388,7 @@ static void AllocAndSetHapToken(void)
  */
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionRequestToggleStatusSpecTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest003");
 
     AllocAndSetHapToken();
 

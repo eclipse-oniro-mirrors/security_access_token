@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -27,8 +27,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RegisterTokenSyncCallbackTest"};
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
@@ -58,19 +56,19 @@ public:
 
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 };
@@ -116,7 +114,7 @@ void RegisterTokenSyncCallbackTest::SetUp()
     ASSERT_NE(udid_, "");
 #endif
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -136,7 +134,7 @@ void RegisterTokenSyncCallbackTest::TearDown()
  */
 HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterTokenSyncCallbackAbnormalTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackAbnormalTest001 start.");
     int32_t ret = AccessTokenKit::RegisterTokenSyncCallback(nullptr);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
 }
@@ -149,7 +147,7 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001
  */
 HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterTokenSyncCallbackAbnormalTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackAbnormalTest002 start.");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
@@ -164,7 +162,7 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002
  */
 HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterTokenSyncCallbackFuncTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackFuncTest001 start.");
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterTokenSyncCallback(callback));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::AllocLocalTokenID(networkId_, 0)); // invalid input, would ret 0

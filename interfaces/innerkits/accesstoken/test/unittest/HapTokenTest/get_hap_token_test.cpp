@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetHapTokenTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
@@ -78,7 +76,7 @@ void GetHapTokenTest::TearDownTestCase()
 
 void GetHapTokenTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -111,7 +109,7 @@ void GetHapTokenTest::TearDown()
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDFuncTest001");
 
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -133,7 +131,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
@@ -147,7 +145,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest002");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "invalid bundlename", 0);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
@@ -161,7 +159,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest003");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
@@ -175,7 +173,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDExFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExFuncTest001");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
                                                               g_infoManagerTestPolicyPrams);
@@ -201,7 +199,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDExAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest001");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
     ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
@@ -215,7 +213,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDExAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest002");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, "invalid bundlename", 0);
     ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
@@ -229,7 +227,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenIDExAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest003");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
     ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
@@ -243,7 +241,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenInfoFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFuncTest001");
 
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -269,7 +267,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoFuncTest001, TestSize.Level0)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenInfoAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoAbnormalTest001");
 
     HapTokenInfo hapTokenInfoRes;
     int ret = AccessTokenKit::GetHapTokenInfo(TEST_TOKENID_INVALID, hapTokenInfoRes);
@@ -284,7 +282,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoExtensionFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoExtensionFuncTest001");
     setuid(0);
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
