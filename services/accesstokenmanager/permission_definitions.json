@@ -5599,6 +5599,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.NDK_START_SELF_UI_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
