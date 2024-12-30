@@ -79,7 +79,19 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->StartUsingPermission(tokenID, pid, permissionName, type);
+
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    parcel.info.type = type;
+
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy death recipent is null.");
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+    return proxy->StartUsingPermission(parcel, anonyStub);
 }
 
 int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
@@ -120,8 +132,17 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-
-    result = proxy->StartUsingPermission(tokenId, pid, permissionName, callbackWrap->AsObject(), type);
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenId;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    parcel.info.type = type;
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy death recipent is null.");
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+    result = proxy->StartUsingPermission(parcel, callbackWrap->AsObject(), anonyStub);
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
@@ -436,6 +457,15 @@ void PrivacyManagerClient::ReleaseProxy()
     }
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
+}
+
+sptr<ProxyDeathCallBackStub> PrivacyManagerClient::GetAnonyStub()
+{
+    std::lock_guard<std::mutex> lock(stubMutex_);
+    if (anonyStub_ == nullptr) {
+        anonyStub_ = sptr<ProxyDeathCallBackStub>::MakeSptr();
+    }
+    return anonyStub_;
 }
 } // namespace AccessToken
 } // namespace Security

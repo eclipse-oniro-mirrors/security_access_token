@@ -59,25 +59,16 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParce
 }
 
 int32_t PrivacyManagerProxy::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
+    const PermissionUsedTypeInfoParcel &infoParcel, const sptr<IRemoteObject>& anonyStub)
 {
     MessageParcel startData;
     startData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!startData.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+    if (!startData.WriteParcelable(&infoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permission used info parcel.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!startData.WriteInt32(pid)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!startData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    uint32_t usedType = static_cast<uint32_t>(type);
-    if (!startData.WriteUint32(usedType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write type");
+    if (!startData.WriteRemoteObject(anonyStub)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -92,30 +83,22 @@ int32_t PrivacyManagerProxy::StartUsingPermission(
 }
 
 int32_t PrivacyManagerProxy::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-    const sptr<IRemoteObject>& callback, PermissionUsedType type)
+    const PermissionUsedTypeInfoParcel &infoParcel,
+    const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteInt32(pid)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
+    if (!data.WriteParcelable(&infoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permission used info parcel.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    uint32_t usedType = static_cast<uint32_t>(type);
-    if (!data.WriteUint32(usedType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write type");
+
+    if (!data.WriteRemoteObject(anonyStub)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 

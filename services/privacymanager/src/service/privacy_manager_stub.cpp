@@ -21,6 +21,7 @@
 #include "memory_guard.h"
 #include "on_permission_used_record_callback_proxy.h"
 #include "privacy_error.h"
+#include "privacy_manager_proxy_death_param.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
@@ -141,12 +142,19 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
-    int32_t pid = data.ReadInt32();
-    std::string permissionName = data.ReadString();
-    uint32_t usedType = data.ReadUint32();
-    PermissionUsedType type = static_cast<PermissionUsedType>(usedType);
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, type));
+    sptr<PermissionUsedTypeInfoParcel> info = data.ReadParcelable<PermissionUsedTypeInfoParcel>();
+    if (info == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read parcel fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->StartUsingPermission(*info, anonyStub));
 }
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -155,18 +163,24 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
-    int32_t pid = data.ReadInt32();
-    std::string permissionName = data.ReadString();
+    sptr<PermissionUsedTypeInfoParcel> info = data.ReadParcelable<PermissionUsedTypeInfoParcel>();
+    if (info == nullptr) {
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    uint32_t usedType = data.ReadUint32();
-    PermissionUsedType type = static_cast<PermissionUsedType>(usedType);
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, callback, type));
+    sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->StartUsingPermission(*info, callback, anonyStub));
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)

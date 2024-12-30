@@ -27,6 +27,7 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_manager_service.h"
+#include "proxy_death_callback_stub.h"
 #include "state_change_callback.h"
 #include "string_ex.h"
 #include "token_setproc.h"
@@ -281,13 +282,12 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
+    int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel& info, const sptr<IRemoteObject>& anonyStub)
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid,  const std::string& permissionName,
-        const sptr<IRemoteObject>& callback, PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
+    int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel& info,
+        const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
     {
         return RET_SUCCESS;
     }
@@ -486,6 +486,8 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level
 {
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName = "ohos.permission.test";
+    int32_t pid = 456; // 456 is random input
+    auto anonystub = new (std::nothrow) ProxyDeathCallBackStub();
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -493,8 +495,12 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level
     MessageOption option(MessageOption::TF_SYNC);
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    ASSERT_EQ(true, data.WriteParcelable(&parcel));
+    ASSERT_EQ(true, data.WriteRemoteObject(anonystub->AsObject()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION), data, reply, option));
     // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
@@ -523,8 +529,11 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level
     SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = -1;
+    parcel.info.permissionName = permissionName;
+    ASSERT_EQ(true, data.WriteParcelable(&parcel));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION), data, reply, option));
     // callingTokenID is normal hap without need permission
@@ -551,8 +560,11 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
     SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteString(permissionName));
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = -1;
+    parcel.info.permissionName = permissionName;
+    ASSERT_EQ(true, data.WriteParcelable(&parcel));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION), data, reply, option));
     // callingTokenID is system hap without need permission
@@ -596,9 +608,11 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
     SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteInt32(pid));
-    ASSERT_EQ(true, data.WriteString(permissionName));
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    ASSERT_EQ(true, data.WriteParcelable(&parcel));
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK), data, reply, option));
@@ -621,6 +635,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
     ASSERT_NE(nullptr, callbackPtr);
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
+    auto anonystub = new (std::nothrow) ProxyDeathCallBackStub();
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -628,10 +643,13 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
     MessageOption option(MessageOption::TF_SYNC);
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(tokenID));
-    ASSERT_EQ(true, data.WriteInt32(pid));
-    ASSERT_EQ(true, data.WriteString(permissionName));
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    ASSERT_EQ(true, data.WriteParcelable(&parcel));
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(true, data.WriteRemoteObject(anonystub->AsObject()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK), data, reply, option));
     // callingTokenID is native token hdcd with request permission
