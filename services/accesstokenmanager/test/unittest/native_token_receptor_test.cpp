@@ -42,10 +42,6 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptorTest"};
-}
-
 void NativeTokenReceptorTest::SetUpTestCase()
 {
     // delete all test 0x28100000 - 0x28100007
@@ -81,7 +77,7 @@ void NativeTokenReceptorTest::SetUp()
 
 void NativeTokenReceptorTest::TearDown()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test down!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test down!");
 }
 
 /**
@@ -92,7 +88,7 @@ void NativeTokenReceptorTest::TearDown()
  */
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData001!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData001!");
     std::string testStr = R"([)"\
         R"({"processName":"process6","APL":3,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
         R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]},)"\
@@ -121,7 +117,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData002!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData002!");
     std::string testStr = R"([{"processName":""}])";
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
@@ -184,7 +180,7 @@ namespace AccessToken {
  */
 HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test from_json001!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test from_json001!");
     nlohmann::json j = nlohmann::json{
         {"processName", "process6"},
         {"APL", APL_SYSTEM_CORE},
@@ -207,7 +203,7 @@ HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, from_json002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test from_json002!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test from_json002!");
     // version wrong
     nlohmann::json j = nlohmann::json{
         {"processName", "process6"}, {"APL", APL_SYSTEM_CORE},
@@ -272,7 +268,7 @@ HWTEST_F(NativeTokenReceptorTest, from_json002, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos001!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos001!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     // test process one
@@ -363,7 +359,7 @@ static void CompareGoalTokenInfo(const NativeTokenInfoBase &info)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos002!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos002!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     NativeTokenInfoBase info1;
     info1.apl = APL_NORMAL;
@@ -433,7 +429,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos003!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos003!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>();
@@ -450,7 +446,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos003, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos004!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos004!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info3 = {
@@ -497,7 +493,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos005!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos005!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info5 = {
@@ -547,7 +543,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos006!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos006!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenInfoBase info7 = {
@@ -587,6 +583,321 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ProcessNativeTokenInfos007
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos007!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test71",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test72",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100008,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos1.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test71"));
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test72"));
+
+    info1.tokenID = 0x28100008;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos2.emplace_back(nativeToken3);
+    info2.tokenID = 0x28100009;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken4 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos2.emplace_back(nativeToken4);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test71"));
+    ASSERT_EQ(0x28100009, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test72"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos008
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos008, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos008!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test81",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test82",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100008,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos1.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test81"));
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test82"));
+
+    info1.tokenID = 0x28100008;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos2.emplace_back(nativeToken3);
+    info2.tokenID = 0x28100007;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken4 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos2.emplace_back(nativeToken4);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test81"));
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test82"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos009
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos009, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos009!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test91",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test92",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100008,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos1.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test91"));
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test92"));
+
+    info2.tokenID = 0x28100007;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos2.emplace_back(nativeToken3);
+    info1.tokenID = 0x28100008;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken4 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos2.emplace_back(nativeToken4);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test91"));
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test92"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos010
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos010, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos010!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test101",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test102",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test101"));
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test102"));
+
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos2.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test101"));
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test102"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos011
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos011, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos011!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test111",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test112",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100008,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test111"));
+
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos2.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test111"));
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test112"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos012
+ * @tc.desc: test new create native token same from the old with different processName
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos012, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ProcessNativeTokenInfos012!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos1;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos2;
+
+    NativeTokenInfoBase info1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test121",
+        .dcap =  {"AT_CAP", "ST_CAP"},
+        .tokenID = 0x28100007,
+        .tokenAttr = 0
+    };
+
+    NativeTokenInfoBase info2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .ver = 1,
+        .processName = "native_token_test122",
+        .dcap =  {"AT_CAP"},
+        .tokenID = 0x28100008,
+        .tokenAttr = 0
+    };
+
+    std::vector<PermissionStatus> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos1.emplace_back(nativeToken1);
+    std::shared_ptr<NativeTokenInfoInner> nativeToken2 = std::make_shared<NativeTokenInfoInner>(info2, permStateList);
+    tokenInfos1.emplace_back(nativeToken2);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos1);
+    ASSERT_EQ(0x28100007, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test121"));
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test122"));
+
+    info1.tokenID = 0x28100008;
+    std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
+    tokenInfos2.emplace_back(nativeToken3);
+
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos2);
+    ASSERT_EQ(0x28100008, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test121"));
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test122"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID));
+}
+
+/**
  * @tc.name: init001
  * @tc.desc: test get native cfg
  * @tc.type: FUNC
@@ -594,7 +905,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
  */
 HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test init001!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test init001!");
 
     const char *dcaps[1];
     dcaps[0] = "AT_CAP_01";

@@ -18,7 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -28,9 +28,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SetRemoteHapTokenInfoTest"};
-
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
@@ -60,19 +57,19 @@ public:
 
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 };
@@ -118,7 +115,7 @@ void SetRemoteHapTokenInfoTest::SetUp()
     ASSERT_NE(udid_, "");
 #endif
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -138,7 +135,7 @@ void SetRemoteHapTokenInfoTest::TearDown()
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoFuncTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest001 start.");
     std::string deviceID1 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
     PermissionStatus infoManagerTestState2 = {
@@ -204,7 +201,7 @@ void SetRemoteHapTokenInfoWithWrongInfo1(HapTokenInfo &wrongBaseInfo, const HapT
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoFuncTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest002 start.");
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
     HapTokenInfo rightBaseInfo = {
@@ -244,7 +241,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoFuncTest003 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest003 start.");
     std::string deviceID3 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID3, 0x20100000);
 
@@ -283,7 +280,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoFuncTest004 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest004 start.");
     std::string deviceID4 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID4, 0x20100000);
     PermissionStatus infoManagerTestState_4 = {
@@ -327,7 +324,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest001 start.");
     std::string deviceID5 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID5, 0x20100000);
     PermissionStatus infoManagerTestState5 = {
@@ -370,7 +367,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest002 start.");
     std::string deviceID6 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
     PermissionStatus infoManagerTestState6 = {
@@ -419,7 +416,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest003 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest003 start.");
     std::string deviceID7 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID7, 0x20100000);
     PermissionStatus infoManagerTestState7 = {
@@ -456,7 +453,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest004 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest004 start.");
     std::string deviceID8 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID8, 0x20100000);
     int32_t DEFAULT_API_VERSION = 8;
@@ -502,7 +499,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest005 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest005 start.");
     std::string deviceID9 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID9, 0x20100000);
     PermissionStatus infoManagerTestState9 = {
@@ -545,7 +542,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoSpecTest006 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest006 start.");
     std::string deviceID = udid_;
     HapTokenInfo baseInfo = {
         .ver = 1,
@@ -580,7 +577,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfoAbnormalTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoAbnormalTest001 start.");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     std::string device = "device";
     HapTokenInfoForSync hapSync;

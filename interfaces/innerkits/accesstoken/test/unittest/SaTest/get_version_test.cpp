@@ -18,7 +18,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
@@ -38,8 +38,6 @@ namespace AccessToken {
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetVersionTest"};
 
 HapInfoParams g_locationTestInfo = {
     .userID = TEST_USER_ID,
@@ -126,7 +124,7 @@ void GetVersionTest::SetUp()
         .domain = "domain"
     };
     AccessTokenKit::AllocHapToken(info, policy);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void GetVersionTest::TearDown()
@@ -178,7 +176,7 @@ void GetVersionTest::AllocHapToken(std::vector<PermissionDef>& permissionDefs,
  */
 HWTEST_F(GetVersionTest, GetVersionFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetVersionFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionFuncTest001");
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
@@ -197,7 +195,7 @@ HWTEST_F(GetVersionTest, GetVersionFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetVersionTest, GetVersionFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetVersionFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionFuncTest002");
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);

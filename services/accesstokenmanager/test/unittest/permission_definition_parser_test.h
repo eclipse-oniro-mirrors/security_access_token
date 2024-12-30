@@ -17,7 +17,7 @@
 #define PERMISSION_DEFINITION_PARSER_TEST_H
 
 #include <gtest/gtest.h>
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "permission_def.h"
 namespace OHOS {
 namespace Security {

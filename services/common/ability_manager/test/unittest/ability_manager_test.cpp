@@ -15,7 +15,6 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include "accesstoken_log.h"
 #include "access_token.h"
 #include "ability_manager_access_loader.h"
 

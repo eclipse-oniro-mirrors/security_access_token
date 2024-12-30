@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetNativeTokenIdTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
@@ -60,7 +58,7 @@ void GetNativeTokenIdTest::TearDownTestCase()
 
 void GetNativeTokenIdTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -93,7 +91,7 @@ void GetNativeTokenIdTest::TearDown()
  */
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest001");
     std::string processName = "";
     ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetNativeTokenId(processName));
 
@@ -109,7 +107,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest002");
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -134,7 +132,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest003");
     int32_t gSelfUid = getuid();
     setuid(1234); // 1234: UID
 
@@ -154,7 +152,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest001");
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -172,7 +170,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetNativeTokenIdFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest002");
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);

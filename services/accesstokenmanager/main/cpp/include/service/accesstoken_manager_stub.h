@@ -45,6 +45,7 @@ private:
     void GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply);
     void SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
+    void RequestAppPermOnSettingInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply);

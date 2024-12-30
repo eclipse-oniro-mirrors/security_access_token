@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "access_token.h"
 #include "generic_values.h"
 #include "rdb_predicates.h"
 #include "result_set.h"

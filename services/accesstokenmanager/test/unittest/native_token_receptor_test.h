@@ -17,7 +17,7 @@
 #define NATIVE_TOKEN_RECEPTOR_TEST_H
 
 #include <gtest/gtest.h>
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {

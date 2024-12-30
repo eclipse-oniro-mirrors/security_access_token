@@ -109,7 +109,15 @@ private:
     int AddNativeTokenInfo(const std::shared_ptr<NativeTokenInfoInner>& info);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
-    bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
+    void IdFalseWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName, AccessTokenID oriTokenId);
+    void IdFalseWithProcessFalseCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName);
+    void IdTrueWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName);
+    void TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+        std::vector<AccessTokenID>& deleteTokenList, std::vector<GenericValues>& nativeTokenValues,
+        std::vector<GenericValues>& permStateValues);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo,
         const std::string& appId, ATokenAplEnum apl);

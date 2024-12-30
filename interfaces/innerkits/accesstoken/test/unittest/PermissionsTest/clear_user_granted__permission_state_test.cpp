@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "ClearUserGrantedPermissionStateTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
@@ -78,7 +76,7 @@ void ClearUserGrantedPermissionStateTest::TearDownTestCase()
 
 void ClearUserGrantedPermissionStateTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -111,7 +109,7 @@ void ClearUserGrantedPermissionStateTest::TearDown()
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -136,7 +134,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFuncTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateFuncTest002");
 
     PermissionDef g_infoManagerTestPermDef1 = {
         .permissionName = "ohos.permission.test1",
@@ -198,7 +196,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -221,7 +219,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbn
  */
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateSpecTets001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ClearUserGrantedPermissionStateSpecTets001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateSpecTets001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);

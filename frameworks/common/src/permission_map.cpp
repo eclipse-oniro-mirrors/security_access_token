@@ -348,6 +348,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.EXEMPT_LOCATION_PRIVACY_INDICATOR",   false},
     {"ohos.permission.EXEMPT_PRIVACY_SECURITY_CENTER",      false},
     {"ohos.permission.ACCESS_LEARN_MORE_DIALOG",      false},
+    {"ohos.permission.USE_MESSAGES_PICKER",                 false},
+    {"ohos.permission.USE_CALL_LOG_PICKER",                 false},
     {"ohos.permission.GET_SUPER_PRIVACY",                   false},
     {"ohos.permission.SET_SUPER_PRIVACY",                   false},
     {"ohos.permission.RECORD_VOICE_CALL",                   false},
@@ -562,6 +564,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_APP_LOCK",                       false},
     {"ohos.permission.WRITE_APP_LOCK",                      false},
     {"ohos.permission.ACCESS_APP_LOCK",                     false},
+    {"ohos.permission.ACCESS_APP_SINGLE_PERMISSION_MANAGEMENT", false},
     {"ohos.permission.ACCESS_APP_INSTALL_DIR",              false},
     {"ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION", false},
     {"ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", false},
@@ -571,6 +574,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CAPTURE_PLAYBACK",                    false},
     {"ohos.permission.USE_USER_ACCESS_MANAGER",        false},
     {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
+    {"ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE", false},
     {"ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", false},
     {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
     {"ohos.permission.SET_LAUNCH_REASON_MESSAGE",           false},
@@ -583,6 +587,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.WATCH_START_SOS_SERVICE",              false},
     {"ohos.permission.ANTI_FRAUD",                          false},
     {"ohos.permission.GET_SIGNATURE_INFO",                  false},
+    {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
@@ -605,6 +610,16 @@ bool TransferOpcodeToPermission(uint32_t opCode, std::string& permission)
     }
     permission = g_permMap[opCode].first;
     return true;
+}
+
+bool IsUserGrantPermission(const std::string& permission)
+{
+    for (const auto& perm : g_permMap) {
+        if (permission == perm.first) {
+            return perm.second;
+        }
+    }
+    return false;
 }
 } // namespace AccessToken
 } // namespace Security

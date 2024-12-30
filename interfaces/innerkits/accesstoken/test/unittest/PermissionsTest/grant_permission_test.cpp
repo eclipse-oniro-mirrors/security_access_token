@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GrantPermissionTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
@@ -90,7 +88,7 @@ void GrantPermissionTest::TearDownTestCase()
 
 void GrantPermissionTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -123,7 +121,7 @@ void GrantPermissionTest::TearDown()
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -150,7 +148,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -183,7 +181,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionAbnormalTest002");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -201,7 +199,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionSpecsTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -228,7 +226,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest001, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest002, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionSpecsTest002");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
@@ -251,7 +249,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest002, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest003, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantPermissionSpecsTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionSpecsTest003");
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);

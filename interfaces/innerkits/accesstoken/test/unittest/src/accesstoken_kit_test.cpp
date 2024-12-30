@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "i_accesstoken_manager.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
@@ -3335,6 +3335,81 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoExt001, TestSize.Level1)
 
     ret = AccessTokenKit::GetHapTokenInfoExtension(INVALID_TOKENID, hapTokenInfoExt);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest001
+ * @tc.desc: RequestAppPermOnSetting invalid token.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    // invalid tokenID in client
+    AccessTokenID tokenID = 0;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::RequestAppPermOnSetting(tokenID));
+    // invalid tokenID in service
+    tokenID = 123;
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::RequestAppPermOnSetting(tokenID));
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest002
+ * @tc.desc: RequestAppPermOnSetting not system app.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenID tokenID = 123;
+    int32_t ret = AccessTokenKit::RequestAppPermOnSetting(tokenID);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest003
+ * @tc.desc: RequestAppPermOnSetting add hap and call function.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    AccessTokenKit::RequestAppPermOnSetting(tokenID);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest004
+ * @tc.desc: RequestAppPermOnSetting call function with self token.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenKit::RequestAppPermOnSetting(tokenID);
 }
 } // namespace AccessToken
 } // namespace Security
