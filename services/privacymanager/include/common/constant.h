@@ -70,6 +70,7 @@ public:
         OP_CAPTURE_SCREEN = 41,
         SHORT_TERM_WRITE_IMAGEVIDEO = 42,
         CAMERA_BACKGROUND = 43,
+        OP_CUSTOM_SCREEN_CAPTURE = 44,
     };
 
     enum ErrorCode {
