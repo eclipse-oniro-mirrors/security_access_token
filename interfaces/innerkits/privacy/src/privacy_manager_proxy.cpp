@@ -58,6 +58,71 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParce
     return result;
 }
 
+int32_t PrivacyManagerProxy::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userID");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteBool(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write status");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d)", result);
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
+
+int32_t PrivacyManagerProxy::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userID");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d)", result);
+        return ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Result from server data = %{public}d", result);
+        return result;
+    }
+
+    if (!reply.ReadBool(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read status");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
+
 int32_t PrivacyManagerProxy::StartUsingPermission(
     const PermissionUsedTypeInfoParcel &infoParcel, const sptr<IRemoteObject>& anonyStub)
 {

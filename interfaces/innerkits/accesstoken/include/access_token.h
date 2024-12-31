@@ -283,6 +283,16 @@ typedef enum TypeDlpPerm {
 } DlpPermMode;
 
 /**
+ * @brief Atm toggle mode type
+ */
+typedef enum TypeToggleModeType {
+    /** toggle mode is request */
+    TOGGLE_REQUEST = 0,
+    /** toggle mode is record */
+    TOGGLE_RECORD,
+} ToggleModeType;
+
+/**
  * @brief Atm tools operate type
  */
 typedef enum TypeOptType {
@@ -300,9 +310,9 @@ typedef enum TypeOptType {
     PERM_GRANT,
     /** revoke permission */
     PERM_REVOKE,
-    /** set toggle status */
+    /** set toggle request/record status */
     TOGGLE_SET,
-    /** get toggle status */
+    /** get toggle request/record status */
     TOGGLE_GET,
 } OptType;
 

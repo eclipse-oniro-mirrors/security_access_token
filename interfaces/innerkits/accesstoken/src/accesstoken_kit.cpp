@@ -241,6 +241,16 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
 
+int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d.", userID);
+    if (!DataValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID=%{public}d is invalid", userID);
+        return  AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
+}
+
 int AccessTokenKit::GetHapTokenInfo(
     AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes) __attribute__((no_sanitize("cfi")))
 {

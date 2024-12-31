@@ -41,6 +41,8 @@ public:
     void OnStop() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& anonyStub) override;
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,

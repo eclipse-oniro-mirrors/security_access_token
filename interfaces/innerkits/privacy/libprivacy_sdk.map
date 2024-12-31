@@ -18,6 +18,8 @@
       "OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk::~PermActiveStatusCustomizedCbk()";
       "OHOS::Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, int, bool)";
       "OHOS::Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(OHOS::Security::AccessToken::AddPermParamInfo const&, bool)";
+      "OHOS::Security::AccessToken::PrivacyKit::SetPermissionUsedRecordToggleStatus(int, bool)";
+      "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecordToggleStatus(int, bool&)";
       "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, OHOS::Security::AccessToken::PermissionUsedTypeValue)";
       "OHOS::Security::AccessToken::PrivacyKit::StopUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecords(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::Security::AccessToken::PermissionUsedResult&)";

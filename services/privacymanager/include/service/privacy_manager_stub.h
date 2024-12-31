@@ -34,6 +34,8 @@ public:
 
 private:
     void AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply);
+    void SetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
     void StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply);
     void StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
@@ -53,6 +55,7 @@ private:
     void GetPermissionUsedTypeInfosInner(MessageParcel& data, MessageParcel& reply);
     void SetMutePolicyInner(MessageParcel& data, MessageParcel& reply);
     void SetHapWithFGReminderInner(MessageParcel& data, MessageParcel& reply);
+    bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling() const;
     bool IsSystemAppCalling() const;
     bool VerifyPermission(const std::string& permission) const;
@@ -61,6 +64,9 @@ private:
     AccessTokenID secCompTokenId_ = 0;
 #endif
     void SetPrivacyFuncInMap();
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    static const int32_t ROOT_UID = 0;
+#endif
 
     using RequestType = void (PrivacyManagerStub::*)(MessageParcel &data, MessageParcel &reply);
     std::map<uint32_t, RequestType> requestMap_;

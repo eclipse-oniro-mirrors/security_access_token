@@ -54,6 +54,7 @@ static constexpr int64_t THREE_SECOND = 3000;
 static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr int32_t TEST_USER_ID_11 = 11;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -859,6 +860,43 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
     request.beginTimeMillis = -1; // -1 is a invalid input
     PermissionUsedResult result;
     EXPECT_EQ(false, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+}
+
+/*
+ * @tc.name: AddOrUpdateUsedStatusIfNeeded001
+ * @tc.desc: PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS;
+    bool ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, false);
+    EXPECT_TRUE(ret);
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, TEST_USER_ID_11);
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    ASSERT_FALSE(results.empty());
+    for (const auto& result : results) {
+        if (TEST_USER_ID_11 == result.GetInt(PrivacyFiledConst::FIELD_USER_ID)) {
+            ASSERT_FALSE(static_cast<bool>(result.GetInt(PrivacyFiledConst::FIELD_STATUS)));
+            break;
+        }
+    }
+    results.clear();
+
+    ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, true);
+    EXPECT_TRUE(ret);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    ASSERT_FALSE(results.empty());
+    for (const auto& result : results) {
+        if (TEST_USER_ID_11 == result.GetInt(PrivacyFiledConst::FIELD_USER_ID)) {
+            ASSERT_TRUE(static_cast<bool>(result.GetInt(PrivacyFiledConst::FIELD_STATUS)));
+            break;
+        }
+    }
 }
 
 /*

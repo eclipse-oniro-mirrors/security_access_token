@@ -20,6 +20,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
@@ -48,6 +49,7 @@ public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
     void Init();
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);

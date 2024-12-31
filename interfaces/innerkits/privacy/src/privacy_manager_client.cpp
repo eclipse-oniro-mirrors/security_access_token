@@ -71,6 +71,28 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     return proxy->AddPermissionUsedRecord(infoParcel, asyncMode);
 }
 
+int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return proxy->SetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return proxy->GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
 int32_t PrivacyManagerClient::StartUsingPermission(
     AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {

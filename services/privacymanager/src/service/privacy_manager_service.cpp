@@ -102,6 +102,18 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
+int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
 std::shared_ptr<ProxyDeathHandler> PrivacyManagerService::GetProxyDeathHandler()
 {
     std::lock_guard<std::mutex> lock(deathHandlerMutex_);
