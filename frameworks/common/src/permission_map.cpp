@@ -69,6 +69,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY", true},
     {"ohos.permission.READ_WRITE_DESKTOP_DIRECTORY", true},
     {"ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", true},
+    {"ohos.permission.CUSTOM_SCREEN_CAPTURE", true},
     {"ohos.permission.USE_BLUETOOTH",           false},
     {"ohos.permission.DISCOVER_BLUETOOTH",      false},
     {"ohos.permission.MANAGE_BLUETOOTH",        false},
