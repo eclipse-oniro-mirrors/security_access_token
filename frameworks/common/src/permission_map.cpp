@@ -119,6 +119,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UPDATE_SYSTEM",           false},
     {"ohos.permission.FACTORY_RESET",           false},
     {"ohos.permission.ASSIST_DEVICE_UPDATE",    false},
+    {"ohos.permission.PLUGIN_UPDATE",           false},
     {"ohos.permission.RECEIVE_UPDATE_MESSAGE",    false},
     {"ohos.permission.UPDATE_MIGRATE",          false},
     {"ohos.permission.GRANT_SENSITIVE_PERMISSIONS", false},
@@ -587,7 +588,6 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.WATCH_START_SOS_SERVICE",              false},
     {"ohos.permission.ANTI_FRAUD",                          false},
     {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
-    {"ohos.permission.PLUGIN_UPDATE",                          false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
