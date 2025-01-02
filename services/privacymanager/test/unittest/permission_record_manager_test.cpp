@@ -231,7 +231,12 @@ public:
     PermActiveStatusChangeCallback() = default;
     virtual ~PermActiveStatusChangeCallback() = default;
 
-    void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override
+    {
+        return true;
+    }
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
     {
         type_ = result.type;
         GTEST_LOG_(INFO) << "ActiveStatusChange tokenid " << result.tokenID <<

@@ -766,10 +766,16 @@ public:
     virtual ~PermChangeCallback() = default;
 
     void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override;
 };
 
 void PermChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
 {
+}
+
+bool PermChangeCallback::AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient)
+{
+    return true;
 }
 
 /**
