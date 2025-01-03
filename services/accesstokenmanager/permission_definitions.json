@@ -4169,6 +4169,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INPUT_KEYBOARD_CONTROLLER",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
@@ -4690,7 +4700,7 @@
             "name": "ohos.permission.MANAGE_INPUT_INFRARED_EMITTER",
             "grantMode": "system_grant",
             "availableLevel": "normal",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
