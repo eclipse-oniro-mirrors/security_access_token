@@ -5579,6 +5579,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MICROPHONE_BACKGROUND",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ENABLE_EXPERIENCE_HBM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
