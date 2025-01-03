@@ -25,7 +25,6 @@
 #include "access_event_handler.h"
 #endif
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_change_callback.h"

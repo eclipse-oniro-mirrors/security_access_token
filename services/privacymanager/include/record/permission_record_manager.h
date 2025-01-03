@@ -27,7 +27,6 @@
 #include "active_change_response_info.h"
 #include "add_perm_param_info.h"
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #include "hap_token_info.h"
 #include "libraryloader.h"

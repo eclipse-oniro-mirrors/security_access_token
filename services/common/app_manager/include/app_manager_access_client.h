@@ -21,8 +21,6 @@
 
 #include "app_status_change_callback.h"
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
-#include "app_manager_access_proxy.h"
 #include "nocopyable.h"
 
 namespace OHOS {
@@ -40,18 +38,32 @@ public:
     void RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback);
     void OnRemoteDiedHandle();
 
+    enum class Message {
+        APP_GET_MGR_INSTANCE = 6,
+        REGISTER_APPLICATION_STATE_OBSERVER = 12,
+        UNREGISTER_APPLICATION_STATE_OBSERVER = 13,
+        GET_FOREGROUND_APPLICATIONS = 14,
+    };
+
 private:
     AppManagerAccessClient();
     DISALLOW_COPY_AND_MOVE(AppManagerAccessClient);
 
+    class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        AppMgrDeathRecipient() {}
+        virtual ~AppMgrDeathRecipient() override = default;
+        void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+    };
+
     void InitProxy();
-    sptr<IAppMgr> GetProxy();
+    sptr<IRemoteObject> GetProxy();
     void ReleaseProxy();
 
     sptr<AppMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
     std::mutex deathCallbackMutex_;
-    sptr<IAppMgr> proxy_ = nullptr;
+    sptr<IRemoteObject> proxy_ = nullptr;
     std::vector<std::shared_ptr<AppManagerDeathCallback>> appManagerDeathCallbackList_;
 };
 } // namespace AccessToken
