@@ -23,6 +23,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr int32_t DEFAULT_SA_REQUEST_RETRY_TIMES = 1;
 class El5FilekeyManagerClient {
 public:
     static El5FilekeyManagerClient &GetInstance();
@@ -37,7 +38,7 @@ public:
     int32_t SetFilePathPolicy();
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
     int32_t CallProxyWithRetry(const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func,
-        const char *funcName, int32_t def = EFM_ERR_REMOTE_CONNECTION);
+        const char *funcName, int32_t retryTimes = DEFAULT_SA_REQUEST_RETRY_TIMES);
     bool IsRequestNeedRetry(int32_t ret);
 
 private:
