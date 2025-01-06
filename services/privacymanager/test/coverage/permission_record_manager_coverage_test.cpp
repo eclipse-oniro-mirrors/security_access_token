@@ -372,10 +372,16 @@ public:
     virtual ~PermActiveStatusChangeCallbackTest() = default;
 
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
+    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override;
 };
 
 void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChangeResponse& result)
 {
+}
+
+bool PermActiveStatusChangeCallbackTest::AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient)
+{
+    return true;
 }
 
 class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusCustomizedCbk {
