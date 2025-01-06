@@ -212,6 +212,67 @@ HWTEST_F(El5FilekeyManagerServiceTest, RegisterCallback001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GenerateGroupIDKey001
+ * @tc.desc: Generate data group key by userId and group id without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, GenerateGroupIDKey001, TestSize.Level1)
+{
+    int32_t userId = 100;
+    std::string groupID = "abcdefghijklmn";
+    std::string keyId;
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(userId, groupID, keyId), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: DeleteGroupIDKey001
+ * @tc.desc: Delete data group key by user id and group id without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, DeleteGroupIDKey001, TestSize.Level1)
+{
+    int32_t userId = 100;
+    std::string groupID = "";
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(userId, groupID), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: QueryAppKeyState001
+ * @tc.desc: Query media type app key without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState001, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: QueryAppKeyState002
+ * @tc.desc: Query all type app key without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState002, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(ALL_DATA), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: QueryAppKeyState003
+ * @tc.desc: Query invalid type app key.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState003, TestSize.Level1)
+{
+    uint32_t type = 3;
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+}
+
+/**
  * @tc.name: SetPolicyScreenLocked001
  * @tc.desc: SetPolicyScreenLocked
  * @tc.type: FUNC

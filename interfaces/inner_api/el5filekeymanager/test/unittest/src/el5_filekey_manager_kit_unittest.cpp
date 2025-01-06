@@ -185,3 +185,54 @@ HWTEST_F(El5FilekeyManagerKitTest, GetUserAllAppKey001, TestSize.Level1)
     keyInfos.emplace_back(std::make_pair(100, ""));
     ASSERT_EQ(El5FilekeyManagerKit::GetUserAllAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
 }
+
+/**
+ * @tc.name: GenerateGroupIDKey001
+ * @tc.desc: Generate data group key by userId and group id without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerKitTest, GenerateGroupIDKey001, TestSize.Level1)
+{
+    int32_t userId = 100;
+    std::string groupID = "abcdefghijklmn";
+    std::string keyId;
+    ASSERT_EQ(El5FilekeyManagerKit::GenerateGroupIDKey(userId, groupID, keyId), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: DeleteGroupIDKey001
+ * @tc.desc: Delete data group key by user id and group id without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerKitTest, DeleteGroupIDKey001, TestSize.Level1)
+{
+    int32_t userId = 100;
+    std::string groupID = "";
+    ASSERT_EQ(El5FilekeyManagerKit::DeleteGroupIDKey(userId, groupID), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: QueryAppKeyState001
+ * @tc.desc: Query media type app key without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerKitTest, QueryAppKeyState001, TestSize.Level1)
+{
+    DataLockType type = MEDIA_DATA;
+    ASSERT_EQ(El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: QueryAppKeyState002
+ * @tc.desc: Query all type app key without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerKitTest, QueryAppKeyState002, TestSize.Level1)
+{
+    DataLockType type = ALL_DATA;
+    ASSERT_EQ(El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+}

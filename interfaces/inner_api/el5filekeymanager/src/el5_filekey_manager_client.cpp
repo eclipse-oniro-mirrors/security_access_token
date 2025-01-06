@@ -108,6 +108,30 @@ int32_t El5FilekeyManagerClient::RegisterCallback(const sptr<El5FilekeyCallbackI
     return CallProxyWithRetry(func, __FUNCTION__);
 }
 
+int32_t El5FilekeyManagerClient::GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->GenerateGroupIDKey(userId, groupID, keyId);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
+int32_t El5FilekeyManagerClient::DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->DeleteGroupIDKey(userId, groupID);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
+int32_t El5FilekeyManagerClient::QueryAppKeyState(DataLockType type)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->QueryAppKeyState(type);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
 sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
 {
     std::unique_lock<std::mutex> lock(proxyMutex_);
