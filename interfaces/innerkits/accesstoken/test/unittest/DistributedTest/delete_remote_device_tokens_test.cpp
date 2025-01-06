@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -27,8 +27,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DeleteRemoteDeviceTokensTest"};
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
@@ -58,19 +56,19 @@ public:
 
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 };
@@ -116,7 +114,7 @@ void DeleteRemoteDeviceTokensTest::SetUp()
     ASSERT_NE(udid_, "");
 #endif
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -136,17 +134,15 @@ void DeleteRemoteDeviceTokensTest::TearDown()
  */
 HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokensFuncTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensFuncTest001 start.");
     std::string deviceID1 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100001);
-    PermissionStateFull infoManagerTestState4 = {
+    PermissionStatus infoManagerTestState4 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local4"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList1;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList1;
     permStateList1.emplace_back(infoManagerTestState4);
 
     HapTokenInfoForSync remoteTokenInfo1 = {
@@ -186,17 +182,15 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, Test
  */
 HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokensFuncTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensFuncTest002 start.");
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100001);
-    PermissionStateFull infoManagerTestState2 = {
+    PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList2;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
     HapTokenInfoForSync remoteTokenInfo2 = {
@@ -234,7 +228,7 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, Test
 HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensAbnormalTest001, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokensAbnormalTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensAbnormalTest001 start.");
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }

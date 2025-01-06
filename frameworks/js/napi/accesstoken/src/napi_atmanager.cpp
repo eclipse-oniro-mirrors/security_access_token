@@ -296,6 +296,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPermissionsStatus", NapiRequestPermission::GetPermissionsStatus),
         DECLARE_NAPI_FUNCTION("requestPermissionOnSetting", NapiRequestPermissionOnSetting::RequestPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),
+        DECLARE_NAPI_FUNCTION("requestPermissionOnApplicationSetting", RequestAppPermOnSetting),
     };
 
     napi_value cons = nullptr;
@@ -1172,6 +1173,72 @@ bool NapiAtManager::FillPermStateChangeScope(const napi_env env, const napi_valu
     return true;
 }
 
+void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+    asyncContext->result = AccessTokenKit::RequestAppPermOnSetting(asyncContext->tokenId);
+}
+
+void NapiAtManager::RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = GetNapiNull(env);
+    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+}
+
+napi_value NapiAtManager::RequestAppPermOnSetting(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestAppPermOnSetting begin.");
+
+    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New asyncContext failed.");
+        return nullptr;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+
+    size_t argc = NapiContextCommon::MAX_PARAMS_ONE;
+    napi_value argv[NapiContextCommon::MAX_PARAMS_ONE] = {nullptr};
+    napi_value thatVar = nullptr;
+
+    void *data = nullptr;
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data));
+    if (argc < NapiContextCommon::MAX_PARAMS_ONE) {
+        NAPI_CALL(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")));
+        return nullptr;
+    }
+
+    asyncContext->env = env;
+    if (!ParseUint32(env, argv[0], asyncContext->tokenId)) {
+        std::string errMsg = GetParamErrorMsg("tokenID", "number");
+        NAPI_CALL(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)));
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+
+    napi_value resource = nullptr; // resource name
+    NAPI_CALL(env, napi_create_string_utf8(env, "RequestAppPermOnSetting", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource,
+        RequestAppPermOnSettingExecute, RequestAppPermOnSettingComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestAppPermOnSetting end.");
+    context.release();
+    return result;
+}
+
 bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
     const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
@@ -1269,8 +1336,8 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     }
     if (IsExistRegister(env, registerPermStateChangeInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribe failed. The current subscriber has been existed");
-        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
         return nullptr;
     }
     int32_t result;
@@ -1365,9 +1432,9 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     std::vector<RegisterPermStateChangeInfo*> batchPermStateChangeRegisters;
     if (!FindAndGetSubscriberInVector(unregisterPermStateChangeInfo, batchPermStateChangeRegisters, env)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
-        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
         NAPI_CALL(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
         return nullptr;
     }
     for (const auto& item : batchPermStateChangeRegisters) {

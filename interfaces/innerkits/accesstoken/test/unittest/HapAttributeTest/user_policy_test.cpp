@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "UserPolicyTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
@@ -78,7 +76,7 @@ void UserPolicyTest::TearDownTestCase()
 
 void UserPolicyTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -111,7 +109,7 @@ void UserPolicyTest::TearDown()
  */
 HWTEST_F(UserPolicyTest, UserPolicyFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserPolicyFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserPolicyFuncTest001");
 
     setuid(0);
     const char **perms = new const char *[1];

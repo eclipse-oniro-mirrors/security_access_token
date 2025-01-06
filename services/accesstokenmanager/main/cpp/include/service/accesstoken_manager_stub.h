@@ -45,6 +45,7 @@ private:
     void GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply);
     void SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
+    void RequestAppPermOnSettingInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply);
@@ -53,6 +54,7 @@ private:
     void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply);
+    void GetTokenIDByUserIDInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply);

@@ -29,6 +29,7 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#include "privacy_manager_proxy_death_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
@@ -101,20 +102,77 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, PermissionUsedType type)
+int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
-        tokenId, pid, permissionName.c_str(), type);
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, type);
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
-    const std::string& permissionName, const sptr<IRemoteObject>& callback, PermissionUsedType type)
+int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
-        tokenId, pid, permissionName.c_str(), type);
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, callback, type);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+std::shared_ptr<ProxyDeathHandler> PrivacyManagerService::GetProxyDeathHandler()
+{
+    std::lock_guard<std::mutex> lock(deathHandlerMutex_);
+    if (proxyDeathHandler_ == nullptr) {
+        proxyDeathHandler_ = std::make_shared<ProxyDeathHandler>();
+    }
+    return proxyDeathHandler_;
+}
+
+void PrivacyManagerService::ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub, int32_t callerPid)
+{
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "anonyStub is nullptr.");
+        return;
+    }
+    std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
+    if (param == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create param failed.");
+        return;
+    }
+    auto handler = GetProxyDeathHandler();
+    if (handler == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Handler is nullptr.");
+        return;
+    }
+    handler->AddProxyStub(anonyStub, param);
+}
+
+void PrivacyManagerService::ReleaseDeathStub(int32_t callerPid)
+{
+    std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
+    if (param == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create param failed.");
+        return;
+    }
+    auto handler = GetProxyDeathHandler();
+    if (handler == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Handler is nullptr.");
+        return;
+    }
+    handler->ReleaseProxyByParam(param);
+}
+
+int32_t PrivacyManagerService::StartUsingPermission(
+    const PermissionUsedTypeInfoParcel &infoParcel, const sptr<IRemoteObject>& anonyStub)
+{
+    int32_t callerPid = IPCSkeleton::GetCallingPid();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Caller pid = %{public}d.", callerPid);
+    ProcessProxyDeathStub(anonyStub, callerPid);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callerPid);
+}
+
+int32_t PrivacyManagerService::StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
+    const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
+{
+    int32_t callerPid = IPCSkeleton::GetCallingPid();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Caller pid = %{public}d.", callerPid);
+    ProcessProxyDeathStub(anonyStub, callerPid);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(
@@ -122,7 +180,16 @@ int32_t PrivacyManagerService::StopUsingPermission(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
         tokenId, pid, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName);
+    int32_t callerPid = IPCSkeleton::GetCallingPid();
+    int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName, callerPid);
+    if (ret != Constant::SUCCESS) {
+        return ret;
+    }
+    if (!PermissionRecordManager::GetInstance().HasCallerInStartList(callerPid)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "No permission record from caller = %{public}d", callerPid);
+        ReleaseDeathStub(callerPid);
+    }
+    return ret;
 }
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)

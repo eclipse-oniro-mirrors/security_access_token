@@ -96,6 +96,22 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     return RET_SUCCESS;
 }
 
+int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    if (!DataValidator::IsUserIdValid(userID)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyKit::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    if (!DataValidator::IsUserIdValid(userID)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,
     PermissionUsedType type)
 {

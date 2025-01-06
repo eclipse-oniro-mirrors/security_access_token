@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -27,8 +27,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "GetHapTokenInfoFromRemoteTest"};
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static AccessTokenID g_selfTokenId = 0;
@@ -61,19 +59,19 @@ public:
 
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 
     int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
     {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenInfo called.");
         return FAKE_SYNC_RET;
     };
 };
@@ -130,7 +128,7 @@ void GetHapTokenInfoFromRemoteTest::SetUp()
     ASSERT_NE(udid_, "");
 #endif
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -150,7 +148,7 @@ void GetHapTokenInfoFromRemoteTest::TearDown()
  */
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemoteFuncTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest001 start.");
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     AccessTokenID localTokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -159,23 +157,14 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags.size(), static_cast<uint32_t>(2));
 
     ASSERT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
-    ASSERT_EQ(infoSync.permStateList[0].grantFlags[0], g_infoManagerTestPolicyPrams.permStateList[0].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[0].grantStatus[0], g_infoManagerTestPolicyPrams.permStateList[0].grantStatus[0]);
-    ASSERT_EQ(infoSync.permStateList[0].resDeviceID[0], g_infoManagerTestPolicyPrams.permStateList[0].resDeviceID[0]);
-    ASSERT_EQ(infoSync.permStateList[0].isGeneral, g_infoManagerTestPolicyPrams.permStateList[0].isGeneral);
+    ASSERT_EQ(infoSync.permStateList[0].grantFlag, g_infoManagerTestPolicyPrams.permStateList[0].grantFlags[0]);
+    ASSERT_EQ(infoSync.permStateList[0].grantStatus, g_infoManagerTestPolicyPrams.permStateList[0].grantStatus[0]);
 
     ASSERT_EQ(infoSync.permStateList[1].permissionName, g_infoManagerTestPolicyPrams.permStateList[1].permissionName);
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags[0], g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[1].grantStatus[0], g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[0]);
-    ASSERT_EQ(infoSync.permStateList[1].resDeviceID[0], g_infoManagerTestPolicyPrams.permStateList[1].resDeviceID[0]);
-    ASSERT_EQ(infoSync.permStateList[1].isGeneral, g_infoManagerTestPolicyPrams.permStateList[1].isGeneral);
-
-    ASSERT_EQ(infoSync.permStateList[1].grantFlags[1], g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[1]);
-    ASSERT_EQ(infoSync.permStateList[1].grantStatus[1], g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[1]);
-    ASSERT_EQ(infoSync.permStateList[1].resDeviceID[1], g_infoManagerTestPolicyPrams.permStateList[1].resDeviceID[1]);
+    ASSERT_EQ(infoSync.permStateList[1].grantFlag, g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[0]);
+    ASSERT_EQ(infoSync.permStateList[1].grantStatus, g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[0]);
 
     ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
     ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
@@ -195,16 +184,14 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
  */
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemoteFuncTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest002 start.");
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
-    PermissionStateFull infoManagerTestState2 = {
+    PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
-    std::vector<PermissionStateFull> permStateList2;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList2;
     permStateList2.emplace_back(infoManagerTestState2);
 
     HapTokenInfoForSync remoteTokenInfo2 = {
@@ -233,7 +220,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, Te
  */
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemoteAbnormalTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteAbnormalTest001 start.");
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(0, infoSync);
     ASSERT_NE(ret, RET_SUCCESS);
@@ -247,7 +234,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest001
  */
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemoteAbnormalTest002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteAbnormalTest002 start.");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     AccessTokenID tokenId = 123;
     HapTokenInfoForSync hapSync;

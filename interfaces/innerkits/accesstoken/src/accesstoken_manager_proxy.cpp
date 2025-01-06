@@ -214,7 +214,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
 }
 
 int AccessTokenManagerProxy::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -246,7 +246,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
-        sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
+        sptr<PermissionStatusParcel> permissionReq = reply.ReadParcelable<PermissionStatusParcel>();
         if (permissionReq != nullptr) {
             reqPermList.emplace_back(*permissionReq);
         }
@@ -312,6 +312,32 @@ int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::str
         status = reply.ReadUint32();
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::REQUEST_APP_PERM_ON_SETTING, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
     return result;
 }
 
@@ -610,10 +636,6 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
         AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
         return ERR_SERVICE_ABNORMAL;
     }
-        if (!SendRequest(
-            AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
-            return ERR_SERVICE_ABNORMAL;
-        }
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
@@ -893,6 +915,48 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
         return ERR_READ_PARCEL_FAILED;
     }
     nativeTokenInfoRes = *resultSptr;
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_TOKEN_ID_BY_USER_ID, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+        return ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    uint32_t tokenIDListSize = 0;
+    if (!reply.ReadUint32(tokenIDListSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    for (uint32_t i = 0; i < tokenIDListSize; i++) {
+        AccessTokenID tokenId = 0;
+        if (!reply.ReadUint32(tokenId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+            return ERR_READ_PARCEL_FAILED;
+        }
+        tokenIdList.emplace(tokenId);
+    }
     return result;
 }
 

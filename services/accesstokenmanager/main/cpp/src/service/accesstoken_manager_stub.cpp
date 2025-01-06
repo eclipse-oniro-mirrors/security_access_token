@@ -183,7 +183,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 {
     AccessTokenID tokenID = data.ReadUint32();
     int isSystemGrant = data.ReadInt32();
-    std::vector<PermissionStateFullParcel> permList;
+    std::vector<PermissionStatusParcel> permList;
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
     IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
@@ -349,6 +349,20 @@ void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel
         return;
     }
     IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(status), "WriteInt32 failed.");
+}
+
+void AccessTokenManagerStub::RequestAppPermOnSettingInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsSystemAppCalling()) {
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP), "WriteInt32 failed.");
+        return;
+    }
+
+    AccessTokenID tokenID;
+    IF_FALSE_RETURN_LOG(LABEL, data.ReadUint32(tokenID), "ReadUint32 failed.");
+
+    int result = this->RequestAppPermOnSetting(tokenID);
+    IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -567,6 +581,31 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
         }
         ACCESSTOKEN_LOG_ERROR(LABEL, "Res error %{public}d", result);
         return;
+    }
+}
+
+void AccessTokenManagerStub::GetTokenIDByUserIDInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsNativeProcessCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        return;
+    }
+    std::unordered_set<AccessTokenID> tokenIdList;
+    int32_t userID = 0;
+    if (!data.ReadInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        IF_FALSE_PRINT_LOG(LABEL, reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
+        return;
+    }
+    int32_t result = this->GetTokenIDByUserID(userID, tokenIdList);
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteInt32(result), "WriteInt32 failed.");
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(tokenIdList.size()), "WriteUint32 failed.");
+    for (const auto& tokenId : tokenIdList) {
+        IF_FALSE_RETURN_LOG(LABEL, reply.WriteUint32(tokenId), "WriteUint32 failed.");
     }
 }
 
@@ -1083,6 +1122,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::AllocLocalTokenIDInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO)] =
         &AccessTokenManagerStub::GetNativeTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_TOKEN_ID_BY_USER_ID)] =
+        &AccessTokenManagerStub::GetTokenIDByUserIDInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKENINFO)] =
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN)] =
@@ -1155,6 +1196,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
     requestFuncMap_[
         static_cast<uint32_t>(AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)] =
         &AccessTokenManagerStub::UnRegisterSelfPermStateChangeCallbackInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REQUEST_APP_PERM_ON_SETTING)] =
+        &AccessTokenManagerStub::RequestAppPermOnSettingInner;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()

@@ -63,6 +63,7 @@ const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
 const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
+const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainAbility";
 }
 
 const bool REGISTER_RESULT =
@@ -186,14 +187,14 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 }
 
 int AccessTokenManagerService::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {
-    std::vector<PermissionStateFull> permList;
+    std::vector<PermissionStatus> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
     for (const auto& perm : permList) {
-        PermissionStateFullParcel permParcel;
-        permParcel.permStatFull = perm;
+        PermissionStatusParcel permParcel;
+        permParcel.permState = perm;
         reqPermList.emplace_back(permParcel);
     }
     return ret;
@@ -231,7 +232,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
 
     bool needRes = false;
-    std::vector<PermissionStateFull> permsList;
+    std::vector<PermissionStatus> permsList;
     int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
     int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
     if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
@@ -299,6 +300,18 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
     return PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    HapTokenInfo hapInfo;
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo failed, err=%{public}d.", ret);
+        return ret;
+    }
+    return PermissionManager::GetInstance().RequestAppPermOnSetting(hapInfo,
+        grantBundleName_, applicationSettingAbilityName_);
+}
+
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
@@ -357,7 +370,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     tokenIdEx.tokenIDEx = 0LL;
 
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policy.hapPolicyParameter, tokenIdEx);
+        info.hapInfoParameter, policy.hapPolicy, tokenIdEx);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token info create failed");
     }
@@ -368,10 +381,10 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, HapPo
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
-    std::vector<PermissionStateFull> initializedList;
+    std::vector<PermissionStatus> initializedList;
     if (info.hapInfoParameter.dlpType == DLP_COMMON) {
         if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
-            policy.hapPolicyParameter, initializedList, result)) {
+            policy.hapPolicy, initializedList, result)) {
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     } else {
@@ -380,10 +393,10 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, HapPo
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     }
-    policy.hapPolicyParameter.permStateList = initializedList;
+    policy.hapPolicy.permStateList = initializedList;
 
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policy.hapPolicyParameter, fullTokenId);
+        info.hapInfoParameter, policy.hapPolicy, fullTokenId);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -425,14 +438,20 @@ int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx, co
     const HapPolicyParcel& policyParcel, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
-    std::vector<PermissionStateFull> InitializedList;
+    std::vector<PermissionStatus> InitializedList;
     if (!PermissionManager::GetInstance().InitPermissionList(
-        info.appDistributionType, policyParcel.hapPolicyParameter, InitializedList, result)) {
+        info.appDistributionType, policyParcel.hapPolicy, InitializedList, result)) {
         return ERR_PERM_REQUEST_CFG_FAILED;
     }
     int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
-        InitializedList, policyParcel.hapPolicyParameter.apl, policyParcel.hapPolicyParameter.permList);
+        InitializedList, policyParcel.hapPolicy.apl, policyParcel.hapPolicy.permList);
     return ret;
+}
+int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID: %{public}d", userID);
+
+    return AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
 }
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
@@ -657,6 +676,8 @@ void AccessTokenManagerService::GetConfigValue()
             PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
         globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
             GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
+        applicationSettingAbilityName_ = value.atConfig.applicationSettingAbilityName.empty() ?
+            APPLICATION_SETTING_ABILITY_NAME : value.atConfig.applicationSettingAbilityName;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
@@ -664,6 +685,7 @@ void AccessTokenManagerService::GetConfigValue()
         grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
         permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+        applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \

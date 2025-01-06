@@ -25,7 +25,6 @@
 #include "access_event_handler.h"
 #endif
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_change_callback.h"
@@ -92,7 +91,7 @@ public:
         const std::string& bundleName, const std::string& permissionName, const std::vector<bool>& list);
     void RevokeAllTempPermission(AccessTokenID tokenID);
     void RevokeTempPermission(AccessTokenID tokenID, const std::string& permissionName);
-    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& permissionStateFullList);
+    bool GetPermissionState(AccessTokenID tokenID, std::vector<PermissionStatus>& permissionStateList);
     bool GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list);
     void ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag);
     bool GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID);

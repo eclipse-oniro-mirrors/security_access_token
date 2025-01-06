@@ -68,6 +68,7 @@ public:
     std::string permissionName;
     std::string bundleName;
     std::string processName;
+    ToggleModeType toggleMode = TOGGLE_REQUEST;
 };
 } // namespace AccessToken
 } // namespace Security

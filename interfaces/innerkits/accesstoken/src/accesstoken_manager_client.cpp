@@ -143,10 +143,15 @@ int AccessTokenManagerClient::GetReqPermissions(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    std::vector<PermissionStateFullParcel> parcelList;
+    std::vector<PermissionStatusParcel> parcelList;
     int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
     for (const auto& permParcel : parcelList) {
-        PermissionStateFull perm = permParcel.permStatFull;
+        PermissionStateFull perm;
+        perm.permissionName = permParcel.permState.permissionName;
+        perm.isGeneral = true;
+        perm.resDeviceID.emplace_back("PHONE-001");
+        perm.grantStatus.emplace_back(permParcel.permState.grantStatus);
+        perm.grantFlags.emplace_back(permParcel.permState.grantFlag);
         reqPermList.emplace_back(perm);
     }
     return result;
@@ -295,6 +300,16 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
     return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->RequestAppPermOnSetting(tokenID);
+}
+
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
     sptr<PermissionStateChangeCallback>& callback)
@@ -392,7 +407,7 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     return result;
 }
 
-AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
+AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicy& policy)
 {
     AccessTokenIDEx tokenIdEx = { 0 };
     auto proxy = GetProxy();
@@ -403,12 +418,12 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel hapPolicyParcel;
     hapInfoParcel.hapInfoParameter = info;
-    hapPolicyParcel.hapPolicyParameter = policy;
+    hapPolicyParcel.hapPolicy = policy;
 
     return proxy->AllocHapToken(hapInfoParcel, hapPolicyParcel);
 }
 
-int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicy& policy,
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     auto proxy = GetProxy();
@@ -419,7 +434,7 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel hapPolicyParcel;
     hapInfoParcel.hapInfoParameter = info;
-    hapPolicyParcel.hapPolicyParameter = policy;
+    hapPolicyParcel.hapPolicy = policy;
 
     return proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId, result);
 }
@@ -468,7 +483,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
 }
 
 int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const HapPolicyParams& policy, HapInfoCheckResult& result)
+    const HapPolicy& policy, HapInfoCheckResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -476,8 +491,18 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapPolicyParcel hapPolicyParcel;
-    hapPolicyParcel.hapPolicyParameter = policy;
+    hapPolicyParcel.hapPolicy = policy;
     return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel, result);
+}
+
+int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetTokenIDByUserID(userID, tokenIdList);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)

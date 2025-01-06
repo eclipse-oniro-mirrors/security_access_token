@@ -17,6 +17,7 @@
 #define I_ACCESSTOKEN_MANAGER_H
 
 #include <string>
+#include <unordered_set>
 
 #include "access_token.h"
 #include "accesstoken_service_ipc_interface_code.h"
@@ -33,7 +34,7 @@
 #include "permission_def_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_list_state_parcel.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 #include "permission_state_change_scope_parcel.h"
 #include "system_ability_definition.h"
 
@@ -54,12 +55,13 @@ public:
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
     virtual int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
         int32_t userID = 0) = 0;
     virtual int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID = 0) = 0;
+    virtual int32_t RequestAppPermOnSetting(AccessTokenID tokenID) = 0;
     virtual PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int32_t GetPermissionsStatus(
@@ -77,6 +79,7 @@ public:
     virtual AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) = 0;
     virtual AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) = 0;
     virtual int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) = 0;
+    virtual int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList) = 0;
     virtual int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) = 0;
     virtual int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParcel& policyParcel, HapInfoCheckResult& result) = 0;

@@ -79,7 +79,10 @@ int32_t ActiveStatusCallbackManager::AddCallback(
         ACCESSTOKEN_LOG_ERROR(LABEL, "List size has reached max value");
         return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
-    callback->AddDeathRecipient(callbackDeathRecipient_);
+    if (!callback->AddDeathRecipient(callbackDeathRecipient_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "add death recipient failed");
+        return PrivacyError::ERR_ADD_DEATH_RECIPIENT_FAILED;
+    }
 
     CallbackData recordInstance;
     recordInstance.registerTokenId = regiterTokenId;

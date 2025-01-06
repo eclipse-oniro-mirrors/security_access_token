@@ -39,6 +39,7 @@
 #include "libraryloader.h"
 #include "parameter.h"
 #include "parcel_utils.h"
+#include "permission_record_set.h"
 #include "permission_used_record_db.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
@@ -76,6 +77,8 @@ static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
+static constexpr int32_t MAX_USER_ID = 10736;
+static constexpr int32_t BASE_USER_RANGE = 200000;
 std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
@@ -405,8 +408,30 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
     return true;
 }
 
+bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID)
+{
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it != permUsedRecToggleStatusMap_.end()) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
+        return it->second;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d not exist record, return true.", userID);
+    return true;
+}
+
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d).", info.tokenId);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "The permission used record toggle status is false.");
+        return Constant::SUCCESS;
+    }
+
     ExecuteDeletePermissionRecordTask();
 
     if ((info.successCount == 0) && (info.failCount == 0)) {
@@ -426,6 +451,166 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 
     return AddOrUpdateUsedTypeIfNeeded(
         info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
+}
+
+int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    if (!PermissionRecordManager::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    if (!status) {
+        std::unordered_set<AccessTokenID> tokenIDList;
+        int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList);
+        if (ret != RET_SUCCESS) {
+            return Constant::FAILURE;
+        }
+        if (!tokenIDList.empty()) {
+            RemoveHistoryPermissionUsedRecords(tokenIDList);
+        }
+    }
+
+    if (!UpdatePermUsedRecToggleStatusMap(userID, status)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The status is the same as that set last time, not need to update database.");
+        return Constant::SUCCESS;
+    }
+
+    if (!AddOrUpdateUsedStatusIfNeeded(userID, status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to AddOrUpdateUsedStatusIfNeeded.");
+        return Constant::FAILURE;
+    }
+
+    return Constant::SUCCESS;
+}
+
+bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status)
+{
+    std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it == permUsedRecToggleStatusMap_.end()) {
+        permUsedRecToggleStatusMap_.insert(std::make_pair(userID, status));
+        return true;
+    } else {
+        if (it->second != status) {
+            it->second = status;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+
+    std::vector<GenericValues> results;
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue, results);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        return false;
+    }
+
+    if (results.empty()) {
+        // empty means there is no user record, add it
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "No exsit record, add it.");
+
+        GenericValues recordValue;
+        recordValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+        recordValue.Put(PrivacyFiledConst::FIELD_STATUS, status);
+
+        std::vector<GenericValues> recordValues;
+        recordValues.emplace_back(recordValue);
+        int32_t res = PermissionUsedRecordDb::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, recordValues);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            return false;
+        }
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Exsit record, update it.");
+        GenericValues newValue;
+        newValue.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(status));
+        return (PermissionUsedRecordDb::GetInstance().Update(
+            PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS,
+            newValue, conditionValue) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
+    }
+
+    return true;
+}
+
+int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    if (!PermissionRecordManager::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it == permUsedRecToggleStatusMap_.end()) {
+        status = true;
+    } else {
+        status = it->second;
+    }
+
+    return Constant::SUCCESS;
+}
+
+void PermissionRecordManager::UpdatePermUsedRecToggleStatusMapFromDb()
+{
+    std::vector<GenericValues> permUsedRecordToggleStatusRes;
+    GenericValues conditionValue;
+
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS,
+        conditionValue, permUsedRecordToggleStatusRes);
+    if (res != PermissionUsedRecordDb::SUCCESS || permUsedRecordToggleStatusRes.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not exsit record, res:%{public}d.", res);
+        return;
+    }
+
+    int32_t userID = 0;
+    bool status = true;
+    auto it = permUsedRecordToggleStatusRes.begin();
+    while (it != permUsedRecordToggleStatusRes.end()) {
+        userID = it->GetInt(PrivacyFiledConst::FIELD_USER_ID);
+        status = static_cast<bool>(it->GetInt(PrivacyFiledConst::FIELD_STATUS));
+        UpdatePermUsedRecToggleStatusMap(userID, status);
+        ++it;
+    }
+
+    return;
+}
+
+void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_set<AccessTokenID> tokenIDList)
+{
+    // remove from database
+    std::vector<PermissionUsedRecordDb::DataType> dataTypes;
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE);
+    PermissionUsedRecordDb::GetInstance().DeleteHistoryRecordsInTables(dataTypes, tokenIDList);
+
+    {
+        // remove from record cache
+        std::lock_guard<std::mutex> lock(permUsedRecMutex_);
+        auto it = permUsedRecList_.begin();
+        while (it != permUsedRecList_.end()) {
+            if (tokenIDList.find(it->record.tokenId) != tokenIDList.end()) {
+                it = permUsedRecList_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
@@ -753,59 +938,51 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 }
 
 int32_t PermissionRecordManager::AddRecordToStartList(
-    uint32_t tokenId, int32_t pid, const std::string& permissionName, int32_t status, PermissionUsedType type)
+    const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid)
 {
     int32_t opCode;
+    int ret = Constant::SUCCESS;
+    const std::string& permissionName = info.permissionName;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
+    ContinusPermissionRecord newRecord = {
+        .tokenId = info.tokenId,
+        .opCode = opCode,
+        .status = status,
+        .pid = info.pid,
+        .callerPid = callerPid,
+    };
+
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    bool hasTokenStarted = false;
-    bool hasPidStarted = false;
-    for (auto& record : startRecordList_) {
-        if ((record.opCode == opCode) && (record.tokenId == tokenId)) { // find token
-            hasTokenStarted = true;
-            if (!IsPidValid(pid) || record.pidList.find(pid) != record.pidList.end()) {
-                hasPidStarted = true;
-            } else {
-                record.pidList.insert(pid);
-            }
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if (it->IsEqualRecord(newRecord)) {
+            ret = PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
             break;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id(%{public}u), pid(%{public}d), opCode(%{public}d),\
-        hasTokenStarted(%{public}d), hasPidStarted(%{public}d).",
-        tokenId, pid, opCode, hasTokenStarted, hasPidStarted);
-    if (!hasTokenStarted) {
-        ContinusPermissionRecord record = { 0 };
-        record.tokenId = tokenId;
-        record.status = status;
-        record.opCode = opCode;
-        if (IsPidValid(pid)) {
-            record.pidList.insert(pid);
-        }
-        startRecordList_.emplace_back(record);
-    }
-    if (hasTokenStarted && hasPidStarted) {
-        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
+    if (ret != PrivacyError::ERR_PERMISSION_ALREADY_START_USING) {
+        startRecordList_.emplace(newRecord);
     }
 
-    CallbackExecute(tokenId, permissionName, status, type);
+    CallbackExecute(info.tokenId, permissionName, status, info.type);
     
-    return Constant::SUCCESS;
+    return ret;
 }
 
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
 {
     std::vector<std::string> camPermList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+    std::set<ContinusPermissionRecord> updateList;
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
         if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
+                ++it;
                 continue;
             }
 
@@ -819,14 +996,22 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
                 (!isShow) && (!isAllowedBackGround)) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "Camera float window is close!");
                 camPermList.emplace_back(perm);
+                ++it;
                 continue;
             }
 
             // update status to input and timestamp to now in cache
-            it->status = status;
+            auto record = *it;
+            record.status = status;
+            updateList.emplace(record);
+            it = startRecordList_.erase(it);
             ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
+            continue;
         }
+        ++it;
     }
+
+    startRecordList_.insert(updateList.begin(), updateList.end());
 
     if (!camPermList.empty()) {
         ExecuteCameraCallbackAsync(tokenId, pid);
@@ -873,7 +1058,7 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
 }
 
 int32_t PermissionRecordManager::RemoveRecordFromStartList(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid)
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
@@ -881,38 +1066,20 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Id %{public}u, pid %{public}d, perm %{public}s",
-        tokenId, pid, permissionName.c_str());
-    int32_t status = PERM_INACTIVE;
-    bool isFind = false;
-    int32_t ret = Constant::SUCCESS;
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        if ((it->opCode != opCode) || (it->tokenId != tokenId)) {
-            ++it;
-            continue;
-        }
-        isFind = !IsPidValid(pid);
-        // erase pid from pidList
-        if (!isFind && it->pidList.find(pid) != it->pidList.end()) {
-            isFind = true;
-            it->pidList.erase(pid);
-        }
-        if (it->pidList.empty()) {
-            status = it->status;
-            startRecordList_.erase(it);
-        }
-        break;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Id %{public}u, pid %{public}d, perm %{public}s, callerPid %{public}d",
+        tokenId, pid, permissionName.c_str(), callerPid);
+    ContinusPermissionRecord record = {
+        .tokenId = tokenId,
+        .opCode = opCode,
+        .pid = pid,
+        .callerPid = callerPid,
+    };
+    if (!ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualRecord, false)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No records started, tokenId=%{public}u, pid=%{public}d, " \
+            "opCode=%{public}d, callerPid=%{public}d", tokenId, pid, opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
     }
-    if (status != PERM_INACTIVE) {
-        CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
-    }
-    if (!isFind) {
-        ret = PrivacyError::ERR_PERMISSION_NOT_START_USING;
-        ACCESSTOKEN_LOG_ERROR(LABEL, "No records started, tokenId=%{public}u, pid=%{public}d, opCode=%{public}d",
-            tokenId, pid, opCode);
-    }
-    return ret;
+    return Constant::SUCCESS;
 }
 
 /*
@@ -922,27 +1089,10 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, pid %{public}d", tokenId, pid);
-    {
-        std::vector<std::string> permList;
-        std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-            if (it->tokenId != tokenId || it->pidList.empty() || it->pidList.find(pid) == it->pidList.end()) {
-                ++it;
-                continue;
-            }
-            it->pidList.erase(pid);
-            if (it->pidList.empty()) {
-                std::string perm;
-                Constant::TransferOpcodeToPermission(it->opCode, perm);
-                permList.emplace_back(perm);
-                it = startRecordList_.erase(it);
-            }
-        }
-        for (const auto& perm : permList) {
-            CallbackExecute(tokenId, perm, PERM_INACTIVE);
-        }
-    }
-    cameraCallbackMap_.Erase(GetUniqueId(tokenId, pid));
+    ContinusPermissionRecord record = {0};
+    record.tokenId = tokenId;
+    record.pid = pid;
+    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualPid);
 }
 
 /*
@@ -951,46 +1101,56 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u", tokenId);
-    {
-        std::vector<std::string> permList;
-        std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-            if (it->tokenId != tokenId) {
-                ++it;
-                continue;
-            }
-            std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
-            permList.emplace_back(perm);
-            it = startRecordList_.erase(it);
-        }
-        for (const auto& perm : permList) {
-            CallbackExecute(tokenId, perm, PERM_INACTIVE);
-        }
-    }
-    cameraCallbackMap_.Erase(GetUniqueId(tokenId, -1));
+    ContinusPermissionRecord record = {0};
+    record.tokenId = tokenId;
+    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualTokenId);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OpCode %{public}d", opCode);
-    std::string perm;
-    Constant::TransferOpcodeToPermission(opCode, perm);
+    ContinusPermissionRecord record = {0};
+    record.opCode = opCode;
+    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualPermCode);
+}
+
+void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t callerPid)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallerPid %{public}d", callerPid);
+    ContinusPermissionRecord record = {0};
+    record.callerPid = callerPid;
+    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualCallerPid);
+}
+
+bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& targetRecord,
+    const IsEqualFunc& isEqualFunc, bool needClearCamera)
+{
+    std::vector<ContinusPermissionRecord> unusedCameraRecord;
     {
-        std::vector<AccessTokenID> tokenList;
+        std::string perm;
+        std::vector<ContinusPermissionRecord> removeList, inactiveList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-            if (it->opCode != opCode) {
-                ++it;
-                continue;
-            }
-            tokenList.emplace_back(it->tokenId);
-            it = startRecordList_.erase(it);
+        PermissionRecordSet::RemoveByKey(startRecordList_, targetRecord, isEqualFunc, removeList);
+        if (removeList.empty()) {
+            return false;
         }
-        for (size_t i = 0; i < tokenList.size(); ++i) {
-            CallbackExecute(tokenList[i], perm, PERM_INACTIVE);
+        PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
+        for (const auto& record: inactiveList) {
+            Constant::TransferOpcodeToPermission(record.opCode, perm);
+            CallbackExecute(record.tokenId, perm, PERM_INACTIVE);
         }
+        if (!needClearCamera) {
+            return true;
+        }
+        PermissionRecordSet::GetUnusedCameraRecords(startRecordList_, removeList, unusedCameraRecord);
     }
+
+    for (const auto& record: unusedCameraRecord) {
+        cameraCallbackMap_.Erase(GetUniqueId(record.tokenId, record.pid));
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "cameraCallbackMap size = %{public}d after clearing",
+        cameraCallbackMap_.Size());
+    return true;
 }
 
 void PermissionRecordManager::CallbackExecute(
@@ -1033,11 +1193,12 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
 {
     int32_t opCode;
     Constant::TransferPermissionToOpcode(permissionName, opCode);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::set<ContinusPermissionRecord> updatedRecordList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        ContinusPermissionRecord& record = *it;
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
+        ContinusPermissionRecord record = *it;
         if ((record.opCode) != static_cast<int32_t>(opCode)) {
+            ++it;
             continue;
         }
         if (switchStatus) {
@@ -1048,10 +1209,12 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
             ACCESSTOKEN_LOG_INFO(LABEL, "Global switch is close, update record to inactive");
             record.status = PERM_INACTIVE;
         }
-        recordList.emplace_back(*it);
+        updatedRecordList.emplace(record);
+        it = startRecordList_.erase(it);
     }
+    startRecordList_.insert(updatedRecordList.begin(), updatedRecordList.end());
     // each permission sends a status change notice
-    for (const auto& record : recordList) {
+    for (const auto& record : updatedRecordList) {
         CallbackExecute(record.tokenId, permissionName, record.status);
     }
 }
@@ -1128,9 +1291,12 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The cameraCallback execution is complete.");
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, PermissionUsedType type)
+int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeInfo &info, int32_t callerPid)
 {
+    AccessTokenID tokenId = info.tokenId;
+    const std::string &permissionName = info.permissionName;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
+        tokenId, info.pid, permissionName.c_str(), info.type);
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1154,12 +1320,16 @@ int32_t PermissionRecordManager::StartUsingPermission(
         status = PERM_INACTIVE;
     }
 #endif
-    return AddRecordToStartList(tokenId, pid, permissionName, status, type);
+    return AddRecordToStartList(info, status, callerPid);
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
-    const std::string& permissionName, const sptr<IRemoteObject>& callback, PermissionUsedType type)
+int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeInfo &info,
+    const sptr<IRemoteObject>& callback, int32_t callerPid)
 {
+    AccessTokenID tokenId = info.tokenId;
+    const std::string &permissionName = info.permissionName;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
+        tokenId, info.pid, permissionName.c_str(), info.type);
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1183,13 +1353,13 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, int
         status = PERM_INACTIVE;
     }
 #endif
-    uint64_t id = GetUniqueId(tokenId, pid);
+    uint64_t id = GetUniqueId(tokenId, info.pid);
     cameraCallbackMap_.EnsureInsert(id, callback);
     if (!RegisterWindowCallback()) {
         cameraCallbackMap_.Erase(id);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
-    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status, type);
+    int32_t ret = AddRecordToStartList(info, status, callerPid);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }
@@ -1197,7 +1367,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, int
 }
 
 int32_t PermissionRecordManager::StopUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid)
 {
     ExecuteDeletePermissionRecordTask();
 
@@ -1206,7 +1376,18 @@ int32_t PermissionRecordManager::StopUsingPermission(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
-    return RemoveRecordFromStartList(tokenId, pid, permissionName);
+    return RemoveRecordFromStartList(tokenId, pid, permissionName, callerPid);
+}
+
+bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
+{
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if (it->callerPid == callerPid) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void PermissionRecordManager::PermListToString(const std::vector<std::string>& permList)
@@ -1694,7 +1875,6 @@ void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
         std::lock_guard<std::mutex> lock(micLoadMutex_);
         isMicLoad_ = false;
     }
-    RemoveRecordFromStartListByOp(Constant::OP_MICROPHONE);
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
@@ -1704,7 +1884,6 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
         std::lock_guard<std::mutex> lock(camLoadMutex_);
         isCamLoad_ = false;
     }
-    RemoveRecordFromStartListByOp(Constant::OP_CAMERA);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     ClearWindowShowing();
 #endif
@@ -1816,9 +1995,9 @@ uint64_t PermissionRecordManager::GetUniqueId(uint32_t tokenId, int32_t pid) con
     return ((uint64_t)tmpPid << 32) | ((uint64_t)tokenId & 0xFFFFFFFF); // 32: bit
 }
 
-bool PermissionRecordManager::IsPidValid(int32_t pid) const
+bool PermissionRecordManager::IsUserIdValid(int32_t userID) const
 {
-    return pid > 0;
+    return userID >= 0 && userID <= MAX_USER_ID;
 }
 
 void PermissionRecordManager::Init()
@@ -1828,6 +2007,8 @@ void PermissionRecordManager::Init()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Init");
     hasInited_ = true;
+
+    UpdatePermUsedRecToggleStatusMapFromDb();
 
     GetConfigValue();
 }

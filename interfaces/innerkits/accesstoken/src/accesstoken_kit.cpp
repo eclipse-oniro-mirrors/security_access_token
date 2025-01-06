@@ -68,6 +68,22 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
     return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
 }
 
+static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& policyOut)
+{
+    policyOut.apl = policyIn.apl;
+    policyOut.domain = policyIn.domain;
+    policyOut.permList.assign(policyIn.permList.begin(), policyIn.permList.end());
+    policyOut.aclRequestedList.assign(policyIn.aclRequestedList.begin(), policyIn.aclRequestedList.end());
+    policyOut.preAuthorizationInfo.assign(policyIn.preAuthorizationInfo.begin(), policyIn.preAuthorizationInfo.end());
+    for (const auto& perm : policyIn.permStateList) {
+        PermissionStatus tmp;
+        tmp.permissionName = perm.permissionName;
+        tmp.grantStatus = perm.grantStatus[0];
+        tmp.grantFlag = perm.grantFlags[0];
+        policyOut.permStateList.emplace_back(tmp);
+    }
+}
+
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
@@ -80,7 +96,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return res;
     }
-    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, newPolicy);
 }
 
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
@@ -102,7 +120,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId, result);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().InitHapToken(info, newPolicy, fullTokenId, result);
 }
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
@@ -137,7 +157,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy, result);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
@@ -217,6 +239,16 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
         return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
+}
+
+int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d.", userID);
+    if (!DataValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID=%{public}d is invalid", userID);
+        return  AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
 }
 
 int AccessTokenKit::GetHapTokenInfo(
@@ -505,6 +537,16 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AccessTokenKit::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=%{public}d.", tokenID);
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().RequestAppPermOnSetting(tokenID);
 }
 
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(

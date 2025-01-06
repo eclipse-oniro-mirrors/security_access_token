@@ -68,12 +68,12 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level1)
 }
 
 /*
- * @tc.name: TranslationIntoPermissionStateFull001
- * @tc.desc: DataTranslator::TranslationIntoPermissionStateFull
+ * @tc.name: TranslationIntoPermissionStatus001
+ * @tc.desc: DataTranslator::TranslationIntoPermissionStatus
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStateFull001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, TestSize.Level1)
 {
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -84,9 +84,9 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStateFull001,
     ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_GRANTED),
         value.GetInt(TokenFiledConst::FIELD_GRANT_STATE));
 
-    PermissionStateFull permissionState;
-    DataTranslator::TranslationIntoPermissionStateFull(value, permissionState);
-    ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_DENIED), permissionState.grantStatus[0]);
+    PermissionStatus permissionState;
+    DataTranslator::TranslationIntoPermissionStatus(value, permissionState);
+    ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_DENIED), permissionState.grantStatus);
 }
 
 /*

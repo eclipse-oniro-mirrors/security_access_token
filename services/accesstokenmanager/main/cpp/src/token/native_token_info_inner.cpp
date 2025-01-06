@@ -38,7 +38,7 @@ NativeTokenInfoInner::NativeTokenInfoInner()
 }
 
 NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfoBase& native,
-    const std::vector<PermissionStateFull>& permStateList)
+    const std::vector<PermissionStatus>& permStateList)
 {
     tokenInfoBasic_ = native;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(native.tokenID,

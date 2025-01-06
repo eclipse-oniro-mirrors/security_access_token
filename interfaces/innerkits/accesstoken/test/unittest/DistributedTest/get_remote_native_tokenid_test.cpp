@@ -15,7 +15,7 @@
 
 #include "get_remote_native_tokenid_test.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -25,8 +25,6 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "GetRemoteNativeTokenIDTest"};
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
@@ -108,7 +106,7 @@ void GetRemoteNativeTokenIDTest::TearDown()
  */
 HWTEST_F(GetRemoteNativeTokenIDTest, GetRemoteNativeTokenIDAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteNativeTokenIDAbnormalTest001 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteNativeTokenIDAbnormalTest001 start.");
     std::string device = "device";
     AccessTokenID tokenId = 123;
     ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetRemoteNativeTokenID(device, tokenId));

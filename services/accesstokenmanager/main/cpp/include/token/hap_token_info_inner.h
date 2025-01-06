@@ -25,7 +25,7 @@
 #include "hap_token_info.h"
 #include "permission_def.h"
 #include "permission_policy_set.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,14 +33,13 @@ namespace AccessToken {
 class HapTokenInfoInner final {
 public:
     HapTokenInfoInner();
-    HapTokenInfoInner(AccessTokenID id, const HapInfoParams& info, const HapPolicyParams& policy);
+    HapTokenInfoInner(AccessTokenID id, const HapInfoParams& info, const HapPolicy& policy);
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfo &info,
-        const std::vector<PermissionStateFull>& permStateList);
+        const std::vector<PermissionStatus>& permStateList);
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
     virtual ~HapTokenInfoInner();
 
-    void Update(const UpdateHapInfoParams& info,
-        const std::vector<PermissionStateFull>& permStateList);
+    void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList);
     void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& valueList) const;
     void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
@@ -65,10 +64,10 @@ public:
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
-    int32_t GetPermissionStateList(std::vector<PermissionStateFull>& permList);
+    int32_t GetPermissionStateList(std::vector<PermissionStatus>& permList);
     int32_t ResetUserGrantPermissionStatus(void);
     void UpdateRemoteHapTokenInfo(AccessTokenID mapID,
-        const HapTokenInfo& baseInfo, std::vector<PermissionStateFull>& permStateList);
+        const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList);
 
     static void RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
         bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
@@ -88,8 +87,8 @@ private:
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
-    bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList);
-    int32_t GetPermissionStateListFromBrief(std::vector<PermissionStateFull>& permList);
+    bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList);
+    int32_t GetPermissionStateListFromBrief(std::vector<PermissionStatus>& permList);
 
     HapTokenInfo tokenInfoBasic_;
 

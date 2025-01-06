@@ -62,6 +62,8 @@ static constexpr int32_t RESULT_NUM_THREE = 3;
 // if change this, origin value in privacy_manager_proxy.cpp should change together
 const static uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 const static int32_t NOT_EXSIT_PID = 99999999;
+const static int32_t INVALID_USER_ID = -1;
+const static int32_t USER_ID_1 = 1;
 
 static PermissionStateFull g_infoManagerTestStateA = {
     .permissionName = "ohos.permission.CAMERA",
@@ -2622,4 +2624,36 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level1)
     uint32_t invalidTokenId = 0;
     ret = PrivacyKit::SetHapWithFGReminder(invalidTokenId, true);
     ASSERT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatus001
+ * @tc.desc: Test SetPermissionUsedRecordToggleStatus and GetPermissionUsedRecordToggleStatus function.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    bool status = true;
+    int32_t resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(INVALID_USER_ID, status);
+    int32_t resGet = PrivacyKit::GetPermissionUsedRecordToggleStatus(INVALID_USER_ID, status);
+    EXPECT_EQ(resSet, PrivacyError::ERR_PARAM_INVALID);
+    EXPECT_EQ(resGet, PrivacyError::ERR_PARAM_INVALID);
+
+    resGet = PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_1, status);
+    EXPECT_EQ(resGet, 0);
+    EXPECT_TRUE(status);
+    resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_1, false);
+    resGet = PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_1, status);
+    EXPECT_EQ(resSet, 0);
+    EXPECT_FALSE(status);
+
+    resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_1, true);
+    resGet = PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_1, status);
+    EXPECT_EQ(resSet, 0);
+    EXPECT_EQ(resGet, 0);
+    EXPECT_TRUE(status);
+
+    resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_1, true);
+    EXPECT_EQ(resSet, 0);
 }

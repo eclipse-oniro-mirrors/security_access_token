@@ -59,6 +59,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
   ]
   external_deps = [
     "c_utils:utils",
@@ -122,6 +123,7 @@ ohos_unittest("libprivacy_mock_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
   ]
 
   external_deps = [

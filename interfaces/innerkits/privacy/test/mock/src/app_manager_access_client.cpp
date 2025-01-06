@@ -15,8 +15,6 @@
 #include "app_manager_access_client.h"
 #include <unistd.h>
 
-#include "accesstoken_log.h"
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

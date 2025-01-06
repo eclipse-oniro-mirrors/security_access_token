@@ -19,6 +19,7 @@
 #include <numeric>
 #include <sstream>
 
+#include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
@@ -43,6 +44,7 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
+#include "want.h"
 
 namespace OHOS {
 namespace Security {
@@ -66,6 +68,10 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
+constexpr const char* BUNDLE_NAME = "bundleName";
+constexpr const char* APP_INDEX = "appIndex";
+constexpr const char* USER_ID = "userId";
+constexpr const char* CALLER_TOKENID = "callerTokenId";
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -162,7 +168,7 @@ void PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Per
 }
 
 int PermissionManager::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: %{public}u, isSystemGrant: %{public}d",
         __func__, tokenID, isSystemGrant);
@@ -172,7 +178,7 @@ int PermissionManager::GetReqPermissions(
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
-    std::vector<PermissionStateFull> tmpList;
+    std::vector<PermissionStatus> tmpList;
     int32_t ret = infoPtr->GetPermissionStateList(tmpList);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetPermissionStateList failed, token %{public}u is invalid.", tokenID);
@@ -188,7 +194,7 @@ int PermissionManager::GetReqPermissions(
     return RET_SUCCESS;
 }
 
-static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& permsList,
+static bool IsPermissionRequestedInHap(const std::vector<PermissionStatus>& permsList,
     PermissionListState& permState, int32_t& status, uint32_t& flag)
 {
     const std::string permission = permState.permissionName;
@@ -197,7 +203,7 @@ static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& p
         permState.errorReason = PERM_INVALID;
         return false;
     }
-    auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStateFull& perm) {
+    auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStatus& perm) {
         return permission == perm.permissionName;
     });
     if (iter == permsList.end()) {
@@ -206,9 +212,9 @@ static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& p
         return false;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
-        permission.c_str(), iter->grantStatus[0], iter->grantFlags[0]);
-    status = iter->grantStatus[0];
-    flag = static_cast<uint32_t>(iter->grantFlags[0]);
+        permission.c_str(), iter->grantStatus, iter->grantFlag);
+    status = iter->grantStatus;
+    flag = static_cast<uint32_t>(iter->grantFlag);
     return true;
 }
 
@@ -237,7 +243,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     return false;
 }
 
-void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStateFull>& permsList,
+void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStatus>& permsList,
     PermissionListState& permState, int32_t apiVersion)
 {
     int32_t goalGrantStatus;
@@ -407,6 +413,41 @@ int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& p
     status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
 
     return 0;
+}
+
+int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
+    const std::string& bundleName, const std::string& abilityName)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName=%{public}s, abilityName=%{public}s, hapInfo.bundleName=%{public}s",
+        bundleName.c_str(), abilityName.c_str(), hapInfo.bundleName.c_str());
+    AAFwk::Want want;
+    want.SetElementName(bundleName, abilityName);
+    want.SetParam(BUNDLE_NAME, hapInfo.bundleName);
+    want.SetParam(APP_INDEX, hapInfo.instIndex);
+    want.SetParam(USER_ID, hapInfo.userID);
+
+    AccessTokenID callerTokenId = IPCSkeleton::GetCallingTokenID();
+    want.SetParam(CALLER_TOKENID, std::to_string(callerTokenId));
+
+    {
+        std::lock_guard<std::mutex> lock(abilityManagerMutex_);
+        if (abilityManagerLoader_ == nullptr) {
+            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+        }
+    }
+
+    AbilityManagerAccessLoaderInterface* abilityManager =
+        abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
+    if (abilityManager == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AbilityManager is nullptr!");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    ErrCode err = abilityManager->StartAbility(want, nullptr);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return ERR_OK;
 }
 
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)
@@ -627,7 +668,6 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
 int32_t PermissionManager::AddPermStateChangeCallback(
     const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     PermStateChangeScope scopeRes;
     int32_t result = ScopeFilter(scope, scopeRes);
     if (result != RET_SUCCESS) {
@@ -713,7 +753,7 @@ bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListSta
 }
 
 bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
-    std::vector<PermissionListStateParcel>& reqPermList, std::vector<PermissionStateFull>& permsList,
+    std::vector<PermissionListStateParcel>& reqPermList, std::vector<PermissionStatus>& permsList,
     int32_t apiVersion, const LocationIndex& locationIndex)
 {
     bool needVagueDynamic = false;
@@ -775,7 +815,7 @@ bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
 bool PermissionManager::LocationPermissionSpecialHandle(
     AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
+    std::vector<PermissionStatus>& permsList, int32_t apiVersion)
 {
     struct LocationIndex locationIndex;
     if (!GetLocationPermissionIndex(reqPermList, locationIndex)) {
@@ -807,20 +847,20 @@ void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& gr
     }
 }
 
-bool PermissionManager::IsPermissionStateOrFlagMatched(const PermissionStateFull& state1,
-    const PermissionStateFull& state2)
+bool PermissionManager::IsPermissionStateOrFlagMatched(const PermissionStatus& state1,
+    const PermissionStatus& state2)
 {
-    return ((state1.grantStatus[0] == state2.grantStatus[0]) && (state1.grantFlags[0] == state2.grantFlags[0]));
+    return ((state1.grantStatus == state2.grantStatus) && (state1.grantFlag == state2.grantFlag));
 }
 
-void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStateFull>& stateListBefore,
-    std::vector<PermissionStateFull>& stateListAfter, std::vector<PermissionStateFull>& stateChangeList)
+void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStatus>& stateListBefore,
+    std::vector<PermissionStatus>& stateListAfter, std::vector<PermissionStatus>& stateChangeList)
 {
     uint32_t size = stateListBefore.size();
 
     for (uint32_t i = 0; i < size; ++i) {
-        PermissionStateFull state1 = stateListBefore[i];
-        PermissionStateFull state2 = stateListAfter[i];
+        PermissionStatus state1 = stateListBefore[i];
+        PermissionStatus state2 = stateListAfter[i];
 
         if (!IsPermissionStateOrFlagMatched(state1, state2)) {
             stateChangeList.emplace_back(state2);
@@ -902,7 +942,7 @@ void PermissionManager::SetPermToKernel(
         tokenID, permissionName.c_str(), ret);
 }
 
-bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicyParams& policy)
+bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicy& policy)
 {
     if (policy.apl < permDef.availableLevel) {
         if (!permDef.provisionEnable) {
@@ -954,7 +994,7 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
 }
 
 bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int32_t userId,
-    std::vector<PermissionStateFull>& initializedList)
+    std::vector<PermissionStatus>& initializedList)
 {
     // get dlp original app
     AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(userId, bundleName, 0);
@@ -968,8 +1008,8 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
     return true;
 }
 
-bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicyParams& policy,
-    std::vector<PermissionStateFull>& initializedList, HapInfoCheckResult& result)
+bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicy& policy,
+    std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
         "ACLRequestedList size %{public}zu.",
@@ -998,12 +1038,12 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
             ACCESSTOKEN_LOG_ERROR(LABEL, "Available range of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
-        state.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
-        state.grantStatus[0] = PERMISSION_DENIED;
+        state.grantFlag = PERMISSION_DEFAULT_FLAG;
+        state.grantStatus = PERMISSION_DENIED;
 
         if (permDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
-            state.grantFlags[0] = PERMISSION_SYSTEM_FIXED;
-            state.grantStatus[0] = PERMISSION_GRANTED;
+            state.grantFlag = PERMISSION_SYSTEM_FIXED;
+            state.grantStatus = PERMISSION_GRANTED;
             initializedList.emplace_back(state);
             continue;
         }
@@ -1013,8 +1053,8 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         }
         bool userCancelable = true;
         if (IsUserGrantPermPreAuthorized(policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
-            state.grantFlags[0] = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
-            state.grantStatus[0] = PERMISSION_GRANTED;
+            state.grantFlag = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
+            state.grantStatus = PERMISSION_GRANTED;
         }
         initializedList.emplace_back(state);
     }

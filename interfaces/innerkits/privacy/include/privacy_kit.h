@@ -76,6 +76,20 @@ public:
      */
     static int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
     /**
+     * @brief Set permission used record toggle status.
+     * @param userID the userID
+     * @param status permission used record toggle status, true means record, false means not record
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
+    /**
+     * @brief Get permission used record toggle status.
+     * @param userID the userID
+     * @param status permission used record toggle status, true means record, false means not record
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    /**
      * @brief Input tokenID start using input permission.
      * @param tokenID token id
      * @param permissionName permission nanme

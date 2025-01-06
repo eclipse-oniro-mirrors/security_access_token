@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
-#define ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
+#ifndef PROXY_DEATH_CALLBACK_H
+#define PROXY_DEATH_CALLBACK_H
 
-#include "iremote_object.h"
+#include "iremote_broker.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
+/**
+ * @brief Declares ProxyDeathCallBack interface class
+ */
+class ProxyDeathCallBack : public IRemoteBroker {
 public:
-    AppMgrDeathRecipient() {}
-    virtual ~AppMgrDeathRecipient() override = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+    /**
+     * @brief declare interface descritor which used in parcel.
+     * @param const string
+     */
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.ProxyDeathCallBack");
 };
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
-#endif  // ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
-
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // PROXY_DEATH_CALLBACK_H

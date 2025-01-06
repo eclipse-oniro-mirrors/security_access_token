@@ -20,7 +20,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -34,8 +34,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "DumpTokenInfoTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static AccessTokenIDEx g_testTokenIDEx = {0};
@@ -69,7 +67,7 @@ void DumpTokenInfoTest::TearDownTestCase()
 
 void DumpTokenInfoTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
 }
@@ -86,7 +84,7 @@ void DumpTokenInfoTest::TearDown()
  */
 HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DumpTokenInfoAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest001");
     AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
 
     g_testTokenIDEx = AccessTokenKit::GetHapTokenIDEx(g_InfoParms.userID,
@@ -117,7 +115,7 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "DumpTokenInfoAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest002");
     SetSelfTokenID(g_selfTokenId);
     std::string dumpInfo;
     AtmToolsParamInfo info;

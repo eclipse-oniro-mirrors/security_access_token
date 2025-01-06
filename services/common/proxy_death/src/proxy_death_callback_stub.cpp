@@ -12,25 +12,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "app_manager_death_recipient.h"
 
-#include "accesstoken_log.h"
-#include "app_manager_access_client.h"
+#include "proxy_death_callback_stub.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppMgrDeathRecipient"
-};
-} // namespace
 
-void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
+int32_t ProxyDeathCallBackStub::OnRemoteRequest(uint32_t code, MessageParcel& data,
+    MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
+    return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
 }
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
+
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

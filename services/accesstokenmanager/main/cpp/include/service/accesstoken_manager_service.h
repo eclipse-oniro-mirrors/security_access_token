@@ -56,7 +56,7 @@ public:
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
         PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
@@ -65,6 +65,7 @@ public:
         int32_t userID) override;
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID) override;
+    int32_t RequestAppPermOnSetting(AccessTokenID tokenID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int GrantPermissionForSpecifiedTime(
@@ -75,6 +76,7 @@ public:
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParcel& policyParcel, HapInfoCheckResult& result) override;
@@ -123,6 +125,7 @@ private:
     std::string grantServiceAbilityName_;
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
+    std::string applicationSettingAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security

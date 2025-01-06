@@ -502,8 +502,8 @@ void TempPermissionObserver::AddTempPermTokenToList(AccessTokenID tokenID,
     }
 }
 
-bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
-    std::vector<PermissionStateFull>& permissionStateFullList)
+bool TempPermissionObserver::GetPermissionState(AccessTokenID tokenID,
+    std::vector<PermissionStatus>& permissionStateList)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -514,7 +514,7 @@ bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
         ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", tokenID);
         return false;
     }
-    if (infoPtr->GetPermissionStateList(permissionStateFullList) != RET_SUCCESS) {
+    if (infoPtr->GetPermissionStateList(permissionStateList) != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetPermissionStateList failed, token %{public}u!", tokenID);
         return false;
     }
@@ -534,13 +534,13 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
         UnRegisterCallback();
     }
 
-    std::vector<PermissionStateFull> tmpList;
-    if (!GetPermissionStateFull(tokenID, tmpList)) {
+    std::vector<PermissionStatus> tmpList;
+    if (!GetPermissionState(tokenID, tmpList)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d get permission state full fail!", tokenID);
         return;
     }
     for (const auto& permissionState : tmpList) {
-        if (permissionState.grantFlags[0] & PERMISSION_ALLOW_THIS_TIME) {
+        if (permissionState.grantFlag & PERMISSION_ALLOW_THIS_TIME) {
             if (PermissionManager::GetInstance().RevokePermission(
                 tokenID, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME) != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
@@ -553,13 +553,13 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
 
 void TempPermissionObserver::RevokeTempPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    std::vector<PermissionStateFull> tmpList;
-    if (!GetPermissionStateFull(tokenID, tmpList)) {
+    std::vector<PermissionStatus> tmpList;
+    if (!GetPermissionState(tokenID, tmpList)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d get permission state full fail!", tokenID);
         return;
     }
     for (const auto& permissionState : tmpList) {
-        if ((permissionState.grantFlags[0] & PERMISSION_ALLOW_THIS_TIME) &&
+        if ((permissionState.grantFlag & PERMISSION_ALLOW_THIS_TIME) &&
             permissionState.permissionName == permissionName) {
             if (PermissionManager::GetInstance().RevokePermission(
                 tokenID, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME) != RET_SUCCESS) {
@@ -575,10 +575,10 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
 {
     std::unique_lock<std::mutex> lck(tempPermissionMutex_);
     for (auto iter = tempPermTokenMap_.begin(); iter != tempPermTokenMap_.end(); ++iter) {
-        std::vector<PermissionStateFull> tmpList;
-        GetPermissionStateFull(iter->first, tmpList);
+        std::vector<PermissionStatus> tmpList;
+        GetPermissionState(iter->first, tmpList);
         for (const auto& permissionState : tmpList) {
-            if (!(permissionState.grantFlags[0] & PERMISSION_ALLOW_THIS_TIME)) {
+            if (!(permissionState.grantFlag & PERMISSION_ALLOW_THIS_TIME)) {
                 continue;
             }
             int32_t ret = PermissionManager::GetInstance().RevokePermission(

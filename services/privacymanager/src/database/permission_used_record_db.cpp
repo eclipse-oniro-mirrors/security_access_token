@@ -33,6 +33,7 @@ constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
+constexpr const size_t TOKEN_ID_LENGTH = 11;
 
 std::recursive_mutex g_instanceMutex;
 }
@@ -60,6 +61,7 @@ void PermissionUsedRecordDb::OnCreate()
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     CreatePermissionRecordTable();
     CreatePermissionUsedTypeTable();
+    CreatePermissionUsedRecordToggleStatusTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
@@ -70,12 +72,17 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
         InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
         UpdatePermissionRecordTablePrimaryKey();
+        CreatePermissionUsedRecordToggleStatusTable();
     } else if (version == DataBaseVersion::VERISION_2) {
         InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
         UpdatePermissionRecordTablePrimaryKey();
+        CreatePermissionUsedRecordToggleStatusTable();
     } else if (version == DataBaseVersion::VERISION_3) {
         UpdatePermissionRecordTablePrimaryKey();
+        CreatePermissionUsedRecordToggleStatusTable();
+    } else if (version == DataBaseVersion::VERISION_4) {
+        CreatePermissionUsedRecordToggleStatusTable();
     }
 }
 
@@ -113,9 +120,17 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
         PrivacyFiledConst::FIELD_USED_TYPE
     };
 
+    SqliteTable permissionUsedRecordToggleStatusTable;
+    permissionUsedRecordToggleStatusTable.tableName_ = PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE;
+    permissionUsedRecordToggleStatusTable.tableColumnNames_ = {
+        PrivacyFiledConst::FIELD_USER_ID,
+        PrivacyFiledConst::FIELD_STATUS
+    };
+
     dataTypeToSqlTable_ = {
         {PERMISSION_RECORD, permissionRecordTable},
         {PERMISSION_USED_TYPE, permissionUsedTypeTable},
+        {PERMISSION_USED_RECORD_TOGGLE_STATUS, permissionUsedRecordToggleStatusTable},
     };
     Open();
 }
@@ -235,6 +250,27 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
             return FAILURE;
         }
     }
+    return SUCCESS;
+}
+
+int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataType> dateTypes,
+    const std::unordered_set<AccessTokenID>& tokenIDList)
+{
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    BeginTransaction();
+    for (const auto& type : dateTypes) {
+        std::string deleteHistorySql = CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList);
+        auto deleteHistoryStatement = Prepare(deleteHistorySql);
+        if (deleteHistoryStatement.Step() != Statement::State::DONE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
+            RollbackTransaction();
+            return FAILURE;
+        }
+    }
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Commit transaction.");
+    CommitTransaction();
+
     return SUCCESS;
 }
 
@@ -483,6 +519,31 @@ std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataT
     return sql;
 }
 
+std::string PermissionUsedRecordDb::CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
+    const std::unordered_set<AccessTokenID>& tokenIDList) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "delete from " + it->second.tableName_ + " where ";
+    sql.append(PrivacyFiledConst::FIELD_TOKEN_ID);
+    sql.append(" in ( ");
+
+    size_t sqlLen = sql.size();
+    sqlLen += TOKEN_ID_LENGTH * tokenIDList.size();
+    sql.reserve(sqlLen);
+
+    for (auto token = tokenIDList.begin(); token != tokenIDList.end(); ++token) {
+        sql.append(std::to_string(*token));
+        if (std::next(token) != tokenIDList.end()) {
+            sql.append(", ");
+        }
+    }
+    sql.append(" )");
+    return sql;
+}
+
 std::string PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type,
     uint32_t excessiveSize) const
 {
@@ -559,6 +620,24 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedTypeTable() const
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
         .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
+        .append("))");
+    return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::CreatePermissionUsedRecordToggleStatusTable() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = CREATE_TABLE_STR;
+    sql.append(it->second.tableName_ + " (")
+        .append(PrivacyFiledConst::FIELD_USER_ID)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_STATUS)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_USER_ID)
         .append("))");
     return ExecuteSql(sql);
 }

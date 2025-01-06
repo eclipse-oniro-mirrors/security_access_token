@@ -42,6 +42,7 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     PermissionUsedRequest request;
     PermissionUsedResult result;
     int32_t retCode = -1;
+    bool status = true;
 };
 
 struct PermissionUsedTypeAsyncContext : public PrivacyAsyncWorkData {
@@ -65,6 +66,8 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo);
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbInfo);
+napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbInfo);
+napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbinfo);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

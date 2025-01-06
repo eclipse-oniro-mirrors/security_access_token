@@ -43,6 +43,7 @@ static constexpr int32_t SECOND_PARAM = 1;
 static constexpr int32_t THIRD_PARAM = 2;
 static constexpr int32_t FOURTH_PARAM = 3;
 static constexpr int32_t FIFTH_PARAM = 4;
+static constexpr int32_t SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS = 1;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
@@ -215,6 +216,31 @@ static bool ParseAddPermissionRecord(
         if (!ParseAddPermissionFifthParam(env, argv[FIFTH_PARAM], asyncContext)) {
             return false;
         }
+    }
+
+    return true;
+}
+
+static bool ParsePermissionUsedRecordToggleStatus(
+    const napi_env& env, const napi_callback_info& info, RecordManagerAsyncContext& asyncContext)
+{
+    size_t argc = SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS;
+    napi_value argv[SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS] = { nullptr };
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc != SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter error.")), false);
+        return false;
+    }
+
+    asyncContext.env = env;
+    // 0: the first parameter of argv
+    if (!ParseBool(env, argv[FIRST_PARAM], asyncContext.status)) {
+        ParamResolveErrorThrow(env, "status", "boolean");
+        return false;
     }
 
     return true;
@@ -582,6 +608,128 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         AddPermissionUsedRecordComplete,
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
+    callbackPtr.release();
+    return result;
+}
+
+static void SetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SetPermissionUsedRecordToggleStatus execute.");
+    RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+
+    int32_t userID = 0;
+    asyncContext->retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, asyncContext->status);
+}
+
+static void SetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SetPermissionUsedRecordToggleStatus complete.");
+    RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = GetNapiNull(env);
+    if (asyncContext->deferred != nullptr) {
+        ReturnPromiseResult(env, *asyncContext, result);
+    }
+}
+
+napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbinfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SetPermissionUsedRecordToggleStatus begin.");
+
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+    if (!ParsePermissionUsedRecordToggleStatus(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    if (asyncContext->callbackRef == nullptr) {
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+    } else {
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "SetPermissionUsedRecordToggleStatus", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(env,
+        nullptr,
+        resource,
+        SetPermissionUsedRecordToggleStatusExecute,
+        SetPermissionUsedRecordToggleStatusComplete,
+        reinterpret_cast<void *>(asyncContext),
+        &(asyncContext->asyncWork)));
+
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
+    callbackPtr.release();
+    return result;
+}
+
+static void GetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecordToggleStatus execute.");
+    RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+
+    int32_t userID = 0;
+    asyncContext->retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID, asyncContext->status);
+}
+
+static void GetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecordToggleStatus complete.");
+    RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = GetNapiNull(env);
+    NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->status, &result));
+    if (asyncContext->deferred != nullptr) {
+        ReturnPromiseResult(env, *asyncContext, result);
+    }
+}
+
+napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbinfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecordToggleStatus begin.");
+
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = nullptr;
+    if (asyncContext->callbackRef == nullptr) {
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+    } else {
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetPermissionUsedRecordToggleStatus", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(env,
+        nullptr,
+        resource,
+        GetPermissionUsedRecordToggleStatusExecute,
+        GetPermissionUsedRecordToggleStatusComplete,
+        reinterpret_cast<void *>(asyncContext),
+        &(asyncContext->asyncWork)));
+
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
     return result;
