@@ -36,6 +36,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     }
 
     AccessTokenID tokenId = 0;
+    std::string bundleName = "";
     bool needDynamicRequest = true;
     int32_t result = RET_SUCCESS;
     int32_t instanceId = -1;
@@ -128,7 +129,6 @@ private:
         RequestAsyncContext& asyncContext);
     static void GetPermissionsStatusExecute(napi_env env, void *data);
     static void GetPermissionsStatusComplete(napi_env env, napi_status status, void *data);
-    static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
 } // namespace AccessToken
 } // namespace Security
