@@ -41,6 +41,7 @@
 #define INTERFACES_INNER_KITS_ACCESSTOKEN_KIT_H
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
@@ -167,6 +168,13 @@ public:
      * @return token type enum, see access_token.h
      */
     static ATokenTypeEnum GetTokenTypeFlag(FullTokenID tokenID);
+    /**
+     * @brief Get token id by user id.
+     * @param userID user id
+     * @param tokenIdList token id list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     /**
      * @brief Query hap tokenID by input prarms.
      * @param userID user id

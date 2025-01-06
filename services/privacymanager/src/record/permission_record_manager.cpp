@@ -77,6 +77,8 @@ static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
+static constexpr int32_t MAX_USER_ID = 10736;
+static constexpr int32_t BASE_USER_RANGE = 200000;
 std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
@@ -406,8 +408,30 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
     return true;
 }
 
+bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID)
+{
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it != permUsedRecToggleStatusMap_.end()) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
+        return it->second;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d not exist record, return true.", userID);
+    return true;
+}
+
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d).", info.tokenId);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "The permission used record toggle status is false.");
+        return Constant::SUCCESS;
+    }
+
     ExecuteDeletePermissionRecordTask();
 
     if ((info.successCount == 0) && (info.failCount == 0)) {
@@ -427,6 +451,166 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 
     return AddOrUpdateUsedTypeIfNeeded(
         info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
+}
+
+int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    if (!PermissionRecordManager::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    if (!status) {
+        std::unordered_set<AccessTokenID> tokenIDList;
+        int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList);
+        if (ret != RET_SUCCESS) {
+            return Constant::FAILURE;
+        }
+        if (!tokenIDList.empty()) {
+            RemoveHistoryPermissionUsedRecords(tokenIDList);
+        }
+    }
+
+    if (!UpdatePermUsedRecToggleStatusMap(userID, status)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The status is the same as that set last time, not need to update database.");
+        return Constant::SUCCESS;
+    }
+
+    if (!AddOrUpdateUsedStatusIfNeeded(userID, status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to AddOrUpdateUsedStatusIfNeeded.");
+        return Constant::FAILURE;
+    }
+
+    return Constant::SUCCESS;
+}
+
+bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status)
+{
+    std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it == permUsedRecToggleStatusMap_.end()) {
+        permUsedRecToggleStatusMap_.insert(std::make_pair(userID, status));
+        return true;
+    } else {
+        if (it->second != status) {
+            it->second = status;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+
+    std::vector<GenericValues> results;
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue, results);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        return false;
+    }
+
+    if (results.empty()) {
+        // empty means there is no user record, add it
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "No exsit record, add it.");
+
+        GenericValues recordValue;
+        recordValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+        recordValue.Put(PrivacyFiledConst::FIELD_STATUS, status);
+
+        std::vector<GenericValues> recordValues;
+        recordValues.emplace_back(recordValue);
+        int32_t res = PermissionUsedRecordDb::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, recordValues);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            return false;
+        }
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Exsit record, update it.");
+        GenericValues newValue;
+        newValue.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(status));
+        return (PermissionUsedRecordDb::GetInstance().Update(
+            PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS,
+            newValue, conditionValue) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
+    }
+
+    return true;
+}
+
+int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    if (!PermissionRecordManager::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    auto it = permUsedRecToggleStatusMap_.find(userID);
+    if (it == permUsedRecToggleStatusMap_.end()) {
+        status = true;
+    } else {
+        status = it->second;
+    }
+
+    return Constant::SUCCESS;
+}
+
+void PermissionRecordManager::UpdatePermUsedRecToggleStatusMapFromDb()
+{
+    std::vector<GenericValues> permUsedRecordToggleStatusRes;
+    GenericValues conditionValue;
+
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS,
+        conditionValue, permUsedRecordToggleStatusRes);
+    if (res != PermissionUsedRecordDb::SUCCESS || permUsedRecordToggleStatusRes.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not exsit record, res:%{public}d.", res);
+        return;
+    }
+
+    int32_t userID = 0;
+    bool status = true;
+    auto it = permUsedRecordToggleStatusRes.begin();
+    while (it != permUsedRecordToggleStatusRes.end()) {
+        userID = it->GetInt(PrivacyFiledConst::FIELD_USER_ID);
+        status = static_cast<bool>(it->GetInt(PrivacyFiledConst::FIELD_STATUS));
+        UpdatePermUsedRecToggleStatusMap(userID, status);
+        ++it;
+    }
+
+    return;
+}
+
+void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_set<AccessTokenID> tokenIDList)
+{
+    // remove from database
+    std::vector<PermissionUsedRecordDb::DataType> dataTypes;
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE);
+    PermissionUsedRecordDb::GetInstance().DeleteHistoryRecordsInTables(dataTypes, tokenIDList);
+
+    {
+        // remove from record cache
+        std::lock_guard<std::mutex> lock(permUsedRecMutex_);
+        auto it = permUsedRecList_.begin();
+        while (it != permUsedRecList_.end()) {
+            if (tokenIDList.find(it->record.tokenId) != tokenIDList.end()) {
+                it = permUsedRecList_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
@@ -1811,6 +1995,11 @@ uint64_t PermissionRecordManager::GetUniqueId(uint32_t tokenId, int32_t pid) con
     return ((uint64_t)tmpPid << 32) | ((uint64_t)tokenId & 0xFFFFFFFF); // 32: bit
 }
 
+bool PermissionRecordManager::IsUserIdValid(int32_t userID) const
+{
+    return userID >= 0 && userID <= MAX_USER_ID;
+}
+
 void PermissionRecordManager::Init()
 {
     if (hasInited_) {
@@ -1818,6 +2007,8 @@ void PermissionRecordManager::Init()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Init");
     hasInited_ = true;
+
+    UpdatePermUsedRecToggleStatusMapFromDb();
 
     GetConfigValue();
 }

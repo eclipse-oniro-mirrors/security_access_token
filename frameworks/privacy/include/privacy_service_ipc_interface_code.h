@@ -40,6 +40,8 @@ enum class PrivacyInterfaceCode {
     GET_PERMISSION_USED_TYPE_INFOS,
     SET_MUTE_POLICY,
     SET_HAP_WITH_FOREGROUND_REMINDER,
+    SET_PERMISSION_USED_RECORD_TOGGLE_STATUS,
+    GET_PERMISSION_USED_RECORD_TOGGLE_STATUS
 };
 } // namespace AccessToken
 } // namespace Security

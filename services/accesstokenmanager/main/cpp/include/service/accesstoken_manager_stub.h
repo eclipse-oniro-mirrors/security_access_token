@@ -54,6 +54,7 @@ private:
     void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply);
+    void GetTokenIDByUserIDInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply);

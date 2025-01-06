@@ -918,6 +918,48 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     return result;
 }
 
+int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_TOKEN_ID_BY_USER_ID, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+        return ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    uint32_t tokenIDListSize = 0;
+    if (!reply.ReadUint32(tokenIDListSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    for (uint32_t i = 0; i < tokenIDListSize; i++) {
+        AccessTokenID tokenId = 0;
+        if (!reply.ReadUint32(tokenId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+            return ERR_READ_PARCEL_FAILED;
+        }
+        tokenIdList.emplace(tokenId);
+    }
+    return result;
+}
+
 int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes)
 {
     MessageParcel data;

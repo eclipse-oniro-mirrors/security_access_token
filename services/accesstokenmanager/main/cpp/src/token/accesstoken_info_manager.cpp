@@ -395,6 +395,29 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
     return false;
 }
 
+int32_t AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    GenericValues conditionValue;
+    std::vector<GenericValues> tokenIDResults;
+    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    int32_t ret = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, tokenIDResults);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID(%{public}d) find tokenID failed, ret: %{public}d.", userID, ret);
+        return ret;
+    }
+    if (tokenIDResults.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID(%{public}d) find tokenID empty.", userID);
+        return RET_SUCCESS;
+    }
+
+    for (const GenericValues& tokenIDResult : tokenIDResults) {
+        AccessTokenID tokenId = (AccessTokenID)tokenIDResult.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        tokenIdList.emplace(tokenId);
+    }
+    return RET_SUCCESS;
+}
+
 int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& info)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);

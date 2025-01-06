@@ -16,9 +16,10 @@
 #ifndef PERMISSION_RECORD_MANAGER_H
 #define PERMISSION_RECORD_MANAGER_H
 
-#include <vector>
 #include <set>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
@@ -75,6 +76,10 @@ public:
     void Init();
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
     void RemovePermissionUsedRecords(AccessTokenID tokenId);
+    bool IsUserIdValid(int32_t userID) const;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    void RemoveHistoryPermissionUsedRecords(std::unordered_set<AccessTokenID> tokenIDList);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
@@ -125,6 +130,10 @@ private:
     bool IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid);
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
+    bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
+    bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
+    void UpdatePermUsedRecToggleStatusMapFromDb();
+    bool AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
     bool UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
@@ -257,6 +266,9 @@ private:
 
     std::mutex permUsedRecMutex_;
     std::vector<PermissionRecordCache> permUsedRecList_;
+
+    std::mutex permUsedRecToggleStatusMutex_;
+    std::map<int32_t, bool> permUsedRecToggleStatusMap_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -60,6 +60,9 @@ static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
+static constexpr int32_t TEST_USER_ID_10 = 10;
+static constexpr int32_t TEST_INVALID_USER_ID = -1;
+static constexpr int32_t TEST_INVALID_USER_ID_20000 = 20000;
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
@@ -821,6 +824,66 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords001, TestSize.L
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+}
+
+/*
+ * @tc.name:SetPermissionUsedRecordToggleStatus001
+ * @tc.desc: PermissionRecordManager::SetPermissionUsedRecordToggleStatus function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    int32_t ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_INVALID_USER_ID, true);
+    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+
+    ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_INVALID_USER_ID_20000, true);
+    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+}
+
+/*
+ * @tc.name:GetPermissionUsedRecordToggleStatus001
+ * @tc.desc: PermissionRecordManager::GetPermissionUsedRecordToggleStatus function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    bool status = true;
+    int32_t ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        TEST_INVALID_USER_ID, status);
+    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+
+    ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        TEST_INVALID_USER_ID_20000, status);
+    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+}
+
+/*
+ * @tc.name:UpdatePermUsedRecToggleStatusMap001
+ * @tc.desc: PermissionRecordManager::test UpdatePermUsedRecToggleStatusMap and CheckPermissionUsedRecordToggleStatus
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, UpdatePermUsedRecToggleStatusMap001, TestSize.Level1)
+{
+    bool checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
+    EXPECT_TRUE(checkStatus);
+
+    bool ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, false);
+    checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(checkStatus);
+
+    ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, false);
+    EXPECT_FALSE(ret);
+
+    ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, true);
+    checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(checkStatus);
 }
 
 /*

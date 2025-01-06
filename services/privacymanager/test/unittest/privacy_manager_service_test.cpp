@@ -282,6 +282,14 @@ public:
     {
         return RET_SUCCESS;
     }
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+    {
+        return RET_SUCCESS;
+    }
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+    {
+        return RET_SUCCESS;
+    }
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel& info, const sptr<IRemoteObject>& anonyStub)
     {
         return RET_SUCCESS;
@@ -473,6 +481,166 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
     // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatusInner001
+ * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
+    ASSERT_EQ(RET_SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatusInner002
+ * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatusInner003
+ * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatusInner001
+ * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
+    ASSERT_EQ(RET_SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatusInner002
+ * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatusInner003
+ * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    TestPrivacyManagerStub testStub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteInt32(userID));
+    ASSERT_EQ(true, data.WriteBool(status));
+    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
+        static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
 }
 

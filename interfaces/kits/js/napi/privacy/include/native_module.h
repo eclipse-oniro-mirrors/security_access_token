@@ -30,6 +30,8 @@ namespace AccessToken {
  * function for module exports
  */
 static napi_value Init(napi_env env, napi_value exports);
+
+static void CreateObjects(const napi_env& env, const napi_value& exports);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

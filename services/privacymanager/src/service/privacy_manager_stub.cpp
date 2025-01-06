@@ -88,6 +88,10 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
         &PrivacyManagerStub::SetMutePolicyInner;
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_HAP_WITH_FOREGROUND_REMINDER)] =
         &PrivacyManagerStub::SetHapWithFGReminderInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS)] =
+        &PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS)] =
+        &PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner;
 }
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
@@ -129,6 +133,64 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
         return;
     }
     reply.WriteInt32(this->AddPermissionUsedRecord(*infoParcel));
+}
+
+void PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int32_t userID = 0;
+    if (!data.ReadInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    bool status = true;
+    if (!data.ReadBool(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read status.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->SetPermissionUsedRecordToggleStatus(userID, status));
+}
+
+void PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int32_t userID = 0;
+    if (!data.ReadInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    bool status = true;
+    reply.WriteInt32(this->GetPermissionUsedRecordToggleStatus(userID, status));
+    reply.WriteBool(status);
 }
 
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -497,6 +559,17 @@ void PrivacyManagerStub::SetHapWithFGReminderInner(MessageParcel& data, MessageP
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;
     }
+}
+
+bool PrivacyManagerStub::IsPrivilegedCalling() const
+{
+    // shell process is root in debug mode.
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    return callingUid == ROOT_UID;
+#else
+    return false;
+#endif
 }
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const
