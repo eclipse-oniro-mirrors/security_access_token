@@ -244,12 +244,14 @@ int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, cons
     return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
 }
 
-int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID)
 {
-    if (!DataValidator::IsPolicyTypeValid(policyType) && !DataValidator::IsCallerTypeValid(callerType)) {
+    if (!DataValidator::IsPolicyTypeValid(policyType) ||
+        !DataValidator::IsCallerTypeValid(callerType) ||
+        (tokenID == 0)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute);
+    return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute, tokenID);
 }
 
 int32_t PrivacyKit::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)

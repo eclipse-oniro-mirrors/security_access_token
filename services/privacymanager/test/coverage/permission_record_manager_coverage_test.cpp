@@ -53,7 +53,7 @@ static constexpr int64_t TWO_SECOND = 2000;
 static constexpr int64_t THREE_SECOND = 3000;
 static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
-static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t TEST_USER_ID_11 = 11;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
@@ -260,7 +260,8 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.CAMERA";
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, false);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, false,
+        RANDOM_TOKENID);
     PermissionRecordManager::GetInstance().AddRecordToStartList(MakeInfo(tokenId, PID, permission), status, CALLER_PID);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
@@ -913,21 +914,22 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize
  */
 HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.Level1)
 {
-    int32_t tokenId = RANDOM_TOKENID;
+    int32_t tokenId = static_cast<int32_t>(RANDOM_TOKENID);
     int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL);
     PermissionUsedType visitType = PermissionUsedType::NORMAL_TYPE;
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
     GenericValues conditionValue;
-    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, tokenId);
     conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
 
     // query result empty, add input type
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+        RANDOM_TOKENID, opCode, visitType));
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     ASSERT_EQ(false, results.empty());
     for (const auto& result : results) {
-        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+        if (tokenId == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
             ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
                 result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
             ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
@@ -937,10 +939,11 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
     results.clear();
 
     // uesd type exsit and same to input type, return
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+        RANDOM_TOKENID, opCode, visitType));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     for (const auto& result : results) {
-        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+        if (tokenId == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
             ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
                 result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
             ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
@@ -951,10 +954,11 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
 
     visitType = PermissionUsedType::PICKER_TYPE;
     // used type exsit and diff from input type, update the type
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+        RANDOM_TOKENID, opCode, visitType));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     for (const auto& result : results) {
-        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+        if (tokenId == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
             ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
                 result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
             ASSERT_EQ(PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
@@ -1025,7 +1029,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     // true means close
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, true);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, true, RANDOM_TOKENID);
 
     auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);

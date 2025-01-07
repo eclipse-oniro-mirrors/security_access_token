@@ -99,7 +99,8 @@ public:
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
-    int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute);
+    int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute,
+        AccessTokenID tokenID);
     int32_t SetEdmMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
