@@ -51,7 +51,7 @@ static AccessTokenID g_nativeToken = 0;
 #ifdef AUDIO_FRAMEWORK_ENABLE
 static bool g_isMicMute = false;
 #endif
-static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t INVALID_PERMISSIONAME_LENGTH = 257;
 static constexpr int32_t FIRST_INDEX = 0;
 static constexpr int32_t SECOND_INDEX = 1;
@@ -2456,18 +2456,20 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PrivacyKit::SetMutePolicy(PolicyType::EDM - 1, CallerType::MICROPHONE, true));
+        PrivacyKit::SetMutePolicy(PolicyType::EDM - 1, CallerType::MICROPHONE, true, RANDOM_TOKENID));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PrivacyKit::SetMutePolicy(PolicyType::MIXED, CallerType::MICROPHONE, true));
+        PrivacyKit::SetMutePolicy(PolicyType::MIXED, CallerType::MICROPHONE, true, RANDOM_TOKENID));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE - 1, true));
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE - 1, true, RANDOM_TOKENID));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::CAMERA + 1, true));
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::CAMERA + 1, true, RANDOM_TOKENID));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::CAMERA, true, 0));
 }
 
 /**
  * @tc.name: SetMutePolicyTest002
- * @tc.desc: Test SetMutePolicy without PERMISSION_USED_STATE
+ * @tc.desc: Test SetMutePolicy without SET_MUTE_POLICY
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -2476,9 +2478,25 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without PERMISSION_USED_STATE
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without SET_MUTE_POLICY
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
+}
+
+/**
+ * @tc.name: SetMutePolicyTest003
+ * @tc.desc: Test SetMutePolicy with not edm
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
+{
+    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("camera_service");
+    ASSERT_NE(0, tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId)); // as a system service with SET_MUTE_POLICY
+
+    ASSERT_EQ(PrivacyError::ERR_FIRST_CALLER_NOT_EDM,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
 
 /**

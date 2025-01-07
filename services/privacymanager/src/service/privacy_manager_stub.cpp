@@ -43,6 +43,7 @@ static constexpr uint32_t TIMEOUT = 6; // 6s
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
+constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 }
 
 PrivacyManagerStub::PrivacyManagerStub()
@@ -505,7 +506,7 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
 
 void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!VerifyPermission(SET_MUTE_POLICY)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -527,8 +528,14 @@ void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
+    uint32_t tokenID;
+    if (!data.ReadUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
 
-    int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
+    int32_t result = this->SetMutePolicy(policyType, callerType, isMute, tokenID);
     if (!reply.WriteInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;

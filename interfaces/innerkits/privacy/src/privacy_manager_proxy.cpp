@@ -525,7 +525,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedTypeInfos(const AccessTokenID toke
     return result;
 }
 
-int32_t PrivacyManagerProxy::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyManagerProxy::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -544,6 +544,10 @@ int32_t PrivacyManagerProxy::SetMutePolicy(uint32_t policyType, uint32_t callerT
     }
     if (!data.WriteBool(isMute)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}d)", isMute);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!SendRequest(PrivacyInterfaceCode::SET_MUTE_POLICY, data, reply)) {
