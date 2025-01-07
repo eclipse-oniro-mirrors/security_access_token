@@ -99,12 +99,12 @@ public:
         return EFM_SUCCESS;
     }
 
-    int32_t GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+    int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
     {
         return EFM_SUCCESS;
     }
 
-    int32_t DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+    int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
     {
         return EFM_SUCCESS;
     }
@@ -452,13 +452,13 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey001, TestSize.Level
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "abcdefghijklmn";
     std::string keyId;
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(userId, groupID, keyId), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(uid, groupID, keyId), EFM_SUCCESS);
 }
 
 /**
@@ -471,13 +471,13 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey002, TestSize.Level
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "abcdefghijklmn";
     std::string keyId;
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(userId, groupID, keyId), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(uid, groupID, keyId), EFM_SUCCESS);
 }
 
 /**
@@ -490,12 +490,12 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey001, TestSize.Level1)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "";
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(userId, groupID), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(uid, groupID), EFM_SUCCESS);
 }
 
 /**
@@ -508,12 +508,12 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey002, TestSize.Level1)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "";
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(userId, groupID), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(uid, groupID), EFM_SUCCESS);
 }
 
 /**
@@ -651,10 +651,12 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level1)
     ASSERT_EQ(data.WriteInterfaceToken(El5FilekeyCallbackInterface::GetDescriptor()), true);
     data.WriteUint32(1); // infosSize
     data.WriteInt32(1);  // AppKeyInfo size
+    data.WriteUint32(static_cast<uint32_t>(AppKeyType::APP));
     data.WriteUint32(1000);
     std::string bundleName = "ohos.permission.test";
     data.WriteString(bundleName);
     data.WriteInt32(100);
+    data.WriteString("testGroupId");
     ASSERT_EQ(testEl5FilekeyCallback.OnRemoteRequest(code, data, reply, option), OHOS::NO_ERROR);
 }
 
@@ -670,6 +672,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Marshalling001, TestSize.Level1)
     appKeyInfo.uid = 1000;
     appKeyInfo.bundleName = "test";
     appKeyInfo.userId = 200;
+    appKeyInfo.groupID = "testGroupId";
     OHOS::Parcel parcel;
     ASSERT_EQ(appKeyInfo.Marshalling(parcel), true);
 }
@@ -684,9 +687,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Unmarshalling001, TestSize.Level1)
 {
     AppKeyInfo appKeyInfo;
     OHOS::Parcel parcel;
+    parcel.WriteUint32(static_cast<uint32_t>(AppKeyType::GROUPID));
     parcel.WriteUint32(1000);
     parcel.WriteString("ohos.permission.test");
     parcel.WriteInt32(100);
+    parcel.WriteString("testGroupId");
     auto info = appKeyInfo.Unmarshalling(parcel);
     ASSERT_EQ(info != nullptr, true);
     ASSERT_EQ(info->bundleName, "ohos.permission.test");

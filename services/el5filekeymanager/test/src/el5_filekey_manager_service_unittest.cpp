@@ -219,10 +219,10 @@ HWTEST_F(El5FilekeyManagerServiceTest, RegisterCallback001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, GenerateGroupIDKey001, TestSize.Level1)
 {
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "abcdefghijklmn";
     std::string keyId;
-    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(userId, groupID, keyId), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(uid, groupID, keyId), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -233,9 +233,9 @@ HWTEST_F(El5FilekeyManagerServiceTest, GenerateGroupIDKey001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, DeleteGroupIDKey001, TestSize.Level1)
 {
-    int32_t userId = 100;
+    uint32_t uid = 100;
     std::string groupID = "";
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(userId, groupID), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(uid, groupID), EFM_ERR_NO_PERMISSION);
 }
 
 /**

@@ -21,9 +21,11 @@ namespace Security {
 namespace AccessToken {
 bool AppKeyInfo::Marshalling(Parcel &parcel) const
 {
+    RETURN_IF_FALSE(parcel.WriteUint32(static_cast<uint32_t>(this->type)));
     RETURN_IF_FALSE(parcel.WriteUint32(this->uid));
     RETURN_IF_FALSE(parcel.WriteString(this->bundleName));
     RETURN_IF_FALSE(parcel.WriteInt32(this->userId));
+    RETURN_IF_FALSE(parcel.WriteString(this->groupID));
     return true;
 }
 
@@ -33,9 +35,14 @@ AppKeyInfo *AppKeyInfo::Unmarshalling(Parcel &parcel)
     if (info == nullptr) {
         return nullptr;
     }
+
+    uint32_t type;
+    RELEASE_IF_FALSE(parcel.ReadUint32(type), info);
+    info->type = static_cast<AppKeyType>(type);
     RELEASE_IF_FALSE(parcel.ReadUint32(info->uid), info);
     RELEASE_IF_FALSE(parcel.ReadString(info->bundleName), info);
     RELEASE_IF_FALSE(parcel.ReadInt32(info->userId), info);
+    RELEASE_IF_FALSE(parcel.ReadString(info->groupID), info);
     return info;
 }
 }  // namespace AccessToken
