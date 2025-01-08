@@ -75,6 +75,7 @@ public:
     int DeleteToken(AccessTokenID tokenID) override;
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParcel& policyParcel, HapInfoCheckResult& resultInfo) override;
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE

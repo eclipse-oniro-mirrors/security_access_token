@@ -671,6 +671,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PLUGIN_UPDATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.RECEIVE_UPDATE_MESSAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -2276,6 +2286,26 @@
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.START_PROVISIONING_MESSAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -4159,6 +4189,26 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.PRELOAD_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INPUT_KEYBOARD_CONTROLLER",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
@@ -4680,7 +4730,7 @@
             "name": "ohos.permission.MANAGE_INPUT_INFRARED_EMITTER",
             "grantMode": "system_grant",
             "availableLevel": "normal",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
@@ -5569,6 +5619,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MICROPHONE_BACKGROUND",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ENABLE_EXPERIENCE_HBM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5613,7 +5673,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 13,
+            "since": 15,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -5674,6 +5734,26 @@
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.LOCATION_SWITCH_IGNORED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.SET_MUTE_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 15,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false

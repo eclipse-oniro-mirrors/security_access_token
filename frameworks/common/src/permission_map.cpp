@@ -119,6 +119,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UPDATE_SYSTEM",           false},
     {"ohos.permission.FACTORY_RESET",           false},
     {"ohos.permission.ASSIST_DEVICE_UPDATE",    false},
+    {"ohos.permission.PLUGIN_UPDATE",           false},
     {"ohos.permission.RECEIVE_UPDATE_MESSAGE",    false},
     {"ohos.permission.UPDATE_MIGRATE",          false},
     {"ohos.permission.GRANT_SENSITIVE_PERMISSIONS", false},
@@ -220,6 +221,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",  false},
     {"ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",     false},
     {"ohos.permission.RECEIVE_ENTERPRISE_POLICY_EVENT",     false},
+    {"ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",        false},
+    {"ohos.permission.START_PROVISIONING_MESSAGE",          false},
     {"ohos.permission.NFC_TAG",                             false},
     {"ohos.permission.NFC_CARD_EMULATION",                  false},
     {"ohos.permission.MANAGE_UWB",                          false},
@@ -572,6 +575,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",  false},
     {"ohos.permission.ENABLE_EXPERIENCE_HBM",               false},
     {"ohos.permission.CAPTURE_PLAYBACK",                    false},
+    {"ohos.permission.MICROPHONE_BACKGROUND",               false},
     {"ohos.permission.USE_USER_ACCESS_MANAGER",        false},
     {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
     {"ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE", false},
@@ -588,6 +592,10 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ANTI_FRAUD",                          false},
     {"ohos.permission.GET_SIGNATURE_INFO",                  false},
     {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
+    {"ohos.permission.PRELOAD_FILE",                          false},
+    {"ohos.permission.INPUT_KEYBOARD_CONTROLLER",             false},
+    {"ohos.permission.LOCATION_SWITCH_IGNORED",     false},
+    {"ohos.permission.SET_MUTE_POLICY",                     false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

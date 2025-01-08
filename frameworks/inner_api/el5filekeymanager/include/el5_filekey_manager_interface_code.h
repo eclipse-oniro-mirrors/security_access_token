@@ -29,6 +29,9 @@ enum class EFMInterfaceCode {
     CHANGE_USER_APP_KEYS_LOAD_INFO,
     SET_FILE_PATH_POLICY,
     REGISTER_CALLBACK,
+    GENERATE_GROUPID_KEY,
+    DELETE_GROUPID_KEY,
+    QUERY_APP_KEY_STATE,
 };
 } // namespace AccessToken
 } // namespace Security

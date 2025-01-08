@@ -447,6 +447,12 @@ int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx, co
         InitializedList, policyParcel.hapPolicy.apl, policyParcel.hapPolicy.permList);
     return ret;
 }
+int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID: %{public}d", userID);
+
+    return AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
+}
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
 {

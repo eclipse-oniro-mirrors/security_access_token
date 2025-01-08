@@ -668,7 +668,6 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
 int32_t PermissionManager::AddPermStateChangeCallback(
     const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     PermStateChangeScope scopeRes;
     int32_t result = ScopeFilter(scope, scopeRes);
     if (result != RET_SUCCESS) {

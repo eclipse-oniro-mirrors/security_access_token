@@ -44,6 +44,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/database",
       "${access_token_path}/services/privacymanager/include/record",
       "${access_token_path}/services/privacymanager/include/service",
+      "${access_token_path}/services/privacymanager/include/proxy",
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
     ]
@@ -58,15 +59,19 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/database/data_translator.cpp",
       "../../src/database/permission_used_record_db.cpp",
       "../../src/database/privacy_field_const.cpp",
+      "../../src/proxy/privacy_manager_proxy_death_param.cpp",
       "../../src/record/on_permission_used_record_callback_proxy.cpp",
       "../../src/record/permission_record.cpp",
       "../../src/record/permission_record_manager.cpp",
+      "../../src/record/permission_record_set.cpp",
       "../../src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "../../src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "../../src/service/privacy_manager_service.cpp",
       "../../src/service/privacy_manager_stub.cpp",
       "permission_record_db_test.cpp",
       "permission_record_manager_test.cpp",
+      "permission_record_set_test.cpp",
+      "privacy_manager_proxy_death_test.cpp",
       "privacy_manager_service_test.cpp",
       "sensitive_manager_test.cpp",
     ]
@@ -83,6 +88,8 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
       "${access_token_path}/services/common:accesstoken_service_common",
+      "${access_token_path}/services/common/proxy_death:proxy_death_handler",
+      "${access_token_path}/services/common/proxy_death:proxy_death_stub",
       "${access_token_path}/services/privacymanager:privacy_manager_service",
     ]
 

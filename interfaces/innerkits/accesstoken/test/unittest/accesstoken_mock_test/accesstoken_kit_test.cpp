@@ -298,6 +298,19 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetTokenIDByUserID001
+ * @tc.desc: GetTokenIDByUserID with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenIDByUserID001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    std::unordered_set<AccessTokenID> tokenIdList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList));
+}
+
+/**
  * @tc.name: GetPermissionFlag001
  * @tc.desc: GetPermissionFlag with proxy is null
  * @tc.type: FUNC

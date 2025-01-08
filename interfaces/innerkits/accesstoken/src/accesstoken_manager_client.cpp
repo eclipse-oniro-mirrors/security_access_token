@@ -495,6 +495,16 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel, result);
 }
 
+int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetTokenIDByUserID(userID, tokenIdList);
+}
+
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
 {
     auto proxy = GetProxy();

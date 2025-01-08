@@ -30,10 +30,12 @@ public:
     ~PrivacyManagerProxy() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        PermissionUsedType type) override;
-    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback, PermissionUsedType type) override;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
+    int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
+        const sptr<IRemoteObject>& anonyStub) override;
+    int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
+        const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub) override;
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID) override;
     int32_t GetPermissionUsedRecords(
@@ -53,7 +55,7 @@ public:
 #endif
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
-    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) override;
+    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID) override;
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) override;
 private:
     bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode = false);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include "accesstoken_log.h"
+#include "ams_manager_access_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
@@ -28,6 +29,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
+std::u16string DESCRIPTOR = u"ohos.appexecfwk.AppMgr";
+constexpr int32_t CYCLE_LIMIT = 1000;
 } // namespace
 
 AppManagerAccessClient& AppManagerAccessClient::GetInstance()
@@ -59,7 +62,22 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return ERROR;
     }
-    sptr<IAmsMgr> amsService = proxy->GetAmsMgr();
+
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(DESCRIPTOR)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        return ERROR;
+    }
+    int32_t error = proxy->SendRequest(
+        static_cast<uint32_t>(AppManagerAccessClient::Message::APP_GET_MGR_INSTANCE), data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAmsMgr failed, error: %{public}d", error);
+        return ERROR;
+    }
+    sptr<IRemoteObject> object = reply.ReadRemoteObject();
+    sptr<IAmsMgr> amsService = new AmsManagerAccessProxy(object);
     if (amsService == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AmsService is null.");
         return ERROR;
@@ -80,7 +98,30 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
         return ERROR;
     }
     std::vector<std::string> bundleNameList;
-    return proxy->RegisterApplicationStateObserver(observer, bundleNameList);
+
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(DESCRIPTOR)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        return ERROR;
+    }
+    if (!data.WriteRemoteObject(observer->AsObject())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
+        return ERROR;
+    }
+    if (!data.WriteStringVector(bundleNameList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "BundleNameList write failed.");
+        return ERROR;
+    }
+    int32_t error = proxy->SendRequest(
+        static_cast<uint32_t>(AppManagerAccessClient::Message::REGISTER_APPLICATION_STATE_OBSERVER),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterAppStatus failed, error: %{public}d", error);
+        return ERROR;
+    }
+    return reply.ReadInt32();
 }
 
 int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
@@ -94,7 +135,26 @@ int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IA
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERROR;
     }
-    return proxy->UnregisterApplicationStateObserver(observer);
+
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(DESCRIPTOR)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        return ERROR;
+    }
+    if (!data.WriteRemoteObject(observer->AsObject())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
+        return ERROR;
+    }
+    int32_t error = proxy->SendRequest(
+        static_cast<uint32_t>(AppManagerAccessClient::Message::UNREGISTER_APPLICATION_STATE_OBSERVER),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
+        return error;
+    }
+    return reply.ReadInt32();
 }
 
 int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateData>& list)
@@ -104,7 +164,32 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERROR;
     }
-    return proxy->GetForegroundApplications(list);
+
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(DESCRIPTOR)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        return ERROR;
+    }
+    int32_t error = proxy->SendRequest(
+        static_cast<uint32_t>(AppManagerAccessClient::Message::GET_FOREGROUND_APPLICATIONS), data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetForegroundApplications failed, error: %{public}d", error);
+        return error;
+    }
+    uint32_t infoSize = reply.ReadUint32();
+    if (infoSize > CYCLE_LIMIT) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize is too large");
+        return ERROR;
+    }
+    for (uint32_t i = 0; i < infoSize; i++) {
+        std::unique_ptr<AppStateData> info(reply.ReadParcelable<AppStateData>());
+        if (info != nullptr) {
+            list.emplace_back(*info);
+        }
+    }
+    return reply.ReadInt32();
 }
 
 void AppManagerAccessClient::InitProxy()
@@ -126,10 +211,7 @@ void AppManagerAccessClient::InitProxy()
         appManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = new AppManagerAccessProxy(appManagerSa);
-    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
-    }
+    proxy_ = appManagerSa;
 }
 
 void AppManagerAccessClient::RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback)
@@ -159,10 +241,10 @@ void AppManagerAccessClient::OnRemoteDiedHandle()
     }
 }
 
-sptr<IAppMgr> AppManagerAccessClient::GetProxy()
+sptr<IRemoteObject> AppManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
+    if (proxy_ == nullptr || proxy_->IsObjectDead()) {
         InitProxy();
     }
     return proxy_;
@@ -171,10 +253,16 @@ sptr<IAppMgr> AppManagerAccessClient::GetProxy()
 void AppManagerAccessClient::ReleaseProxy()
 {
     if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
-        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+        proxy_->RemoveDeathRecipient(serviceDeathObserver_);
     }
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
+}
+
+void AppManagerAccessClient::AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 } // namespace AccessToken
 } // namespace Security

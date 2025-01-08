@@ -12,25 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "app_manager_death_recipient.h"
 
-#include "accesstoken_log.h"
-#include "app_manager_access_client.h"
+#ifndef TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUSSTUB_FUZZER_H
+#define TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUSSTUB_FUZZER_H
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppMgrDeathRecipient"
-};
-} // namespace
+#define FUZZ_PROJECT_NAME "setpermissionusedrecordtogglestatusstub_fuzzer"
 
-void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
+#endif // TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUSSTUB_FUZZER_H

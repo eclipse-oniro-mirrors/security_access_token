@@ -761,6 +761,25 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetTokenIDByUserID001
+ * @tc.desc: Get token id by user id.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenIDByUserID001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    std::unordered_set<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    userID = 100;
+    ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_NE(static_cast<uint32_t>(0), tokenIdList.size());
+}
+
+/**
  * @tc.name: SetPermissionRequestToggleStatus001
  * @tc.desc: Set permission request toggle status that userId, permission or status is invalid.
  * @tc.type: FUNC

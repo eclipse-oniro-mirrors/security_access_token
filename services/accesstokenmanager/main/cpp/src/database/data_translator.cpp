@@ -103,7 +103,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
             "ERROR_REASON", "permission grant flag error");
         return ERR_PARAM_INVALID;
     }
-    outPermissionState.grantFlag = grantFlag;
+    outPermissionState.grantFlag = static_cast<uint32_t>(grantFlag);
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
@@ -113,7 +113,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
             "ERROR_REASON", "permission grant status error");
         return ERR_PARAM_INVALID;
     }
-    if (grantFlag & PERMISSION_ALLOW_THIS_TIME) {
+    if (static_cast<uint32_t>(grantFlag) & PERMISSION_ALLOW_THIS_TIME) {
         grantStatus = PERMISSION_DENIED;
     }
     outPermissionState.grantStatus = grantStatus;
