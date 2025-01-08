@@ -178,10 +178,5 @@ if (is_standard_system && ability_base_enable == true) {
       include_dirs +=
           [ "${access_token_path}/services/common/ability_manager/include" ]
     }
-
-    if (hicollie_enable == true) {
-      external_deps += [ "hicollie:libhicollie" ]
-      cflags_cc += [ "-DHICOLLIE_ENABLE" ]
-    }
   }
 }
