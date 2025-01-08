@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
@@ -43,8 +43,6 @@ const std::string OVER_SIZE_STR =
     "FBSURBVDiN7ZQ/S8NQFMVPxU/QCx06GBzrkqUZ42rBbHWUBDqYxSnUoTxXydCSycVsgltfBiFDR8HNdHGxY4nQQAPvMzwHsWn+KM"
     "vj3He5vIaUEjV0UAfe85X83KMBT7N75JEXVdSlfEAVfPRyZ5yfIrBoUkVlMU82Hkp8wu9ddt1vFew4sIiIiKwgzcXIvN7GTZOvpZ"
     "D3I1NZvmdCXz+XOv5wJANKHOVYjRTAghxIyh0FHKb+0QQH5+kXf2zkYGAG0oFr5RfnK8DAGkwY19wliRT2L448vjv0YGQFVa8VKd";
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "InitHapTokenTest"};
 
 PermissionStateFull g_infoManagerManageHapState = {
     .permissionName = "ohos.permission.MANAGE_HAP_TOKENID",
@@ -121,7 +119,7 @@ void InitHapTokenTest::TearDownTestCase()
 
 void InitHapTokenTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -137,7 +135,7 @@ void InitHapTokenTest::TearDown()
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -150,14 +148,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(0, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
@@ -170,7 +170,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -182,14 +182,16 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(1, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
@@ -202,7 +204,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -245,7 +247,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest004");
 
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullTokenId);
@@ -262,7 +264,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenFuncTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -318,6 +320,33 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapTokenFuncTest006
+ * @tc.desc: Install normal app success with input param result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest006");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.isSystemApp = false;
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    result.permCheckResult.permissionName = "test"; // invalid Name
+    result.permCheckResult.rule = static_cast<PermissionRulesEnum>(-1); // invalid reasan
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "test");
+    ASSERT_EQ(result.permCheckResult.rule, -1);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
  * @tc.name: InitHapTokenSpecsTest001
  * @tc.desc: Test the high-level permission authorized by acl.
  * @tc.type: FUNC
@@ -325,7 +354,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -371,7 +400,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -398,6 +427,12 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ACCESS_DDK_USB");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
 }
 
 /**
@@ -408,7 +443,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -462,7 +497,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest004");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -526,7 +561,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -554,7 +589,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest006");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest006");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -593,7 +628,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest007");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest007");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -607,10 +642,18 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
         .grantFlags = {PERMISSION_SYSTEM_FIXED}
     };
     policyParams.permStateList = {permissionStateFull001};
+    policyParams.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
+    tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
     EXPECT_EQ(PERMISSION_DENIED, ret);
@@ -624,7 +667,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenSpecsTest008");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest008");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -663,7 +706,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -699,7 +742,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -733,7 +776,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -774,7 +817,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest004");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -831,7 +874,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
  */
 HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitHapTokenAbnormalTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;

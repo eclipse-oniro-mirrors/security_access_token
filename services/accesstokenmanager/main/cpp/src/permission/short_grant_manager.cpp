@@ -21,6 +21,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "accesstoken_log.h"
 #include "app_manager_access_client.h"
 #include "permission_manager.h"
 

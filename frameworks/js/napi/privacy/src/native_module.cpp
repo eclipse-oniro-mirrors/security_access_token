@@ -33,11 +33,20 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPermissionUsedRecords", GetPermissionUsedRecords),
         DECLARE_NAPI_FUNCTION("on", RegisterPermActiveChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback),
-        DECLARE_NAPI_FUNCTION("getPermissionUsedTypeInfos", GetPermissionUsedTypeInfos)
+        DECLARE_NAPI_FUNCTION("getPermissionUsedTypeInfos", GetPermissionUsedTypeInfos),
+        DECLARE_NAPI_FUNCTION("setPermissionUsedRecordToggleStatus", SetPermissionUsedRecordToggleStatus),
+        DECLARE_NAPI_FUNCTION("getPermissionUsedRecordToggleStatus", GetPermissionUsedRecordToggleStatus)
     };
 
     napi_define_properties(env, exports, sizeof(descriptor) / sizeof(descriptor[0]), descriptor);
 
+    CreateObjects(env, exports);
+
+    return exports;
+}
+
+static void CreateObjects(const napi_env& env, const napi_value& exports)
+{
     napi_value permissionUsageFlag = nullptr;
     napi_create_object(env, &permissionUsageFlag);
 
@@ -85,8 +94,6 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("PermissionUsedType", permissionUsedType)
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(exportFuncs[0]), exportFuncs);
-
-    return exports;
 }
 EXTERN_C_END
 

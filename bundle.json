@@ -90,7 +90,30 @@
           "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
           "header": {
             "header_files": [
-              "accesstoken_kit.h"
+              "access_token_error.h",
+              "access_token.h",
+              "accesstoken_callback_stubs.h",
+              "accesstoken_callbacks.h",
+              "accesstoken_kit.h",
+              "accesstoken_state_change_ipc_interface_code.h",
+              "atm_tools_param_info.h",
+              "hap_token_info_for_sync_parcel.h",
+              "hap_token_info.h",
+              "i_permission_state_callback.h",
+              "i_token_sync_callback.h",
+              "native_token_info.h",
+              "perm_state_change_callback_customize.h",
+              "permission_def.h",
+              "permission_dlp_mode.h",
+              "permission_grant_info.h",
+              "permission_list_state.h",
+              "permission_state_change_info.h",
+              "permission_state_full.h",
+              "permission_status.h",
+              "sec_comp_enhance_data.h",
+              "token_sync_kit_interface.h",
+              "tokenid_kit.h",
+              "tokensync_callback_ipc_interface_code.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
           }
@@ -156,6 +179,8 @@
           "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
           "header": {
             "header_files": [
+              "perm_setproc.h",
+              "setproc_common.h",
               "token_setproc.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
@@ -165,6 +190,8 @@
           "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtokensetproc_shared",
           "header": {
             "header_files": [
+              "perm_setproc.h",
+              "setproc_common.h",
               "token_setproc.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"

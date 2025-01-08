@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetPermissionTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
@@ -79,7 +77,7 @@ void GetPermissionTest::TearDownTestCase()
 
 void GetPermissionTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -112,7 +110,7 @@ void GetPermissionTest::TearDown()
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
 
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
 
@@ -144,7 +142,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeFuncTest001");
 
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
     std::string sendMessages = "ohos.permission.SEND_MESSAGES";
@@ -200,7 +198,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionFuncTest001");
 
     PermissionDef permDefResultAlpha;
     int ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
@@ -221,7 +219,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionAbnormalTest001");
 
     PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission("ohos.permission.GAMMA", permDefResult);
@@ -243,7 +241,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionSpecTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionSpecTest001");
 
     for (int j = 0; j < CYCLE_TIMES; j++) {
         PermissionDef permDefResultAlpha;
@@ -261,7 +259,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionsFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -282,7 +280,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionsFuncTest002");
 
     HapPolicyParams testPolicyPrams = g_infoManagerTestPolicyPrams;
     testPolicyPrams.permList.clear();
@@ -310,7 +308,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsFuncTest002, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionsAbnormalTest001");
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -330,7 +328,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetDefPermissionsSpecTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetDefPermissionsSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionsSpecTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -351,7 +349,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionsSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -375,7 +373,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest002");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -399,7 +397,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsFuncTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest003");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -410,12 +408,12 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain"
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -442,7 +440,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -466,7 +464,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetReqPermissionsSpecTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsSpecTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -488,7 +486,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionManagerInfoFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionManagerInfoFuncTest001");
 
     PermissionGrantInfo info;
     AccessTokenKit::GetPermissionManagerInfo(info);

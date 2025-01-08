@@ -20,6 +20,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
@@ -48,6 +49,7 @@ public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
     void Init();
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
@@ -56,12 +58,12 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
-    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
+    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-        const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
+        const std::vector<PermissionStatus>& permStateList, ATokenAplEnum apl,
         const std::vector<PermissionDef>& permList);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     bool IsTokenIdExist(AccessTokenID id);
@@ -109,12 +111,27 @@ private:
     int AddNativeTokenInfo(const std::shared_ptr<NativeTokenInfoInner>& info);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
-    bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
+    void IdFalseWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName, AccessTokenID oriTokenId);
+    void IdFalseWithProcessFalseCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName);
+    void IdTrueWithProcessTrueCache(const std::shared_ptr<NativeTokenInfoInner>& infoPtr, AccessTokenID cfgTokenId,
+        std::string& cfgProcessName);
+    void TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr,
+        std::vector<AccessTokenID>& deleteTokenList, std::vector<GenericValues>& nativeTokenValues,
+        std::vector<GenericValues>& permStateValues);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo);
+    int AddHapTokenInfoToDb(AccessTokenID tokenID, const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const std::string& appId, ATokenAplEnum apl);
     int AddNativeTokenInfoToDb(
         const std::vector<GenericValues>& nativeInfoValues, const std::vector<GenericValues>& permStateValues);
     int RemoveTokenInfoFromDb(AccessTokenID tokenID, bool isHap = true);
+    void StoreHapInfo(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const std::string& appId, ATokenAplEnum apl,
+        std::vector<GenericValues>& valueList);
+    int32_t ModifyHapTokenInfoToDb(std::shared_ptr<HapTokenInfoInner>& infoPtr,
+        const std::vector<PermissionStatus>& permStateList,
+        const UpdateHapInfoParams& info, ATokenAplEnum apl);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);

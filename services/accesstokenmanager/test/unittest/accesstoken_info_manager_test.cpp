@@ -43,9 +43,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManagerTest"
-};
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static bool g_hasHapPermissionDefinition;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
@@ -77,20 +74,16 @@ static PermissionDef g_infoManagerTestPermDef2 = {
     .descriptionId = 1
 };
 
-static PermissionStateFull g_infoManagerTestState1 = {
+static PermissionStatus g_infoManagerTestState1 = {
     .permissionName = "open the door",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {1},
-    .grantFlags = {1}
+    .grantStatus = 1,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_infoManagerTestState2 = {
+static PermissionStatus g_infoManagerTestState2 = {
     .permissionName = "break the door",
-    .isGeneral = false,
-    .resDeviceID = {"device 1", "device 2"},
-    .grantStatus = {1, 3},
-    .grantFlags = {1, 2}
+    .grantStatus = 1,
+    .grantFlag = 1
 };
 
 static HapInfoParams g_infoManagerTestInfoParms = {
@@ -100,19 +93,17 @@ static HapInfoParams g_infoManagerTestInfoParms = {
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPrams1 = {
+static HapPolicy g_infoManagerTestPolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
 
-static PermissionStateFull g_permState = {
+static PermissionStatus g_permState = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = false,
-    .resDeviceID = {"dev-001", "dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
 };
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -182,17 +173,14 @@ HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
 {
     AccessTokenID id = 0x20240112;
     HapTokenInfo info = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "deviceId",
         .tokenID = id,
         .tokenAttr = 0
     };
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(id, info, permStateList);
     ASSERT_EQ(hap->IsRemote(), false);
     hap->SetRemote(true);
@@ -243,8 +231,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "AddHapToken001 fill data");
-
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams1, tokenIdEx);
@@ -286,7 +272,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
     HapInfoParams info = {
         .userID = -1
     };
-    HapPolicyParams policy;
+    HapPolicy policy;
     AccessTokenIDEx tokenIdEx;
 
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
@@ -304,7 +290,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
         .userID = USER_ID,
         .bundleName = ""
     };
-    HapPolicyParams policy;
+    HapPolicy policy;
     AccessTokenIDEx tokenIdEx;
 
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
@@ -323,7 +309,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
         .bundleName = "ohos.com.testtesttest",
         .appIDDesc = ""
     };
-    HapPolicyParams policy;
+    HapPolicy policy;
     AccessTokenIDEx tokenIdEx;
 
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
@@ -342,7 +328,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
         .bundleName = "ohos.com.testtesttest",
         .appIDDesc = "who cares"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .domain = ""
     };
     AccessTokenIDEx tokenIdEx;
@@ -364,7 +350,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
         .dlpType = -1,
         .appIDDesc = "who cares"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .domain = "who cares"
     };
     AccessTokenIDEx tokenIdEx;
@@ -397,7 +383,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
         .bundleName = "ohos.com.testtesttest",
         .appIDDesc = ""
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {permDef}
@@ -425,10 +411,11 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
         .isSystemApp = false,
     };
     HapPolicyParcel hapPolicyParcel;
-    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
-    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+    hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicy.domain = "test.domain";
     AccessTokenIDEx tokenIdEx;
-    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
 }
 
 /**
@@ -450,10 +437,12 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
         .isSystemApp = false,
     };
     HapPolicyParcel hapPolicyParcel;
-    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
-    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+    hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicy.domain = "test.domain";
     AccessTokenIDEx tokenIdEx;
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+        atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
 }
 
 /**
@@ -475,39 +464,34 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
         .isSystemApp = false,
     };
     HapPolicyParcel policy;
-    PermissionStateFull permissionStateA = {
+    PermissionStatus permissionStateA = {
         .permissionName = "ohos.permission.GET_ALL_APP_ACCOUNTS",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {1},
-        .grantFlags = {1}
+        .grantStatus = 1,
+        .grantFlag = 1
     };
-    PermissionStateFull permissionStateB = {
-        .permissionName = "ohos.permission.PRELOAD_APPLICATION",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {1},
-        .grantFlags = {1}
-    };
-    PermissionStateFull permissionStateC = {
+    PermissionStatus permissionStateB = {
         .permissionName = "ohos.permission.test",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {1},
-        .grantFlags = {1}
+        .grantStatus = 1,
+        .grantFlag = 1
     };
-    policy.hapPolicyParameter = {
+    policy.hapPolicy = {
         .apl = APL_NORMAL,
         .domain = "test",
         .permList = {},
-        .permStateList = { permissionStateA }
+        .permStateList = { permissionStateA, permissionStateB }
     };
     AccessTokenIDEx fullTokenId = {0};
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId));
+    HapInfoCheckResult result;
 
-    policy.hapPolicyParameter.permStateList = { permissionStateB, permissionStateC };
-    policy.hapPolicyParameter.aclRequestedList = { "ohos.permission.PRELOAD_APPLICATION" };
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId));
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
+    permissionStateA.permissionName = "ohos.permission.ENTERPRISE_MANAGE_SETTINGS";
+    policy.hapPolicy.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
+    policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
 }
 
 /**
@@ -633,7 +617,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
-    HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
+    HapPolicy policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
     UpdateHapInfoParams info;
     info.appIDDesc = std::string("updateAppId");
@@ -665,7 +649,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
+    HapPolicy policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
     UpdateHapInfoParams info;
     info.appIDDesc = std::string("");
@@ -695,7 +679,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
-    HapPolicyParams policy;
+    HapPolicy policy;
     UpdateHapInfoParams hapInfoParams;
     hapInfoParams.appIDDesc = "who cares";
     hapInfoParams.apiVersion = DEFAULT_API_VERSION;
@@ -843,7 +827,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
 
 static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapTokenInfo& baseInfo)
 {
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(g_infoManagerTestState1);
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
@@ -863,13 +847,10 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     std::string deviceID = "deviceId";
     HapTokenInfo rightBaseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "deviceId",
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -877,13 +858,6 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string wrongStr(10241, 'x');
 
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest("", wrongBaseInfo));
-
-    wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.userID = -1; // wrong userID
@@ -895,10 +869,6 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.tokenID = 0; // wrong tokenID
-    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.appID = wrongStr; // wrong appID
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
@@ -1404,7 +1374,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "accesstoken_info_manager_test"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "domain"
     };
@@ -1485,7 +1455,14 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, TryUpdateExistNativeToken001, TestSize.Level1)
 {
     std::shared_ptr<NativeTokenInfoInner> infoPtr = nullptr;
-    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr)); // infoPtr is null
+    std::vector<AccessTokenID> deleteTokenList;
+    std::vector<GenericValues> permStateValues;
+    std::vector<GenericValues> nativeTokenValues;
+    AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr, deleteTokenList,
+        permStateValues, nativeTokenValues); // infoPtr is null
+    ASSERT_EQ(0, deleteTokenList.size());
+    ASSERT_EQ(0, permStateValues.size());
+    ASSERT_EQ(0, nativeTokenValues.size());
 }
 
 /**
@@ -1591,35 +1568,23 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
     std::string deviceID = "dev-001";
     int grantState = PermissionState::PERMISSION_DENIED;
     uint32_t grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-
-    std::vector<std::string> resDeviceID;
-    std::vector<int> grantStates;
-    std::vector<uint32_t> grantFlags;
-
-    resDeviceID.emplace_back(deviceID);
-    grantStates.emplace_back(grantState);
-    grantFlags.emplace_back(grantFlag);
-
-    PermissionStateFull permState = {
+    PermissionStatus permState = {
         .permissionName = permissionName,
-        .isGeneral = false,
-        .resDeviceID = resDeviceID,
-        .grantStatus = grantStates,
-        .grantFlags = grantFlags
+        .grantStatus = grantState,
+        .grantFlag = grantFlag
     };
 
     ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState)); // permissionName empty
 
     permState.permissionName = "com.ohos.TEST";
-    permState.resDeviceID.emplace_back("dev-002");
-    // deviceID nums not equal status nums or flag nums
+    permState.grantStatus = 1; // 1: invalid status
     ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState));
 
-    permState.grantStatus.emplace_back(PermissionState::PERMISSION_DENIED);
-    // deviceID nums not equal flag nums
+    permState.grantStatus = grantState;
+    permState.grantFlag = -1; // -1: invalid flag
     ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState));
 
-    permState.grantFlags.emplace_back(PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    permState.grantFlag = grantFlag;
     ASSERT_EQ(true, PermissionValidator::IsPermissionStateValid(permState));
 }
 
@@ -1656,131 +1621,6 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
 }
 
 /**
- * @tc.name: DeduplicateResDevID001
- * @tc.desc: PermissionValidator::DeduplicateResDevID function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
-{
-    GTEST_LOG_(INFO) << "DeduplicateResDevID001";
-    PermissionStateFull permState = {
-        .permissionName = "ohos.permission.TEST",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-    GTEST_LOG_(INFO) << "DeduplicateResDevID001_1";
-    ASSERT_EQ(static_cast<uint32_t>(2), permState.resDeviceID.size());
-
-    std::vector<PermissionStateFull> permList;
-    permList.emplace_back(permState);
-    std::vector<PermissionStateFull> result;
-    GTEST_LOG_(INFO) << "DeduplicateResDevID001_2";
-    PermissionValidator::FilterInvalidPermissionState(TOKEN_NATIVE, false, permList, result); // resDevId.count != 0
-    GTEST_LOG_(INFO) << "DeduplicateResDevID001_3";
-    ASSERT_EQ(static_cast<uint32_t>(1), result[0].resDeviceID.size());
-}
-
-/**
- * @tc.name: Update001
- * @tc.desc: PermissionPolicySet::Update function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, Update001, TestSize.Level1)
-{
-    PermissionStateFull perm1 = {
-        .permissionName = "ohos.permission.TEST1",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-    PermissionStateFull perm2 = {
-        .permissionName = "ohos.permission.TEST2",
-        .isGeneral = true,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-    PermissionStateFull perm3 = {
-        .permissionName = "ohos.permission.TEST1",
-        .isGeneral = true,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-    ASSERT_EQ(false, perm1.permissionName == perm2.permissionName);
-    ASSERT_EQ(true, perm1.permissionName == perm3.permissionName);
-    ASSERT_EQ(false, perm1.isGeneral == perm3.isGeneral);
-
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<PermissionStateFull> permStateList1;
-    permStateList1.emplace_back(perm1);
-    std::vector<PermissionStateFull> permStateList2;
-    permStateList1.emplace_back(perm2);
-    std::vector<PermissionStateFull> permStateList3;
-    permStateList1.emplace_back(perm3);
-
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList1);
-
-    policySet->Update(permStateList2); // iter reach end
-    policySet->Update(permStateList3); // permNew.isGeneral != permOld.isGeneral
-}
-
-/**
- * @tc.name: RestorePermissionPolicy001
- * @tc.desc: PermissionPolicySet::RestorePermissionPolicy function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1)
-{
-    GenericValues value1;
-    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
-    value1.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
-    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value1.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-001");
-    value1.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<PermissionState>(3));
-    value1.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
-
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<GenericValues> permStateRes1;
-    permStateRes1.emplace_back(value1);
-
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permStateRes1); // ret != RET_SUCCESS
-
-    ASSERT_EQ(tokenId, policySet->tokenId_);
-
-    GenericValues value2;
-    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
-    value2.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
-    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value2.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-002");
-    value2.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
-    value2.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
-    GenericValues value3;
-    value3.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
-    value3.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
-    value3.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value3.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-003");
-    value3.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
-    value3.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
-
-    std::vector<GenericValues> permStateRes2;
-    permStateRes2.emplace_back(value2);
-    permStateRes2.emplace_back(value3);
-
-    std::shared_ptr<PermissionPolicySet> policySet2 = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permStateRes2); // state.permissionName == iter->permissionName
-    ASSERT_EQ(static_cast<uint32_t>(2), policySet2->permStateList_[0].resDeviceID.size());
-}
-
-/**
  * @tc.name: QueryPermissionFlag001
  * @tc.desc: PermissionPolicySet::QueryPermissionFlag function test
  * @tc.type: FUNC
@@ -1800,17 +1640,15 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
         .description = "description",
         .descriptionId = 1
     };
-    PermissionStateFull perm = {
+    PermissionStatus perm = {
         .permissionName = "ohos.permission.TEST",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
     };
 
     AccessTokenID tokenId = 0x280bc140; // 0x280bc140 is random native
     PermissionDefinitionCache::GetInstance().Insert(def, tokenId);
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(perm);
 
     std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
@@ -1819,14 +1657,6 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
     // perm.permissionName != permissionName
     int flag = 0;
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
-    // isGeneral is false
-    ASSERT_EQ(ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST", flag));
-
-    perm.isGeneral = true;
-    std::shared_ptr<PermissionPolicySet> policySet1 = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
-    // isGeneral is true
-    ASSERT_EQ(ERR_PARAM_INVALID, policySet1->QueryPermissionFlag("ohos.permission.TEST", flag));
 }
 
 /**
@@ -1837,16 +1667,14 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
 {
-    PermissionStateFull perm = {
+    PermissionStatus perm = {
         .permissionName = "ohos.permission.CAMERA",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
     };
 
     AccessTokenID tokenId = 789; // 789 is random input
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(perm);
 
     std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
@@ -1856,41 +1684,31 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
     bool changed = false;
+
+    // permission is invalid
     ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
         isGranted, flag, changed));
 
-    // isGeneral is false
+    // flag != PERMISSION_COMPONENT_SET
+    flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
     ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
         isGranted, flag, changed));
-}
+    
+    // flag == PERMISSION_COMPONENT_SET
+    flag = PermissionFlag::PERMISSION_COMPONENT_SET;
+    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
+        isGranted, flag, changed));
 
-/**
- * @tc.name: ResetUserGrantPermissionStatus001
- * @tc.desc: PermissionPolicySet::ResetUserGrantPermissionStatus function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize.Level1)
-{
-    PermissionStateFull perm = {
-        .permissionName = "ohos.permission.TEST",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
 
-    AccessTokenID tokenId = 1011; // 1011 is random input
-    std::vector<PermissionStateFull> permStateList;
-    permStateList.emplace_back(perm);
+    // flag == PERMISSION_SYSTEM_FIXED
+    flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
+    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
+        isGranted, flag, changed));
 
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
-
-    ASSERT_EQ(tokenId, policySet->tokenId_);
-
-    // isGeneral is false
-    policySet->ResetUserGrantPermissionStatus();
+    // Permission fixed by system
+    flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
+        isGranted, flag, changed));
 }
 
 /**
@@ -1902,7 +1720,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize
 HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(g_permState);
 
     std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
@@ -1914,6 +1732,7 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
     std::vector<PermissionDef> permList;
     // iter != end - 1
     PermissionPolicySet::ToString(info, permList, permStateList);
+    ASSERT_TRUE(!info.empty());
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -2048,7 +1867,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
     int version = 10; // 10 is random input which only need not equal 1
     std::vector<std::string> dcap;
     std::vector<std::string> nativeAcls;
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     GenericValues inGenericValues;
     std::vector<GenericValues> permStateRes;
 
@@ -2087,13 +1906,12 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;
-    int aplNum = static_cast<int>(ATokenAplEnum::APL_INVALID);
     int version = 10; // 10 is random input which only need not equal 1
-    HapPolicyParams policy;
+    HapPolicy policy;
     UpdateHapInfoParams hapInfo;
     hapInfo.apiVersion = DEFAULT_API_VERSION;
     hapInfo.isSystemApp = false;
-    hap->Update(hapInfo, policy.permStateList, policy.apl); // permPolicySet_ is null
+    hap->Update(hapInfo, policy.permStateList); // permPolicySet_ is null
 
     std::string info;
     hap->ToString(info); // permPolicySet_ is null
@@ -2111,26 +1929,6 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     bundleName = "com.ohos.permissionmanger";
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
-    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
-    // appID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(TokenFiledConst::FIELD_APP_ID);
-
-    appIDDesc = "what's this";
-    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
-    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
-    // deviceID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(TokenFiledConst::FIELD_DEVICE_ID);
-
-    deviceID = "dev-001";
-    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
-    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
-    // apl invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-
-    aplNum = static_cast<int>(ATokenAplEnum::APL_NORMAL);
-    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
     tokenValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
@@ -2291,8 +2089,8 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level1)
         .isSystemApp = false,
     };
     HapPolicyParcel hapPolicyParcel;
-    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
-    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+    hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicy.domain = "test.domain";
 
     AccessTokenIDEx tokenIDEx = atManagerService_->AllocHapToken(hapinfoParcel, hapPolicyParcel);
     ASSERT_EQ(INVALID_TOKENID, tokenIDEx.tokenIDEx);
@@ -2458,7 +2256,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "accesstoken_info_manager_test"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "domain"
     };

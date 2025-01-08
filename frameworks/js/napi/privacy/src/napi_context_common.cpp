@@ -197,6 +197,9 @@ void NotifyChangeResponse(const PermActiveStatusWorker* permActiveStatusData)
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result)
 {
     napi_value element;
+    NAPI_CALL_BASE(env, napi_create_uint32(env, result.callingTokenID, &element), false);
+    NAPI_CALL_BASE(env, napi_set_named_property(env, value, "callingTokenId", element), false);
+    element = nullptr;
     NAPI_CALL_BASE(env, napi_create_uint32(env, result.tokenID, &element), false);
     NAPI_CALL_BASE(env, napi_set_named_property(env, value, "tokenId", element), false);
     element = nullptr;
@@ -210,6 +213,9 @@ bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveCha
     element = nullptr;
     NAPI_CALL_BASE(env, napi_create_int32(env, result.type, &element), false);
     NAPI_CALL_BASE(env, napi_set_named_property(env, value, "activeStatus", element), false);
+    element = nullptr;
+    NAPI_CALL_BASE(env, napi_create_int32(env, result.usedType, &element), false);
+    NAPI_CALL_BASE(env, napi_set_named_property(env, value, "usedType", element), false);
     return true;
 }
 }  // namespace AccessToken

@@ -14,13 +14,12 @@
  */
 
 #include "app_manager_access_proxy.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
 constexpr int32_t CYCLE_LIMIT = 1000;
 }
@@ -31,18 +30,18 @@ int32_t AppManagerAccessProxy::GetForegroundApplications(std::vector<AppStateDat
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(IAppMgr::Message::GET_FOREGROUND_APPLICATIONS), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetForegroundApplications failed, error: %{public}d", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetForegroundApplications failed, error: %{public}d", error);
         return error;
     }
     uint32_t infoSize = reply.ReadUint32();
     if (infoSize > CYCLE_LIMIT) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize is too large");
+        LOGE(PRI_DOMAIN, PRI_TAG, "InfoSize is too large");
         return ERROR;
     }
     for (uint32_t i = 0; i < infoSize; i++) {

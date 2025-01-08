@@ -301,6 +301,102 @@ int32_t El5FilekeyManagerProxy::RegisterCallback(const sptr<El5FilekeyCallbackIn
     }
     return result;
 }
+
+int32_t El5FilekeyManagerProxy::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
+        LOG_ERROR("Failed to write WriteInterfaceToken.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteUint32(uid)) {
+        LOG_ERROR("Failed to WriteInt32(%{public}d).", uid);
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteString(groupID)) {
+        LOG_ERROR("Failed to WriteString(%{public}s).", groupID.c_str());
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOG_ERROR("Remote service is null.");
+        return EFM_ERR_REMOTE_CONNECTION;
+    }
+    int32_t result = remote->SendRequest(
+        static_cast<int32_t>(EFMInterfaceCode::GENERATE_GROUPID_KEY), data, reply, option);
+    if (result != NO_ERROR) {
+        LOG_ERROR("SendRequest failed, result: %{public}d.", result);
+    } else {
+        result = reply.ReadInt32();
+        keyId = reply.ReadString();
+    }
+    return result;
+}
+
+int32_t El5FilekeyManagerProxy::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
+        LOG_ERROR("Failed to write WriteInterfaceToken.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteUint32(uid)) {
+        LOG_ERROR("Failed to WriteInt32(%{public}d).", uid);
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteString(groupID)) {
+        LOG_ERROR("Failed to WriteString(%{public}s).", groupID.c_str());
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOG_ERROR("Remote service is null.");
+        return EFM_ERR_REMOTE_CONNECTION;
+    }
+    int32_t result = remote->SendRequest(
+        static_cast<int32_t>(EFMInterfaceCode::DELETE_GROUPID_KEY), data, reply, option);
+    if (result != NO_ERROR) {
+        LOG_ERROR("SendRequest failed, result: %{public}d.", result);
+    } else {
+        result = reply.ReadInt32();
+    }
+    return result;
+}
+
+int32_t El5FilekeyManagerProxy::QueryAppKeyState(DataLockType type)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
+        LOG_ERROR("Failed to write WriteInterfaceToken.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteInt32(static_cast<int32_t>(type))) {
+        LOG_ERROR("Failed to WriteInt32(%{public}d).", type);
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOG_ERROR("Remote service is null.");
+        return EFM_ERR_REMOTE_CONNECTION;
+    }
+    int32_t result = remote->SendRequest(
+        static_cast<int32_t>(EFMInterfaceCode::QUERY_APP_KEY_STATE), data, reply, option);
+    if (result != NO_ERROR) {
+        LOG_ERROR("SendRequest failed, result: %{public}d.", result);
+    } else {
+        result = reply.ReadInt32();
+    }
+    return result;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

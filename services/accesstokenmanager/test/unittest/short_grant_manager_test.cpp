@@ -32,15 +32,13 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO";
-static PermissionStateFull g_permiState = {
+static PermissionStatus g_permiState = {
     .permissionName = SHORT_TEMP_PERMISSION,
-    .isGeneral = true,
-    .resDeviceID = {"localC"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {1}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = 1
 };
 
-static HapPolicyParams g_policyParams = {
+static HapPolicy g_policyParams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permStateList = {g_permiState}

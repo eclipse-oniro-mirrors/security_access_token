@@ -94,6 +94,17 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
     return PERMISSION_DENIED;
 }
 
+int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->VerifyAccessToken(tokenID, permissionList, permStateList);
+}
+
 int AccessTokenManagerClient::GetDefPermission(
     const std::string& permissionName, PermissionDef& permissionDefResult)
 {
@@ -132,10 +143,15 @@ int AccessTokenManagerClient::GetReqPermissions(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    std::vector<PermissionStateFullParcel> parcelList;
+    std::vector<PermissionStatusParcel> parcelList;
     int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
     for (const auto& permParcel : parcelList) {
-        PermissionStateFull perm = permParcel.permStatFull;
+        PermissionStateFull perm;
+        perm.permissionName = permParcel.permState.permissionName;
+        perm.isGeneral = true;
+        perm.resDeviceID.emplace_back("PHONE-001");
+        perm.grantStatus.emplace_back(permParcel.permState.grantStatus);
+        perm.grantFlags.emplace_back(permParcel.permState.grantFlag);
         reqPermList.emplace_back(perm);
     }
     return result;
@@ -180,6 +196,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     for (uint32_t i = 0; i < len; i++) {
         PermissionListState perm = parcelList[i].permsState;
         permList[i].state = perm.state;
+        permList[i].errorReason = perm.errorReason;
     }
 
     info = infoParcel.info;
@@ -283,6 +300,16 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
     return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->RequestAppPermOnSetting(tokenID);
+}
+
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
     sptr<PermissionStateChangeCallback>& callback)
@@ -308,7 +335,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
 }
 
 int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type)
 {
     if (customizedCb == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCb is nullptr");
@@ -329,12 +356,23 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     PermStateChangeScopeParcel scopeParcel;
     customizedCb->GetScope(scopeParcel.scope);
 
-    if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
-        scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope oversize");
+    if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList scope oversize");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+    if (type == SYSTEM_REGISTER_TYPE) {
+        if (scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenIDs scope oversize");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+    } else {
+        if (scopeParcel.scope.tokenIDs.size() != 1) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenIDs scope invalid");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        result = proxy->RegisterSelfPermStateChangeCallback(scopeParcel, callback->AsObject());
+    }
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(callbackMutex_);
         callbackMap_[customizedCb] = callback;
@@ -343,7 +381,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 }
 
 int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -357,15 +395,19 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
         ACCESSTOKEN_LOG_ERROR(LABEL, "GoalCallback already is not exist");
         return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
     }
-
-    int32_t result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+    int32_t result;
+    if (type == SYSTEM_REGISTER_TYPE) {
+        result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+    } else {
+        result = proxy->UnRegisterSelfPermStateChangeCallback(goalCallback->second->AsObject());
+    }
     if (result == RET_SUCCESS) {
         callbackMap_.erase(goalCallback);
     }
     return result;
 }
 
-AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
+AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicy& policy)
 {
     AccessTokenIDEx tokenIdEx = { 0 };
     auto proxy = GetProxy();
@@ -376,13 +418,13 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel hapPolicyParcel;
     hapInfoParcel.hapInfoParameter = info;
-    hapPolicyParcel.hapPolicyParameter = policy;
+    hapPolicyParcel.hapPolicy = policy;
 
     return proxy->AllocHapToken(hapInfoParcel, hapPolicyParcel);
 }
 
-int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
-    AccessTokenIDEx& fullTokenId)
+int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicy& policy,
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -392,9 +434,9 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel hapPolicyParcel;
     hapInfoParcel.hapInfoParameter = info;
-    hapPolicyParcel.hapPolicyParameter = policy;
+    hapPolicyParcel.hapPolicy = policy;
 
-    return proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId);
+    return proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId, result);
 }
 
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
@@ -440,8 +482,8 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int32_t AccessTokenManagerClient::UpdateHapToken(
-    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
+int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicy& policy, HapInfoCheckResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -449,8 +491,18 @@ int32_t AccessTokenManagerClient::UpdateHapToken(
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapPolicyParcel hapPolicyParcel;
-    hapPolicyParcel.hapPolicyParameter = policy;
-    return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel);
+    hapPolicyParcel.hapPolicy = policy;
+    return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel, result);
+}
+
+int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetTokenIDByUserID(userID, tokenIdList);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)

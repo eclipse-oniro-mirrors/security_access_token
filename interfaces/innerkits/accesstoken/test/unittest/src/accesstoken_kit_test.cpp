@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "i_accesstoken_manager.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
@@ -578,12 +578,12 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain"
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -758,6 +758,25 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: GetTokenIDByUserID001
+ * @tc.desc: Get token id by user id.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenIDByUserID001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    std::unordered_set<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    userID = 100;
+    ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_NE(static_cast<uint32_t>(0), tokenIdList.size());
 }
 
 /**
@@ -1174,13 +1193,13 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     HapPolicyParams policy = {
-        .apl = hapInfo.apl,
+        .apl = APL_NORMAL,
         .domain = "domain",
         .permList = permDefList,
         .permStateList = permStatList
     };
     UpdateHapInfoParams info;
-    info.appIDDesc = hapInfo.appID;
+    info.appIDDesc = "appIDDesc";
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
@@ -1188,6 +1207,100 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_MICRO, false);
     ASSERT_EQ(PERMISSION_GRANTED, ret);
+}
+
+/**
+ * @tc.name: VerifyAccessTokenWithList001
+ * @tc.desc: Verify permission with list.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+
+    std::vector<int32_t> permStateList;
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
+    }
+
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_A_CAMERA, PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, true);
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        ASSERT_EQ(PERMISSION_DENIED, permStateList[i]);
+    }
+}
+
+/**
+ * @tc.name: VerifyAccessTokenWithList002
+ * @tc.desc: Verify permission that tokenID or permission is invalid.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList002, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back(TEST_PERMISSION_NAME_GAMMA);
+    std::vector<int32_t> permStateList;
+    int ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList, false);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back("");
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
+    permissionList.clear();
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+
+    permissionList.clear();
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_MICRO);
+    permissionList.emplace_back(TEST_PERMISSION_NAME_A_CAMERA);
+    permissionList.emplace_back(invalidPerm);
+    permStateList.clear();
+    ret = AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, permissionList, permStateList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[0]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[1]);
+    ASSERT_EQ(PERMISSION_DENIED, permStateList[2]);
 }
 
 /**
@@ -1636,13 +1749,10 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
     ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
     ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
     ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
-
-    ASSERT_EQ(hapTokenInfoRes.appID, "appIDDesc");
 
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
 }
@@ -2554,9 +2664,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, info.appIDDesc);
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_SYSTEM_BASIC);
-
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
@@ -2607,8 +2714,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, g_infoManagerTestInfoParms.appIDDesc);
-
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
@@ -2637,8 +2742,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 
     HapTokenInfo hapTokenInfoRes;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
-
-    ASSERT_EQ(hapTokenInfoRes.apl, apl);
     g_infoManagerTestPolicyPrams.apl = apl;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
@@ -3208,35 +3311,6 @@ HWTEST_F(AccessTokenKitTest, SetPermDialogCap002, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetSelfPermissionsState001
- * @tc.desc: get self permissions state with wrong token type.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
-{
-    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    HapBaseInfo hapBaseInfo = {
-        .userID = g_infoManagerTestInfoParms.userID,
-        .bundleName = g_infoManagerTestInfoParms.bundleName,
-        .instIndex = g_infoManagerTestInfoParms.instIndex,
-    };
-
-    std::vector<PermissionListState> permsList;
-    PermissionListState tmp = {
-        .permissionName = g_infoManagerTestPolicyPrams.permStateList[0].permissionName,
-        .state = BUTT_OPER
-    };
-    permsList.emplace_back(tmp);
-
-    // test dialog isn't forbiddedn
-    ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
-    SetSelfTokenID(tokenID);
-    PermissionGrantInfo info;
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-}
-
-/**
  * @tc.name: UserPolicyTest
  * @tc.desc: UserPolicyTest.
  * @tc.type: FUNC
@@ -3280,6 +3354,81 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoExt001, TestSize.Level1)
 
     ret = AccessTokenKit::GetHapTokenInfoExtension(INVALID_TOKENID, hapTokenInfoExt);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest001
+ * @tc.desc: RequestAppPermOnSetting invalid token.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    // invalid tokenID in client
+    AccessTokenID tokenID = 0;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::RequestAppPermOnSetting(tokenID));
+    // invalid tokenID in service
+    tokenID = 123;
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::RequestAppPermOnSetting(tokenID));
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest002
+ * @tc.desc: RequestAppPermOnSetting not system app.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenID tokenID = 123;
+    int32_t ret = AccessTokenKit::RequestAppPermOnSetting(tokenID);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest003
+ * @tc.desc: RequestAppPermOnSetting add hap and call function.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    AccessTokenKit::RequestAppPermOnSetting(tokenID);
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest004
+ * @tc.desc: RequestAppPermOnSetting call function with self token.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenKit::RequestAppPermOnSetting(tokenID);
 }
 } // namespace AccessToken
 } // namespace Security

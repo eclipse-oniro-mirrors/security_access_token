@@ -33,7 +33,7 @@ int32_t El5FilekeyCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     if (data.ReadInterfaceToken() != El5FilekeyCallbackInterface::GetDescriptor()) {
-        LOG_ERROR("get unexpected descriptor");
+        LOG_ERROR("Get unexpected descriptor");
         return EFM_ERR_IPC_TOKEN_INVALID;
     }
     if (code == static_cast<uint32_t>(El5FilekeyCallbackInterface::Code::ON_REGENERATE_APP_KEY)) {

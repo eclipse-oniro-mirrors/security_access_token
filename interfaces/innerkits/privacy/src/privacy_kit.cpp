@@ -96,27 +96,48 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     return RET_SUCCESS;
 }
 
-int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
+int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+    if (!DataValidator::IsUserIdValid(userID)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyKit::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    if (!DataValidator::IsUserIdValid(userID)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,
+    PermissionUsedType type)
+{
+    if ((!DataValidator::IsTokenIDValid(tokenID)) ||
+        (!DataValidator::IsPermissionNameValid(permissionName)) ||
+        (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-    const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid)
+    const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid, PermissionUsedType type)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+    if ((!DataValidator::IsTokenIDValid(tokenID)) ||
+        (!DataValidator::IsPermissionNameValid(permissionName)) ||
+        (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback, type);
 }
 
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
@@ -223,12 +244,14 @@ int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, cons
     return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
 }
 
-int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID)
 {
-    if (!DataValidator::IsPolicyTypeValid(policyType) && !DataValidator::IsCallerTypeValid(callerType)) {
+    if (!DataValidator::IsPolicyTypeValid(policyType) ||
+        !DataValidator::IsCallerTypeValid(callerType) ||
+        (tokenID == 0)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute);
+    return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute, tokenID);
 }
 
 int32_t PrivacyKit::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)

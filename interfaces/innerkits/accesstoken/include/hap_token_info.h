@@ -43,6 +43,7 @@
 #include "access_token.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
+#include "permission_status.h"
 #include <string>
 #include <vector>
 
@@ -91,11 +92,6 @@ public:
  */
 class HapTokenInfo final {
 public:
-    /**
-     * apl level, for details about the valid values,
-     * see the definition of ATokenAplEnum in the access_token.h file.
-     */
-    ATokenAplEnum apl;
     char ver;
     int userID;
     std::string bundleName;
@@ -108,8 +104,6 @@ public:
      * see the definition of HapDlpType in the access_token.h file.
      */
     int dlpType;
-    std::string appID;
-    std::string deviceID;
     AccessTokenID tokenID;
     /** token attribute */
     AccessTokenAttr tokenAttr;
@@ -123,7 +117,7 @@ public:
     /** hap token info */
     HapTokenInfo baseInfo;
     /** permission state list */
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
 };
 
 class HapTokenInfoExt final {
@@ -171,6 +165,39 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
 };
 
+/**
+ * @brief Declares the result after failing to update or install hap
+ */
+class PermissionInfoCheckResult final {
+public:
+    std::string permissionName;
+    PermissionRulesEnum rule;
+};
+
+class HapInfoCheckResult final {
+public:
+    /**
+     * permission detail after failing to install or update hap
+     */
+    PermissionInfoCheckResult permCheckResult;
+};
+
+/**
+ * @brief Declares hap policy params class
+ */
+class HapPolicy final {
+public:
+    /**
+     * apl level, for details about the valid values,
+     * see the definition of ATokenAplEnum in the access_token.h file.
+     */
+    ATokenAplEnum apl;
+    std::string domain;
+    std::vector<PermissionDef> permList;
+    std::vector<PermissionStatus> permStateList;
+    std::vector<std::string> aclRequestedList;
+    std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -45,14 +45,12 @@ namespace OHOS {
             .labelId = 1,
             .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
-        PermissionStateFull TestState = {
+        PermissionStatus testState = {
             .permissionName = permissionName,
-            .isGeneral = true,
-            .resDeviceID = {fuzzData.GenerateStochasticString()},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1},
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .grantFlag = 1,
         };
-        HapInfoParams TestInfoParms = {
+        HapInfoParams testInfoParms = {
             .userID = 1,
             .bundleName = bundleName,
             .instIndex = 0,
@@ -61,17 +59,17 @@ namespace OHOS {
             .permissionName = permissionName,
             .userCancelable = true
         };
-        HapPolicyParams TestPolicyPrams = {
+        HapPolicy testPolicy = {
             .apl = APL_NORMAL,
             .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
-            .permStateList = {TestState},
+            .permStateList = {testState},
             .aclRequestedList = {permissionName},
             .preAuthorizationInfo = {info1}
         };
 
-        hapInfoParcel.hapInfoParameter = TestInfoParms;
-        hapPolicyParcel.hapPolicyParameter = TestPolicyPrams;
+        hapInfoParcel.hapInfoParameter = testInfoParms;
+        hapPolicyParcel.hapPolicy = testPolicy;
     }
 
     bool InitHapTokenStubFuzzTest(const uint8_t* data, size_t size)

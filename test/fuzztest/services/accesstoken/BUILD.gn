@@ -38,17 +38,20 @@ group("fuzztest") {
     "getremotenativetokenidstub_fuzzer:GetRemoteNativeTokenIDStubFuzzTest",
     "getreqpermissionsstub_fuzzer:GetReqPermissionsStubFuzzTest",
     "getselfpermissionsstatestub_fuzzer:GetSelfPermissionsStateStubFuzzTest",
+    "gettokenidbyuseridstub_fuzzer:GetTokenIDByUserIDStubFuzzTest",
     "gettokentypestub_fuzzer:GetTokenTypeStubFuzzTest",
     "grantpermissionforspecifiedtimestub_fuzzer:GrantPermissionForSpecifiedTimeStubFuzzTest",
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "initHapTokenstub_fuzzer:InitHapTokenStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
+    "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
+    "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
   ]
 
   if (is_standard_system && token_sync_enable == true) {

@@ -94,6 +94,26 @@ public:
         return EFM_SUCCESS;
     }
 
+    int32_t RegisterCallback(const OHOS::sptr<El5FilekeyCallbackInterface> &callback)
+    {
+        return EFM_SUCCESS;
+    }
+
+    int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
+    {
+        return EFM_SUCCESS;
+    }
+
+    int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
+    {
+        return EFM_SUCCESS;
+    }
+
+    int32_t QueryAppKeyState(DataLockType type, bool isApp)
+    {
+        return EFM_SUCCESS;
+    }
+
     int32_t HandleUserCommonEvent(const std::string &eventName, int32_t userId)
     {
         return EFM_SUCCESS;
@@ -105,11 +125,6 @@ public:
     }
 
     int32_t DumpData(int fd, const std::vector<std::u16string>& args)
-    {
-        return EFM_SUCCESS;
-    }
-
-    int32_t RegisterCallback(const OHOS::sptr<El5FilekeyCallbackInterface> &callback)
     {
         return EFM_SUCCESS;
     }
@@ -428,6 +443,114 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GenerateGroupIDKey001
+ * @tc.desc: Generate data group key by user id and group id.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+
+    uint32_t uid = 100;
+    std::string groupID = "abcdefghijklmn";
+    std::string keyId;
+
+    MockIpc::SetCallingUid(3060);
+
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(uid, groupID, keyId), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: GenerateGroupIDKey002
+ * @tc.desc: Generate data group key by user id and group id.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+
+    uint32_t uid = 100;
+    std::string groupID = "abcdefghijklmn";
+    std::string keyId;
+
+    MockIpc::SetCallingUid(3060);
+
+    ASSERT_EQ(el5FilekeyManagerService_->GenerateGroupIDKey(uid, groupID, keyId), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: DeleteGroupIDKey001
+ * @tc.desc: Delete data group key by user id and group id.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+
+    uint32_t uid = 100;
+    std::string groupID = "";
+
+    MockIpc::SetCallingUid(3060);
+
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(uid, groupID), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: DeleteGroupIDKey002
+ * @tc.desc: Delete data group key by user id and group id.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+
+    uint32_t uid = 100;
+    std::string groupID = "";
+
+    MockIpc::SetCallingUid(3060);
+
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteGroupIDKey(uid, groupID), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: QueryAppKeyState001
+ * @tc.desc: Query default type app key.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: QueryAppKeyState002
+ * @tc.desc: Query default type app key.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
+}
+
+/**
  * @tc.name: SetPolicyScreenLocked001
  * @tc.desc: SetPolicyScreenLocked
  * @tc.type: FUNC
@@ -509,4 +632,67 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Le
     std::string eventName = "abc";
     int userId = 1;
     ASSERT_EQ(el5FilekeyManagerService_->HandleUserCommonEvent(eventName, userId), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: El5FilekeyCallbackStub function test OnRemoteRequest001.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level1)
+{
+    TestEl5FilekeyCallback testEl5FilekeyCallback;
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    uint32_t code = static_cast<uint32_t>(El5FilekeyCallbackInterface::Code::ON_REGENERATE_APP_KEY);
+
+    ASSERT_EQ(data.WriteInterfaceToken(El5FilekeyCallbackInterface::GetDescriptor()), true);
+    data.WriteUint32(1); // infosSize
+    data.WriteInt32(1);  // AppKeyInfo size
+    data.WriteUint32(static_cast<uint32_t>(AppKeyType::APP));
+    data.WriteUint32(1000);
+    std::string bundleName = "ohos.permission.test";
+    data.WriteString(bundleName);
+    data.WriteInt32(100);
+    data.WriteString("testGroupId");
+    ASSERT_EQ(testEl5FilekeyCallback.OnRemoteRequest(code, data, reply, option), OHOS::NO_ERROR);
+}
+
+/**
+ * @tc.name: Marshalling001
+ * @tc.desc: AppKeyInfo function test Marshalling.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, Marshalling001, TestSize.Level1)
+{
+    AppKeyInfo appKeyInfo;
+    appKeyInfo.uid = 1000;
+    appKeyInfo.bundleName = "test";
+    appKeyInfo.userId = 200;
+    appKeyInfo.groupID = "testGroupId";
+    OHOS::Parcel parcel;
+    ASSERT_EQ(appKeyInfo.Marshalling(parcel), true);
+}
+
+/**
+ * @tc.name: Unmarshalling001
+ * @tc.desc: AppKeyInfo function test Marshalling.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, Unmarshalling001, TestSize.Level1)
+{
+    AppKeyInfo appKeyInfo;
+    OHOS::Parcel parcel;
+    parcel.WriteUint32(static_cast<uint32_t>(AppKeyType::GROUPID));
+    parcel.WriteUint32(1000);
+    parcel.WriteString("ohos.permission.test");
+    parcel.WriteInt32(100);
+    parcel.WriteString("testGroupId");
+    auto info = appKeyInfo.Unmarshalling(parcel);
+    ASSERT_EQ(info != nullptr, true);
+    ASSERT_EQ(info->bundleName, "ohos.permission.test");
 }

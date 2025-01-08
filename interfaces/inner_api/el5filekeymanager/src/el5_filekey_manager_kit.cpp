@@ -65,6 +65,20 @@ int32_t El5FilekeyManagerKit::GetUserAllAppKey(int32_t userId, std::vector<std::
 {
     return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, true, keyInfos);
 }
+int32_t El5FilekeyManagerKit::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
+{
+    return El5FilekeyManagerClient::GetInstance().GenerateGroupIDKey(uid, groupID, keyId);
+}
+
+int32_t El5FilekeyManagerKit::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
+{
+    return El5FilekeyManagerClient::GetInstance().DeleteGroupIDKey(uid, groupID);
+}
+
+int32_t El5FilekeyManagerKit::QueryAppKeyState(DataLockType type)
+{
+    return El5FilekeyManagerClient::GetInstance().QueryAppKeyState(type);
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

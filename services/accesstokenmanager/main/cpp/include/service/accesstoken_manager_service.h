@@ -49,12 +49,14 @@ public:
     PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) override;
     int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
-        AccessTokenIDEx& fullTokenId) override;
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
+    int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
         PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
@@ -63,6 +65,7 @@ public:
         int32_t userID) override;
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID) override;
+    int32_t RequestAppPermOnSetting(AccessTokenID tokenID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int GrantPermissionForSpecifiedTime(
@@ -73,12 +76,16 @@ public:
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
-    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-        const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
+    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParcel& policyParcel, HapInfoCheckResult& result) override;
     int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
+    int32_t RegisterSelfPermStateChangeCallback(const PermStateChangeScopeParcel& scope,
+        const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterSelfPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
 #endif
@@ -118,6 +125,7 @@ private:
     std::string grantServiceAbilityName_;
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
+    std::string applicationSettingAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security

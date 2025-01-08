@@ -17,6 +17,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "callback_manager.h"
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
@@ -69,20 +70,16 @@ static PermissionDef g_infoManagerTestPermDef2 = {
     .descriptionId = 1
 };
 
-static PermissionStateFull g_infoManagerTestState1 = {
+static PermissionStatus g_infoManagerTestState1 = {
     .permissionName = "open the door",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {1},
-    .grantFlags = {1}
+    .grantStatus = 1,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_infoManagerTestState2 = {
+static PermissionStatus g_infoManagerTestState2 = {
     .permissionName = "break the door",
-    .isGeneral = false,
-    .resDeviceID = {"device 1", "device 2"},
-    .grantStatus = {1, 3},
-    .grantFlags = {1, 2}
+    .grantStatus = 1,
+    .grantFlag = 1
 };
 
 static HapInfoParams g_infoManagerTestInfoParms = {
@@ -92,87 +89,67 @@ static HapInfoParams g_infoManagerTestInfoParms = {
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPrams1 = {
+static HapPolicy g_infoManagerTestPolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
 
-static PermissionStateFull g_infoManagerTestStateA = {
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PERMISSION_GRANTED},
-    .grantFlags = {1}
+static PermissionStatus g_infoManagerTestStateA = {
+    .grantStatus = PERMISSION_GRANTED,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_infoManagerTestStateB = {
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PERMISSION_GRANTED},
-    .grantFlags = {1}
+static PermissionStatus g_infoManagerTestStateB = {
+    .grantStatus = PERMISSION_GRANTED,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_infoManagerTestStateC = {
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PERMISSION_GRANTED},
-    .grantFlags = {1}
+static PermissionStatus g_infoManagerTestStateC = {
+    .grantStatus = PERMISSION_GRANTED,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_infoManagerTestStateD = {
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PERMISSION_GRANTED},
-    .grantFlags = {1}
+static PermissionStatus g_infoManagerTestStateD = {
+    .grantStatus = PERMISSION_GRANTED,
+    .grantFlag = 1
 };
 
-static PermissionStateFull g_permState1 = {
+static PermissionStatus g_permState1 = {
     .permissionName = "ohos.permission.TEST",
-    .isGeneral = false,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
 };
 
-static PermissionStateFull g_permState2 = {
+static PermissionStatus g_permState2 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = false,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
 };
 
-static PermissionStateFull g_permState6 = {
+static PermissionStatus g_permState6 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED
 };
 
-static PermissionStateFull g_permState7 = {
+static PermissionStatus g_permState7 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED}
+    .grantStatus = PermissionState::PERMISSION_GRANTED,
+    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED
 };
 
-static PermissionStateFull g_permState8 = {
+static PermissionStatus g_permState8 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET
 };
 
-static PermissionStateFull g_permState9 = {
+static PermissionStatus g_permState9 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET}
+    .grantStatus = PermissionState::PERMISSION_GRANTED,
+    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET
 };
 
 static PermissionDef g_infoManagerPermDef1 = {
@@ -296,10 +273,10 @@ void PermissionManagerTest::TearDown()
 static AccessTokenID CreateTempHapTokenInfo()
 {
     g_infoManagerTestStateA.permissionName = "ohos.permission.APPROXIMATELY_LOCATION";
-    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateA.grantStatus = PERMISSION_DENIED;
     g_infoManagerTestStateB.permissionName = "ohos.permission.READ_PASTEBOARD";
-    g_infoManagerTestStateB.grantStatus[0] = PERMISSION_DENIED;
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    g_infoManagerTestStateB.grantStatus = PERMISSION_DENIED;
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
@@ -355,7 +332,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level1)
     g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
     g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain1",
         .permList = {},
@@ -409,7 +386,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
     g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
     g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
         .permList = {},
@@ -463,7 +440,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level1)
     g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
     g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain3",
         .permList = {},
@@ -504,13 +481,13 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level1)
 static void PrepareUserPermState()
 {
     g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
-    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateA.grantStatus = PERMISSION_DENIED;
     g_infoManagerTestStateB.permissionName = "ohos.permission.MICROPHONE";
-    g_infoManagerTestStateB.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateB.grantStatus = PERMISSION_DENIED;
     g_infoManagerTestStateC.permissionName = "ohos.permission.READ_CALENDAR";
-    g_infoManagerTestStateC.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateC.grantStatus = PERMISSION_DENIED;
     g_infoManagerTestStateD.permissionName = "ohos.permission.READ_CALL_LOG";
-    g_infoManagerTestStateD.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateD.grantStatus = PERMISSION_DENIED;
 }
 
 static void PrepareJsonData2()
@@ -539,7 +516,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level1)
     PrepareJsonData2();
     PrepareUserPermState();
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain4",
         .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
@@ -597,7 +574,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
     PrepareJsonData2();
     PrepareUserPermState();
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain5",
         .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
@@ -654,7 +631,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level1)
     PrepareJsonData2();
     PrepareUserPermState();
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicy infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain6",
         .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
@@ -789,10 +766,16 @@ public:
     virtual ~PermChangeCallback() = default;
 
     void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override;
 };
 
 void PermChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
 {
+}
+
+bool PermChangeCallback::AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient)
+{
+    return true;
 }
 
 /**
@@ -947,7 +930,7 @@ HWTEST_F(PermissionManagerTest, GetDefPermissions002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level1)
 {
-    std::vector<PermissionStateFull> result;
+    std::vector<PermissionStatus> result;
 
     // permissionName is empty
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetReqPermissions(0, result, true));
@@ -967,7 +950,7 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level1)
         g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    std::vector<PermissionStateFull> result;
+    std::vector<PermissionStatus> result;
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     // permissionName is empty
     ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetReqPermissions(tokenId, result, true));
@@ -984,7 +967,7 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
 {
-    std::vector<PermissionStateFull> permsList1;
+    std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState1);
     PermissionListState permState1;
     permState1.permissionName = "ohos.permission.GetSelfPermissionStateTest";
@@ -994,7 +977,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
     PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
     ASSERT_EQ(PermissionOper::INVALID_OPER, permState1.state);
 
-    std::vector<PermissionStateFull> permsList2;
+    std::vector<PermissionStatus> permsList2;
     permsList2.emplace_back(g_permState2);
     PermissionListState permState2;
     permState2.permissionName = "ohos.permission.CAMERA";
@@ -1012,7 +995,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
 {
-    std::vector<PermissionStateFull> permsList1;
+    std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState6);
     PermissionListState permState1;
     permState1.permissionName = "ohos.permission.CAMERA";
@@ -1022,7 +1005,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
     PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
     ASSERT_EQ(PermissionOper::SETTING_OPER, permState1.state);
 
-    std::vector<PermissionStateFull> permsList2;
+    std::vector<PermissionStatus> permsList2;
     permsList2.emplace_back(g_permState7);
     PermissionListState permState2;
     permState2.permissionName = "ohos.permission.CAMERA";
@@ -1031,7 +1014,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
     PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
     ASSERT_EQ(PermissionOper::PASS_OPER, permState2.state);
 
-    std::vector<PermissionStateFull> permsList3;
+    std::vector<PermissionStatus> permsList3;
     permsList3.emplace_back(g_permState8);
     PermissionListState permState3;
     permState3.permissionName = "ohos.permission.CAMERA";
@@ -1040,7 +1023,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
     PermissionManager::GetInstance().GetSelfPermissionState(permsList3, permState3, apiVersion);
     ASSERT_EQ(PermissionOper::SETTING_OPER, permState3.state);
 
-    std::vector<PermissionStateFull> permsList4;
+    std::vector<PermissionStatus> permsList4;
     permsList4.emplace_back(g_permState9);
     PermissionListState permState4;
     permState4.permissionName = "ohos.permission.CAMERA";
@@ -1058,7 +1041,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 {
-    std::vector<PermissionStateFull> permsList1;
+    std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState2);
     std::string permissionName = "ohos.permission.CAMERA";
     uint32_t oriStatus;
@@ -1241,14 +1224,12 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
         .instIndex = 0,
         .appIDDesc = "testtesttesttest"
     };
-    PermissionStateFull permStat = {
+    PermissionStatus permStat = {
         .permissionName = "ohos.permission.CAMERA",
-        .isGeneral = true,
-        .resDeviceID = {"dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
     };
-    HapPolicyParams policyPrams = {
+    HapPolicy policyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
@@ -1291,7 +1272,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "permission_manager_test"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "domain"
     };
@@ -1331,14 +1312,12 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "permission_manager_test"
     };
-    PermissionStateFull permStat = {
+    PermissionStatus permStat = {
         .permissionName = permissionName,
-        .isGeneral = true,
-        .resDeviceID = {"dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "domain",
         .permStateList = {permStat}
@@ -1398,17 +1377,17 @@ HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetPermissionStateFull001
- * @tc.desc: TempPermissionObserver::GetPermissionStateFull function test
+ * @tc.name: GetPermissionState001
+ * @tc.desc: TempPermissionObserver::GetPermissionState function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetPermissionStateFull001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123; // random input
-    std::vector<PermissionStateFull> permissionStateFullList;
+    std::vector<PermissionStatus> permissionStateList;
     // tokenId invalid
-    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionStateFull(tokenId, permissionStateFullList));
+    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionState(tokenId, permissionStateList));
 
     HapInfoParams info = {
         .userID = USER_ID,
@@ -1416,7 +1395,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionStateFull001, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "permission_manager_test"
     };
-    HapPolicyParams policy = {
+    HapPolicy policy = {
         .apl = APL_NORMAL,
         .domain = "domain"
     };
@@ -1428,7 +1407,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionStateFull001, TestSize.Level1)
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     infoPtr->SetRemote(true);
     // remote token is true
-    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionStateFull(tokenId, permissionStateFullList));
+    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionState(tokenId, permissionStateList));
     infoPtr->SetRemote(false);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));

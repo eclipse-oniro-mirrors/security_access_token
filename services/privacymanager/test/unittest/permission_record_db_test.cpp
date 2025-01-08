@@ -244,6 +244,39 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteExpireRecordsPrepareSqlCmd001, Test
 }
 
 /*
+ * @tc.name: DeleteHistoryRecordsInTables001
+ * @tc.desc: PermissionUsedRecordDb::DeleteHistoryRecordsInTables function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, DeleteHistoryRecordsInTables001, TestSize.Level1)
+{
+    std::vector<PermissionUsedRecordDb::DataType> dataTypes;
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
+    dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE);
+    std::unordered_set<AccessTokenID> tokenIDList;
+    tokenIDList.emplace(RANDOM_TOKENID);
+    EXPECT_EQ(0, PermissionUsedRecordDb::GetInstance().DeleteHistoryRecordsInTables(dataTypes, tokenIDList));
+}
+
+/*
+ * @tc.name: CreateDeleteHistoryRecordsPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteHistoryRecordsPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, CreateDeleteHistoryRecordsPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100); // type not found
+    std::unordered_set<AccessTokenID> tokenIDList;
+    EXPECT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList));
+
+    type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    tokenIDList.emplace(RANDOM_TOKENID);
+    EXPECT_NE("", PermissionUsedRecordDb::GetInstance().CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList));
+}
+
+/*
  * @tc.name: CreateDeleteExcessiveRecordsPrepareSqlCmd001
  * @tc.desc: PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd function test type not found
  * @tc.type: FUNC

@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -33,8 +33,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "GetTokenTypeTest"};
 static AccessTokenID g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
@@ -76,7 +74,7 @@ void GetTokenTypeTest::TearDownTestCase()
 
 void GetTokenTypeTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
     setuid(0);
     HapInfoParams info = {
@@ -109,7 +107,7 @@ void GetTokenTypeTest::TearDown()
  */
 HWTEST_F(GetTokenTypeTest, GetTokenTypeFuncTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetTokenTypeFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeFuncTest001");
 
     // type = TOKEN_SHELL
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("hdcd");
@@ -142,7 +140,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFuncTest001, TestSize.Level0)
  */
 HWTEST_F(GetTokenTypeTest, GetTokenTypeAbnormalTest001, TestSize.Level0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetTokenTypeAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeAbnormalTest001");
 
     AccessTokenID tokenID = 0;
     int32_t ret = AccessTokenKit::GetTokenType(tokenID);
@@ -157,7 +155,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeAbnormalTest001, TestSize.Level0)
  */
 HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetTokenTypeFlagAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeFlagAbnormalTest001");
 
     AccessTokenID tokenID = 0;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
@@ -172,7 +170,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetTokenTypeFlagFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeFlagFuncTest001");
 
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,

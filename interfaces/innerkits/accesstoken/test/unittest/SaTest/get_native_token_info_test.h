@@ -12,25 +12,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "app_manager_death_recipient.h"
 
-#include "accesstoken_log.h"
-#include "app_manager_access_client.h"
+#ifndef GET_NATIVE_TOKEN_INFO_TEST_H
+#define GET_NATIVE_TOKEN_INFO_TEST_H
+
+#include <gtest/gtest.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppMgrDeathRecipient"
+class GetNativeTokenInfoTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
+    void AllocHapToken(std::vector<PermissionDef>& permissionDefs,
+        std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
 };
-} // namespace
-
-void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // GET_NATIVE_TOKEN_INFO_TEST_H

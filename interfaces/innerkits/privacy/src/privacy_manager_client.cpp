@@ -71,15 +71,49 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     return proxy->AddPermissionUsedRecord(infoParcel, asyncMode);
 }
 
-int32_t PrivacyManagerClient::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->StartUsingPermission(tokenID, pid, permissionName);
+
+    return proxy->SetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return proxy->GetPermissionUsedRecordToggleStatus(userID, status);
+}
+
+int32_t PrivacyManagerClient::StartUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    parcel.info.type = type;
+
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy death recipent is null.");
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+    return proxy->StartUsingPermission(parcel, anonyStub);
 }
 
 int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
@@ -100,9 +134,8 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerClient::StartUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-    const std::shared_ptr<StateCustomizedCbk>& callback)
+int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_t pid,
+    const std::string& permissionName, const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type)
 {
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
@@ -121,8 +154,17 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-
-    result = proxy->StartUsingPermission(tokenId, pid, permissionName, callbackWrap->AsObject());
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenId;
+    parcel.info.pid = pid;
+    parcel.info.permissionName = permissionName;
+    parcel.info.type = type;
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy death recipent is null.");
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+    result = proxy->StartUsingPermission(parcel, callbackWrap->AsObject(), anonyStub);
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
@@ -362,14 +404,15 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
+    AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->SetMutePolicy(policyType, callerType, isMute);
+    return proxy->SetMutePolicy(policyType, callerType, isMute, tokenID);
 }
 
 int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
@@ -437,6 +480,15 @@ void PrivacyManagerClient::ReleaseProxy()
     }
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
+}
+
+sptr<ProxyDeathCallBackStub> PrivacyManagerClient::GetAnonyStub()
+{
+    std::lock_guard<std::mutex> lock(stubMutex_);
+    if (anonyStub_ == nullptr) {
+        anonyStub_ = sptr<ProxyDeathCallBackStub>::MakeSptr();
+    }
+    return anonyStub_;
 }
 } // namespace AccessToken
 } // namespace Security

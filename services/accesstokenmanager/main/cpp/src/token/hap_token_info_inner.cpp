@@ -48,11 +48,10 @@ HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(fals
     tokenInfoBasic_.apiVersion = 0;
     tokenInfoBasic_.instIndex = 0;
     tokenInfoBasic_.dlpType = 0;
-    tokenInfoBasic_.apl = APL_NORMAL;
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
-    const HapInfoParams &info, const HapPolicyParams &policy) : permUpdateTimestamp_(0), isRemote_(false)
+    const HapInfoParams &info, const HapPolicy &policy) : permUpdateTimestamp_(0), isRemote_(false)
 {
     tokenInfoBasic_.tokenID = id;
     tokenInfoBasic_.userID = info.userID;
@@ -65,14 +64,11 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
-    tokenInfoBasic_.appID = info.appIDDesc;
-    tokenInfoBasic_.deviceID = DEFAULT_DEVICEID;
-    tokenInfoBasic_.apl = policy.apl;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permStateList);
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
-    const HapTokenInfo &info, const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
+    const HapTokenInfo &info, const std::vector<PermissionStatus>& permStateList) : isRemote_(false)
 {
     permUpdateTimestamp_ = 0;
     tokenInfoBasic_ = info;
@@ -93,12 +89,9 @@ HapTokenInfoInner::~HapTokenInfoInner()
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
-int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
-    const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl)
+void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList)
 {
-    tokenInfoBasic_.appID = info.appIDDesc;
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
-    tokenInfoBasic_.apl = apl;
     if (info.isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
@@ -108,34 +101,12 @@ int32_t HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
 
     permPolicySet_->Update(permStateList);
-
-    if (isRemote_) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
-        return RET_SUCCESS;
-    }
-
-    // get new hap token info from cache
-    std::vector<GenericValues> hapInfoValues;
-    StoreHapInfo(hapInfoValues);
-    // get new permission def from cache if exist
-    std::vector<GenericValues> permDefValues;
-    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenInfoBasic_.tokenID, permDefValues);
-    // get new permission status from cache if exist
-    std::vector<GenericValues> permStateValues;
-    permPolicySet_->StorePermissionPolicySet(permStateValues);
-
-    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenInfoBasic_.tokenID, hapInfoValues, permDefValues,
-        permStateValues);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "TokenID %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenInfoBasic_.tokenID, ret);
-    }
-    return ret;
 }
 
 void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
@@ -151,9 +122,6 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
     outGenericValues.Put(TokenFiledConst::FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
     outGenericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
-    outGenericValues.Put(TokenFiledConst::FIELD_APP_ID, tokenInfoBasic_.appID);
-    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
-    outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
     outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
@@ -173,32 +141,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.apiVersion = GetApiVersion(inGenericValues.GetInt(TokenFiledConst::FIELD_API_VERSION));
     tokenInfoBasic_.instIndex = inGenericValues.GetInt(TokenFiledConst::FIELD_INST_INDEX);
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(TokenFiledConst::FIELD_DLP_TYPE);
-    tokenInfoBasic_.appID = inGenericValues.GetString(TokenFiledConst::FIELD_APP_ID);
-    if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "appID error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
 
-    tokenInfoBasic_.deviceID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
-    if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
-    if (DataValidator::IsAplNumValid(aplNum)) {
-        tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x apl is error, value %{public}d",
-            tokenInfoBasic_.tokenID, aplNum);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x version is error, version %{public}d",
@@ -346,7 +289,7 @@ int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 }
 
 void HapTokenInfoInner::UpdateRemoteHapTokenInfo(AccessTokenID mapID,
-    const HapTokenInfo& baseInfo, std::vector<PermissionStateFull>& permStateList)
+    const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList)
 {
     std::shared_ptr<PermissionPolicySet> newPermPolicySet =
         PermissionPolicySet::BuildPolicySetWithoutDefCheck(mapID, permStateList);
@@ -361,6 +304,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
@@ -394,7 +338,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     return RET_SUCCESS;
 }
 
-int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<PermissionStateFull>& permList)
+int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<PermissionStatus>& permList)
 {
     std::vector<BriefPermData> briefPermDataList;
     int32_t ret = PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
@@ -403,19 +347,16 @@ int32_t HapTokenInfoInner::GetPermissionStateListFromBrief(std::vector<Permissio
         return ret;
     }
     for (const auto& perm : briefPermDataList) {
-        PermissionStateFull fullData;
-        fullData.isGeneral = true;
+        PermissionStatus fullData;
         (void)TransferOpcodeToPermission(perm.permCode, fullData.permissionName);
-        fullData.resDeviceID.emplace_back("PHONE-001");
-        int32_t status = perm.status ? PERMISSION_GRANTED : PERMISSION_DENIED;
-        fullData.grantStatus.emplace_back(status);
-        fullData.grantFlags.emplace_back(perm.flag);
+        fullData.grantStatus = perm.status ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        fullData.grantFlag = perm.flag;
         permList.emplace_back(fullData);
     }
     return RET_SUCCESS;
 }
 
-int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStateFull>& permList)
+int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStatus>& permList)
 {
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->policySetLock_);
@@ -427,12 +368,12 @@ int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStateFul
     return GetPermissionStateListFromBrief(permList);
 }
 
-bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList)
+bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList)
 {
     for (const auto& state : stateChangeList) {
         GenericValues modifyValue;
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus[0]);
-        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlags[0]));
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus);
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlag));
 
         GenericValues conditionValue;
         conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
@@ -457,13 +398,14 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     if (permPolicySet_ == nullptr) {
         std::vector<GenericValues> permStateRes;
         GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySetFromDb(tokenInfoBasic_.tokenID, permStateRes);
     }
 
     permPolicySet_->ResetUserGrantPermissionStatus();
 
-    std::vector<PermissionStateFull> permListOfHap;
+    std::vector<PermissionStatus> permListOfHap;
     permPolicySet_->GetPermissionStateList(permListOfHap);
 
 #ifdef SUPPORT_SANDBOX_APP
@@ -538,14 +480,12 @@ void HapTokenInfoInner::ToString(std::string& info)
     info.append(R"(  "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")" + ",\n");
     info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
     info.append(R"(  "dlpType": )" + std::to_string(tokenInfoBasic_.dlpType) + ",\n");
-    info.append(R"(  "appID": ")" + tokenInfoBasic_.appID + R"(")" + ",\n");
-    info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
     info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
 
     std::vector<PermissionDef> permList;
     PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenInfoBasic_.tokenID);
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     (void)GetPermissionStateListFromBrief(permStateList);
     PermissionPolicySet::ToString(info, permList, permStateList);
     info.append("}");

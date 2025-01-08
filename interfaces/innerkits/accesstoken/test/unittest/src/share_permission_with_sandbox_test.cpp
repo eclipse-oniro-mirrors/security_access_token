@@ -17,7 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -33,8 +33,6 @@ static const std::string PERMISSION_NONE = "ohos.permission.INTERNET";
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string TEST_PERMISSION_REVOKE = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitExtensionTest"};
 
 HapInfoParams g_infoParmsCommon = {
     .userID = 1,
@@ -136,7 +134,7 @@ void SharePermissionTest::SetUpTestCase()
     EXPECT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
 }
 
 void SharePermissionTest::TearDownTestCase()
@@ -148,7 +146,7 @@ void SharePermissionTest::TearDownTestCase()
 
 void SharePermissionTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void SharePermissionTest::TearDown()

@@ -29,8 +29,7 @@
 #include "permission_grant_info_parcel.h"
 #include "permission_state_change_scope_parcel.h"
 #include "permission_state_change_info_parcel.h"
-#include "permission_state_full.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 
 using namespace testing::ext;
 
@@ -65,19 +64,15 @@ PermissionDef g_permDefBeta = {
     .descriptionId = 1
 };
 
-PermissionStateFull g_permStatAlpha = {
+PermissionStatus g_permStatAlpha = {
     .permissionName = TEST_PERMISSION_NAME_ALPHA,
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_USER_SET
 };
-PermissionStateFull g_permStatBeta = {
+PermissionStatus g_permStatBeta = {
     .permissionName = TEST_PERMISSION_NAME_BETA,
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    .grantStatus = PermissionState::PERMISSION_GRANTED,
+    .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
 };
 }
 class AccessTokenParcelTest : public testing::Test  {
@@ -135,12 +130,12 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
 {
     HapPolicyParcel hapPolicyParcel;
 
-    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
-    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
-    hapPolicyParcel.hapPolicyParameter.permList.emplace_back(g_permDefAlpha);
-    hapPolicyParcel.hapPolicyParameter.permList.emplace_back(g_permDefBeta);
-    hapPolicyParcel.hapPolicyParameter.permStateList.emplace_back(g_permStatAlpha);
-    hapPolicyParcel.hapPolicyParameter.permStateList.emplace_back(g_permStatBeta);
+    hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicy.domain = "test.domain";
+    hapPolicyParcel.hapPolicy.permList.emplace_back(g_permDefAlpha);
+    hapPolicyParcel.hapPolicy.permList.emplace_back(g_permDefBeta);
+    hapPolicyParcel.hapPolicy.permStateList.emplace_back(g_permStatAlpha);
+    hapPolicyParcel.hapPolicy.permStateList.emplace_back(g_permStatBeta);
 
     Parcel parcel;
     EXPECT_EQ(true, hapPolicyParcel.Marshalling(parcel));
@@ -148,42 +143,38 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
     std::shared_ptr<HapPolicyParcel> readedData(HapPolicyParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
 
-    EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.apl, readedData->hapPolicyParameter.apl);
-    EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.domain, readedData->hapPolicyParameter.domain);
-    EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList.size(), readedData->hapPolicyParameter.permList.size());
-    EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList.size(),
-        readedData->hapPolicyParameter.permStateList.size());
+    EXPECT_EQ(hapPolicyParcel.hapPolicy.apl, readedData->hapPolicy.apl);
+    EXPECT_EQ(hapPolicyParcel.hapPolicy.domain, readedData->hapPolicy.domain);
+    EXPECT_EQ(hapPolicyParcel.hapPolicy.permList.size(), readedData->hapPolicy.permList.size());
+    EXPECT_EQ(hapPolicyParcel.hapPolicy.permStateList.size(),
+        readedData->hapPolicy.permStateList.size());
 
-    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permList.size(); i++) {
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].permissionName,
-            readedData->hapPolicyParameter.permList[i].permissionName);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].bundleName,
-            readedData->hapPolicyParameter.permList[i].bundleName);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].grantMode,
-            readedData->hapPolicyParameter.permList[i].grantMode);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].availableLevel,
-            readedData->hapPolicyParameter.permList[i].availableLevel);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].label,
-            readedData->hapPolicyParameter.permList[i].label);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].labelId,
-            readedData->hapPolicyParameter.permList[i].labelId);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].description,
-            readedData->hapPolicyParameter.permList[i].description);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].descriptionId,
-            readedData->hapPolicyParameter.permList[i].descriptionId);
+    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicy.permList.size(); i++) {
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].permissionName,
+            readedData->hapPolicy.permList[i].permissionName);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].bundleName,
+            readedData->hapPolicy.permList[i].bundleName);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].grantMode,
+            readedData->hapPolicy.permList[i].grantMode);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].availableLevel,
+            readedData->hapPolicy.permList[i].availableLevel);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].label,
+            readedData->hapPolicy.permList[i].label);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].labelId,
+            readedData->hapPolicy.permList[i].labelId);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].description,
+            readedData->hapPolicy.permList[i].description);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permList[i].descriptionId,
+            readedData->hapPolicy.permList[i].descriptionId);
     }
 
-    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].permissionName,
-            readedData->hapPolicyParameter.permStateList[i].permissionName);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].isGeneral,
-            readedData->hapPolicyParameter.permStateList[i].isGeneral);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].resDeviceID,
-            readedData->hapPolicyParameter.permStateList[i].resDeviceID);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].grantStatus,
-            readedData->hapPolicyParameter.permStateList[i].grantStatus);
-        EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].grantFlags,
-            readedData->hapPolicyParameter.permStateList[i].grantFlags);
+    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicy.permStateList.size(); i++) {
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permStateList[i].permissionName,
+            readedData->hapPolicy.permStateList[i].permissionName);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permStateList[i].grantStatus,
+            readedData->hapPolicy.permStateList[i].grantStatus);
+        EXPECT_EQ(hapPolicyParcel.hapPolicy.permStateList[i].grantFlag,
+            readedData->hapPolicy.permStateList[i].grantFlag);
     }
 }
 
@@ -250,15 +241,12 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel001, TestSize.Level1)
     HapTokenInfoForSyncParcel hapTokenInfoSync;
 
     HapTokenInfo hapTokenInfo;
-    hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
     hapTokenInfo.bundleName = "bundle1";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "test1";
-    hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
     hapTokenInfoSync.hapTokenInfoForSyncParams.baseInfo = hapTokenInfo;
@@ -274,15 +262,15 @@ static void WriteParcelable(
     Parcel& out, const Parcelable& baseInfoParcel, uint32_t size)
 {
     out.WriteParcelable(&baseInfoParcel);
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
     for (uint32_t i = 0; i < size; i++) {
         permStateList.emplace_back(g_permStatBeta);
     }
     uint32_t permStateListSize = permStateList.size();
     out.WriteUint32(permStateListSize);
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
+        PermissionStatusParcel permStateParcel;
+        permStateParcel.permState = permStateList[i];
         out.WriteParcelable(&permStateParcel);
     }
 
@@ -292,8 +280,8 @@ static void WriteParcelable(
     permStateListSize = permStateList.size();
     out.WriteUint32(permStateListSize);
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
+        PermissionStatusParcel permStateParcel;
+        permStateParcel.permState = permStateList[i];
         out.WriteParcelable(&permStateParcel);
     }
 }
@@ -309,15 +297,12 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     HapTokenInfoForSyncParcel hapTokenInfoSync;
 
     HapTokenInfo hapTokenInfo;
-    hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
     hapTokenInfo.bundleName = "bundle2";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "test2";
-    hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
 
@@ -330,77 +315,27 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     EXPECT_NE(nullptr, readedData);
 
     Parcel out1;
-    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
+    WriteParcelable(out1, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
     std::shared_ptr<HapTokenInfoForSyncParcel> readedData1(HapTokenInfoForSyncParcel::Unmarshalling(out1));
     EXPECT_EQ(true, readedData1 == nullptr);
 }
 
-
-static void PutData(Parcel& out, uint32_t deviceSize, uint32_t statusSize, uint32_t flagSize)
-{
-    out.WriteString("ohos.permission.LOCATION");
-    out.WriteBool(true);
-    out.WriteUint32(deviceSize);
-    for (uint32_t i = 0; i < deviceSize; i++) {
-        out.WriteString("deviceName");
-    }
-    out.WriteUint32(statusSize);
-    for (uint32_t i = 0; i < statusSize; i++) {
-        out.WriteInt32(0);
-    }
-    out.WriteUint32(flagSize);
-    for (uint32_t i = 0; i < flagSize; i++) {
-        out.WriteInt32(0);
-    }
-}
-
-/**
- * @tc.name: PermissionStateFullParcel001
- * @tc.desc: Test permissionStateFullParcel Marshalling/Unmarshalling.
- * @tc.type: FUNC
- * @tc.require: issueI5QKZF
- */
-HWTEST_F(AccessTokenParcelTest, PermissionStateFullParcel001, TestSize.Level1)
-{
-    Parcel out;
-    PutData(out, MAX_DEVICE_ID_SIZE, MAX_DEVICE_ID_SIZE, MAX_DEVICE_ID_SIZE + 1);
-    std::shared_ptr<PermissionStateFullParcel> readedData(PermissionStateFullParcel::Unmarshalling(out));
-    EXPECT_EQ(nullptr, readedData);
-
-    Parcel out1;
-    PutData(out1, MAX_DEVICE_ID_SIZE, MAX_DEVICE_ID_SIZE + 1, MAX_DEVICE_ID_SIZE + 1);
-    std::shared_ptr<PermissionStateFullParcel> readedData1(PermissionStateFullParcel::Unmarshalling(out1));
-    EXPECT_EQ(readedData1, nullptr);
-
-    Parcel out2;
-    PutData(out2, MAX_DEVICE_ID_SIZE + 1, MAX_DEVICE_ID_SIZE + 1, MAX_DEVICE_ID_SIZE + 1);
-    std::shared_ptr<PermissionStateFullParcel> readedData2(PermissionStateFullParcel::Unmarshalling(out2));
-    EXPECT_EQ(readedData2, nullptr);
-
-    Parcel out3;
-    PutData(out3, MAX_DEVICE_ID_SIZE, MAX_DEVICE_ID_SIZE, MAX_DEVICE_ID_SIZE);
-    std::shared_ptr<PermissionStateFullParcel> readedData3(PermissionStateFullParcel::Unmarshalling(out3));
-    EXPECT_NE(readedData3, nullptr);
-}
-
 /**
  * @tc.name: PermissionStateFullParcel002
- * @tc.desc: Test permissionStateFullParcel Marshalling/Unmarshalling.
+ * @tc.desc: Test permissionStateParcel Marshalling/Unmarshalling.
  * @tc.type: FUNC
  * @tc.require: issueI5QKZF
  */
 HWTEST_F(AccessTokenParcelTest, PermissionStateFullParcel002, TestSize.Level1)
 {
-    PermissionStateFullParcel permissionStateFullParcel;
-    permissionStateFullParcel.permStatFull.permissionName = "permissionName";
-    permissionStateFullParcel.permStatFull.isGeneral = false;
-    permissionStateFullParcel.permStatFull.resDeviceID = {"device"};
-    permissionStateFullParcel.permStatFull.grantStatus = {1};
-    permissionStateFullParcel.permStatFull.grantFlags = {0};
+    PermissionStatusParcel permissionStateParcel;
+    permissionStateParcel.permState.permissionName = "permissionName";
+    permissionStateParcel.permState.grantStatus = 1;
+    permissionStateParcel.permState.grantFlag = 0;
     Parcel parcel;
-    EXPECT_EQ(true, permissionStateFullParcel.Marshalling(parcel));
+    EXPECT_EQ(true, permissionStateParcel.Marshalling(parcel));
 
-    std::shared_ptr<PermissionStateFullParcel> readedData(PermissionStateFullParcel::Unmarshalling(parcel));
+    std::shared_ptr<PermissionStatusParcel> readedData(PermissionStatusParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
 }
 

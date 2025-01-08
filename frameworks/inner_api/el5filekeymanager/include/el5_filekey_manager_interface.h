@@ -40,6 +40,9 @@ public:
     virtual int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) = 0;
     virtual int32_t SetFilePathPolicy() = 0;
     virtual int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) = 0;
+    virtual int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) = 0;
+    virtual int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) = 0;
+    virtual int32_t QueryAppKeyState(DataLockType type) = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security

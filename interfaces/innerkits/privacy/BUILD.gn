@@ -63,6 +63,7 @@ if (is_standard_system) {
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
+      "${access_token_path}/services/common/proxy_death:proxy_death_stub",
     ]
 
     configs = [
@@ -84,6 +85,10 @@ if (is_standard_system) {
 
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+    }
+
+    if (build_variant == "user") {
+      cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
     }
   }
 }

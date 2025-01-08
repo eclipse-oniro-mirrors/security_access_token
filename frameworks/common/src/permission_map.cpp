@@ -119,6 +119,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UPDATE_SYSTEM",           false},
     {"ohos.permission.FACTORY_RESET",           false},
     {"ohos.permission.ASSIST_DEVICE_UPDATE",    false},
+    {"ohos.permission.PLUGIN_UPDATE",           false},
     {"ohos.permission.RECEIVE_UPDATE_MESSAGE",    false},
     {"ohos.permission.UPDATE_MIGRATE",          false},
     {"ohos.permission.GRANT_SENSITIVE_PERMISSIONS", false},
@@ -220,6 +221,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",  false},
     {"ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",     false},
     {"ohos.permission.RECEIVE_ENTERPRISE_POLICY_EVENT",     false},
+    {"ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",        false},
+    {"ohos.permission.START_PROVISIONING_MESSAGE",          false},
     {"ohos.permission.NFC_TAG",                             false},
     {"ohos.permission.NFC_CARD_EMULATION",                  false},
     {"ohos.permission.MANAGE_UWB",                          false},
@@ -348,6 +351,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.EXEMPT_LOCATION_PRIVACY_INDICATOR",   false},
     {"ohos.permission.EXEMPT_PRIVACY_SECURITY_CENTER",      false},
     {"ohos.permission.ACCESS_LEARN_MORE_DIALOG",      false},
+    {"ohos.permission.USE_MESSAGES_PICKER",                 false},
+    {"ohos.permission.USE_CALL_LOG_PICKER",                 false},
     {"ohos.permission.GET_SUPER_PRIVACY",                   false},
     {"ohos.permission.SET_SUPER_PRIVACY",                   false},
     {"ohos.permission.RECORD_VOICE_CALL",                   false},
@@ -448,6 +453,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.OPERATE_FINDNETWORK",                 false},
     {"ohos.permission.QUERY_FINDNETWORK_LOCATION",          false},
     {"ohos.permission.REGISTER_FINDNETWORK_ACCESSORY",      false},
+    {"ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",      false},
     {"ohos.permission.INJECT_INPUT_EVENT",              false},
     {"ohos.permission.ACCESS_SUBSCRIPTION_CAPSULE_DATA",              false},
     {"ohos.permission.PRE_START_ATOMIC_SERVICE",            false},
@@ -483,6 +489,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_FACTORY_OTA_DIR",   false},
     {"ohos.permission.MICROPHONE_CONTROL",   false},
     {"ohos.permission.MANAGE_MOUSE_CURSOR",                 false},
+    {"ohos.permission.INPUT_DEVICE_CONTROLLER",             false},
     {"ohos.permission.FILTER_INPUT_EVENT",                  false},
     {"ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",        false},
     {"ohos.permission.RECEIVE_FUSION_MESSAGES",             false},
@@ -560,11 +567,34 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_APP_LOCK",                       false},
     {"ohos.permission.WRITE_APP_LOCK",                      false},
     {"ohos.permission.ACCESS_APP_LOCK",                     false},
+    {"ohos.permission.ACCESS_APP_SINGLE_PERMISSION_MANAGEMENT", false},
     {"ohos.permission.ACCESS_APP_INSTALL_DIR",              false},
     {"ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION", false},
     {"ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", false},
     {"ohos.permission.MANAGE_UDMF_APP_SHARE_OPTION",        false},
     {"ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",  false},
+    {"ohos.permission.ENABLE_EXPERIENCE_HBM",               false},
+    {"ohos.permission.CAPTURE_PLAYBACK",                    false},
+    {"ohos.permission.MICROPHONE_BACKGROUND",               false},
+    {"ohos.permission.USE_USER_ACCESS_MANAGER",        false},
+    {"ohos.permission.ACCESS_ENTERPRISE_USER_TRUSTED_CERT", false},
+    {"ohos.permission.ACCESS_CONFIDENTIAL_COMPUTING_ZONE", false},
+    {"ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", false},
+    {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
+    {"ohos.permission.SET_LAUNCH_REASON_MESSAGE",           false},
+    {"ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",     false},
+    {"ohos.permission.GET_DOMAIN_ACCOUNT_SERVER_CONFIGS",   false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNT_SERVER_CONFIGS", false},
+    {"ohos.permission.MANAGE_DOMAIN_ACCOUNTS",              false},
+    {"ohos.permission.WATCH_READ_EMERGENCY_INFO",              false},
+    {"ohos.permission.WATCH_WRITE_EMERGENCY_INFO",              false},
+    {"ohos.permission.WATCH_START_SOS_SERVICE",              false},
+    {"ohos.permission.ANTI_FRAUD",                          false},
+    {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
+    {"ohos.permission.PRELOAD_FILE",                          false},
+    {"ohos.permission.INPUT_KEYBOARD_CONTROLLER",             false},
+    {"ohos.permission.LOCATION_SWITCH_IGNORED",     false},
+    {"ohos.permission.SET_MUTE_POLICY",                     false},
     {"ohos.permission.GET_ANIM_POLICY",                     false},
 };
 
@@ -588,6 +618,16 @@ bool TransferOpcodeToPermission(uint32_t opCode, std::string& permission)
     }
     permission = g_permMap[opCode].first;
     return true;
+}
+
+bool IsUserGrantPermission(const std::string& permission)
+{
+    for (const auto& perm : g_permMap) {
+        if (permission == perm.first) {
+            return perm.second;
+        }
+    }
+    return false;
 }
 } // namespace AccessToken
 } // namespace Security

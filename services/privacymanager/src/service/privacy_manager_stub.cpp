@@ -21,6 +21,7 @@
 #include "memory_guard.h"
 #include "on_permission_used_record_callback_proxy.h"
 #include "privacy_error.h"
+#include "privacy_manager_proxy_death_param.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
@@ -42,6 +43,7 @@ static constexpr uint32_t TIMEOUT = 6; // 6s
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
+constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 }
 
 PrivacyManagerStub::PrivacyManagerStub()
@@ -87,6 +89,10 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
         &PrivacyManagerStub::SetMutePolicyInner;
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_HAP_WITH_FOREGROUND_REMINDER)] =
         &PrivacyManagerStub::SetHapWithFGReminderInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS)] =
+        &PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS)] =
+        &PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner;
 }
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
@@ -130,6 +136,64 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
     reply.WriteInt32(this->AddPermissionUsedRecord(*infoParcel));
 }
 
+void PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int32_t userID = 0;
+    if (!data.ReadInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    bool status = true;
+    if (!data.ReadBool(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read status.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->SetPermissionUsedRecordToggleStatus(userID, status));
+}
+
+void PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int32_t userID = 0;
+    if (!data.ReadInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    bool status = true;
+    reply.WriteInt32(this->GetPermissionUsedRecordToggleStatus(userID, status));
+    reply.WriteBool(status);
+}
+
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -141,10 +205,19 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
-    int32_t pid = data.ReadInt32();
-    std::string permissionName = data.ReadString();
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName));
+    sptr<PermissionUsedTypeInfoParcel> info = data.ReadParcelable<PermissionUsedTypeInfoParcel>();
+    if (info == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read parcel fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->StartUsingPermission(*info, anonyStub));
 }
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -153,16 +226,24 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
-    int32_t pid = data.ReadInt32();
-    std::string permissionName = data.ReadString();
+    sptr<PermissionUsedTypeInfoParcel> info = data.ReadParcelable<PermissionUsedTypeInfoParcel>();
+    if (info == nullptr) {
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, callback));
+    sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
+    if (anonyStub == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    reply.WriteInt32(this->StartUsingPermission(*info, callback, anonyStub));
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -425,7 +506,7 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
 
 void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!VerifyPermission(SET_MUTE_POLICY)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -447,8 +528,14 @@ void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
+    uint32_t tokenID;
+    if (!data.ReadUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
 
-    int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
+    int32_t result = this->SetMutePolicy(policyType, callerType, isMute, tokenID);
     if (!reply.WriteInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;
@@ -479,6 +566,17 @@ void PrivacyManagerStub::SetHapWithFGReminderInner(MessageParcel& data, MessageP
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;
     }
+}
+
+bool PrivacyManagerStub::IsPrivilegedCalling() const
+{
+    // shell process is root in debug mode.
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    return callingUid == ROOT_UID;
+#else
+    return false;
+#endif
 }
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const

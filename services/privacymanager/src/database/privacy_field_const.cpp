@@ -17,6 +17,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const std::string PrivacyFiledConst::FIELD_USER_ID = "user_id";
 const std::string PrivacyFiledConst::FIELD_TOKEN_ID = "token_id";
 const std::string PrivacyFiledConst::FIELD_DEVICE_ID = "device_id";
 const std::string PrivacyFiledConst::FIELD_OP_CODE = "op_code";

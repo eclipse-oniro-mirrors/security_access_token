@@ -29,10 +29,10 @@ class DataTranslator final {
 public:
     static int TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues);
     static int TranslationIntoPermissionDef(const GenericValues& inGenericValues, PermissionDef& outPermissionDef);
-    static int TranslationIntoGenericValues(const PermissionStateFull& inPermissionState,
-        const unsigned int grantIndex, GenericValues& outGenericValues);
-    static int TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
-        PermissionStateFull& outPermissionState);
+    static int TranslationIntoGenericValues(const PermissionStatus& inPermissionState,
+        GenericValues& outGenericValues);
+    static int TranslationIntoPermissionStatus(const GenericValues& inGenericValues,
+        PermissionStatus& outPermissionState);
 };
 } // namespace AccessToken
 } // namespace Security

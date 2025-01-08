@@ -43,26 +43,8 @@ void AccessTokenDatabaseTest::TearDown()
 }
 
 /**
- * @tc.name: DatabaseTranslationTest001
- * @tc.desc: test TranslationIntoGenericValues
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDatabaseTest, DatabaseTranslationTest001, TestSize.Level1)
-{
-    DataTranslator trans;
-    PermissionStateFull inPermissionDef;
-    inPermissionDef.resDeviceID.resize(0); // 0 is the size
-
-    unsigned int grantIndex = 1; // 1 is a test input
-    GenericValues outGenericValues;
-
-    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoGenericValues(inPermissionDef, grantIndex, outGenericValues));
-}
-
-/**
  * @tc.name: DatabaseTranslationTest002
- * @tc.desc: test TranslationIntoPermissionStateFull
+ * @tc.desc: test TranslationIntoPermissionStatus
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -70,18 +52,18 @@ HWTEST_F(AccessTokenDatabaseTest, DatabaseConverage002, TestSize.Level1)
 {
     DataTranslator trans;
     GenericValues inGenericValues;
-    PermissionStateFull outPermissionState;
+    PermissionStatus outPermissionState;
     outPermissionState.permissionName = ""; // empty name
 
-    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
 
     outPermissionState.permissionName = "test name"; // test name
     inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, ""); // empty device id
-    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
 
     inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test dev id");
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, 0xffff); // 0xffff is test input
-    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    EXPECT_EQ(ERR_PARAM_INVALID, trans.TranslationIntoPermissionStatus(inGenericValues, outPermissionState));
 }
 
 } // namespace AccessToken

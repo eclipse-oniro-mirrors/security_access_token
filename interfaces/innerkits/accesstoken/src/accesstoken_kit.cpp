@@ -16,7 +16,6 @@
 #include "accesstoken_kit.h"
 #include <string>
 #include <vector>
-#include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "accesstoken_manager_client.h"
@@ -35,6 +34,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
@@ -68,6 +68,22 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
     return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
 }
 
+static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& policyOut)
+{
+    policyOut.apl = policyIn.apl;
+    policyOut.domain = policyIn.domain;
+    policyOut.permList.assign(policyIn.permList.begin(), policyIn.permList.end());
+    policyOut.aclRequestedList.assign(policyIn.aclRequestedList.begin(), policyIn.aclRequestedList.end());
+    policyOut.preAuthorizationInfo.assign(policyIn.preAuthorizationInfo.begin(), policyIn.preAuthorizationInfo.end());
+    for (const auto& perm : policyIn.permStateList) {
+        PermissionStatus tmp;
+        tmp.permissionName = perm.permissionName;
+        tmp.grantStatus = perm.grantStatus[0];
+        tmp.grantFlag = perm.grantFlags[0];
+        policyOut.permStateList.emplace_back(tmp);
+    }
+}
+
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
@@ -80,11 +96,20 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return res;
     }
-    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().AllocHapToken(info, newPolicy);
 }
 
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
     AccessTokenIDEx& fullTokenId)
+{
+    HapInfoCheckResult result;
+    return InitHapToken(info, policy, fullTokenId, result);
+}
+
+int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UserID: %{public}d, bundleName :%{public}s, \
 permList: %{public}zu, stateList: %{public}zu",
@@ -95,7 +120,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().InitHapToken(info, newPolicy, fullTokenId, result);
 }
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
@@ -115,6 +142,13 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
+    HapInfoCheckResult result;
+    return UpdateHapToken(tokenIdEx, info, policy, result);
+}
+
+int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParams& policy, HapInfoCheckResult& result)
+{
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, isSystemApp: %{public}d, \
 permList: %{public}zu, stateList: %{public}zu",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size());
@@ -123,7 +157,9 @@ permList: %{public}zu, stateList: %{public}zu",
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy);
+    HapPolicy newPolicy;
+    TransferHapPolicyParams(policy, newPolicy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
@@ -203,6 +239,16 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
         return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
+}
+
+int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d.", userID);
+    if (!DataValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID=%{public}d is invalid", userID);
+        return  AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
 }
 
 int AccessTokenKit::GetHapTokenInfo(
@@ -310,6 +356,50 @@ int AccessTokenKit::VerifyAccessToken(
         return ret;
     }
     return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
+}
+
+int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+    std::vector<int32_t>& permStateList, bool crossIpc)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionlist.size=%{public}zu, crossIpc=%{public}d.",
+        tokenID, permissionList.size(), crossIpc);
+    permStateList.clear();
+    if (crossIpc) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionList, permStateList);
+    }
+
+    permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+    std::vector<std::string> permListCrossIpc;
+    std::unordered_map<size_t, size_t> permToState;
+    for (size_t i = 0; i < permissionList.size(); i++) {
+        bool isGranted = false;
+        uint32_t code;
+        if (!TransferPermissionToOpcode(permissionList[i], code)) {
+            permStateList[i] = PERMISSION_DENIED;
+            continue;
+        }
+        int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
+        if (ret != 0) {
+            permToState[permListCrossIpc.size()] = i;
+            permListCrossIpc.emplace_back(permissionList[i]);
+            continue;
+        }
+        permStateList[i] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    }
+    if (!permListCrossIpc.empty()) {
+        std::vector<int32_t> permStateCrossIpc;
+        int ret = AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID,
+            permListCrossIpc, permStateCrossIpc);
+        if (ret != ERR_OK) {
+            return ret;
+        }
+        for (size_t i = 0; i < permStateCrossIpc.size(); i++) {
+            if (permToState.find(i) != permToState.end()) {
+                permStateList[permToState[i]] = permStateCrossIpc[i];
+            }
+        }
+    }
+    return ERR_OK;
 }
 
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
@@ -449,18 +539,40 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
     return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
+int32_t AccessTokenKit::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=%{public}d.", tokenID);
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().RequestAppPermOnSetting(tokenID);
+}
+
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback);
+    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);
+    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
+}
+
+int32_t AccessTokenKit::RegisterSelfPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
+{
+    return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback, SELF_REGISTER_TYPE);
+}
+
+int32_t AccessTokenKit::UnRegisterSelfPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
+{
+    return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback, SELF_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
@@ -595,6 +707,25 @@ int32_t AccessTokenKit::ClearUserPolicy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy();
+}
+
+bool AccessTokenKit::IsSystemAppByFullTokenID(uint64_t tokenId)
+{
+    return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
+}
+
+uint64_t AccessTokenKit::GetRenderTokenID(uint64_t tokenId)
+{
+    AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
+    if (id == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
+        return tokenId;
+    }
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    idInner->renderFlag = 1;
+
+    id = *reinterpret_cast<AccessTokenID *>(idInner);
+    return static_cast<uint64_t>(id);
 }
 } // namespace AccessToken
 } // namespace Security

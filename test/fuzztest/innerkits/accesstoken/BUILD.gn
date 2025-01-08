@@ -41,6 +41,7 @@ group("fuzztest") {
     "getrendertokenid_fuzzer:GetRenderTokenIdFuzzTest",
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
+    "gettokenidbyuserid_fuzzer:GetTokenIDByUserIDFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",
     "grantpermission_fuzzer:GrantPermissionFuzzTest",
@@ -48,6 +49,7 @@ group("fuzztest") {
     "inithaptoken_fuzzer:InitHapTokenFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "registertokensynccallback_fuzzer:RegisterTokenSyncCallbackFuzzTest",
+    "requestapppermonsetting_fuzzer:RequestAppPermOnSettingFuzzTest",
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
@@ -57,5 +59,6 @@ group("fuzztest") {
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
     "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
+    "verifyaccesstokenwithlist_fuzzer:VerifyAccessTokenWithListFuzzTest",
   ]
 }

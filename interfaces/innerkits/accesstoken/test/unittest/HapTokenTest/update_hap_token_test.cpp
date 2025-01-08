@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
@@ -43,8 +43,6 @@ const std::string OVER_SIZE_STR =
     "FBSURBVDiN7ZQ/S8NQFMVPxU/QCx06GBzrkqUZ42rBbHWUBDqYxSnUoTxXydCSycVsgltfBiFDR8HNdHGxY4nQQAPvMzwHsWn+KM"
     "vj3He5vIaUEjV0UAfe85X83KMBT7N75JEXVdSlfEAVfPRyZ5yfIrBoUkVlMU82Hkp8wu9ddt1vFew4sIiIiKwgzcXIvN7GTZOvpZ"
     "D3I1NZvmdCXz+XOv5wJANKHOVYjRTAghxIyh0FHKb+0QQH5+kXf2zkYGAG0oFr5RfnK8DAGkwY19wliRT2L448vjv0YGQFVa8VKd";
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "UpdateHapTokenTest"};
 
 PermissionStateFull g_testPermReq = {
     .permissionName = "ohos.permission.MANAGE_HAP_TOKENID",
@@ -121,7 +119,7 @@ void UpdateHapTokenTest::TearDownTestCase()
 
 void UpdateHapTokenTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     setuid(0);
 }
 
@@ -139,7 +137,7 @@ void UpdateHapTokenTest::TearDown()
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -160,14 +158,16 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("HapTokenTestAppID_1", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(1, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("HapTokenTestAppID_1", hapInfoExt.appID);
 }
 
 /**
@@ -180,7 +180,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -201,14 +201,16 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(API_VERSION_EIGHT, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(1, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 }
 
 /**
@@ -222,7 +224,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -243,14 +245,16 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest003, TestSize.Level1)
 
     HapTokenInfo hapInfo;
     AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    EXPECT_EQ(APL_NORMAL, hapInfo.apl);
     EXPECT_EQ(0, hapInfo.userID);
     EXPECT_EQ("com.ohos.AccessTokenTestBundle", hapInfo.bundleName);
     EXPECT_EQ(TestCommon::DEFAULT_API_VERSION, hapInfo.apiVersion);
     EXPECT_EQ(0, hapInfo.instIndex);
-    EXPECT_EQ("AccessTokenTestAppID", hapInfo.appID);
     EXPECT_EQ(tokenID, hapInfo.tokenID);
     EXPECT_EQ(0, hapInfo.tokenAttr);
+
+    HapTokenInfoExt hapInfoExt;
+    AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
+    EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
     updateHapInfoParams.isSystemApp = true;
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams);
@@ -285,7 +289,7 @@ void GetPermissions(string permissionName, PermissionStateFull& stateFull, PreAu
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest004");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -340,7 +344,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -399,7 +403,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest005, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenFuncTest006");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest006");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -456,7 +460,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest006, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -514,7 +518,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest001, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -569,7 +573,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest002, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -623,7 +627,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest003, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest004");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -669,7 +673,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest004, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -708,8 +712,14 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level1)
         .appDistributionType = ""
     };
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams);
-    tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result);
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -722,7 +732,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest006");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest006");
 
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -772,7 +782,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest007");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest007");
 
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -834,7 +844,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest008");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest008");
 
     PreAuthorizationInfo info1 = {
         .permissionName = "ohos.permission.CAMERA",
@@ -892,7 +902,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenSpecsTest009");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest009");
 
     PreAuthorizationInfo info1 = {
         .permissionName = "ohos.permission.CAMERA",
@@ -937,6 +947,61 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level1)
 }
 
 /**
+ * @tc.name: UpdateHapTokenSpecsTest010
+ * @tc.desc: test aclRequestedList exist before update and remove after update.
+ *           1.aclRequestedList = {"ohos.permission.ACCESS_DDK_USB"}
+ *           2.aclRequestedList = {}, Update failed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest010");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_NORMAL;
+
+    PermissionStateFull permissionStateFull001 = {
+        .permissionName = "ohos.permission.ACCESS_DDK_USB",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {PERMISSION_SYSTEM_FIXED}
+    };
+
+    policyParams.permStateList = {permissionStateFull001};
+    policyParams.aclRequestedList = {"ohos.permission.ACCESS_DDK_USB"};
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams updateHapInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = infoParams.appDistributionType
+    };
+    policyParams.aclRequestedList = {};
+    HapInfoCheckResult result;
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result);
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ACCESS_DDK_USB");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
+
+    result.permCheckResult.permissionName = "test"; // invalid Name
+    result.permCheckResult.rule = static_cast<PermissionRulesEnum>(-1); // invalid reasan
+    policyParams.aclRequestedList = { "ohos.permission.ACCESS_DDK_USB" };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(result.permCheckResult.permissionName, "test");
+    ASSERT_EQ(result.permCheckResult.rule, -1);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
  * @tc.name: UpdateHapTokenAbnormalTest001
  * @tc.desc: test invaild UpdateHapInfoParams.appIDDesc
  *           1.appIDDesc is too long
@@ -946,7 +1011,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest001");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -979,7 +1044,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenAbnormalTest002");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest002");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -1015,7 +1080,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenAbnormalTest003");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest003");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -1068,7 +1133,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest003, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenAbnormalTest004");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest004");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -1130,7 +1195,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest004, TestSize.Level1)
  */
 HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateHapTokenAbnormalTest005");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest005");
 
     HapInfoParams infoParams;
     HapPolicyParams policyParams;

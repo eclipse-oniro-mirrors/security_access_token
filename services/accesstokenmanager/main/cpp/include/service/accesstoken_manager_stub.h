@@ -36,6 +36,7 @@ public:
 private:
     void GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply);
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
+    void VerifyAccessTokenWithListInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply);
@@ -44,6 +45,7 @@ private:
     void GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply);
     void SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
+    void RequestAppPermOnSettingInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply);
@@ -52,6 +54,7 @@ private:
     void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply);
+    void GetTokenIDByUserIDInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply);
@@ -59,6 +62,8 @@ private:
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void RegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void UnRegisterSelfPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);

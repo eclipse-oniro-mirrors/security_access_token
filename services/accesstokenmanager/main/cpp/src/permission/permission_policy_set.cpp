@@ -44,22 +44,22 @@ PermissionPolicySet::~PermissionPolicySet()
 
 
 void PermissionPolicySet::GetPermissionBriefData(std::vector<BriefPermData>& list,
-    const std::vector<PermissionStateFull> &permStateList)
+    const std::vector<PermissionStatus> &permStateList)
 {
     for (const auto& state : permStateList) {
         BriefPermData data = {0};
         uint32_t code;
         if (TransferPermissionToOpcode(state.permissionName, code)) {
-            data.status = (state.grantStatus[0] == PERMISSION_GRANTED) ? 1 : 0;
+            data.status = (state.grantStatus == PERMISSION_GRANTED) ? 1 : 0;
             data.permCode = code;
-            data.flag = state.grantFlags[0];
+            data.flag = state.grantFlag;
             list.emplace_back(data);
         }
     }
 }
 
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicySet(
-    AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList)
 {
     ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
@@ -76,7 +76,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
 }
 
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPolicySetWithoutDefCheck(
-    AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList)
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     PermissionValidator::FilterInvalidPermissionState(
@@ -98,10 +98,10 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
 
     for (const GenericValues& stateValue : permStateRes) {
         if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) == tokenId) {
-            PermissionStateFull state;
-            int ret = DataTranslator::TranslationIntoPermissionStateFull(stateValue, state);
+            PermissionStatus state;
+            int ret = DataTranslator::TranslationIntoPermissionStatus(stateValue, state);
             if (ret == RET_SUCCESS) {
-                MergePermissionStateFull(policySet->permStateList_, state);
+                MergePermissionStatus(policySet->permStateList_, state);
             } else {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0%{public}u permState is wrong.", tokenId);
             }
@@ -110,44 +110,40 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     return policySet;
 }
 
-void PermissionPolicySet::UpdatePermStateFull(const PermissionStateFull& permOld, PermissionStateFull& permNew)
+void PermissionPolicySet::UpdatePermStatus(const PermissionStatus& permOld, PermissionStatus& permNew)
 {
-    if (permNew.isGeneral == permOld.isGeneral) {
-        // if user_grant permission is not operated by user, it keeps the new initalized state.
-        // the new state can be pre_authorization.
-        if ((permOld.grantFlags[0] == PERMISSION_DEFAULT_FLAG) && (permOld.grantStatus[0] == PERMISSION_DENIED)) {
-            return;
-        }
-        // if old user_grant permission is granted by pre_authorization fixed, it keeps the new initalized state.
-        // the new state can be pre_authorization or not.
-        if ((permOld.grantFlags[0] == PERMISSION_SYSTEM_FIXED) ||
-            // if old user_grant permission is granted by pre_authorization unfixed
-            // and the user has not operated this permission, it keeps the new initalized state.
-            (permOld.grantFlags[0] == PERMISSION_GRANTED_BY_POLICY)) {
-            return;
-        }
-
-        // if old user_grant permission has been operated by user, it keeps the old status and old flag.
-        permNew.resDeviceID = permOld.resDeviceID;
-        permNew.grantStatus = permOld.grantStatus;
-        permNew.grantFlags = permOld.grantFlags;
+    // if user_grant permission is not operated by user, it keeps the new initalized state.
+    // the new state can be pre_authorization.
+    if ((permOld.grantFlag == PERMISSION_DEFAULT_FLAG) && (permOld.grantStatus == PERMISSION_DENIED)) {
+        return;
     }
+    // if old user_grant permission is granted by pre_authorization fixed, it keeps the new initalized state.
+    // the new state can be pre_authorization or not.
+    if ((permOld.grantFlag == PERMISSION_SYSTEM_FIXED) ||
+        // if old user_grant permission is granted by pre_authorization unfixed
+        // and the user has not operated this permission, it keeps the new initalized state.
+        (permOld.grantFlag == PERMISSION_GRANTED_BY_POLICY)) {
+        return;
+    }
+
+    permNew.grantStatus = permOld.grantStatus;
+    permNew.grantFlag = permOld.grantFlag;
 }
 
-void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permStateList)
+void PermissionPolicySet::Update(const std::vector<PermissionStatus>& permStateList)
 {
-    std::vector<PermissionStateFull> permStateFilterList;
+    std::vector<PermissionStatus> permStateFilterList;
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
     ACCESSTOKEN_LOG_INFO(LABEL, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
 
-    for (PermissionStateFull& permStateNew : permStateFilterList) {
+    for (PermissionStatus& permStateNew : permStateFilterList) {
         auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
-            [permStateNew](const PermissionStateFull& permStateOld) {
+            [permStateNew](const PermissionStatus& permStateOld) {
                 return permStateNew.permissionName == permStateOld.permissionName;
             });
         if (iter != permStateList_.end()) {
-            UpdatePermStateFull(*iter, permStateNew);
+            UpdatePermStatus(*iter, permStateNew);
         }
     }
     permStateList_ = permStateFilterList;
@@ -169,10 +165,10 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
 
     for (const GenericValues& stateValue : permStateRes) {
         if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) == tokenId) {
-            PermissionStateFull state;
-            int ret = DataTranslator::TranslationIntoPermissionStateFull(stateValue, state);
+            PermissionStatus state;
+            int ret = DataTranslator::TranslationIntoPermissionStatus(stateValue, state);
             if (ret == RET_SUCCESS) {
-                MergePermissionStateFull(policySet->permStateList_, state);
+                MergePermissionStatus(policySet->permStateList_, state);
             } else {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0x%{public}x permState is wrong.", tokenId);
             }
@@ -189,16 +185,15 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     return policySet;
 }
 
-void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
-    PermissionStateFull& state)
+void PermissionPolicySet::MergePermissionStatus(std::vector<PermissionStatus>& permStateList,
+    PermissionStatus& state)
 {
-    uint32_t flag = GetFlagWroteToDb(state.grantFlags[0]);
-    state.grantFlags[0] = flag;
+    uint32_t flag = GetFlagWroteToDb(state.grantFlag);
+    state.grantFlag = flag;
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
         if (state.permissionName == iter->permissionName) {
-            iter->resDeviceID.emplace_back(state.resDeviceID[0]);
-            iter->grantStatus.emplace_back(state.grantStatus[0]);
-            iter->grantFlags.emplace_back(state.grantFlags[0]);
+            iter->grantStatus = state.grantStatus;
+            iter->grantFlag = state.grantFlag;
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Update permission: %{public}s.", state.permissionName.c_str());
             return;
         }
@@ -211,21 +206,10 @@ void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& value
 {
     for (const auto& permissionState : permStateList_) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName: %{public}s", permissionState.permissionName.c_str());
-        if (permissionState.isGeneral) {
-            GenericValues genericValues;
-            genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
-            DataTranslator::TranslationIntoGenericValues(permissionState, 0, genericValues);
-            valueList.emplace_back(genericValues);
-            continue;
-        }
-
-        unsigned int stateSize = permissionState.resDeviceID.size();
-        for (unsigned int i = 0; i < stateSize; i++) {
-            GenericValues genericValues;
-            genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
-            DataTranslator::TranslationIntoGenericValues(permissionState, i, genericValues);
-            valueList.emplace_back(genericValues);
-        }
+        GenericValues genericValues;
+        genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
+        DataTranslator::TranslationIntoGenericValues(permissionState, genericValues);
+        valueList.emplace_back(genericValues);
     }
 }
 
@@ -245,13 +229,8 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
-            if (perm.isGeneral) {
-                flag = perm.grantFlags[0];
-                return RET_SUCCESS;
-            } else {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission %{public}s is invalid", permissionName.c_str());
-                return AccessTokenError::ERR_PARAM_INVALID;
-            }
+            flag = perm.grantFlag;
+            return RET_SUCCESS;
         }
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
@@ -269,23 +248,23 @@ int32_t PermissionPolicySet::UpdatePermStateList(
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
-        [permissionName](const PermissionStateFull& permState) {
+        [permissionName](const PermissionStatus& permState) {
             return permissionName == permState.permissionName;
         });
     if (iter != permStateList_.end()) {
-        if ((static_cast<uint32_t>(iter->grantFlags[0]) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
+        if ((static_cast<uint32_t>(iter->grantFlag) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Permission fixed by system!");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-        iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-        iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
+        iter->grantStatus = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        iter->grantFlag = UpdateWithNewFlag(iter->grantFlag, flag);
         uint32_t opCode;
         if (!TransferPermissionToOpcode(permissionName, opCode)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid %{public}s.", permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-        bool status = (iter->grantStatus[0] == PERMISSION_GRANTED) ? 1 : 0;
-        return PermissionDataBrief::GetInstance().SetBriefPermData(tokenId_, opCode, status, iter->grantFlags[0]);
+        bool status = (iter->grantStatus == PERMISSION_GRANTED) ? 1 : 0;
+        return PermissionDataBrief::GetInstance().SetBriefPermData(tokenId_, opCode, status, iter->grantFlag);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -345,23 +324,19 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
-        if (perm.isGeneral) {
-            uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
-            if ((oldFlag & PERMISSION_SYSTEM_FIXED) != 0) {
-                continue;
-            }
-            /* A user_grant permission has been set by system for cancellable pre-authorization. */
-            /* it should keep granted when the app reset. */
-            if ((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) {
-                perm.grantStatus[0] = PERMISSION_GRANTED;
-                perm.grantFlags[0] = PERMISSION_GRANTED_BY_POLICY;
-                continue;
-            }
-            perm.grantStatus[0] = PERMISSION_DENIED;
-            perm.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
-        } else {
+        uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlag);
+        if ((oldFlag & PERMISSION_SYSTEM_FIXED) != 0) {
             continue;
         }
+        /* A user_grant permission has been set by system for cancellable pre-authorization. */
+        /* it should keep granted when the app reset. */
+        if ((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) {
+            perm.grantStatus = PERMISSION_GRANTED;
+            perm.grantFlag = PERMISSION_GRANTED_BY_POLICY;
+            continue;
+        }
+        perm.grantStatus = PERMISSION_DENIED;
+        perm.grantFlag = PERMISSION_DEFAULT_FLAG;
     }
     std::vector<BriefPermData> list;
     GetPermissionBriefData(list, permStateList_);
@@ -369,7 +344,7 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
     PermissionDataBrief::GetInstance().ClearAllSecCompGrantedPermById(tokenId_);
 }
 
-void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull>& permList)
+void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStatus>& permList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     permList.assign(permStateList_.begin(), permStateList_.end());
@@ -382,7 +357,7 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeLi
         uint32_t code;
         if (TransferPermissionToOpcode(state.permissionName, code)) {
             opCodeList.emplace_back(code);
-            statusList.emplace_back(state.grantStatus[0] == PERMISSION_GRANTED);
+            statusList.emplace_back(state.grantStatus == PERMISSION_GRANTED);
         }
     }
 }
@@ -409,43 +384,13 @@ void PermDefToString(const PermissionDef& def, std::string& info)
     info.append(R"(    })");
 }
 
-void PermStateFullToString(const PermissionStateFull& state, std::string& info)
+void PermStateFullToString(const PermissionStatus& state, std::string& info)
 {
     info.append(R"(    {)");
     info.append("\n");
     info.append(R"(      "permissionName": ")" + state.permissionName + R"(")" + ",\n");
-    info.append(R"(      "isGeneral": )" + std::to_string(state.isGeneral) + ",\n");
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    info.append(R"(      "resDeviceIDList": [ )");
-    for (auto iter = state.resDeviceID.begin(); iter != state.resDeviceID.end(); iter++) {
-        info.append("\n");
-        info.append(R"(        { "resDeviceID": ")" + *iter + R"(")" + " }");
-        if (iter != (state.resDeviceID.end() - 1)) {
-            info.append(",");
-        }
-    }
-    info.append("\n      ],\n");
-#endif
-    info.append(R"(      "grantStatusList": [)");
-    for (auto iter = state.grantStatus.begin(); iter != state.grantStatus.end(); iter++) {
-        info.append("\n");
-        info.append(R"(        { "grantStatus": )" + std::to_string(*iter) + " }");
-        if (iter != (state.grantStatus.end() - 1)) {
-            info.append(",");
-        }
-    }
-    info.append("\n      ],\n");
-
-    info.append(R"(      "grantFlagsList": [)");
-    for (auto iter = state.grantFlags.begin(); iter != state.grantFlags.end(); iter++) {
-        info.append("\n");
-        info.append(R"(        { "grantFlag": )" + std::to_string(*iter) + " }");
-        if (iter != (state.grantFlags.end() - 1)) {
-            info.append(",");
-        }
-    }
-    info.append("\n      ],\n");
-
+    info.append(R"(      "grantStatus": ")" + std::to_string(state.grantStatus) + R"(")" + ",\n");
+    info.append(R"(      "grantFlag": ")" + std::to_string(state.grantFlag) + R"(")" + ",\n");
     info.append(R"(    })");
 }
 
@@ -476,7 +421,7 @@ void PermissionPolicySet::ToString(std::string& info)
 }
 
 void PermissionPolicySet::ToString(std::string& info, const std::vector<PermissionDef>& permList,
-    const std::vector<PermissionStateFull>& permStateList)
+    const std::vector<PermissionStatus>& permStateList)
 {
     info.append(R"(  "permDefList": [)");
     info.append("\n");

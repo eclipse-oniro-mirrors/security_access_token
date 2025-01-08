@@ -39,9 +39,10 @@ public:
     int32_t Remove(const AtmDataType type, const GenericValues& conditionValue);
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
-    int32_t DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
-        const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
+    int32_t DeleteAndInsertValues(const std::vector<AtmDataType>& deleteDataTypes,
+        const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
+        const std::vector<std::vector<GenericValues>>& addValues);
 
 private:
     AccessTokenDb();
@@ -58,11 +59,10 @@ private:
     int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
         const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
         const std::shared_ptr<NativeRdb::RdbStore>& db);
-    int32_t DeleteAndAddSingleTable(const GenericValues delCondition, const std::string& tableName,
-        const std::vector<GenericValues>& addValues, const std::shared_ptr<NativeRdb::RdbStore>& db);
-    int32_t DeleteAndAddRecord(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
-        const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
     void InitRdb();
+
+    int32_t AddValues(const AtmDataType type, const std::vector<GenericValues>& addValues);
+    int32_t RemoveValues(const AtmDataType type, const GenericValues& conditionValue);
 
     OHOS::Utils::RWLock rwLock_;
     std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;

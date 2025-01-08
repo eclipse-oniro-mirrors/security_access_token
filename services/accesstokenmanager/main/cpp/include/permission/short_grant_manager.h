@@ -24,7 +24,6 @@
 
 #include "access_event_handler.h"
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #include "permission_manager.h"
 

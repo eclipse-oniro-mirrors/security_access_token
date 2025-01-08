@@ -63,6 +63,8 @@ enum PrivacyError {
     ERR_EDM_POLICY_CHECK_FAILED,
     ERR_PRIVACY_POLICY_CHECK_FAILED,
     ERR_REMOTE_CONNECTION,
+    ERR_ADD_DEATH_RECIPIENT_FAILED,
+    ERR_FIRST_CALLER_NOT_EDM,
 };
 } // namespace AccessToken
 } // namespace Security

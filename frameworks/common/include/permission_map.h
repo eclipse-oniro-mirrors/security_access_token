@@ -24,6 +24,7 @@ namespace Security {
 namespace AccessToken {
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
 bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
+bool IsUserGrantPermission(const std::string& permission);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

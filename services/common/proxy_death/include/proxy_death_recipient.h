@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,27 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNER_KITS_PERMISSION_PERMISSION_STATE_FULL_PARCEL_H
-#define INTERFACES_INNER_KITS_PERMISSION_PERMISSION_STATE_FULL_PARCEL_H
 
-#include "permission_state_full.h"
-#include "parcel.h"
+#ifndef PROXY_DEATH_RECIPIENT_H
+#define PROXY_DEATH_RECIPIENT_H
+
+#include <memory>
+#include "iremote_object.h"
+#include "proxy_death_handler.h"
+#include "proxy_death_param.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionStateFullParcel final : public Parcelable {
-    PermissionStateFullParcel() = default;
-
-    ~PermissionStateFullParcel() override = default;
-
-    bool Marshalling(Parcel &out) const override;
-
-    static PermissionStateFullParcel *Unmarshalling(Parcel &in);
-
-    PermissionStateFull permStatFull;
+class ProxyDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    ProxyDeathRecipient(ProxyDeathHandler* handler);
+    virtual ~ProxyDeathRecipient() override = default;
+    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+private:
+    ProxyDeathHandler* handler_ = nullptr;
 };
 }  // namespace AccessToken
-}  // namespace Security
+} // namespace Security
 }  // namespace OHOS
-#endif  // INTERFACES_INNER_KITS_PERMISSION_PERMISSION_STATE_FULL_PARCEL_H
+#endif  // PROXY_DEATH_RECIPIENT_H
+

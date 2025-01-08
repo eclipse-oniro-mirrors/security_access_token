@@ -240,6 +240,25 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: VerifyAccessTokenWithList001
+ * @tc.desc: VerifyAccessTokenWithList with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessTokenWithList001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::vector<std::string> permissionList = {"ohos.permission.CAMERA"};
+    std::vector<int32_t> permStateList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::VerifyAccessToken(tokenId, permissionList, permStateList, true));
+
+    permStateList.clear();
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::VerifyAccessToken(tokenId, permissionList, permStateList, false));
+}
+
+/**
  * @tc.name: GetDefPermission001
  * @tc.desc: GetDefPermission with proxy is null
  * @tc.type: FUNC
@@ -276,6 +295,19 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
     AccessTokenID tokenId = 123;
     std::vector<PermissionStateFull> permList;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetReqPermissions(tokenId, permList, false));
+}
+
+/**
+ * @tc.name: GetTokenIDByUserID001
+ * @tc.desc: GetTokenIDByUserID with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenIDByUserID001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    std::unordered_set<AccessTokenID> tokenIdList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList));
 }
 
 /**
@@ -579,6 +611,18 @@ HWTEST_F(AccessTokenKitTest, GrantPermissionForSpecifiedTime001, TestSize.Level1
     uint32_t onceTime = 1;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
+}
+
+/**
+ * @tc.name: RequestAppPermOnSettingTest001
+ * @tc.desc: RequestAppPermOnSetting with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RequestAppPermOnSetting(tokenId));
 }
 }  // namespace AccessToken
 }  // namespace Security

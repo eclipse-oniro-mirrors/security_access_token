@@ -232,6 +232,27 @@ typedef enum TypePermissionOper {
     BUTT_OPER,
 } PermissionOper;
 
+
+/**
+ * @brief Permission operation result details
+ */
+typedef enum TypePermissionErrorReason {
+    /** The operation is successful */
+    REQ_SUCCESS = 0,
+    /** The permission name is invalid */
+    PERM_INVALID = 1,
+    /** The requested has not been declared */
+    PERM_NOT_DECLEARED = 2,
+    /** The conditions for requesting the permission are not met */
+    CONDITIONS_NOT_MET = 3,
+    /** The user does not agree to the Privacy Statement */
+    PRIVACY_STATEMENT_NOT_AGREED = 4,
+    /** The permission cannot be requested in a pop-up window */
+    UNABLE_POP_UP = 5,
+    /** The service is abnormal */
+    SERVICE_ABNORMAL = 12,
+} PermissionErrorReason;
+
 /**
  * @brief Dlp types
  */
@@ -262,6 +283,16 @@ typedef enum TypeDlpPerm {
 } DlpPermMode;
 
 /**
+ * @brief Atm toggle mode type
+ */
+typedef enum TypeToggleModeType {
+    /** toggle mode is request */
+    TOGGLE_REQUEST = 0,
+    /** toggle mode is record */
+    TOGGLE_RECORD,
+} ToggleModeType;
+
+/**
  * @brief Atm tools operate type
  */
 typedef enum TypeOptType {
@@ -279,11 +310,29 @@ typedef enum TypeOptType {
     PERM_GRANT,
     /** revoke permission */
     PERM_REVOKE,
-    /** set toggle status */
+    /** set toggle request/record status */
     TOGGLE_SET,
-    /** get toggle status */
+    /** get toggle request/record status */
     TOGGLE_GET,
 } OptType;
+
+/**
+ * @brief PermssionRule
+ */
+typedef enum TypePermissionRulesEnum {
+    PERMISSION_EDM_RULE = 0,
+    PERMISSION_ACL_RULE
+} PermissionRulesEnum;
+
+/**
+ * @brief Permission change registration type
+ */
+typedef enum RegisterPermissionChangeType {
+    /** system app register permissions state change info of selected haps */
+    SYSTEM_REGISTER_TYPE = 0,
+    /** app register permissions state change info of itself */
+    SELF_REGISTER_TYPE = 1,
+} RegisterPermChangeType;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

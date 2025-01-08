@@ -113,6 +113,7 @@ private:
     static napi_value GetVersion(napi_env env, napi_callback_info info);
     static napi_value SetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
     static napi_value GetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
+    static napi_value RequestAppPermOnSetting(napi_env env, napi_callback_info info);
 
     static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
@@ -138,14 +139,20 @@ private:
     static void SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionRequestToggleStatusExecute(napi_env env, void *data);
     static void GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data);
+    static void RequestAppPermOnSettingExecute(napi_env env, void *data);
+    static void RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
     static void CreateObjects(napi_env env, napi_value exports);
+    static bool GetPermStateChangeType(const napi_env env, const size_t argc, const napi_value* argv,
+        std::string& type);
     static bool FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
         const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool IsExistRegister(const napi_env env, const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
+    static bool FillPermStateChangeScope(const napi_env env, const napi_value* argv,
+        const std::string& type, PermStateChangeScope& scopeInfo);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);

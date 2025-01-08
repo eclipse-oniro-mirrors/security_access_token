@@ -35,23 +35,18 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
         HapTokenInfo baseInfo = {
-            .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
             .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = fuzzData.GenerateStochasticString(),
-            .deviceID = fuzzData.GenerateStochasticString(),
             .tokenID = fuzzData.GetData<AccessTokenID>(),
             .tokenAttr = 0
         };
-        PermissionStateFull infoManagerTestState = {
-            .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .isGeneral = true,
-            .permissionName = fuzzData.GenerateStochasticString(),
-            .resDeviceID = {fuzzData.GenerateStochasticString()}};
-        std::vector<PermissionStateFull> permStateList;
+        PermissionStatus infoManagerTestState = {
+            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .permissionName = fuzzData.GenerateStochasticString()};
+        std::vector<PermissionStatus> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,

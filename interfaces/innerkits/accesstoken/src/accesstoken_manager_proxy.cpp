@@ -114,6 +114,36 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     return result;
 }
 
+int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteStringVector(permissionList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteStringVector failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN_WITH_LIST, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    if (!reply.ReadInt32Vector(&permStateList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32Vector failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+
+    return ERR_OK;
+}
+
 int AccessTokenManagerProxy::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
@@ -184,7 +214,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
 }
 
 int AccessTokenManagerProxy::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -216,7 +246,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
-        sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
+        sptr<PermissionStatusParcel> permissionReq = reply.ReadParcelable<PermissionStatusParcel>();
         if (permissionReq != nullptr) {
             reqPermList.emplace_back(*permissionReq);
         }
@@ -282,6 +312,32 @@ int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::str
         status = reply.ReadUint32();
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::RequestAppPermOnSetting(AccessTokenID tokenID)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::REQUEST_APP_PERM_ON_SETTING, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
     return result;
 }
 
@@ -353,6 +409,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
         sptr<PermissionListStateParcel> permissionReq = reply.ReadParcelable<PermissionListStateParcel>();
         if (permissionReq != nullptr) {
             permListParcel[i].permsState.state = permissionReq->permsState.state;
+            permListParcel[i].permsState.errorReason = permissionReq->permsState.errorReason;
         }
     }
 
@@ -589,6 +646,63 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
     return result;
 }
 
+int32_t AccessTokenManagerProxy::RegisterSelfPermStateChangeCallback(
+    const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteParcelable(&scope)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t ret;
+    if (!reply.ReadInt32(ret)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", ret);
+    return ret;
+}
+
+int32_t AccessTokenManagerProxy::UnRegisterSelfPermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(
+        AccessTokenInterfaceCode::UNREGISTER_SELF_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    return result;
+}
+
 AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel)
 {
@@ -620,7 +734,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
 }
 
 int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel, HapPolicyParcel& policyParcel,
-    AccessTokenIDEx& fullTokenId)
+    AccessTokenIDEx& fullTokenId, HapInfoCheckResult& resultInfo)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -653,6 +767,16 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
             return ERR_READ_PARCEL_FAILED;
         }
         fullTokenId.tokenIDEx = tokenId;
+    } else {
+        if (reply.GetDataSize() > reply.GetReadPosition()) {
+            IF_FALSE_RETURN_VALUE_LOG(LABEL, reply.ReadString(resultInfo.permCheckResult.permissionName),
+                ERR_READ_PARCEL_FAILED, "ReadString faild.");
+
+            int32_t rule;
+            IF_FALSE_RETURN_VALUE_LOG(LABEL, reply.ReadInt32(rule),
+                ERR_READ_PARCEL_FAILED, "ReadString faild.");
+            resultInfo.permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
+        }
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, id=%{public}llu).",
         result, fullTokenId.tokenIDEx);
@@ -794,6 +918,48 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     return result;
 }
 
+int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_TOKEN_ID_BY_USER_ID, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+        return ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    uint32_t tokenIDListSize = 0;
+    if (!reply.ReadUint32(tokenIDListSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    for (uint32_t i = 0; i < tokenIDListSize; i++) {
+        AccessTokenID tokenId = 0;
+        if (!reply.ReadUint32(tokenId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+            return ERR_READ_PARCEL_FAILED;
+        }
+        tokenIdList.emplace(tokenId);
+    }
+    return result;
+}
+
 int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes)
 {
     MessageParcel data;
@@ -825,8 +991,8 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int32_t AccessTokenManagerProxy::UpdateHapToken(
-    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
+int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParcel& policyParcel, HapInfoCheckResult& resultInfo)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     MessageParcel data;
@@ -865,6 +1031,15 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(
     }
     int32_t result = reply.ReadInt32();
     tokenIdEx.tokenIdExStruct.tokenAttr = reply.ReadUint32();
+    if (result != RET_SUCCESS && reply.GetDataSize() > reply.GetReadPosition()) {
+        IF_FALSE_RETURN_VALUE_LOG(LABEL, reply.ReadString(resultInfo.permCheckResult.permissionName),
+            ERR_READ_PARCEL_FAILED, "ReadString faild.");
+
+        int32_t rule;
+        IF_FALSE_RETURN_VALUE_LOG(LABEL, reply.ReadInt32(rule),
+            ERR_READ_PARCEL_FAILED, "ReadString faild.");
+        resultInfo.permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
     return result;
 }

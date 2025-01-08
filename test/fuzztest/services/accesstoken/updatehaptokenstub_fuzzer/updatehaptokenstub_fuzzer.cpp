@@ -43,16 +43,14 @@ namespace OHOS {
             .labelId = 1,
             .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
-        PermissionStateFull testState = {.permissionName = permissionName,
-            .isGeneral = true,
-            .resDeviceID = {fuzzData.GenerateStochasticString()},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1}};
-        HapPolicyParams policy = {.apl = APL_NORMAL,
+        PermissionStatus testState = {.permissionName = permissionName,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .grantFlag = 1};
+        HapPolicy policy = {.apl = APL_NORMAL,
             .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}};
-        hapPolicyParcel.hapPolicyParameter = policy;
+        hapPolicyParcel.hapPolicy = policy;
     }
     bool UpdateHapTokenStubFuzzTest(const uint8_t* data, size_t size)
     {

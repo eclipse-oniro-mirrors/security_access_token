@@ -24,10 +24,17 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+enum AppKeyType {
+    APP = 1,
+    GROUPID,
+};
+
 struct AppKeyInfo : public Parcelable {
+    AppKeyType type = AppKeyType::APP;
     uint32_t uid;
     std::string bundleName;
     int32_t userId;
+    std::string groupID;
 
     bool Marshalling(Parcel &parcel) const override;
     static AppKeyInfo *Unmarshalling(Parcel &parcel);

@@ -28,7 +28,7 @@ namespace AccessToken {
 namespace {
 constexpr int32_t LOAD_SA_TIMEOUT_SECOND = 4;
 constexpr int32_t LOAD_SA_RETRY_TIMES = 5;
-static const int32_t SA_REQUEST_RETRY_TIMES = 1;
+constexpr int32_t SA_REQUEST_RETRY_TIMES = 3;
 static const int32_t SENDREQ_FAIL_ERR = 32;
 static const std::vector<int32_t> RETRY_CODE_LIST = { BR_DEAD_REPLY, BR_FAILED_REPLY, SENDREQ_FAIL_ERR };
 }
@@ -80,7 +80,7 @@ int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
         return proxy->GetUserAppKey(userId, getAllFlag, keyInfos);
     };
-    return CallProxyWithRetry(func, __FUNCTION__);
+    return CallProxyWithRetry(func, __FUNCTION__, SA_REQUEST_RETRY_TIMES);
 }
 
 int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
@@ -104,6 +104,30 @@ int32_t El5FilekeyManagerClient::RegisterCallback(const sptr<El5FilekeyCallbackI
 {
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
         return proxy->RegisterCallback(callback);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
+int32_t El5FilekeyManagerClient::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->GenerateGroupIDKey(uid, groupID, keyId);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
+int32_t El5FilekeyManagerClient::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->DeleteGroupIDKey(uid, groupID);
+    };
+    return CallProxyWithRetry(func, __FUNCTION__);
+}
+
+int32_t El5FilekeyManagerClient::QueryAppKeyState(DataLockType type)
+{
+    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
+        return proxy->QueryAppKeyState(type);
     };
     return CallProxyWithRetry(func, __FUNCTION__);
 }
@@ -137,7 +161,7 @@ sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
 }
 
 int32_t El5FilekeyManagerClient::CallProxyWithRetry(
-    const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func, const char *funcName)
+    const std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> &func, const char *funcName, int32_t retryTimes)
 {
     LOG_INFO("call proxy with retry function:%s", funcName);
     auto proxy = GetProxy();
@@ -151,7 +175,7 @@ int32_t El5FilekeyManagerClient::CallProxyWithRetry(
         LOG_WARN("First try call %{public}s failed, proxy is NULL. Begin retry.", funcName);
     }
 
-    for (int32_t i = 0; i < SA_REQUEST_RETRY_TIMES; i++) {
+    for (int32_t i = 0; i < retryTimes; i++) {
         proxy = GetProxy();
         if (proxy == nullptr) {
             LOG_WARN("Get proxy %{public}s failed, retry time = %{public}d.", funcName, i);
@@ -163,7 +187,7 @@ int32_t El5FilekeyManagerClient::CallProxyWithRetry(
         }
         LOG_WARN("Call %{public}s failed, retry time = %{public}d, result = %{public}d", funcName, i, ret);
     }
-    LOG_ERROR("Retry call service %{public}s error, tried %{public}d times.", funcName, SA_REQUEST_RETRY_TIMES);
+    LOG_ERROR("Retry call service %{public}s error, tried %{public}d times.", funcName, retryTimes);
     return EFM_ERR_REMOTE_CONNECTION;
 }
 

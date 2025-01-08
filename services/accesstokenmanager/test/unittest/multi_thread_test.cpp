@@ -17,7 +17,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #define private public
 #include "accesstoken_id_manager.h"
 #undef private
@@ -37,8 +37,6 @@ static std::set<AccessTokenID> g_tokenIdSet;
 static constexpr int32_t TEST_TOKEN_ID_1 = 537800000;
 static constexpr int32_t TEST_TOKEN_ID_2 = 537900000;
 static constexpr int32_t MULTI_CYCLE_TIMES = 1000;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenMultiThreadTest"};
 }
 
 void AccessTokenMultiThreadTest::SetUpTestCase()
@@ -51,7 +49,7 @@ void AccessTokenMultiThreadTest::TearDownTestCase()
 
 void AccessTokenMultiThreadTest::SetUp()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
     g_tokenIdSet = AccessTokenIDManager::GetInstance().tokenIdSet_;
     AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
 }

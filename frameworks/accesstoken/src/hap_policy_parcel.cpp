@@ -20,17 +20,17 @@
 #include "permission_def.h"
 #include "permission_def_parcel.h"
 #include "permission_state_full.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 bool HapPolicyParcel::Marshalling(Parcel& out) const
 {
-    RETURN_IF_FALSE(out.WriteInt32(this->hapPolicyParameter.apl));
-    RETURN_IF_FALSE(out.WriteString(this->hapPolicyParameter.domain));
+    RETURN_IF_FALSE(out.WriteInt32(this->hapPolicy.apl));
+    RETURN_IF_FALSE(out.WriteString(this->hapPolicy.domain));
 
-    const std::vector<PermissionDef>& permList = this->hapPolicyParameter.permList;
+    const std::vector<PermissionDef>& permList = this->hapPolicy.permList;
     uint32_t permListSize = permList.size();
     RETURN_IF_FALSE(out.WriteUint32(permListSize));
 
@@ -40,17 +40,17 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
         RETURN_IF_FALSE(out.WriteParcelable(&permDefParcel));
     }
 
-    const std::vector<PermissionStateFull>& permStateList = this->hapPolicyParameter.permStateList;
+    const std::vector<PermissionStatus>& permStateList = this->hapPolicy.permStateList;
     uint32_t permStateListSize = permStateList.size();
     RETURN_IF_FALSE(out.WriteUint32(permStateListSize));
 
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
+        PermissionStatusParcel permStateParcel;
+        permStateParcel.permState = permStateList[i];
         RETURN_IF_FALSE(out.WriteParcelable(&permStateParcel));
     }
 
-    const std::vector<std::string>& aclRequestedList = this->hapPolicyParameter.aclRequestedList;
+    const std::vector<std::string>& aclRequestedList = this->hapPolicy.aclRequestedList;
     uint32_t aclRequestedListSize = aclRequestedList.size();
     RETURN_IF_FALSE(out.WriteUint32(aclRequestedListSize));
 
@@ -58,7 +58,7 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
         RETURN_IF_FALSE(out.WriteString(aclRequestedList[i]));
     }
 
-    const std::vector<PreAuthorizationInfo>& info = this->hapPolicyParameter.preAuthorizationInfo;
+    const std::vector<PreAuthorizationInfo>& info = this->hapPolicy.preAuthorizationInfo;
     uint32_t infoSize = info.size();
     RETURN_IF_FALSE(out.WriteUint32(infoSize));
 
@@ -78,9 +78,9 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 
     int32_t apl;
     RELEASE_IF_FALSE(in.ReadInt32(apl), hapPolicyParcel);
-    hapPolicyParcel->hapPolicyParameter.apl = ATokenAplEnum(apl);
+    hapPolicyParcel->hapPolicy.apl = ATokenAplEnum(apl);
 
-    hapPolicyParcel->hapPolicyParameter.domain = in.ReadString();
+    hapPolicyParcel->hapPolicy.domain = in.ReadString();
 
     uint32_t permListSize;
     RELEASE_IF_FALSE(in.ReadUint32(permListSize), hapPolicyParcel);
@@ -89,16 +89,16 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
     for (uint32_t i = 0; i < permListSize; i++) {
         sptr<PermissionDefParcel> permDefParcel = in.ReadParcelable<PermissionDefParcel>();
         RELEASE_IF_FALSE(permDefParcel != nullptr, hapPolicyParcel);
-        hapPolicyParcel->hapPolicyParameter.permList.emplace_back(permDefParcel->permissionDef);
+        hapPolicyParcel->hapPolicy.permList.emplace_back(permDefParcel->permissionDef);
     }
 
     uint32_t permStateListSize;
     RELEASE_IF_FALSE(in.ReadUint32(permStateListSize), hapPolicyParcel);
     RELEASE_IF_FALSE((permStateListSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        sptr<PermissionStateFullParcel> permissionStateParcel = in.ReadParcelable<PermissionStateFullParcel>();
+        sptr<PermissionStatusParcel> permissionStateParcel = in.ReadParcelable<PermissionStatusParcel>();
         RELEASE_IF_FALSE(permissionStateParcel != nullptr, hapPolicyParcel);
-        hapPolicyParcel->hapPolicyParameter.permStateList.emplace_back(permissionStateParcel->permStatFull);
+        hapPolicyParcel->hapPolicy.permStateList.emplace_back(permissionStateParcel->permState);
     }
     uint32_t aclRequestedListSize;
     RELEASE_IF_FALSE(in.ReadUint32(aclRequestedListSize), hapPolicyParcel);
@@ -106,7 +106,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
     for (uint32_t i = 0; i < aclRequestedListSize; i++) {
         std::string acl;
         RELEASE_IF_FALSE(in.ReadString(acl), hapPolicyParcel);
-        hapPolicyParcel->hapPolicyParameter.aclRequestedList.emplace_back(acl);
+        hapPolicyParcel->hapPolicy.aclRequestedList.emplace_back(acl);
     }
     uint32_t infoSize;
     RELEASE_IF_FALSE(in.ReadUint32(infoSize), hapPolicyParcel);
@@ -115,7 +115,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
         PreAuthorizationInfo info;
         RELEASE_IF_FALSE(in.ReadString(info.permissionName), hapPolicyParcel);
         RELEASE_IF_FALSE(in.ReadBool(info.userCancelable), hapPolicyParcel);
-        hapPolicyParcel->hapPolicyParameter.preAuthorizationInfo.emplace_back(info);
+        hapPolicyParcel->hapPolicy.preAuthorizationInfo.emplace_back(info);
     }
     return hapPolicyParcel;
 }

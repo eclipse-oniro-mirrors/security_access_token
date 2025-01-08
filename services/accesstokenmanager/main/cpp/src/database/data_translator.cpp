@@ -71,28 +71,21 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     return RET_SUCCESS;
 }
 
-int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPermissionState,
-    const unsigned int grantIndex, GenericValues& outGenericValues)
+int DataTranslator::TranslationIntoGenericValues(const PermissionStatus& inPermissionState,
+    GenericValues& outGenericValues)
 {
-    if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
-        grantIndex >= inPermissionState.grantFlags.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Perm status grant size is wrong");
-        return ERR_PARAM_INVALID;
-    }
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
-    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
-    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, inPermissionState.isGeneral ? 1 : 0);
-    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus[grantIndex]);
-    int32_t grantFlags = static_cast<int32_t>(inPermissionState.grantFlags[grantIndex]);
-    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlags);
+    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus);
+    int32_t grantFlag = static_cast<int32_t>(inPermissionState.grantFlag);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlag);
     return RET_SUCCESS;
 }
 
-int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
-    PermissionStateFull& outPermissionState)
+int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGenericValues,
+    PermissionStatus& outPermissionState)
 {
-    outPermissionState.isGeneral =
-        ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is wrong");
@@ -102,16 +95,6 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         return ERR_PARAM_INVALID;
     }
 
-    std::string devID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
-    if (!DataValidator::IsDeviceIdValid(devID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DevID is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission deviceId error");
-        return ERR_PARAM_INVALID;
-    }
-    outPermissionState.resDeviceID.push_back(devID);
-
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GrantFlag is wrong");
@@ -120,8 +103,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
             "ERROR_REASON", "permission grant flag error");
         return ERR_PARAM_INVALID;
     }
-    
-    outPermissionState.grantFlags.push_back(grantFlag);
+    outPermissionState.grantFlag = static_cast<uint32_t>(grantFlag);
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
@@ -131,10 +113,10 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
             "ERROR_REASON", "permission grant status error");
         return ERR_PARAM_INVALID;
     }
-    if (grantFlag & PERMISSION_ALLOW_THIS_TIME) {
+    if (static_cast<uint32_t>(grantFlag) & PERMISSION_ALLOW_THIS_TIME) {
         grantStatus = PERMISSION_DENIED;
     }
-    outPermissionState.grantStatus.push_back(grantStatus);
+    outPermissionState.grantStatus = grantStatus;
 
     return RET_SUCCESS;
 }

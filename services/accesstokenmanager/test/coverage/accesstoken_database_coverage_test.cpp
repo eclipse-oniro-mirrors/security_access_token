@@ -68,12 +68,12 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level1)
 }
 
 /*
- * @tc.name: TranslationIntoPermissionStateFull001
- * @tc.desc: DataTranslator::TranslationIntoPermissionStateFull
+ * @tc.name: TranslationIntoPermissionStatus001
+ * @tc.desc: DataTranslator::TranslationIntoPermissionStatus
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStateFull001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, TestSize.Level1)
 {
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -84,9 +84,9 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStateFull001,
     ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_GRANTED),
         value.GetInt(TokenFiledConst::FIELD_GRANT_STATE));
 
-    PermissionStateFull permissionState;
-    DataTranslator::TranslationIntoPermissionStateFull(value, permissionState);
-    ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_DENIED), permissionState.grantStatus[0]);
+    PermissionStatus permissionState;
+    DataTranslator::TranslationIntoPermissionStatus(value, permissionState);
+    ASSERT_EQ(static_cast<int32_t>(PermissionState::PERMISSION_DENIED), permissionState.grantStatus);
 }
 
 /*
@@ -97,7 +97,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStateFull001,
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level1)
 {
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
     AccessTokenOpenCallback callback;
 
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_1, DATABASE_VERSION_2));
@@ -126,11 +126,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Add001, TestSize.Level1)
     values.emplace_back(value);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenDb::GetInstance().Add(type, values));
 
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
-    AccessTokenDb::GetInstance().db_ = nullptr;
     type = AtmDataType::ACCESSTOKEN_HAP_INFO;
     ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance().Add(type, values));
-    AccessTokenDb::GetInstance().db_ = db;
 
     ASSERT_NE(NativeRdb::E_OK, AccessTokenDb::GetInstance().Add(type, values));
 
@@ -138,6 +135,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Add001, TestSize.Level1)
     int64_t outInsertNum = 0;
     std::string tableName = "hap_token_info_table";
     std::vector<NativeRdb::ValuesBucket> buckets;
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
     ASSERT_EQ(NativeRdb::E_SQLITE_ERROR,
         AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
 
@@ -158,12 +156,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Remove001, TestSize.Level1)
     GenericValues value;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenDb::GetInstance().Remove(type, value));
 
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
-    AccessTokenDb::GetInstance().db_ = nullptr;
     type = AtmDataType::ACCESSTOKEN_HAP_INFO;
-    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance().Remove(type, value));
-    AccessTokenDb::GetInstance().db_ = db;
-
     value.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
     ASSERT_NE(NativeRdb::E_OK, AccessTokenDb::GetInstance().Remove(type, value));
 
@@ -171,7 +164,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Remove001, TestSize.Level1)
     int32_t deletedRows = 0;
     NativeRdb::RdbPredicates predicates("hap_token_info_table");
     AccessTokenDbUtil::ToRdbPredicates(value, predicates);
-
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
     ASSERT_EQ(NativeRdb::E_SQLITE_ERROR,
         AccessTokenDb::GetInstance().RestoreAndDeleteIfCorrupt(resultCode, deletedRows, predicates, db));
 
@@ -198,12 +191,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance().Modify(type, modifyValue, conditionValue));
 
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
-    AccessTokenDb::GetInstance().db_ = nullptr;
     modifyValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
-    ASSERT_NE(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
-        AccessTokenDb::GetInstance().Modify(type, modifyValue, conditionValue));
-    AccessTokenDb::GetInstance().db_ = db;
+    ASSERT_EQ(NativeRdb::E_SQLITE_ERROR, AccessTokenDb::GetInstance().Modify(type, modifyValue, conditionValue));
 
     conditionValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
     ASSERT_NE(NativeRdb::E_OK, AccessTokenDb::GetInstance().Modify(type, modifyValue, conditionValue));
@@ -214,7 +203,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level1)
     AccessTokenDbUtil::ToRdbValueBucket(modifyValue, bucket);
     NativeRdb::RdbPredicates predicates("hap_token_info_table");
     AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
-
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
     ASSERT_EQ(NativeRdb::E_SQLITE_ERROR,
         AccessTokenDb::GetInstance().RestoreAndUpdateIfCorrupt(resultCode, changedRows, bucket, predicates, db));
 
@@ -238,11 +227,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level1)
         AccessTokenDb::GetInstance().Find(type, conditionValue, results));
 
     type = AtmDataType::ACCESSTOKEN_HAP_INFO;
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().db_;
-    AccessTokenDb::GetInstance().db_ = nullptr;
-    ASSERT_NE(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
-        AccessTokenDb::GetInstance().Find(type, conditionValue, results));
-    AccessTokenDb::GetInstance().db_ = db;
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance().Find(type, conditionValue, results));
 
     conditionValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
     ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,

@@ -52,13 +52,19 @@ void El5FilekeyManagerStub::SetFuncInMap()
         &El5FilekeyManagerStub::SetFilePathPolicyInner;
     requestMap_[static_cast<uint32_t>(EFMInterfaceCode::REGISTER_CALLBACK)] =
         &El5FilekeyManagerStub::RegisterCallbackInner;
+    requestMap_[static_cast<uint32_t>(EFMInterfaceCode::GENERATE_GROUPID_KEY)] =
+        &El5FilekeyManagerStub::GenerateGroupIDKeyInner;
+    requestMap_[static_cast<uint32_t>(EFMInterfaceCode::DELETE_GROUPID_KEY)] =
+        &El5FilekeyManagerStub::DeleteGroupIDKeyInner;
+    requestMap_[static_cast<uint32_t>(EFMInterfaceCode::QUERY_APP_KEY_STATE)] =
+        &El5FilekeyManagerStub::QueryAppKeyStateInner;
 }
 
 int32_t El5FilekeyManagerStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
     MessageOption &option)
 {
     if (data.ReadInterfaceToken() != El5FilekeyManagerInterface::GetDescriptor()) {
-        LOG_ERROR("get unexpected descriptor");
+        LOG_ERROR("Get unexpected descriptor");
         return EFM_ERR_IPC_TOKEN_INVALID;
     }
 
@@ -136,6 +142,28 @@ void El5FilekeyManagerStub::RegisterCallbackInner(MessageParcel &data, MessagePa
         return;
     }
     reply.WriteInt32(this->RegisterCallback(callback));
+}
+
+void El5FilekeyManagerStub::GenerateGroupIDKeyInner(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t uid = data.ReadUint32();
+    std::string groupID = data.ReadString();
+    std::string keyId;
+    reply.WriteInt32(this->GenerateGroupIDKey(uid, groupID, keyId));
+    reply.WriteString(keyId);
+}
+
+void El5FilekeyManagerStub::DeleteGroupIDKeyInner(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t uid = data.ReadUint32();
+    std::string groupID = data.ReadString();
+    reply.WriteInt32(this->DeleteGroupIDKey(uid, groupID));
+}
+
+void El5FilekeyManagerStub::QueryAppKeyStateInner(MessageParcel &data, MessageParcel &reply)
+{
+    DataLockType type = static_cast<DataLockType>(data.ReadInt32());
+    reply.WriteInt32(this->QueryAppKeyState(type));
 }
 
 void El5FilekeyManagerStub::MarshallingKeyInfos(MessageParcel &reply,

@@ -50,6 +50,8 @@ public:
 
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int VerifyAccessToken(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
@@ -57,6 +59,7 @@ public:
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
+    int32_t RequestAppPermOnSetting(AccessTokenID tokenID);
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
         PermissionGrantInfo& info);
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
@@ -65,13 +68,16 @@ public:
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
-    AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
-    int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);
+    AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
+    int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
+        AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
     int DeleteToken(AccessTokenID tokenID);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy);
+    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicy& policy, HapInfoCheckResult& result);
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenList);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
@@ -80,9 +86,9 @@ public:
     int GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfoExt& info);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type);
     int32_t UnRegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type);
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);

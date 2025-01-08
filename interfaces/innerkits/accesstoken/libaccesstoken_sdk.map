@@ -17,11 +17,14 @@
         "OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenIDEx(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::InitHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams&, OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenIDByUserID(int, std::__h::unordered_set<unsigned int, std::__h::hash<unsigned int>, std::__h::equal_to<unsigned int>, std::__h::allocator<unsigned int>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenInfo(unsigned int, OHOS::Security::AccessToken::NativeTokenInfo&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionFlag(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
@@ -30,6 +33,8 @@
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize(OHOS::Security::AccessToken::PermStateChangeScope const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RegisterSelfPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterSelfPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(OHOS::Security::AccessToken::AtmToolsParamInfo const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
@@ -57,6 +62,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetVersion(unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionManagerInfo(OHOS::Security::AccessToken::PermissionGrantInfo&)";
         "OHOS::Security::AccessToken::PermissionStateChangeCallback::PermissionStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::PermissionStateChangeCallback::Stop()";
         "OHOS::Security::AccessToken::PermissionStateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::GetInstance()";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::InitProxy()";
@@ -72,8 +78,12 @@
         "OHOS::Security::AccessToken::TokenSyncCallback::~TokenSyncCallback()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::TokenSyncKitInterface()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::~TokenSyncKitInterface()";
+        "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<int, std::__h::allocator<int>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermissionForSpecifiedTime(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoExtension(unsigned int, OHOS::Security::AccessToken::HapTokenInfoExt&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RequestAppPermOnSetting(unsigned int)";
+        OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
+        OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
         "";
         "";
     };
