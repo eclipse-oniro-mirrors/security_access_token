@@ -23,6 +23,7 @@ bool PermissionGrantInfoParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->info.grantBundleName));
     RETURN_IF_FALSE(out.WriteString(this->info.grantAbilityName));
+    RETURN_IF_FALSE(out.WriteString(this->info.grantServiceAbilityName));
     RETURN_IF_FALSE(out.WriteString(this->info.permStateAbilityName));
     RETURN_IF_FALSE(out.WriteString(this->info.globalSwitchAbilityName));
     return true;
@@ -36,6 +37,7 @@ PermissionGrantInfoParcel* PermissionGrantInfoParcel::Unmarshalling(Parcel& in)
     }
     permissionGrantInfoParcel->info.grantBundleName = in.ReadString();
     permissionGrantInfoParcel->info.grantAbilityName = in.ReadString();
+    permissionGrantInfoParcel->info.grantServiceAbilityName = in.ReadString();
     permissionGrantInfoParcel->info.permStateAbilityName = in.ReadString();
     permissionGrantInfoParcel->info.globalSwitchAbilityName = in.ReadString();
     return permissionGrantInfoParcel;

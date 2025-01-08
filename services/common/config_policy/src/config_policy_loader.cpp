@@ -26,20 +26,21 @@ namespace AccessToken {
 namespace {
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ConfigPolicLoader"};
-static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
+static constexpr const char* ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 
-static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
-static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
-static const std::string PERMISSION_STATE_SHEET_ABILITY_NAME_KEY = "permission_state_sheet_ability_name";
-static const std::string GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_switch_sheet_ability_name";
-static const std::string TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
+static constexpr const char* PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
+static constexpr const char* GRANT_ABILITY_NAME_KEY = "grant_ability_name";
+static constexpr const char* GRANT_SERVICE_ABILITY_NAME_KEY = "grant_servicre_ability_name";
+static constexpr const char* PERMISSION_STATE_SHEET_ABILITY_NAME_KEY = "permission_state_sheet_ability_name";
+static constexpr const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_switch_sheet_ability_name";
+static constexpr const char* TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
 
-static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
-static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
-static const std::string GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
-static const std::string GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
+static constexpr const char* RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
+static constexpr const char* RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
+static constexpr const char* GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
+static constexpr const char* GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
 
-static const std::string SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
+static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 }
 
@@ -71,6 +72,10 @@ void from_json(const nlohmann::json& j, AccessTokenServiceConfig& a)
     }
 
     if (!JsonParser::GetStringFromJson(j, GRANT_ABILITY_NAME_KEY, a.grantAbilityName)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, GRANT_SERVICE_ABILITY_NAME_KEY, a.grantAbilityName)) {
         return;
     }
 

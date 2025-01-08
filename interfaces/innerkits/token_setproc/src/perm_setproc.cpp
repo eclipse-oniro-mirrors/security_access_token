@@ -53,8 +53,7 @@ int32_t AddPermissionToKernel(
     }
     size_t size = opCodeList.size();
     if (size == 0) {
-        RemovePermissionFromKernel(tokenID);
-        return ACCESS_TOKEN_OK;
+        return RemovePermissionFromKernel(tokenID);
     }
     struct IoctlAddPermData data;
     data.token = tokenID;
