@@ -108,18 +108,18 @@ int32_t El5FilekeyManagerClient::RegisterCallback(const sptr<El5FilekeyCallbackI
     return CallProxyWithRetry(func, __FUNCTION__);
 }
 
-int32_t El5FilekeyManagerClient::GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+int32_t El5FilekeyManagerClient::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
 {
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->GenerateGroupIDKey(userId, groupID, keyId);
+        return proxy->GenerateGroupIDKey(uid, groupID, keyId);
     };
     return CallProxyWithRetry(func, __FUNCTION__);
 }
 
-int32_t El5FilekeyManagerClient::DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+int32_t El5FilekeyManagerClient::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
 {
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->DeleteGroupIDKey(userId, groupID);
+        return proxy->DeleteGroupIDKey(uid, groupID);
     };
     return CallProxyWithRetry(func, __FUNCTION__);
 }

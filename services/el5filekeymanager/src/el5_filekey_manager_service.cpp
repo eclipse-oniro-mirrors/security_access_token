@@ -308,7 +308,7 @@ int32_t El5FilekeyManagerService::RegisterCallback(const sptr<El5FilekeyCallback
     return service_->RegisterCallback(callback);
 }
 
-int32_t El5FilekeyManagerService::GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+int32_t El5FilekeyManagerService::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
 {
     LOG_INFO("Generate groupID for %{public}s.", groupID.c_str());
     if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
@@ -322,16 +322,12 @@ int32_t El5FilekeyManagerService::GenerateGroupIDKey(int32_t userId, const std::
         return EFM_SUCCESS;
     }
 
-    return service_->GenerateGroupIDKey(userId, groupID, keyId);
+    return service_->GenerateGroupIDKey(uid, groupID, keyId);
 }
 
-int32_t El5FilekeyManagerService::DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+int32_t El5FilekeyManagerService::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
 {
-    LOG_INFO("Delete %{public}d's %{public}s app key.", userId, groupID.c_str());
-    if (userId < 0) {
-        LOG_ERROR("UserId is invalid!");
-        return EFM_ERR_INVALID_PARAMETER;
-    }
+    LOG_INFO("Delete %{public}d's %{public}s app key.", uid, groupID.c_str());
     if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
         LOG_ERROR("Delete app key permission denied.");
         return EFM_ERR_NO_PERMISSION;
@@ -343,7 +339,7 @@ int32_t El5FilekeyManagerService::DeleteGroupIDKey(int32_t userId, const std::st
         return EFM_SUCCESS;
     }
 
-    return service_->DeleteGroupIDKey(userId, groupID);
+    return service_->DeleteGroupIDKey(uid, groupID);
 }
 
 int32_t El5FilekeyManagerService::QueryAppKeyState(DataLockType type)
