@@ -447,7 +447,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<AtmDataType>& del
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertNative cost %{public}" PRId64 ".", endTime - beginTime);
+    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteAndInsertNative cost %{public}" PRId64 ".", endTime - beginTime);
 
     return 0;
 }
