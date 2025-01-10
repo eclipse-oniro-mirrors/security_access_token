@@ -34,6 +34,7 @@
 #include "dlp_permission_set_manager.h"
 #endif
 #include "ipc_skeleton.h"
+#include "hisysevent_adapter.h"
 #include "parameter.h"
 #include "permission_definition_cache.h"
 #include "short_grant_manager.h"
@@ -496,32 +497,21 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", id);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote token can not update");
-        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
-    }
-    if ((flag == PERMISSION_ALLOW_THIS_TIME) && isGranted) {
-        if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(id, permission)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Id:%{public}d fail to grant permission:%{public}s", id, permission.c_str());
-            return ERR_IDENTITY_CHECK_FAILED;
-        }
+
+    int32_t ret = UpdateTokenPermissionStateCheck(infoPtr, id, permission, isGranted, flag);
+    if (ret != ERR_OK) {
+        return ret;
     }
 
-#ifdef SUPPORT_SANDBOX_APP
-    int32_t hapDlpType = infoPtr->GetDlpType();
-    if (hapDlpType != DLP_COMMON) {
-        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permission);
-        if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s cannot to be granted to %{public}u", permission.c_str(), id);
-            return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
-        }
-    }
-#endif
     // statusBefore cannot use VerifyPermissionStatus in permPolicySet, because the function exclude secComp
     bool isSecCompGrantedBefore = HapTokenInfoInner::IsPermissionGrantedWithSecComp(id, permission);
     bool statusChanged = false;
-    int32_t ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
+    ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID", id,
+            "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret,
+            "INT_VAL2", static_cast<int32_t>(flag), "NEED_KILL", needKill);
         return ret;
     }
     if (statusChanged) {
@@ -539,6 +529,36 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
     return RET_SUCCESS;
+}
+
+int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
+    AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag)
+{
+    if (infoPtr->IsRemote()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote token can not update");
+        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
+    }
+    if ((flag == PERMISSION_ALLOW_THIS_TIME) && isGranted) {
+        if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(id, permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Id:%{public}d fail to grant permission:%{public}s", id, permission.c_str());
+            return ERR_IDENTITY_CHECK_FAILED;
+        }
+    }
+
+#ifdef SUPPORT_SANDBOX_APP
+    int32_t hapDlpType = infoPtr->GetDlpType();
+    if (hapDlpType != DLP_COMMON) {
+        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permission);
+        if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s cannot to be granted to %{public}u", permission.c_str(), id);
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", id, "PERM",
+                permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType, "INT_VAL2", permDlpMode);
+            return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
+        }
+    }
+#endif
+    return ERR_OK;
 }
 
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,

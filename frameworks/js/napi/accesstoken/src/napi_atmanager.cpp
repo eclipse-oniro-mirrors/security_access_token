@@ -15,6 +15,8 @@
 #include "napi_atmanager.h"
 
 #include "access_token.h"
+#include "hisysevent.h"
+#include "napi_hisysevent_adapter.h"
 #include "napi_request_global_switch_on_setting.h"
 #include "napi_request_permission.h"
 #include "napi_request_permission_on_setting.h"
@@ -30,6 +32,8 @@ std::vector<RegisterPermStateChangeInfo*> g_permStateChangeRegisters;
 std::mutex g_lockCache;
 std::map<std::string, PermissionStatusCache> g_cache;
 static PermissionParamCache g_paramCache;
+static std::atomic<int32_t> g_cnt = 0;
+constexpr uint32_t REPORT_CNT = 10;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
@@ -421,6 +425,15 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
+    AccessTokenID selfTokenId = static_cast<AccessTokenID>(GetSelfTokenID());
+    if (asyncContext->tokenId != selfTokenId) {
+        int32_t cnt = g_cnt.fetch_add(1);
+        if (cnt % REPORT_CNT == 0) {
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+                HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
+                "SELF_TOKENID", selfTokenId, "CONTEXT_TOKENID", asyncContext->tokenId);
+        }
+    }
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
 }
 
@@ -486,6 +499,15 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         ((asyncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
         return;
+    }
+    AccessTokenID selfTokenId = static_cast<AccessTokenID>(GetSelfTokenID());
+    if (asyncContext->tokenId != selfTokenId) {
+        int32_t cnt = g_cnt.fetch_add(1);
+        if (cnt % REPORT_CNT == 0) {
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+                HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
+                "SELF_TOKENID", selfTokenId, "CONTEXT_TOKENID", asyncContext->tokenId);
+        }
     }
 
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
@@ -616,6 +638,13 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return nullptr;
     }
     if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
+        int32_t cnt = g_cnt.fetch_add(1);
+        if (cnt % REPORT_CNT == 0) {
+            AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+                HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
+                "SELF_TOKENID", selfToken, "CONTEXT_TOKENID", asyncContext->tokenId);
+        }
         asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         napi_value result = nullptr;
         NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
