@@ -93,19 +93,19 @@ public:
     static int32_t GetUserAllAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos);
     /**
      * @brief Generate app key of the installed data group.
-     * @param userId The user id
+     * @param uid The uid
      * @param groupID ID of the data group
      * @param keyId Return keyId of the installed data group
      * @return error code, see el5_filekey_manager_error.h
      */
-    static int32_t GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId);
+    static int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId);
     /**
      * @brief Delete app key of the uninstalled data group.
-     * @param userId The user id
+     * @param uid The uid
      * @param groupID ID of the data group
      * @return error code, see el5_filekey_manager_error.h
      */
-    static int32_t DeleteGroupIDKey(int32_t userId, const std::string &groupID);
+    static int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID);
     /**
      * @brief Query specified type of app key's state.
      * If acquiring MEDIA_DATA, you need to apply for ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA permission,

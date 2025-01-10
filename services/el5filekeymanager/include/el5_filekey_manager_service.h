@@ -51,8 +51,8 @@ public:
     int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) override;
     int32_t SetFilePathPolicy() override;
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) override;
-    int32_t GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId) override;
-    int32_t DeleteGroupIDKey(int32_t userId, const std::string &groupID) override;
+    int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) override;
+    int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) override;
     int32_t QueryAppKeyState(DataLockType type) override;
 
     int32_t SetPolicyScreenLocked();

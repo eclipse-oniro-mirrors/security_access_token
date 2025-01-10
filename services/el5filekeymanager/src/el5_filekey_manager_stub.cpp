@@ -146,18 +146,18 @@ void El5FilekeyManagerStub::RegisterCallbackInner(MessageParcel &data, MessagePa
 
 void El5FilekeyManagerStub::GenerateGroupIDKeyInner(MessageParcel &data, MessageParcel &reply)
 {
-    int32_t userId = data.ReadInt32();
+    uint32_t uid = data.ReadUint32();
     std::string groupID = data.ReadString();
     std::string keyId;
-    reply.WriteInt32(this->GenerateGroupIDKey(userId, groupID, keyId));
+    reply.WriteInt32(this->GenerateGroupIDKey(uid, groupID, keyId));
     reply.WriteString(keyId);
 }
 
 void El5FilekeyManagerStub::DeleteGroupIDKeyInner(MessageParcel &data, MessageParcel &reply)
 {
-    int32_t userId = data.ReadInt32();
+    uint32_t uid = data.ReadUint32();
     std::string groupID = data.ReadString();
-    reply.WriteInt32(this->DeleteGroupIDKey(userId, groupID));
+    reply.WriteInt32(this->DeleteGroupIDKey(uid, groupID));
 }
 
 void El5FilekeyManagerStub::QueryAppKeyStateInner(MessageParcel &data, MessageParcel &reply)

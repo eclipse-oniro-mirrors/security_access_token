@@ -302,15 +302,15 @@ int32_t El5FilekeyManagerProxy::RegisterCallback(const sptr<El5FilekeyCallbackIn
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::GenerateGroupIDKey(int32_t userId, const std::string &groupID, std::string &keyId)
+int32_t El5FilekeyManagerProxy::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
         LOG_ERROR("Failed to write WriteInterfaceToken.");
         return EFM_ERR_IPC_WRITE_DATA;
     }
-    if (!data.WriteInt32(userId)) {
-        LOG_ERROR("Failed to WriteInt32(%{public}d).", userId);
+    if (!data.WriteUint32(uid)) {
+        LOG_ERROR("Failed to WriteInt32(%{public}d).", uid);
         return EFM_ERR_IPC_WRITE_DATA;
     }
     if (!data.WriteString(groupID)) {
@@ -336,15 +336,15 @@ int32_t El5FilekeyManagerProxy::GenerateGroupIDKey(int32_t userId, const std::st
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::DeleteGroupIDKey(int32_t userId, const std::string &groupID)
+int32_t El5FilekeyManagerProxy::DeleteGroupIDKey(uint32_t uid, const std::string &groupID)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
         LOG_ERROR("Failed to write WriteInterfaceToken.");
         return EFM_ERR_IPC_WRITE_DATA;
     }
-    if (!data.WriteInt32(userId)) {
-        LOG_ERROR("Failed to WriteInt32(%{public}d).", userId);
+    if (!data.WriteUint32(uid)) {
+        LOG_ERROR("Failed to WriteInt32(%{public}d).", uid);
         return EFM_ERR_IPC_WRITE_DATA;
     }
     if (!data.WriteString(groupID)) {
