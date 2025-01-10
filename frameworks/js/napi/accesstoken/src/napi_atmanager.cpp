@@ -1336,8 +1336,14 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     }
     if (IsExistRegister(env, registerPermStateChangeInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribe failed. The current subscriber has been existed");
-        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
+        if (registerPermStateChangeInfo->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+            std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
+            NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
+        } else {
+            std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
+            NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
+        }
+        
         return nullptr;
     }
     int32_t result;
@@ -1432,9 +1438,15 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     std::vector<RegisterPermStateChangeInfo*> batchPermStateChangeRegisters;
     if (!FindAndGetSubscriberInVector(unregisterPermStateChangeInfo, batchPermStateChangeRegisters, env)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
-        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
-        NAPI_CALL(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
+        if (unregisterPermStateChangeInfo->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+            std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_NOT_USE_TOGETHER);
+            NAPI_CALL(env,
+                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_NOT_USE_TOGETHER, errMsg)));
+        } else {
+            std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
+            NAPI_CALL(env,
+                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
+        }
         return nullptr;
     }
     for (const auto& item : batchPermStateChangeRegisters) {
