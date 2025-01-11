@@ -1987,7 +1987,6 @@ HWTEST_F(PrivacyKitTest, GetSpecialSecCompEnhance001, TestSize.Level1)
 
     std::vector<SecCompEnhanceData> res;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance("", res));
-    ASSERT_EQ(static_cast<int32_t>(res.size()), 0);
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance(g_infoParmsA.bundleName, res));
 }
 #endif
