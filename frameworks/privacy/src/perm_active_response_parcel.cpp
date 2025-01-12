@@ -27,6 +27,7 @@ bool ActiveChangeResponseParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.deviceId));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.type));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.usedType));
+    RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.pid));
     return true;
 }
 
@@ -50,6 +51,7 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     int32_t usedType;
     RELEASE_IF_FALSE(in.ReadInt32(usedType), activeChangeResponseParcel);
     activeChangeResponseParcel->changeResponse.usedType = static_cast<PermissionUsedType>(usedType);
+    RELEASE_IF_FALSE(in.ReadInt32(activeChangeResponseParcel->changeResponse.pid), activeChangeResponseParcel);
     return activeChangeResponseParcel;
 }
 } // namespace AccessToken

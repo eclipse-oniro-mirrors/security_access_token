@@ -122,6 +122,13 @@ static HapPolicyParams g_policyPramsC = {
     .permStateList = {g_infoManagerTestStateC}
 };
 
+static PermissionStateFull g_infoManagerTestStateD = {
+    .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
+    .isGeneral = true,
+    .resDeviceID = {"localC"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
 static HapInfoParams g_infoParmsD = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundleD",
@@ -1348,10 +1355,12 @@ public:
     {
         callingTokenID_ = result.callingTokenID;
         usedType_ = result.usedType;
+        pid_ = result.pid;
     }
 
     AccessTokenID callingTokenID_ = INVALID_TOKENID;
     PermissionUsedType usedType_ = INVALID_USED_TYPE;
+    int32_t pid_ = NOT_EXSIT_PID;
 };
 
 /**
@@ -1371,6 +1380,17 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
     usleep(500000); // 500000us = 0.5s
     ASSERT_NE(INVALID_TOKENID, callbackPtr->callingTokenID_);
     ASSERT_NE(INVALID_USED_TYPE, callbackPtr->usedType_);
+    ASSERT_NE(NOT_EXSIT_PID, callbackPtr->pid_);
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_CALL_LOG"));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(
+        g_tokenIdE, "ohos.permission.READ_CALL_LOG", NOT_EXSIT_PID));
+
+    ASSERT_EQ(NOT_EXSIT_PID, callbackPtr->pid_);
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(
+        g_tokenIdE, "ohos.permission.READ_CALL_LOG", NOT_EXSIT_PID));
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 }
@@ -2542,6 +2562,61 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission012, TestSize.Level1)
     permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
     ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermission013
+ * @tc.desc: IsAllowedUsingPermission with MICROPHONE_BACKGROUND permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission013, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+
+    HapInfoParams info = {
+        .userID = 1,
+        .bundleName = "ohos.privacy_test.microphone",
+        .instIndex = 0,
+        .appIDDesc = "privacy_test.microphone"
+    };
+
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {g_infoManagerTestStateD}
+    };
+
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(0, tokenId); // hap MICROPHONE_BACKGROUND permission
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName)); // background hap
+
+    uint32_t selfUid = getuid();
+    setuid(ACCESS_TOKEN_UID);
+
+    uint32_t opCode1 = -1;
+    uint32_t opCode2 = -1;
+    ASSERT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
+    ASSERT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
+    ASSERT_EQ(0, AddPermissionToKernel(RANDOM_TOKENID, {opCode1, opCode2}, {1, 1}));
+    EXPECT_EQ(0, SetSelfTokenID(RANDOM_TOKENID));
+    GTEST_LOG_(INFO) << "permissionSet OK ";
+
+    // callkit set hap to foreground with MICROPHONE_BACKGROUND
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, true));
+    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
+
+    // callkit set g_tokenIdE to foreground without MICROPHONE_BACKGROUND
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
+    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, false));
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
+    ASSERT_EQ(0, RemovePermissionFromKernel(RANDOM_TOKENID));
+    setuid(selfUid);
 }
 
 /**
