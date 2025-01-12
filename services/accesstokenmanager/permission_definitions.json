@@ -841,6 +841,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MANAGE_ENTERPRISE_WIFI_CONNECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.MANAGE_WIFI_CONNECTION",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
