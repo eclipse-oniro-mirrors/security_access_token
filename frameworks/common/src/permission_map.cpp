@@ -173,6 +173,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.GET_WIFI_LOCAL_MAC",      false},
     {"ohos.permission.GET_WIFI_CONFIG",         false},
     {"ohos.permission.SET_WIFI_CONFIG",         false},
+    {"ohos.permission.MANAGE_ENTERPRISE_WIFI_CONNECTION",  false},
     {"ohos.permission.MANAGE_WIFI_CONNECTION",  false},
     {"ohos.permission.DUMP",                    false},
     {"ohos.permission.MANAGE_WIFI_HOTSPOT",     false},
