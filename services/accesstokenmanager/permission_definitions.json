@@ -4219,6 +4219,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_ASSET_ACCELERATION_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
