@@ -53,13 +53,9 @@ public:
     void ToString(std::string& info);
     static void ToString(std::string& info, const std::vector<PermissionDef>& permList,
         const std::vector<PermissionStatus>& permStateList);
-    bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
-        const std::vector<std::string>& nativeAcls);
-    void PermStateToString(int32_t tokenApl, const std::vector<std::string>& nativeAcls, std::string& info);
     void GetPermissionStateList(std::vector<PermissionStatus>& stateList);
     void ResetUserGrantPermissionStatus(void);
     static uint32_t GetFlagWroteToDb(uint32_t grantFlag);
-    void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     uint32_t GetReqPermissionSize();
     static std::shared_ptr<PermissionPolicySet> BuildPermissionPolicySetFromDb(
         AccessTokenID tokenId, const std::vector<GenericValues>& permStateRes);

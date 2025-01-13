@@ -23,7 +23,6 @@
 #include "access_token.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
-#include "native_token_info_inner.h"
 #include "nocopyable.h"
 #include "rwlock.h"
 

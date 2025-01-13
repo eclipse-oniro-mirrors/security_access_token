@@ -36,8 +36,6 @@
 #endif
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
-#include "native_token_info_inner.h"
-#include "native_token_receptor.h"
 #include "parameter.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
@@ -291,13 +289,13 @@ int AccessTokenManagerService::GetPermissionFlag(
 int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
     const std::string& permissionName, uint32_t status, int32_t userID = 0)
 {
-    return PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
+    return AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
     const std::string& permissionName, uint32_t& status, int32_t userID = 0)
 {
-    return PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
+    return AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
@@ -487,9 +485,10 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
-    return NativeTokenReceptor::GetInstance().Init();
+    uint32_t nativeSize = 0;
+    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos(nativeSize);
+    return RET_SUCCESS;
 }
-
 #endif
 
 AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& processName)
@@ -699,7 +698,6 @@ bool AccessTokenManagerService::Initialize()
     ReportSysEventPerformance();
     AccessTokenInfoManager::GetInstance().Init();
     AccessTokenInfoManager::GetInstance().ClearHapPolicy();
-    NativeTokenReceptor::GetInstance().Init();
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();

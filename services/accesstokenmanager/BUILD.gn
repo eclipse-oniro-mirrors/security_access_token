@@ -98,7 +98,6 @@ if (is_standard_system) {
       "main/cpp/src/token/accesstoken_id_manager.cpp",
       "main/cpp/src/token/accesstoken_info_manager.cpp",
       "main/cpp/src/token/hap_token_info_inner.cpp",
-      "main/cpp/src/token/native_token_info_inner.cpp",
       "main/cpp/src/token/native_token_receptor.cpp",
     ]
     sources += access_token_impl_sources

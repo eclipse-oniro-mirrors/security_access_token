@@ -19,12 +19,11 @@
 #include <memory>
 #include <string>
 
-#include "native_token_info_inner.h"
+#include "native_token_info_base.h"
 
 #include "access_token.h"
 #include "nlohmann/json.hpp"
 #include "nocopyable.h"
-#include "permission_policy_set.h"
 #include "permission_status.h"
 
 namespace OHOS {
@@ -37,16 +36,14 @@ class NativeTokenReceptor final {
 public:
     static NativeTokenReceptor& GetInstance();
     virtual ~NativeTokenReceptor() = default;
-    int Init();
+    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
 
 private:
     NativeTokenReceptor() {}
     DISALLOW_COPY_AND_MOVE(NativeTokenReceptor);
     int ReadCfgFile(std::string &nativeRawData);
-    void FromJson(const nlohmann::json &jsonObject,
-        std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    int32_t ParserNativeRawData(const std::string& nativeRawData,
-        std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
+    void FromJson(const nlohmann::json &jsonObject, std::vector<std::shared_ptr<NativeTokenInfoBase>>& tokenInfos);
+    int32_t ParserNativeRawData(const std::string& nativeRawData, std::vector<NativeTokenInfoBase>& tokenInfos);
     void from_json(const nlohmann::json& j, NativeTokenInfoBase& p);
 };
 } // namespace AccessToken

@@ -152,24 +152,6 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
     return 0;
 }
 
-int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValues>& values)
-{
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-
-    {
-        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-        int32_t res = AddValues(type, values);
-        if (res != 0) {
-            return res;
-        }
-    }
-
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add cost %{public}" PRId64, endTime - beginTime);
-
-    return 0;
-}
-
 int32_t AccessTokenDb::RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
     const NativeRdb::RdbPredicates& predicates, const std::shared_ptr<NativeRdb::RdbStore>& db)
 {
@@ -225,24 +207,6 @@ int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues&
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "Delete %{public}d records from table %{public}s.", deletedRows, tableName.c_str());
-
-    return 0;
-}
-
-int32_t AccessTokenDb::Remove(const AtmDataType type, const GenericValues& conditionValue)
-{
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-
-    {
-        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-        int32_t res = RemoveValues(type, conditionValue);
-        if (res != 0) {
-            return res;
-        }
-    }
-
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove cost %{public}" PRId64, endTime - beginTime);
 
     return 0;
 }
@@ -408,9 +372,9 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     return 0;
 }
 
-int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<AtmDataType>& deleteDataTypes,
-    const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
-    const std::vector<std::vector<GenericValues>>& addValues)
+int32_t AccessTokenDb::DeleteAndInsertValues(
+    const std::vector<AtmDataType>& delDataTypes, const std::vector<GenericValues>& delValues,
+    const std::vector<AtmDataType>& addDataTypes, const std::vector<std::vector<GenericValues>>& addValues)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
@@ -425,9 +389,9 @@ int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<AtmDataType>& del
         db->BeginTransaction();
 
         int32_t res = 0;
-        size_t count = deleteDataTypes.size();
+        size_t count = delDataTypes.size();
         for (size_t i = 0; i < count; ++i) {
-            res = RemoveValues(deleteDataTypes[i], deleteValues[i]);
+            res = RemoveValues(delDataTypes[i], delValues[i]);
             if (res != 0) {
                 db->RollBack();
                 return res;

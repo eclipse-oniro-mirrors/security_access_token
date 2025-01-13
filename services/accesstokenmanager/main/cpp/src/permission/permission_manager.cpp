@@ -54,7 +54,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
-static constexpr int32_t BASE_USER_RANGE = 200000;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
@@ -310,110 +309,6 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
     }
     return ret;
-}
-
-int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    std::vector<GenericValues> permRequestToggleStatusRes;
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        conditionValue, permRequestToggleStatusRes);
-    if (permRequestToggleStatusRes.empty()) {
-        // never set, return default status: CLOSED if APP_TRACKING_CONSENT
-        return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?
-            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
-    }
-    return permRequestToggleStatusRes[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
-}
-
-void PermissionManager::AddPermRequestToggleStatusToDb(
-    int32_t userID, const std::string& permissionName, int32_t status)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permToggleStateLock_);
-    GenericValues value;
-    value.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, value);
-
-    std::vector<GenericValues> permRequestToggleStatusValues;
-    value.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
-    permRequestToggleStatusValues.emplace_back(value);
-    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        permRequestToggleStatusValues);
-}
-
-int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
-    int32_t userID)
-{
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, status=%{public}d", userID,
-        permissionName.c_str(), status);
-    if (!PermissionValidator::IsUserIdValid(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to set.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionValidator::IsToggleStatusValid(status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Status is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    AddPermRequestToggleStatusToDb(userID, permissionName, status);
-
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
-        "TOGGLE_STATUS", status);
-
-    return 0;
-}
-
-int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-    int32_t userID)
-{
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
-    if (!PermissionValidator::IsUserIdValid(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to get.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
-
-    return 0;
 }
 
 int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
@@ -893,14 +788,9 @@ void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timesta
     grantEvent_.NotifyPermGrantStoreResult(result, timestamp);
 }
 
-void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy)
+void PermissionManager::AddNativePermToKernel(AccessTokenID tokenID,
+    const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
-    if (policy == nullptr) {
-        return;
-    }
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
-    policy->GetPermissionStateList(opCodeList, statusList);
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
     if (ret != ACCESS_TOKEN_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
@@ -908,20 +798,7 @@ void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared
     }
 }
 
-void PermissionManager::AddPermToKernel(AccessTokenID tokenID)
-{
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
-    std::vector<uint32_t> EmptyList;
-    HapTokenInfoInner::GetPermStatusListByTokenId(tokenID, EmptyList, opCodeList, statusList);
-    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
-    if (ret != ACCESS_TOKEN_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
-            tokenID, opCodeList.size(), ret);
-    }
-}
-
-void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList)
+void PermissionManager::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList)
 {
     std::vector<uint32_t> permCodeList;
     for (const auto &permission : permList) {

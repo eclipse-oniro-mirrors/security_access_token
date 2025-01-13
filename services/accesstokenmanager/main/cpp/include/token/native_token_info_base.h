@@ -18,11 +18,13 @@
 #include <string>
 #include <vector>
 #include "access_token.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct NativeTokenInfoBase {
+    /** native token info */
     ATokenAplEnum apl;
     unsigned char ver;
     std::string processName;
@@ -30,6 +32,8 @@ struct NativeTokenInfoBase {
     AccessTokenID tokenID;
     AccessTokenAttr tokenAttr;
     std::vector<std::string> nativeAcls;
+    /** permission state list */
+    std::vector<PermissionStatus> permStateList;
 };
 
 struct NativeTokenInfoCache {

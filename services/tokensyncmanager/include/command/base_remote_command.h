@@ -27,18 +27,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
-/**
- * @brief Declares native token info for distributed synchronize class
- */
-class NativeTokenInfoForSync final {
-public:
-    /** native token info */
-    NativeTokenInfoBase baseInfo;
-    /** permission state list */
-    std::vector<PermissionStatus> permStateList;
-};
-
 /**
  * The base class for command. You can treat this as remote command header.
  */
@@ -69,8 +57,8 @@ public:
 
     nlohmann::json ToHapTokenInfosJson(const HapTokenInfoForSync &tokenInfo);
     void FromHapTokenInfoJson(const nlohmann::json& hapTokenJson, HapTokenInfoForSync& hapTokenInfo);
-    nlohmann::json ToNativeTokenInfoJson(const NativeTokenInfoForSync& tokenInfo);
-    void FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson, NativeTokenInfoForSync& nativeTokenInfo);
+    nlohmann::json ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo);
+    void FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson, NativeTokenInfoBase& nativeTokenInfo);
     RemoteProtocol remoteProtocol_;
 };
 }  // namespace AccessToken

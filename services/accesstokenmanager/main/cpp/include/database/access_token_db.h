@@ -35,14 +35,12 @@ public:
     static AccessTokenDb& GetInstance();
     virtual ~AccessTokenDb() = default;
 
-    int32_t Add(const AtmDataType type, const std::vector<GenericValues>& values);
-    int32_t Remove(const AtmDataType type, const GenericValues& conditionValue);
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
-    int32_t DeleteAndInsertValues(const std::vector<AtmDataType>& deleteDataTypes,
-        const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
-        const std::vector<std::vector<GenericValues>>& addValues);
+    int32_t DeleteAndInsertValues(
+        const std::vector<AtmDataType>& delDataTypes, const std::vector<GenericValues>& delValues,
+        const std::vector<AtmDataType>& addDataTypes, const std::vector<std::vector<GenericValues>>& addValues);
 
 private:
     AccessTokenDb();

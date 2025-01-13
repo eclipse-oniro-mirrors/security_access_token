@@ -96,7 +96,7 @@ nlohmann::json BaseRemoteCommand::ToRemoteProtocolJson()
     return j;
 }
 
-nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoForSync& tokenInfo)
+nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo)
 {
     nlohmann::json permStatesJson;
     for (const auto& permState : tokenInfo.permStateList) {
@@ -105,14 +105,14 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
         permStatesJson.emplace_back(permStateJson);
     }
 
-    nlohmann::json DcapsJson = nlohmann::json(tokenInfo.baseInfo.dcap);
-    nlohmann::json NativeAclsJson = nlohmann::json(tokenInfo.baseInfo.nativeAcls);
+    nlohmann::json DcapsJson = nlohmann::json(tokenInfo.dcap);
+    nlohmann::json NativeAclsJson = nlohmann::json(tokenInfo.nativeAcls);
     nlohmann::json nativeTokenJson = nlohmann::json {
-        {"processName", tokenInfo.baseInfo.processName},
-        {"apl", tokenInfo.baseInfo.apl},
-        {"version", tokenInfo.baseInfo.ver},
-        {"tokenId", tokenInfo.baseInfo.tokenID},
-        {"tokenAttr", tokenInfo.baseInfo.tokenAttr},
+        {"processName", tokenInfo.processName},
+        {"apl", tokenInfo.apl},
+        {"version", tokenInfo.ver},
+        {"tokenId", tokenInfo.tokenID},
+        {"tokenAttr", tokenInfo.tokenAttr},
         {"dcaps", DcapsJson},
         {"nativeAcls", NativeAclsJson},
         {"permState", permStatesJson},
@@ -200,33 +200,33 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
 }
 
 void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson,
-    NativeTokenInfoForSync& nativeTokenInfo)
+    NativeTokenInfoBase& nativeTokenInfo)
 {
     if (nativeTokenJson.find("processName") != nativeTokenJson.end() && nativeTokenJson.at("processName").is_string()) {
-        nativeTokenInfo.baseInfo.processName = nativeTokenJson.at("processName").get<std::string>();
+        nativeTokenInfo.processName = nativeTokenJson.at("processName").get<std::string>();
     }
     if (nativeTokenJson.find("apl") != nativeTokenJson.end() && nativeTokenJson.at("apl").is_number()) {
         int apl = nativeTokenJson.at("apl").get<int>();
         if (DataValidator::IsAplNumValid(apl)) {
-            nativeTokenInfo.baseInfo.apl = static_cast<ATokenAplEnum>(apl);
+            nativeTokenInfo.apl = static_cast<ATokenAplEnum>(apl);
         }
     }
     if (nativeTokenJson.find("version") != nativeTokenJson.end() && nativeTokenJson.at("version").is_number()) {
-        nativeTokenInfo.baseInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
+        nativeTokenInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenId") != nativeTokenJson.end() && nativeTokenJson.at("tokenId").is_number()) {
-        nativeTokenInfo.baseInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
+        nativeTokenInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenAttr") != nativeTokenJson.end() && nativeTokenJson.at("tokenAttr").is_number()) {
-        nativeTokenInfo.baseInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
+        nativeTokenInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
     }
     if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
         && !nativeTokenJson.at("dcaps").empty() && (nativeTokenJson.at("dcaps"))[0].is_string()) {
-        nativeTokenInfo.baseInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
+        nativeTokenInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
     }
     if (nativeTokenJson.find("nativeAcls") != nativeTokenJson.end() && nativeTokenJson.at("nativeAcls").is_array()
         && !nativeTokenJson.at("nativeAcls").empty() && (nativeTokenJson.at("nativeAcls"))[0].is_string()) {
-        nativeTokenInfo.baseInfo.nativeAcls = nativeTokenJson.at("nativeAcls").get<std::vector<std::string>>();
+        nativeTokenInfo.nativeAcls = nativeTokenJson.at("nativeAcls").get<std::vector<std::string>>();
     }
 
     FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);

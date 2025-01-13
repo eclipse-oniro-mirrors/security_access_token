@@ -185,7 +185,7 @@ HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
     ASSERT_EQ(hap->IsRemote(), false);
     hap->SetRemote(true);
     std::vector<GenericValues> valueList;
-    hap->StoreHapInfo(valueList);
+    hap->StoreHapInfo(valueList, "test", APL_NORMAL);
 
     hap->StorePermissionPolicy(valueList);
     ASSERT_EQ(hap->IsRemote(), true);
@@ -1403,50 +1403,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
 }
 
 /**
- * @tc.name: AddNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test
- * @tc.type: FUNC
- * @tc.require: issueI62M6G
- */
-HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo001, TestSize.Level1)
-{
-    std::shared_ptr<NativeTokenInfoInner> info = nullptr;
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // info is null
-
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    info = std::make_shared<NativeTokenInfoInner>();
-    info->tokenInfoBasic_.tokenID = tokenId;
-    ASSERT_EQ(ERR_TOKENID_HAS_EXISTED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(id) > 0
-}
-
-/**
- * @tc.name: RemoveNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test
- * @tc.type: FUNC
- * @tc.require: issueI62M6G
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
-
-    tokenId = 806354943; // 806354943 is shell tokenId: 001 10 0 000000 11111111111111111111
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_SHELL));
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
-
-    tokenId = 672137215; // 672137215 is native tokenId: 001 01 0 000000 11111111111111111111
-
-    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
-    ASSERT_NE(nullptr, native);
-    native->tokenInfoBasic_.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
-    native->tokenInfoBasic_.tokenID = tokenId;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(native));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
-}
-
-/**
  * @tc.name: Insert001
  * @tc.desc: PermissionDefinitionCache::Insert function test
  * @tc.type: FUNC
@@ -1829,48 +1785,6 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
 #endif
 
 /**
- * @tc.name: RestoreNativeTokenInfo001
- * @tc.desc: NativeTokenInfoInner::RestoreNativeTokenInfo function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
-{
-    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
-    ASSERT_NE(nullptr, native);
-
-    std::string info;
-    native->ToString(info); // permPolicySet_ is null
-
-    AccessTokenID tokenId = 0;
-    std::string processName;
-    int apl = static_cast<int>(ATokenAplEnum::APL_INVALID);
-    int version = 10; // 10 is random input which only need not equal 1
-    std::vector<std::string> dcap;
-    std::vector<std::string> nativeAcls;
-    std::vector<PermissionStatus> permStateList;
-    GenericValues inGenericValues;
-    std::vector<GenericValues> permStateRes;
-
-    inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
-    // processName invalid
-    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
-    inGenericValues.Remove(TokenFiledConst::FIELD_PROCESS_NAME);
-
-    inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
-    inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
-    // apl invalid
-    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
-    inGenericValues.Remove(TokenFiledConst::FIELD_APL);
-
-    apl = static_cast<int>(ATokenAplEnum::APL_NORMAL);
-    inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
-    inGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
-    // version invalid
-    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
-}
-
-/**
  * @tc.name: RestoreHapTokenInfo001
  * @tc.desc: HapTokenInfoInner::RestoreHapTokenInfo function test
  * @tc.type: FUNC
@@ -1899,7 +1813,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permStateValues;
-    hap->StoreHapInfo(hapInfoValues);
+    hap->StoreHapInfo(hapInfoValues, "test", APL_NORMAL);
     hap->StorePermissionPolicy(permStateValues); // permPolicySet_ is null
 
 
@@ -2162,43 +2076,36 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1
 {
     AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
     std::string permissionName = "ohos.permission.INVALID_AA";
-
-    PermissionManager::GetInstance().RemoveDefPermissions(tokenId); // tokenInfo is null
-
-    // tokenInfoPtr is null
+    AccessTokenID tokenId1 = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    // tokenId is not exist
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
 
-    // backup
-    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_.clear();
+    // permission is not defined and permissionHap is not installed
     PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = false;
-
-    // apl default normal, remote default false
-    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
-    ASSERT_NE(nullptr, native);
-
-    ASSERT_EQ(PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty(), true);
-    native->tokenInfoBasic_.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
-    native->tokenInfoBasic_.tokenID = tokenId;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(native));
-
-    // permission definition set has not been installed + apl >= APL_SYSTEM_BASIC
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
-    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = g_hasHapPermissionDefinition;
+        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
-    // not remote + no definition
+    // permission is not defined and permissionHap is installed
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = true;
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
     permissionName = "ohos.permission.CAMERA";
-    // permPolicySet is null
+    // permission is not request
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
+    // tokenId is native token, and permission is defined
+    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = true;
+    ASSERT_EQ(PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty(), false);
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
+
+    permissionName = "ohos.permission.KILL_APP_PROCESSES";
+    ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 }
 
 /**
@@ -2248,6 +2155,134 @@ HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(appId, "accesstoken_info_manager_test");
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus001
+ * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
+ * status and invalid userID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    // UserId is invalid.
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Permission name is invalid.
+    userID = 123;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        "", status, userID));
+
+    // PermissionName is not defined.
+    permissionName = "ohos.permission.invalid";
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Permission is system_grant.
+    permissionName = "ohos.permission.USE_BLUETOOTH";
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Status is invalid.
+    status = -1;
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus002
+ * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with normal process.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus001
+ * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with invalid userID, invalid permission
+ * name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    uint32_t status;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    // UserId is invalid.
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // PermissionName is invalid.
+    userID = 123;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        "", status, userID));
+
+    // PermissionName is not defined.
+    permissionName = "ohos.permission.invalid";
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Permission is system_grant.
+    permissionName = "ohos.permission.USE_BLUETOOTH";
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus002
+ * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with normal process.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;
+    uint32_t setStatusOpen = PermissionRequestToggleStatus::OPEN;
+    uint32_t getStatus;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusOpen, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", setStatusClose, userID));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusClose, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", setStatusOpen, userID));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusOpen, getStatus);
 }
 } // namespace AccessToken
 } // namespace Security

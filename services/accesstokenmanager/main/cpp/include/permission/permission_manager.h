@@ -67,8 +67,6 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
-    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
-    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         const std::string& bundleName, const std::string& abilityName);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
@@ -91,9 +89,9 @@ public:
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
-    void AddPermToKernel(AccessTokenID tokenID);
-    void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy);
-    void AddPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
+    void AddNativePermToKernel(
+        AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
+    void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const std::string& appDistributionType, const HapPolicy& policy,
@@ -119,8 +117,6 @@ private:
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
-    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
-    void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
     bool IsPermissionStateOrFlagMatched(const PermissionStatus& stata1, const PermissionStatus& stata2);
 
     PermissionGrantEvent grantEvent_;

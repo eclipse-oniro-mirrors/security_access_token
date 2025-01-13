@@ -33,15 +33,16 @@ namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
-static const std::string DEFAULT_DEVICEID = "0";
-static const std::string JSON_PROCESS_NAME = "processName";
-static const std::string JSON_APL = "APL";
-static const std::string JSON_VERSION = "version";
-static const std::string JSON_TOKEN_ID = "tokenId";
-static const std::string JSON_TOKEN_ATTR = "tokenAttr";
-static const std::string JSON_DCAPS = "dcaps";
-static const std::string JSON_PERMS = "permissions";
-static const std::string JSON_ACLS = "nativeAcls";
+static const char* JSON_PROCESS_NAME = "processName";
+static const char* JSON_APL = "APL";
+static const char* JSON_VERSION = "version";
+static const char* JSON_TOKEN_ID = "tokenId";
+static const char* JSON_TOKEN_ATTR = "tokenAttr";
+static const char* JSON_DCAPS = "dcaps";
+static const char* JSON_PERMS = "permissions";
+static const char* JSON_ACLS = "nativeAcls";
+static const int MAX_DCAPS_NUM = 10 * 1024;
+static const int MAX_REQ_PERM_NUM = 10 * 1024;
 }
 
 int32_t NativeReqPermsGet(
@@ -73,48 +74,42 @@ int32_t NativeReqPermsGet(
 }
 
 // nlohmann json need the function named from_json to parse NativeTokenInfoBase
-void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p)
+void from_json(const nlohmann::json& j, NativeTokenInfoBase& native)
 {
-    NativeTokenInfoBase native;
-
-    if (!JsonParser::GetStringFromJson(j, JSON_PROCESS_NAME, native.processName) ||
-        !DataValidator::IsProcessNameValid(native.processName)) {
-        return;
-    }
-
+    NativeTokenInfoBase info;
     int aplNum = 0;
     if (!JsonParser::GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
         return;
     }
 
-    native.apl = static_cast<ATokenAplEnum>(aplNum);
+    info.apl = static_cast<ATokenAplEnum>(aplNum);
 
     if (j.find(JSON_VERSION) == j.end() || (!j.at(JSON_VERSION).is_number())) {
         return;
     }
-    native.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
-    if (native.ver != DEFAULT_TOKEN_VERSION) {
+    info.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
+    if (info.ver != DEFAULT_TOKEN_VERSION) {
         return;
     }
 
-    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
+    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ID, info.tokenID) || (info.tokenID == 0)) {
         return;
     }
 
-    ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
+    ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(info.tokenID);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         return;
     }
 
-    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, native.tokenAttr)) {
+    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr)) {
         return;
     }
 
     if (j.find(JSON_DCAPS) == j.end() || (!j.at(JSON_DCAPS).is_array())) {
         return;
     }
-    native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
-    if (native.dcap.size() > MAX_DCAPS_NUM) {
+    info.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
+    if (info.dcap.size() > MAX_DCAPS_NUM) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Native dcap oversize.");
         return;
     }
@@ -122,22 +117,25 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     if (j.find(JSON_ACLS) == j.end() || (!j.at(JSON_DCAPS).is_array())) {
         return;
     }
-    native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
-    if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
+    info.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
+    if (info.nativeAcls.size() > MAX_REQ_PERM_NUM) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission num oversize.");
         return;
     }
 
-    std::vector<PermissionStatus> permStateList;
-    if (NativeReqPermsGet(j, permStateList) != RET_SUCCESS) {
+    if (NativeReqPermsGet(j, info.permStateList) != RET_SUCCESS) {
         return;
     }
 
-    p = std::make_shared<NativeTokenInfoInner>(native, permStateList);
+    if (!JsonParser::GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
+        !DataValidator::IsProcessNameValid(info.processName)) {
+        return;
+    }
+    native = info;
 }
 
 int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawData,
-    std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
+    std::vector<NativeTokenInfoBase>& tokenInfos)
 {
     nlohmann::json jsonRes = nlohmann::json::parse(nativeRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
@@ -145,17 +143,15 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
         return ERR_PARAM_INVALID;
     }
     for (auto it = jsonRes.begin(); it != jsonRes.end(); it++) {
-        auto token = it->get<std::shared_ptr<NativeTokenInfoInner>>();
-        if (token != nullptr) {
+        auto token = it->get<NativeTokenInfoBase>();
+        if (!token.processName.empty()) {
             tokenInfos.emplace_back(token);
-        } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Token is invalid.");
         }
     }
     return RET_SUCCESS;
 }
 
-int NativeTokenReceptor::Init()
+int NativeTokenReceptor::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
 {
     std::string nativeRawData;
     int ret = JsonParser::ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
@@ -163,15 +159,11 @@ int NativeTokenReceptor::Init()
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
         return ret;
     }
-    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     ret = ParserNativeRawData(nativeRawData, tokenInfos);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserNativeRawData failed.");
         return ret;
     }
-    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok, native token size: %{public}zu.", tokenInfos.size());
     return RET_SUCCESS;
 }
 

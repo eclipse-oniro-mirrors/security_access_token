@@ -1045,142 +1045,15 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
     permsList1.emplace_back(g_permState2);
     std::string permissionName = "ohos.permission.CAMERA";
     uint32_t oriStatus;
-    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
+    AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
 
-    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName,
+    AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName,
         PermissionRequestToggleStatus::CLOSED, 0);
     uint32_t status;
-    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, 0);
+    AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, 0);
     ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
 
-    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
-}
-
-/**
- * @tc.name: SetPermissionRequestToggleStatus001
- * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
- * status and invalid userID.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
-{
-    int32_t userID = -1;
-    uint32_t status = PermissionRequestToggleStatus::CLOSED;
-    std::string permissionName = "ohos.permission.CAMERA";
-
-    // UserId is invalid.
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission name is invalid.
-    userID = 123;
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        "", status, userID));
-
-    // PermissionName is not defined.
-    permissionName = "ohos.permission.invalid";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission is system_grant.
-    permissionName = "ohos.permission.USE_BLUETOOTH";
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Status is invalid.
-    status = -1;
-    permissionName = "ohos.permission.CAMERA";
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-}
-
-/**
- * @tc.name: SetPermissionRequestToggleStatus002
- * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with normal process.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level1)
-{
-    int32_t userID = 123;
-    uint32_t status = PermissionRequestToggleStatus::CLOSED;
-    std::string permissionName = "ohos.permission.CAMERA";
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    status = PermissionRequestToggleStatus::OPEN;
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-}
-
-/**
- * @tc.name: GetPermissionRequestToggleStatus001
- * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with invalid userID, invalid permission
- * name.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
-{
-    int32_t userID = -1;
-    uint32_t status;
-    std::string permissionName = "ohos.permission.CAMERA";
-
-    // UserId is invalid.
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // PermissionName is invalid.
-    userID = 123;
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        "", status, userID));
-
-    // PermissionName is not defined.
-    permissionName = "ohos.permission.invalid";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission is system_grant.
-    permissionName = "ohos.permission.USE_BLUETOOTH";
-    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-}
-
-/**
- * @tc.name: GetPermissionRequestToggleStatus002
- * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with normal process.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level1)
-{
-    int32_t userID = 123;
-    uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;
-    uint32_t setStatusOpen = PermissionRequestToggleStatus::OPEN;
-    uint32_t getStatus;
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusOpen, getStatus);
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", setStatusClose, userID));
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusClose, getStatus);
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", setStatusOpen, userID));
-
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusOpen, getStatus);
+    AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
 }
 
 /**

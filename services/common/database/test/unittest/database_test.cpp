@@ -136,70 +136,16 @@ HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level1)
 
 static void RemoveTestTokenHapInfo()
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> hapInfoResults;
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
-    for (GenericValues hapInfoValue : hapInfoResults) {
-        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        if (tokenId == TEST_TOKEN_ID) {
-            ASSERT_EQ(0, AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValue));
-            break;
-        }
-    }
-}
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TEST_TOKEN_ID));
+    std::vector<AtmDataType> deleteDataTypes;
+    std::vector<GenericValues> deleteValues;
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
+    deleteValues.emplace_back(condition);
 
-/*
- * @tc.name: SqliteStorageAddTest001
- * @tc.desc: Add function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "SqliteStorageAddTest001 begin");
-
-    RemoveTestTokenHapInfo();
-
-    GenericValues genericValues;
-    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    genericValues.Put(TokenFiledConst::FIELD_USER_ID, 100);
-    genericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name");
-    genericValues.Put(TokenFiledConst::FIELD_API_VERSION, 9);
-    genericValues.Put(TokenFiledConst::FIELD_INST_INDEX, 0);
-    genericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, 0);
-    genericValues.Put(TokenFiledConst::FIELD_APP_ID, "test_app_id");
-    genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
-    genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
-    genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
-    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
-    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
-
-    std::vector<GenericValues> values;
-    values.emplace_back(genericValues);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
-    LOGI(ATM_DOMAIN, ATM_TAG, "SqliteStorageAddTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageAddTest002
- * @tc.desc: Add function test failed
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "SqliteStorageAddTest002 begin");
-
-    RemoveTestTokenHapInfo();
-
-    GenericValues genericValues;
-    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
-
-    std::vector<GenericValues> values;
-    values.emplace_back(genericValues);
-    EXPECT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
-        AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
-    LOGI(ATM_DOMAIN, ATM_TAG, "SqliteStorageAddTest002 end");
+    std::vector<AtmDataType> addDataTypes;
+    std::vector<std::vector<GenericValues>> addValues;
+    AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
 }
 
 /*
@@ -228,9 +174,17 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
     genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
 
-    std::vector<GenericValues> values;
-    values.emplace_back(genericValues);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
+    std::vector<AtmDataType> deleteDataTypes;
+    std::vector<GenericValues> deleteValues;
+
+    std::vector<AtmDataType> addDataTypes;
+    std::vector<std::vector<GenericValues>> addValues;
+    std::vector<GenericValues> value;
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
+    value.emplace_back(genericValues);
+    addValues.emplace_back(value);
+    EXPECT_EQ(0,
+        AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues));
 
     GenericValues modifyValues;
     modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
