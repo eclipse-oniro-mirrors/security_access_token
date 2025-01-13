@@ -4229,6 +4229,16 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ohos.permission.GET_FAMILY_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
