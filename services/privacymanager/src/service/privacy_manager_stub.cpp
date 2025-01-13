@@ -24,9 +24,6 @@
 #include "privacy_manager_proxy_death_param.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
-#ifdef HICOLLIE_ENABLE
-#include "xcollie/xcollie.h"
-#endif // HICOLLIE_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -36,11 +33,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerStub"
 };
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#ifdef HICOLLIE_ENABLE
-static constexpr uint32_t TIMEOUT = 6; // 6s
-#endif // HICOLLIE_ENABLE
-#endif // SECURITY_COMPONENT_ENHANCE_ENABLE
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
@@ -395,28 +387,13 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
 {
-#ifdef HICOLLIE_ENABLE
-    std::string name = "PrivacyTimer";
-    int timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
-        HiviewDFX::XCOLLIE_FLAG_LOG);
-#endif // HICOLLIE_ENABLE
-
     sptr<SecCompEnhanceDataParcel> requestParcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
-
-#ifdef HICOLLIE_ENABLE
-        HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
-#endif // HICOLLIE_ENABLE
-
         return;
     }
     reply.WriteInt32(this->RegisterSecCompEnhance(*requestParcel));
-
-#ifdef HICOLLIE_ENABLE
-    HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
-#endif // HICOLLIE_ENABLE
 }
 
 void PrivacyManagerStub::UpdateSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
