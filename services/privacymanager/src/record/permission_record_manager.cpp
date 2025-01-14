@@ -965,7 +965,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         startRecordList_.emplace(newRecord);
     }
 
-    CallbackExecute(info.tokenId, permissionName, status, info.type);
+    CallbackExecute(info.tokenId, permissionName, status, info.pid, info.type);
     
     return ret;
 }
@@ -1135,7 +1135,7 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
         PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
         for (const auto& record: inactiveList) {
             Constant::TransferOpcodeToPermission(record.opCode, perm);
-            CallbackExecute(record.tokenId, perm, PERM_INACTIVE);
+            CallbackExecute(record.tokenId, perm, PERM_INACTIVE, record.pid);
         }
         if (!needClearCamera) {
             return true;
@@ -1152,11 +1152,10 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
 }
 
 void PermissionRecordManager::CallbackExecute(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t status, PermissionUsedType type)
+    AccessTokenID tokenId, const std::string& permissionName, int32_t status, int32_t pid, PermissionUsedType type)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d, type %{public}d",
-        tokenId, permissionName.c_str(), status, type);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, "
+        "status %{public}d, type %{public}d, pid %{public}d.", tokenId, permissionName.c_str(), status, type, pid);
 
     ActiveChangeResponse info;
     info.callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -1165,6 +1164,7 @@ void PermissionRecordManager::CallbackExecute(
     info.deviceId = "";
     info.type = static_cast<ActiveChangeType>(status);
     info.usedType = type;
+    info.pid = pid;
 
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
 }
@@ -1213,7 +1213,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
     startRecordList_.insert(updatedRecordList.begin(), updatedRecordList.end());
     // each permission sends a status change notice
     for (const auto& record : updatedRecordList) {
-        CallbackExecute(record.tokenId, permissionName, record.status);
+        CallbackExecute(record.tokenId, permissionName, record.status, record.pid);
     }
 }
 
@@ -1425,7 +1425,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
         return true;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, appStatus %{public}d.", tokenId, status);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, appStatus %{public}d(1-foreground 2-background).", tokenId, status);
 
     return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
 }
@@ -1433,7 +1433,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
 {
     int32_t status = GetAppStatus(tokenId, pid);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, status is %{public}d.", tokenId, status);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}d, status is %{public}d(1-foreground 2-background).", tokenId, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
@@ -1443,7 +1443,8 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, in
     if (iter != foreTokenIdList_.end()) {
         return true;
     }
-    return false;
+
+    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE_BACKGROUND") == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
@@ -1557,7 +1558,7 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
         }
         if (GetMuteStatus(permissionName, MIXED)) {
             AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-            CallbackExecute(callingTokenID, permissionName, PERM_TEMPORARY_CALL);
+            CallbackExecute(callingTokenID, permissionName, PERM_TEMPORARY_CALL, -1); // pid -1 with no meaning
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
