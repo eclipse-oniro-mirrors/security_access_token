@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,11 @@ enum AccessStatus {
 enum ReleaseStatus {
     RELEASE_DENIED = -1,
     RELEASE_GRANTED = 0
+};
+
+enum KeyStatus {
+    KEY_RELEASED = -1,
+    KEY_EXIST = 0
 };
 
 /*

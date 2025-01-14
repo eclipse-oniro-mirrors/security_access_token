@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -81,6 +81,7 @@ bool CheckDataType(napi_env env, int32_t dataLockType)
 {
     if ((static_cast<DataLockType>(dataLockType) != DEFAULT_DATA) &&
         (static_cast<DataLockType>(dataLockType) != MEDIA_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != GROUP_ID_DATA) &&
         (static_cast<DataLockType>(dataLockType) != ALL_DATA)) {
         ThrowError(env, EFM_ERR_INVALID_DATATYPE);
         return false;
@@ -150,6 +151,44 @@ napi_value ReleaseAccess(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value QueryAppKeyState(napi_env env, napi_callback_info info)
+{
+    size_t argc = MAX_PARAM_SIZE;
+    napi_value argv[MAX_PARAM_SIZE] = {nullptr};
+    if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok) {
+        LOG_ERROR("napi_get_cb_info failed.");
+        ThrowError(env, EFM_ERR_INVALID_PARAMETER);
+        return nullptr;
+    }
+
+    int32_t dataLockType = DEFAULT_DATA;
+    if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
+        return nullptr;
+    }
+
+    if (!CheckDataType(env, dataLockType)) {
+        LOG_ERROR("Invalid DataType.");
+        return nullptr;
+    }
+
+    int32_t retCode = El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(dataLockType));
+    if (retCode != EFM_SUCCESS) {
+        ThrowError(env, retCode);
+        retCode = KEY_RELEASED;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, retCode, &result));
+    return result;
+}
+
+static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
+{
+    napi_value prop = nullptr;
+    napi_create_int32(env, objValue, &prop);
+    napi_set_named_property(env, dstObj, propName, prop);
+}
+
 EXTERN_C_START
 /*
  * function for module exports
@@ -158,48 +197,38 @@ static napi_value Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_FUNCTION("acquireAccess", AcquireAccess),
-        DECLARE_NAPI_FUNCTION("releaseAccess", ReleaseAccess)
+        DECLARE_NAPI_FUNCTION("releaseAccess", ReleaseAccess),
+        DECLARE_NAPI_FUNCTION("queryAppKeyState", QueryAppKeyState)
     };
 
     napi_define_properties(env, exports, sizeof(properties) / sizeof(properties[0]), properties);
 
     napi_value dataType = nullptr;
     napi_create_object(env, &dataType);
-
-    napi_value prop = nullptr;
-    napi_create_int32(env, MEDIA_DATA, &prop);
-    napi_set_named_property(env, dataType, "MEDIA_DATA", prop);
-
-    prop = nullptr;
-    napi_create_int32(env, ALL_DATA, &prop);
-    napi_set_named_property(env, dataType, "ALL_DATA", prop);
+    SetNamedProperty(env, dataType, MEDIA_DATA, "MEDIA_DATA");
+    SetNamedProperty(env, dataType, GROUP_ID_DATA, "GROUP_ID_DATA");
+    SetNamedProperty(env, dataType, ALL_DATA, "ALL_DATA");
 
     napi_value accessStatus = nullptr;
     napi_create_object(env, &accessStatus);
-
-    prop = nullptr;
-    napi_create_int32(env, ACCESS_GRANTED, &prop);
-    napi_set_named_property(env, accessStatus, "ACCESS_GRANTED", prop);
-
-    prop = nullptr;
-    napi_create_int32(env, ACCESS_DENIED, &prop);
-    napi_set_named_property(env, accessStatus, "ACCESS_DENIED", prop);
+    SetNamedProperty(env, accessStatus, ACCESS_GRANTED, "ACCESS_GRANTED");
+    SetNamedProperty(env, accessStatus, ACCESS_DENIED, "ACCESS_DENIED");
 
     napi_value releaseStatus = nullptr;
     napi_create_object(env, &releaseStatus);
+    SetNamedProperty(env, releaseStatus, RELEASE_GRANTED, "RELEASE_GRANTED");
+    SetNamedProperty(env, releaseStatus, RELEASE_DENIED, "RELEASE_DENIED");
 
-    prop = nullptr;
-    napi_create_int32(env, RELEASE_GRANTED, &prop);
-    napi_set_named_property(env, releaseStatus, "RELEASE_GRANTED", prop);
-
-    prop = nullptr;
-    napi_create_int32(env, RELEASE_DENIED, &prop);
-    napi_set_named_property(env, releaseStatus, "RELEASE_DENIED", prop);
+    napi_value keyStatus = nullptr;
+    napi_create_object(env, &keyStatus);
+    SetNamedProperty(env, keyStatus, KEY_EXIST, "KEY_EXIST");
+    SetNamedProperty(env, keyStatus, KEY_RELEASED, "KEY_RELEASED");
 
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("DataType", dataType),
         DECLARE_NAPI_PROPERTY("AccessStatus", accessStatus),
         DECLARE_NAPI_PROPERTY("ReleaseStatus", releaseStatus),
+        DECLARE_NAPI_PROPERTY("KeyStatus", keyStatus),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(exportFuncs[0]), exportFuncs);
 
