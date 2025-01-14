@@ -596,6 +596,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.INPUT_KEYBOARD_CONTROLLER",             false},
     {"ohos.permission.LOCATION_SWITCH_IGNORED",     false},
     {"ohos.permission.SET_MUTE_POLICY",                     false},
+    {"ohos.permission.SET_ABILITY_INSTANCE_INFO",           false},
     {"ohos.permission.VIRTUAL_KEYBOARD_WINDOW",             false},
 };
 
