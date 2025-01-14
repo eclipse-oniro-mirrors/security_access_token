@@ -65,6 +65,7 @@ enum PrivacyError {
     ERR_REMOTE_CONNECTION,
     ERR_ADD_DEATH_RECIPIENT_FAILED,
     ERR_FIRST_CALLER_NOT_EDM,
+    PRIVACY_TOGGELE_RESTRICTED,
 };
 } // namespace AccessToken
 } // namespace Security
