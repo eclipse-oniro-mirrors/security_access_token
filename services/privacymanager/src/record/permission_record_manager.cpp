@@ -430,7 +430,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 
     if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "The permission used record toggle status is false.");
-        return Constant::SUCCESS;
+        return PrivacyError::PRIVACY_TOGGELE_RESTRICTED;
     }
 
     if ((info.successCount == 0) && (info.failCount == 0)) {
