@@ -3581,7 +3581,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.USE_MESSAGES_PICKER",
+            "name": "ohos.permission.USE_FRAUD_MESSAGES_PICKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
@@ -3591,7 +3591,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.USE_CALL_LOG_PICKER",
+            "name": "ohos.permission.USE_FRAUD_CALL_LOG_PICKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
