@@ -217,6 +217,29 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
     callbackPtr.release();
 }
 
+static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext,
+    int32_t sessionId)
+{
+    auto task = [asyncContext, sessionId]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            return;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
+        uiContent->CloseModalUIExtension(sessionId);
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CloseModalUIExtensionMainThread");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+}
+
 void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
 {
     {
@@ -227,13 +250,7 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
         }
         this->reqContext_->releaseFlag = true;
     }
-    Ace::UIContent* uiContent = GetUIContent(this->reqContext_);
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
-    uiContent->CloseModalUIExtension(this->sessionId_);
+    CloseModalUIExtensionMainThread(this->reqContext_, this->sessionId_);
     if (code == -1) {
         this->reqContext_->errorCode = code;
     }
@@ -315,14 +332,43 @@ void PermissonOnSettingUICallback::OnDestroy()
     ReleaseHandler(-1);
 }
 
+static void CreateUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext,
+    const AAFwk::Want& want, const Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
+    const std::shared_ptr<PermissonOnSettingUICallback>& uiExtCallback)
+{
+    auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+
+        Ace::ModalUIExtensionConfig config;
+        config.isProhibitBack = true;
+        int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
+            sessionId, asyncContext->tokenId);
+        if (sessionId == 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+        uiExtCallback->SetSessionId(sessionId);
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CreateUIExtensionMainThread");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+}
+
 static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
 {
-    Ace::UIContent* uiContent = GetUIContent(asyncContext);
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
-        asyncContext->result = RET_FAILED;
-        return RET_FAILED;
-    }
     auto uiExtCallback = std::make_shared<PermissonOnSettingUICallback>(asyncContext);
     Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
         [uiExtCallback](int32_t releaseCode) {
@@ -345,17 +391,10 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOn
         },
     };
 
-    Ace::ModalUIExtensionConfig config;
-    config.isProhibitBack = true;
-    int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d, permSize: %{public}zu.",
-        sessionId, asyncContext->tokenId, asyncContext->permissionList.size());
-    if (sessionId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
-        asyncContext->result = RET_FAILED;
+    CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
+    if (asyncContext->result == RET_FAILED) {
         return RET_FAILED;
     }
-    uiExtCallback->SetSessionId(sessionId);
     return JS_OK;
 }
 
@@ -439,6 +478,9 @@ bool NapiRequestPermissionOnSetting::ParseRequestPermissionOnSetting(const napi_
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
+#ifdef EVENTHANDLER_ENABLE
+    asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
+#endif
     return true;
 }
 
