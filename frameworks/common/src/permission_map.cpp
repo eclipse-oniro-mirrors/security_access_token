@@ -592,6 +592,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.WATCH_WRITE_EMERGENCY_INFO",              false},
     {"ohos.permission.WATCH_START_SOS_SERVICE",              false},
     {"ohos.permission.ANTI_FRAUD",                          false},
+    {"ohos.permission.GET_SIGNATURE_INFO",                  false},
     {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
     {"ohos.permission.GET_ANIM_POLICY",                     false},
     {"ohos.permission.PRELOAD_FILE",                          false},
