@@ -1403,9 +1403,11 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
     ASSERT_NE(NOT_EXSIT_PID, callbackPtr->pid_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_CALL_LOG"));
+    usleep(500000); // 500000us = 0.5s
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(
         g_tokenIdE, "ohos.permission.READ_CALL_LOG", NOT_EXSIT_PID));
+    usleep(500000); // 500000us = 0.5s
 
     ASSERT_EQ(NOT_EXSIT_PID, callbackPtr->pid_);
 
