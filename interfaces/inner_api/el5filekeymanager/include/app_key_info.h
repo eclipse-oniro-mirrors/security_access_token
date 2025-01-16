@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,6 +35,10 @@ struct AppKeyInfo : public Parcelable {
     std::string bundleName;
     int32_t userId;
     std::string groupID;
+
+    AppKeyInfo() {}
+    AppKeyInfo(AppKeyType type, uint32_t uid, const std::string &bundleName, int32_t userId,
+        const std::string &groupID) : type(type), uid(uid), bundleName(bundleName), userId(userId) {}
 
     bool Marshalling(Parcel &parcel) const override;
     static AppKeyInfo *Unmarshalling(Parcel &parcel);

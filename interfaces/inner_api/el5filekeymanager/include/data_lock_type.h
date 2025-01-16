@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@ namespace AccessToken {
 enum DataLockType {
     DEFAULT_DATA = 0x0,
     MEDIA_DATA = 0x01,
+    GROUP_ID_DATA = 0x02,
     ALL_DATA = 0xFFFFFFFF
 };
 }  // namespace AccessToken
