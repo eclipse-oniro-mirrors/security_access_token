@@ -76,6 +76,7 @@ struct ActiveChangeResponse {
      */
     ActiveChangeType type;
     PermissionUsedType usedType;
+    int32_t pid;
 };
 } // namespace AccessToken
 } // namespace Security

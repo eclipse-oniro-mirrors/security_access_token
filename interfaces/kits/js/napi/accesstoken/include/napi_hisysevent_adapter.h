@@ -13,9 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUS_FUZZER_H
-#define TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUS_FUZZER_H
+#ifndef ACCESSTOKEN_NAPI_HISYSEVENT_ADAPTER_H
+#define ACCESSTOKEN_NAPI_HISYSEVENT_ADAPTER_H
 
-#define FUZZ_PROJECT_NAME "setpermissionusedrecordtogglestatus_fuzzer"
-
-#endif // TEST_FUZZTEST_SETPERMISSIONUSEDRECORDTOGGLESTATUS_FUZZER_H
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+enum ReqPermFromUserErrorCode {
+    TOKENID_INCONSISTENCY = 0,
+    ABILITY_FLAG_ERROR = 1,
+    GET_UI_CONTENT_FAILED = 2,
+    CREATE_MODAL_UI_FAILED = 3,
+    TRIGGER_RELEASE = 4,
+    TRIGGER_ONERROR = 5,
+    TRIGGER_DESTROY = 6,
+};
+enum VerifyAccessTokenEventCode {
+    VERIFY_TOKENID_INCONSISTENCY = 0,
+};
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // ACCESSTOKEN_NAPI_HISYSEVENT_ADAPTER_H

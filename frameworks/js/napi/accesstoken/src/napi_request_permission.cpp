@@ -21,6 +21,7 @@
 #include "accesstoken_log.h"
 #include "hisysevent.h"
 #include "napi_base_context.h"
+#include "napi_hisysevent_adapter.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -107,6 +108,8 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
             return;
         }
         asyncContext->uiContentFlag = true;
@@ -148,6 +151,8 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             ACCESSTOKEN_LOG_ERROR(LABEL, "Create component failed, sessionId is 0");
             asyncContext->result = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", CREATE_MODAL_UI_FAILED);
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -409,6 +414,8 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result = RET_FAILED;
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
     }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
@@ -497,6 +504,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
 {
     this->reqContext_ = reqContext;
+    isOnResult_.exchange(false);
 }
 
 UIExtensionCallback::~UIExtensionCallback()
@@ -512,6 +520,7 @@ void UIExtensionCallback::SetSessionId(int32_t sessionId)
  */
 void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
+    isOnResult_.exchange(true);
     ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d", resultCode);
     this->reqContext_->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     this->reqContext_->permissionsState = result.GetIntArrayParam(RESULT_KEY);
@@ -533,7 +542,8 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
-
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_RELEASE, "INNER_CODE", releaseCode);
     ReleaseHandler(-1);
 }
 
@@ -544,7 +554,8 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_ONERROR, "INNER_CODE", code);
     ReleaseHandler(-1);
 }
 
@@ -563,6 +574,10 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    if (isOnResult_.load() == false) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_DESTROY);
+    }
     ReleaseHandler(-1);
 }
 
@@ -690,6 +705,9 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.",
             asyncContextHandle->asyncContextPtr->tokenId, selfTokenID);
         asyncContextHandle->asyncContextPtr->result = RET_FAILED;
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
+            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContextHandle->asyncContextPtr->tokenId);
         return;
     }
 

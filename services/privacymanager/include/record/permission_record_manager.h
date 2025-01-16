@@ -93,7 +93,7 @@ public:
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status,
+    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status, int32_t pid,
         PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
@@ -123,6 +123,7 @@ public:
     void RemoveRecordFromStartListByCallerPid(int32_t callerPid);
     void ExecuteAllCameraExecuteCallback();
     void UpdatePermRecImmediately();
+    void ExecuteDeletePermissionRecordTask();
 
 private:
     PermissionRecordManager();
@@ -141,7 +142,6 @@ private:
     int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
-    void ExecuteDeletePermissionRecordTask();
     int32_t GetCurDeleteTaskNum();
     void AddDeleteTaskNum();
     void ReduceDeleteTaskNum();

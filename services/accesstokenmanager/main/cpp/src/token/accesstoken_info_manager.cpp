@@ -759,11 +759,6 @@ void AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
     std::vector<AccessTokenID>& deleteTokenList, std::vector<GenericValues>& nativeTokenValues,
     std::vector<GenericValues>& permStateValues)
 {
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Info is null.");
-        return;
-    }
-
     AccessTokenID cfgTokenId = infoPtr->GetTokenID();
     std::string cfgProcessName = infoPtr->GetProcessName();
     AccessTokenID oriTokenId = INVALID_TOKENID;
@@ -795,6 +790,10 @@ void AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 
     if (!idExist && processExist) { // this process is exist, but id is not same, perhaps libat lose his data
         IdFalseWithProcessTrueCache(infoPtr, cfgTokenId, cfgProcessName, oriTokenId);
+
+        std::string errMsg = "processName=" + cfgProcessName + ", newTokenID=" + std::to_string(cfgTokenId) +
+            ", oldTokenID=" + std::to_string(oriTokenId);
+        ReportSysEventServiceStartError(TOKENID_NOT_EQUAL, errMsg, TOKENID_NOT_EQUAL);
 
         deleteTokenList.emplace_back(oriTokenId);
         infoPtr->TransferNativeInfo(nativeTokenValues); // get new native token info

@@ -148,8 +148,8 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
         sptr<IPermActiveStatusCallback> callback = new PermActiveStatusChangeCallbackProxy(*it);
         if (callback != nullptr) {
             ACCESSTOKEN_LOG_INFO(LABEL, "callback execute callingTokenId %{public}u, tokenId %{public}u, "
-                "permision %{public}s, changeType %{public}d, usedType %{public}d", info.callingTokenID,
-                info.tokenID, info.permissionName.c_str(), info.type, info.usedType);
+                "permision %{public}s, changeType %{public}d, usedType %{public}d, pid %{public}d", info.callingTokenID,
+                info.tokenID, info.permissionName.c_str(), info.type, info.usedType, info.pid);
             callback->ActiveStatusChangeCallback(info);
         }
     }
