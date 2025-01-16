@@ -81,7 +81,6 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     }
     if (!callback->AddDeathRecipient(callbackDeathRecipient_)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "add death recipient failed");
-        return PrivacyError::ERR_ADD_DEATH_RECIPIENT_FAILED;
     }
 
     CallbackData recordInstance;
