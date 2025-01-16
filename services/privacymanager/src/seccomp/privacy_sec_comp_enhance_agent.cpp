@@ -29,6 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySecCompEnhanceAgent"
 };
+static const std::string SCENE_BOARD_PKG_NAME = "com.ohos.sceneboard";
 std::recursive_mutex g_instanceMutex;
 }
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
@@ -129,8 +130,15 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
+    enhance.isSceneBoard = false;
     if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+    }
+    HapTokenInfo info;
+    if (AccessTokenKit::GetHapTokenInfo(enhance.token, info) == AccessTokenKitRet::RET_SUCCESS) {
+        if (info.bundleName == SCENE_BOARD_PKG_NAME) {
+            enhance.isSceneBoard = true;
+        }
     }
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
@@ -171,11 +179,8 @@ int32_t PrivacySecCompEnhanceAgent::GetSpecialSecCompEnhance(const std::string& 
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); iter++) {
-        HapTokenInfo info;
-        if (AccessTokenKit::GetHapTokenInfo(iter->token, info) == AccessTokenKitRet::RET_SUCCESS) {
-            if (bundleName == info.bundleName) {
-                enhanceList.emplace_back(*iter);
-            }
+        if ((*iter).isSceneBoard) {
+            enhanceList.emplace_back(*iter);
         }
     }
     return RET_SUCCESS;
