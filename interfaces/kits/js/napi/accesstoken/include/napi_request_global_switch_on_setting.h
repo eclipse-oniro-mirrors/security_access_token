@@ -15,6 +15,10 @@
 #ifndef INTERFACES_ACCESSTOKEN_KITS_NAPI_REQUEST_GLOBAL_SWITCHN_ON_SETTING_H
 #define INTERFACES_ACCESSTOKEN_KITS_NAPI_REQUEST_GLOBAL_SWITCHN_ON_SETTING_H
 
+#ifdef EVENTHANDLER_ENABLE
+#include "event_handler.h"
+#include "event_queue.h"
+#endif
 #include "napi_context_common.h"
 #include "permission_grant_info.h"
 #include "ui_content.h"
@@ -47,6 +51,9 @@ struct RequestGlobalSwitchAsyncContext : public AtManagerAsyncWorkData {
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
     bool releaseFlag = false;
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
+#endif
 };
 
 struct RequestGlobalSwitchAsyncContextHandle {
