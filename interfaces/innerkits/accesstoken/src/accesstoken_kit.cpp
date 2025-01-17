@@ -295,13 +295,12 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
         tokenID, permissionName.c_str(), crossIpc);
-    if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
+    uint32_t code;
+    if (!TransferPermissionToOpcode(permissionName, code)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
         return PERMISSION_DENIED;
     }
-
-    uint32_t code;
-    if (crossIpc || !TransferPermissionToOpcode(permissionName, code)) {
+    if (crossIpc) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
     bool isGranted = false;
@@ -333,7 +332,8 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
         tokenID, permissionName.c_str());
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
-        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
+        return PERMISSION_DENIED;
     }
     bool isGranted = false;
     int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
@@ -375,6 +375,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
         bool isGranted = false;
         uint32_t code;
         if (!TransferPermissionToOpcode(permissionList[i], code)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName(%{public}s) is not exist.", permissionList[i].c_str());
             permStateList[i] = PERMISSION_DENIED;
             continue;
         }
