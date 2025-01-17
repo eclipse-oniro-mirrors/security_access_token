@@ -15,12 +15,15 @@
 
 #include "permission_used_record_db.h"
 
+#include <cinttypes>
 #include <mutex>
+
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "constant.h"
 #include "permission_used_type.h"
 #include "privacy_field_const.h"
+#include "time_util.h"
 
 namespace OHOS {
 namespace Security {
@@ -122,12 +125,15 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
 
 int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValues>& values)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     if (prepareSql.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Add sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
     BeginTransaction();
@@ -151,11 +157,17 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Commit transaction.");
     CommitTransaction();
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add cost %{public}" PRId64 ".", endTime - beginTime);
+
     return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& conditions)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
@@ -163,18 +175,25 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Remove sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
     for (const auto& columnName : columnNames) {
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int32_t ret = statement.Step();
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove cost %{public}" PRId64 ".", endTime - beginTime);
+
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
 int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList,
     const GenericValues& andConditions, std::vector<GenericValues>& results, int32_t databaseQueryCount)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     int32_t tokenId = andConditions.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
@@ -184,6 +203,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "FindByConditions sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
 
@@ -204,29 +224,43 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
         }
         results.emplace_back(value);
     }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "FindByConditions cost %{public}" PRId64 ".", endTime - beginTime);
+
     return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::Count(DataType type)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     GenericValues countValue;
     std::string countSql = CreateCountPrepareSqlCmd(type);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Count sql is %{public}s.", countSql.c_str());
     auto countStatement = Prepare(countSql);
     if (countStatement.Step() == Statement::State::ROW) {
         int32_t column = 0;
         countValue.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, false));
     }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Count cost %{public}" PRId64 ".", endTime - beginTime);
+
     return countValue.GetInt(FIELD_COUNT_NUMBER);
 }
 
 int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
     const GenericValues& andConditions)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     if (!andColumns.empty()) {
         std::string deleteExpireSql = CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteExpireRecords sql is %{public}s.", deleteExpireSql.c_str());
         auto deleteExpireStatement = Prepare(deleteExpireSql);
         for (const auto& columnName : andColumns) {
             deleteExpireStatement.Bind(columnName, andConditions.Get(columnName));
@@ -235,23 +269,36 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
             return FAILURE;
         }
     }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteExpireRecords cost %{public}" PRId64 ".", endTime - beginTime);
+
     return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t excessiveSize)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteExcessiveRecords sql is %{public}s.", deleteExcessiveSql.c_str());
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
     if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
         return FAILURE;
     }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteExcessiveRecords cost %{public}" PRId64 ".", endTime - beginTime);
+
     return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modifyValue,
     const GenericValues& conditionValue)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     std::vector<std::string> modifyNames = modifyValue.GetAllKeys();
     std::vector<std::string> conditionNames = conditionValue.GetAllKeys();
 
@@ -261,6 +308,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Update sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
 
@@ -280,12 +328,17 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
         return FAILURE;
     }
 
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Update cost %{public}" PRId64 ".", endTime - beginTime);
+
     return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& conditionValue,
     std::vector<GenericValues>& results)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
     std::vector<std::string> conditionColumns = conditionValue.GetAllKeys();
 
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
@@ -294,6 +347,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid.", type);
         return FAILURE;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Query sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
     for (const auto& conditionColumn : conditionColumns) {
@@ -310,6 +364,9 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
 
         results.emplace_back(value);
     }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Query cost %{public}" PRId64 ".", endTime - beginTime);
 
     return SUCCESS;
 }
