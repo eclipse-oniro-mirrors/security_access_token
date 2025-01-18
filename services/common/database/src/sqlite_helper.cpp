@@ -55,6 +55,8 @@ void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
         return;
     }
 
+    SetWal();
+
     int32_t version = GetVersion();
     if (version == currentVersion_) {
         return;
@@ -158,6 +160,20 @@ int32_t SqliteHelper::ExecuteSql(const std::string& sql) const
     }
     sqlite3_free(errorMessage);
     return result;
+}
+
+void SqliteHelper::SetWal() const
+{
+    if (db_ == nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Do open data base first!");
+        return;
+    }
+    auto statement = Prepare(PRAGMA_WAL_COMMAND);
+    if (statement.Step() != Statement::State::DONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Set wal mode failed, errorMsg: %{public}s", SpitError().c_str());
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Set wal mode success!");
+    }
 }
 
 int32_t SqliteHelper::GetVersion() const __attribute__((no_sanitize("cfi")))

@@ -117,6 +117,7 @@ public:
     void RemoveRecordFromStartListByOp(int32_t opCode);
     void ExecuteAllCameraExecuteCallback();
     void UpdatePermRecImmediately();
+    void ExecuteDeletePermissionRecordTask();
 
 private:
     PermissionRecordManager();
@@ -131,7 +132,6 @@ private:
     int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
-    void ExecuteDeletePermissionRecordTask();
     int32_t GetCurDeleteTaskNum();
     void AddDeleteTaskNum();
     void ReduceDeleteTaskNum();

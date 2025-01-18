@@ -268,7 +268,7 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
     std::lock_guard<std::mutex> lock(permUsedRecMutex_);
     auto it = permUsedRecList_.begin();
     while (it != permUsedRecList_.end()) {
-        if (it->record.timestamp > updateStamp) {
+        if ((it->record.timestamp > updateStamp) || (it->record.opCode != record.opCode)) {
             // record from cache less than updateStamp may merge, ignore them
             ++it;
             continue;
@@ -402,8 +402,6 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
-    ExecuteDeletePermissionRecordTask();
-
     if ((info.successCount == 0) && (info.failCount == 0)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
@@ -462,8 +460,6 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    ExecuteDeletePermissionRecordTask();
-
     if (!request.isRemote && !GetRecordsFromLocalDB(request, result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromLocalDB");
         return  PrivacyError::ERR_PARAM_INVALID;
@@ -695,6 +691,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     return true;
 }
 
+// call this when receive screen off common event
 void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 {
 #ifdef EVENTHANDLER_ENABLE
@@ -1169,8 +1166,6 @@ int32_t PermissionRecordManager::StartUsingPermission(
 int32_t PermissionRecordManager::StopUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
-    ExecuteDeletePermissionRecordTask();
-
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;

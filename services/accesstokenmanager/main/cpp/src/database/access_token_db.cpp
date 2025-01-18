@@ -457,7 +457,7 @@ int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vect
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertHap cast %{public}" PRId64 ".", endTime - beginTime);
+    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteAndInsertNative cost %{public}" PRId64 ".", endTime - beginTime);
 
     return 0;
 }
