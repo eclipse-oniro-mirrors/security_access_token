@@ -38,7 +38,7 @@ struct AppKeyInfo : public Parcelable {
 
     AppKeyInfo() {}
     AppKeyInfo(AppKeyType type, uint32_t uid, const std::string &bundleName, int32_t userId,
-        const std::string &groupID) : type(type), uid(uid), bundleName(bundleName), userId(userId) {}
+        const std::string &groupID) : type(type), uid(uid), bundleName(bundleName), userId(userId), groupID(groupID) {}
 
     bool Marshalling(Parcel &parcel) const override;
     static AppKeyInfo *Unmarshalling(Parcel &parcel);

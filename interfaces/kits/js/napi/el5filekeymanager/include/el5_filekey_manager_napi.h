@@ -32,6 +32,7 @@ enum ReleaseStatus {
 };
 
 enum KeyStatus {
+    KEY_NOT_EXIST = -2,
     KEY_RELEASED = -1,
     KEY_EXIST = 0
 };
