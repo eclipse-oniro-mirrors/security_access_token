@@ -172,9 +172,20 @@ napi_value QueryAppKeyState(napi_env env, napi_callback_info info)
     }
 
     int32_t retCode = El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(dataLockType));
-    if (retCode != EFM_SUCCESS) {
-        ThrowError(env, retCode);
-        retCode = KEY_RELEASED;
+    switch (retCode) {
+        case EFM_SUCCESS:
+            retCode = KEY_EXIST;
+            break;
+        case EFM_ERR_ACCESS_RELEASED:
+            retCode = KEY_RELEASED;
+            break;
+        case EFM_ERR_FIND_ACCESS_FAILED:
+            retCode = KEY_NOT_EXIST;
+            break;
+        default:
+            ThrowError(env, retCode);
+            retCode = KEY_RELEASED;
+            break;
     }
 
     napi_value result = nullptr;
@@ -206,7 +217,6 @@ static napi_value Init(napi_env env, napi_value exports)
     napi_value dataType = nullptr;
     napi_create_object(env, &dataType);
     SetNamedProperty(env, dataType, MEDIA_DATA, "MEDIA_DATA");
-    SetNamedProperty(env, dataType, GROUP_ID_DATA, "GROUP_ID_DATA");
     SetNamedProperty(env, dataType, ALL_DATA, "ALL_DATA");
 
     napi_value accessStatus = nullptr;
@@ -221,6 +231,7 @@ static napi_value Init(napi_env env, napi_value exports)
 
     napi_value keyStatus = nullptr;
     napi_create_object(env, &keyStatus);
+    SetNamedProperty(env, keyStatus, KEY_NOT_EXIST, "KEY_NOT_EXIST");
     SetNamedProperty(env, keyStatus, KEY_EXIST, "KEY_EXIST");
     SetNamedProperty(env, keyStatus, KEY_RELEASED, "KEY_RELEASED");
 
