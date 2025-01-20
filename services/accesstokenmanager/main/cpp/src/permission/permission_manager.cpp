@@ -603,7 +603,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     }
     bool needKill = false;
     // To kill process when perm is revoke
-    if (!isGranted && (flag != PERMISSION_ALLOW_THIS_TIME) && (flag != PERMISSION_COMPONENT_SET)) {
+    if (!isGranted && flag != PERMISSION_COMPONENT_SET) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Perm(%{public}s) is revoked, kill process(%{public}u).",
             permissionName.c_str(), tokenID);
         needKill = true;
