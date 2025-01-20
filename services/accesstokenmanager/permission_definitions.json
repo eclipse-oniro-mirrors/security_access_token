@@ -2661,6 +2661,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.EXEMPT_PRIVACY_SECURITY_CENTER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_LEARN_MORE_DIALOG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_SUPER_PRIVACY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
