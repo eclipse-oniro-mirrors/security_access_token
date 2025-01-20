@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "access_token.h"
 
@@ -29,7 +29,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "JsonParser"};
 constexpr int MAX_NATIVE_CONFIG_FILE_SIZE = 5 * 1024 * 1024; // 5M
 constexpr size_t BUFFER_SIZE = 1024;
 }
@@ -78,24 +77,24 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
     }
     int32_t fd = open(filePath, O_RDONLY);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Open failed errno %{public}d.", errno);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return ERR_FILE_OPERATE_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fstat failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fstat failed.");
         close(fd);
         return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is invalid.");
         close(fd);
         return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is too large.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is too large.");
         close(fd);
         return ERR_OVERSIZE;
     }
@@ -116,18 +115,18 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
 bool JsonParser::IsDirExsit(const std::string& file)
 {
     if (file.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "File path is empty");
+        LOGE(ATM_DOMAIN, ATM_TAG, "File path is empty");
         return false;
     }
 
     struct stat buf;
     if (stat(file.c_str(), &buf) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get file attributes failed, errno %{public}d.", errno);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get file attributes failed, errno %{public}d.", errno);
         return false;
     }
 
     if (!S_ISDIR(buf.st_mode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "File mode is not directory.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "File mode is not directory.");
         return false;
     }
 

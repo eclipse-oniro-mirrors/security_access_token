@@ -16,7 +16,7 @@
 
 #include "ability.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "napi_base_context.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -25,9 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NapiRequestPermissionOnSetting"
-};
 const std::string PERMISSION_KEY = "ohos.user.setting.permission";
 const std::string PERMISSION_RESULT_KEY = "ohos.user.setting.permission.result";
 const std::string RESULT_ERROR_KEY = "ohos.user.setting.error_code";
@@ -79,12 +76,12 @@ static napi_value GetContext(
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
     if (status != napi_ok || !stageMode) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is not a stage mode.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "It is not a stage mode.");
         return nullptr;
     } else {
         auto context = AbilityRuntime::GetStageModeContext(env, value);
         if (context == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Get application context.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Get application context.");
             return nullptr;
         }
         asyncContext->abilityContext =
@@ -92,11 +89,11 @@ static napi_value GetContext(
         if (asyncContext->abilityContext != nullptr) {
             asyncContext->uiAbilityFlag = true;
         } else {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Failed to convert to ability context.");
+            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to convert to ability context.");
             asyncContext->uiExtensionContext =
                 AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
             if (asyncContext->uiExtensionContext == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to convert to ui extension context.");
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to convert to ui extension context.");
                 return nullptr;
             }
         }
@@ -143,7 +140,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    LOGI(ATM_DOMAIN, ATM_TAG, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
     return jsCode;
 }
 
@@ -151,13 +148,13 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
 {
     (void)status;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Uv_queue_work_with_qos input work is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uv_queue_work_with_qos input work is nullptr");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     PermissonOnSettingResultCallback *retCB = reinterpret_cast<PermissonOnSettingResultCallback*>(work->data);
     if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RetCB is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "RetCB is nullptr");
         return;
     }
     std::unique_ptr<PermissonOnSettingResultCallback> callbackPtr {retCB};
@@ -170,12 +167,12 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(asyncContext->env, &scope);
     if (scope == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_open_handle_scope failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
         return;
     }
     napi_value requestResult = WrapRequestResult(asyncContext->env, retCB->stateList);
     if ((result == JS_OK) && (requestResult == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Wrap requestResult failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
         result = JS_ERROR_INNER;
     }
 
@@ -188,7 +185,7 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
 {
     auto* retCB = new (std::nothrow) PermissonOnSettingResultCallback();
     if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
         return;
     }
 
@@ -200,12 +197,12 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(data->env, napi_get_uv_event_loop(data->env, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
@@ -223,10 +220,10 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestPermOnSetting
     auto task = [asyncContext, sessionId]() {
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
             return;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
+        LOGI(ATM_DOMAIN, ATM_TAG, "Close uiextension component");
         uiContent->CloseModalUIExtension(sessionId);
     };
 #ifdef EVENTHANDLER_ENABLE
@@ -245,7 +242,7 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
         if (this->reqContext_->releaseFlag) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Callback has executed.");
+            LOGW(ATM_DOMAIN, ATM_TAG, "Callback has executed.");
             return;
         }
         this->reqContext_->releaseFlag = true;
@@ -279,7 +276,7 @@ void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Wan
 {
     this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->reqContext_->stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
-    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d, listSize=%{public}zu",
+    LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d, errorCode=%{public}d, listSize=%{public}zu",
         resultCode, this->reqContext_->errorCode, this->reqContext_->stateList.size());
     ReleaseHandler(0);
 }
@@ -289,7 +286,7 @@ void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Wan
  */
 void PermissonOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Called!");
 }
 
 /*
@@ -298,7 +295,7 @@ void PermissonOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
  */
 void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
+    LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
 
     ReleaseHandler(-1);
 }
@@ -308,7 +305,7 @@ void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
  */
 void PermissonOnSettingUICallback::OnError(int32_t code, const std::string& name, const std::string& message)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
     ReleaseHandler(-1);
@@ -320,7 +317,7 @@ void PermissonOnSettingUICallback::OnError(int32_t code, const std::string& name
  */
 void PermissonOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>& uiProxy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Connect to UIExtensionAbility successfully.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Connect to UIExtensionAbility successfully.");
 }
 
 /*
@@ -328,7 +325,7 @@ void PermissonOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::Moda
  */
 void PermissonOnSettingUICallback::OnDestroy()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
     ReleaseHandler(-1);
 }
 
@@ -339,7 +336,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyn
     auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
             asyncContext->result = RET_FAILED;
             return;
         }
@@ -347,10 +344,10 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyn
         Ace::ModalUIExtensionConfig config;
         config.isProhibitBack = true;
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-        ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
             sessionId, asyncContext->tokenId);
         if (sessionId == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create component, sessionId is 0.");
             asyncContext->result = RET_FAILED;
             return;
         }
@@ -402,7 +399,7 @@ static int32_t StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext
 {
     AAFwk::Want want;
     AccessTokenKit::GetPermissionManagerInfo(asyncContext->info);
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s, permStateAbilityName: %{public}s.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "bundleName: %{public}s, permStateAbilityName: %{public}s.",
         asyncContext->info.grantBundleName.c_str(), asyncContext->info.permStateAbilityName.c_str());
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.permStateAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -412,7 +409,7 @@ static int32_t StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext
 
 napi_value NapiRequestPermissionOnSetting::RequestPermissionOnSetting(napi_env env, napi_callback_info info)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionOnSetting begin.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "RequestPermissionOnSetting begin.");
     // use handle to protect asyncContext
     std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext =
         std::make_shared<RequestPermOnSettingAsyncContext>(env);
@@ -437,7 +434,7 @@ napi_value NapiRequestPermissionOnSetting::RequestPermissionOnSetting(napi_env e
     NAPI_CALL(env,
         napi_queue_async_work_with_qos(env, asyncContextHandle->asyncContextPtr->work, napi_qos_user_initiated));
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionOnSetting end.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "RequestPermissionOnSetting end.");
     asyncContextHandle.release();
     return result;
 }
@@ -450,7 +447,7 @@ bool NapiRequestPermissionOnSetting::ParseRequestPermissionOnSetting(const napi_
     napi_value thisVar = nullptr;
 
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_get_cb_info failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
         return false;
     }
     if (argc < NapiContextCommon::MAX_PARAMS_TWO - 1) {
@@ -468,7 +465,7 @@ bool NapiRequestPermissionOnSetting::ParseRequestPermissionOnSetting(const napi_
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
 
     // argv[1] : permissionList
     if (!ParseStringArray(env, argv[1], asyncContext->permissionList) ||
@@ -509,23 +506,23 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env 
     }
     static AccessTokenID currToken = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != currToken) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "The context(token=%{public}d) is not belong to the current application(currToken=%{public}d).",
             asyncContextHandle->asyncContextPtr->tokenId, currToken);
         asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Start to pop ui extension dialog");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
     StartUIExtension(asyncContextHandle->asyncContextPtr);
     if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Failed to pop uiextension dialog.");
+        LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
 }
 
 void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env env, napi_status status, void* data)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionOnSettingComplete begin.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "RequestPermissionOnSettingComplete begin.");
     RequestOnSettingAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestOnSettingAsyncContextHandle*>(data);
     if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
