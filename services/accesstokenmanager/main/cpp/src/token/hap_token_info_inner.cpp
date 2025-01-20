@@ -169,7 +169,8 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList) const
+void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList,
+    const std::string& appId, ATokenAplEnum apl) const
 {
     if (isRemote_) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is remote hap token, will not store", tokenInfoBasic_.tokenID);
@@ -177,6 +178,9 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList) cons
     }
     GenericValues genericValues;
     TranslationIntoGenericValues(genericValues);
+    genericValues.Put(TokenFiledConst::FIELD_APP_ID, appId);
+    genericValues.Put(TokenFiledConst::FIELD_APL, static_cast<int32_t>(apl));
+    genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "0");
     valueList.emplace_back(genericValues);
 }
 

@@ -1993,6 +1993,13 @@ HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo002, TestSize.Level1)
     ASSERT_EQ(token1, token2);
     ASSERT_EQ(
         PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(token2, "ohos.permission.MANAGE_HAP_TOKENID", false));
+
+    uint64_t token3 = GetNativeTokenTest("TestCase_core", perms, 1);
+    ASSERT_NE(INVALID_TOKENID, token3);
+
+    ASSERT_EQ(token1, token3);
+    ASSERT_EQ(
+        PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(token3, "ohos.permission.MANAGE_HAP_TOKENID", false));
 }
 
 /**

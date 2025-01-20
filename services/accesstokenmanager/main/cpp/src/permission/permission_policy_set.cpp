@@ -350,18 +350,6 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStatus>& 
     permList.assign(permStateList_.begin(), permStateList_.end());
 }
 
-void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& state : permStateList_) {
-        uint32_t code;
-        if (TransferPermissionToOpcode(state.permissionName, code)) {
-            opCodeList.emplace_back(code);
-            statusList.emplace_back(state.grantStatus == PERMISSION_GRANTED);
-        }
-    }
-}
-
 uint32_t PermissionPolicySet::GetReqPermissionSize()
 {
     return static_cast<uint32_t>(permStateList_.size());
@@ -440,58 +428,6 @@ void PermissionPolicySet::ToString(std::string& info, const std::vector<Permissi
         if (iter != (permStateList.end() - 1)) {
             info.append(",\n");
         }
-    }
-    info.append("\n  ]\n");
-}
-
-bool PermissionPolicySet::IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
-    const std::vector<std::string>& nativeAcls)
-{
-    PermissionDef permissionDef;
-    int ret = PermissionDefinitionCache::GetInstance().FindByPermissionName(
-        permissionName, permissionDef);
-    if (ret != RET_SUCCESS) {
-        return false;
-    }
-    if (tokenApl >= permissionDef.availableLevel) {
-        return true;
-    }
-
-    auto iter = std::find(nativeAcls.begin(), nativeAcls.end(), permissionName);
-    if (iter != nativeAcls.end()) {
-        return true;
-    }
-    return false;
-}
-
-void PermissionPolicySet::PermStateToString(int32_t tokenApl,
-    const std::vector<std::string>& nativeAcls, std::string& info)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-
-    std::vector<std::string> invalidPermList = {};
-    info.append(R"(  "permStateList": [)");
-    info.append("\n");
-    for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
-        if (!IsPermissionReqValid(tokenApl, iter->permissionName, nativeAcls)) {
-            invalidPermList.emplace_back(iter->permissionName);
-            continue;
-        }
-        PermStateFullToString(*iter, info);
-        if (iter != (permStateList_.end() - 1)) {
-            info.append(",\n");
-        }
-    }
-    info.append("\n  ]\n");
-
-    if (invalidPermList.empty()) {
-        return;
-    }
-
-    info.append(R"(  "invalidPermList": [)");
-    info.append("\n");
-    for (auto iter = invalidPermList.begin(); iter != invalidPermList.end(); iter++) {
-        info.append(R"(      "permissionName": ")" + *iter + R"(")" + ",\n");
     }
     info.append("\n  ]\n");
 }

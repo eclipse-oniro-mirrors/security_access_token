@@ -15,6 +15,7 @@
 
 #include "permission_definition_cache.h"
 
+#include <mutex>
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_log.h"

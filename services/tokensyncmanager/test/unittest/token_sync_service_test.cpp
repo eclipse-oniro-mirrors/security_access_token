@@ -435,13 +435,13 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
 {
-    NativeTokenInfoForSync native1 = {
-        .baseInfo.ver = 1,
-        .baseInfo.processName = "token_sync_test",
-        .baseInfo.dcap = {"AT_CAP"},
-        .baseInfo.tokenID = 1,
-        .baseInfo.tokenAttr = 0,
-        .baseInfo.nativeAcls = {},
+    NativeTokenInfoBase native1 = {
+        .ver = 1,
+        .processName = "token_sync_test",
+        .dcap = {"AT_CAP"},
+        .tokenID = 1,
+        .tokenAttr = 0,
+        .nativeAcls = {},
     };
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
     EXPECT_NE(nullptr, cmd->ToNativeTokenInfoJson(native1));
@@ -510,27 +510,27 @@ HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
     nlohmann::json nativeTokenListJsonNull;
-    NativeTokenInfoForSync tokenNull;
+    NativeTokenInfoBase tokenNull;
     cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull, tokenNull);
 
     nlohmann::json hapTokenJsonNull;
     HapTokenInfo hapTokenBasicInfoNull;
     cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull, hapTokenBasicInfoNull);
 
-    NativeTokenInfoForSync native1 = {
-        .baseInfo.apl = APL_NORMAL,
-        .baseInfo.ver = 2,
-        .baseInfo.processName = "token_sync_test",
-        .baseInfo.dcap = {"AT_CAP"},
-        .baseInfo.tokenID = 1,
-        .baseInfo.tokenAttr = 0,
-        .baseInfo.nativeAcls = {},
+    NativeTokenInfoBase native1 = {
+        .apl = APL_NORMAL,
+        .ver = 2,
+        .processName = "token_sync_test",
+        .dcap = {"AT_CAP"},
+        .tokenID = 1,
+        .tokenAttr = 0,
+        .nativeAcls = {},
     };
     nlohmann::json nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
-    NativeTokenInfoForSync token;
+    NativeTokenInfoBase token;
     cmd->FromNativeTokenInfoJson(nativeTokenListJson, token);
-    EXPECT_EQ(token.baseInfo.processName, "token_sync_test");
-    EXPECT_EQ(token.baseInfo.apl, ATokenAplEnum::APL_NORMAL);
+    EXPECT_EQ(token.processName, "token_sync_test");
+    EXPECT_EQ(token.apl, ATokenAplEnum::APL_NORMAL);
 }
 
 /**

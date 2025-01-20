@@ -18,9 +18,9 @@
 
 #include <string>
 
-#include "hap_token_info_inner.h"
-#include "native_token_info_inner.h"
 #include "generic_values.h"
+#include "permission_def.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {

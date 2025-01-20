@@ -113,67 +113,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level1)
 }
 
 /*
- * @tc.name: Add001
- * @tc.desc: AccessTokenDb::Add
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, Add001, TestSize.Level1)
-{
-    AtmDataType type = static_cast<AtmDataType>(NOT_EXSIT_ATM_TYPE);
-    std::vector<GenericValues> values;
-    GenericValues value;
-    values.emplace_back(value);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenDb::GetInstance().Add(type, values));
-
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
-    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance().Add(type, values));
-
-    ASSERT_NE(NativeRdb::E_OK, AccessTokenDb::GetInstance().Add(type, values));
-
-    int32_t resultCode = NativeRdb::E_SQLITE_ERROR;
-    int64_t outInsertNum = 0;
-    std::string tableName = "hap_token_info_table";
-    std::vector<NativeRdb::ValuesBucket> buckets;
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
-    ASSERT_EQ(NativeRdb::E_SQLITE_ERROR,
-        AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
-
-    resultCode = NativeRdb::E_SQLITE_CORRUPT;
-    ASSERT_EQ(NativeRdb::E_OK,
-        AccessTokenDb::GetInstance().RestoreAndInsertIfCorrupt(resultCode, outInsertNum, tableName, buckets, db));
-}
-
-/*
- * @tc.name: Remove001
- * @tc.desc: AccessTokenDb::Remove
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, Remove001, TestSize.Level1)
-{
-    AtmDataType type = static_cast<AtmDataType>(NOT_EXSIT_ATM_TYPE);
-    GenericValues value;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenDb::GetInstance().Remove(type, value));
-
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
-    value.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
-    ASSERT_NE(NativeRdb::E_OK, AccessTokenDb::GetInstance().Remove(type, value));
-
-    int32_t resultCode = NativeRdb::E_SQLITE_ERROR;
-    int32_t deletedRows = 0;
-    NativeRdb::RdbPredicates predicates("hap_token_info_table");
-    AccessTokenDbUtil::ToRdbPredicates(value, predicates);
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
-    ASSERT_EQ(NativeRdb::E_SQLITE_ERROR,
-        AccessTokenDb::GetInstance().RestoreAndDeleteIfCorrupt(resultCode, deletedRows, predicates, db));
-
-    resultCode = NativeRdb::E_SQLITE_CORRUPT;
-    ASSERT_NE(NativeRdb::E_OK,
-        AccessTokenDb::GetInstance().RestoreAndDeleteIfCorrupt(resultCode, deletedRows, predicates, db));
-}
-
-/*
  * @tc.name: Modify001
  * @tc.desc: AccessTokenDb::Modify
  * @tc.type: FUNC

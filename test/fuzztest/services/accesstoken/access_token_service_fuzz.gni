@@ -106,7 +106,6 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_info_inner.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
