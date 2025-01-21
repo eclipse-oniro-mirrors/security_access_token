@@ -674,6 +674,9 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
             nativeTokenInfoMap_.erase(idRemove);
         }
         AccessTokenIDManager::GetInstance().ReleaseTokenId(idRemove);
+        std::string errMsg = "processName=" + processName + ", newTokenID=" + std::to_string(id) +
+            ", oldTokenID=" + std::to_string(idRemove);
+        ReportSysEventServiceStartError(TOKENID_NOT_EQUAL, errMsg, TOKENID_NOT_EQUAL);
         return false;
     }
 

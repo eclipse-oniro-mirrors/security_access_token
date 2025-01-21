@@ -27,6 +27,7 @@
 #endif
 #include "form_manager_access_client.h"
 #include "hisysevent.h"
+#include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
 
 namespace OHOS {
@@ -359,13 +360,13 @@ bool TempPermissionObserver::IsAllowGrantTempPermission(AccessTokenID tokenID, c
     }
 #endif
     if (!userEnable || isForeground || isFormVisible || isContinuousTaskExist) {
-        std::vector<bool> list;
-        list.emplace_back(isForeground);
-        list.emplace_back(isFormVisible);
-        list.emplace_back(isContinuousTaskExist);
+        std::vector<bool> list{isForeground, isFormVisible, isContinuousTaskExist};
         AddTempPermTokenToList(tokenID, tokenInfo.bundleName, permissionName, list);
         return true;
     }
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GRANT_TEMP_PERMISSION_FAILED,
+        "TOKENID", tokenID, "PERM", permissionName, "BUNDLE_NAME", tokenInfo.bundleName);
     return false;
 }
 

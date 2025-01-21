@@ -109,6 +109,8 @@ private:
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
     int32_t UpdateTokenPermissionState(
         AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
+    int32_t UpdateTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
+        AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);
