@@ -545,8 +545,8 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
     }
     for (const auto& permissionState : tmpList) {
         if (permissionState.grantFlag & PERMISSION_ALLOW_THIS_TIME) {
-            if (PermissionManager::GetInstance().RevokePermission(
-                tokenID, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME) != RET_SUCCESS) {
+            if (PermissionManager::GetInstance().UpdatePermission(
+                tokenID, permissionState.permissionName, false, PERMISSION_ALLOW_THIS_TIME, false) != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
                     tokenID, permissionState.permissionName.c_str());
                 return;
@@ -565,8 +565,8 @@ void TempPermissionObserver::RevokeTempPermission(AccessTokenID tokenID, const s
     for (const auto& permissionState : tmpList) {
         if ((permissionState.grantFlag & PERMISSION_ALLOW_THIS_TIME) &&
             permissionState.permissionName == permissionName) {
-            if (PermissionManager::GetInstance().RevokePermission(
-                tokenID, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME) != RET_SUCCESS) {
+            if (PermissionManager::GetInstance().UpdatePermission(
+                tokenID, permissionState.permissionName, false, PERMISSION_ALLOW_THIS_TIME, false)  != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID:%{public}d revoke permission:%{public}s failed!",
                     tokenID, permissionState.permissionName.c_str());
                 return;
