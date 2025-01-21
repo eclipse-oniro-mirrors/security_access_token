@@ -124,38 +124,6 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
     return jsCode;
 }
 
-static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
-{
-    (void)status;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uv_queue_work_with_qos input work is nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    SwitchOnSettingResultCallback *retCB = reinterpret_cast<SwitchOnSettingResultCallback*>(work->data);
-    if (retCB == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RetCB is nullptr");
-        return;
-    }
-    std::unique_ptr<SwitchOnSettingResultCallback> callbackPtr {retCB};
-    std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext = retCB->data;
-    if (asyncContext == nullptr) {
-        return;
-    }
-
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(asyncContext->env, &scope);
-    if (scope == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
-        return;
-    }
-    napi_value requestResult = nullptr;
-    NAPI_CALL_RETURN_VOID(asyncContext->env, napi_get_boolean(asyncContext->env, retCB->switchStatus, &requestResult));
-
-    ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
-    napi_close_handle_scope(asyncContext->env, scope);
-}
-
 static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
     bool switchStatus, std::shared_ptr<RequestGlobalSwitchAsyncContext>& data)
 {
@@ -164,30 +132,34 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
         LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
         return;
     }
-
     std::unique_ptr<SwitchOnSettingResultCallback> callbackPtr {retCB};
     retCB->jsCode = jsCode;
     retCB->switchStatus = switchStatus;
     retCB->data = data;
+    auto task = [retCB]() {
+        std::unique_ptr<SwitchOnSettingResultCallback> callback {retCB};
+        std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext = retCB->data;
+        if (asyncContext == nullptr) {
+            return;
+        }
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(asyncContext->env, &scope);
+        if (scope == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
+            return;
+        }
+        napi_value requestResult = nullptr;
+        NAPI_CALL_RETURN_VOID(asyncContext->env,
+            napi_get_boolean(asyncContext->env, retCB->switchStatus, &requestResult));
 
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(data->env, napi_get_uv_event_loop(data->env, &loop));
-    if (loop == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
-        return;
+        ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
+        napi_close_handle_scope(asyncContext->env, scope);
+    };
+    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GlobalSwitchResultsCallbackUI: Failed to SendEvent");
+    } else {
+        callbackPtr.release();
     }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(data->env, uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
-
-    uvWorkPtr.release();
-    callbackPtr.release();
 }
 
 static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext,

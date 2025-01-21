@@ -69,7 +69,6 @@ struct PermActiveChangeContext {
     std::thread::id threadId_;
 };
 
-void UvQueueWorkActiveStatusChange(uv_work_t* work, int status);
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result);
 void NotifyChangeResponse(const PermActiveStatusWorker* permActiveStatusData);
 }  // namespace AccessToken
