@@ -58,6 +58,7 @@ private:
     int32_t HandleToggleRecord(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
     int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
+    bool IsNumericString(const char* string);
 
     int32_t RunAsHelpCommand();
     int32_t RunAsCommonCommand();
