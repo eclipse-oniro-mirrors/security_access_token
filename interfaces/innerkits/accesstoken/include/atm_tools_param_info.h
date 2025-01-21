@@ -49,6 +49,7 @@ namespace AccessToken {
 /**
  * @brief Declares atm tools param class
  */
+static constexpr uint32_t INVALID_STATUS = 2;
 
 /**
  * @brief Atm tools param info
@@ -64,7 +65,7 @@ public:
         AccessTokenID tokenId = 0;
         int32_t userID;
     };
-    uint32_t status = 0;
+    uint32_t status = INVALID_STATUS;
     std::string permissionName;
     std::string bundleName;
     std::string processName;

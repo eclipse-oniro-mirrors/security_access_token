@@ -294,17 +294,36 @@ void AtmCommand::RunToggleCommandExistentOptionArgument(const int32_t& option, A
             break;
         case 'i':
             if (optarg != nullptr) {
-                info.userID = static_cast<int32_t>(std::atoi(optarg));
+                if (IsNumericString(optarg)) {
+                    info.userID = static_cast<int32_t>(std::atoi(optarg));
+                } else {
+                    info.userID = -1;
+                }
             }
             break;
         case 'k':
-            if (optarg != nullptr) {
+            if (optarg != nullptr && (strcmp(optarg, "0") == 0 || strcmp(optarg, "1") == 0)) {
                 info.status = static_cast<uint32_t>(std::atoi(optarg));
             }
             break;
         default:
             break;
     }
+}
+
+bool AtmCommand::IsNumericString(const char* string)
+{
+    if (string == nullptr || string[0] == '\0') {
+        return false;
+    }
+
+    for (int32_t i = 0; string[i] != '\0'; i++) {
+        if (!isdigit(string[i])) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& permissionName)
