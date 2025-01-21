@@ -46,10 +46,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr uint32_t INVALID_ATM_SET_STATUS = 2;
+}
 /**
  * @brief Declares atm tools param class
  */
-static constexpr uint32_t INVALID_STATUS = 2;
 
 /**
  * @brief Atm tools param info
@@ -65,7 +67,7 @@ public:
         AccessTokenID tokenId = 0;
         int32_t userID;
     };
-    uint32_t status = INVALID_STATUS;
+    uint32_t status = INVALID_ATM_SET_STATUS;
     std::string permissionName;
     std::string bundleName;
     std::string processName;
