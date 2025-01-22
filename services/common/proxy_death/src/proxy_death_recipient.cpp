@@ -14,16 +14,11 @@
  */
 
 #include "proxy_death_recipient.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ProxyDeathRecipient"};
-}
 
 ProxyDeathRecipient::ProxyDeathRecipient(ProxyDeathHandler* handler) : handler_(handler)
 {
@@ -31,14 +26,14 @@ ProxyDeathRecipient::ProxyDeathRecipient(ProxyDeathHandler* handler) : handler_(
 
 void ProxyDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Proxy died.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Proxy died.");
     sptr<IRemoteObject> object = remote.promote();
     if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object is nullptr");
         return;
     }
     if (handler_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Handler is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Handler is nullptr");
         return;
     }
     handler_->HandleRemoteDied(object);

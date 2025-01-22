@@ -15,19 +15,16 @@
 
 #include "statement.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "Statement"};
-}
 
 Statement::Statement(sqlite3* db, const std::string& sql) : db_(db), sql_(sql)
 {
     if (sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &statement_, nullptr) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot prepare, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot prepare, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
@@ -40,21 +37,21 @@ Statement::~Statement()
 void Statement::Bind(const int32_t index, const std::string& text)
 {
     if (sqlite3_bind_text(statement_, index, text.c_str(), text.size(), SQLITE_TRANSIENT) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind string, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind string, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
 void Statement::Bind(const int32_t index, int32_t value)
 {
     if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
 void Statement::Bind(const int32_t index, int64_t value)
 {
     if (sqlite3_bind_int64(statement_, index, value) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int64_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int64_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 

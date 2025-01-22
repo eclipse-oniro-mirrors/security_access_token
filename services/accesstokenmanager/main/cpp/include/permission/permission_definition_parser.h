@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "nlohmann/json.hpp"
 #include "nocopyable.h"
 #include "permission_def.h"

@@ -14,21 +14,16 @@
  */
 #include "background_task_manager_death_recipient.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "background_task_manager_access_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgroundTaskMgrDeathRecipient"
-};
-} // namespace
 
 void BackgroundTaskMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called", __func__);
     BackgourndTaskManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken

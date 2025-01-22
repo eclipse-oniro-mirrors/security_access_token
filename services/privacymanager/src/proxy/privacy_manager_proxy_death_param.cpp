@@ -15,22 +15,18 @@
 
 #include "privacy_manager_proxy_death_param.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerProxyDeathParam"
-};
-
 PrivacyManagerProxyDeathParam::PrivacyManagerProxyDeathParam(int32_t pid): pid_(pid) {}
 
 void PrivacyManagerProxyDeathParam::ProcessParam()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove by caller pid, pid = %{public}d.", pid_);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Remove by caller pid, pid = %{public}d.", pid_);
     PermissionRecordManager::GetInstance().RemoveRecordFromStartListByCallerPid(pid_);
 }
 

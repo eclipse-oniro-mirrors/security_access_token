@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 #include "dlp_permission_set_manager.h"
 #include "securec.h"
@@ -30,7 +30,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DlpPermissionSetParser"};
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -66,7 +65,7 @@ int32_t DlpPermissionSetParser::ParserDlpPermsRawData(const std::string& dlpPerm
 {
     nlohmann::json jsonRes = nlohmann::json::parse(dlpPermsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
 
@@ -82,24 +81,24 @@ int32_t DlpPermissionSetParser::ReadCfgFile(std::string& dlpPermsRawData)
 {
     int32_t fd = open(CLONE_PERMISSION_CONFIG_FILE.c_str(), O_RDONLY);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Open failed errno %{public}d.", errno);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return ERR_FILE_OPERATE_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fstat failed errno %{public}d.", errno);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fstat failed errno %{public}d.", errno);
         close(fd);
         return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is 0.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is 0.");
         close(fd);
         return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_CLONE_PERMISSION_CONFIG_FILE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is too large.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is too large.");
         close(fd);
         return ERR_OVERSIZE;
     }
@@ -121,26 +120,26 @@ int32_t DlpPermissionSetParser::ReadCfgFile(std::string& dlpPermsRawData)
 int32_t DlpPermissionSetParser::Init()
 {
     if (ready_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlp permission has been set.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlp permission has been set.");
         return RET_SUCCESS;
     }
 
     std::string dlpPermsRawData;
     int32_t ret = ReadCfgFile(dlpPermsRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadCfgFile failed.");
         return ret;
     }
     std::vector<PermissionDlpMode> dlpPerms;
     ret = ParserDlpPermsRawData(dlpPermsRawData, dlpPerms);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParserDlpPermsRawData failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ParserDlpPermsRawData failed.");
         return ERR_FILE_OPERATE_FAILED;
     }
     DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
 
     ready_ = true;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Init ok.");
     return RET_SUCCESS;
 }
 

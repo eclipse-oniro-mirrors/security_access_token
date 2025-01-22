@@ -15,34 +15,29 @@
 
 #include "continuous_task_change_callback.h"
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgroundTaskSubscriberStub"
-};
-}
 
 BackgroundTaskSubscriberStub::BackgroundTaskSubscriberStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub Instance create.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "BackgroundTaskSubscriberStub Instance create.");
 }
 
 BackgroundTaskSubscriberStub::~BackgroundTaskSubscriberStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub Instance destroy.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "BackgroundTaskSubscriberStub Instance destroy.");
 }
 
 int32_t BackgroundTaskSubscriberStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "BackgroundTaskSubscriberStub: ReadInterfaceToken failed.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "BackgroundTaskSubscriberStub: ReadInterfaceToken failed.");
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IBackgroundTaskSubscriber::Message>(code)) {
@@ -55,7 +50,7 @@ int32_t BackgroundTaskSubscriberStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case code: %{public}d.", code);
+            LOGD(ATM_DOMAIN, ATM_TAG, "Default case code: %{public}d.", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
@@ -67,7 +62,7 @@ void BackgroundTaskSubscriberStub::HandleOnContinuousTaskStart(MessageParcel &da
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo(
         data.ReadParcelable<ContinuousTaskCallbackInfo>());
     if (continuousTaskCallbackInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return;
     }
     OnContinuousTaskStart(continuousTaskCallbackInfo);
@@ -78,7 +73,7 @@ void BackgroundTaskSubscriberStub::HandleOnContinuousTaskStop(MessageParcel &dat
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo(
         data.ReadParcelable<ContinuousTaskCallbackInfo>());
     if (continuousTaskCallbackInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return;
     }
     OnContinuousTaskStop(continuousTaskCallbackInfo);

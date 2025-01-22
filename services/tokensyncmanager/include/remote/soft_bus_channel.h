@@ -25,7 +25,7 @@
 #include <string>
 #include <zlib.h>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "nlohmann/json.hpp"
 #include "rpc_channel.h"
 #include "socket.h"

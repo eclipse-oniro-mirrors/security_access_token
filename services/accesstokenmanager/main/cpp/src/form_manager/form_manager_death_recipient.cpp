@@ -14,21 +14,16 @@
  */
 #include "form_manager_death_recipient.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "form_manager_access_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "FormMgrDeathRecipient"
-};
-} // namespace
 
 void FormMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called", __func__);
     FormManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken

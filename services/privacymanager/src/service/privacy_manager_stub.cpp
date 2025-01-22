@@ -16,7 +16,7 @@
 #include "privacy_manager_stub.h"
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "ipc_skeleton.h"
 #include "memory_guard.h"
 #include "on_permission_used_record_callback_proxy.h"
@@ -29,9 +29,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerStub"
-};
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
@@ -92,7 +89,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
     MemoryGuard cacheGuard;
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPrivacyManager::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -121,7 +118,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
     }
     sptr<AddPermParamInfoParcel> infoParcel = data.ReadParcelable<AddPermParamInfoParcel>();
     if (infoParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -141,18 +138,18 @@ void PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner(MessageParcel&
     }
     int32_t userID = 0;
     if (!data.ReadInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read userId.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     if (userID != 0 && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     bool status = true;
     if (!data.ReadBool(status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read status.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read status.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -172,12 +169,12 @@ void PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner(MessageParcel&
     }
     int32_t userID = 0;
     if (!data.ReadInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read userId.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     if (userID != 0 && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "User version only get calling userID.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -199,13 +196,13 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
     }
     sptr<PermissionUsedTypeInfoParcel> info = data.ReadParcelable<PermissionUsedTypeInfoParcel>();
     if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read parcel fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read parcel fail.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
     if (anonyStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read ReadRemoteObject fail.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -225,13 +222,13 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<IRemoteObject> anonyStub = data.ReadRemoteObject();
     if (anonyStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read ReadRemoteObject fail.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -280,14 +277,14 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 faild");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInt32 faild");
         return;
     }
     reply.WriteParcelable(&responseParcel);
@@ -301,13 +298,13 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable failed");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<OnPermissionUsedRecordCallback> callback = new OnPermissionUsedRecordCallbackProxy(data.ReadRemoteObject());
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is null");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -327,7 +324,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     }
     uint32_t permListSize = data.ReadUint32();
     if (permListSize > PERM_LIST_SIZE_MAX) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read permListSize fail");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read permListSize fail");
         reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
         return;
     }
@@ -338,7 +335,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -358,7 +355,7 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read scopeParcel fail");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read scopeParcel fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -378,7 +375,7 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
 
     bool result = this->IsAllowedUsingPermission(tokenId, permissionName, pid);
     if (!reply.WriteBool(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}s)", permissionName.c_str());
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteBool(%{public}s)", permissionName.c_str());
         reply.WriteBool(false);
         return;
     }
@@ -389,7 +386,7 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
 {
     sptr<SecCompEnhanceDataParcel> requestParcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
     if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -472,7 +469,7 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
     std::vector<PermissionUsedTypeInfoParcel> resultsParcel;
     int32_t result = this->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
     if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32(%{public}d-%{public}s)", tokenId, permissionName.c_str());
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteInt32(%{public}d-%{public}s)", tokenId, permissionName.c_str());
         return;
     }
     reply.WriteUint32(resultsParcel.size());
@@ -489,32 +486,32 @@ void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& 
     }
     uint32_t policyType;
     if (!data.ReadUint32(policyType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read policyType.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read policyType.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     uint32_t callerType;
     if (!data.ReadUint32(callerType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read callerType.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read callerType.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     bool isMute;
     if (!data.ReadBool(isMute)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isMute.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read isMute.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     uint32_t tokenID;
     if (!data.ReadUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read tokenID.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
 
     int32_t result = this->SetMutePolicy(policyType, callerType, isMute, tokenID);
     if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteInt32.");
         return;
     }
 }
@@ -527,20 +524,20 @@ void PrivacyManagerStub::SetHapWithFGReminderInner(MessageParcel& data, MessageP
     }
     uint32_t tokenId;
     if (!data.ReadUint32(tokenId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenId.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read tokenId.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     bool isAllowed;
     if (!data.ReadBool(isAllowed)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isAllowed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read isAllowed.");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
 
     int32_t result = this->SetHapWithFGReminder(tokenId, isAllowed);
     if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteInt32.");
         return;
     }
 }
@@ -572,7 +569,7 @@ bool PrivacyManagerStub::VerifyPermission(const std::string& permission) const
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(callingTokenID=%{public}d)", callingTokenID);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission denied(callingTokenID=%{public}d)", callingTokenID);
         return false;
     }
     return true;

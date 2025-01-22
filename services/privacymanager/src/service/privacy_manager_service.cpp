@@ -19,7 +19,7 @@
 #include <cstring>
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "active_status_callback_manager.h"
 #include "ipc_skeleton.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
@@ -39,11 +39,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerService"
-};
-}
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
@@ -51,12 +46,12 @@ const bool REGISTER_RESULT =
 PrivacyManagerService::PrivacyManagerService()
     : SystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService()");
+    LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService()");
 }
 
 PrivacyManagerService::~PrivacyManagerService()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyManagerService()");
+    LOGI(PRI_DOMAIN, PRI_TAG, "~PrivacyManagerService()");
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     PrivacyCommonEventSubscriber::UnRegisterEvent();
 #endif //COMMON_EVENT_SERVICE_ENABLE
@@ -65,12 +60,12 @@ PrivacyManagerService::~PrivacyManagerService()
 void PrivacyManagerService::OnStart()
 {
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService has already started!");
+        LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService has already started!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService is starting");
+    LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService is starting");
     if (!Initialize()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to initialize");
         return;
     }
 
@@ -80,22 +75,22 @@ void PrivacyManagerService::OnStart()
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
     if (!ret) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, PrivacyManagerService start successfully!");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Congratulations, PrivacyManagerService start successfully!");
 }
 
 void PrivacyManagerService::OnStop()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Stop service");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
     bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d, perm: %{public}s, succCnt: %{public}d,"
+    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s, succCnt: %{public}d,"
         " failCnt: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
         infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
     AddPermParamInfo info = infoParcel.info;
@@ -104,13 +99,13 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
 
 int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    LOGI(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
 }
 
@@ -126,17 +121,17 @@ std::shared_ptr<ProxyDeathHandler> PrivacyManagerService::GetProxyDeathHandler()
 void PrivacyManagerService::ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub, int32_t callerPid)
 {
     if (anonyStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "anonyStub is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "anonyStub is nullptr.");
         return;
     }
     std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
     if (param == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create param failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Create param failed.");
         return;
     }
     auto handler = GetProxyDeathHandler();
     if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Handler is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Handler is nullptr.");
         return;
     }
     handler->AddProxyStub(anonyStub, param);
@@ -146,12 +141,12 @@ void PrivacyManagerService::ReleaseDeathStub(int32_t callerPid)
 {
     std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
     if (param == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create param failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Create param failed.");
         return;
     }
     auto handler = GetProxyDeathHandler();
     if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Handler is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Handler is nullptr.");
         return;
     }
     handler->ReleaseProxyByParam(param);
@@ -161,7 +156,7 @@ int32_t PrivacyManagerService::StartUsingPermission(
     const PermissionUsedTypeInfoParcel &infoParcel, const sptr<IRemoteObject>& anonyStub)
 {
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Caller pid = %{public}d.", callerPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callerPid);
 }
@@ -170,7 +165,7 @@ int32_t PrivacyManagerService::StartUsingPermission(const PermissionUsedTypeInfo
     const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
 {
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Caller pid = %{public}d.", callerPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
 }
@@ -178,7 +173,7 @@ int32_t PrivacyManagerService::StartUsingPermission(const PermissionUsedTypeInfo
 int32_t PrivacyManagerService::StopUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
+    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u, pid: %{public}d, perm: %{public}s",
         tokenId, pid, permissionName.c_str());
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName, callerPid);
@@ -186,7 +181,7 @@ int32_t PrivacyManagerService::StopUsingPermission(
         return ret;
     }
     if (!PermissionRecordManager::GetInstance().HasCallerInStartList(callerPid)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "No permission record from caller = %{public}d", callerPid);
+        LOGI(PRI_DOMAIN, PRI_TAG, "No permission record from caller = %{public}d", callerPid);
         ReleaseDeathStub(callerPid);
     }
     return ret;
@@ -194,7 +189,7 @@ int32_t PrivacyManagerService::StopUsingPermission(
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u", tokenId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u", tokenId);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     return Constant::SUCCESS;
 }
@@ -207,7 +202,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
         permissionList.append(perm);
         permissionList.append(" ");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, timestamp: [%{public}" PRId64 "-%{public}" PRId64
+    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, timestamp: [%{public}" PRId64 "-%{public}" PRId64
         "], flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
         request.request.endTimeMillis, request.request.flag, permissionList.c_str());
 
@@ -220,7 +215,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d", request.request.tokenId);
+    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
@@ -234,7 +229,7 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Pid: %{public}d", enhanceParcel.enhanceData.pid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Pid: %{public}d", enhanceParcel.enhanceData.pid);
     return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
 }
 
@@ -248,7 +243,7 @@ int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceData
     SecCompEnhanceData enhanceData;
     int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
     if (res != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Pid: %{public}d get enhance failed ", pid);
+        LOGW(PRI_DOMAIN, PRI_TAG, "Pid: %{public}d get enhance failed ", pid);
         return res;
     }
 
@@ -314,7 +309,7 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector
 int32_t PrivacyManagerService::Dump(int32_t fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dump fd invalid value");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Dump fd invalid value");
         return ERR_INVALID_VALUE;
     }
     int32_t ret = ERR_OK;
@@ -345,7 +340,7 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
 bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     int32_t pid)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, perm: %{public}s, pid: %{public}d.",
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, perm: %{public}s, pid: %{public}d.",
         tokenId, permissionName.c_str(), pid);
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
 }
@@ -353,7 +348,7 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PolicyType %{public}d, callerType %{public}d, isMute %{public}d, tokenId %{public}u",
+    LOGI(PRI_DOMAIN, PRI_TAG, "PolicyType %{public}d, callerType %{public}d, isMute %{public}d, tokenId %{public}u",
         policyType, callerType, isMute, tokenID);
     return PermissionRecordManager::GetInstance().SetMutePolicy(
         static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute, tokenID);
@@ -361,14 +356,14 @@ int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t calle
 
 int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
+    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
     return PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
     const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
+    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
 
     std::vector<PermissionUsedTypeInfo> results;
     int32_t res = PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
@@ -387,7 +382,7 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
 
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "saId is %{public}d", systemAbilityId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "saId is %{public}d", systemAbilityId);
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         PrivacyCommonEventSubscriber::RegisterEvent();
@@ -408,7 +403,7 @@ bool PrivacyManagerService::Initialize()
 #ifdef EVENTHANDLER_ENABLE
     eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!eventRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create eventRunner.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create eventRunner.");
         return false;
     }
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);

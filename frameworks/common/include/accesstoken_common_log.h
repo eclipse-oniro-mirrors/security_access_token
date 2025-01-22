@@ -40,4 +40,19 @@
     ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, domain, tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 
+#define IF_FALSE_PRINT_LOG(domain, tag, cond, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            LOGE(domain, tag, fmt, ##__VA_ARGS__); \
+        } \
+    } while (0)
+
+#define IF_FALSE_RETURN_LOG(domain, tag, cond, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            LOGE(domain, tag, fmt, ##__VA_ARGS__); \
+            return; \
+        } \
+    } while (0)
+
 #endif // ACCESSTOKEN_COMMON_LOG_H

@@ -19,7 +19,7 @@
 #include <cinttypes>
 #include <mutex>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "access_token_open_callback.h"
 #include "rdb_helper.h"
@@ -30,8 +30,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDb"};
-
 constexpr const char* DATABASE_NAME = "access_token.db";
 constexpr const char* ACCESSTOKEN_SERVICE_NAME = "accesstoken_service";
 std::recursive_mutex g_instanceMutex;
@@ -63,17 +61,17 @@ int32_t AccessTokenDb::RestoreAndInsertIfCorrupt(const int32_t resultCode, int64
         return resultCode;
     }
 
-    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
         return res;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try insert again!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try insert again!");
 
     res = db->BatchInsert(outInsertNum, tableName, buckets);
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s again, res is %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to batch insert into table %{public}s again, res is %{public}d.",
             tableName.c_str(), res);
         return res;
     }
@@ -94,7 +92,7 @@ void AccessTokenDb::InitRdb()
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
     db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_4, callback, res);
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to init rdb, res is %{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
     }
 }
 
@@ -112,7 +110,7 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Table name is empty.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -123,7 +121,7 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
 
     std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
     if (db == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -134,7 +132,7 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
 
     int32_t res = db->BatchInsert(outInsertNum, tableName, buckets);
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s, res is %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to batch insert into table %{public}s, res is %{public}d.",
             tableName.c_str(), res);
         int32_t result = RestoreAndInsertIfCorrupt(res, outInsertNum, tableName, buckets, db);
         if (result != NativeRdb::E_OK) {
@@ -142,11 +140,11 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
         }
     }
     if (outInsertNum <= 0) { // rdb bug, adapt it
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Batch insert %{public}" PRId64 " records to table %{public}s.", outInsertNum,
+    LOGI(ATM_DOMAIN, ATM_TAG, "Batch insert %{public}" PRId64 " records to table %{public}s.", outInsertNum,
         tableName.c_str());
 
     return 0;
@@ -159,17 +157,17 @@ int32_t AccessTokenDb::RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32
         return resultCode;
     }
 
-    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
         return res;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try delete again!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try delete again!");
 
     res = db->Delete(deletedRows, predicates);
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to delete record from table %{public}s again, res is %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete record from table %{public}s again, res is %{public}d.",
             predicates.GetTableName().c_str(), res);
         return res;
     }
@@ -182,13 +180,13 @@ int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues&
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Table name is empty.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
     if (db == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -198,7 +196,7 @@ int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues&
 
     int32_t res = db->Delete(deletedRows, predicates);
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to delete record from table %{public}s, res is %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete record from table %{public}s, res is %{public}d.",
             tableName.c_str(), res);
         int32_t result = RestoreAndDeleteIfCorrupt(res, deletedRows, predicates, db);
         if (result != NativeRdb::E_OK) {
@@ -206,7 +204,7 @@ int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues&
         }
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Delete %{public}d records from table %{public}s.", deletedRows, tableName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Delete %{public}d records from table %{public}s.", deletedRows, tableName.c_str());
 
     return 0;
 }
@@ -219,17 +217,17 @@ int32_t AccessTokenDb::RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32
         return resultCode;
     }
 
-    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
         return res;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try update again!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try update again!");
 
     res = db->Update(changedRows, bucket, predicates);
     if (res != NativeRdb::E_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to update record from table %{public}s again, res is %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to update record from table %{public}s again, res is %{public}d.",
             predicates.GetTableName().c_str(), res);
         return res;
     }
@@ -262,13 +260,13 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
         int32_t res = db->Update(changedRows, bucket, predicates);
         if (res != NativeRdb::E_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to update record from table %{public}s, res is %{public}d.",
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to update record from table %{public}s, res is %{public}d.",
                 tableName.c_str(), res);
             int32_t result = RestoreAndUpdateIfCorrupt(res, changedRows, bucket, predicates, db);
             if (result != NativeRdb::E_OK) {
@@ -278,7 +276,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Modify cost %{public}" PRId64
+    LOGI(ATM_DOMAIN, ATM_TAG, "Modify cost %{public}" PRId64
         ", update %{public}d records from table %{public}s.", endTime - beginTime, changedRows, tableName.c_str());
 
     return 0;
@@ -295,22 +293,22 @@ int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& 
             queryResultSet->Close();
             queryResultSet = nullptr;
 
-            ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+            LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
             res = db->Restore("");
             if (res != NativeRdb::E_OK) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+                LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
                 return res;
             }
-            ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try query again!");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
 
             queryResultSet = db->Query(predicates, columns);
             if (queryResultSet == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find records from table %{public}s again.",
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s again.",
                     predicates.GetTableName().c_str());
                 return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
             }
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get result count.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get result count.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
@@ -337,13 +335,13 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
         OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
         auto queryResultSet = db->Query(predicates, columns);
         if (queryResultSet == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find records from table %{public}s.",
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s.",
                 tableName.c_str());
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
@@ -366,7 +364,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Find cost %{public}" PRId64
+    LOGI(ATM_DOMAIN, ATM_TAG, "Find cost %{public}" PRId64
         ", query %{public}d records from table %{public}s.", endTime - beginTime, count, tableName.c_str());
 
     return 0;
@@ -382,7 +380,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
         if (db == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "db is nullptr.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -411,7 +409,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteAndInsertNative cost %{public}" PRId64 ".", endTime - beginTime);
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertNative cost %{public}" PRId64 ".", endTime - beginTime);
 
     return 0;
 }

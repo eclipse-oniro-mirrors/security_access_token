@@ -23,7 +23,7 @@
 #include "access_event_handler.h"
 #endif
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "active_change_response_info.h"
 #include "perm_active_status_callback_death_recipient.h"
 #include "perm_active_status_change_callback_proxy.h"

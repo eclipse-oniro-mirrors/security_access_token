@@ -14,14 +14,13 @@
  */
 
 #include "background_task_manager_access_proxy.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "errors.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgroundTaskManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
 static constexpr int32_t MAX_CALLBACK_NUM = 10 * 1024;
 }
@@ -32,27 +31,27 @@ int32_t BackgroundTaskManagerAccessProxy::SubscribeBackgroundTask(const sptr<IBa
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERROR;
     }
     if (!data.WriteRemoteObject(subscriber->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write callerToken failed.");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::SUBSCRIBE_BACKGROUND_TASK), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Regist background task observer failed, error: %{public}d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Regist background task observer failed, error: %{public}d", error);
         return ERROR;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERROR;
     }
     return result;
@@ -64,27 +63,27 @@ int32_t BackgroundTaskManagerAccessProxy::UnsubscribeBackgroundTask(const sptr<I
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERROR;
     }
     if (!data.WriteRemoteObject(subscriber->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write callerToken failed.");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::UNSUBSCRIBE_BACKGROUND_TASK), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Unregist background task observer failed, error: %d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Unregist background task observer failed, error: %d", error);
         return error;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERROR;
     }
     return result;
@@ -97,38 +96,38 @@ int32_t BackgroundTaskManagerAccessProxy::GetContinuousTaskApps(
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service is null.");
         return ERROR;
     }
     int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::GET_CONTINUOUS_TASK_APPS), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get continuous task apps failed, error: %{public}d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get continuous task apps failed, error: %{public}d", error);
         return ERROR;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERROR;
     }
     if (result != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetContinuousTaskApps failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetContinuousTaskApps failed.");
         return result;
     }
     int32_t infoSize = reply.ReadInt32();
     if ((infoSize < 0) || (infoSize > MAX_CALLBACK_NUM)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize:%{public}d invalid.", infoSize);
+        LOGE(ATM_DOMAIN, ATM_TAG, "InfoSize:%{public}d invalid.", infoSize);
         return ERROR;
     }
     for (int32_t i = 0; i < infoSize; i++) {
         auto info = ContinuousTaskCallbackInfo::Unmarshalling(reply);
         if (info == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Read Parcelable infos.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Read Parcelable infos.");
             return ERROR;
         }
         list.emplace_back(info);

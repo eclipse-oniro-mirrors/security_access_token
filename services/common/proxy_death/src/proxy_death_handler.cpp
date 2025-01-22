@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "iremote_object.h"
 #include "proxy_death_handler.h"
 #include "proxy_death_recipient.h"
@@ -21,10 +21,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ProxyDeathHandler"
-};
 
 void ProxyDeathHandler::AddProxyStub(const sptr<IRemoteObject>& proxyStub,
     std::shared_ptr<ProxyDeathParam>& param)
@@ -34,16 +30,16 @@ void ProxyDeathHandler::AddProxyStub(const sptr<IRemoteObject>& proxyStub,
         return;
     }
     if (proxyStubAndRecipientMap_.find(proxyStub) != proxyStubAndRecipientMap_.end()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Proxy is found.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "Proxy is found.");
         return;
     }
     auto proxyDeathRecipient = sptr<ProxyDeathRecipient>::MakeSptr(this);
     if (proxyDeathRecipient == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create proxy death recipient failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create proxy death recipient failed.");
         return;
     }
     if (proxyStub->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote stub is dead.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote stub is dead.");
         return;
     }
     proxyStub->AddDeathRecipient(proxyDeathRecipient);
@@ -63,7 +59,7 @@ void ProxyDeathHandler::HandleRemoteDied(const sptr<IRemoteObject>& object)
     std::lock_guard lock(proxyLock_);
     auto iter = proxyStubAndRecipientMap_.find(object);
     if (iter == proxyStubAndRecipientMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot find object in map");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot find object in map");
         return;
     }
     object->RemoveDeathRecipient(iter->second.first);
@@ -73,7 +69,7 @@ void ProxyDeathHandler::HandleRemoteDied(const sptr<IRemoteObject>& object)
 
 void ProxyDeathHandler::ProcessProxyData(const std::shared_ptr<ProxyDeathParam>& param)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    LOGI(ATM_DOMAIN, ATM_TAG, "called");
     param->ProcessParam();
 }
 

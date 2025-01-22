@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_info_manager.h"
@@ -59,8 +59,6 @@ static const std::string PERMISSION_GRANT_MODE_USER_GRANT = "user_grant";
 static const std::string SYSTEM_GRANT_DEFINE_PERMISSION = "systemGrantPermissions";
 static const std::string USER_GRANT_DEFINE_PERMISSION = "userGrantPermissions";
 static const std::string DEFINE_PERMISSION_FILE = "/system/etc/access_token/permission_definitions.json";
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionParser"};
 }
 
 static bool GetPermissionApl(const std::string &apl, AccessToken::ATokenAplEnum& aplNum)
@@ -77,7 +75,7 @@ static bool GetPermissionApl(const std::string &apl, AccessToken::ATokenAplEnum&
         aplNum = AccessToken::ATokenAplEnum::APL_NORMAL;
         return true;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Apl: %{public}s is invalid.", apl.c_str());
+    LOGE(ATM_DOMAIN, ATM_TAG, "Apl: %{public}s is invalid.", apl.c_str());
     return false;
 }
 
@@ -108,7 +106,7 @@ static bool GetPermissionAvailableType(const std::string &availableType, AccessT
         return true;
     }
     typeNum = AccessToken::ATokenAvailableTypeEnum::INVALID;
-    ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableType: %{public}s is invalid.", availableType.c_str());
+    LOGE(ATM_DOMAIN, ATM_TAG, "AvailableType: %{public}s is invalid.", availableType.c_str());
     return false;
 }
 
@@ -177,7 +175,7 @@ static bool CheckPermissionDefRules(const PermissionDef& permDef)
 {
     // Extension permission support permission for service only.
     if (permDef.availableType != AccessToken::ATokenAvailableTypeEnum::SERVICE) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s is for hap.", permDef.permissionName.c_str());
+        LOGD(ATM_DOMAIN, ATM_TAG, "%{public}s is for hap.", permDef.permissionName.c_str());
         return false;
     }
     return true;
@@ -187,7 +185,7 @@ int32_t PermissionDefinitionParser::GetPermissionDefList(const nlohmann::json& j
     const std::string& type, std::vector<PermissionDef>& permDefList)
 {
     if ((json.find(type) == json.end()) || (!json.at(type).is_array())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Json is not array.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Json is not array.");
         return ERR_PARAM_INVALID;
     }
 
@@ -195,13 +193,13 @@ int32_t PermissionDefinitionParser::GetPermissionDefList(const nlohmann::json& j
     for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
         auto result = it->get<PermissionDefParseRet>();
         if (!result.isSuccessful) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get permission def failed.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get permission def failed.");
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
         if (!CheckPermissionDefRules(result.permDef)) {
             continue;
         }
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s insert.", result.permDef.permissionName.c_str());
+        LOGD(ATM_DOMAIN, ATM_TAG, "%{public}s insert.", result.permDef.permissionName.c_str());
         permDefList.emplace_back(result.permDef);
     }
     return RET_SUCCESS;
@@ -212,37 +210,37 @@ int32_t PermissionDefinitionParser::ParserPermsRawData(const std::string& permsR
 {
     nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
 
     int32_t ret = GetPermissionDefList(jsonRes, permsRawData, SYSTEM_GRANT_DEFINE_PERMISSION, permDefList);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get system_grant permission def list failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get system_grant permission def list failed.");
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get system_grant permission size=%{public}zu.", permDefList.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get system_grant permission size=%{public}zu.", permDefList.size());
     ret = GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get user_grant permission def list failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get user_grant permission def list failed.");
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get permission size=%{public}zu.", permDefList.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get permission size=%{public}zu.", permDefList.size());
     return RET_SUCCESS;
 }
 
 int32_t PermissionDefinitionParser::Init()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "System permission set begin.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "System permission set begin.");
     if (ready_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, " system permission has been set.");
+        LOGE(ATM_DOMAIN, ATM_TAG, " system permission has been set.");
         return RET_SUCCESS;
     }
 
     std::string permsRawData;
     int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadCfgFile failed.");
         ReportSysEventServiceStartError(INIT_PERM_DEF_JSON_ERROR, "ReadCfgFile fail.", ret);
         return ERR_FILE_OPERATE_FAILED;
     }
@@ -250,7 +248,7 @@ int32_t PermissionDefinitionParser::Init()
     ret = ParserPermsRawData(permsRawData, permDefList);
     if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(INIT_PERM_DEF_JSON_ERROR, "ParserPermsRawData fail.", ret);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParserPermsRawData failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ParserPermsRawData failed.");
         return ret;
     }
 
@@ -258,7 +256,7 @@ int32_t PermissionDefinitionParser::Init()
         PermissionDefinitionCache::GetInstance().Insert(perm, EXTENSION_PERMISSION_ID);
     }
     ready_ = true;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Init ok.");
     return RET_SUCCESS;
 }
 

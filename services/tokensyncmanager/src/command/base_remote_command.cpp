@@ -14,14 +14,13 @@
  */
 #include "base_remote_command.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BaseRemoteCommand"};
 static const std::string JSON_COMMAND_NAME = "commandName";
 static const std::string JSON_UNIQUEID = "uniqueId";
 static const std::string JSON_REQUEST_VERSION = "requestVersion";
@@ -193,7 +192,7 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
     if (hapTokenInfo.baseInfo.tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token basic info is error.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Hap token basic info is error.");
         return;
     }
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);

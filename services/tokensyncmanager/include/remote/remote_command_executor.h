@@ -19,7 +19,7 @@
 #include <deque>
 #include <mutex>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "base_remote_command.h"
 #include "remote_command_factory.h"
 #include "rpc_channel.h"

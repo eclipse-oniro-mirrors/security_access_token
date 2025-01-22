@@ -14,7 +14,7 @@
  */
 
 #include "camera_manager_adapter.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #ifdef CAMERA_FRAMEWORK_ENABLE
 #include "camera_service_ipc_interface_code.h"
 #endif
@@ -25,11 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CameraManagerAdapter"
-};
-}
 
 CameraManagerAdapter& CameraManagerAdapter::GetInstance()
 {
@@ -46,12 +41,12 @@ CameraManagerAdapter::~CameraManagerAdapter()
 bool CameraManagerAdapter::IsCameraMuted()
 {
 #ifndef CAMERA_FRAMEWORK_ENABLE
-    ACCESSTOKEN_LOG_INFO(LABEL, "camera framework is not support.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "camera framework is not support.");
     return false;
 #else
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetProxy.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetProxy.");
         return false;
     }
 
@@ -61,14 +56,14 @@ bool CameraManagerAdapter::IsCameraMuted()
 
     std::u16string CAMERA_MGR_DESCRIPTOR = u"ICameraService";
     if (!data.WriteInterfaceToken(CAMERA_MGR_DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
         return false;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
         data, reply, option);
     if (error != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest error: %{public}d", error);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
         return false;
     }
     return reply.ReadBool();
@@ -83,22 +78,22 @@ void CameraManagerAdapter::InitProxy()
     }
     sptr<ISystemAbilityManager> systemManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemManager == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get system ability registry.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get system ability registry.");
         return;
     }
     sptr<IRemoteObject> remoteObj = systemManager->CheckSystemAbility(CAMERA_SERVICE_ID);
     if (remoteObj == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to connect ability manager service.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to connect ability manager service.");
         return;
     }
 
     deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new (std::nothrow) CameraManagerDeathRecipient());
     if (deathRecipient_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create CameraManagerDeathRecipient!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create CameraManagerDeathRecipient!");
         return;
     }
     if ((remoteObj->IsProxyObject()) && (!remoteObj->AddDeathRecipient(deathRecipient_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient to AbilityManagerService failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add death recipient to AbilityManagerService failed.");
         return;
     }
     proxy_ = remoteObj;
@@ -125,7 +120,7 @@ void CameraManagerAdapter::ReleaseProxy(const wptr<IRemoteObject>& remote)
 
 void CameraManagerAdapter::CameraManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "CameraManagerDeathRecipient handle remote died.");
+    LOGE(PRI_DOMAIN, PRI_TAG, "CameraManagerDeathRecipient handle remote died.");
     CameraManagerAdapter::GetInstance().ReleaseProxy(remote);
 }
 #endif
