@@ -326,7 +326,7 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, uint32_t tokenID)
     {
         return RET_SUCCESS;
     }

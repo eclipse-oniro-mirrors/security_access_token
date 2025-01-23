@@ -187,9 +187,11 @@ public:
      * @param policyType policy type, see privacy_param.h
      * @param caller caller type, see privacy_param.h
      * @param isMute mute or unmute
+     * @param tokenID when policyType is EDM, this param should be first caller token id,
+     *                when policyType is not EDM, this param will be ignore.
      * @return error code, see privacy_error.h
      */
-    static int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute);
+    static int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID);
 
     /**
      * @brief try set background visit policy.

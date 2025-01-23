@@ -72,6 +72,7 @@ static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
+constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
@@ -1255,7 +1256,8 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     return false;
 }
 
-int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute)
+int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute,
+    AccessTokenID tokenID)
 {
     std::string permissionName;
     if (callerType == MICROPHONE) {
@@ -1267,6 +1269,11 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
     }
 
     if (policyType == EDM) {
+        static uint32_t edmTokenID = AccessTokenKit::GetNativeTokenId(EDM_PROCESS_NAME);
+        if (edmTokenID != tokenID) {
+            return PrivacyError::ERR_FIRST_CALLER_NOT_EDM;
+        }
+
         return SetEdmMutePolicy(permissionName, isMute);
     }
 

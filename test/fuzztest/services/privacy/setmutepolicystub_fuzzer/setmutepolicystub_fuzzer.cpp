@@ -67,10 +67,11 @@ size_t g_baseFuzzPos = 0;
         GetNativeToken();
         AccessTokenFuzzData fuzzData(data, size);
 
-        if (size > sizeof(uint32_t) + sizeof(bool)) {
+        if (size > sizeof(uint32_t) + sizeof(bool) + sizeof(uint32_t)) {
             uint32_t policyType = fuzzData.GetData<uint32_t>();
             uint32_t callerType = fuzzData.GetData<uint32_t>();
             bool isMute = fuzzData.GenerateRandomBool();
+            uint32_t tokenID = fuzzData.GetData<uint32_t>();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -81,6 +82,9 @@ size_t g_baseFuzzPos = 0;
                 return false;
             }
             if (!datas.WriteBool(isMute)) {
+                return false;
+            }
+            if (!datas.WriteUint32(tokenID)) {
                 return false;
             }
 
