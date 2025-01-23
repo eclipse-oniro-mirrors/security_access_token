@@ -31,9 +31,9 @@ enum AppKeyType {
 
 struct AppKeyInfo : public Parcelable {
     AppKeyType type = AppKeyType::APP;
-    uint32_t uid;
+    uint32_t uid = 0;
     std::string bundleName;
-    int32_t userId;
+    int32_t userId = -1;
     std::string groupID;
 
     AppKeyInfo() {}
