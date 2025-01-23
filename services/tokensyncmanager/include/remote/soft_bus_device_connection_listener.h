@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 

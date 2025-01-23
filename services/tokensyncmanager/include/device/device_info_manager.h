@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 #include "device_info_repository.h"
 #include "ipc_skeleton.h"

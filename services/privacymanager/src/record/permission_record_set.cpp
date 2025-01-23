@@ -14,16 +14,12 @@
  */
 
 #include "permission_record_set.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "constant.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordSet"
-};
 
 void PermissionRecordSet::RemoveByKey(std::set<ContinusPermissionRecord>& recordList,
     const ContinusPermissionRecord& record, const IsEqualFunc& isEqualFunc,
@@ -37,7 +33,7 @@ void PermissionRecordSet::RemoveByKey(std::set<ContinusPermissionRecord>& record
             ++it;
         }
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "After removing record List size = %{public}zu, removed size = %{public}zu",
+    LOGD(PRI_DOMAIN, PRI_TAG, "After removing record List size = %{public}zu, removed size = %{public}zu",
         recordList.size(), retList.size());
 }
 
@@ -53,7 +49,7 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinusPermiss
             lastUniqueKey = curUniqueKey;
         }
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Unique list size = %{public}zu", retList.size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Unique list size = %{public}zu", retList.size());
 
     // filter active records with same tokenid and opcode in set
     auto iterRemoved = retList.begin();
@@ -73,7 +69,7 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinusPermiss
         }
         ++iterRemain;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get inactive list size = %{public}zu", retList.size());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", retList.size());
 }
 
 void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinusPermissionRecord>& recordList,
@@ -95,7 +91,7 @@ void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinusPermissi
         lastUniqueKey = curUniqueKey;
         retList.emplace_back(*iter);
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Unique list size = %{public}zu", retList.size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Unique list size = %{public}zu", retList.size());
 
     // filter records with same tokenid, opcode and pid in set
     auto iterRemoved = retList.begin();
@@ -120,7 +116,7 @@ void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinusPermissi
             ++iterRemain;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Get unused camera list size = %{public}zu", retList.size());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Get unused camera list size = %{public}zu", retList.size());
 }
 } // namespace AccessToken
 } // namespace Security

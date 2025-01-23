@@ -17,16 +17,13 @@
 #include <set>
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 #include "permission_definition_cache.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionValidator"};
-}
 
 bool PermissionValidator::IsGrantModeValid(int grantMode)
 {
@@ -61,31 +58,31 @@ bool PermissionValidator::IsToggleStatusValid(const uint32_t status)
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 {
     if (!DataValidator::IsLabelValid(permDef.label)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Label invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Label invalid.");
         return false;
     }
     if (!DataValidator::IsDescValid(permDef.description)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Desc invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Desc invalid.");
         return false;
     }
     if (!DataValidator::IsBundleNameValid(permDef.bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "BundleName invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "BundleName invalid.");
         return false;
     }
     if (!DataValidator::IsPermissionNameValid(permDef.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName invalid.");
         return false;
     }
     if (!IsGrantModeValid(permDef.grantMode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantMode invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantMode invalid.");
         return false;
     }
     if (!DataValidator::IsAvailableTypeValid(permDef.availableType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableType invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AvailableType invalid.");
         return false;
     }
     if (!DataValidator::IsAplNumValid(permDef.availableLevel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableLevel invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AvailableLevel invalid.");
         return false;
     }
     return true;
@@ -93,10 +90,10 @@ bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 
 bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenType is %{public}d.", tokenType);
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenType is %{public}d.", tokenType);
     if (tokenType == TOKEN_HAP) {
         if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined for hap.", permissionName.c_str());
+            LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is not defined for hap.", permissionName.c_str());
             return false;
         }
     }
@@ -110,7 +107,7 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStatus& permSta
         return false;
     }
     if (!IsGrantStatusValid(permState.grantStatus) || !IsPermissionFlagValid(permState.grantFlag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantStatus or grantFlag is invalid");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantStatus or grantFlag is invalid");
         return false;
     }
     return true;

@@ -19,7 +19,7 @@
 #include "privacy_manager_proxy_death_param.h"
 
 #include <cstdint>
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token.h"
 #include "proxy_death_param.h"
 

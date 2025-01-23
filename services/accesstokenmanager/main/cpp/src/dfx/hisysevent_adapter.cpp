@@ -14,7 +14,7 @@
  */
 
 #include "hisysevent_adapter.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "hisysevent.h"
 #include "time_util.h"
 
@@ -22,7 +22,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AtmDfx"};
 static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
 static constexpr char ADD_DOMAIN[] = "PERFORMANCE";
 }
@@ -36,7 +35,7 @@ void ReportSysEventPerformance()
     int32_t ret = HiSysEventWrite(ADD_DOMAIN, "CPU_SCENE_ENTRY", HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME, "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
     if (ret != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to report performance, ret %{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to report performance, ret %{public}d.", ret);
     }
 }
 
@@ -46,7 +45,7 @@ void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSi
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "PID", pid, "HAP_SIZE", hapSize, "NATIVE_SIZE", nativeSize, "PERM_DEFINITION_SIZE", permDefSize);
     if (ret != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write hisysevent write, ret %{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
     }
 }
 
@@ -55,7 +54,7 @@ void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg,
     int32_t ret = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START_ERROR",
         HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", scene, "ERROR_CODE", errCode, "ERROR_MSG", errMsg);
     if (ret != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write hisysevent write, ret %{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
     }
 }
 } // namespace AccessToken

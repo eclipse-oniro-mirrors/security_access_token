@@ -18,7 +18,7 @@
 #include <memory>
 
 #include "accesstoken_dfx_define.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
 #include "permission_validator.h"
@@ -27,9 +27,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DataTranslator"};
-}
 
 int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues)
 {
@@ -55,7 +52,7 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.grantMode = inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_MODE);
     int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Apl is wrong.");
         return ERR_PARAM_INVALID;
     }
     outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
@@ -88,7 +85,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
 {
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is wrong");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
@@ -97,7 +94,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
 
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantFlag is wrong");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantFlag is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant flag error");
@@ -107,7 +104,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantStatus is wrong");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantStatus is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant status error");

@@ -15,7 +15,7 @@
 #include "privacy_window_manager_client.h"
 
 #include <thread>
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "iservice_registry.h"
 #include "privacy_error.h"
 
@@ -31,9 +31,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerClient"
-};
 std::recursive_mutex g_instanceMutex;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 } // namespace
@@ -59,7 +56,7 @@ PrivacyWindowManagerClient::PrivacyWindowManagerClient() : deathCallback_(nullpt
 
 PrivacyWindowManagerClient::~PrivacyWindowManagerClient()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyWindowManagerClient().");
+    LOGI(PRI_DOMAIN, PRI_TAG, "~PrivacyWindowManagerClient().");
     std::lock_guard<std::mutex> lock(proxyMutex_);
     RemoveDeathRecipient();
 }
@@ -72,7 +69,7 @@ int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgent(WindowManagerAgen
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
@@ -86,7 +83,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgent(WindowManagerAg
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
@@ -97,7 +94,7 @@ int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgentLite(WindowManager
 {
     auto proxy = GetLiteProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
@@ -108,7 +105,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgentLite(WindowManag
 {
     auto proxy = GetLiteProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
@@ -129,29 +126,29 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!systemAbilityManager) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get system ability mgr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to get system ability mgr.");
         return;
     }
     sptr<IRemoteObject> remoteObject = systemAbilityManager->GetSystemAbility(WINDOW_MANAGER_SERVICE_ID);
     if (!remoteObject) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote object is nullptr");
         return;
     }
     mockSessionManagerServiceProxy_ = new PrivacyMockSessionManagerProxy(remoteObject);
     if (!mockSessionManagerServiceProxy_  || mockSessionManagerServiceProxy_->AsObject() == nullptr ||
         mockSessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Get mock session manager service proxy failed, nullptr");
+        LOGW(PRI_DOMAIN, PRI_TAG, "Get mock session manager service proxy failed, nullptr");
         return;
     }
     sptr<IRemoteObject> remoteObject2 = mockSessionManagerServiceProxy_->GetSessionManagerService();
     if (!remoteObject2) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object2 is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote object2 is nullptr");
         return;
     }
     sessionManagerServiceProxy_ = new PrivacySessionManagerProxy(remoteObject2);
     if (!sessionManagerServiceProxy_ || sessionManagerServiceProxy_->AsObject() == nullptr ||
         sessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SessionManagerServiceProxy_ is nullptr");
     }
 }
 
@@ -163,30 +160,30 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
     }
     if (!sessionManagerServiceProxy_ || sessionManagerServiceProxy_->AsObject() == nullptr ||
         sessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SessionManagerServiceProxy_ is nullptr");
         return;
     }
 
     sptr<IRemoteObject> remoteObject = sessionManagerServiceProxy_->GetSceneSessionManager();
     if (!remoteObject) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Get scene session manager proxy failed, scene session manager service is null");
+        LOGW(PRI_DOMAIN, PRI_TAG, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
     sceneSessionManagerProxy_ = new PrivacySceneSessionManagerProxy(remoteObject);
     if (sceneSessionManagerProxy_ == nullptr || sceneSessionManagerProxy_->AsObject() == nullptr ||
         sceneSessionManagerProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerProxy_ is null.");
+        LOGW(PRI_DOMAIN, PRI_TAG, "SceneSessionManagerProxy_ is null.");
         return;
     }
     if (!serviceDeathObserver_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create death Recipient ptr WMSDeathRecipient");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create death Recipient ptr WMSDeathRecipient");
         return;
     }
     if (remoteObject->IsProxyObject() && !remoteObject->AddDeathRecipient(serviceDeathObserver_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add death recipient");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to add death recipient");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitSceneSessionManagerProxy end.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "InitSceneSessionManagerProxy end.");
 }
 
 void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
@@ -196,30 +193,30 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         return;
     }
     if (!sessionManagerServiceProxy_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SessionManagerServiceProxy_ is nullptr");
         return;
     }
 
     sptr<IRemoteObject> remoteObject = sessionManagerServiceProxy_->GetSceneSessionManagerLite();
     if (!remoteObject) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Get scene session manager proxy failed, scene session manager service is null");
+        LOGW(PRI_DOMAIN, PRI_TAG, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
     sceneSessionManagerLiteProxy_ = new PrivacySceneSessionManagerLiteProxy(remoteObject);
     if (sceneSessionManagerLiteProxy_ == nullptr || sceneSessionManagerLiteProxy_->AsObject() == nullptr ||
         sceneSessionManagerLiteProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerLiteProxy_ is null.");
+        LOGW(PRI_DOMAIN, PRI_TAG, "SceneSessionManagerLiteProxy_ is null.");
         return;
     }
     if (!serviceDeathObserver_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create death Recipient ptr WMSDeathRecipient");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create death Recipient ptr WMSDeathRecipient");
         return;
     }
     if (remoteObject->IsProxyObject() && !remoteObject->AddDeathRecipient(serviceDeathObserver_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add death recipient");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to add death recipient");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitSceneSessionManagerLiteProxy end.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "InitSceneSessionManagerLiteProxy end.");
 }
 
 sptr<ISceneSessionManager> PrivacyWindowManagerClient::GetSSMProxy()
@@ -245,12 +242,12 @@ void PrivacyWindowManagerClient::InitWMSProxy()
     }
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
         return;
     }
     auto windowManagerSa = sam->GetSystemAbility(WINDOW_MANAGER_SERVICE_ID);
     if (windowManagerSa == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbility %{public}d is null",
             WINDOW_MANAGER_SERVICE_ID);
         return;
     }
@@ -261,10 +258,10 @@ void PrivacyWindowManagerClient::InitWMSProxy()
 
     wmsProxy_ = new PrivacyWindowManagerProxy(windowManagerSa);
     if (wmsProxy_ == nullptr  || wmsProxy_->AsObject() == nullptr || wmsProxy_->AsObject()->IsObjectDead()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WmsProxy_ is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WmsProxy_ is null.");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitWMSProxy end.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "InitWMSProxy end.");
 }
 
 sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()
@@ -277,7 +274,7 @@ sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()
 void PrivacyWindowManagerClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Window manager remote died.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Window manager remote died.");
     RemoveDeathRecipient();
 
     std::function<void()> runner = [this]() {

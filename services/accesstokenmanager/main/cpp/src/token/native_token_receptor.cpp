@@ -21,7 +21,7 @@
 #include "access_token_error.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 #include "json_parser.h"
 #include "native_token_receptor.h"
@@ -32,7 +32,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
 static const char* JSON_PROCESS_NAME = "processName";
 static const char* JSON_APL = "APL";
 static const char* JSON_VERSION = "version";
@@ -50,12 +49,12 @@ int32_t NativeReqPermsGet(
 {
     std::vector<std::string> permReqList;
     if (j.find(JSON_PERMS) == j.end() || (!j.at(JSON_PERMS).is_array())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JSON_PERMS is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "JSON_PERMS is invalid.");
         return ERR_PARAM_INVALID;
     }
     permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission num oversize.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission num oversize.");
         return ERR_OVERSIZE;
     }
     std::set<std::string> permRes;
@@ -110,7 +109,7 @@ void from_json(const nlohmann::json& j, NativeTokenInfoBase& native)
     }
     info.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
     if (info.dcap.size() > MAX_DCAPS_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Native dcap oversize.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Native dcap oversize.");
         return;
     }
 
@@ -119,7 +118,7 @@ void from_json(const nlohmann::json& j, NativeTokenInfoBase& native)
     }
     info.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
     if (info.nativeAcls.size() > MAX_REQ_PERM_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission num oversize.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission num oversize.");
         return;
     }
 
@@ -139,7 +138,7 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
 {
     nlohmann::json jsonRes = nlohmann::json::parse(nativeRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
     for (auto it = jsonRes.begin(); it != jsonRes.end(); it++) {
@@ -156,12 +155,12 @@ int NativeTokenReceptor::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>&
     std::string nativeRawData;
     int ret = JsonParser::ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadCfgFile failed.");
         return ret;
     }
     ret = ParserNativeRawData(nativeRawData, tokenInfos);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParserNativeRawData failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
         return ret;
     }
     return RET_SUCCESS;

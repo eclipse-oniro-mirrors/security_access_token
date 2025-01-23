@@ -13,20 +13,16 @@
  * limitations under the License.
  */
 #include "privacy_window_manager_death_recipient.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "privacy_window_manager_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerDeathRecipient"};
-} // namespace
 
 void PrivacyWindowManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "WindowManger died.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "WindowManger died.");
     PrivacyWindowManagerClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken

@@ -18,7 +18,7 @@
 #include <mutex>
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
 #include "securec.h"
@@ -27,7 +27,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DlpPermissionSetManager"};
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -55,7 +54,7 @@ void DlpPermissionSetManager::ProcessDlpPermInfos(const std::vector<PermissionDl
     for (auto iter = dlpPermInfos.begin(); iter != dlpPermInfos.end(); iter++) {
         auto it = dlpPermissionModeMap_.find(iter->permissionName);
         if (it != dlpPermissionModeMap_.end()) {
-            ACCESSTOKEN_LOG_WARN(LABEL,
+            LOGW(ATM_DOMAIN, ATM_TAG,
                 "info for permission: %{public}s dlpMode %{public}d has been insert, please check!",
                 iter->permissionName.c_str(), iter->dlpMode);
             continue;
@@ -68,7 +67,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 {
     auto it = dlpPermissionModeMap_.find(permissionName);
     if (it == dlpPermissionModeMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Can not find permission: %{public}s in dlp permission cfg",
+        LOGD(ATM_DOMAIN, ATM_TAG, "Can not find permission: %{public}s in dlp permission cfg",
             permissionName.c_str());
         return DLP_PERM_ALL;
     }
@@ -78,7 +77,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
     std::vector<PermissionStatus>& permStateList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d", hapDlpType);
+    LOGD(ATM_DOMAIN, ATM_TAG, "DlpType: %{public}d", hapDlpType);
     for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
         if (iter->grantStatus == PERMISSION_DENIED) {
             continue;
@@ -100,7 +99,7 @@ bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,
 
 bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
+    LOGD(ATM_DOMAIN, ATM_TAG, "DlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
 
     /* permission is available to all dlp hap */
     if ((hapDlpType == DLP_COMMON) || (permDlpMode == DLP_PERM_ALL)) {

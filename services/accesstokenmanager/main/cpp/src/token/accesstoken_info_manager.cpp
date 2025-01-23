@@ -24,7 +24,7 @@
 #include "access_token_db.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_remote_token_manager.h"
 #include "access_token_error.h"
 #include "atm_tools_param_info_parcel.h"
@@ -56,7 +56,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManager"};
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 #ifdef TOKEN_SYNC_ENABLE
@@ -77,7 +76,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 #ifdef TOKEN_SYNC_ENABLE
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME);
     if (ret != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UnInitDeviceManager failed, code: %{public}d", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UnInitDeviceManager failed, code: %{public}d", ret);
     }
 #endif
 
@@ -91,18 +90,18 @@ void AccessTokenInfoManager::Init()
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init begin!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Init begin!");
     uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     InitHapTokenInfos(hapSize);
     InitNativeTokenInfos(nativeSize);
     uint32_t pefDefSize = PermissionDefinitionCache::GetInstance().GetDefPermissionsSize();
     ReportSysEventServiceStart(getpid(), hapSize, nativeSize, pefDefSize);
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
         hapSize, nativeSize, pefDefSize);
 
     hasInited_ = true;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Init success");
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -115,9 +114,9 @@ void AccessTokenInfoManager::InitDmCallback(void)
         int32_t ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME,
             ptrDmInitCallback);
         if (ret != ERR_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Initialize: InitDeviceManager error, result: %{public}d", ret);
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "device manager part init end");
+        LOGI(ATM_DOMAIN, ATM_TAG, "device manager part init end");
         return;
     };
     std::thread initThread(runner);
@@ -148,7 +147,7 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
         std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
         int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (result != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
             ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
                 "RegisterTokenId fail, " + bundle + std::to_string(tokenId), result);
             continue;
@@ -157,20 +156,20 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
         result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
         if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u restore failed.", tokenId);
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u restore failed.", tokenId);
             continue;
         }
 
         result = AddHapTokenInfo(hap);
         if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u add failed.", tokenId);
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add failed.", tokenId);
             ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
                 "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), result);
             continue;
         }
         hapSize++;
-        ACCESSTOKEN_LOG_INFO(LABEL,
+        LOGI(ATM_DOMAIN, ATM_TAG,
             " Restore hap token %{public}u bundle name %{public}s user %{public}d,"
             " permSize %{public}d, inst %{public}d ok!",
             tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
@@ -195,7 +194,7 @@ std::string AccessTokenInfoManager::GetHapUniqueStr(const std::shared_ptr<HapTok
 int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info)
 {
     if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token info is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token info is null.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     AccessTokenID id = info->GetTokenID();
@@ -203,7 +202,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) > 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u info has exist.", id);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u info has exist.", id);
             return AccessTokenError::ERR_TOKENID_NOT_EXIST;
         }
 
@@ -211,7 +210,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
             std::string hapUniqueKey = GetHapUniqueStr(info);
             auto iter = hapTokenIdMap_.find(hapUniqueKey);
             if (iter != hapTokenIdMap_.end()) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u Unique info has exist, update.", id);
+                LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u Unique info has exist, update.", id);
                 idRemoved = iter->second;
             }
             hapTokenIdMap_[hapUniqueKey] = id;
@@ -232,7 +231,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
             PermissionManager::GetInstance().AddHapPermToKernel(id, permPolicyList_);
             return RET_SUCCESS;
         }
@@ -257,7 +256,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
         std::vector<GenericValues> permDefRes;
         AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, permDefRes);
         PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes); // restore all permission definition
-        ACCESSTOKEN_LOG_INFO(LABEL, "Restore perm def size: %{public}zu, mapSize: %{public}zu.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Restore perm def size: %{public}zu, mapSize: %{public}zu.",
             permDefRes.size(), hapTokenInfoMap_.size());
     }
 
@@ -265,14 +264,14 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     std::vector<GenericValues> hapTokenResults;
     int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS || hapTokenResults.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
             "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
         return nullptr;
     }
     std::vector<GenericValues> permStateRes;
     ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
             "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
         return nullptr;
     }
@@ -280,7 +279,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
     ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
             id, ret, hapTokenInfoMap_.size());
         return nullptr;
     }
@@ -288,7 +287,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     hapTokenIdMap_[GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
     PermissionManager::GetInstance().AddHapPermToKernel(id, std::vector<std::string>());
-    ACCESSTOKEN_LOG_INFO(LABEL, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
+    LOGI(ATM_DOMAIN, ATM_TAG, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
         " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
         hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());
     return hap;
@@ -301,7 +300,7 @@ int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
     if ((iter != hapTokenInfoMap_.end()) && (iter->second != nullptr)) {
         return iter->second->GetDlpType();
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid, mapSize: %{public}zu.", id, hapTokenInfoMap_.size());
+    LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid, mapSize: %{public}zu.", id, hapTokenInfoMap_.size());
     return BUTT_DLP_TYPE;
 }
 
@@ -330,11 +329,11 @@ int32_t AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordere
     int32_t ret = AccessTokenDb::GetInstance().Find(
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, tokenIDResults);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID(%{public}d) find tokenID failed, ret: %{public}d.", userID, ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserID(%{public}d) find tokenID failed, ret: %{public}d.", userID, ret);
         return ret;
     }
     if (tokenIDResults.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID(%{public}d) find tokenID empty.", userID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserID(%{public}d) find tokenID empty.", userID);
         return RET_SUCCESS;
     }
 
@@ -349,8 +348,7 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is invalid.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     infoPtr->TranslateToHapTokenInfo(info);
@@ -362,7 +360,7 @@ int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeToke
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     auto iter = nativeTokenInfoMap_.find(tokenID);
     if (iter == nativeTokenInfoMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     info.apl = iter->second.apl;
@@ -374,7 +372,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
     if (type != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is not hap.", id);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
         return ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> info;
@@ -388,17 +386,17 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
 
         if (hapTokenInfoMap_.count(id) == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token %{public}u no exist.", id);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", id);
             return ERR_TOKENID_NOT_EXIST;
         }
 
         info = hapTokenInfoMap_[id];
         if (info == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token %{public}u is null.", id);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u is null.", id);
             return ERR_TOKEN_INVALID;
         }
         if (info->IsRemote()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Remote hap token %{public}u can not delete.", id);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", id);
             return ERR_IDENTITY_CHECK_FAILED;
         }
         std::string HapUniqueKey = GetHapUniqueStr(info);
@@ -409,7 +407,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         hapTokenInfoMap_.erase(id);
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove hap token %{public}u ok!", id);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
     PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
@@ -426,22 +424,21 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is not native or shell.", id);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not native or shell.", id);
         return ERR_PARAM_INVALID;
     }
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Native token %{public}u is null.", id);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", id);
             return ERR_TOKENID_NOT_EXIST;
         }
 
         nativeTokenInfoMap_.erase(id);
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove native token %{public}u ok!", id);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Remove native token %{public}u ok!", id);
 
     // remove native to kernel
     PermissionManager::GetInstance().RemovePermFromKernel(id);
@@ -469,14 +466,14 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
         (!DataValidator::IsDlpTypeValid(info.dlpType))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token param failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
     int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
     AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
     if (tokenId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id create failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
         return ERR_TOKENID_CREATE_FAILED;
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
@@ -496,13 +493,13 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy.apl, false);
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
         RemoveHapTokenInfoFromDb(tokenId);
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
     return RET_SUCCESS;
@@ -529,7 +526,7 @@ AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std:
         auto infoIter = hapTokenInfoMap_.find(tokenId);
         if (infoIter != hapTokenInfoMap_.end()) {
             if (infoIter->second == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
+                LOGE(ATM_DOMAIN, ATM_TAG, "HapTokenInfoInner is nullptr");
                 return tokenIdEx;
             }
             HapTokenInfo info = infoIter->second->GetHapInfoBasic();
@@ -559,7 +556,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
     std::vector<NativeTokenInfoBase> tokenInfos;
     int ret = NativeTokenReceptor::GetInstance().GetAllNativeTokenInfo(tokenInfos);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to load native from native json, err=%{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
         ReportSysEventServiceStartError(
             INIT_NATIVE_TOKENINFO_ERROR, "GetAllNativeTokenInfo fail from native json.", ret);
         return;
@@ -571,7 +568,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
         int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (res != RET_SUCCESS && res != ERR_TOKENID_HAS_EXISTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Token id register fail, res is %{public}d.", res);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Token id register fail, res is %{public}d.", res);
             ReportSysEventServiceStartError(INIT_NATIVE_TOKENINFO_ERROR,
                 "RegisterTokenId fail, " + process + std::to_string(tokenId), res);
             continue;
@@ -589,7 +586,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
 
         nativeTokenInfoMap_[tokenId] = cache;
         PermissionManager::GetInstance().AddNativePermToKernel(tokenId, cache.opCodeList, cache.statusList);
-        ACCESSTOKEN_LOG_INFO(LABEL,
+        LOGI(ATM_DOMAIN, ATM_TAG,
             "Init native token %{public}u process name %{public}s, permSize %{public}zu ok!",
             tokenId, process.c_str(), info.permStateList.size());
         nativeSize++;
@@ -602,17 +599,17 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u parm format error!", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u parm format error!", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid, can not update!", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid, can not update!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote hap token %{public}u can not update!", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not update!", tokenID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
     if (info.isSystemApp) {
@@ -639,7 +636,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
             PermissionManager::GetInstance().AddHapPermToKernel(tokenID, permPolicyList_);
             return RET_SUCCESS;
         }
@@ -653,8 +650,7 @@ int AccessTokenInfoManager::GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoF
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr || infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is invalid.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
     hapSync.baseInfo = infoPtr->GetHapInfoBasic();
@@ -673,7 +669,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(mapID);
     if (infoPtr == nullptr || !infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is null or not remote, can not update!", mapID);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is null or not remote, can not update!", mapID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
@@ -690,7 +686,7 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 
     int ret = AddHapTokenInfo(hap);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Add local token failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Add local token failed.");
         return ret;
     }
 
@@ -727,14 +723,14 @@ bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, 
 int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync)
 {
     if (!IsRemoteHapTokenValid(deviceID, hapSync)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return ERR_IDENTITY_CHECK_FAILED;
     }
 
     AccessTokenID remoteID = hapSync.baseInfo.tokenID;
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
     if (mapID != 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s token %{public}u update exist remote hap token %{public}u.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u update exist remote hap token %{public}u.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         // update remote token mapping id
         hapSync.baseInfo.tokenID = mapID;
@@ -743,7 +739,7 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 
     mapID = AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s token %{public}u map failed.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u map failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return ERR_TOKEN_MAP_FAILED;
     }
@@ -754,13 +750,13 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
     if (ret != RET_SUCCESS) {
         int result = AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
         if (result != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "remove device map token id failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "remove device map token id failed");
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s token %{public}u map to local token %{public}u failed.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u map to local token %{public}u failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s token %{public}u map to local token %{public}u success.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u map to local token %{public}u success.",
         ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
     return RET_SUCCESS;
 }
@@ -768,13 +764,13 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s parms invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s tokenId %{public}u is not mapped.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s tokenId %{public}u is not mapped.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
         return ERR_TOKEN_MAP_FAILED;
     }
@@ -783,20 +779,19 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
     if (type == TOKEN_HAP) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(mapID) == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token %{public}u no exist.", mapID);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", mapID);
             return ERR_TOKEN_INVALID;
         }
         hapTokenInfoMap_.erase(mapID);
     } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(mapID) == 0) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "Native token %{public}u is null.", mapID);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", mapID);
             return ERR_TOKEN_INVALID;
         }
         nativeTokenInfoMap_.erase(mapID);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Mapping tokenId %{public}u type is unknown.", mapID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Mapping tokenId %{public}u type is unknown.", mapID);
     }
 
     return AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, tokenID);
@@ -807,7 +802,7 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
     if ((!DataValidator::IsDeviceIdValid(deviceID)) || (tokenID == 0) ||
         ((AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) &&
         (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_SHELL))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s parms invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
     }
@@ -817,21 +812,21 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
 int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s parms invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::vector<AccessTokenID> remoteTokens;
     int ret = AccessTokenRemoteTokenManager::GetInstance().GetDeviceAllRemoteTokenID(deviceID, remoteTokens);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s have no remote token.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s have no remote token.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return ret;
     }
     for (AccessTokenID remoteID : remoteTokens) {
         ret = DeleteRemoteToken(deviceID, remoteID);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "delete remote token failed! deviceId=%{public}s, remoteId=%{public}d.", \
+            LOGE(ATM_DOMAIN, ATM_TAG, "delete remote token failed! deviceId=%{public}s, remoteId=%{public}d.", \
                 deviceID.c_str(), remoteID);
         }
     }
@@ -842,7 +837,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     AccessTokenID remoteTokenID)
 {
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s parms invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
@@ -851,12 +846,12 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     }
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     int result = SetFirstCallerTokenID(fullTokenId); // for debug
-    ACCESSTOKEN_LOG_INFO(LABEL, "Set first caller %{public}" PRIu64 "., ret is %{public}d", fullTokenId, result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Set first caller %{public}" PRIu64 "., ret is %{public}d", fullTokenId, result);
 
     std::string remoteUdid;
     DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(ACCESS_TOKEN_PACKAGE_NAME, remoteDeviceID,
         remoteUdid);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s remoteUdid.", ConstantCommon::EncryptDevId(remoteUdid).c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Device %{public}s remoteUdid.", ConstantCommon::EncryptDevId(remoteUdid).c_str());
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);
     if (mapID != 0) {
@@ -864,7 +859,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     }
     int ret = TokenModifyNotifier::GetInstance().GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Device %{public}s token %{public}u sync failed",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
         std::string errorReason = "token sync call error, error number is " + std::to_string(ret);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
@@ -879,7 +874,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
 AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
     AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Tokensync is disable, check dependent components");
+    LOGE(ATM_DOMAIN, ATM_TAG, "Tokensync is disable, check dependent components");
     return 0;
 }
 #endif
@@ -901,11 +896,11 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     const std::string& appId, ATokenAplEnum apl, bool isUpdate)
 {
     if (hapInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token info is null!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token info is null!");
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (hapInfo->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "It is a remote hap!");
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     AccessTokenID tokenID = hapInfo->GetTokenID();
@@ -946,7 +941,7 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(
         delDataTypes, deleteValues, addDataTypes, addValues);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
         return ret;
     }
     return RET_SUCCESS;
@@ -970,7 +965,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(AccessTokenID tokenID)
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
         addValues);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
         return ret;
     }
     return RET_SUCCESS;
@@ -984,7 +979,7 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
             HapTokenInfoInner::GetGrantedPermByTokenId(id, permPolicyList_, permissionList);
         } else {
             std::vector<std::string> emptyList;
@@ -1007,18 +1002,18 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
     std::vector<GenericValues> hapTokenResults;
     int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
         return ret;
     }
 
     if (hapTokenResults.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id(%{public}u) is not in hap_token_table.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is not in hap_token_table.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     std::string result = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
     if (!DataValidator::IsAppIDDescValid(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: 0x%{public}x appID is error.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x appID is error.", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     appId = result;
@@ -1070,7 +1065,7 @@ void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bun
 
 void AccessTokenInfoManager::DumpAllHapTokenname(std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all hap token name.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "Get all hap token name.");
 
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
@@ -1088,7 +1083,7 @@ void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string&
 
 void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all native token name.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "Get all native token name.");
 
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
@@ -1114,10 +1109,10 @@ void AccessTokenInfoManager::ReduceDumpTaskNum()
 
 void AccessTokenInfoManager::DumpToken()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessToken Dump");
+    LOGI(ATM_DOMAIN, ATM_TAG, "AccessToken Dump");
     int32_t fd = open(DUMP_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Open failed errno %{public}d.", errno);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return;
     }
     std::string dumpStr;
@@ -1169,11 +1164,11 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", id);
         return ERR_PARAM_INVALID;
     }
     if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", id);
+        LOGE(ATM_DOMAIN, ATM_TAG, "It is a remote hap token %{public}u!", id);
         return ERR_IDENTITY_CHECK_FAILED;
     }
     std::vector<std::string> grantedPermListBefore;
@@ -1197,7 +1192,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
         }
     }
     PermissionManager::GetInstance().AddHapPermToKernel(id, std::vector<std::string>());
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "grantedPermListBefore size %{public}zu, grantedPermListAfter size %{public}zu!",
         grantedPermListBefore.size(), grantedPermListAfter.size());
     PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
@@ -1208,14 +1203,14 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", id);
         return ERR_PARAM_INVALID;
     }
     int32_t userId = infoPtr->GetUserID();
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
     if ((std::find(permPolicyList_.begin(), permPolicyList_.end(), permissionName) != permPolicyList_.end()) &&
         (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "id %{public}u perm %{public}s.", id, permissionName.c_str());
+        LOGI(ATM_DOMAIN, ATM_TAG, "id %{public}u perm %{public}s.", id, permissionName.c_str());
         return true;
     }
     return false;
@@ -1230,7 +1225,7 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
         return;
     }
     if (infoIter->second == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "HapTokenInfoInner is nullptr.");
         return;
     }
     std::string bundleName = infoIter->second->GetBundleName();
@@ -1261,7 +1256,7 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "HapTokenInfoInner is nullptr.");
         return ERR_TOKENID_NOT_EXIST;
     }
     infoIter->second->SetPermDialogForbidden(enable);
@@ -1277,7 +1272,7 @@ int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>
     const std::vector<std::string>& permList, std::map<int32_t, bool>& changedUserList)
 {
     if (!permPolicyList_.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserPolicy has been initialized.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserPolicy has been initialized.");
         return ERR_USER_POLICY_INITIALIZED;
     }
     for (const auto &permission : permList) {
@@ -1287,16 +1282,16 @@ int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>
     }
 
     if (permPolicyList_.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permList is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "permList is invalid.");
         return ERR_PARAM_INVALID;
     }
     for (const auto &userInfo : userList) {
         if (userInfo.userId < 0) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "userId %{public}d is invalid.", userInfo.userId);
+            LOGW(ATM_DOMAIN, ATM_TAG, "userId %{public}d is invalid.", userInfo.userId);
             continue;
         }
         if (userInfo.isActive) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "userid %{public}d is active.", userInfo.userId);
+            LOGI(ATM_DOMAIN, ATM_TAG, "userid %{public}d is active.", userInfo.userId);
             continue;
         }
         inactiveUserList_.emplace_back(userInfo.userId);
@@ -1310,12 +1305,12 @@ int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>
     std::map<int32_t, bool>& changedUserList)
 {
     if (permPolicyList_.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserPolicy has been initialized.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserPolicy has been initialized.");
         return ERR_USER_POLICY_NOT_INITIALIZED;
     }
     for (const auto &userInfo : userList) {
         if (userInfo.userId < 0) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "UserId %{public}d is invalid.", userInfo.userId);
+            LOGW(ATM_DOMAIN, ATM_TAG, "UserId %{public}d is invalid.", userInfo.userId);
             continue;
         }
         auto iter = std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userInfo.userId);
@@ -1341,7 +1336,7 @@ void AccessTokenInfoManager::GetGoalHapList(std::map<AccessTokenID, bool>& token
         AccessTokenID tokenId = iter->first;
         std::shared_ptr<HapTokenInfoInner> infoPtr = iter->second;
         if (infoPtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId infoPtr is null.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId infoPtr is null.");
             continue;
         }
         auto userInfo = changedUserList.find(infoPtr->GetUserID());
@@ -1390,7 +1385,7 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::vector<
             PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
         }
         for (auto perm = refreshedPermList.begin(); perm != refreshedPermList.end(); ++perm) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Perm %{public}s refreshed by user policy, isActive %{public}d.",
+            LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by user policy, isActive %{public}d.",
                 perm->first.c_str(), perm->second);
             PermStateChangeType change = perm->second ?
                 PermStateChangeType::STATE_CHANGE_GRANTED : PermStateChangeType::STATE_CHANGE_REVOKED;
@@ -1412,7 +1407,7 @@ int32_t AccessTokenInfoManager::InitUserPolicy(
             return ret;
         }
         if (changedUserList.empty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "changedUserList is empty.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "changedUserList is empty.");
             return ret;
         }
         GetGoalHapList(tokenIdList, changedUserList);
@@ -1431,7 +1426,7 @@ int32_t AccessTokenInfoManager::UpdateUserPolicy(const std::vector<UserState>& u
             return ret;
         }
         if (changedUserList.empty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "changedUserList is empty.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "changedUserList is empty.");
             return ret;
         }
         GetGoalHapList(tokenIdList, changedUserList);
@@ -1445,7 +1440,7 @@ int32_t AccessTokenInfoManager::ClearUserPolicy()
     std::vector<std::string> permList;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
     if (permPolicyList_.empty()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "UserPolicy has been cleared.");
+        LOGW(ATM_DOMAIN, ATM_TAG, "UserPolicy has been cleared.");
         return RET_SUCCESS;
     }
     permList.assign(permPolicyList_.begin(), permPolicyList_.end());
@@ -1467,13 +1462,13 @@ int32_t AccessTokenInfoManager::ClearUserPolicy()
 bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
 {
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenId.");
         return true;
     }
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId is not exist in map.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId is not exist in map.");
         return true;
     }
     return infoIter->second->IsPermDialogForbidden();
@@ -1489,7 +1484,7 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
 
     int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
     if (res != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "Update tokenID %{public}u permissionDialogForbidden %{public}d to database failed", tokenID, enable);
         return false;
     }
@@ -1501,26 +1496,26 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
 {
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Permission definition set has not been installed!");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Permission definition set has not been installed!");
             if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_NATIVE) {
                 return PERMISSION_GRANTED;
             }
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Token: %{public}d type error!", tokenID);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Token: %{public}d type error!", tokenID);
             return PERMISSION_DENIED;
         }
-        ACCESSTOKEN_LOG_ERROR(LABEL, "No definition for permission: %{public}s!", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
         return PERMISSION_DENIED;
     }
 
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     auto iter = nativeTokenInfoMap_.find(tokenID);
     if (iter == nativeTokenInfoMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -1540,12 +1535,12 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
             static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return PERMISSION_DENIED;
     }
 
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
 
@@ -1556,13 +1551,13 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
     if (tokenType == TOKEN_HAP) {
         return PermissionManager::GetInstance().VerifyHapAccessToken(tokenID, permissionName);
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, invalid tokenType!", tokenID);
+    LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, invalid tokenType!", tokenID);
     return PERMISSION_DENIED;
 }
 
 void AccessTokenInfoManager::ClearHapPolicy()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         iter->second->ClearHapInfoPermissionPolicySet();
@@ -1591,7 +1586,7 @@ int32_t AccessTokenInfoManager::AddPermRequestToggleStatusToDb(
     addValues.emplace_back(value);
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(dataTypes, deleteValues, dataTypes, addValues);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertHap failed, ret %{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertHap failed, ret %{public}d.", ret);
         return ret;
     }
     return RET_SUCCESS;
@@ -1604,28 +1599,27 @@ int32_t AccessTokenInfoManager::SetPermissionRequestToggleStatus(const std::stri
         userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permission=%{public}s, status=%{public}d", userID,
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permission=%{public}s, status=%{public}d", userID,
         permissionName.c_str(), status);
     if (!PermissionValidator::IsUserIdValid(userID) ||
         !PermissionValidator::IsPermissionNameValid(permissionName) ||
         !PermissionValidator::IsToggleStatusValid(status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid parameter(userId=%{public}d, perm=%{public}s, status=%{public}d).",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter(userId=%{public}d, perm=%{public}s, status=%{public}d).",
             userID, permissionName.c_str(), status);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to set.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to set.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     int32_t ret = AddPermRequestToggleStatusToDb(userID, permissionName, status);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Status is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Status is invalid.");
         return ret;
     }
 
@@ -1660,20 +1654,19 @@ int32_t AccessTokenInfoManager::GetPermissionRequestToggleStatus(const std::stri
         userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
     if (!PermissionValidator::IsUserIdValid(userID) ||
         !PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid parameter(userId=%{public}d, perm=%{public}s.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter(userId=%{public}d, perm=%{public}s.",
             userID, permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to get.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to get.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -1707,7 +1700,7 @@ void AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID, std::str
     std::vector<NativeTokenInfoBase> tokenInfos;
     int ret = NativeTokenReceptor::GetInstance().GetAllNativeTokenInfo(tokenInfos);
     if (ret != RET_SUCCESS || tokenInfos.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to load native from native json, err=%{public}d.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
         return;
     }
     auto iter = tokenInfos.begin();
@@ -1718,7 +1711,7 @@ void AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID, std::str
         ++iter;
     }
     if (iter == tokenInfos.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Id %{public}u is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
         return;
     }
     NativeTokenInfoBase native = *iter;

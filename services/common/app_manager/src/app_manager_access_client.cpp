@@ -15,7 +15,7 @@
 #include "app_manager_access_client.h"
 #include <unistd.h>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "ams_manager_access_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -24,9 +24,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
-};
 static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
 std::u16string DESCRIPTOR = u"ohos.appexecfwk.AppMgr";
@@ -59,7 +56,7 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return ERROR;
     }
 
@@ -67,19 +64,19 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AppManagerAccessClient::Message::APP_GET_MGR_INSTANCE), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAmsMgr failed, error: %{public}d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetAmsMgr failed, error: %{public}d", error);
         return ERROR;
     }
     sptr<IRemoteObject> object = reply.ReadRemoteObject();
     sptr<IAmsMgr> amsService = new AmsManagerAccessProxy(object);
     if (amsService == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AmsService is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AmsService is null.");
         return ERROR;
     }
     return amsService->KillProcessesByAccessTokenId(accessTokenId);
@@ -87,14 +84,14 @@ int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t acce
 
 int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Entry");
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Callback is nullptr.");
         return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return ERROR;
     }
     std::vector<std::string> bundleNameList;
@@ -103,22 +100,22 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     if (!data.WriteRemoteObject(observer->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Observer write failed.");
         return ERROR;
     }
     if (!data.WriteStringVector(bundleNameList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "BundleNameList write failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "BundleNameList write failed.");
         return ERROR;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AppManagerAccessClient::Message::REGISTER_APPLICATION_STATE_OBSERVER),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterAppStatus failed, error: %{public}d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "RegisterAppStatus failed, error: %{public}d", error);
         return ERROR;
     }
     return reply.ReadInt32();
@@ -127,12 +124,12 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
 int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
 {
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Callback is nullptr.");
         return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return ERROR;
     }
 
@@ -140,18 +137,18 @@ int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IA
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     if (!data.WriteRemoteObject(observer->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Observer write failed.");
         return ERROR;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AppManagerAccessClient::Message::UNREGISTER_APPLICATION_STATE_OBSERVER),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set microphoneMute failed, error: %d", error);
         return error;
     }
     return reply.ReadInt32();
@@ -161,7 +158,7 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return ERROR;
     }
 
@@ -169,18 +166,18 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(DESCRIPTOR)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
         return ERROR;
     }
     int32_t error = proxy->SendRequest(
         static_cast<uint32_t>(AppManagerAccessClient::Message::GET_FOREGROUND_APPLICATIONS), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetForegroundApplications failed, error: %{public}d", error);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetForegroundApplications failed, error: %{public}d", error);
         return error;
     }
     uint32_t infoSize = reply.ReadUint32();
     if (infoSize > CYCLE_LIMIT) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize is too large");
+        LOGE(ATM_DOMAIN, ATM_TAG, "InfoSize is too large");
         return ERROR;
     }
     for (uint32_t i = 0; i < infoSize; i++) {
@@ -196,12 +193,12 @@ void AppManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetSystemAbilityManager is null");
         return;
     }
     auto appManagerSa = sam->GetSystemAbility(APP_MGR_SERVICE_ID);
     if (appManagerSa == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetSystemAbility %{public}d is null",
             APP_MGR_SERVICE_ID);
         return;
     }
@@ -218,7 +215,7 @@ void AppManagerAccessClient::RegisterDeathCallback(const std::shared_ptr<AppMana
 {
     std::lock_guard<std::mutex> lock(deathCallbackMutex_);
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: Callback is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AppManagerAccessClient: Callback is nullptr.");
         return;
     }
     appManagerDeathCallbackList_.emplace_back(callback);
@@ -261,7 +258,7 @@ void AppManagerAccessClient::ReleaseProxy()
 
 void AppManagerAccessClient::AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called", __func__);
     AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 } // namespace AccessToken

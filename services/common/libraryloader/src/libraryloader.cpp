@@ -18,14 +18,12 @@
 #include <dlfcn.h>
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenLibLoader"};
 typedef void* (*FUNC_CREATE) (void);
 typedef void (*FUNC_DESTROY) (void*);
 }
@@ -57,7 +55,7 @@ bool LibraryLoader::PrintErrorLog(const std::string& targetName)
 {
     char* error;
     if ((error = dlerror()) != nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get %{public}s failed, errMsg=%{public}s.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get %{public}s failed, errMsg=%{public}s.",
             targetName.c_str(), error);
         return false;
     }

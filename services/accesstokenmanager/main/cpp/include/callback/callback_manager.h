@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
 #include "ffrt.h"
 #endif
