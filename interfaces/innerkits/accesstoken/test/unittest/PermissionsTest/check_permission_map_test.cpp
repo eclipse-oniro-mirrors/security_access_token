@@ -125,7 +125,11 @@ HWTEST_F(CheckPermissionMapTest, CheckPermissionMapFuncTest001, TestSize.Level1)
     uint32_t opCode;
     for (const auto& perm : permDefList) {
         // Check if permissions exist
-        EXPECT_TRUE(TransferPermissionToOpcode(perm.permissionName, opCode));
+        bool isExsit = TransferPermissionToOpcode(perm.permissionName, opCode);
+        if (!isExsit) {
+            GTEST_LOG_(INFO) << "permission name is " << perm.permissionName;
+        }
+        EXPECT_TRUE(isExsit);
         // Check true-user_grant/false-system_grant
         if (perm.grantMode == AccessToken::GrantMode::USER_GRANT) {
             EXPECT_TRUE(IsUserGrantPermission(perm.permissionName));

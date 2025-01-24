@@ -962,7 +962,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         startRecordList_.emplace(newRecord);
     }
 
-    CallbackExecute(info.tokenId, permissionName, status, info.pid, info.type);
+    CallbackExecute(newRecord, permissionName, info.type);
     
     return ret;
 }
@@ -1132,7 +1132,12 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
         PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
         for (const auto& record: inactiveList) {
             Constant::TransferOpcodeToPermission(record.opCode, perm);
-            CallbackExecute(record.tokenId, perm, PERM_INACTIVE, record.pid);
+            ContinusPermissionRecord newRecord;
+            newRecord.tokenId = record.tokenId;
+            newRecord.status = PERM_INACTIVE;
+            newRecord.pid = record.pid;
+            newRecord.callerPid = record.callerPid;
+            CallbackExecute(newRecord, perm);
         }
         if (!needClearCamera) {
             return true;
@@ -1148,20 +1153,21 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
     return true;
 }
 
-void PermissionRecordManager::CallbackExecute(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t status, int32_t pid, PermissionUsedType type)
+void PermissionRecordManager::CallbackExecute(const ContinusPermissionRecord& record, const std::string& permissionName,
+    PermissionUsedType type)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, "
-        "status %{public}d, type %{public}d, pid %{public}d.", tokenId, permissionName.c_str(), status, type, pid);
+        "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", record.tokenId,
+        permissionName.c_str(), record.status, type, record.pid, record.callerPid);
 
     ActiveChangeResponse info;
     info.callingTokenID = IPCSkeleton::GetCallingTokenID();
-    info.tokenID = tokenId;
+    info.tokenID = record.tokenId;
     info.permissionName = permissionName;
     info.deviceId = "";
-    info.type = static_cast<ActiveChangeType>(status);
+    info.type = static_cast<ActiveChangeType>(record.status);
     info.usedType = type;
-    info.pid = pid;
+    info.pid = record.pid;
 
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
 }
@@ -1210,7 +1216,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
     startRecordList_.insert(updatedRecordList.begin(), updatedRecordList.end());
     // each permission sends a status change notice
     for (const auto& record : updatedRecordList) {
-        CallbackExecute(record.tokenId, permissionName, record.status, record.pid);
+        CallbackExecute(record, permissionName);
     }
 }
 
@@ -1290,8 +1296,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 {
     AccessTokenID tokenId = info.tokenId;
     const std::string &permissionName = info.permissionName;
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
-        tokenId, info.pid, permissionName.c_str(), info.type);
+    LOGI(PRI_DOMAIN, PRI_TAG,
+        "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
+        tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1323,8 +1330,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 {
     AccessTokenID tokenId = info.tokenId;
     const std::string &permissionName = info.permissionName;
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
-        tokenId, info.pid, permissionName.c_str(), info.type);
+    LOGI(PRI_DOMAIN, PRI_TAG,
+        "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
+        tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1555,7 +1563,12 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
         }
         if (GetMuteStatus(permissionName, MIXED)) {
             AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-            CallbackExecute(callingTokenID, permissionName, PERM_TEMPORARY_CALL, -1); // pid -1 with no meaning
+            ContinusPermissionRecord record;
+            record.tokenId = callingTokenID;
+            record.status = PERM_TEMPORARY_CALL;
+            record.pid = -1; // pid -1 with no meaning
+            record.callerPid = -1; // pid -1 with no meaning
+            CallbackExecute(record, permissionName);
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
