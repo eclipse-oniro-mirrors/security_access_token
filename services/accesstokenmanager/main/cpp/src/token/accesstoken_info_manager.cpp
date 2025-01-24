@@ -621,10 +621,11 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         infoPtr->Update(info, permStateList);
-        int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, apl, true);
-        if (ret != RET_SUCCESS) {
-            return ret;
-        }
+    }
+
+    int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, apl, true);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
 
 #ifdef TOKEN_SYNC_ENABLE

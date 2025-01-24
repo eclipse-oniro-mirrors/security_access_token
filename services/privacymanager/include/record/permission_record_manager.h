@@ -93,7 +93,7 @@ public:
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status, int32_t pid,
+    void CallbackExecute(const ContinusPermissionRecord& record, const std::string& permissionName,
         PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
