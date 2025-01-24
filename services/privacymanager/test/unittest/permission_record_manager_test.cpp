@@ -59,7 +59,7 @@ static bool g_isMicMixMute = false;
 static bool g_isMicMute = false;
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
-static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
 static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const int32_t PICKER_TYPE_ADD_VALUE = 2;
@@ -333,7 +333,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Leve
     bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
     PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
@@ -356,7 +357,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
     PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
     ASSERT_EQ(RET_SUCCESS,
         AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY));
 
@@ -396,7 +398,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
     bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
     PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -430,7 +433,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
     bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
     PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -560,7 +564,8 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1
     bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
     PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -737,7 +742,7 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestS
  */
 HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level1)
 {
-    int32_t tokenId = RANDOM_TOKENID;
+    uint32_t tokenId = RANDOM_TOKENID;
     std::string permissionName = "ohos.permission.PERMISSION_RECORD_MANAGER_TEST";
     std::vector<PermissionUsedTypeInfo> results;
     // tokenId is not exsit
@@ -778,7 +783,7 @@ HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
 HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, NORMAL_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
 
@@ -795,7 +800,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level1)
 HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PICKER_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
 
@@ -812,7 +817,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level1)
 HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, SEC_COMPONENT_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
 
@@ -829,15 +834,18 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
     EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
     EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID));
 }
 
 /*
@@ -848,15 +856,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
     EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
     EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID));
 }
 
 /*
@@ -867,15 +878,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
     EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
     EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID));
 }
 
 /*
@@ -886,15 +900,19 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
     EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false));
+        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID));
 }
 
 /*
@@ -905,15 +923,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::MICROPHONE, false, RANDOM_TOKENID));
 }
 
 /*
@@ -924,15 +945,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::MICROPHONE, false, RANDOM_TOKENID));
 }
 
 /*
@@ -943,15 +967,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, false, RANDOM_TOKENID));
 }
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -964,15 +991,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true);
-    EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
+        RANDOM_TOKENID);
+    EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, false, RANDOM_TOKENID));
 }
 #endif
 
@@ -984,15 +1014,18 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest009, TestSize.Level1)
 {
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, true));
+    uint32_t tokenID = AccessTokenKit::GetNativeTokenId("edm");
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false);
-    EXPECT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
+        RANDOM_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::TEMPORARY, CallerType::MICROPHONE, false, RANDOM_TOKENID));
 }
 } // namespace AccessToken
 } // namespace Security

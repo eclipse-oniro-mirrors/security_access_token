@@ -360,14 +360,15 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
+    AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->SetMutePolicy(policyType, callerType, isMute);
+    return proxy->SetMutePolicy(policyType, callerType, isMute, tokenID);
 }
 
 int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)

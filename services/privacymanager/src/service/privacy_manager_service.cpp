@@ -282,12 +282,13 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
 
-int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
+    AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PolicyType: %{public}d, callerType: %{public}d, isMute: %{public}d",
-        policyType, callerType, isMute);
+    ACCESSTOKEN_LOG_INFO(LABEL, "PolicyType %{public}d, callerType %{public}d, isMute %{public}d, tokenId %{public}u",
+        policyType, callerType, isMute, tokenID);
     return PermissionRecordManager::GetInstance().SetMutePolicy(
-        static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
+        static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute, tokenID);
 }
 
 int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
