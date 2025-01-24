@@ -40,6 +40,7 @@ public:
     virtual int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) = 0;
     virtual int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) = 0;
     virtual int32_t QueryAppKeyState(DataLockType type, bool isApp) = 0;
+    virtual void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) = 0;
     virtual void UnInit() = 0;
 };
 }  // namespace AccessToken

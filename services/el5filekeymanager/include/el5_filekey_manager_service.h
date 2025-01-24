@@ -55,6 +55,7 @@ public:
     int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) override;
     int32_t QueryAppKeyState(DataLockType type) override;
 
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId);
     int32_t SetPolicyScreenLocked();
     int32_t HandleUserCommonEvent(const std::string &eventName, int32_t userId);
     void PostDelayedUnloadTask(uint32_t delayedTime);

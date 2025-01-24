@@ -75,29 +75,6 @@ int32_t El5FilekeyManagerService::Init()
     unloadHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
 #endif
 
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-    if (subscriber_ == nullptr) {
-        EventFwk::MatchingSkills matchingSkills;
-        matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
-        matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
-        EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
-        subscriber_ = std::make_shared<El5FilekeyManagerSubscriber>(subscribeInfo);
-        bool ret = EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
-        if (!ret) {
-            LOG_ERROR("Subscribe common event failed.");
-            subscriber_ = nullptr;
-        }
-    }
-#endif
-
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-    // screen is unlocked, sa is called by USER_REMOVED, auto stop in 30s.
-    if (!ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()) {
-        LOG_INFO("Init when screen is unlocked.");
-        PostDelayedUnloadTask(SCREEN_ON_DELAY_TIME);
-    }
-#endif
-
     handler_ = dlopen("/system/lib64/libel5_filekey_manager_api.z.so", RTLD_LAZY);
     if (handler_ == nullptr) {
         LOG_ERROR("Policy not exist, just start service.");
@@ -124,6 +101,41 @@ void El5FilekeyManagerService::UnInit()
     LOG_INFO("UnInit start");
     if (service_) {
         service_->UnInit();
+    }
+}
+
+void El5FilekeyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    LOG_INFO("SaId %{public}d added", systemAbilityId);
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+    if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
+        if (subscriber_ == nullptr) {
+            EventFwk::MatchingSkills matchingSkills;
+            matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
+            matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
+            EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+            subscriber_ = std::make_shared<El5FilekeyManagerSubscriber>(subscribeInfo);
+            bool ret = EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+            if (!ret) {
+                LOG_ERROR("Subscribe common event failed.");
+                subscriber_ = nullptr;
+            }
+        }
+    }
+#endif
+
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
+    if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
+        // screen is unlocked, sa is called by USER_REMOVED, auto stop in 30s.
+        if (!ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()) {
+            LOG_INFO("Init when screen is unlocked.");
+            PostDelayedUnloadTask(SCREEN_ON_DELAY_TIME);
+        }
+    }
+#endif
+
+    if (service_ != nullptr) {
+        service_->OnAddSystemAbility(systemAbilityId, deviceId);
     }
 }
 
