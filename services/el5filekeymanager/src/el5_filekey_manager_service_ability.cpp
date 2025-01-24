@@ -41,6 +41,7 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
     LOG_INFO("OnStart called.");
     std::string reasonName = startReason.GetName();
     LOG_INFO("El5FilekeyManager onStart reason name:%{public}s", reasonName.c_str());
+
     if (service_ != nullptr) {
         LOG_ERROR("The El5FilekeyManagerService has existed.");
         return;
@@ -52,6 +53,12 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
         LOG_ERROR("Failed to init the El5FilekeyManagerService instance.");
         return;
     }
+
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+    AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
+    AddSystemAbilityListener(TELEPHONY_CALL_MANAGER_SYS_ABILITY_ID);
+    AddSystemAbilityListener(TIME_SERVICE_ID);
+    AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
 
     if (reasonName == "usual.event.SCREEN_LOCKED") {
         service_->SetPolicyScreenLocked();
@@ -78,6 +85,13 @@ void El5FilekeyManagerServiceAbility::OnStop()
     if (service_) {
         service_->UnInit();
         service_ = nullptr;
+    }
+}
+
+void El5FilekeyManagerServiceAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    if (service_) {
+        service_->OnAddSystemAbility(systemAbilityId, deviceId);
     }
 }
 }  // namespace AccessToken

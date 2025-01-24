@@ -129,6 +129,11 @@ public:
         return EFM_SUCCESS;
     }
 
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+    {
+        GTEST_LOG_(INFO) << "OnAddSystemAbility.";
+    }
+
     void UnInit()
     {
         GTEST_LOG_(INFO) << "UnInit.";
