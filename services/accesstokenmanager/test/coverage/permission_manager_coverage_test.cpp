@@ -29,6 +29,7 @@
 #include "callback_death_recipients.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
+#include "permission_data_brief.h"
 
 using namespace testing::ext;
 
@@ -210,11 +211,10 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
     AccessTokenID tokenId = 123; // 123 is random input
     std::vector<GenericValues> permStateRes1;
     permStateRes1.emplace_back(value1);
+    PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes1); // ret != RET_SUCCESS
+    std::vector<BriefPermData> briefPermDataList;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
 
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permStateRes1); // ret != RET_SUCCESS
-
-    ASSERT_EQ(tokenId, policySet->tokenId_);
 
     GenericValues value2;
     value2.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
@@ -230,10 +230,11 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
     std::vector<GenericValues> permStateRes2;
     permStateRes2.emplace_back(value2);
     permStateRes2.emplace_back(value3);
-
-    std::shared_ptr<PermissionPolicySet> policySet2 = PermissionPolicySet::RestorePermissionPolicy(tokenId,
+    briefPermDataList.clear();
+    PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId,
         permStateRes2); // state.permissionName == iter->permissionName
-    ASSERT_EQ(static_cast<uint32_t>(2), policySet2->permStateList_.size());
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
+    ASSERT_EQ(static_cast<uint32_t>(2), briefPermDataList.size());
 }
 } // namespace AccessToken
 } // namespace Security

@@ -84,7 +84,7 @@ HapPolicyParams TestCommon::GetInfoManagerTestPolicyPrams()
     };
 
     PermissionStateFull g_infoManagerTestState1 = {
-        .permissionName = "ohos.permission.test1",
+        .permissionName = "ohos.permission.GET_WIFI_INFO",
         .isGeneral = true,
         .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
@@ -92,7 +92,7 @@ HapPolicyParams TestCommon::GetInfoManagerTestPolicyPrams()
     };
 
     PermissionStateFull g_infoManagerTestState2 = {
-        .permissionName = "ohos.permission.test2",
+        .permissionName = "ohos.permission.SET_WIFI_INFO",
         .isGeneral = false,
         .resDeviceID = {"device 1", "device 2"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},

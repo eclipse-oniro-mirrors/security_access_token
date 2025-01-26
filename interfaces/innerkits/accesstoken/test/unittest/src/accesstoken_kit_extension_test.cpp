@@ -371,7 +371,7 @@ void PreparePermStateListExt(HapPolicyParams &policy)
 void PreparePermStateList(HapPolicyParams &policy)
 {
     PermissionStateFull permTestState1 = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -379,7 +379,7 @@ void PreparePermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState2 = {
-        .permissionName = "ohos.permission.testPermDef2",
+        .permissionName = "ohos.permission.MICROPHONE",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -387,7 +387,7 @@ void PreparePermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState3 = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -395,7 +395,7 @@ void PreparePermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState4 = {
-        .permissionName = "ohos.permission.testPermDef4",
+        .permissionName = "ohos.permission.READ_IMAGEVIDEO",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
@@ -426,44 +426,8 @@ void PreparePermDefList(HapPolicyParams &policy)
     permissionDefBeta.provisionEnable = false;
     permissionDefBeta.distributedSceneEnable = false;
 
-    PermissionDef testPermDef1;
-    testPermDef1.permissionName = "ohos.permission.testPermDef1";
-    testPermDef1.bundleName = TEST_BUNDLE_NAME;
-    testPermDef1.grantMode = GrantMode::USER_GRANT;
-    testPermDef1.availableLevel = APL_NORMAL;
-    testPermDef1.provisionEnable = false;
-    testPermDef1.distributedSceneEnable = false;
-
-    PermissionDef testPermDef2;
-    testPermDef2.permissionName = "ohos.permission.testPermDef2";
-    testPermDef2.bundleName = TEST_BUNDLE_NAME;
-    testPermDef2.grantMode = GrantMode::USER_GRANT;
-    testPermDef2.availableLevel = APL_NORMAL;
-    testPermDef2.provisionEnable = false;
-    testPermDef2.distributedSceneEnable = false;
-
-    PermissionDef testPermDef3;
-    testPermDef3.permissionName = "ohos.permission.testPermDef3";
-    testPermDef3.bundleName = TEST_BUNDLE_NAME;
-    testPermDef3.grantMode = GrantMode::USER_GRANT;
-    testPermDef3.availableLevel = APL_NORMAL;
-    testPermDef3.provisionEnable = false;
-    testPermDef3.distributedSceneEnable = false;
-
-    PermissionDef testPermDef4;
-    testPermDef4.permissionName = "ohos.permission.testPermDef4";
-    testPermDef4.bundleName = TEST_BUNDLE_NAME;
-    testPermDef4.grantMode = GrantMode::USER_GRANT;
-    testPermDef4.availableLevel = APL_NORMAL;
-    testPermDef4.provisionEnable = false;
-    testPermDef4.distributedSceneEnable = false;
-
     policy.permList.emplace_back(permissionDefAlpha);
     policy.permList.emplace_back(permissionDefBeta);
-    policy.permList.emplace_back(testPermDef1);
-    policy.permList.emplace_back(testPermDef2);
-    policy.permList.emplace_back(testPermDef3);
-    policy.permList.emplace_back(testPermDef4);
 }
 
 void AccessTokenKitExtensionTest::SetUp()
@@ -557,11 +521,11 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionsStatus001, TestSize.Level1)
 
     std::vector<PermissionListState> permsList;
     PermissionListState tmpA = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .state = SETTING_OPER
     };
     PermissionListState tmpB = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .state = SETTING_OPER
     };
     PermissionListState tmpC = {
@@ -585,7 +549,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionsStatus001, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
     ASSERT_EQ(SETTING_OPER, permsList[1].state);
-    ASSERT_EQ(PASS_OPER, permsList[2].state);
+    ASSERT_EQ(INVALID_OPER, permsList[2].state);
     ASSERT_EQ(INVALID_OPER, permsList[3].state);
     ASSERT_EQ(INVALID_OPER, permsList[4].state);
 }
@@ -605,11 +569,11 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionsStatus002, TestSize.Level1)
 
     std::vector<PermissionListState> permsList;
     PermissionListState tmpA = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .state = SETTING_OPER
     };
     PermissionListState tmpB = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .state = SETTING_OPER
     };
     PermissionListState tmpC = {
@@ -640,7 +604,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionsStatus002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
     ASSERT_EQ(FORBIDDEN_OPER, permsList[0].state);
     ASSERT_EQ(FORBIDDEN_OPER, permsList[1].state);
-    ASSERT_EQ(FORBIDDEN_OPER, permsList[2].state);
+    ASSERT_EQ(INVALID_OPER, permsList[2].state);
     ASSERT_EQ(INVALID_OPER, permsList[3].state);
     ASSERT_EQ(INVALID_OPER, permsList[4].state);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
@@ -758,7 +722,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionsStatus007, TestSize.Level1)
 
     std::vector<PermissionListState> permsList;
     PermissionListState tmpA = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .state = SETTING_OPER
     };
 

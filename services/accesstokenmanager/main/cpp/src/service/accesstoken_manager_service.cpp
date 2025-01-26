@@ -310,9 +310,6 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
-    if (flag == PermissionFlag::PERMISSION_USER_SET) {
-        AccessTokenInfoManager::GetInstance().ClearHapPolicy();
-    }
     return ret;
 }
 
@@ -694,7 +691,6 @@ bool AccessTokenManagerService::Initialize()
 {
     ReportSysEventPerformance();
     AccessTokenInfoManager::GetInstance().Init();
-    AccessTokenInfoManager::GetInstance().ClearHapPolicy();
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();

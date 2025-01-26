@@ -356,7 +356,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ("ohos.permission.MICROPHONE", permStatList[0].permissionName);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
@@ -380,7 +380,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ("ohos.permission.SET_WIFI_INFO", permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
@@ -472,7 +472,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
         std::vector<PermissionStateFull> permStatList;
         int32_t ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
         ASSERT_EQ("ohos.permission.MICROPHONE", permStatList[0].permissionName);
     }
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));

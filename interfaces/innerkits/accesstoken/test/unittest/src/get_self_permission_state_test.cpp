@@ -111,7 +111,7 @@ void GetSelfPermissionStateTest::TearDownTestCase()
 void InitPermStateList(HapPolicyParams &policy)
 {
     PermissionStateFull permTestState1 = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -119,7 +119,7 @@ void InitPermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState2 = {
-        .permissionName = "ohos.permission.testPermDef2",
+        .permissionName = "ohos.permission.MICROPHONE",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -127,7 +127,7 @@ void InitPermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState3 = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -135,7 +135,7 @@ void InitPermStateList(HapPolicyParams &policy)
     };
 
     PermissionStateFull permTestState4 = {
-        .permissionName = "ohos.permission.testPermDef4",
+        .permissionName = "ohos.permission.READ_IMAGEVIDEO",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
@@ -242,19 +242,19 @@ void GetSelfPermissionStateTest::DeleteTestToken() const
 void GetPermsList1(std::vector<PermissionListState> &permsList1)
 {
     PermissionListState perm1 = {
-        .permissionName = "ohos.permission.testPermDef1",
+        .permissionName = "ohos.permission.LOCATION",
         .state = SETTING_OPER,
     };
     PermissionListState perm2 = {
-        .permissionName = "ohos.permission.testPermDef2",
+        .permissionName = "ohos.permission.MICROPHONE",
         .state = SETTING_OPER,
     };
     PermissionListState perm3 = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .state = SETTING_OPER,
     };
     PermissionListState perm4 = {
-        .permissionName = "ohos.permission.testPermDef4",
+        .permissionName = "ohos.permission.READ_IMAGEVIDEO",
         .state = SETTING_OPER,
     };
     permsList1.emplace_back(perm1);
@@ -266,11 +266,11 @@ void GetPermsList1(std::vector<PermissionListState> &permsList1)
 void GetPermsList2(std::vector<PermissionListState> &permsList2)
 {
     PermissionListState perm3 = {
-        .permissionName = "ohos.permission.testPermDef3",
+        .permissionName = "ohos.permission.WRITE_CALENDAR",
         .state = SETTING_OPER,
     };
     PermissionListState perm4 = {
-        .permissionName = "ohos.permission.testPermDef4",
+        .permissionName = "ohos.permission.READ_IMAGEVIDEO",
         .state = SETTING_OPER,
     };
     permsList2.emplace_back(perm3);
@@ -299,10 +299,10 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState001, TestSize.Level1
     ASSERT_EQ(DYNAMIC_OPER, permsList1[1].state);
     ASSERT_EQ(SETTING_OPER, permsList1[2].state);
     ASSERT_EQ(PASS_OPER, permsList1[3].state);
-    ASSERT_EQ("ohos.permission.testPermDef1", permsList1[0].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef2", permsList1[1].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef3", permsList1[2].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef4", permsList1[3].permissionName);
+    ASSERT_EQ("ohos.permission.LOCATION", permsList1[0].permissionName);
+    ASSERT_EQ("ohos.permission.MICROPHONE", permsList1[1].permissionName);
+    ASSERT_EQ("ohos.permission.WRITE_CALENDAR", permsList1[2].permissionName);
+    ASSERT_EQ("ohos.permission.READ_IMAGEVIDEO", permsList1[3].permissionName);
 
     PermissionListState perm5 = {
         .permissionName = "ohos.permission.testPermDef5",

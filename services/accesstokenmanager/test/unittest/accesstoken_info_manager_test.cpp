@@ -727,7 +727,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
 {
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
-    info->permPolicySet_ = nullptr;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
     HapTokenInfoForSync hapSync;
     ASSERT_NE(0, AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenId, hapSync));
@@ -1588,12 +1587,12 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
     std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(perm);
 
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
 
     // perm.permissionName != permissionName
-    int flag = 0;
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
+    uint32_t flag = 0;
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
+        PermissionDataBrief::GetInstance().QueryPermissionFlag(tokenId, "ohos.permission.TEST1", flag));
 }
 
 /**
@@ -1614,8 +1613,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(perm);
 
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
 
     // iter reach the end
     bool isGranted = false;
@@ -1623,29 +1621,28 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     bool changed = false;
 
     // permission is invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
-        isGranted, flag, changed));
-
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.TEST1", isGranted, flag, changed));
     // flag != PERMISSION_COMPONENT_SET
     flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
-        isGranted, flag, changed));
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
     
     // flag == PERMISSION_COMPONENT_SET
     flag = PermissionFlag::PERMISSION_COMPONENT_SET;
-    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
-        isGranted, flag, changed));
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
 
 
     // flag == PERMISSION_SYSTEM_FIXED
     flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
-    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
-        isGranted, flag, changed));
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
 
     // Permission fixed by system
     flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.CAMERA",
-        isGranted, flag, changed));
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
 }
 
 /**
@@ -1660,15 +1657,15 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
     std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(g_permState);
 
-    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
-        permStateList);
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
 
-    ASSERT_EQ(tokenId, policySet->tokenId_);
+    std::vector<BriefPermData> briefPermDataList;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
 
     std::string info;
     std::vector<PermissionDef> permList;
     // iter != end - 1
-    PermissionPolicySet::ToString(info, permList, permStateList);
+    HapTokenInfoInner::PermToString(permList, permStateList, info);
     ASSERT_TRUE(!info.empty());
 }
 
