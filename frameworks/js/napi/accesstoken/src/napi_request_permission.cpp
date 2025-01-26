@@ -273,51 +273,6 @@ static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::
     return result;
 }
 
-static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
-{
-    (void)status;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uv_queue_work_with_qos input work is nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    ResultCallback *retCB = reinterpret_cast<ResultCallback*>(work->data);
-    if (retCB == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RetCB is nullptr");
-        return;
-    }
-    std::unique_ptr<ResultCallback> callbackPtr {retCB};
-
-    int32_t result = JsErrorCode::JS_OK;
-    if (retCB->data->result != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Result is: %{public}d", retCB->data->result);
-        result = RET_FAILED;
-    }
-    if (retCB->grantResults.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GrantResults empty");
-        result = RET_FAILED;
-    }
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(retCB->data->env, &scope);
-    if (scope == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
-        return;
-    }
-    napi_value requestResult = WrapRequestResult(
-        retCB->data->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults, retCB->errorReasons);
-    if (requestResult == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
-        result = RET_FAILED;
-    }
-
-    if (retCB->data->deferred != nullptr) {
-        ReturnPromiseResult(retCB->data->env, result, retCB->data->deferred, requestResult);
-    } else {
-        ReturnCallbackResult(retCB->data->env, result, retCB->data->callbackRef, requestResult);
-    }
-    napi_close_handle_scope(retCB->data->env, scope);
-}
-
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
     const std::vector<int>& grantResults, std::shared_ptr<RequestAsyncContext>& data, std::vector<int>& newGrantResults)
 {
@@ -340,8 +295,6 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
         LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
         return;
     }
-
-    // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
     std::vector<int> newGrantResults;
     UpdateGrantPermissionResultOnly(permissionList, permissionStates, data, newGrantResults);
 
@@ -351,25 +304,39 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
     retCB->dialogShownResults = data->dialogShownResults;
     retCB->errorReasons = data->errorReasons;
     retCB->data = data;
+    auto task = [retCB]() {
+        int32_t result = JsErrorCode::JS_OK;
+        if ((retCB->data->result != RET_SUCCESS) || (retCB->grantResults.empty())) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Result is: %{public}d", retCB->data->result);
+            result = RET_FAILED;
+        }
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(retCB->data->env, &scope);
+        if (scope == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
+            delete retCB;
+            return;
+        }
+        napi_value requestResult = WrapRequestResult(
+            retCB->data->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults, retCB->errorReasons);
+        if (requestResult == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
+            result = RET_FAILED;
+        }
 
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(data->env, napi_get_uv_event_loop(data->env, &loop));
-    if (loop == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
-        return;
+        if (retCB->data->deferred != nullptr) {
+            ReturnPromiseResult(retCB->data->env, result, retCB->data->deferred, requestResult);
+        } else {
+            ReturnCallbackResult(retCB->data->env, result, retCB->data->callbackRef, requestResult);
+        }
+        napi_close_handle_scope(retCB->data->env, scope);
+        delete retCB;
+    };
+    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestResultsHandler: Failed to SendEvent");
+    } else {
+        callbackPtr.release();
     }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(data->env, uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
-
-    uvWorkPtr.release();
-    callbackPtr.release();
 }
 
 void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& permissionList,
