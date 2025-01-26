@@ -79,41 +79,29 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid env");
         return;
     }
-    std::unique_ptr<uv_work_t> workPtr = std::make_unique<uv_work_t>();
-    std::unique_ptr<AtManagerAsyncWorkDataRel> workDataRel = std::make_unique<AtManagerAsyncWorkDataRel>();
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env, &loop);
-    if ((loop == nullptr) || (workPtr == nullptr) || (workDataRel == nullptr)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to init execution environment");
+    AtManagerAsyncWorkDataRel* workDataRel = new (std::nothrow) AtManagerAsyncWorkDataRel();
+    if (workDataRel == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "workDataRel is nullptr");
         return;
     }
+    std::unique_ptr<AtManagerAsyncWorkDataRel> workDataRelPtr {workDataRel};
     workDataRel->env = env;
     workDataRel->work = work;
     workDataRel->callbackRef = callbackRef;
-    workPtr->data = reinterpret_cast<void *>(workDataRel.get());
-    NAPI_CALL_RETURN_VOID(env, uv_queue_work_with_qos(loop, workPtr.get(), [] (uv_work_t *work) {},
-        [] (uv_work_t *work, int status) {
-            if (work == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Work is nullptr");
-                return;
-            }
-            auto workDataRel = reinterpret_cast<AtManagerAsyncWorkDataRel *>(work->data);
-            if (workDataRel == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "WorkDataRel is nullptr");
-                delete work;
-                return;
-            }
-            if (workDataRel->work != nullptr) {
-                napi_delete_async_work(workDataRel->env, workDataRel->work);
-            }
-            if (workDataRel->callbackRef != nullptr) {
-                napi_delete_reference(workDataRel->env, workDataRel->callbackRef);
-            }
-            delete workDataRel;
-            delete work;
-        }, uv_qos_default));
-    workDataRel.release();
-    workPtr.release();
+    auto task = [workDataRel]() {
+        if (workDataRel->work != nullptr) {
+            napi_delete_async_work(workDataRel->env, workDataRel->work);
+        }
+        if (workDataRel->callbackRef != nullptr) {
+            napi_delete_reference(workDataRel->env, workDataRel->callbackRef);
+        }
+        delete workDataRel;
+    };
+    if (napi_status::napi_ok != napi_send_event(env, task, napi_eprio_high)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AtManagerAsyncWorkData: Failed to SendEvent");
+    } else {
+        workDataRelPtr.release();
+    }
 }
 }  // namespace AccessToken
 }  // namespace Security

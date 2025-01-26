@@ -144,42 +144,6 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
     return jsCode;
 }
 
-static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
-{
-    (void)status;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uv_queue_work_with_qos input work is nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    PermissonOnSettingResultCallback *retCB = reinterpret_cast<PermissonOnSettingResultCallback*>(work->data);
-    if (retCB == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RetCB is nullptr");
-        return;
-    }
-    std::unique_ptr<PermissonOnSettingResultCallback> callbackPtr {retCB};
-    std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext = retCB->data;
-    if (asyncContext == nullptr) {
-        return;
-    }
-
-    int32_t result = retCB->jsCode;
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(asyncContext->env, &scope);
-    if (scope == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
-        return;
-    }
-    napi_value requestResult = WrapRequestResult(asyncContext->env, retCB->stateList);
-    if ((result == JS_OK) && (requestResult == nullptr)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
-        result = JS_ERROR_INNER;
-    }
-
-    ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
-    napi_close_handle_scope(asyncContext->env, scope);
-}
-
 static void PermissionResultsCallbackUI(int32_t jsCode,
     const std::vector<int32_t> stateList, std::shared_ptr<RequestPermOnSettingAsyncContext>& data)
 {
@@ -193,25 +157,36 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
     retCB->jsCode = jsCode;
     retCB->stateList = stateList;
     retCB->data = data;
+    auto task = [retCB]() {
+        std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext = retCB->data;
+        if (asyncContext == nullptr) {
+            delete retCB;
+            return;
+        }
 
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(data->env, napi_get_uv_event_loop(data->env, &loop));
-    if (loop == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
-        return;
-    }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(data->env, uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
+        int32_t result = retCB->jsCode;
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(asyncContext->env, &scope);
+        if (scope == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Napi_open_handle_scope failed");
+            delete retCB;
+            return;
+        }
+        napi_value requestResult = WrapRequestResult(asyncContext->env, retCB->stateList);
+        if ((result == JS_OK) && (requestResult == nullptr)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
+            result = JS_ERROR_INNER;
+        }
 
-    uvWorkPtr.release();
-    callbackPtr.release();
+        ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
+        napi_close_handle_scope(asyncContext->env, scope);
+        delete retCB;
+    };
+    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionResultsCallbackUI: Failed to SendEvent");
+    } else {
+        callbackPtr.release();
+    }
 }
 
 static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext,

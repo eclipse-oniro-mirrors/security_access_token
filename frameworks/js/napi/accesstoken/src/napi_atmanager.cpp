@@ -109,28 +109,6 @@ static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermSt
         napi_call_function(registerPermStateChangeData->env, undefined, callback, 1, &result, &resultOut));
 }
 
-static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
-{
-    if (work == nullptr || work->data == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Work == nullptr || work->data == nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    RegisterPermStateChangeWorker* registerPermStateChangeData =
-        reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
-    std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeData};
-
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(registerPermStateChangeData->env, &scope);
-    if (scope == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to open scope");
-        return;
-    }
-    NotifyPermStateChanged(registerPermStateChangeData);
-    napi_close_handle_scope(registerPermStateChangeData->env, scope);
-    LOGD(ATM_DOMAIN, ATM_TAG, "UvQueueWorkPermStateChanged end");
-};
-
 static bool IsPermissionFlagValid(uint32_t flag)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Permission flag is %{public}d", flag);
@@ -158,20 +136,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
         LOGE(ATM_DOMAIN, ATM_TAG, "Object is invalid.");
         return;
     }
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
-    if (loop == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
-        return;
-    }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    RegisterPermStateChangeWorker* registerPermStateChangeWorker =
-        new (std::nothrow) RegisterPermStateChangeWorker();
+    RegisterPermStateChangeWorker* registerPermStateChangeWorker = new (std::nothrow) RegisterPermStateChangeWorker();
     if (registerPermStateChangeWorker == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
@@ -180,15 +145,23 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     registerPermStateChangeWorker->env = env_;
     registerPermStateChangeWorker->ref = ref_;
     registerPermStateChangeWorker->result = result;
-    LOGD(ATM_DOMAIN, ATM_TAG,
-        "result permStateChangeType = %{public}d, tokenID = %{public}d, permissionName = %{public}s",
-        result.permStateChangeType, result.tokenID, result.permissionName.c_str());
-    registerPermStateChangeWorker->subscriber = shared_from_this();
-    work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
-    NAPI_CALL_RETURN_VOID(env_,
-        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkPermStateChanged, uv_qos_default));
-    uvWorkPtr.release();
-    workPtr.release();
+    auto task = [registerPermStateChangeWorker]() {
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(registerPermStateChangeWorker->env, &scope);
+        if (scope == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Fail to open scope");
+            delete registerPermStateChangeWorker;
+            return;
+        }
+        NotifyPermStateChanged(registerPermStateChangeWorker);
+        napi_close_handle_scope(registerPermStateChangeWorker->env, scope);
+        delete registerPermStateChangeWorker;
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermStateChangeCallback: Failed to SendEvent");
+    } else {
+        workPtr.release();
+    }
 }
 
 void RegisterPermStateChangeScopePtr::SetEnv(const napi_env& env)
@@ -210,45 +183,9 @@ void RegisterPermStateChangeScopePtr::SetValid(bool valid)
 PermStateChangeContext::~PermStateChangeContext()
 {}
 
-void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
-{
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Work == nullptr : %{public}d", work == nullptr);
-        return;
-    } else if (work->data == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Work->data == nullptr : %{public}d", work->data == nullptr);
-        return;
-    }
-    RegisterPermStateChangeWorker* registerPermStateChangeWorker =
-        reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
-    if (registerPermStateChangeWorker == nullptr) {
-        delete work;
-        return;
-    }
-    napi_delete_reference(registerPermStateChangeWorker->env, registerPermStateChangeWorker->ref);
-    delete registerPermStateChangeWorker;
-    registerPermStateChangeWorker = nullptr;
-    delete work;
-    LOGD(ATM_DOMAIN, ATM_TAG, "UvQueueWorkDeleteRef end");
-}
-
 void RegisterPermStateChangeScopePtr::DeleteNapiRef()
 {
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
-    if (loop == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Loop instance is nullptr");
-        return;
-    }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
-        return;
-    }
-
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    RegisterPermStateChangeWorker* registerPermStateChangeWorker =
-        new (std::nothrow) RegisterPermStateChangeWorker();
+    RegisterPermStateChangeWorker* registerPermStateChangeWorker = new (std::nothrow) RegisterPermStateChangeWorker();
     if (registerPermStateChangeWorker == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
@@ -256,13 +193,15 @@ void RegisterPermStateChangeScopePtr::DeleteNapiRef()
     std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeWorker};
     registerPermStateChangeWorker->env = env_;
     registerPermStateChangeWorker->ref = ref_;
-
-    work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
-    NAPI_CALL_RETURN_VOID(env_,
-        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkDeleteRef, uv_qos_default));
-    LOGD(ATM_DOMAIN, ATM_TAG, "DeleteNapiRef");
-    uvWorkPtr.release();
-    workPtr.release();
+    auto task = [registerPermStateChangeWorker]() {
+        napi_delete_reference(registerPermStateChangeWorker->env, registerPermStateChangeWorker->ref);
+        delete registerPermStateChangeWorker;
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "DeleteNapiRef: Failed to SendEvent");
+    } else {
+        workPtr.release();
+    }
 }
 
 void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
