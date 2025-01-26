@@ -3581,6 +3581,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WRITE_PROTECTION_ADVICE_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.READ_PROTECTION_ADVICE_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.USE_FRAUD_MESSAGES_PICKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -4274,6 +4294,16 @@
             "name": "ohos.permission.GET_PAGE_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_ACCOUNT_RECOMMENDATION_DATA",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 16,
             "deprecated": "",
