@@ -748,7 +748,7 @@ static void UnlockNativeTokenFile(int32_t lockFileFd)
 static uint32_t AddOrUpdateTokenInfo(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
     int32_t apl, NativeAtId *tokenId)
 {
-    int ret = ATRET_SUCCESS;
+    uint32_t ret = ATRET_SUCCESS;
     if (tokenNode == NULL) {
         ret = AddNewTokenToListAndFile(tokenInfo, apl, tokenId);
     } else {
