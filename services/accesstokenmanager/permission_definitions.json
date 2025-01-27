@@ -5897,6 +5897,15 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },{   
+            "name": "ohos.permission.SET_PAC_URL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.ACCESS_FUSION_AWARENESS_DATA",
