@@ -12,6 +12,8 @@
 # limitations under the License.
 
 access_token_path = "//base/security/access_token"
+access_token_innerkit_path =
+    "//base/security/access_token/interfaces/innerkits/accesstoken"
 module_output_path_interface_privacy =
     "access_token/access_token/interface_privacy"
 module_output_path_interface_access_token =
