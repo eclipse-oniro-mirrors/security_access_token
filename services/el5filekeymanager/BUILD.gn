@@ -44,7 +44,13 @@ if (is_standard_system && ability_base_enable == true) {
 
     shlib_type = "sa"
     cflags = []
-    cflags_cc = []
+    cflags_cc = [
+      "-fdata-sections",
+      "-ffunction-sections",
+      "-fno-asynchronous-unwind-tables",
+      "-fno-unwind-tables",
+      "-Os",
+    ]
     defines = []
     sources = [
       "src/el5_filekey_callback_proxy.cpp",
