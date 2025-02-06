@@ -45,11 +45,7 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
     "napi:cj_bind_ffi",
   ]
 
-  cflags_cc = [
-    "-fstack-protector-strong",
-    "-O2",
-    "-D_FORTIFY_SOURCE=2",
-  ]
+  cflags_cc = [ "-DHILOG_ENABLE" ]
   public_configs = [ ":cj_screen_lock_file_manager_ffi_config" ]
   configs = [
     "${access_token_path}/config:access_token_compile_flags",
