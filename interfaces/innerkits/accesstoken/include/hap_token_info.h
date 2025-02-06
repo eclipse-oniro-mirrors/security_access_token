@@ -71,6 +71,8 @@ public:
     bool isSystemApp;
     /* app type */
     std::string appDistributionType;
+    bool isRestore = false;
+    AccessTokenID tokenID = INVALID_TOKENID;
 };
 
 /**

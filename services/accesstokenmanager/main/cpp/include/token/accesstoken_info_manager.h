@@ -135,6 +135,7 @@ private:
     bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
         const std::vector<std::string>& nativeAcls);
     void NativeTokenToString(AccessTokenID tokenID, std::string& info);
+    int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     bool hasInited_;
     std::atomic_int32_t dumpTaskNum_;
 
