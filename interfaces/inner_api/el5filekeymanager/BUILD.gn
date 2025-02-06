@@ -30,6 +30,14 @@ ohos_shared_library("el5_filekey_manager_sdk") {
   }
   branch_protector_ret = "pac_ret"
 
+  cflags_cc = [
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-Os",
+  ]
+
   public_configs = [ ":efm_innerkits" ]
 
   include_dirs = [
