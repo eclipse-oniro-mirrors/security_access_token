@@ -2724,7 +2724,7 @@
             "name": "ohos.permission.SYNC_ASSET_BETWEEN_TRUSTED_ACCOUNT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
