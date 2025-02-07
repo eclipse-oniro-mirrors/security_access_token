@@ -356,6 +356,43 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
     return true;
 }
 
+bool NapiAtManager::ParseInputVerifyPermissionSync(const napi_env env, const napi_callback_info info,
+    AtManagerSyncContext& syncContext)
+{
+    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
+
+    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = { nullptr };
+    napi_value thisVar = nullptr;
+    std::string errMsg;
+    void *data = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
+    syncContext.env = env;
+    // 0: the first parameter of argv
+    if (!ParseUint32(env, argv[0], syncContext.tokenId)) {
+        errMsg = GetParamErrorMsg("tokenId", "number");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    // 1: the second parameter of argv
+    if (!ParseString(env, argv[1], syncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}d, permissionName = %{public}s", syncContext.tokenId,
+        syncContext.permissionName.c_str());
+    return true;
+}
+
 void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
@@ -526,72 +563,72 @@ std::string NapiAtManager::GetPermParamValue()
     return g_paramCache.sysParamCache;
 }
 
-void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
+void NapiAtManager::UpdatePermissionCache(AtManagerSyncContext* syncContext)
 {
     std::lock_guard<std::mutex> lock(g_lockCache);
-    auto iter = g_cache.find(asyncContext->permissionName);
+    auto iter = g_cache.find(syncContext->permissionName);
     if (iter != g_cache.end()) {
         std::string currPara = GetPermParamValue();
         if (currPara != iter->second.paramValue) {
-            asyncContext->result = AccessTokenKit::VerifyAccessToken(
-                asyncContext->tokenId, asyncContext->permissionName);
-            iter->second.status = asyncContext->result;
+            syncContext->result = AccessTokenKit::VerifyAccessToken(
+                syncContext->tokenId, syncContext->permissionName);
+            iter->second.status = syncContext->result;
             iter->second.paramValue = currPara;
             LOGD(ATM_DOMAIN, ATM_TAG, "Param changed currPara %{public}s", currPara.c_str());
         } else {
-            asyncContext->result = iter->second.status;
+            syncContext->result = iter->second.status;
         }
     } else {
-        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
-        g_cache[asyncContext->permissionName].status = asyncContext->result;
-        g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
+        syncContext->result = AccessTokenKit::VerifyAccessToken(syncContext->tokenId, syncContext->permissionName);
+        g_cache[syncContext->permissionName].status = syncContext->result;
+        g_cache[syncContext->permissionName].paramValue = GetPermParamValue();
         LOGD(ATM_DOMAIN, ATM_TAG, "G_cacheParam set %{public}s",
-            g_cache[asyncContext->permissionName].paramValue.c_str());
+            g_cache[syncContext->permissionName].paramValue.c_str());
     }
 }
 
 napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
     static uint64_t selfTokenId = GetSelfTokenID();
-    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
-    if (asyncContext == nullptr) {
+    auto* syncContext = new (std::nothrow) AtManagerSyncContext();
+    if (syncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
         return nullptr;
     }
 
-    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
+    std::unique_ptr<AtManagerSyncContext> context {syncContext};
+    if (!ParseInputVerifyPermissionSync(env, info, *syncContext)) {
         return nullptr;
     }
-    if (asyncContext->tokenId == 0) {
+    if (syncContext->tokenId == 0) {
         std::string errMsg = GetParamErrorMsg("tokenID", "number");
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if ((asyncContext->permissionName.empty()) ||
-        ((asyncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
+    if ((syncContext->permissionName.empty()) ||
+        ((syncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
         std::string errMsg = GetParamErrorMsg("permissionName", "string");
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
+    if (syncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
         int32_t cnt = g_cnt.fetch_add(1);
         if (cnt % REPORT_CNT == 0) {
             AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
-                "SELF_TOKENID", selfToken, "CONTEXT_TOKENID", asyncContext->tokenId);
+                "SELF_TOKENID", selfToken, "CONTEXT_TOKENID", syncContext->tokenId);
         }
-        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
+        syncContext->result = AccessTokenKit::VerifyAccessToken(syncContext->tokenId, syncContext->permissionName);
         napi_value result = nullptr;
-        NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
+        NAPI_CALL(env, napi_create_int32(env, syncContext->result, &result));
         LOGD(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenSync end.");
         return result;
     }
 
-    UpdatePermissionCache(asyncContext);
+    UpdatePermissionCache(syncContext);
     napi_value result = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
+    NAPI_CALL(env, napi_create_int32(env, syncContext->result, &result));
     return result;
 }
 

@@ -85,6 +85,16 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     int32_t errorCode = 0;
 };
 
+struct AtManagerSyncContext {
+    explicit AtManagerSyncContext() {}
+
+    napi_env env = nullptr;
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+    int32_t result = RET_FAILED;
+    int32_t errorCode = 0;
+};
+
 struct PermissionStatusCache {
     int32_t status;
     std::string paramValue;
@@ -117,6 +127,8 @@ private:
 
     static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
+    static bool ParseInputVerifyPermissionSync(const napi_env env, const napi_callback_info info,
+        AtManagerSyncContext& syncContext);
     static bool ParseInputSetToggleStatus(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
     static bool ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
@@ -161,7 +173,7 @@ private:
     static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, const napi_env env,
         napi_ref subscriberRef);
     static std::string GetPermParamValue();
-    static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
+    static void UpdatePermissionCache(AtManagerSyncContext* syncContext);
 };
 } // namespace AccessToken
 } // namespace Security
