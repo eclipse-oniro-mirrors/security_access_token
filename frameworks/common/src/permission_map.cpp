@@ -84,6 +84,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.GET_PHONE_NUMBERS",       false},
     {"ohos.permission.DISTRIBUTED_SOFTBUS_CENTER", false},
     {"ohos.permission.REQUIRE_FORM",            false},
+    {"ohos.permission.START_DESKTOP_UI_COMPONENT", false},
     {"ohos.permission.AGENT_REQUIRE_FORM",      false},
     {"ohos.permission.GET_NETWORK_INFO",        false},
     {"ohos.permission.PLACE_CALL",              false},
