@@ -16,6 +16,11 @@ declare_args() {
 }
 
 config("access_token_compile_flags") {
+  cflags_cc = [
+    "-Os",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+  ]
   cflags = [
     "-fdata-sections",
     "-ffunction-sections",
