@@ -93,7 +93,7 @@ static int32_t GetJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_INNER;
             break;
     }
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
     return jsCode;
 }
 
@@ -544,7 +544,7 @@ static bool ParseGetPermissionUsedRecords(
 
 static void AddPermissionUsedRecordExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "AddPermissionUsedRecord execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "AddPermissionUsedRecord execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -561,7 +561,7 @@ static void AddPermissionUsedRecordExecute(napi_env env, void* data)
 
 static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "AddPermissionUsedRecord complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "AddPermissionUsedRecord complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
@@ -575,11 +575,11 @@ static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, vo
 
 napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "AddPermissionUsedRecord begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "AddPermissionUsedRecord begin.");
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -612,7 +612,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 
 static void SetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "SetPermissionUsedRecordToggleStatus execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "SetPermissionUsedRecordToggleStatus execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -624,7 +624,7 @@ static void SetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
 
 static void SetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "SetPermissionUsedRecordToggleStatus complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "SetPermissionUsedRecordToggleStatus complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
@@ -636,11 +636,11 @@ static void SetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_statu
 
 napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "SetPermissionUsedRecordToggleStatus begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "SetPermissionUsedRecordToggleStatus begin.");
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -674,7 +674,7 @@ napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
 
 static void GetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecordToggleStatus execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordToggleStatus execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -686,7 +686,7 @@ static void GetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
 
 static void GetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecordToggleStatus complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordToggleStatus complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
@@ -699,11 +699,11 @@ static void GetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_statu
 
 napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecordToggleStatus begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordToggleStatus begin.");
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -734,7 +734,7 @@ napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
 
 static void StartUsingPermissionExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StartUsingPermission execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StartUsingPermission execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -746,7 +746,7 @@ static void StartUsingPermissionExecute(napi_env env, void* data)
 
 static void StartUsingPermissionComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StartUsingPermission complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StartUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
@@ -760,10 +760,10 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StartUsingPermission begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StartUsingPermission begin.");
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -796,7 +796,7 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 
 static void StopUsingPermissionExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StopUsingPermission execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StopUsingPermission execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -808,7 +808,7 @@ static void StopUsingPermissionExecute(napi_env env, void* data)
 
 static void StopUsingPermissionComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StopUsingPermission complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StopUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
@@ -822,11 +822,11 @@ static void StopUsingPermissionComplete(napi_env env, napi_status status, void* 
 
 napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "StopUsingPermission begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "StopUsingPermission begin.");
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -859,7 +859,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 
 static void GetPermissionUsedRecordsExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecords execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecords execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
@@ -870,7 +870,7 @@ static void GetPermissionUsedRecordsExecute(napi_env env, void* data)
 
 static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecords complete.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecords complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
@@ -886,10 +886,10 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedRecords begin.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecords begin.");
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 
@@ -1095,7 +1095,7 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     RegisterPermActiveChangeContext* registerPermActiveChangeContext =
         new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for registerPermActiveChangeContext!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Insufficient memory for registerPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {registerPermActiveChangeContext};
@@ -1103,14 +1103,14 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
         return nullptr;
     }
     if (IsExistRegister(registerPermActiveChangeContext)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Subscribe failed. The current subscriber has been existed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Subscribe failed. The current subscriber has been existed");
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
     int32_t result = PrivacyKit::RegisterPermActiveStatusCallback(registerPermActiveChangeContext->subscriber);
     if (result != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RegisterPermActiveStatusCallback failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "RegisterPermActiveStatusCallback failed");
         int32_t jsCode = GetJsErrorCode(result);
         std::string errMsg = GetErrorMessage(jsCode);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
@@ -1119,7 +1119,7 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     {
         std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
         if (g_permActiveChangeSubscribers.size() >= MAX_CALLBACK_SIZE) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Subscribers size has reached max value");
+            LOGE(PRI_DOMAIN, PRI_TAG, "Subscribers size has reached max value");
             return nullptr;
         }
         g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
@@ -1133,7 +1133,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
         new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for unregisterPermActiveChangeContext!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Insufficient memory for unregisterPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<UnregisterPermActiveChangeContext> callbackPtr {unregisterPermActiveChangeContext};
@@ -1142,7 +1142,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     }
     std::vector<RegisterPermActiveChangeContext*> batchPermActiveChangeSubscribers;
     if (!FindAndGetSubscriber(unregisterPermActiveChangeContext, batchPermActiveChangeSubscribers)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Unsubscribe failed. The current subscriber does not exist");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Unsubscribe failed. The current subscriber does not exist");
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
@@ -1152,7 +1152,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
         if (result == RET_SUCCESS) {
             DeleteRegisterInVector(item);
         } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "UnregisterPermActiveChangeCompleted failed");
+            LOGE(PRI_DOMAIN, PRI_TAG, "UnregisterPermActiveChangeCompleted failed");
             int32_t jsCode = GetJsErrorCode(result);
             std::string errMsg = GetErrorMessage(jsCode);
             NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
@@ -1203,7 +1203,7 @@ static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_i
 
 static void GetPermissionUsedTypeInfosExecute(napi_env env, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeInfos execute.");
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedTypeInfos execute.");
 
     PermissionUsedTypeAsyncContext* asyncContext = reinterpret_cast<PermissionUsedTypeAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1233,7 +1233,7 @@ static void ConvertPermissionUsedTypeInfo(const napi_env& env, napi_value& value
 static void ProcessPermissionUsedTypeInfoResult(const napi_env& env, napi_value& value,
     const std::vector<PermissionUsedTypeInfo>& results)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Size is %{public}zu", results.size());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Size is %{public}zu", results.size());
     size_t index = 0;
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &value));
     for (const auto& result : results) {
@@ -1247,7 +1247,7 @@ static void ProcessPermissionUsedTypeInfoResult(const napi_env& env, napi_value&
 
 static void GetPermissionUsedTypeInfosComplete(napi_env env, napi_status status, void* data)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeInfos complete.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedTypeInfos complete.");
 
     PermissionUsedTypeAsyncContext* asyncContext = reinterpret_cast<PermissionUsedTypeAsyncContext*>(data);
     std::unique_ptr<PermissionUsedTypeAsyncContext> callbackPtr{asyncContext};
@@ -1267,11 +1267,11 @@ static void GetPermissionUsedTypeInfosComplete(napi_env env, napi_status status,
 
 napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeInfos begin.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedTypeInfos begin.");
 
     auto *asyncContext = new (std::nothrow) PermissionUsedTypeAsyncContext(env);
     if (asyncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
     }
 

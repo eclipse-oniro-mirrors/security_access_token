@@ -16,6 +16,7 @@
 #include "accesstoken_manager_proxy.h"
 
 #include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 
 #include "parcel.h"
@@ -44,13 +45,13 @@ bool AccessTokenManagerProxy::SendRequest(
 
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Code: %{public}d remote service null.", code);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Code: %{public}d remote service null.", code);
         return false;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(code), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Code: %{public}d request fail, result: %{public}d", code, requestResult);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Code: %{public}d request fail, result: %{public}d", code, requestResult);
         return false;
     }
     return true;
@@ -61,15 +62,15 @@ PermUsedTypeEnum AccessTokenManagerProxy::GetPermissionUsedType(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
 
@@ -80,11 +81,11 @@ PermUsedTypeEnum AccessTokenManagerProxy::GetPermissionUsedType(
 
     int32_t ret;
     if (!reply.ReadInt32(ret)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32t failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32t failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     PermUsedTypeEnum result = static_cast<PermUsedTypeEnum>(ret);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (type=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (type=%{public}d).", result);
     return result;
 }
 
@@ -92,15 +93,15 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return PERMISSION_DENIED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return PERMISSION_DENIED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return PERMISSION_DENIED;
     }
 
@@ -110,7 +111,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (status=%{public}d).", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (status=%{public}d).", result);
     return result;
 }
 
@@ -119,15 +120,15 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteStringVector(permissionList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteStringVector failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteStringVector failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -137,7 +138,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID,
     }
 
     if (!reply.ReadInt32Vector(&permStateList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32Vector failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32Vector failed.");
         return ERR_READ_PARCEL_FAILED;
     }
 
@@ -149,11 +150,11 @@ int AccessTokenManagerProxy::GetDefPermission(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -163,13 +164,13 @@ int AccessTokenManagerProxy::GetDefPermission(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<PermissionDefParcel> resultSptr = reply.ReadParcelable<PermissionDefParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return ERR_READ_PARCEL_FAILED;
     }
     permissionDefResult = *resultSptr;
@@ -181,11 +182,11 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -195,13 +196,13 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     uint32_t defPermSize = reply.ReadUint32();
     if (defPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}u) is oversize.", defPermSize);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}u) is oversize.", defPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < defPermSize; i++) {
@@ -218,15 +219,15 @@ int AccessTokenManagerProxy::GetReqPermissions(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(isSystemGrant)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -236,13 +237,13 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (error=%{public}d).", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     uint32_t reqPermSize = reply.ReadUint32();
     if (reqPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}u) is oversize.", reqPermSize);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}u) is oversize.", reqPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
@@ -259,19 +260,19 @@ int32_t AccessTokenManagerProxy::SetPermissionRequestToggleStatus(const std::str
 {
     MessageParcel sendData;
     if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteUint32(status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -281,7 +282,7 @@ int32_t AccessTokenManagerProxy::SetPermissionRequestToggleStatus(const std::str
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -290,15 +291,15 @@ int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::str
 {
     MessageParcel sendData;
     if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -311,7 +312,7 @@ int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::str
     if (result == RET_SUCCESS) {
         status = reply.ReadUint32();
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, status);
     return result;
 }
 
@@ -319,11 +320,11 @@ int32_t AccessTokenManagerProxy::RequestAppPermOnSetting(AccessTokenID tokenID)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -334,10 +335,10 @@ int32_t AccessTokenManagerProxy::RequestAppPermOnSetting(AccessTokenID tokenID)
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (result=%{public}d).", result);
     return result;
 }
 
@@ -345,15 +346,15 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
 {
     MessageParcel sendData;
     if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!sendData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -366,7 +367,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     if (result == RET_SUCCESS) {
         flag = reply.ReadUint32();
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, flag=%{public}d).", result, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, flag=%{public}d).", result, flag);
     return result;
 }
 
@@ -375,16 +376,16 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return INVALID_OPER;
     }
     if (!data.WriteUint32(permListParcel.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return INVALID_OPER;
     }
     for (const auto& permission : permListParcel) {
         if (!data.WriteParcelable(&permission)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
             return INVALID_OPER;
         }
     }
@@ -397,12 +398,12 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
     PermissionOper result = static_cast<PermissionOper>(reply.ReadInt32());
     size_t size = reply.ReadUint32();
     if (size != permListParcel.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
             size, permListParcel.size());
         return INVALID_OPER;
     }
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}zu) is oversize.", size);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) is oversize.", size);
         return INVALID_OPER;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -415,12 +416,12 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
 
     sptr<PermissionGrantInfoParcel> resultSptr = reply.ReadParcelable<PermissionGrantInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return INVALID_OPER;
     }
     infoParcel = *resultSptr;
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (status=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (status=%{public}d).", result);
     return result;
 }
 
@@ -429,20 +430,20 @@ int32_t AccessTokenManagerProxy::GetPermissionsStatus(AccessTokenID tokenID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(permListParcel.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     for (const auto& permission : permListParcel) {
         if (!data.WriteParcelable(&permission)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
             return ERR_WRITE_PARCEL_FAILED;
         }
     }
@@ -453,13 +454,13 @@ int32_t AccessTokenManagerProxy::GetPermissionsStatus(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     size_t size = reply.ReadUint32();
     if (size != permListParcel.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
             size, permListParcel.size());
         return ERR_SIZE_NOT_EQUAL;
     }
@@ -476,19 +477,19 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
 {
     MessageParcel inData;
     if (!inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!inData.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!inData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!inData.WriteUint32(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -498,7 +499,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -506,19 +507,19 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -528,7 +529,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -537,19 +538,19 @@ int AccessTokenManagerProxy::GrantPermissionForSpecifiedTime(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(onceTime)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -560,10 +561,10 @@ int AccessTokenManagerProxy::GrantPermissionForSpecifiedTime(
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (result=%{public}d).", result);
     return result;
 }
 
@@ -571,11 +572,11 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -585,7 +586,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -594,15 +595,15 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&scope)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteRemoteObject failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
@@ -612,10 +613,10 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
 
     int32_t ret;
     if (!reply.ReadInt32(ret)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", ret);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", ret);
     return ret;
 }
 
@@ -623,11 +624,11 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteRemoteObject failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -639,10 +640,10 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -651,15 +652,15 @@ int32_t AccessTokenManagerProxy::RegisterSelfPermStateChangeCallback(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&scope)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteRemoteObject failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
@@ -669,10 +670,10 @@ int32_t AccessTokenManagerProxy::RegisterSelfPermStateChangeCallback(
 
     int32_t ret;
     if (!reply.ReadInt32(ret)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", ret);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", ret);
     return ret;
 }
 
@@ -680,11 +681,11 @@ int32_t AccessTokenManagerProxy::UnRegisterSelfPermStateChangeCallback(const spt
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteRemoteObject failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -696,10 +697,10 @@ int32_t AccessTokenManagerProxy::UnRegisterSelfPermStateChangeCallback(const spt
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -709,16 +710,16 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     MessageParcel data;
     AccessTokenIDEx res = { 0 };
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return res;
     }
 
     if (!data.WriteParcelable(&hapInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return res;
     }
     if (!data.WriteParcelable(&policyParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return res;
     }
 
@@ -728,7 +729,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     }
 
     unsigned long long result = reply.ReadUint64();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (id=%{public}llu).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}llu).", result);
     res.tokenIDEx = result;
     return res;
 }
@@ -738,16 +739,16 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteParcelable(&hapInfoParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -757,13 +758,13 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
     }
     int32_t result = 0;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
     if (result == RET_SUCCESS) {
         uint64_t tokenId = 0;
         if (!reply.ReadUint64(tokenId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint64 faild.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "ReadUint64 faild.");
             return ERR_READ_PARCEL_FAILED;
         }
         fullTokenId.tokenIDEx = tokenId;
@@ -778,7 +779,7 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
             resultInfo.permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, id=%{public}llu).",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}llu).",
         result, fullTokenId.tokenIDEx);
     return result;
 }
@@ -787,12 +788,12 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -802,7 +803,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, id=%{public}u).", result, tokenID);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}u).", result, tokenID);
     return result;
 }
 
@@ -810,12 +811,12 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -825,7 +826,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (type=%{public}d).", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (type=%{public}d).", result);
     return result;
 }
 
@@ -834,20 +835,20 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
     AccessTokenIDEx tokenIdEx = {0};
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return tokenIdEx;
     }
 
     if (!data.WriteInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID");
         return tokenIdEx;
     }
     if (!data.WriteString(bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write dcap");
         return tokenIdEx;
     }
     if (!data.WriteInt32(instIndex)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write dcap");
         return tokenIdEx;
     }
     MessageParcel reply;
@@ -856,7 +857,7 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
     }
 
     tokenIdEx.tokenIDEx = reply.ReadUint64();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (id=%{public}llu).", tokenIdEx.tokenIDEx);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}llu).", tokenIdEx.tokenIDEx);
     return tokenIdEx;
 }
 
@@ -865,16 +866,16 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return 0;
     }
 
     if (!data.WriteString(remoteDeviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write dcap");
         return 0;
     }
     if (!data.WriteUint32(remoteTokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write dcap");
         return 0;
     }
     MessageParcel reply;
@@ -883,7 +884,7 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
     }
 
     AccessTokenID result = reply.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (id=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", result);
     return result;
 }
 
@@ -891,11 +892,11 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -905,13 +906,13 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (error=%{public}d).", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<NativeTokenInfoParcel> resultSptr = reply.ReadParcelable<NativeTokenInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable fail");
         return ERR_READ_PARCEL_FAILED;
     }
     nativeTokenInfoRes = *resultSptr;
@@ -922,11 +923,11 @@ int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unorder
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -937,7 +938,7 @@ int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unorder
 
     int32_t result = 0;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
         return ERR_READ_PARCEL_FAILED;
     }
     if (result != RET_SUCCESS) {
@@ -946,13 +947,13 @@ int32_t AccessTokenManagerProxy::GetTokenIDByUserID(int32_t userID, std::unorder
 
     uint32_t tokenIDListSize = 0;
     if (!reply.ReadUint32(tokenIDListSize)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadUint32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
     for (uint32_t i = 0; i < tokenIDListSize; i++) {
         AccessTokenID tokenId = 0;
         if (!reply.ReadUint32(tokenId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "ReadUint32 failed.");
             return ERR_READ_PARCEL_FAILED;
         }
         tokenIdList.emplace(tokenId);
@@ -964,11 +965,11 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -978,13 +979,13 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (error=%{public}d).", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<HapTokenInfoParcel> resultSptr = reply.ReadParcelable<HapTokenInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return ERR_READ_PARCEL_FAILED;
     }
     hapTokenInfoRes = *resultSptr;
@@ -997,31 +998,31 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, cons
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write tokenID failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write tokenID failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteBool(info.isSystemApp)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write isSystemApp failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write isSystemApp failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(info.appIDDesc)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write appIDDesc failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write appIDDesc failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(info.apiVersion)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write apiVersion failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write apiVersion failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(info.appDistributionType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write appDistributionType failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write appDistributionType failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write policyParcel failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write policyParcel failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1040,7 +1041,7 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, cons
             ERR_READ_PARCEL_FAILED, "ReadString faild.");
         resultInfo.permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1049,7 +1050,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
@@ -1058,7 +1059,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1069,11 +1070,11 @@ int AccessTokenManagerProxy::GetHapTokenInfoExtension(AccessTokenID tokenID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 fail");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 fail");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1083,18 +1084,18 @@ int AccessTokenManagerProxy::GetHapTokenInfoExtension(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<HapTokenInfoParcel> hapResult = reply.ReadParcelable<HapTokenInfoParcel>();
     if (hapResult == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable fail.");
         return ERR_READ_PARCEL_FAILED;
     }
     hapTokenInfoRes = *hapResult;
     if (!reply.ReadString(appID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString fail.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadString fail.");
         return ERR_READ_PARCEL_FAILED;
     }
 
@@ -1105,12 +1106,12 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return INVALID_TOKENID;
     }
 
     if (!data.WriteString(processName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
         return INVALID_TOKENID;
     }
     MessageParcel reply;
@@ -1119,10 +1120,10 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
     }
     AccessTokenID id;
     if (!reply.ReadUint32(id)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "ReadInt32 failed.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return INVALID_TOKENID;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (process=%{public}s, id=%{public}d).", processName.c_str(), id);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (process=%{public}s, id=%{public}d).", processName.c_str(), id);
     return id;
 }
 
@@ -1132,7 +1133,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(tokenID)) {
@@ -1145,13 +1146,13 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<HapTokenInfoForSyncParcel> hapResult = reply.ReadParcelable<HapTokenInfoForSyncParcel>();
     if (hapResult == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable fail");
         return ERR_READ_PARCEL_FAILED;
     }
     hapSyncParcel = *hapResult;
@@ -1163,7 +1164,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(deviceID)) {
@@ -1179,7 +1180,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1201,7 +1202,7 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1209,7 +1210,7 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return 0;
     }
     if (!data.WriteString(deviceID)) {
@@ -1226,7 +1227,7 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
     }
 
     AccessTokenID id = reply.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (id=%{public}d).", id);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", id);
     return id;
 }
 
@@ -1234,7 +1235,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(deviceID)) {
@@ -1247,7 +1248,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1255,11 +1256,11 @@ int32_t AccessTokenManagerProxy::RegisterTokenSyncCallback(const sptr<IRemoteObj
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteRemoteObject failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1271,10 +1272,10 @@ int32_t AccessTokenManagerProxy::RegisterTokenSyncCallback(const sptr<IRemoteObj
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -1282,7 +1283,7 @@ int32_t AccessTokenManagerProxy::UnRegisterTokenSyncCallback()
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1294,10 +1295,10 @@ int32_t AccessTokenManagerProxy::UnRegisterTokenSyncCallback()
 
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 #endif
@@ -1306,12 +1307,12 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return;
     }
 
     if (!data.WriteParcelable(&infoParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write infoParcel failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write infoParcel failed.");
         return;
     }
     MessageParcel reply;
@@ -1319,16 +1320,16 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
         return;
     }
     if (!reply.ReadString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadString failed.");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (dumpInfo=%{public}s).", dumpInfo.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (dumpInfo=%{public}s).", dumpInfo.c_str());
 }
 
 int32_t AccessTokenManagerProxy::GetVersion(uint32_t& version)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1337,12 +1338,12 @@ int32_t AccessTokenManagerProxy::GetVersion(uint32_t& version)
         return ERR_SERVICE_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     if (!reply.ReadUint32(version)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadUint32 failed.");
         return ERR_READ_PARCEL_FAILED;
     }
     return result;
@@ -1352,16 +1353,16 @@ int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBa
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteParcelable(&hapBaseInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteParcelable failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteBool(enable)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteBool failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteBool failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -1376,7 +1377,7 @@ void AccessTokenManagerProxy::GetPermissionManagerInfo(PermissionGrantInfoParcel
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return;
     }
 
@@ -1387,7 +1388,7 @@ void AccessTokenManagerProxy::GetPermissionManagerInfo(PermissionGrantInfoParcel
 
     sptr<PermissionGrantInfoParcel> parcel = reply.ReadParcelable<PermissionGrantInfoParcel>();
     if (parcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
         return;
     }
     infoParcel = *parcel;
@@ -1398,53 +1399,53 @@ int32_t AccessTokenManagerProxy::InitUserPolicy(
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     size_t userLen = userList.size();
     size_t permLen = permList.size();
     if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE) || (permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserLen %{public}zu or permLen %{public}zu is invalid", userLen, permLen);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu or permLen %{public}zu is invalid", userLen, permLen);
         return ERR_PARAM_INVALID;
     }
 
     if (!data.WriteUint32(userLen)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userLen size.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write userLen size.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(permLen)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permLen size.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write permLen size.");
         return ERR_WRITE_PARCEL_FAILED;
     }
     for (const auto& userInfo : userList) {
         if (!data.WriteInt32(userInfo.userId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userId.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write userId.");
             return ERR_WRITE_PARCEL_FAILED;
         }
         if (!data.WriteBool(userInfo.isActive)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isActive.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write isActive.");
             return ERR_WRITE_PARCEL_FAILED;
         }
     }
     for (const auto& permission : permList) {
         if (!data.WriteString(permission)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permission.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write permission.");
             return ERR_WRITE_PARCEL_FAILED;
         }
     }
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::INIT_USER_POLICY, data, reply)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read replay failed");
         return ERR_SERVICE_ABNORMAL;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read Int32 failed");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -1452,21 +1453,21 @@ int32_t AccessTokenManagerProxy::ClearUserPolicy()
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::CLEAR_USER_POLICY, data, reply)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read replay failed");
         return ERR_SERVICE_ABNORMAL;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read Int32 failed");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -1474,43 +1475,43 @@ int32_t AccessTokenManagerProxy::UpdateUserPolicy(const std::vector<UserState>& 
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     size_t userLen = userList.size();
     if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserLen %{public}zu is invalid.", userLen);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu is invalid.", userLen);
         return ERR_PARAM_INVALID;
     }
 
     if (!data.WriteUint32(userLen)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userLen size.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write userLen size.");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     for (const auto& userInfo : userList) {
         if (!data.WriteInt32(userInfo.userId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userId.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write userId.");
             return ERR_WRITE_PARCEL_FAILED;
         }
         if (!data.WriteBool(userInfo.isActive)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isActive.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write isActive.");
             return ERR_WRITE_PARCEL_FAILED;
         }
     }
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::UPDATE_USER_POLICY, data, reply)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read replay failed");
         return ERR_SERVICE_ABNORMAL;
     }
     int32_t result;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read Int32 failed");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
     return result;
 }
 } // namespace AccessToken

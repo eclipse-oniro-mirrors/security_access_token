@@ -13,20 +13,16 @@
  * limitations under the License.
  */
 #include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_manager_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
 
 void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called", __func__);
     AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken
