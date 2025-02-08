@@ -55,7 +55,7 @@ void PermActiveStatusPtr::DeleteNapiRef()
 {
     PermActiveStatusWorker* permActiveStatusWorker = new (std::nothrow) PermActiveStatusWorker();
     if (permActiveStatusWorker == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusWorker};
@@ -66,7 +66,7 @@ void PermActiveStatusPtr::DeleteNapiRef()
         delete permActiveStatusWorker;
     };
     if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "DeleteNapiRef: Failed to SendEvent");
+        LOGE(PRI_DOMAIN, PRI_TAG, "DeleteNapiRef: Failed to SendEvent");
     } else {
         workPtr.release();
     }
@@ -86,14 +86,14 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
 {
     PermActiveStatusWorker* permActiveStatusWorker = new (std::nothrow) PermActiveStatusWorker();
     if (permActiveStatusWorker == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusWorker};
     permActiveStatusWorker->env = env_;
     permActiveStatusWorker->ref = ref_;
     permActiveStatusWorker->result = result;
-    LOGD(ATM_DOMAIN, ATM_TAG,
+    LOGD(PRI_DOMAIN, PRI_TAG,
         "result: tokenID = %{public}d, permissionName = %{public}s, type = %{public}d",
         result.tokenID, result.permissionName.c_str(), result.type);
     permActiveStatusWorker->subscriber = shared_from_this();
@@ -101,7 +101,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
         napi_handle_scope scope = nullptr;
         napi_open_handle_scope(permActiveStatusWorker->env, &scope);
         if (scope == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Scope is null");
+            LOGE(PRI_DOMAIN, PRI_TAG, "Scope is null");
             delete permActiveStatusWorker;
             return;
         }
@@ -110,7 +110,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
         delete permActiveStatusWorker;
     };
     if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ActiveStatusChangeCallback: Failed to SendEvent");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ActiveStatusChangeCallback: Failed to SendEvent");
     } else {
         workPtr.release();
     }
@@ -122,7 +122,7 @@ void NotifyChangeResponse(const PermActiveStatusWorker* permActiveStatusData)
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
         napi_create_object(permActiveStatusData->env, &result));
     if (!ConvertActiveChangeResponse(permActiveStatusData->env, result, permActiveStatusData->result)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ConvertActiveChangeResponse failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "ConvertActiveChangeResponse failed");
         return;
     }
     napi_value undefined = nullptr;

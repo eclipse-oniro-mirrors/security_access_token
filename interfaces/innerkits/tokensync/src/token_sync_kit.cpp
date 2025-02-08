@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "constant_common.h"
 #include "token_sync_manager_client.h"
 
@@ -27,26 +27,22 @@ namespace Security {
 namespace AccessToken {
 using namespace std;
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncKit"};
-} // namespace
-
 int TokenSyncKit::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
         __func__, ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo(deviceID, tokenID);
 }
 
 int TokenSyncKit::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID=%{public}d", __func__, tokenID);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called, tokenID=%{public}d", __func__, tokenID);
     return TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(tokenID);
 }
 
 int TokenSyncKit::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called tokenID=%{public}d", __func__, tokenInfo.baseInfo.tokenID);
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called tokenID=%{public}d", __func__, tokenInfo.baseInfo.tokenID);
     return TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo);
 }
 } // namespace AccessToken
