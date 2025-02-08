@@ -27,6 +27,12 @@ enum SceneCode {
     INIT_HAP_TOKENINFO_ERROR,
     INIT_NATIVE_TOKENINFO_ERROR,
     INIT_PERM_DEF_JSON_ERROR,
+    TOKENID_NOT_EQUAL,
+};
+enum UpdatePermStatusErrorCode {
+    GRANT_TEMP_PERMISSION_FAILED = 0,
+    DLP_CHECK_FAILED = 1,
+    UPDATE_PERMISSION_STATUS_FAILED = 2,
 };
 void ReportSysEventPerformance();
 void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSize, uint32_t permDefSize);

@@ -86,3 +86,25 @@ REQUEST_PERMISSIONS_FROM_USER:
   __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
   BUNDLENAME: {type: STRING, desc: bundle name}
   UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
+
+REQ_PERM_FROM_USER_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: failed to request permission from user}
+  ERROR_CODE: {type: INT32, desc: error code}
+  SELF_TOKENID: {type: UINT32, desc: self tokenID}
+  CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}
+
+UPDATE_PERMISSION_STATUS_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: failed to grant or revoke permission}
+  ERROR_CODE: {type: INT32, desc: error code}
+  TOKENID: {type: UINT32, desc: tokenID}
+  PERM: {type: STRING, desc: permission name}
+  BUNDLE_NAME: {type: STRING, desc: bundle name}
+  INT_VAL1: {type: INT32, desc: hap dlp type/return value}
+  INT_VAL2: {type: INT32, desc: permission dlp mode/update permission flag}
+  NEED_KILL: {type: BOOL, desc: need kill hap}
+
+VERIFY_ACCESS_TOKEN_EVENT:
+  __BASE: {type: STATISTIC, level: CRITICAL, desc: verify access token event}
+  EVENT_CODE: {type: INT32, desc: event code}
+  SELF_TOKENID: {type: UINT32, desc: self tokenID}
+  CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}

@@ -21,6 +21,7 @@
 #include "accesstoken_log.h"
 #include "hisysevent.h"
 #include "napi_base_context.h"
+#include "napi_hisysevent_adapter.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -483,6 +484,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
 {
     this->reqContext_ = reqContext;
+    isOnResult_.exchange(false);
 }
 
 UIExtensionCallback::~UIExtensionCallback()
@@ -498,6 +500,7 @@ void UIExtensionCallback::SetSessionId(int32_t sessionId)
  */
 void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
+    isOnResult_.exchange(true);
     ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d", resultCode);
     this->reqContext_->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     this->reqContext_->permissionsState = result.GetIntArrayParam(RESULT_KEY);
@@ -519,7 +522,6 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
-
     ReleaseHandler(-1);
 }
 
@@ -530,7 +532,6 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-
     ReleaseHandler(-1);
 }
 
@@ -549,6 +550,10 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    if (isOnResult_.load() == false) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_DESTROY);
+    }
     ReleaseHandler(-1);
 }
 
