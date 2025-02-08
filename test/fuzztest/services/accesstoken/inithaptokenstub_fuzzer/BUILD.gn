@@ -20,7 +20,7 @@ ohos_fuzztest("InitHapTokenStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [ "initHapTokenstub_fuzzer.cpp" ]
+  sources = [ "inithaptokenstub_fuzzer.cpp" ]
 
   cflags = [
     "-g",
