@@ -81,7 +81,6 @@ public:
     bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
-    void ClearHapPolicy();
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */

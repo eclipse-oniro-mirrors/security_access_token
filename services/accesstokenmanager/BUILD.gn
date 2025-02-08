@@ -89,7 +89,6 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_definition_parser.cpp",
       "main/cpp/src/permission/permission_grant_event.cpp",
       "main/cpp/src/permission/permission_manager.cpp",
-      "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
       "main/cpp/src/permission/short_grant_manager.cpp",
       "main/cpp/src/permission/temp_permission_observer.cpp",

@@ -1573,15 +1573,6 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
     return PERMISSION_DENIED;
 }
 
-void AccessTokenInfoManager::ClearHapPolicy()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
-        iter->second->ClearHapInfoPermissionPolicySet();
-    }
-}
-
 int32_t AccessTokenInfoManager::AddPermRequestToggleStatusToDb(
     int32_t userID, const std::string& permissionName, int32_t status)
 {

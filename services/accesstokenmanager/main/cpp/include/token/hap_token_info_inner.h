@@ -23,9 +23,10 @@
 #include "access_token.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
+#include "permission_data_brief.h"
 #include "permission_def.h"
-#include "permission_policy_set.h"
 #include "permission_status.h"
+#include "rwlock.h"
 
 namespace OHOS {
 namespace Security {
@@ -46,7 +47,6 @@ public:
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes);
 
-    void ClearHapInfoPermissionPolicySet();
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
@@ -55,7 +55,6 @@ public:
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
-    void SetPermissionPolicySet(std::shared_ptr<PermissionPolicySet>& policySet);
     void ToString(std::string& info);
     bool IsRemote() const;
     void SetRemote(bool isRemote);
@@ -88,7 +87,8 @@ private:
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
     bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList);
-    int32_t GetPermissionStateListFromBrief(std::vector<PermissionStatus>& permList);
+    static void PermToString(const std::vector<PermissionDef>& permList,
+        const std::vector<PermissionStatus>& permStateList, std::string& info);
 
     HapTokenInfo tokenInfoBasic_;
 
@@ -98,7 +98,6 @@ private:
     bool isPermDialogForbidden_ = false;
 
     OHOS::Utils::RWLock policySetLock_;
-    std::shared_ptr<PermissionPolicySet> permPolicySet_;
 };
 } // namespace AccessToken
 } // namespace Security

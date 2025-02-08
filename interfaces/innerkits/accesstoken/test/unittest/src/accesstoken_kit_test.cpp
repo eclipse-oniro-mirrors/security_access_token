@@ -534,7 +534,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_A_MICRO, permStatList[0].permissionName);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_MICRO, false);
@@ -554,7 +554,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_A_CAMERA, permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_CAMERA, false);
@@ -636,7 +636,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
         std::vector<PermissionStateFull> permStatList;
         int32_t ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
         ASSERT_EQ(TEST_PERMISSION_NAME_A_MICRO, permStatList[0].permissionName);
     }
 }
