@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "initHapTokenstub_fuzzer.h"
+#include "inithaptokenstub_fuzzer.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
