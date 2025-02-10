@@ -248,7 +248,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) > 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u info has exist.", id);
-            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+            return AccessTokenError::ERR_TOKENID_HAS_EXISTED;
         }
 
         if (!info->IsRemote()) {
@@ -553,33 +553,49 @@ static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& poli
 }
 #endif
 
-int AccessTokenInfoManager::CreateHapTokenInfo(
-    const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
+int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
-        (!DataValidator::IsDlpTypeValid(info.dlpType))) {
+        (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
-    int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
-    AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
-    if (tokenId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id create failed");
-        return ERR_TOKENID_CREATE_FAILED;
+    return ERR_OK;
+}
+
+int AccessTokenInfoManager::CreateHapTokenInfo(
+    const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
+{
+    if (CheckHapInfoParam(info, policy) != ERR_OK) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    AccessTokenID tokenId = info.tokenID;
+    if (info.isRestore) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "isRestore is true, tokenId is %{public}u", tokenId);
+        int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+        if (res != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id register failed, res is %{public}d", res);
+            return res;
+        }
+    } else {
+        int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
+        int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
+        tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
+        if (tokenId == 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id create failed");
+            return ERR_TOKENID_CREATE_FAILED;
+        }
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
 #ifdef SUPPORT_SANDBOX_APP
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    HapPolicyParams policyNew = policy;
     if (info.dlpType != DLP_COMMON) {
-        HapPolicyParams policyNew;
         GetPolicyCopied(policy, policyNew);
         DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(info.dlpType, policyNew.permStateList);
-        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
-    } else {
-        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
     }
+    tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
@@ -590,8 +606,9 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
-        tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d isRestore %{public}d ok",
+        tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex(), info.isRestore);
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
     AddHapTokenInfoToDb(tokenId, tokenInfo);
     return RET_SUCCESS;
