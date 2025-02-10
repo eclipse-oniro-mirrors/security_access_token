@@ -55,6 +55,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     }
 
     if (fileStat.st_size == 0) {
+        NativeTokenKmsg(NATIVETOKEN_KINFO, "[%s]: file is empty", __func__);
         *retBuff = NULL;
         return ATRET_SUCCESS;
     }
@@ -631,18 +632,94 @@ static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
+
+static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
+{
+    int32_t fd = open(TOKEN_ID_CFG_FILE_LOCK_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR,
+            "[%s]: Failed to open native token file, errno is %d.", __func__, errno);
+        return ATRET_FAILED;
+    }
+#ifdef WITH_SELINUX
+    Restorecon(TOKEN_ID_CFG_FILE_LOCK_PATH);
+#endif // WITH_SELINUX
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // lock entire file
+    int32_t ret = -1;
+    for (int i = 0; i < MAX_RETRY_LOCK_TIMES; i++) {
+        ret = fcntl(fd, F_SETLK, &lock);
+        if (ret == -1) {
+            NativeTokenKmsg(NATIVETOKEN_KERROR,
+                "[%s]: Failed to lock the file, try %d time, errno is %d.", __func__, i, errno);
+            usleep(SLEEP_TIME);
+        } else {
+            break;
+        }
+    }
+    if (ret == -1) {
+        close(fd);
+        return ATRET_FAILED;
+    }
+    *lockFileFd = fd;
+    return ATRET_SUCCESS;
+}
+
+static void UnlockNativeTokenFile(int32_t lockFileFd)
+{
+    struct flock lock;
+    lock.l_type = F_UNLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+
+    if (fcntl(lockFileFd, F_SETLK, &lock) == -1) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR,
+            "[%s]: Failed to unlock file, errno is %d.", __func__, errno);
+    }
+    close(lockFileFd);
+}
+
+static uint32_t AddOrUpdateTokenInfo(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
+    int32_t apl, NativeAtId *tokenId)
+{
+    uint32_t ret = ATRET_SUCCESS;
+    if (tokenNode == NULL) {
+        ret = AddNewTokenToListAndFile(tokenInfo, apl, tokenId);
+    } else {
+        int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
+        int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
+        if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
+            ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
+            ret |= UpdateInfoInCfgFile(tokenNode);
+        }
+    }
+    return ret;
+}
+
 uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
 {
     NativeAtId tokenId = 0;
     uint64_t result = 0;
     int32_t apl;
     NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
-
-    if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
+    int32_t fd = -1;
+    uint32_t ret = LockNativeTokenFile(&fd);
+    if (ret != ATRET_SUCCESS) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]: Failed to lock file", __func__);
         return INVALID_TOKEN_ID;
     }
-    uint32_t ret = CheckProcessInfo(tokenInfo, &apl);
+
+    if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
+        UnlockNativeTokenFile(fd);
+        return INVALID_TOKEN_ID;
+    }
+    ret = CheckProcessInfo(tokenInfo, &apl);
     if (ret != ATRET_SUCCESS) {
+        UnlockNativeTokenFile(fd);
         return INVALID_TOKEN_ID;
     }
 
@@ -654,22 +731,14 @@ uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
         }
         tokenNode = tokenNode->next;
     }
-
-    if (tokenNode == NULL) {
-        ret = AddNewTokenToListAndFile(tokenInfo, apl, &tokenId);
-    } else {
-        int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
-        int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
-        if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
-            ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
-            ret |= UpdateInfoInCfgFile(tokenNode);
-        }
-    }
+    ret = AddOrUpdateTokenInfo(tokenInfo, tokenNode, apl, &tokenId);
     if (ret != ATRET_SUCCESS) {
+        UnlockNativeTokenFile(fd);
         return INVALID_TOKEN_ID;
     }
 
     atPoint->tokenId = tokenId;
     atPoint->tokenAttr = 0;
+    UnlockNativeTokenFile(fd);
     return result;
 }
