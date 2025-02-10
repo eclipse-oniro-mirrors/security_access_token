@@ -2211,6 +2211,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
