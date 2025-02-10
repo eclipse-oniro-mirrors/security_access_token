@@ -126,6 +126,7 @@ typedef enum TypeATokenAvailableTypeEnum {
     MDM,
     SYSTEM_AND_MDM,
     SERVICE,
+    ENTERPRISE_NORMAL,
     AVAILABLE_TYPE_BUTT,
 } ATokenAvailableTypeEnum;
 

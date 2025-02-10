@@ -50,6 +50,7 @@ static const std::string AVAILABLE_TYPE_SYSTEM_HAP = "SYSTEM";
 static const std::string AVAILABLE_TYPE_MDM = "MDM";
 static const std::string AVAILABLE_TYPE_SYSTEM_AND_MDM = "SYSTEM_AND_MDM";
 static const std::string AVAILABLE_TYPE_SERVICE = "SERVICE";
+static const std::string AVAILABLE_TYPE_ENTERPRISE_NORMAL = "ENTERPRISE_NORMAL";
 static const std::string AVAILABLE_LEVEL_NORMAL = "normal";
 static const std::string AVAILABLE_LEVEL_SYSTEM_BASIC = "system_basic";
 static const std::string AVAILABLE_LEVEL_SYSTEM_CORE = "system_core";
@@ -100,6 +101,10 @@ static bool GetPermissionAvailableType(const std::string &availableType, AccessT
     }
     if (availableType == AVAILABLE_TYPE_SERVICE) {
         typeNum = AccessToken::ATokenAvailableTypeEnum::SERVICE;
+        return true;
+    }
+    if (availableType == AVAILABLE_TYPE_ENTERPRISE_NORMAL) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::ENTERPRISE_NORMAL;
         return true;
     }
     typeNum = AccessToken::ATokenAvailableTypeEnum::INVALID;
