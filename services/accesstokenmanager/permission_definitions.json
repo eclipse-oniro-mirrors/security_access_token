@@ -4205,7 +4205,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
-            "since": 16,
+            "since": 15,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
