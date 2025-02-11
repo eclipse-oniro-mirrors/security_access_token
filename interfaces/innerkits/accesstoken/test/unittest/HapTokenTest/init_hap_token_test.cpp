@@ -347,6 +347,37 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapTokenFuncTest007
+ * @tc.desc: Install normal app ignore acl check.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest007");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    PermissionStateFull permStatDump = {
+        .permissionName = "ohos.permission.DUMP",
+        .isGeneral = true,
+        .resDeviceID = {"device3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    policyParams.permStateList.emplace_back(permStatDump);
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    policyParams.checkIgnore = HapPolicyCheckIgnore::ACL_IGNORE_CHECK;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
  * @tc.name: InitHapTokenSpecsTest001
  * @tc.desc: Test the high-level permission authorized by acl.
  * @tc.type: FUNC

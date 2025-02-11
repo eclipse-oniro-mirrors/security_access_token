@@ -333,6 +333,17 @@ typedef enum RegisterPermissionChangeType {
     /** app register permissions state change info of itself */
     SELF_REGISTER_TYPE = 1,
 } RegisterPermChangeType;
+
+/**
+ * @brief Whether acl check
+ */
+typedef enum HapPolicyCheckIgnoreType {
+    /** normal */
+    NONE = 0,
+    /** ignore acl check */
+    ACL_IGNORE_CHECK,
+} HapPolicyCheckIgnore;
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
