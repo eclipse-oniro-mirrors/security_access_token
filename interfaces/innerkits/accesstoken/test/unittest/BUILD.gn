@@ -105,7 +105,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    external_deps += [ "device_manager:devicemanagersdk" ]
+    external_deps += [
+      "device_manager:devicemanagersdk",
+      "json:nlohmann_json_static",
+    ]
   }
   if (dlp_permission_enable == true) {
     cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
