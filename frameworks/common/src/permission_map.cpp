@@ -356,6 +356,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.READ_PROTECTION_ADVICE_POLICY",      false},
     {"ohos.permission.USE_FRAUD_MESSAGES_PICKER",           false},
     {"ohos.permission.USE_FRAUD_CALL_LOG_PICKER",           false},
+    {"ohos.permission.PROXY_MESSAGE_AUTH",           false},
     {"ohos.permission.GET_SUPER_PRIVACY",                   false},
     {"ohos.permission.SET_SUPER_PRIVACY",                   false},
     {"ohos.permission.RECORD_VOICE_CALL",                   false},
