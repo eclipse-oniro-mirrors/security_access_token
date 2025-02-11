@@ -644,23 +644,34 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     if (ret != RET_SUCCESS) {
         return ret;
     }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u bundle name %{public}s user %{public}d \
+        inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
+        infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", tokenID, "USERID",
+        infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
 
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
     // update hap to kernel
-    int32_t userId = infoPtr->GetUserID();
+    UpdateHapToKernel(tokenID, infoPtr->GetUserID());
+    return RET_SUCCESS;
+}
+
+void AccessTokenInfoManager::UpdateHapToKernel(AccessTokenID tokenID, int32_t userId)
+{
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
             PermissionManager::GetInstance().AddHapPermToKernel(tokenID, permPolicyList_);
-            return RET_SUCCESS;
+            return;
         }
     }
     PermissionManager::GetInstance().AddHapPermToKernel(tokenID, std::vector<std::string>());
-    return RET_SUCCESS;
 }
 
 #ifdef TOKEN_SYNC_ENABLE
