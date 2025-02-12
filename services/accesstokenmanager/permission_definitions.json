@@ -4074,7 +4074,7 @@
             "name": "ohos.permission.ACCESS_AMS_FROM_FUSION",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SYSTEM",
+            "availableType": "SERVICE",
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
