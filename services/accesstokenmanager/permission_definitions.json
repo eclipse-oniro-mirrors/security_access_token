@@ -3641,6 +3641,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PROXY_MESSAGE_AUTH",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GET_BLUETOOTH_PEERS_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
