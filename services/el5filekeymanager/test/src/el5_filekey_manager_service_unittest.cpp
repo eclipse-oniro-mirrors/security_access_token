@@ -23,6 +23,9 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 namespace {
 constexpr uint32_t SCREEN_ON_DELAY_TIME = 30;
+constexpr int32_t COMMON_EVENT_SERVICE_ID = 3299;
+constexpr int32_t TIME_SERVICE_ID = 3702;
+constexpr int32_t SCREENLOCK_SERVICE_ID = 3704;
 } // namespace
 
 void El5FilekeyManagerServiceTest::SetUpTestCase()
@@ -38,6 +41,9 @@ void El5FilekeyManagerServiceTest::SetUp()
 {
     el5FilekeyManagerService_ = DelayedSingleton<El5FilekeyManagerService>::GetInstance();
     el5FilekeyManagerService_->Init();
+    el5FilekeyManagerService_->OnAddSystemAbility(COMMON_EVENT_SERVICE_ID, "");
+    el5FilekeyManagerService_->OnAddSystemAbility(TIME_SERVICE_ID, "");
+    el5FilekeyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "");
 }
 
 void El5FilekeyManagerServiceTest::TearDown()
