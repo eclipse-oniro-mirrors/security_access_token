@@ -20,10 +20,10 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 int32_t AbilityManagerAccessLoader::StartAbility(
-    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken)
+    const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken)
 {
 #ifdef ABILITY_RUNTIME_ENABLE
-    return AbilityManagerAdapter::GetInstance().StartAbility(want, callerToken);
+    return AbilityManagerAdapter::GetInstance().StartAbility(innerWant, callerToken);
 #else
     return 0;
 #endif

@@ -17,12 +17,11 @@
 #define ACCESS_TOKEN_ABILITY_MANAGER_ADAPTER_H
 
 #include <mutex>
-#include "want.h"
+#include "ability_manager_access_loader.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using namespace AAFwk;
 /**
  * @class AbilityManagerAdapter
  * AbilityManagerAdapter is used to access ability manager services.
@@ -36,7 +35,7 @@ private:
 public:
     static AbilityManagerAdapter& GetInstance();
 
-    int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken);
+    int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken);
 
 private:
     void InitProxy();

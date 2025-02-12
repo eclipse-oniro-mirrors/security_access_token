@@ -48,7 +48,6 @@
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
-#include "want.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "privacy_window_manager_client.h"
 #include "scene_board_judgement.h"
@@ -66,7 +65,6 @@ constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 #ifndef APP_SECURITY_PRIVACY_SERVICE
 constexpr const char* DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 constexpr const char* DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
-constexpr const char* RESOURCE_KEY = "ohos.sensitive.resource";
 #endif
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
@@ -1232,9 +1230,11 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
         return true;
     }
 
-    AAFwk::Want want;
-    want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
-    want.SetParam(RESOURCE_KEY, resource);
+    InnerWant innerWant = {
+        .bundleName = globalDialogBundleName_,
+        .abilityName = globalDialogAbilityName_,
+        .resource = resource
+    };
 
     std::lock_guard<std::mutex> lock(abilityManagerMutex_);
     if (abilityManagerLoader_ == nullptr) {
@@ -1247,7 +1247,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
         LOGE(PRI_DOMAIN, PRI_TAG, "AbilityManager is nullptr!");
         return false;
     }
-    ErrCode err = abilityManager->StartAbility(want, nullptr);
+    ErrCode err = abilityManager->StartAbility(innerWant, nullptr);
     if (err != ERR_OK) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Fail to StartAbility, err:%{public}d", err);
         return false;

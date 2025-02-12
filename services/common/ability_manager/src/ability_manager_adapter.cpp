@@ -20,6 +20,7 @@
 #include <iremote_proxy.h>
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "want.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,6 +28,11 @@ namespace AccessToken {
 namespace {
 const int32_t DEFAULT_INVAL_VALUE = -1;
 const std::u16string ABILITY_MGR_DESCRIPTOR = u"ohos.aafwk.AbilityManager";
+constexpr const char* BUNDLE_NAME = "bundleName";
+constexpr const char* APP_INDEX = "appIndex";
+constexpr const char* USER_ID = "userId";
+constexpr const char* CALLER_TOKENID = "callerTokenId";
+constexpr const char* RESOURCE_KEY = "ohos.sensitive.resource";
 }
 using namespace AAFwk;
 AbilityManagerAdapter& AbilityManagerAdapter::GetInstance()
@@ -41,13 +47,38 @@ AbilityManagerAdapter::AbilityManagerAdapter()
 AbilityManagerAdapter::~AbilityManagerAdapter()
 {}
 
-int32_t AbilityManagerAdapter::StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken)
+static void AbilityManagerConvertWant(const InnerWant &innerWant, AAFwk::Want &want)
+{
+    if (innerWant.bundleName != std::nullopt && innerWant.abilityName != std::nullopt) {
+        want.SetElementName(innerWant.bundleName.value(), innerWant.abilityName.value());
+    }
+    if (innerWant.hapBundleName != std::nullopt) {
+        want.SetParam(BUNDLE_NAME, innerWant.hapBundleName.value());
+    }
+    if (innerWant.hapAppIndex != std::nullopt) {
+        want.SetParam(APP_INDEX, innerWant.hapAppIndex.value());
+    }
+    if (innerWant.hapUserID != std::nullopt) {
+        want.SetParam(USER_ID, innerWant.hapUserID.value());
+    }
+    if (innerWant.callerTokenId != std::nullopt) {
+        want.SetParam(CALLER_TOKENID, std::to_string(innerWant.callerTokenId.value()));
+    }
+    if (innerWant.resource != std::nullopt) {
+        want.SetParam(RESOURCE_KEY, innerWant.resource.value());
+    }
+}
+
+int32_t AbilityManagerAdapter::StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken)
 {
     auto abms = GetProxy();
     if (abms == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetProxy.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
+
+    AAFwk::Want want;
+    AbilityManagerConvertWant(innerWant, want);
 
     MessageParcel data;
     MessageParcel reply;

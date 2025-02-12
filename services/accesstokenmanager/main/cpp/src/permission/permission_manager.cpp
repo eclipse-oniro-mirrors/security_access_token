@@ -45,7 +45,6 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
-#include "want.h"
 
 namespace OHOS {
 namespace Security {
@@ -67,10 +66,6 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
-constexpr const char* BUNDLE_NAME = "bundleName";
-constexpr const char* APP_INDEX = "appIndex";
-constexpr const char* USER_ID = "userId";
-constexpr const char* CALLER_TOKENID = "callerTokenId";
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -314,14 +309,15 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "bundleName=%{public}s, abilityName=%{public}s, hapInfo.bundleName=%{public}s",
         bundleName.c_str(), abilityName.c_str(), hapInfo.bundleName.c_str());
-    AAFwk::Want want;
-    want.SetElementName(bundleName, abilityName);
-    want.SetParam(BUNDLE_NAME, hapInfo.bundleName);
-    want.SetParam(APP_INDEX, hapInfo.instIndex);
-    want.SetParam(USER_ID, hapInfo.userID);
 
-    AccessTokenID callerTokenId = IPCSkeleton::GetCallingTokenID();
-    want.SetParam(CALLER_TOKENID, std::to_string(callerTokenId));
+    InnerWant innerWant = {
+        .bundleName = bundleName,
+        .abilityName = abilityName,
+        .hapBundleName = hapInfo.bundleName,
+        .hapAppIndex = hapInfo.instIndex,
+        .hapUserID = hapInfo.instIndex,
+        .callerTokenId = IPCSkeleton::GetCallingTokenID()
+    };
 
     {
         std::lock_guard<std::mutex> lock(abilityManagerMutex_);
@@ -336,7 +332,7 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    ErrCode err = abilityManager->StartAbility(want, nullptr);
+    ErrCode err = abilityManager->StartAbility(innerWant, nullptr);
     if (err != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to StartAbility, err:%{public}d", err);
         return AccessTokenError::ERR_SERVICE_ABNORMAL;

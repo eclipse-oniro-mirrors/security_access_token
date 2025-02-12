@@ -107,7 +107,6 @@ ohos_unittest("libpermission_manager_mock_test") {
   ]
 
   external_deps = [
-    "ability_base:want",
     "c_utils:utils",
     "googletest:gmock",
     "googletest:gtest_main",

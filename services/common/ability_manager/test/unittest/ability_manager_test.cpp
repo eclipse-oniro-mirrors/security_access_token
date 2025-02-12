@@ -45,12 +45,12 @@ void AbilityManagerTest::TearDown() {}
 HWTEST_F(AbilityManagerTest, AbilityManagerTest001, TestSize.Level1)
 {
     AbilityManagerAccessLoaderInterface* loader = static_cast<AbilityManagerAccessLoaderInterface*>(Create());
-    AAFwk::Want want;
-    want.SetElementName("InvalidBundleName001", "InvalidAbilityName001");
-    std::string paramName = "ParamName001";
-    std::string param = "Param001";
-    want.SetParam(paramName, param);
-    EXPECT_NE(ERR_OK, loader->StartAbility(want, nullptr));
+    InnerWant innerWant = {
+        .bundleName = "InvalidBundleName001",
+        .abilityName = "InvalidAbilityName001"
+    };
+
+    EXPECT_NE(ERR_OK, loader->StartAbility(innerWant, nullptr));
     Destroy(loader);
 }
 } // namespace AccessToken

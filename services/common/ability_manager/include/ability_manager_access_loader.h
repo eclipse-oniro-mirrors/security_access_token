@@ -17,23 +17,33 @@
 #define ABILITY_MANAGER_ACCESS_LOADER_H
 
 #include <iremote_proxy.h>
-
-#include "want.h"
+#include <optional>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const static std::string ABILITY_MANAGER_LIBPATH = "libaccesstoken_ability_manager_adapter.z.so";
 
+struct InnerWant {
+    std::optional<std::string> bundleName;
+    std::optional<std::string> abilityName;
+    std::optional<std::string> hapBundleName;
+    std::optional<std::string> resource;
+    std::optional<int> hapAppIndex;
+    std::optional<int> hapUserID;
+    std::optional<AccessTokenID> callerTokenId;
+};
+
 class AbilityManagerAccessLoaderInterface {
 public:
     AbilityManagerAccessLoaderInterface() {}
     virtual ~AbilityManagerAccessLoaderInterface() {}
-    virtual int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken);
+    virtual int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken);
 };
 
 class AbilityManagerAccessLoader final: public AbilityManagerAccessLoaderInterface {
-    int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken) override;
+    int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken) override;
 };
 
 #ifdef __cplusplus
