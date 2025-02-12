@@ -188,6 +188,25 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level1)
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     ASSERT_EQ(ret, TOKEN_NATIVE);
 }
+
+/**
+ * @tc.name: GetTokenTypeFlagFuncTest002
+ * @tc.desc: Get token type with hap tokenID.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+
+    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(ret, TOKEN_HAP);
+
+    int res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

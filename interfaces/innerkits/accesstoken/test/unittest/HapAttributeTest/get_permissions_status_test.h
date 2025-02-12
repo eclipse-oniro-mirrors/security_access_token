@@ -32,6 +32,7 @@ public:
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
+    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security
