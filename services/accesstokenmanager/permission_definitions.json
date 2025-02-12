@@ -301,6 +301,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.START_DESKTOP_UI_COMPONENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.REMOVE_CACHE_FILES",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
