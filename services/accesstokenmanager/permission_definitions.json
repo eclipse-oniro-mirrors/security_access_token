@@ -2131,6 +2131,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_DDK_USB_SERIAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_DDK_SCSI_PERIPHERAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
             "grantMode": "system_grant",
             "availableLevel": "normal",
@@ -2138,6 +2158,16 @@
             "since": 10,
             "deprecated": "",
             "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_DDK_DRIVERS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
             "distributedSceneEnable": false
         },
         {
