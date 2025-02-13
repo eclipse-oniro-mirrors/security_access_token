@@ -362,6 +362,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CONNECT_UI_EXTENSION_ABILITY",        false},
     {"ohos.permission.FILE_ACCESS_PERSIST",                 false},
     {"ohos.permission.SET_SANDBOX_POLICY",                  false},
+    {"ohos.permission.CHECK_SANDBOX_POLICY",                  false},
     {"ohos.permission.ACCESS_ACCOUNT_KIT_SERVICE",          false},
     {"ohos.permission.REQUEST_ANONYMOUS_ATTEST",            false},
     {"ohos.permission.ACCESS_ACCOUNT_KIT_UI",               false},
