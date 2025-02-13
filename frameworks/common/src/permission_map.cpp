@@ -520,6 +520,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",   false},
     {"ohos.permission.SET_MUTE_POLICY",                     false},
     {"ohos.permission.SET_PAC_URL",                          false},
+    {"ohos.permission.PRELOAD_FILE",                          false},
     {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
 };
 
