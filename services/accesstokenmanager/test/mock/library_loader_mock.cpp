@@ -26,13 +26,13 @@ static constexpr uint32_t INVALID_INDEX = 0;
 }
 
 class AbilityManagerAccessLoaderMock final: public AbilityManagerAccessLoaderInterface {
-    int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken) override;
+    int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken) override;
 };
 
-int32_t AbilityManagerAccessLoaderMock::StartAbility(const AAFwk::Want &want,
+int32_t AbilityManagerAccessLoaderMock::StartAbility(const InnerWant &innerWant,
     const sptr<IRemoteObject> &callerToken)
 {
-    if (want.GetIntParam("appIndex", 0) == INVALID_INDEX) {
+    if (innerWant.hapAppIndex.value_or(INVALID_INDEX) == INVALID_INDEX) {
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return ERR_OK;

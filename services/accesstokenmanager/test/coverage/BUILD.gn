@@ -106,7 +106,6 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   ]
 
   external_deps = [
-    "ability_base:want",
     "c_utils:utils",
     "googletest:gmock",
     "googletest:gtest_main",
