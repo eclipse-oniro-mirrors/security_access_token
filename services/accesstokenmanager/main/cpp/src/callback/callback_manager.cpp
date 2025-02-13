@@ -75,7 +75,7 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
         LOGE(ATM_DOMAIN, ATM_TAG, "Callback size has reached limitation");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
-    if (!callback->AddDeathRecipient(callbackDeathRecipient_)) {
+    if (callback->IsProxyObject() && !callback->AddDeathRecipient(callbackDeathRecipient_)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "add death recipient failed");
         return AccessTokenError::ERR_ADD_DEATH_RECIPIENT_FAILED;
     }
