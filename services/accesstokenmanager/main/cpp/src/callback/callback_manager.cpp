@@ -144,13 +144,15 @@ void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list,
         auto callbackSingle = [it, tokenID, permName, changeType]() {
             sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
             if (callback != nullptr) {
-                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute");
+                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute, id=%{public}u perm=%{public}s changeType=%{public}d",
+                    tokenID, permName.c_str(), changeType);
                 PermStateChangeInfo resInfo;
                 resInfo.permStateChangeType = changeType;
                 resInfo.permissionName = permName;
                 resInfo.tokenID = tokenID;
                 callback->PermStateChangeCallback(resInfo);
-                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute end");
+                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute end, "
+                    "id=%{public}u perm=%{public}s changeType=%{public}d", tokenID, permName.c_str(), changeType);
             }
         };
         ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
@@ -197,9 +199,11 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
 
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Entry");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Entry, id=%{public}u perm=%{public}s changeType=%{public}d",
+        tokenID, permName.c_str(), changeType);
     auto callbackStart = [this, tokenID, permName, changeType]() {
-        LOGI(ATM_DOMAIN, ATM_TAG, "CallbackStart");
+        LOGI(ATM_DOMAIN, ATM_TAG, "CallbackStart, id=%{public}u perm=%{public}s changeType=%{public}d",
+            tokenID, permName.c_str(), changeType);
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
         std::string name = "AtmCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
