@@ -217,6 +217,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENTERPRISE_ADMIN_MANAGE",             false},
     {"ohos.permission.ENTERPRISE_CONFIG",                   false},
     {"ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",  false},
+    {"ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",        false},
+    {"ohos.permission.START_PROVISIONING_MESSAGE",          false},
     {"ohos.permission.NFC_TAG",                             false},
     {"ohos.permission.NFC_CARD_EMULATION",                  false},
     {"ohos.permission.MANAGE_UWB",                          false},
@@ -360,6 +362,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CONNECT_UI_EXTENSION_ABILITY",        false},
     {"ohos.permission.FILE_ACCESS_PERSIST",                 false},
     {"ohos.permission.SET_SANDBOX_POLICY",                  false},
+    {"ohos.permission.CHECK_SANDBOX_POLICY",                  false},
     {"ohos.permission.ACCESS_ACCOUNT_KIT_SERVICE",          false},
     {"ohos.permission.REQUEST_ANONYMOUS_ATTEST",            false},
     {"ohos.permission.ACCESS_ACCOUNT_KIT_UI",               false},
@@ -518,6 +521,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",   false},
     {"ohos.permission.SET_MUTE_POLICY",                     false},
     {"ohos.permission.SET_PAC_URL",                          false},
+    {"ohos.permission.PRELOAD_FILE",                          false},
+    {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
     {"ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",     false},
 };
 

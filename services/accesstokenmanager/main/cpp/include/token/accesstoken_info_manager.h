@@ -127,7 +127,7 @@ private:
     OHOS::ThreadPool tokenDataWorker_;
 #endif
     bool RemoveNativeInfoFromDatabase(AccessTokenID tokenID);
-
+    int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicyParams& policy);
     bool hasInited_;
     std::atomic_int32_t dumpTaskNum_;
 
