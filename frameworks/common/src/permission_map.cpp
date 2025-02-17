@@ -216,6 +216,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENTERPRISE_OPERATE_DEVICE",           false},
     {"ohos.permission.ENTERPRISE_ADMIN_MANAGE",             false},
     {"ohos.permission.ENTERPRISE_CONFIG",                   false},
+    {"ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",     false},
     {"ohos.permission.ENTERPRISE_MANAGE_DELEGATED_POLICY",  false},
     {"ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",        false},
     {"ohos.permission.START_PROVISIONING_MESSAGE",          false},
