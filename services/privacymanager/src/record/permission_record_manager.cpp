@@ -1426,11 +1426,11 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
 {
     // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
+
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, appStatus %{public}d(1-foreground 2-background).", tokenId, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
-
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, appStatus %{public}d(1-foreground 2-background).", tokenId, status);
 
     return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
 }
