@@ -4950,7 +4950,7 @@
             "name": "ohos.permission.QUERY_AUDIT_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "MDM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
