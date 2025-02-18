@@ -315,7 +315,7 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         .abilityName = abilityName,
         .hapBundleName = hapInfo.bundleName,
         .hapAppIndex = hapInfo.instIndex,
-        .hapUserID = hapInfo.instIndex,
+        .hapUserID = hapInfo.userID,
         .callerTokenId = IPCSkeleton::GetCallingTokenID()
     };
 
