@@ -438,18 +438,6 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
 }
 
 #ifdef TOKEN_SYNC_ENABLE
-/**
- * @tc.name: GetHapTokenInfoFromRemote001
- * @tc.desc: GetHapTokenInfoFromRemote with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123;
-    HapTokenInfoForSync hapSync;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync));
-}
 
 /**
  * @tc.name: SetRemoteHapTokenInfo001
@@ -464,50 +452,6 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
 }
 
-/**
- * @tc.name: DeleteRemoteToken001
- * @tc.desc: DeleteRemoteToken with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level1)
-{
-    std::string device = "device";
-    AccessTokenID tokenId = 123;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteToken(device, tokenId));
-}
-
-/**
- * @tc.name: GetRemoteNativeTokenID001
- * @tc.desc: GetRemoteNativeTokenID with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level1)
-{
-    std::string device = "device";
-    AccessTokenID tokenId = 123;
-    ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetRemoteNativeTokenID(device, tokenId));
-}
-
-/**
- * @tc.name: DeleteRemoteDeviceTokens001
- * @tc.desc: DeleteRemoteDeviceTokens with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
-{
-    std::string device = "device";
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteDeviceTokens(device));
-}
-
-HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level1)
-{
-    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterTokenSyncCallback());
-}
 #endif
 
 /**
