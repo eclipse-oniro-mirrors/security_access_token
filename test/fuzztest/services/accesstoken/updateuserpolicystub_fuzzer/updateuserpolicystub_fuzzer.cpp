@@ -19,14 +19,47 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "access_token.h"
 #include "accesstoken_fuzzdata.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
+#include "nativetoken_kit.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_mockTokenId = 0;
+const int32_t CONSTANTS_NUMBER_TWO = 2;
 
 namespace OHOS {
+    void GetNativeToken()
+    {
+        if (g_mockTokenId != 0) {
+            SetSelfTokenID(g_mockTokenId);
+            return;
+        }
+        const char **perms = new const char *[1];
+        perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+
+        NativeTokenInfoParams infoInstance = {
+            .dcapsNum = 0,
+            .permsNum = 1,
+            .aclsNum = 0,
+            .dcaps = nullptr,
+            .perms = perms,
+            .acls = nullptr,
+            .processName = "updateuserpolicystub_fuzzer_test",
+            .aplStr = "system_core",
+        };
+
+        g_mockTokenId = GetAccessTokenId(&infoInstance);
+        g_selfTokenId = GetSelfTokenID();
+        SetSelfTokenID(g_mockTokenId);
+        AccessTokenKit::ReloadNativeTokenInfo();
+        delete[] perms;
+    }
     bool UpdateUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -56,6 +89,12 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            GetNativeToken();
+        } else {
+            SetSelfTokenID(g_selfTokenId);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;

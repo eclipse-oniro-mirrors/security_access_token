@@ -32,6 +32,7 @@ ohos_fuzztest("UpdateUserPolicyStubFuzzTest") {
   include_dirs = access_token_include_dirs
 
   deps = access_token_deps
+  deps += [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
