@@ -66,6 +66,8 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
         RETURN_IF_FALSE(out.WriteString(info[i].permissionName));
         RETURN_IF_FALSE(out.WriteBool(info[i].userCancelable));
     }
+    
+    RETURN_IF_FALSE(out.WriteInt32(this->hapPolicy.checkIgnore));
     return true;
 }
 
@@ -117,6 +119,9 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
         RELEASE_IF_FALSE(in.ReadBool(info.userCancelable), hapPolicyParcel);
         hapPolicyParcel->hapPolicy.preAuthorizationInfo.emplace_back(info);
     }
+    int32_t checkIgnore;
+    RELEASE_IF_FALSE(in.ReadInt32(checkIgnore), hapPolicyParcel);
+    hapPolicyParcel->hapPolicy.checkIgnore = HapPolicyCheckIgnore(checkIgnore);
     return hapPolicyParcel;
 }
 } // namespace AccessToken

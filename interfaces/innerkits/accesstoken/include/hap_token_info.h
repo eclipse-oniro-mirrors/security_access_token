@@ -165,6 +165,7 @@ public:
     std::vector<PermissionStateFull> permStateList;
     std::vector<std::string> aclRequestedList;
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+    HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
 };
 
 /**
@@ -199,6 +200,7 @@ public:
     std::vector<PermissionStatus> permStateList;
     std::vector<std::string> aclRequestedList;
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+    HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
 };
 } // namespace AccessToken
 } // namespace Security

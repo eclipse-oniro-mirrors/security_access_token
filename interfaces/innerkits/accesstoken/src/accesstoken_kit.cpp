@@ -81,14 +81,15 @@ static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& 
         tmp.grantFlag = perm.grantFlags[0];
         policyOut.permStateList.emplace_back(tmp);
     }
+    policyOut.checkIgnore = policyIn.checkIgnore;
 }
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
     LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, \
-permList: %{public}zu, stateList: %{public}zu",
-        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
+permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(), policy.checkIgnore);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
@@ -111,8 +112,8 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, \
-permList: %{public}zu, stateList: %{public}zu",
-        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
+permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(), policy.checkIgnore);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
@@ -149,8 +150,9 @@ int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateH
     const HapPolicyParams& policy, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, isSystemApp: %{public}d, \
-permList: %{public}zu, stateList: %{public}zu",
-        tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size());
+permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
+        tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size(),
+        policy.checkIgnore);
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");

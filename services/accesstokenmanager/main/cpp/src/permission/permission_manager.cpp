@@ -834,6 +834,11 @@ void PermissionManager::SetPermToKernel(
 
 bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicy& policy)
 {
+    if (policy.checkIgnore == HapPolicyCheckIgnore::ACL_IGNORE_CHECK) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s ignore acl check.", permDef.permissionName.c_str());
+        return true;
+    }
+
     if (policy.apl < permDef.availableLevel) {
         if (!permDef.provisionEnable) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", permDef.permissionName.c_str());
