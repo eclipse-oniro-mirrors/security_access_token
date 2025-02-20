@@ -4956,6 +4956,16 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
+		{
+            "name": "ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
         {
             "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
             "grantMode": "system_grant",
