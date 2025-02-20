@@ -5488,6 +5488,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
+        {
             "name": "ohos.permission.READ_WRITE_USER_FILE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -5516,6 +5517,6 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        },
+        }
     ]
 }
