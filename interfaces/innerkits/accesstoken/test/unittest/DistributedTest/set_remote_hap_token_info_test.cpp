@@ -183,7 +183,7 @@ void SetRemoteHapTokenInfoWithWrongInfo1(HapTokenInfo &wrongBaseInfo, const HapT
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
     remoteTokenInfo.baseInfo = wrongBaseInfo;
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     EXPECT_NE(ret, RET_SUCCESS);
 
     wrongBaseInfo = rightBaseInfo;
