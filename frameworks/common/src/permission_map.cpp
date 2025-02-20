@@ -534,6 +534,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.PRELOAD_FILE",                          false},
     {"ohos.permission.NDK_START_SELF_UI_ABILITY",           false},
     {"ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",     false},
+    {"ohos.permission.ACCESS_DISK_PHY_INFO",    false},
     {"ohos.permission.INPUT_KEYBOARD_CONTROLLER",             false},
     {"ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",  false},
     {"ohos.permission.MANAGE_APP_KEEP_ALIVE",               false},
