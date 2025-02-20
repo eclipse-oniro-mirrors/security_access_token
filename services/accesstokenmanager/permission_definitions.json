@@ -5409,6 +5409,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_DISK_PHY_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
