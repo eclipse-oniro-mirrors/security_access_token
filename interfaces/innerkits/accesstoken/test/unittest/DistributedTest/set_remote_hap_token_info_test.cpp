@@ -214,7 +214,8 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.L
     };
 
     HapTokenInfo wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.dlpType = static_cast<HapDlpType>(1000000);
+    wrongBaseInfo.userID = -11; // wrong userid
+
     PermissionStatus infoManagerTestState_2 = {
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
@@ -249,7 +250,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
         .grantFlag = 11, // wrong flags
-        };
+    };
     std::vector<PermissionStatus> permStateList3;
     permStateList3.emplace_back(infoManagerTestState_3);
 
