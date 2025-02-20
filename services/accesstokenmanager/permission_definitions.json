@@ -4956,6 +4956,16 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
+		{
+            "name": "ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 15,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
         {
             "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
             "grantMode": "system_grant",
@@ -5478,6 +5488,25 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
+            "name": "ohos.permission.READ_WRITE_USER_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.READ_WRITE_USB_DEV",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
         {
             "name": "ohos.permission.USER_AUTH_FROM_BACKGROUND",
             "grantMode": "system_grant",
@@ -5487,6 +5516,6 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        }
+        },
     ]
 }
