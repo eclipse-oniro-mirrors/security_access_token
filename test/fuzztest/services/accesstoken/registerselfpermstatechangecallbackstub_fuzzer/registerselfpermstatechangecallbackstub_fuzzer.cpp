@@ -19,13 +19,21 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "access_token.h"
 #include "accesstoken_fuzzdata.h"
+#define private public
+#include "accesstoken_id_manager.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_client.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static uint64_t g_selfTokenId = 0;
+static uint64_t g_mockTokenId = 0;
+const int32_t CONSTANTS_NUMBER_TWO = 2;
 
 class CbCustomizeTest2 : public PermStateChangeCallbackCustomize {
 public:
@@ -46,6 +54,31 @@ public:
 };
 
 namespace OHOS {
+    void GetHapToken()
+    {
+        if (g_mockTokenId != 0) {
+            SetSelfTokenID(g_mockTokenId);
+            return;
+        }
+        HapInfoParams infoParams = {
+            .userID = 0,
+            .bundleName = "registerselfpermstatechangecallbackstub.fuzzer",
+            .instIndex = 0,
+            .appIDDesc = "fuzzer",
+            .apiVersion = 8
+        };
+
+        HapPolicyParams policyParams = {
+            .apl = APL_SYSTEM_CORE,
+            .domain = "test_domain"
+        };
+
+        AccessTokenIDEx fullTokenId = AccessTokenKit::AllocHapToken(infoParams, policyParams);
+        g_mockTokenId = fullTokenId.tokenIDEx;
+        SetSelfTokenID(g_mockTokenId);
+        AccessTokenIDManager::GetInstance().tokenIdSet_.insert(fullTokenId.tokenIdExStruct.tokenID);
+    }
+
     bool RegisterSelfPermStateChangeCallbackStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -81,6 +114,12 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            GetHapToken();
+        } else {
+            SetSelfTokenID(g_selfTokenId);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;
