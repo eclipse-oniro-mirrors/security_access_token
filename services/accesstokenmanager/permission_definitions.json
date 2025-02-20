@@ -3671,6 +3671,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.USE_FRAUD_APP_PICKER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.PROXY_MESSAGE_AUTH",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
