@@ -18,18 +18,21 @@
 
 #include <string>
 #include <vector>
+#include "permission_def.h"
+#include "native_token_info_base.h"
+#include "permission_dlp_mode.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const static std::string CONFIG_POLICY_LIBPATH = "libaccesstoken_config_policy.z.so";
+const static std::string CONFIG_PARSE_LIBPATH = "libaccesstoken_json_parse.z.so";
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
     std::string grantServiceAbilityName;
     std::string permStateAbilityName;
     std::string globalSwitchAbilityName;
-    int32_t cancleTime;
+    int32_t cancleTime = 0;
     std::string applicationSettingAbilityName;
 };
 
@@ -56,21 +59,37 @@ enum ServiceType {
     TOKENSYNC_SERVICE,
 };
 
+struct PermissionDefParseRet {
+    PermissionDef permDef;
+    bool isSuccessful = false;
+};
+
 class ConfigPolicyLoaderInterface {
 public:
     ConfigPolicyLoaderInterface() {}
     virtual ~ConfigPolicyLoaderInterface() {}
     virtual bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+    virtual int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
+    virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    virtual int32_t GetAllPermissionDef(std::vector<PermissionDef>& permDefList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
     bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+    int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
+    int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    int32_t GetAllPermissionDef(std::vector<PermissionDef>& permDefList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
     bool GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
         AccessTokenConfigValue& config);
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    bool ParserNativeRawData(const std::string& nativeRawData, std::vector<NativeTokenInfoBase>& tokenInfos);
+    bool ParserPermDefRawData(const std::string& permsRawData, std::vector<PermissionDef>& permDefList);
+    bool ParserDlpPermsRawData(const std::string& dlpPermsRawData, std::vector<PermissionDlpMode>& dlpPerms);
+    int32_t ReadCfgFile(const std::string& file, std::string& rawData);
+    bool IsDirExsit(const std::string& file);
 };
 
 #ifdef __cplusplus

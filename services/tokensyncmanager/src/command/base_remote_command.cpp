@@ -41,29 +41,7 @@ static const std::string JSON_INST_INDEX = "instIndex";
 static const std::string JSON_DLP_TYPE = "dlpType";
 }
 
-static void GetStringFromJson(const nlohmann::json& jsonObject, const std::string& tag, std::string& out)
-{
-    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_string()) {
-        out = jsonObject.at(tag).get<std::string>();
-    }
-}
-
-static void GetIntFromJson(const nlohmann::json& jsonObject, const std::string& tag, int32_t& out)
-{
-    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_number()) {
-        out = jsonObject.at(tag).get<int32_t>();
-    }
-}
-
-static void GetUnSignedIntFromJson(const nlohmann::json& jsonObject, const std::string& tag,
-    unsigned int& out)
-{
-    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_number()) {
-        out = jsonObject.at(tag).get<unsigned int>();
-    }
-}
-
-void BaseRemoteCommand::FromRemoteProtocolJson(const nlohmann::json& jsonObject)
+void BaseRemoteCommand::FromRemoteProtocolJson(const CJson* jsonObject)
 {
     GetStringFromJson(jsonObject, JSON_COMMAND_NAME, remoteProtocol_.commandName);
     GetStringFromJson(jsonObject, JSON_UNIQUEID, remoteProtocol_.uniqueId);
@@ -78,116 +56,122 @@ void BaseRemoteCommand::FromRemoteProtocolJson(const nlohmann::json& jsonObject)
     GetStringFromJson(jsonObject, JSON_RESPONSE_DEVICEID, remoteProtocol_.responseDeviceId);
 }
 
-nlohmann::json BaseRemoteCommand::ToRemoteProtocolJson()
+CJsonUnique BaseRemoteCommand::ToRemoteProtocolJson()
 {
-    nlohmann::json j;
-    j["commandName"] = remoteProtocol_.commandName;
-    j["uniqueId"] = remoteProtocol_.uniqueId;
-    j["requestVersion"] = remoteProtocol_.requestVersion;
-    j["srcDeviceId"] = remoteProtocol_.srcDeviceId;
-    j["srcDeviceLevel"] = remoteProtocol_.srcDeviceLevel;
-    j["dstDeviceId"] = remoteProtocol_.dstDeviceId;
-    j["dstDeviceLevel"] = remoteProtocol_.dstDeviceLevel;
-    j["statusCode"] = remoteProtocol_.statusCode;
-    j["message"] = remoteProtocol_.message;
-    j["responseVersion"] = remoteProtocol_.responseVersion;
-    j["responseDeviceId"] = remoteProtocol_.responseDeviceId;
+    CJsonUnique j = CreateJson();
+    AddStringToJson(j, "commandName", remoteProtocol_.commandName);
+    AddStringToJson(j, "uniqueId", remoteProtocol_.uniqueId);
+    AddIntToJson(j, "requestVersion", remoteProtocol_.requestVersion);
+    AddStringToJson(j, "srcDeviceId", remoteProtocol_.srcDeviceId);
+    AddStringToJson(j, "srcDeviceLevel", remoteProtocol_.srcDeviceLevel);
+    AddStringToJson(j, "dstDeviceId", remoteProtocol_.dstDeviceId);
+    AddStringToJson(j, "dstDeviceLevel", remoteProtocol_.dstDeviceLevel);
+    AddIntToJson(j, "statusCode", remoteProtocol_.statusCode);
+    AddStringToJson(j, "message", remoteProtocol_.message);
+    AddIntToJson(j, "responseVersion", remoteProtocol_.responseVersion);
+    AddStringToJson(j, "responseDeviceId", remoteProtocol_.responseDeviceId);
     return j;
 }
 
-nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo)
+CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo)
 {
-    nlohmann::json permStatesJson;
+    CJsonUnique permStatesJson = CreateJsonArray();
     for (const auto& permState : tokenInfo.permStateList) {
-        nlohmann::json permStateJson;
-        ToPermStateJson(permStateJson, permState);
-        permStatesJson.emplace_back(permStateJson);
+        CJsonUnique permStateJson = CreateJson();
+        ToPermStateJson(permStateJson.get(), permState);
+        AddObjToArray(permStatesJson, permStateJson);
     }
-
-    nlohmann::json DcapsJson = nlohmann::json(tokenInfo.dcap);
-    nlohmann::json NativeAclsJson = nlohmann::json(tokenInfo.nativeAcls);
-    nlohmann::json nativeTokenJson = nlohmann::json {
-        {"processName", tokenInfo.processName},
-        {"apl", tokenInfo.apl},
-        {"version", tokenInfo.ver},
-        {"tokenId", tokenInfo.tokenID},
-        {"tokenAttr", tokenInfo.tokenAttr},
-        {"dcaps", DcapsJson},
-        {"nativeAcls", NativeAclsJson},
-        {"permState", permStatesJson},
-    };
+    CJsonUnique DcapsJson = CreateJsonArray();
+    for (const auto& item : tokenInfo.dcap) {
+        cJSON *tmpObj = cJSON_CreateString(item.c_str());
+        AddObjToArray(DcapsJson.get(), tmpObj);
+        cJSON_Delete(tmpObj);
+        tmpObj = nullptr;
+    }
+    CJsonUnique NativeAclsJson = CreateJsonArray();
+    for (const auto& item : tokenInfo.nativeAcls) {
+        cJSON *tmpObj = cJSON_CreateString(item.c_str());
+        AddObjToArray(NativeAclsJson.get(), tmpObj);
+        cJSON_Delete(tmpObj);
+        tmpObj = nullptr;
+    }
+    CJsonUnique nativeTokenJson = CreateJson();
+    AddStringToJson(nativeTokenJson, "processName", tokenInfo.processName);
+    AddIntToJson(nativeTokenJson, "apl", tokenInfo.apl);
+    AddUnsignedIntToJson(nativeTokenJson, "version", tokenInfo.ver);
+    AddUnsignedIntToJson(nativeTokenJson, "tokenId", tokenInfo.tokenID);
+    AddUnsignedIntToJson(nativeTokenJson, "tokenAttr", tokenInfo.tokenAttr);
+    AddObjToJson(nativeTokenJson, "dcaps", DcapsJson);
+    AddObjToJson(nativeTokenJson, "nativeAcls", NativeAclsJson);
+    AddObjToJson(nativeTokenJson, "permState", permStatesJson);
     return nativeTokenJson;
 }
 
-void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const PermissionStatus& state)
+void BaseRemoteCommand::ToPermStateJson(cJSON* permStateJson, const PermissionStatus& state)
 {
-    permStateJson["permissionName"] = state.permissionName;
-    permStateJson["grantStatus"] = state.grantStatus;
-    permStateJson["grantFlag"] = state.grantFlag;
+    AddStringToJson(permStateJson, "permissionName", state.permissionName);
+    AddIntToJson(permStateJson, "grantStatus", state.grantStatus);
+    AddUnsignedIntToJson(permStateJson, "grantFlag", state.grantFlag);
 }
 
-nlohmann::json BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
+CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
 {
-    nlohmann::json permStatesJson;
+    CJsonUnique permStatesJson = CreateJsonArray();
     for (const auto& permState : tokenInfo.permStateList) {
-        nlohmann::json permStateJson;
-        ToPermStateJson(permStateJson, permState);
-        permStatesJson.emplace_back(permStateJson);
+        CJsonUnique permStateJson = CreateJson();
+        ToPermStateJson(permStateJson.get(), permState);
+        AddObjToArray(permStatesJson, permStateJson);
     }
-
-    nlohmann::json hapTokensJson = nlohmann::json {
-        {"version", tokenInfo.baseInfo.ver},
-        {"tokenID", tokenInfo.baseInfo.tokenID},
-        {"tokenAttr", tokenInfo.baseInfo.tokenAttr},
-        {"userID", tokenInfo.baseInfo.userID},
-        {"bundleName", tokenInfo.baseInfo.bundleName},
-        {"instIndex", tokenInfo.baseInfo.instIndex},
-        {"dlpType", tokenInfo.baseInfo.dlpType},
-        {"permState", permStatesJson}
-    };
+    CJsonUnique hapTokensJson = CreateJson();
+    AddIntToJson(hapTokensJson, JSON_VERSION, tokenInfo.baseInfo.ver);
+    AddUnsignedIntToJson(hapTokensJson, JSON_TOKENID, tokenInfo.baseInfo.tokenID);
+    AddUnsignedIntToJson(hapTokensJson, JSON_TOKEN_ATTR, tokenInfo.baseInfo.tokenAttr);
+    AddIntToJson(hapTokensJson, JSON_USERID, tokenInfo.baseInfo.userID);
+    AddStringToJson(hapTokensJson, JSON_BUNDLE_NAME, tokenInfo.baseInfo.bundleName);
+    AddIntToJson(hapTokensJson, JSON_INST_INDEX, tokenInfo.baseInfo.instIndex);
+    AddIntToJson(hapTokensJson, JSON_DLP_TYPE, tokenInfo.baseInfo.dlpType);
+    AddObjToJson(hapTokensJson, "permState", permStatesJson);
     return hapTokensJson;
 }
 
-void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapTokenJson,
+void BaseRemoteCommand::FromHapTokenBasicInfoJson(const cJSON* hapTokenJson,
     HapTokenInfo& hapTokenBasicInfo)
 {
-    if (hapTokenJson.find("version") != hapTokenJson.end() && hapTokenJson.at("version").is_number()) {
-        hapTokenJson.at("version").get_to(hapTokenBasicInfo.ver);
-    }
-
-    GetUnSignedIntFromJson(hapTokenJson, JSON_TOKENID, hapTokenBasicInfo.tokenID);
-    GetUnSignedIntFromJson(hapTokenJson, JSON_TOKEN_ATTR, hapTokenBasicInfo.tokenAttr);
+    int32_t ver;
+    GetIntFromJson(hapTokenJson, JSON_VERSION, ver);
+    hapTokenBasicInfo.ver = (char)ver;
+    GetUnsignedIntFromJson(hapTokenJson, JSON_TOKENID, hapTokenBasicInfo.tokenID);
+    GetUnsignedIntFromJson(hapTokenJson, JSON_TOKEN_ATTR, hapTokenBasicInfo.tokenAttr);
     GetIntFromJson(hapTokenJson, JSON_USERID, hapTokenBasicInfo.userID);
     GetStringFromJson(hapTokenJson, JSON_BUNDLE_NAME, hapTokenBasicInfo.bundleName);
     GetIntFromJson(hapTokenJson, JSON_INST_INDEX, hapTokenBasicInfo.instIndex);
     GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
 }
 
-void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson,
+void BaseRemoteCommand::FromPermStateListJson(const cJSON* hapTokenJson,
     std::vector<PermissionStatus>& permStateList)
 {
-    if (hapTokenJson.find("permState") != hapTokenJson.end()
-        && hapTokenJson.at("permState").is_array()
-        && !hapTokenJson.at("permState").empty()) {
-        nlohmann::json permissionsJson = hapTokenJson.at("permState").get<nlohmann::json>();
-        for (const auto& permissionJson : permissionsJson) {
+    cJSON *jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
+    if (jsonObjTmp != nullptr) {
+        int len = cJSON_GetArraySize(jsonObjTmp);
+        for (int i = 0; i < len; i++) {
+            cJSON *permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
             PermissionStatus permission;
-            if (permissionJson.find("permissionName") == permissionJson.end() ||
-                !permissionJson.at("permissionName").is_string() ||
-                permissionJson.find("grantStatus") == permissionJson.end() ||
-                !permissionJson.at("grantStatus").is_number() ||
-                permissionJson.find("grantFlag") == permissionJson.end() ||
-                !permissionJson.at("grantFlag").is_number()) {
+            if (!GetStringFromJson(permissionJson, "permissionName", permission.permissionName)) {
                 continue;
             }
-            permissionJson.at("permissionName").get_to(permission.permissionName);
-            permissionJson.at("grantStatus").get_to(permission.grantStatus);
-            permissionJson.at("grantFlag").get_to(permission.grantFlag);
+            if (!GetIntFromJson(permissionJson, "grantStatus", permission.grantStatus)) {
+                continue;
+            }
+            if (!GetUnsignedIntFromJson(permissionJson, "grantFlag", permission.grantFlag)) {
+                continue;
+            }
+            permStateList.emplace_back(permission);
         }
     }
 }
 
-void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
+void BaseRemoteCommand::FromHapTokenInfoJson(const cJSON* hapTokenJson,
     HapTokenInfoForSync& hapTokenInfo)
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
@@ -198,36 +182,41 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);
 }
 
-void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson,
+void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
     NativeTokenInfoBase& nativeTokenInfo)
 {
-    if (nativeTokenJson.find("processName") != nativeTokenJson.end() && nativeTokenJson.at("processName").is_string()) {
-        nativeTokenInfo.processName = nativeTokenJson.at("processName").get<std::string>();
+    GetStringFromJson(nativeTokenJson, "processName", nativeTokenInfo.processName);
+    int32_t apl;
+    GetIntFromJson(nativeTokenJson, "apl", apl);
+    if (DataValidator::IsAplNumValid(apl)) {
+        nativeTokenInfo.apl = static_cast<ATokenAplEnum>(apl);
     }
-    if (nativeTokenJson.find("apl") != nativeTokenJson.end() && nativeTokenJson.at("apl").is_number()) {
-        int apl = nativeTokenJson.at("apl").get<int>();
-        if (DataValidator::IsAplNumValid(apl)) {
-            nativeTokenInfo.apl = static_cast<ATokenAplEnum>(apl);
-        }
-    }
-    if (nativeTokenJson.find("version") != nativeTokenJson.end() && nativeTokenJson.at("version").is_number()) {
-        nativeTokenInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
-    }
-    if (nativeTokenJson.find("tokenId") != nativeTokenJson.end() && nativeTokenJson.at("tokenId").is_number()) {
-        nativeTokenInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
-    }
-    if (nativeTokenJson.find("tokenAttr") != nativeTokenJson.end() && nativeTokenJson.at("tokenAttr").is_number()) {
-        nativeTokenInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
-    }
-    if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
-        && !nativeTokenJson.at("dcaps").empty() && (nativeTokenJson.at("dcaps"))[0].is_string()) {
-        nativeTokenInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
-    }
-    if (nativeTokenJson.find("nativeAcls") != nativeTokenJson.end() && nativeTokenJson.at("nativeAcls").is_array()
-        && !nativeTokenJson.at("nativeAcls").empty() && (nativeTokenJson.at("nativeAcls"))[0].is_string()) {
-        nativeTokenInfo.nativeAcls = nativeTokenJson.at("nativeAcls").get<std::vector<std::string>>();
-    }
+    int32_t ver;
+    GetIntFromJson(nativeTokenJson, JSON_VERSION, ver);
+    nativeTokenInfo.ver = (char)ver;
+    GetUnsignedIntFromJson(nativeTokenJson, "tokenId", nativeTokenInfo.tokenID);
+    GetUnsignedIntFromJson(nativeTokenJson, "tokenAttr", nativeTokenInfo.tokenAttr);
 
+    cJSON *dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
+    if (dcapsJson != nullptr) {
+        CJson *dcap = nullptr;
+        std::vector<std::string> dcaps;
+        cJSON_ArrayForEach(dcap, dcapsJson) {
+            std::string item = cJSON_GetStringValue(dcap);
+            dcaps.push_back(item);
+        }
+        nativeTokenInfo.dcap = dcaps;
+    }
+    cJSON *nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
+    if (nativeAclsJson != nullptr) {
+        CJson *acl = nullptr;
+        std::vector<std::string> nativeAcls;
+        cJSON_ArrayForEach(acl, nativeAclsJson) {
+            std::string item = cJSON_GetStringValue(acl);
+            nativeAcls.push_back(item);
+        }
+        nativeTokenInfo.nativeAcls = nativeAcls;
+    }
     FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);
 }
 }  // namespace AccessToken

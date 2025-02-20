@@ -475,26 +475,26 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
         .baseInfo = baseInfo,
         .permStateList = permStateList
     };
-    nlohmann::json hapTokenJson;
+    CJsonUnique hapTokenJson;
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
     hapTokenJson = cmd->ToHapTokenInfosJson(remoteTokenInfo);
 
     HapTokenInfoForSync hap;
-    cmd->FromHapTokenBasicInfoJson(hapTokenJson, hap.baseInfo);
-    cmd->FromPermStateListJson(hapTokenJson, hap.permStateList);
+    cmd->FromHapTokenBasicInfoJson(hapTokenJson.get(), hap.baseInfo);
+    cmd->FromPermStateListJson(hapTokenJson.get(), hap.permStateList);
 
     PermissionStatus state1 = {
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
         .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
-    nlohmann::json permStateJson;
-    cmd->ToPermStateJson(permStateJson, state1);
+    CJsonUnique permStateJson = CreateJson();
+    cmd->ToPermStateJson(permStateJson.get(), state1);
 
     PermissionStatus state2 = {
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
         .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
-    cmd->ToPermStateJson(permStateJson, state2);
+    cmd->ToPermStateJson(permStateJson.get(), state2);
 
     EXPECT_EQ(hap.baseInfo.tokenID, remoteTokenInfo.baseInfo.tokenID);
 }
@@ -509,13 +509,13 @@ HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    nlohmann::json nativeTokenListJsonNull;
+    CJsonUnique nativeTokenListJsonNull = CreateJson();
     NativeTokenInfoBase tokenNull;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull, tokenNull);
+    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull.get(), tokenNull);
 
-    nlohmann::json hapTokenJsonNull;
+    CJsonUnique hapTokenJsonNull = CreateJson();
     HapTokenInfo hapTokenBasicInfoNull;
-    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull, hapTokenBasicInfoNull);
+    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull.get(), hapTokenBasicInfoNull);
 
     NativeTokenInfoBase native1 = {
         .apl = APL_NORMAL,
@@ -526,9 +526,10 @@ HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
         .tokenAttr = 0,
         .nativeAcls = {},
     };
-    nlohmann::json nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
+
+    CJsonUnique nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
     NativeTokenInfoBase token;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJson, token);
+    cmd->FromNativeTokenInfoJson(nativeTokenListJson.get(), token);
     EXPECT_EQ(token.processName, "token_sync_test");
     EXPECT_EQ(token.apl, ATokenAplEnum::APL_NORMAL);
 }
@@ -543,31 +544,32 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    nlohmann::json hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+    CJsonUnique hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+
     std::vector<PermissionStatus> permStateListNull;
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
-        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
-        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"bundleName\\\":\\\"\\\","
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
         "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
         "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 }
 

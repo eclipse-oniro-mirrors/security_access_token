@@ -162,99 +162,89 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
     ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 }
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-    extern bool from_json(const nlohmann::json& j, NativeTokenInfoBase& p);
-}
-}
-}
-
 /**
- * @tc.name: from_json001
+ * @tc.name: ParserNativeRawData002
  * @tc.desc: Verify from json right case.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "test from_json001!");
-    nlohmann::json j = nlohmann::json{
-        {"processName", "process6"},
-        {"APL", APL_SYSTEM_CORE},
-        {"version", 1},
-        {"tokenId", 685266937},
-        {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}},
-        {"permissions", {"ohos.permission.PLACE_CALL"}},
-        {"nativeAcls", {"ohos.permission.PLACE_CALL"}}};
+    LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData002!");
+    std::string testStr = R"([)"\
+        R"({"processName":"process6","APL":APL_SYSTEM_CORE,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"],)"\
+        R"("permissions":["ohos.permission.PLACE_CALL"],)"\
+        R"("nativeAcls":["ohos.permission.PLACE_CALL"]})"\
+        R"(])";
+    CJsonUnique j = CreateJsonFromString(testStr);
     NativeTokenInfoBase native;
-    from_json(j, native);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 685266937);
 }
 
 /**
- * @tc.name: from_json002
+ * @tc.name: GetnNativeTokenInfoFromJson002
  * @tc.desc: Verify from json wrong case.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, from_json002, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, GetnNativeTokenInfoFromJson002, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "test from_json002!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "test GetnNativeTokenInfoFromJson002!");
     // version wrong
-    nlohmann::json j = nlohmann::json{
-        {"processName", "process6"}, {"APL", APL_SYSTEM_CORE},
-        {"version", 2}, {"tokenId", 685266937},
-        {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}}};
+    std::string testStr = R"([)"\
+        R"({"processName":"process6","APL":APL_SYSTEM_CORE,"version":2,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    CJsonUnique j = CreateJsonFromString(testStr);
     NativeTokenInfoBase native;
-    from_json(j, native);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 
     // APL wrong
-    j = nlohmann::json{
-        {"processName", "process6"},
-        {"APL", -1}, {"version", 1},
-        {"tokenId", 685266937}, {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}}};
-    from_json(j, native);
+    testStr = R"([)"\
+        R"({"processName":"process6","APL":-1,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    j = CreateJsonFromString(testStr);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 
     // tokenId wrong
-    j = nlohmann::json{
-        {"processName", "process6"},
-        {"APL", APL_SYSTEM_BASIC}, {"version", 1},
-        {"tokenId", 0}, {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}}};
-    from_json(j, native);
+    testStr = R"([)"\
+        R"({"processName":"","APL":APL_SYSTEM_BASIC,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    j = CreateJsonFromString(testStr);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 
     // process name empty
-    j = nlohmann::json{
-        {"processName", ""},
-        {"APL", APL_SYSTEM_BASIC}, {"version", 1},
-        {"tokenId", 685266937}, {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}}};
-    from_json(j, native);
+    testStr = R"([)"\
+        R"({"processName":name,"APL":APL_SYSTEM_BASIC,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    j = CreateJsonFromString(testStr);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 
     // process name too long
-    std::string name(512, 'c');
-    j = nlohmann::json{
-        {"processName", name},
-        {"APL", APL_SYSTEM_BASIC}, {"version", 1},
-        {"tokenId", 685266937}, {"tokenAttr", 0},
-        {"dcaps", {"AT_CAP", "ST_CAP"}}};
-    from_json(j, native);
+    testStr = R"([)"\
+        R"({"processName":name,"APL":APL_SYSTEM_BASIC,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    j = CreateJsonFromString(testStr);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 
     // lose process name
-    j = nlohmann::json{
-        {"APL", APL_SYSTEM_BASIC},
-        {"version", 1}, {"tokenId", 685266937},
-        {"tokenAttr", 0}, {"dcaps", {"AT_CAP", "ST_CAP"}}};
-    from_json(j, native);
+    testStr = R"([)"\
+        R"({"APL":APL_SYSTEM_BASIC,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
+        R"("dcaps":["AT_CAP","ST_CAP"]})"\
+        R"(])";
+    j = CreateJsonFromString(testStr);
+    NativeTokenReceptor::GetInstance().GetNativeTokenInfoFromJson(j.get(), native);
     ASSERT_EQ(native.tokenID, 0);
 }
 

@@ -22,7 +22,6 @@
 #include "accesstoken_kit.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
-#include "nlohmann/json.hpp"
 #include "nocopyable.h"
 #include "permission_def.h"
 

@@ -29,13 +29,13 @@
 #include "app_manager_access_client.h"
 #include "audio_manager_adapter.h"
 #include "camera_manager_adapter.h"
-#include "config_policy_loader.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
 #include "i_state_change_callback.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "json_parse_loader.h"
 #include "libraryloader.h"
 #include "parameter.h"
 #include "parcel_utils.h"
@@ -1975,10 +1975,10 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Dlopen libaccesstoken_config_policy failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Dlopen libaccesstoken_json_parse failed.");
         return;
     }
     AccessTokenConfigValue value;

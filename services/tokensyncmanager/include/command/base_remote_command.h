@@ -17,10 +17,10 @@
 
 #include <vector>
 
+#include "cjson_utils.h"
 #include "constant.h"
 #include "hap_token_info.h"
 #include "native_token_info_base.h"
-#include "nlohmann/json.hpp"
 #include "permission_status.h"
 #include "remote_protocol.h"
 
@@ -45,20 +45,20 @@ public:
     virtual void Finish() = 0;
 
     virtual std::string ToJsonPayload() = 0;
-    nlohmann::json ToRemoteProtocolJson();
-    void FromRemoteProtocolJson(const nlohmann::json& jsonObject);
+    CJsonUnique ToRemoteProtocolJson();
+    void FromRemoteProtocolJson(const CJson* jsonObject);
 
-    void ToPermStateJson(nlohmann::json& permStateJson, const PermissionStatus& state);
-    void FromPermStateListJson(const nlohmann::json& hapTokenJson,
+    void ToPermStateJson(CJson* permStateJson, const PermissionStatus& state);
+    void FromPermStateListJson(const CJson* hapTokenJson,
         std::vector<PermissionStatus>& permStateList);
 
-    void FromHapTokenBasicInfoJson(const nlohmann::json& hapTokenJson,
+    void FromHapTokenBasicInfoJson(const CJson* hapTokenJson,
         HapTokenInfo& hapTokenBasicInfo);
 
-    nlohmann::json ToHapTokenInfosJson(const HapTokenInfoForSync &tokenInfo);
-    void FromHapTokenInfoJson(const nlohmann::json& hapTokenJson, HapTokenInfoForSync& hapTokenInfo);
-    nlohmann::json ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo);
-    void FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson, NativeTokenInfoBase& nativeTokenInfo);
+    CJsonUnique ToHapTokenInfosJson(const HapTokenInfoForSync &tokenInfo);
+    void FromHapTokenInfoJson(const CJson* hapTokenJson, HapTokenInfoForSync& hapTokenInfo);
+    CJsonUnique ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo);
+    void FromNativeTokenInfoJson(const CJson* nativeTokenJson, NativeTokenInfoBase& nativeTokenInfo);
     RemoteProtocol remoteProtocol_;
 };
 }  // namespace AccessToken

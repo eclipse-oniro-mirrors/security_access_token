@@ -54,28 +54,27 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
     hapTokenInfo_.baseInfo.userID = 0;
     hapTokenInfo_.baseInfo.ver = DEFAULT_TOKEN_VERSION;
 
-    nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
-    if (jsonObject.is_discarded()) {
+    CJsonUnique jsonObject = CreateJsonFromString(json);
+    if (jsonObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "JsonObject is invalid.");
         return;
     }
-    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
-    if ((jsonObject.find("requestTokenId") != jsonObject.end()) && (jsonObject.at("requestTokenId").is_number())) {
-        jsonObject.at("requestTokenId").get_to(requestTokenId_);
-    }
+    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
+    GetUnsignedIntFromJson(jsonObject, "requestTokenId", requestTokenId_);
 
-    if ((jsonObject.find("HapTokenInfo") != jsonObject.end()) && (jsonObject.at("HapTokenInfo").is_object())) {
-        nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfo").get<nlohmann::json>();
+    CJson *hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfo");
+    if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, hapTokenInfo_);
     }
 }
 
 std::string SyncRemoteHapTokenCommand::ToJsonPayload()
 {
-    nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
-    j["requestTokenId"] = requestTokenId_;
-    j["HapTokenInfo"] = BaseRemoteCommand::ToHapTokenInfosJson(hapTokenInfo_);
-    return j.dump();
+    CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
+    AddUnsignedIntToJson(j, "requestTokenId", requestTokenId_);
+    CJsonUnique HapTokenInfo = BaseRemoteCommand::ToHapTokenInfosJson(hapTokenInfo_);
+    AddObjToJson(j, "HapTokenInfo", HapTokenInfo);
+    return PackJsonToString(j);
 }
 
 void SyncRemoteHapTokenCommand::Prepare()

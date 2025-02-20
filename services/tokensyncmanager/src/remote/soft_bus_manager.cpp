@@ -19,12 +19,12 @@
 #include <pthread.h>
 
 #include "accesstoken_common_log.h"
-#include "config_policy_loader.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "device_manager.h"
 #include "ipc_skeleton.h"
+#include "json_parse_loader.h"
 #include "libraryloader.h"
 #include "remote_command_manager.h"
 #include "soft_bus_device_connection_listener.h"
@@ -224,10 +224,10 @@ void SoftBusManager::SetDefaultConfigValue()
 
 void SoftBusManager::GetConfigValue()
 {
-    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_config_policy failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
         return;
     }
     AccessTokenConfigValue value;

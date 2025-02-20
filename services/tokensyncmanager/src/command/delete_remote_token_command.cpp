@@ -42,27 +42,27 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
 DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
 {
     deleteTokenId_ = 0;
-    nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
-    if (jsonObject.is_discarded()) {
+    CJsonUnique jsonObject = CreateJsonFromString(json);
+    if (jsonObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "JsonObject is invalid.");
         return;
     }
-    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
-
-    if (jsonObject.find("tokenId") != jsonObject.end() && jsonObject.at("tokenId").is_number()) {
-        deleteTokenId_ = (AccessTokenID)jsonObject.at("tokenId").get<int>();
+    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
+    uint32_t tokenId;
+    if (GetUnsignedIntFromJson(jsonObject, "tokenId", tokenId)) {
+        deleteTokenId_ = (AccessTokenID)tokenId;
     }
 }
 
 std::string DeleteRemoteTokenCommand::ToJsonPayload()
 {
-    nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
-    if (j.is_discarded()) {
+    CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
+    if (j == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "J is invalid.");
         return "";
     }
-    j["tokenId"] = deleteTokenId_;
-    return j.dump();
+    AddUnsignedIntToJson(j, "tokenId", deleteTokenId_);
+    return PackJsonToString(j);
 }
 
 void DeleteRemoteTokenCommand::Prepare()

@@ -21,7 +21,6 @@
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
-#include "dlp_permission_set_parser.h"
 #undef private
 #endif
 #define private public
@@ -298,386 +297,6 @@ static AccessTokenID CreateTempHapTokenInfo()
     return tokenID;
 }
 
-#ifdef SUPPORT_SANDBOX_APP
-static void PrepareJsonData1()
-{
-    std::string testStr = R"({"dlpPermissions":[)"\
-        R"({"name":"ohos.permission.CAPTURE_SCREEN","dlpGrantRange":"none"},)"\
-        R"({"name":"ohos.permission.CHANGE_ABILITY_ENABLED_STATE","dlpGrantRange":"all"},)"\
-        R"({"name":"ohos.permission.CLEAN_APPLICATION_DATA","dlpGrantRange":"full_control"}]})";
-
-    std::vector<PermissionDlpMode> dlpPerms;
-    int32_t res = DlpPermissionSetParser::GetInstance().ParserDlpPermsRawData(testStr, dlpPerms);
-    if (res != RET_SUCCESS) {
-        GTEST_LOG_(INFO) << "ParserDlpPermsRawData failed:";
-    }
-    for (auto iter = dlpPerms.begin(); iter != dlpPerms.end(); iter++) {
-        GTEST_LOG_(INFO) << "iter:" << iter->permissionName.c_str();
-    }
-    DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
-}
-
-/**
- * @tc.name: DlpPermissionConfig001
- * @tc.desc: test DLP_COMMON app with system_grant permissions.
- * @tc.type: FUNC
- * @tc.require: SR000GVIGR
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level1)
-{
-    PrepareJsonData1();
-
-    g_infoManagerTestStateA.permissionName = "ohos.permission.CAPTURE_SCREEN";
-    g_infoManagerTestStateB.permissionName = "ohos.permission.CHANGE_ABILITY_ENABLED_STATE";
-    g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
-    g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain1",
-        .permList = {},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig001",
-        .instIndex = 0,
-        .dlpType = DLP_COMMON,
-        .appIDDesc = "DlpPermissionConfig001"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.COMMONEVENT_STICKY");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CAPTURE_SCREEN");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CHANGE_ABILITY_ENABLED_STATE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CLEAN_APPLICATION_DATA");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DlpPermissionConfig002
- * @tc.desc: test DLP_READ app with system_grant permissions.
- * @tc.type: FUNC
- * @tc.require: SR000GVIGR
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
-{
-    PrepareJsonData1();
-
-    g_infoManagerTestStateA.permissionName = "ohos.permission.CAPTURE_SCREEN";
-    g_infoManagerTestStateB.permissionName = "ohos.permission.CHANGE_ABILITY_ENABLED_STATE";
-    g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
-    g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain2",
-        .permList = {},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig002",
-        .instIndex = 0,
-        .dlpType = DLP_READ,
-        .appIDDesc = "DlpPermissionConfig002"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CAPTURE_SCREEN");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.COMMONEVENT_STICKY");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CHANGE_ABILITY_ENABLED_STATE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CLEAN_APPLICATION_DATA");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DlpPermissionConfig003
- * @tc.desc: test DLP_FULL_CONTROL app with system_grant permissions.
- * @tc.type: FUNC
- * @tc.require: SR000GVIGR
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level1)
-{
-    PrepareJsonData1();
-
-    g_infoManagerTestStateA.permissionName = "ohos.permission.CAPTURE_SCREEN";
-    g_infoManagerTestStateB.permissionName = "ohos.permission.CHANGE_ABILITY_ENABLED_STATE";
-    g_infoManagerTestStateC.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
-    g_infoManagerTestStateD.permissionName = "ohos.permission.COMMONEVENT_STICKY";
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain3",
-        .permList = {},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig003",
-        .instIndex = 0,
-        .dlpType = DLP_FULL_CONTROL,
-        .appIDDesc = "DlpPermissionConfig003"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CLEAN_APPLICATION_DATA");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.COMMONEVENT_STICKY");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CAPTURE_SCREEN");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CHANGE_ABILITY_ENABLED_STATE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-static void PrepareUserPermState()
-{
-    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
-    g_infoManagerTestStateA.grantStatus = PERMISSION_DENIED;
-    g_infoManagerTestStateB.permissionName = "ohos.permission.MICROPHONE";
-    g_infoManagerTestStateB.grantStatus = PERMISSION_DENIED;
-    g_infoManagerTestStateC.permissionName = "ohos.permission.READ_CALENDAR";
-    g_infoManagerTestStateC.grantStatus = PERMISSION_DENIED;
-    g_infoManagerTestStateD.permissionName = "ohos.permission.READ_CALL_LOG";
-    g_infoManagerTestStateD.grantStatus = PERMISSION_DENIED;
-}
-
-static void PrepareJsonData2()
-{
-    std::string testStr = R"({"dlpPermissions":[)"\
-        R"({"name":"ohos.permission.MEDIA_LOCATION","dlpGrantRange":"none"},)"\
-        R"({"name":"ohos.permission.MICROPHONE","dlpGrantRange":"all"},)"\
-        R"({"name":"ohos.permission.READ_CALENDAR","dlpGrantRange":"full_control"}]})";
-
-    std::vector<PermissionDlpMode> dlpPermissions;
-    int32_t res = DlpPermissionSetParser::GetInstance().ParserDlpPermsRawData(testStr, dlpPermissions);
-    if (res != RET_SUCCESS) {
-        GTEST_LOG_(INFO) << "ParserDlpPermsRawData failed:";
-    }
-    DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPermissions);
-}
-
-/**
- * @tc.name: DlpPermissionConfig004
- * @tc.desc: test DLP_COMMON app with user_grant permissions.
- * @tc.type: FUNC
- * @tc.require: SR000GVIGR
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level1)
-{
-    PrepareJsonData2();
-    PrepareUserPermState();
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain4",
-        .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
-                     g_infoManagerPermDef3, g_infoManagerPermDef4},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig004",
-        .instIndex = 0,
-        .dlpType = DLP_COMMON,
-        .appIDDesc = "DlpPermissionConfig004"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MEDIA_LOCATION", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALL_LOG", PERMISSION_USER_FIXED);
-
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALENDAR");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALL_LOG");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DlpPermissionConfig005
- * @tc.desc: test DLP_READ app with user_grant permissions.
- * @tc.type: FUNC
- * @tc.require: SR000GVIGR
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
-{
-    PrepareJsonData2();
-    PrepareUserPermState();
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain5",
-        .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
-                     g_infoManagerPermDef3, g_infoManagerPermDef4},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig005",
-        .instIndex = 0,
-        .dlpType = DLP_READ,
-        .appIDDesc = "DlpPermissionConfig005"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALL_LOG", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MEDIA_LOCATION", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALENDAR");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALL_LOG");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DlpPermissionConfig006
- * @tc.desc: test DLP_FULL_CONTROL app with user_grant permissions.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level1)
-{
-    PrepareJsonData2();
-    PrepareUserPermState();
-
-    static HapPolicy infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain6",
-        .permList = {g_infoManagerPermDef1, g_infoManagerPermDef2,
-                     g_infoManagerPermDef3, g_infoManagerPermDef4},
-        .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB,
-                          g_infoManagerTestStateC, g_infoManagerTestStateD}
-    };
-    static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
-        .bundleName = "DlpPermissionConfig006",
-        .instIndex = 0,
-        .dlpType = DLP_FULL_CONTROL,
-        .appIDDesc = "DlpPermissionConfig006"
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MEDIA_LOCATION", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-    PermissionManager::GetInstance().GrantPermission(tokenID,
-        "ohos.permission.READ_CALL_LOG", PERMISSION_USER_FIXED);
-
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALENDAR");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION");
-    ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_CALL_LOG");
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-#endif
-
 /**
  * @tc.name: ScopeFilter001
  * @tc.desc: Test filter scopes.
@@ -894,8 +513,8 @@ HWTEST_F(PermissionManagerTest, GetDefPermissions001, TestSize.Level1)
 {
     std::vector<PermissionDef> result;
 
-    // permissionName is empty
-    PermissionManager::GetInstance().GetDefPermissions(0, result);
+    AccessTokenID tokenId = 123;
+    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
     ASSERT_TRUE(result.empty());
 }
 
@@ -914,12 +533,26 @@ HWTEST_F(PermissionManagerTest, GetDefPermissions002, TestSize.Level1)
 
     std::vector<PermissionDef> result;
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    // permissionName is empty
     PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
     ASSERT_TRUE(!result.empty());
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: GetDefPermissions003
+ * @tc.desc: GetDefPermissions with extension tokenId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetDefPermissions003, TestSize.Level1)
+{
+    std::vector<PermissionDef> result;
+
+    AccessTokenID tokenId = 0;
+    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
+    ASSERT_TRUE(!result.empty());
 }
 
 /**

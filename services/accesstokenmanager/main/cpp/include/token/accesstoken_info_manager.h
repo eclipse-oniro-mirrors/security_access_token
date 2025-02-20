@@ -47,7 +47,7 @@ public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
     void Init();
-    void InitNativeTokenInfos(uint32_t& nativeSize);
+    void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
@@ -133,6 +133,7 @@ private:
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
         const std::vector<std::string>& nativeAcls);
+    int32_t GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     void NativeTokenToString(AccessTokenID tokenID, std::string& info);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     void UpdateHapToKernel(AccessTokenID tokenID, int32_t userId);

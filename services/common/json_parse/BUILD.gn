@@ -14,12 +14,12 @@
 import("//build/ohos.gni")
 import("../../../access_token.gni")
 
-config("accesstoken_config_policy_config") {
+config("accesstoken_json_parse_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("accesstoken_config_policy") {
+ohos_shared_library("accesstoken_json_parse") {
   if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
@@ -33,24 +33,70 @@ ohos_shared_library("accesstoken_config_policy") {
     include_dirs = [
       "include",
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     ]
 
-    sources = [ "src/config_policy_loader.cpp" ]
+    sources = [
+      "src/cjson_utils.cpp",
+      "src/json_parse_loader.cpp",
+    ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
     ]
-    public_configs = [ ":accesstoken_config_policy_config" ]
+    public_configs = [ ":accesstoken_json_parse_config" ]
 
     deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
     external_deps = [
+      "cJSON:cjson",
       "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_single",
-      "json:nlohmann_json_static",
+    ]
+    if (customization_config_policy_enable) {
+      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+    }
+  }
+}
+
+ohos_shared_library("accesstoken_cjson_utils") {
+  if (is_standard_system) {
+    subsystem_name = "security"
+    part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    include_dirs = [
+      "include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    ]
+
+    sources = [ "src/cjson_utils.cpp" ]
+
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
+    public_configs = [ ":accesstoken_json_parse_config" ]
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+
+    external_deps = [
+      "cJSON:cjson",
+      "c_utils:utils",
+      "hilog:libhilog",
     ]
     if (customization_config_policy_enable) {
       cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]

@@ -78,6 +78,7 @@ enum AccessTokenError {
     ERR_USER_POLICY_NOT_INITIALIZED,
     ERR_REMOTE_CONNECTION,
     ERR_ADD_DEATH_RECIPIENT_FAILED,
+    ERR_PRASE_RAW_DATA_FAILED
 };
 } // namespace AccessToken
 } // namespace Security

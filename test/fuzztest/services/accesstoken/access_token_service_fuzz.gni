@@ -35,7 +35,7 @@ access_token_include_dirs = [
   "${access_token_path}/interfaces/innerkits/tokensync/src",
   "${access_token_path}/services/common/ability_manager/include",
   "${access_token_path}/services/common/app_manager/include",
-  "${access_token_path}/services/common/config_policy/include",
+  "${access_token_path}/services/common/json_parse/include",
   "${access_token_path}/services/common/database/include",
   "${access_token_path}/services/common/handler/include",
   "${access_token_path}/services/common/random/include",
@@ -57,10 +57,12 @@ access_token_deps = [
   "${access_token_path}/services/accesstokenmanager:access_token.rc",
   "${access_token_path}/services/accesstokenmanager/etc:param_files",
   "${access_token_path}/services/common:accesstoken_service_common",
+  "${access_token_path}/services/common/json_parse:accesstoken_cjson_utils",
 ]
 
 access_token_external_deps = [
   "ability_base:want",
+  "cJSON:cjson",
   "c_utils:utils",
   "device_manager:devicemanagersdk",
   "dsoftbus:softbus_client",
@@ -69,7 +71,6 @@ access_token_external_deps = [
   "hitrace:hitrace_meter",
   "init:libbegetutil",
   "ipc:ipc_single",
-  "json:nlohmann_json_static",
   "openssl:libcrypto_shared",
   "relational_store:native_rdb",
   "safwk:system_ability_fwk",
@@ -94,7 +95,6 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_cache.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
@@ -105,7 +105,6 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
 token_sync_sources = [
@@ -132,10 +131,7 @@ access_token_cflags_cc = [ "-DHILOG_ENABLE" ]
 
 if (dlp_permission_enable == true) {
   access_token_cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-  access_token_sources += [
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_parser.cpp",
-  ]
+  access_token_sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp" ]
 }
 
 if (hicollie_enable == true) {

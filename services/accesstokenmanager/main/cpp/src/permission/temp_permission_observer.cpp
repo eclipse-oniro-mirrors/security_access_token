@@ -17,7 +17,6 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "config_policy_loader.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_common_log.h"
 #include "libraryloader.h"
@@ -29,6 +28,7 @@
 #include "hisysevent.h"
 #include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
+#include "json_parse_loader.h"
 
 namespace OHOS {
 namespace Security {
@@ -41,9 +41,7 @@ static constexpr int32_t ROOT_UID = 0;
 static constexpr int32_t FOREGROUND_FLAG = 0;
 static constexpr int32_t FORMS_FLAG = 1;
 static constexpr int32_t CONTINUOUS_TASK_FLAG = 2;
-#ifdef EVENTHANDLER_ENABLE
 static constexpr int32_t DEFAULT_CANCLE_MILLISECONDS = 10 * 1000; // 10s
-#endif
 std::recursive_mutex g_instanceMutex;
 static const std::vector<std::string> g_tempPermission = {
     "ohos.permission.READ_PASTEBOARD",
@@ -661,19 +659,10 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
 #endif
 }
 
-void TempPermissionObserver::GetConfigValue()
+void TempPermissionObserver::SetCancelTime(int32_t cancleTime)
 {
-    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
-    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
-    if (policy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_config_policy failed.");
-        return;
-    }
-    AccessTokenConfigValue value;
-    if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
-        cancleTimes_ = value.atConfig.cancleTime == 0 ? DEFAULT_CANCLE_MILLISECONDS : value.atConfig.cancleTime;
-    } else {
-        cancleTimes_ = DEFAULT_CANCLE_MILLISECONDS;
+    if (cancleTime != 0) {
+        cancleTimes_ = cancleTime;
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "CancleTimes_ is %{public}d.", cancleTimes_);
