@@ -114,7 +114,6 @@ public:
 
 private:
     void GetValidConfigFilePathList(std::vector<std::string>& pathList);
-    bool GetConfigGrantValueFromFile(std::string& fileContent);
     void GetConfigValue();
     bool Initialize();
     void AccessTokenServiceParamSet() const;

@@ -35,14 +35,12 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
 ohos_unittest("libaccesstoken_manager_service_standard_test") {
@@ -68,7 +66,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/services/common/ability_manager/include",
     "${access_token_path}/services/common/app_manager/include",
-    "${access_token_path}/services/common/config_policy/include",
+    "${access_token_path}/services/common/json_parse/include",
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/services/common/libraryloader/include",
@@ -87,8 +85,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "accesstoken_database_test.cpp",
     "accesstoken_info_manager_test.cpp",
     "multi_thread_test.cpp",
-    "native_token_receptor_test.cpp",
-    "permission_definition_parser_test.cpp",
     "permission_grant_event_test.cpp",
     "permission_manager_test.cpp",
     "short_grant_manager_test.cpp",
@@ -100,10 +96,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   if (dlp_permission_enable == true) {
     cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_parser.cpp",
-    ]
+    sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp" ]
   }
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
@@ -128,7 +121,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_single",
-    "json:nlohmann_json_static",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

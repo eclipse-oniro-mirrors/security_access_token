@@ -40,24 +40,25 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
 
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json)
 {
-    nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
-    if (jsonObject.is_discarded()) {
+    CJsonUnique jsonObject = CreateJsonFromString(json);
+    if (jsonObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "JsonObject is invalid.");
         return;
     }
-    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
+    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
 
-    if ((jsonObject.find("HapTokenInfos") != jsonObject.end()) && (jsonObject.at("HapTokenInfos").is_object())) {
-        nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfos").get<nlohmann::json>();
+    CJson *hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfos");
+    if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, updateTokenInfo_);
     }
 }
 
 std::string UpdateRemoteHapTokenCommand::ToJsonPayload()
 {
-    nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
-    j["HapTokenInfos"] = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
-    return j.dump();
+    CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
+    CJsonUnique HapTokenInfos = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
+    AddObjToJson(j, "HapTokenInfos", HapTokenInfos);
+    return PackJsonToString(j);
 }
 
 void UpdateRemoteHapTokenCommand::Prepare()

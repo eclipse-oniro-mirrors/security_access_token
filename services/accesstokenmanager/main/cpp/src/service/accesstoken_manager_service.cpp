@@ -23,11 +23,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_common_log.h"
-#include "config_policy_loader.h"
 #include "constant_common.h"
-#ifdef SUPPORT_SANDBOX_APP
-#include "dlp_permission_set_parser.h"
-#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "hisysevent_adapter.h"
@@ -35,6 +31,7 @@
 #include "hitrace_meter.h"
 #endif
 #include "ipc_skeleton.h"
+#include "json_parse_loader.h"
 #include "libraryloader.h"
 #include "parameter.h"
 #include "permission_list_state.h"
@@ -42,7 +39,6 @@
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
-#include "permission_definition_parser.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -479,8 +475,20 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
-    uint32_t nativeSize = 0;
-    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos(nativeSize);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
+        return RET_FAILED;
+    }
+
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t res = policy->GetAllNativeTokenInfo(tokenInfos);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+
+    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos(tokenInfos);
     return RET_SUCCESS;
 }
 #endif
@@ -650,10 +658,10 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
 
 void AccessTokenManagerService::GetConfigValue()
 {
-    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_config_policy failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
         return;
     }
     AccessTokenConfigValue value;
@@ -671,6 +679,7 @@ void AccessTokenManagerService::GetConfigValue()
             GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
         applicationSettingAbilityName_ = value.atConfig.applicationSettingAbilityName.empty() ?
             APPLICATION_SETTING_ABILITY_NAME : value.atConfig.applicationSettingAbilityName;
+        TempPermissionObserver::GetInstance().SetCancelTime(value.atConfig.cancleTime);
     } else {
         LOGI(ATM_DOMAIN, ATM_TAG, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
@@ -681,10 +690,11 @@ void AccessTokenManagerService::GetConfigValue()
         applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \
-        permStateAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s",
-        grantBundleName_.c_str(), grantAbilityName_.c_str(),
-        permStateAbilityName_.c_str(), permStateAbilityName_.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
+        "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
+        "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s.",
+        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
+        permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str());
 }
 
 bool AccessTokenManagerService::Initialize()
@@ -696,13 +706,7 @@ bool AccessTokenManagerService::Initialize()
     TempPermissionObserver::GetInstance().InitEventHandler();
     ShortGrantManager::GetInstance().InitEventHandler();
 #endif
-
-#ifdef SUPPORT_SANDBOX_APP
-    DlpPermissionSetParser::GetInstance().Init();
-#endif
-    PermissionDefinitionParser::GetInstance().Init();
     GetConfigValue();
-    TempPermissionObserver::GetInstance().GetConfigValue();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success");
     return true;
 }

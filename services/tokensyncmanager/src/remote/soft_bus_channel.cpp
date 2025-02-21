@@ -452,12 +452,8 @@ int SoftBusChannel::SendResponseBytes(int socket, const unsigned char *bytes, co
 
 std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &jsonString)
 {
-    nlohmann::json json;
-    if (!json.accept(jsonString)) {
-        return nullptr;
-    }
-    json = json.parse(jsonString, nullptr, false);
-    if (json.is_discarded() || (!json.is_object())) {
+    CJsonUnique json = CreateJsonFromString(jsonString);
+    if (json == nullptr || cJSON_IsObject(json.get()) == false) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to parse jsonString");
         return nullptr;
     }
@@ -466,22 +462,10 @@ std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &json
     std::string id;
     std::string commandName;
     std::string jsonPayload;
-    if (json.find("type") != json.end() && json.at("type").is_string()) {
-        json.at("type").get_to(type);
-    }
-    if (json.find("id") != json.end() && json.at("id").is_string()) {
-        json.at("id").get_to(id);
-    }
-    if (json.find("commandName") != json.end() && json.at("commandName").is_string()) {
-        json.at("commandName").get_to(commandName);
-    }
-    if (json.find("jsonPayload") != json.end() && json.at("jsonPayload").is_string()) {
-        json.at("jsonPayload").get_to(jsonPayload);
-    }
-    if (type.empty() || id.empty() || commandName.empty() || jsonPayload.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get json string(json format error)");
-        return nullptr;
-    }
+    GetStringFromJson(json.get(), "type", type);
+    GetStringFromJson(json.get(), "id", id);
+    GetStringFromJson(json.get(), "commandName", commandName);
+    GetStringFromJson(json.get(), "jsonPayload", jsonPayload);
     std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(type, id, commandName, jsonPayload);
     return message;
 }

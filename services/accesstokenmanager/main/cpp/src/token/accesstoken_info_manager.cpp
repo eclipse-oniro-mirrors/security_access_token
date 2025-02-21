@@ -39,12 +39,12 @@
 #include "hap_token_info_inner.h"
 #include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
+#include "json_parse_loader.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
 #include "perm_setproc.h"
-#include "native_token_receptor.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -60,9 +60,10 @@ static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
-static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
+static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 #endif
-static const std::string DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
+static const char* DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
+static const int32_t EXTENSION_PERMISSION_ID = 0;
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
@@ -91,15 +92,43 @@ void AccessTokenInfoManager::Init()
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Init begin!");
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
+        return;
+    }
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int ret = policy->GetAllNativeTokenInfo(tokenInfos);
+    if (ret != RET_SUCCESS) {
+        ReportSysEventServiceStartError(
+            INIT_NATIVE_TOKENINFO_ERROR, "GetAllNativeTokenInfo fail from native json.", ret);
+    }
     uint32_t hapSize = 0;
-    uint32_t nativeSize = 0;
+    uint32_t nativeSize = tokenInfos.size();
     InitHapTokenInfos(hapSize);
-    InitNativeTokenInfos(nativeSize);
+    InitNativeTokenInfos(tokenInfos);
     uint32_t pefDefSize = PermissionDefinitionCache::GetInstance().GetDefPermissionsSize();
     ReportSysEventServiceStart(getpid(), hapSize, nativeSize, pefDefSize);
     LOGI(ATM_DOMAIN, ATM_TAG, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
         hapSize, nativeSize, pefDefSize);
 
+#ifdef SUPPORT_SANDBOX_APP
+    std::vector<PermissionDlpMode> dlpPerms;
+    ret = policy->GetDlpPermissions(dlpPerms);
+    if (ret == RET_SUCCESS) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Load dlpPer size=%{public}zu.", dlpPerms.size());
+        DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
+    }
+#endif
+    std::vector<PermissionDef> permDefList;
+    ret = policy->GetAllPermissionDef(permDefList);
+    if (ret != RET_SUCCESS) {
+        ReportSysEventServiceStartError(INIT_PERM_DEF_JSON_ERROR, "GetAllPermissionDef from json fail.", ret);
+    }
+    for (const auto& perm : permDefList) {
+        PermissionDefinitionCache::GetInstance().Insert(perm, EXTENSION_PERMISSION_ID);
+    }
     hasInited_ = true;
     LOGI(ATM_DOMAIN, ATM_TAG, "Init success");
 }
@@ -568,16 +597,8 @@ void AccessTokenInfoManager::GetNativePermissionList(const NativeTokenInfoBase& 
     }
 }
 
-void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
+void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos)
 {
-    std::vector<NativeTokenInfoBase> tokenInfos;
-    int ret = NativeTokenReceptor::GetInstance().GetAllNativeTokenInfo(tokenInfos);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
-        ReportSysEventServiceStartError(
-            INIT_NATIVE_TOKENINFO_ERROR, "GetAllNativeTokenInfo fail from native json.", ret);
-        return;
-    }
     for (const auto& info: tokenInfos) {
         AccessTokenID tokenId = info.tokenID;
         std::string process = info.processName;
@@ -606,7 +627,6 @@ void AccessTokenInfoManager::InitNativeTokenInfos(uint32_t& nativeSize)
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Init native token %{public}u process name %{public}s, permSize %{public}zu ok!",
             tokenId, process.c_str(), info.permStateList.size());
-        nativeSize++;
     }
 }
 
@@ -1139,7 +1159,7 @@ void AccessTokenInfoManager::ReduceDumpTaskNum()
 void AccessTokenInfoManager::DumpToken()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "AccessToken Dump");
-    int32_t fd = open(DUMP_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    int32_t fd = open(DUMP_JSON_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return;
@@ -1715,10 +1735,27 @@ bool AccessTokenInfoManager::IsPermissionReqValid(int32_t tokenApl, const std::s
     return false;
 }
 
+int32_t AccessTokenInfoManager::GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
+{
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
+        return RET_FAILED;
+    }
+    int ret = policy->GetAllNativeTokenInfo(tokenInfos);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
+        return ret;
+    }
+
+    return RET_SUCCESS;
+}
+
 void AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID, std::string& info)
 {
     std::vector<NativeTokenInfoBase> tokenInfos;
-    int ret = NativeTokenReceptor::GetInstance().GetAllNativeTokenInfo(tokenInfos);
+    int ret = GetNativeCfgInfo(tokenInfos);
     if (ret != RET_SUCCESS || tokenInfos.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
         return;

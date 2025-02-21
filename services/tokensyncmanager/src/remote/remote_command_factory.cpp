@@ -15,7 +15,7 @@
 
 #include "remote_command_factory.h"
 
-#include "nlohmann/json.hpp"
+#include <mutex>
 
 namespace OHOS {
 namespace Security {

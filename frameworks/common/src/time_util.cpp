@@ -25,7 +25,7 @@ static constexpr int64_t ONE_SECOND_MILLISECONDS = 1000;
 int64_t TimeUtil::GetCurrentTimestamp()
 {
     struct timeval t;
-    gettimeofday(&t, NULL);
+    gettimeofday(&t, nullptr);
     int64_t timestamp = t.tv_sec * ONE_SECOND_MILLISECONDS + t.tv_usec / ONE_SECOND_MILLISECONDS;
 
     return timestamp;

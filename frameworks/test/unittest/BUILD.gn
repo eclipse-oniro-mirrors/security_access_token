@@ -55,7 +55,6 @@ ohos_unittest("libaccesstoken_framework_test") {
   external_deps = [
     "c_utils:utils",
     "ipc:ipc_single",
-    "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
   ]
 }

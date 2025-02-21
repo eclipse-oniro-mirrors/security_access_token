@@ -15,19 +15,24 @@
 
 #include "check_permission_map_test.h"
 #include "gtest/gtest.h"
-#include <thread>
+#include <fcntl.h>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cstdio>
+#include <cstdlib>
+
 #include "access_token.h"
-#include "access_token_error.h"
-#include "accesstoken_common_log.h"
-#include "tokenid_kit.h"
-#include "token_setproc.h"
-#include "json_parser.h"
+#include "cJSON.h"
+
 #include "permission_def.h"
-#include "nlohmann/json.hpp"
-#include "data_validator.h"
 #include "permission_map.h"
 
 using namespace testing::ext;
+typedef cJSON CJson;
+typedef std::unique_ptr<CJson, std::function<void(CJson *ptr)>> CJsonUnique;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -36,6 +41,9 @@ static const std::string DEFINE_PERMISSION_FILE = "/system/etc/access_token/perm
 static const std::string SYSTEM_GRANT_DEFINE_PERMISSION = "systemGrantPermissions";
 static const std::string USER_GRANT_DEFINE_PERMISSION = "userGrantPermissions";
 static const std::string PERMISSION_GRANT_MODE_SYSTEM_GRANT = "system_grant";
+constexpr int32_t MAX_NATIVE_CONFIG_FILE_SIZE = 5 * 1024 * 1024; // 5M
+constexpr size_t BUFFER_SIZE = 1024;
+constexpr uint32_t ACCESS_TOKEN_UID = 3020;
 }
 
 void CheckPermissionMapTest::SetUpTestCase()
@@ -62,46 +70,126 @@ static int32_t GetPermissionGrantMode(const std::string &mode)
     return AccessToken::GrantMode::USER_GRANT;
 }
 
-static int32_t GetPermissionDefList(const nlohmann::json& json, const std::string& permsRawData,
-    const std::string& type, std::vector<PermissionDef>& permDefList)
+static bool ReadCfgFile(const std::string& file, std::string& rawData)
 {
-    if ((json.find(type) == json.end()) || (!json.at(type).is_array())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Json is not array.");
-        return ERR_PARAM_INVALID;
+    int32_t selfUid = getuid();
+    setuid(ACCESS_TOKEN_UID);
+    char filePath[PATH_MAX] = {0};
+    if (realpath(file.c_str(), filePath) == NULL) {
+        setuid(selfUid);
+        return false;
+    }
+    int32_t fd = open(filePath, O_RDONLY);
+    if (fd < 0) {
+        setuid(selfUid);
+        return false;
+    }
+    struct stat statBuffer;
+
+    if (fstat(fd, &statBuffer) != 0) {
+        close(fd);
+        setuid(selfUid);
+        return false;
     }
 
-    PermissionDef result;
-    nlohmann::json JsonData = json.at(type).get<nlohmann::json>();
-    for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
-        result.permissionName = it->at("name").get<std::string>();
-        result.grantMode = GetPermissionGrantMode(it->at("grantMode").get<std::string>());
-        permDefList.emplace_back(result);
+    if (statBuffer.st_size == 0) {
+        close(fd);
+        setuid(selfUid);
+        return false;
     }
-    return RET_SUCCESS;
+    if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
+        close(fd);
+        setuid(selfUid);
+        return false;
+    }
+    rawData.reserve(statBuffer.st_size);
+
+    char buff[BUFFER_SIZE] = { 0 };
+    ssize_t readLen = 0;
+    while ((readLen = read(fd, buff, BUFFER_SIZE)) > 0) {
+        rawData.append(buff, readLen);
+    }
+    close(fd);
+    setuid(selfUid);
+    return true;
 }
 
-static int32_t ParserPermsRawData(const std::string& permsRawData,
-    std::vector<PermissionDef>& permDefList)
+void FreeJson(CJson* jsonObj)
 {
-    nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
-    if (jsonRes.is_discarded()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "JsonRes is invalid.");
-        return ERR_PARAM_INVALID;
+    cJSON_Delete(jsonObj);
+    jsonObj = nullptr;
+}
+
+CJsonUnique CreateJsonFromString(const std::string& jsonStr)
+{
+    if (jsonStr.empty()) {
+        CJsonUnique aPtr(cJSON_CreateObject(), FreeJson);
+        return aPtr;
+    }
+    CJsonUnique aPtr(cJSON_Parse(jsonStr.c_str()), FreeJson);
+    return aPtr;
+}
+
+static CJson* GetArrayFromJson(const CJson* jsonObj, const std::string& key)
+{
+    if (key.empty()) {
+        return nullptr;
     }
 
-    int32_t ret = GetPermissionDefList(jsonRes, permsRawData, SYSTEM_GRANT_DEFINE_PERMISSION, permDefList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get system_grant permission def list failed.");
-        return ret;
+    CJson* objValue = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
+    if (objValue != nullptr && cJSON_IsArray(objValue)) {
+        return objValue;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Get system_grant permission size=%{public}zu.", permDefList.size());
-    ret = GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get user_grant permission def list failed.");
-        return ret;
+    return nullptr;
+}
+
+bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string& out)
+{
+    if (jsonObj == nullptr || key.empty()) {
+        return false;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Get permission size=%{public}zu.", permDefList.size());
-    return RET_SUCCESS;
+
+    cJSON *jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
+    if (jsonObjTmp != nullptr && cJSON_IsString(jsonObjTmp)) {
+        out = cJSON_GetStringValue(jsonObjTmp);
+        return true;
+    }
+    return false;
+}
+
+static bool GetPermissionDefList(const CJsonUnique &json, const std::string& permsRawData,
+    const std::string& type, std::vector<PermissionDef>& permDefList)
+{
+    cJSON *permDefObj = GetArrayFromJson(json.get(), type);
+    if (permDefObj == nullptr) {
+        return false;
+    }
+    CJson *j = nullptr;
+    cJSON_ArrayForEach(j, permDefObj) {
+        PermissionDef result;
+        GetStringFromJson(j, "name", result.permissionName);
+        std::string grantModeStr = "";
+        GetStringFromJson(j, "grantMode", grantModeStr);
+        result.grantMode = GetPermissionGrantMode(grantModeStr);
+        permDefList.emplace_back(result);
+    }
+    return true;
+}
+
+static bool ParserPermsRawData(const std::string& permsRawData,
+    std::vector<PermissionDef>& permDefList)
+{
+    CJsonUnique jsonRes = CreateJsonFromString(permsRawData);
+    if (jsonRes == nullptr) {
+        return false;
+    }
+
+    bool ret = GetPermissionDefList(jsonRes, permsRawData, SYSTEM_GRANT_DEFINE_PERMISSION, permDefList);
+    if (!ret) {
+        return false;
+    }
+
+    return GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
 }
 
 /**
@@ -112,15 +200,11 @@ static int32_t ParserPermsRawData(const std::string& permsRawData,
  */
 HWTEST_F(CheckPermissionMapTest, CheckPermissionMapFuncTest001, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "CheckPermissionMapFuncTest001");
-
     std::string permsRawData;
-    int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData));
 
     std::vector<PermissionDef> permDefList;
-    ret = ParserPermsRawData(permsRawData, permDefList);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(ParserPermsRawData(permsRawData, permDefList));
 
     uint32_t opCode;
     for (const auto& perm : permDefList) {

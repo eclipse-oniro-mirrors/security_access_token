@@ -62,12 +62,13 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/privacy/src",
       "${access_token_path}/services/common/app_manager/include",
-      "${access_token_path}/services/common/config_policy/include",
+      "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/database/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/screenlock_manager/include",
       "${access_token_path}/services/common/utils/include",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     ]
 
     sources = [
@@ -133,10 +134,7 @@ if (is_standard_system && ability_base_enable == true) {
     }
 
     if (ohos_indep_compiler_enable) {
-      external_deps += [
-        "bounds_checking_function:libsec_shared",
-        "json:nlohmann_json_static",
-      ]
+      external_deps += [ "bounds_checking_function:libsec_shared" ]
     }
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
