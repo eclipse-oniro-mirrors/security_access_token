@@ -31,6 +31,7 @@ namespace AccessToken {
 namespace {
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+constexpr const char* PERMISSION_RECORD_TOGGLE = "ohos.permission.PERMISSION_RECORD_TOGGLE";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 }
@@ -132,7 +133,7 @@ void PrivacyManagerStub::SetPermissionUsedRecordToggleStatusInner(MessageParcel&
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_RECORD_TOGGLE)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -163,7 +164,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordToggleStatusInner(MessageParcel&
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
