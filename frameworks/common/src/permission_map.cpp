@@ -230,6 +230,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_UWB",                          false},
     {"ohos.permission.USE_UWB_RANGING",                     false},
     {"ohos.permission.PERMISSION_USED_STATS",               false},
+    {"ohos.permission.PERMISSION_RECORD_TOGGLE",            false},
     {"ohos.permission.NOTIFICATION_AGENT_CONTROLLER",       false},
     {"ohos.permission.MOUNT_UNMOUNT_MANAGER",               false},
     {"ohos.permission.MOUNT_FORMAT_MANAGER",                false},
