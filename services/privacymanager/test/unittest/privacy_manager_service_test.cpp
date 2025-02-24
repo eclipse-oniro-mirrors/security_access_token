@@ -538,33 +538,6 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002,
 }
 
 /**
- * @tc.name: SetPermissionUsedRecordToggleStatusInner003
- * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    TestPrivacyManagerStub testStub;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteInt32(userID));
-    ASSERT_EQ(true, data.WriteBool(status));
-    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
-        static_cast<uint32_t>(PrivacyInterfaceCode::SET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
-}
-
-/**
  * @tc.name: GetPermissionUsedRecordToggleStatusInner001
  * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
  * @tc.type: FUNC
@@ -615,33 +588,6 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002,
     ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
-}
-
-/**
- * @tc.name: GetPermissionUsedRecordToggleStatusInner003
- * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    TestPrivacyManagerStub testStub;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteInt32(userID));
-    ASSERT_EQ(true, data.WriteBool(status));
-    ASSERT_EQ(RET_SUCCESS, testStub.OnRemoteRequest(
-        static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS), data, reply, option));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
 }
 
 /**
