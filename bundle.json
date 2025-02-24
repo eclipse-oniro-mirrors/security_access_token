@@ -230,6 +230,9 @@
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/tokensync/include"
           }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/kits/cj/accesstoken:cj_ability_access_ctrl_ffi"
         }
       ],
       "test": [
