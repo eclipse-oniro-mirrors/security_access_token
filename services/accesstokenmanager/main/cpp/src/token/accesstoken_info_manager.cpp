@@ -159,6 +159,7 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permDefRes;
     std::vector<GenericValues> permStateRes;
+    std::vector<GenericValues> extendedPermRes;
     int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
     if (ret != RET_SUCCESS || hapTokenRes.empty()) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load hap from db fail.", ret);
@@ -171,6 +172,12 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
     if (ret != RET_SUCCESS || permStateRes.empty()) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load perm state from db fail.", ret);
     }
+    ret = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, extendedPermRes);
+    if (ret != RET_SUCCESS) { // extendedPermRes may be empty
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
+    }
+    PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes);
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
@@ -182,7 +189,7 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-        result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
+        result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes, extendedPermRes);
         if (result != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u restore failed.", tokenId);
@@ -203,7 +210,6 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
             " permSize %{public}d, inst %{public}d ok!",
             tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
     }
-    PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes);
 }
 
 std::string AccessTokenInfoManager::GetHapUniqueStr(const int& userID,
@@ -305,8 +311,17 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
         return nullptr;
     }
 
+    std::vector<GenericValues> extendedPermRes;
+    ret = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, extendedPermRes);
+    if (ret != RET_SUCCESS) { // extendedPermRes may be empty
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_extend_value_table, err: %{public}d, "
+            "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
+        return nullptr;
+    }
+
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-    ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes);
+    ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes, extendedPermRes);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
             id, ret, hapTokenInfoMap_.size());
@@ -474,28 +489,24 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     return RET_SUCCESS;
 }
 
-#ifdef SUPPORT_SANDBOX_APP
-static void GetPolicyCopied(const HapPolicy& policy, HapPolicy& policyNew)
-{
-    policyNew.apl = policy.apl;
-    policyNew.domain = policy.domain;
-
-    for (const auto& state : policy.permStateList) {
-        policyNew.permStateList.emplace_back(state);
-    }
-    for (const auto& def : policy.permList) {
-        policyNew.permList.emplace_back(def);
-    }
-}
-#endif
-
 int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy)
 {
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
-        (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID)) {
+        (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID) ||
+         !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    for (const auto& extendValue : policy.aclExtendedMap) {
+        if (!PermissionDefinitionCache::GetInstance().HasDefinition(extendValue.first)) {
+            continue;
+        }
+        if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "acl extended content is unvalid.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
     }
     return ERR_OK;
 }
@@ -528,14 +539,13 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     HapPolicy policyNew = policy;
     if (info.dlpType != DLP_COMMON) {
-        GetPolicyCopied(policy, policyNew);
         DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(info.dlpType, policyNew.permStateList);
     }
     tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
-    AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy.apl, false);
+    AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false);
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
@@ -631,8 +641,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
 }
 
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const std::vector<PermissionStatus>& permStateList, ATokenAplEnum apl,
-    const std::vector<PermissionDef>& permList)
+    const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
@@ -654,13 +663,13 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     } else {
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
     }
-    PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
+    PermissionManager::GetInstance().AddDefPermissions(hapPolicy.permList, tokenID, true);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(info, permStateList);
+        infoPtr->Update(info, permStateList, hapPolicy);
     }
 
-    int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, apl, true);
+    int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, hapPolicy, true);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -941,8 +950,20 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
     return *instance;
 }
 
+static void GeneratePermExtendValues(AccessTokenID tokenID, const std::vector<PermissionWithValue> kernelPermList,
+    std::vector<GenericValues>& permExtendValues)
+{
+    for (auto& extendValue : kernelPermList) {
+        GenericValues genericValues;
+        genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+        genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, extendValue.permissionName);
+        genericValues.Put(TokenFiledConst::FIELD_VALUE, extendValue.value);
+        permExtendValues.emplace_back(genericValues);
+    }
+}
+
 int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
-    const std::string& appId, ATokenAplEnum apl, bool isUpdate)
+    const std::string& appId, const HapPolicy& policy, bool isUpdate)
 {
     if (hapInfo == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token info is null!");
@@ -956,7 +977,7 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
 
     // get new hap token info from cache
     std::vector<GenericValues> hapInfoValues;
-    hapInfo->StoreHapInfo(hapInfoValues, appId, apl);
+    hapInfo->StoreHapInfo(hapInfoValues, appId, policy.apl);
 
     // get new permission def from cache if exist
     std::vector<GenericValues> permDefValues;
@@ -965,12 +986,19 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     // get new permission status from cache if exist
     std::vector<GenericValues> permStateValues;
     hapInfo->StorePermissionPolicy(permStateValues);
+    // get new extend permission value
+    std::vector<GenericValues> permExtendValues;
+    std::vector<PermissionWithValue> extendedPermList;
+    PermissionDataBrief::GetInstance().GetExetendedValueList(tokenID, extendedPermList);
+
+    GeneratePermExtendValues(tokenID, extendedPermList, permExtendValues);
 
     std::vector<AtmDataType> addDataTypes;
     std::vector<AtmDataType> delDataTypes;
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
 
     std::vector<GenericValues> deleteValues;
     if (isUpdate) { // udapte: delete and add; otherwise add only
@@ -980,12 +1008,14 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
         deleteValues.emplace_back(conditionValue);
         deleteValues.emplace_back(conditionValue);
         deleteValues.emplace_back(conditionValue);
+        deleteValues.emplace_back(conditionValue);
     }
 
     std::vector<std::vector<GenericValues>> addValues;
     addValues.emplace_back(hapInfoValues);
     addValues.emplace_back(permDefValues);
     addValues.emplace_back(permStateValues);
+    addValues.emplace_back(permExtendValues);
 
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(
         delDataTypes, deleteValues, addDataTypes, addValues);
@@ -1005,6 +1035,8 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(AccessTokenID tokenID)
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
+    deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);
@@ -1733,6 +1765,21 @@ bool AccessTokenInfoManager::IsPermissionReqValid(int32_t tokenApl, const std::s
         return true;
     }
     return false;
+}
+
+
+int32_t AccessTokenInfoManager::GetKernelPermissions(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
+{
+    return PermissionDataBrief::GetInstance().GetKernelPermissions(tokenId, kernelPermList);
+}
+
+
+int32_t AccessTokenInfoManager::GetReqPermissionByName(
+    AccessTokenID tokenId, const std::string& permissionName, std::string& value)
+{
+    return PermissionDataBrief::GetInstance().GetReqPermissionByName(
+        tokenId, permissionName, value, true);
 }
 
 int32_t AccessTokenInfoManager::GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos)

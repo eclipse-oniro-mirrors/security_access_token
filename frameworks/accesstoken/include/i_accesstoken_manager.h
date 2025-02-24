@@ -107,7 +107,10 @@ public:
     virtual int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterTokenSyncCallback() = 0;
 #endif
-
+    virtual int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList) = 0;
+    virtual int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value) = 0;
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
     virtual int32_t InitUserPolicy(
         const std::vector<UserState>& userList, const std::vector<std::string>& permList) = 0;

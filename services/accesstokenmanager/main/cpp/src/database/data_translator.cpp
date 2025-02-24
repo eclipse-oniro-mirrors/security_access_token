@@ -42,6 +42,8 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissi
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION, inPermissionDef.description);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
     outGenericValues.Put(TokenFiledConst::FIELD_AVAILABLE_TYPE, inPermissionDef.availableType);
+    outGenericValues.Put(TokenFiledConst::FIELD_KERNEL_EFFECT, inPermissionDef.isKernelEffect ? 1 : 0);
+    outGenericValues.Put(TokenFiledConst::FIELD_HAS_VALUE, inPermissionDef.hasValue ? 1 : 0);
     return RET_SUCCESS;
 }
 
@@ -65,6 +67,8 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.descriptionId = inGenericValues.GetInt(TokenFiledConst::FIELD_DESCRIPTION_ID);
     int availableType = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_TYPE);
     outPermissionDef.availableType = static_cast<ATokenAvailableTypeEnum>(availableType);
+    outPermissionDef.isKernelEffect = (inGenericValues.GetInt(TokenFiledConst::FIELD_KERNEL_EFFECT) == 1);
+    outPermissionDef.hasValue = (inGenericValues.GetInt(TokenFiledConst::FIELD_HAS_VALUE) == 1);
     return RET_SUCCESS;
 }
 
@@ -73,7 +77,6 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStatus& inPermi
 {
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
     outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
-    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus);
     int32_t grantFlag = static_cast<int32_t>(inPermissionState.grantFlag);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlag);
@@ -114,6 +117,29 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
         grantStatus = PERMISSION_DENIED;
     }
     outPermissionState.grantStatus = grantStatus;
+
+    return RET_SUCCESS;
+}
+
+int32_t DataTranslator::TranslationIntoExtendedPermission(
+    const GenericValues& inGenericValues, PermissionWithValue& perm)
+{
+    perm.permissionName =  inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+    if (!DataValidator::IsPermissionNameValid(perm.permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
+            "ERROR_REASON", "permission name error");
+        return ERR_PARAM_INVALID;
+    }
+    perm.value = inGenericValues.GetString(TokenFiledConst::FIELD_VALUE);
+    if (perm.value.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Extended Permission value is empty");
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
+            "ERROR_REASON", "extended value empty");
+        return ERR_PARAM_INVALID;
+    }
 
     return RET_SUCCESS;
 }

@@ -211,7 +211,9 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
     AccessTokenID tokenId = 123; // 123 is random input
     std::vector<GenericValues> permStateRes1;
     permStateRes1.emplace_back(value1);
-    PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes1); // ret != RET_SUCCESS
+    std::vector<GenericValues> extendedPermRes1;
+    PermissionDataBrief::GetInstance().RestorePermissionBriefData(
+        tokenId, permStateRes1, extendedPermRes1); // ret != RET_SUCCESS
     std::vector<BriefPermData> briefPermDataList;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
 
@@ -232,7 +234,7 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
     permStateRes2.emplace_back(value3);
     briefPermDataList.clear();
     PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId,
-        permStateRes2); // state.permissionName == iter->permissionName
+        permStateRes2, extendedPermRes1); // state.permissionName == iter->permissionName
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
     ASSERT_EQ(static_cast<uint32_t>(2), briefPermDataList.size());
 }

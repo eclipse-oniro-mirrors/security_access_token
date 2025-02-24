@@ -432,7 +432,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx, co
         return ERR_PERM_REQUEST_CFG_FAILED;
     }
     int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
-        InitializedList, policyParcel.hapPolicy.apl, policyParcel.hapPolicy.permList);
+        InitializedList, policyParcel.hapPolicy);
     return ret;
 }
 int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
@@ -695,6 +695,19 @@ void AccessTokenManagerService::GetConfigValue()
         "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s.",
         grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
         permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str());
+}
+
+int32_t AccessTokenManagerService::GetKernelPermissions(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
+{
+    return AccessTokenInfoManager::GetInstance().GetKernelPermissions(tokenId, kernelPermList);
+}
+
+int32_t AccessTokenManagerService::GetReqPermissionByName(
+    AccessTokenID tokenId, const std::string& permissionName, std::string& value)
+{
+    return AccessTokenInfoManager::GetInstance().GetReqPermissionByName(
+        tokenId, permissionName, value);
 }
 
 bool AccessTokenManagerService::Initialize()

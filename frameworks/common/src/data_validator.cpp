@@ -54,6 +54,27 @@ bool DataValidator::IsUserIdValid(const int userId)
     return userId >= 0;
 }
 
+bool DataValidator::IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap)
+{
+    if (aclExtendedMap.size() > MAX_EXTENDED_MAP_SIZE) {
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value)
+{
+    if (!IsPermissionNameValid(permissionName)) {
+        return false;
+    }
+
+    if (value.empty() || (value.length() > MAX_VALUE_LENGTH)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid value length(%{public}d).", static_cast<int32_t>(value.length()));
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsToggleStatusValid(const uint32_t status)
 {
     return ((status == PermissionRequestToggleStatus::CLOSED) ||

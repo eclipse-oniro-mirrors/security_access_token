@@ -811,6 +811,28 @@ void AccessTokenManagerClient::ReleaseProxy()
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
 }
+
+int32_t AccessTokenManagerClient::GetKernelPermissions(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetKernelPermissions(tokenId, kernelPermList);
+}
+
+int32_t AccessTokenManagerClient::GetReqPermissionByName(
+    AccessTokenID tokenId, const std::string& permissionName, std::string& value)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetReqPermissionByName(tokenId, permissionName, value);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

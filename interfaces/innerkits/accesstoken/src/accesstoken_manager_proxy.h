@@ -104,6 +104,10 @@ public:
     int32_t UnRegisterTokenSyncCallback() override;
 #endif
 
+    int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList) override;
+    int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value) override;
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;

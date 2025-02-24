@@ -30,11 +30,15 @@
 #include "data_validator.h"
 #include "token_field_const.h"
 #include "data_translator.h"
+#include "permission_definition_cache.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 std::recursive_mutex g_briefInstanceMutex;
+
+const uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
+const uint32_t HAS_VALUE = (0x1 << 1);
 
 PermissionDataBrief& PermissionDataBrief::GetInstance()
 {
@@ -49,18 +53,143 @@ PermissionDataBrief& PermissionDataBrief::GetInstance()
     return *instance;
 }
 
-bool PermissionDataBrief::GetPermissionBriefData(const PermissionStatus &permState, BriefPermData& briefPermData)
+bool PermissionDataBrief::GetPermissionBriefData(
+    AccessTokenID tokenID, const PermissionStatus &permState,
+    const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData)
 {
     uint32_t code;
-    if (TransferPermissionToOpcode(permState.permissionName, code) &&
-        PermissionValidator::IsGrantStatusValid(permState.grantStatus)) {
+    if (PermissionValidator::IsGrantStatusValid(permState.grantStatus) &&
+        TransferPermissionToOpcode(permState.permissionName, code)) {
         briefPermData.status = static_cast<int8_t>(permState.grantStatus);
         briefPermData.permCode = code;
         briefPermData.flag = permState.grantFlag;
+        if (PermissionDefinitionCache::GetInstance().IsKernelPermission(permState.permissionName)) {
+            briefPermData.type = IS_KERNEL_EFFECT;
+        } else {
+            briefPermData.type = 0;
+        }
+
+        uint64_t key = (static_cast<uint64_t>(tokenID) << 32) | briefPermData.permCode;
+        if (PermissionDefinitionCache::GetInstance().IsPermissionHasValue(permState.permissionName)) {
+            auto iter = aclExtendedMap.find(permState.permissionName);
+            if (iter != aclExtendedMap.end()) {
+                extendedValue_[key] = iter->second;
+                briefPermData.type |= HAS_VALUE;
+            } else {
+                LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is not in aclExtendedMap.", permState.permissionName.c_str());
+                return false;
+            }
+        }
+
+        if (briefPermData.type != 0) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s with type %{public}d",
+                permState.permissionName.c_str(), static_cast<int32_t>(briefPermData.type));
+        }
+        // if permission is about kernel permission without value, do not add it to extendedValue_
         return true;
     }
 
     return false;
+}
+
+void PermissionDataBrief::GetExetendedValueList(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    return GetExetendedValueListInner(tokenId, extendedPermList);
+}
+
+void PermissionDataBrief::GetExetendedValueListInner(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList)
+{
+    for (const auto& item : extendedValue_) {
+        uint64_t key = item.first;
+        uint32_t permCode = key & 0xFFFFFFFF;
+        std::string permissionName;
+        if (!TransferOpcodeToPermission(permCode, permissionName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", permCode);
+            continue;
+        }
+        uint32_t tmpTokenID = key >> 32;
+        if (tmpTokenID != tokenId) {
+            continue;
+        }
+        PermissionWithValue extendedPerm;
+        extendedPerm.permissionName = permissionName;
+        extendedPerm.value = item.second;
+        extendedPermList.emplace_back(extendedPerm);
+    }
+}
+
+int32_t PermissionDataBrief::GetKernelPermissions(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+
+    std::vector<BriefPermData> list;
+    int32_t ret = GetBriefPermDataByTokenIdInner(tokenId, list);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GetBriefPermDataByTokenIdInner failed, tokenId: %{public}d, ret is  %{public}d", tokenId, ret);
+        return ret;
+    }
+    for (const auto& data : list) {
+        if ((data.type & IS_KERNEL_EFFECT) != IS_KERNEL_EFFECT) {
+            continue;
+        }
+        std::string permissionName;
+        if (!TransferOpcodeToPermission(data.permCode, permissionName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", data.permCode);
+            continue;
+        }
+        std::string value;
+        if ((data.type & HAS_VALUE) == HAS_VALUE) {
+            uint64_t key = (static_cast<uint64_t>(tokenId) << 32) | data.permCode;
+            auto it = extendedValue_.find(key);
+            if (it == extendedValue_.end()) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s not with value.", permissionName.c_str());
+                return ERR_PERMISSION_WITHOUT_VALUE;
+            }
+            value = it->second;
+        } else {
+            value = "true";
+        }
+        PermissionWithValue kernelPerm;
+        kernelPerm.permissionName = permissionName;
+        kernelPerm.value = value;
+        kernelPermList.emplace_back(kernelPerm);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PermissionDataBrief::GetReqPermissionByName(
+    AccessTokenID tokenId, const std::string& permissionName,
+    std::string& value, bool tokenIdCheck)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    if (tokenIdCheck) {
+        auto iter = requestedPermData_.find(tokenId);
+        if (iter == requestedPermData_.end()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
+            return ERR_TOKEN_INVALID;
+        }
+    }
+
+    uint32_t permCode;
+    if (!TransferPermissionToOpcode(permissionName, permCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "TransferPermissionToOpcode failed, permissionName: %{public}s.", permissionName.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
+    uint64_t key = (static_cast<uint64_t>(tokenId) << 32) | permCode;
+    auto it = extendedValue_.find(key);
+    if (it == extendedValue_.end()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s not with value.", permissionName.c_str());
+        return ERR_PERMISSION_WITHOUT_VALUE;
+    }
+
+    value = it->second;
+    return RET_SUCCESS;
 }
 
 bool PermissionDataBrief::GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState)
@@ -75,18 +204,23 @@ bool PermissionDataBrief::GetPermissionStatus(const BriefPermData& briefPermData
     return false;
 }
 
-void PermissionDataBrief::GetPermissionBriefDataList(const std::vector<PermissionStatus> &permStateList,
+void PermissionDataBrief::GetPermissionBriefDataList(AccessTokenID tokenID,
+    const std::vector<PermissionStatus>& permStateList,
+    const std::map<std::string, std::string>& aclExtendedMap,
     std::vector<BriefPermData>& list)
 {
+    // delte permission with value
+    DeleteExtendedValue(tokenID);
+
     for (const auto& state : permStateList) {
         BriefPermData data = {0};
-        if (GetPermissionBriefData(state, data)) {
+        if (GetPermissionBriefData(tokenID, state, aclExtendedMap, data)) {
             list.emplace_back(data);
         }
     }
 }
 
-int32_t PermissionDataBrief::AddBriefPermDataByTokenId(
+void PermissionDataBrief::AddBriefPermDataByTokenId(
     AccessTokenID tokenID, const std::vector<BriefPermData>& listInput)
 {
     auto iter = requestedPermData_.find(tokenID);
@@ -94,11 +228,18 @@ int32_t PermissionDataBrief::AddBriefPermDataByTokenId(
         requestedPermData_.erase(tokenID);
     }
     requestedPermData_[tokenID] = listInput;
-    return RET_SUCCESS;
 }
 
 void PermissionDataBrief::AddPermToBriefPermission(
     AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList, bool defCheck)
+{
+    std::map<std::string, std::string> aclExtendedMap;
+    return AddPermToBriefPermission(tokenId, permStateList, aclExtendedMap, defCheck);
+}
+
+void PermissionDataBrief::AddPermToBriefPermission(
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
+    const std::map<std::string, std::string>& aclExtendedMap, bool defCheck)
 {
     ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
     std::vector<PermissionStatus> permStateListRes;
@@ -110,7 +251,7 @@ void PermissionDataBrief::AddPermToBriefPermission(
 
     std::vector<BriefPermData> list;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
-    GetPermissionBriefDataList(permStateListRes, list);
+    GetPermissionBriefDataList(tokenId, permStateListRes, aclExtendedMap, list);
     AddBriefPermDataByTokenId(tokenId, list);
 }
 
@@ -134,7 +275,9 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
     permNew.flag = permOld.flag;
 }
 
-void PermissionDataBrief::Update(AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList)
+void PermissionDataBrief::Update(
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
+    const std::map<std::string, std::string>& aclExtendedMap)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     std::vector<PermissionStatus> permStateFilterList;
@@ -142,7 +285,7 @@ void PermissionDataBrief::Update(AccessTokenID tokenId, const std::vector<Permis
     LOGI(ATM_DOMAIN, ATM_TAG, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
 
     std::vector<BriefPermData> newList;
-    GetPermissionBriefDataList(permStateFilterList, newList);
+    GetPermissionBriefDataList(tokenId, permStateFilterList, aclExtendedMap, newList);
     std::vector<BriefPermData> briefPermDataList;
     (void)GetBriefPermDataByTokenIdInner(tokenId, briefPermDataList);
     for (BriefPermData& newPermData : newList) {
@@ -162,11 +305,35 @@ uint32_t PermissionDataBrief::GetFlagWroteToDb(uint32_t grantFlag)
     return ConstantCommon::GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
 }
 
+int32_t PermissionDataBrief::TranslationIntoAclExtendedMap(
+    AccessTokenID tokenId,
+    const std::vector<GenericValues>& extendedPermRes,
+    std::map<std::string, std::string>& aclExtendedMap)
+{
+    for (const GenericValues& permValue : extendedPermRes) {
+        if ((AccessTokenID)permValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) != tokenId) {
+            continue;
+        }
+        PermissionWithValue perm;
+        int ret = DataTranslator::TranslationIntoExtendedPermission(permValue, perm);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        aclExtendedMap[perm.permissionName] = perm.value;
+    }
+    return RET_SUCCESS;
+}
+
 void PermissionDataBrief::RestorePermissionBriefData(AccessTokenID tokenId,
-    const std::vector<GenericValues>& permStateRes)
+    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     std::vector<BriefPermData> list;
+    std::map<std::string, std::string> aclExtendedMap;
+    int result = TranslationIntoAclExtendedMap(tokenId, extendedPermRes, aclExtendedMap);
+    if (result != RET_SUCCESS) {
+        return;
+    }
     for (const GenericValues& stateValue : permStateRes) {
         if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) != tokenId) {
             continue;
@@ -175,7 +342,7 @@ void PermissionDataBrief::RestorePermissionBriefData(AccessTokenID tokenId,
         int ret = DataTranslator::TranslationIntoPermissionStatus(stateValue, state);
         if (ret == RET_SUCCESS) {
             BriefPermData data = {0};
-            if (!GetPermissionBriefData(state, data)) {
+            if (!GetPermissionBriefData(tokenId, state, aclExtendedMap, data)) {
                 continue;
             }
             MergePermBriefData(list, data);
@@ -343,6 +510,20 @@ int32_t PermissionDataBrief::ResetUserGrantPermissionStatus(AccessTokenID tokenI
     return RET_SUCCESS;
 }
 
+void PermissionDataBrief::DeleteExtendedValue(AccessTokenID tokenID)
+{
+    auto it = extendedValue_.begin();
+    while (it != extendedValue_.end()) {
+        uint64_t key = it->first;
+        AccessTokenID tokenIDToDelete = key >> 32;
+        if (tokenIDToDelete == tokenID) {
+            it = extendedValue_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
@@ -360,6 +541,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
             secCompData = secCompList_.erase(secCompData);
         }
     }
+    DeleteExtendedValue(tokenID);
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is deleted.", tokenID);
     return RET_SUCCESS;
 }

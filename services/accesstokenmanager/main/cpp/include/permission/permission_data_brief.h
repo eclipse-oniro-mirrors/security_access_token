@@ -26,6 +26,7 @@
 #include "access_token.h"
 #include "permission_status.h"
 #include "generic_values.h"
+#include "hap_token_info.h"
 
 #include "rwlock.h"
 
@@ -35,7 +36,7 @@ namespace AccessToken {
 
 typedef struct {
     int8_t status;
-    uint8_t reserved;
+    uint8_t type; // KERNEL_EFFECT_FLAG = 0x1 << 0 HAS_VALUE_FLAG = 0x1 << 1
     uint16_t permCode;
     uint32_t flag;
 } BriefPermData;
@@ -66,20 +67,33 @@ public:
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     int32_t RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
         bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
-    void AddPermToBriefPermission(AccessTokenID tokenId,
-        const std::vector<PermissionStatus>& permStateList, bool defCheck);
-    void Update(AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList);
-    void RestorePermissionBriefData(AccessTokenID tokenId, const std::vector<GenericValues>& permStateRes);
+    void AddPermToBriefPermission(
+            AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList, bool defCheck);
+    void AddPermToBriefPermission(
+            AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
+            const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
+    void Update(
+        AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
+        const std::map<std::string, std::string>& aclExtendedMap);
+    void RestorePermissionBriefData(AccessTokenID tokenId,
+        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
     int32_t StorePermissionBriefData(AccessTokenID tokenId, std::vector<GenericValues>& permStateValueList);
     int32_t UpdatePermissionStatus(AccessTokenID tokenId,
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
     int32_t ResetUserGrantPermissionStatus(AccessTokenID tokenID);
+    int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value, bool tokenIdCheck);
+    void GetExetendedValueList(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
 private:
-    bool GetPermissionBriefData(const PermissionStatus &permState, BriefPermData& briefPermData);
+    bool GetPermissionBriefData(AccessTokenID tokenID, const PermissionStatus &permState,
+        const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData);
     bool GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState);
-    void GetPermissionBriefDataList(
-        const std::vector<PermissionStatus> &permStateList, std::vector<BriefPermData>& list);
-    int32_t AddBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& listInput);
+    void GetPermissionBriefDataList(AccessTokenID tokenID,
+        const std::vector<PermissionStatus>& permStateList,
+        const std::map<std::string, std::string>& aclExtendedMap,
+        std::vector<BriefPermData>& list);
+    void AddBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& listInput);
     void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void MergePermBriefData(std::vector<BriefPermData>& permBriefDataList, BriefPermData& data);
@@ -89,10 +103,15 @@ private:
     void ClearAllSecCompGrantedPermById(AccessTokenID tokenID);
     void SecCompGrantedPermListUpdated(AccessTokenID tokenID, const std::string& permissionName, bool isAdded);
     int32_t GetBriefPermDataByTokenIdInner(AccessTokenID tokenID, std::vector<BriefPermData>& list);
+    int32_t TranslationIntoAclExtendedMap(AccessTokenID tokenId, const std::vector<GenericValues>& extendedPermRes,
+        std::map<std::string, std::string>& aclExtendedMap);
+    void GetExetendedValueListInner(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
+    void DeleteExtendedValue(AccessTokenID tokenID);
     PermissionDataBrief() = default;
     DISALLOW_COPY_AND_MOVE(PermissionDataBrief);
     OHOS::Utils::RWLock permissionStateDataLock_;
     std::map<uint32_t, std::vector<BriefPermData>> requestedPermData_;
+    std::map<uint64_t, std::string> extendedValue_;
     std::list<BriefSecCompData> secCompList_;
 };
 } // namespace AccessToken

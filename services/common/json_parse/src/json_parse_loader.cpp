@@ -78,6 +78,8 @@ static const char* PERMISSION_AVAILABLE_LEVEL = "availableLevel";
 static const char* PERMISSION_AVAILABLE_TYPE = "availableType";
 static const char* PERMISSION_PROVISION_ENABLE = "provisionEnable";
 static const char* PERMISSION_DISTRIBUTED_SCENE_ENABLE = "distributedSceneEnable";
+static const std::string PERMISSION_IS_KERNEL_EFFECT = "isKernelEffect";
+static const std::string PERMISSION_HAS_VALUE = "hasValue";
 static const char* PERMISSION_LABEL = "label";
 static const char* PERMISSION_DESCRIPTION = "description";
 static const char* AVAILABLE_TYPE_NORMAL_HAP = "NORMAL";
@@ -488,7 +490,7 @@ static bool GetPermissionApl(const std::string &apl, AccessToken::ATokenAplEnum&
 }
 
 static bool GetPermissionAvailableType(
-    const std::string &availableType, AccessToken::ATokenAvailableTypeEnum& typeNum)
+    const std::string& availableType, AccessToken::ATokenAvailableTypeEnum& typeNum)
 {
     if (availableType == AVAILABLE_TYPE_NORMAL_HAP) {
         typeNum = AccessToken::ATokenAvailableTypeEnum::NORMAL;
@@ -519,7 +521,7 @@ static bool GetPermissionAvailableType(
     return false;
 }
 
-static int32_t GetPermissionGrantMode(const std::string &mode)
+static int32_t GetPermissionGrantMode(const std::string& mode)
 {
     if (mode == PERMISSION_GRANT_MODE_SYSTEM_GRANT) {
         return AccessToken::GrantMode::SYSTEM_GRANT;
@@ -563,6 +565,10 @@ static void FromJsonPermissionDefParseRet(const CJson *j, PermissionDefParseRet&
     if (!GetBoolFromJson(j, PERMISSION_DISTRIBUTED_SCENE_ENABLE, permDef.distributedSceneEnable)) {
         return;
     }
+
+    GetBoolFromJson(j, PERMISSION_IS_KERNEL_EFFECT, permDef.isKernelEffect); // if not exsit default false
+    GetBoolFromJson(j, PERMISSION_HAS_VALUE, permDef.hasValue); // if not exsit default false
+
     permDef.bundleName = "system_ability";
     if (permDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
         result.permDef = permDef;

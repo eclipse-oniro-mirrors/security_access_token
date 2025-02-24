@@ -849,10 +849,19 @@ bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicy& policy)
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", permDef.permissionName.c_str());
             return false;
         }
-        auto isAclExist = std::any_of(
-            policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [permDef](const auto &perm) {
-            return permDef.permissionName == perm;
-        });
+        bool isAclExist = false;
+        if (permDef.hasValue) {
+            isAclExist = std::any_of(
+                policy.aclExtendedMap.begin(), policy.aclExtendedMap.end(), [permDef](const auto &perm) {
+                return permDef.permissionName == perm.first;
+            });
+        } else {
+            isAclExist = std::any_of(
+                policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [permDef](const auto &perm) {
+                return permDef.permissionName == perm;
+            });
+        }
+        
         if (!isAclExist) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s need acl.", permDef.permissionName.c_str());
             return false;
