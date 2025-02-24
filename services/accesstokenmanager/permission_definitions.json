@@ -6029,7 +6029,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.ACCESS_CUSTOM_RINGTONE",
+            "name": "ohos.permission.ACCESS_USER_ACCOUNT_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -6039,7 +6039,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.ACCESS_USER_ACCOUNT_INFO",
+            "name": "ohos.permission.ACCESS_CUSTOM_RINGTONE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
