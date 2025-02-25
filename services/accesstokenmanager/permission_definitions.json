@@ -6057,6 +6057,18 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_STARTUPGUIDE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "label": "允许系统应用访问开机向导APP的普通数据、普通公共事件。",
+            "description": "允许系统应用访问开机向导APP的普通数据、普通公共事件的通用权限。适用产品PC、平板、phone。"
         }
     ]
 }
