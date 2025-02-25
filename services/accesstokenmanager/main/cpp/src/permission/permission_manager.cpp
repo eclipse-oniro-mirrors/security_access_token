@@ -19,7 +19,6 @@
 #include <numeric>
 #include <sstream>
 
-#include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
@@ -304,6 +303,18 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return ret;
 }
 
+AbilityManagerAccessLoaderInterface* PermissionManager::GetAbilityManager()
+{
+    if (abilityManagerLoader_ == nullptr) {
+        std::lock_guard<std::mutex> lock(abilityManagerMutex_);
+        if (abilityManagerLoader_ == nullptr) {
+            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+        }
+    }
+
+    return abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
+}
+
 int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
     const std::string& bundleName, const std::string& abilityName)
 {
@@ -319,15 +330,7 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         .callerTokenId = IPCSkeleton::GetCallingTokenID()
     };
 
-    {
-        std::lock_guard<std::mutex> lock(abilityManagerMutex_);
-        if (abilityManagerLoader_ == nullptr) {
-            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
-        }
-    }
-
-    AbilityManagerAccessLoaderInterface* abilityManager =
-        abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
+    AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
     if (abilityManager == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
@@ -408,7 +411,10 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
-            if ((ret = AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id)) != ERR_OK) {
+            AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
+            if (abilityManager == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
+            } else if ((ret = abilityManager->KillProcessForPermissionUpdate(id)) != ERR_OK) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "kill process failed, ret=%{public}d.", ret);
             }
         }

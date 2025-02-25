@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include "accesstoken_common_log.h"
-#include "ams_manager_access_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
@@ -50,36 +49,6 @@ AppManagerAccessClient::~AppManagerAccessClient()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
-}
-
-int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t accessTokenId)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return ERROR;
-    }
-
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    if (!data.WriteInterfaceToken(DESCRIPTOR)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed");
-        return ERROR;
-    }
-    int32_t error = proxy->SendRequest(
-        static_cast<uint32_t>(AppManagerAccessClient::Message::APP_GET_MGR_INSTANCE), data, reply, option);
-    if (error != ERR_NONE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetAmsMgr failed, error: %{public}d", error);
-        return ERROR;
-    }
-    sptr<IRemoteObject> object = reply.ReadRemoteObject();
-    sptr<IAmsMgr> amsService = new AmsManagerAccessProxy(object);
-    if (amsService == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "AmsService is null.");
-        return ERROR;
-    }
-    return amsService->KillProcessesByAccessTokenId(accessTokenId);
 }
 
 int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
