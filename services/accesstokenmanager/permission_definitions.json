@@ -4409,6 +4409,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONTROL_SVC_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
