@@ -106,7 +106,6 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 {
     std::vector<PermissionDef> permFilterList;
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
-    LOGI(ATM_DOMAIN, ATM_TAG, "PermFilterList size: %{public}zu", permFilterList.size());
     for (const auto& perm : permFilterList) {
         if (updateFlag) {
             PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
