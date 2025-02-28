@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 
+#include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "hap_token_info_inner.h"
 #include "iremote_broker.h"
@@ -118,6 +119,7 @@ private:
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     bool IsPermissionStateOrFlagMatched(const PermissionStatus& stata1, const PermissionStatus& stata2);
+    AbilityManagerAccessLoaderInterface* GetAbilityManager();
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;
