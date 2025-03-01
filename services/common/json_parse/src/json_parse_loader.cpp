@@ -205,9 +205,7 @@ bool GetAtCfgFromJson(const CJson* j, AccessTokenServiceConfig& a)
         return false;
     }
 
-    if (!GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName)) {
-        return false;
-    }
+    GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName);
     return true;
 }
 
