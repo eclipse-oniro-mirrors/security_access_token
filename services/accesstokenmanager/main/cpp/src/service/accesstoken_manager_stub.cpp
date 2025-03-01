@@ -97,6 +97,11 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
+    if (this->GetTokenType(tokenID) != TOKEN_HAP) {
+        IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG,
+            reply.WriteInt32(AccessTokenError::ERR_PARAM_INVALID), "WriteInt32 failed.");
+        return;
+    }
     int result = this->DeleteToken(tokenID);
     IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
