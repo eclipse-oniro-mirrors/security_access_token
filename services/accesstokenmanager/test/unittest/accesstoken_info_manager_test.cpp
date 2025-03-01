@@ -15,6 +15,7 @@
 
 #include "accesstoken_info_manager_test.h"
 
+#include <fcntl.h>
 #include <gmock/gmock.h>
 
 #include "accesstoken_id_manager.h"
@@ -1168,7 +1169,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
     // fd is 0
     ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
 
-    fd = 123; // 123：valid fd
+    fd = open("/dev/null", O_WRONLY);
 
     // hidumper
     ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
