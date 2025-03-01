@@ -6083,7 +6083,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 16,
+            "since": 18,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -6093,7 +6093,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SERVICE",
-            "since": 16,
+            "since": 18,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
@@ -6103,7 +6103,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 16,
+            "since": 18,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
