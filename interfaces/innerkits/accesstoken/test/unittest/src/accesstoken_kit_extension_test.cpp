@@ -804,6 +804,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterSelfPermStateChangeCallback004, Te
     SetSelfTokenID(selfTokenId_);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2));
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
