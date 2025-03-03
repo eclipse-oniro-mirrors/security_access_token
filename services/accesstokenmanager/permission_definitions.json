@@ -6162,7 +6162,7 @@
             "name": "ohos.permission.ANTIFRAUD_PICTURE_DETECT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SERVICE",
+            "availableType": "SYSTEM",
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
