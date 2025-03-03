@@ -629,7 +629,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_STARTUPGUIDE",       false},
     {"ohos.permission.ANTIFRAUD_DETECT",               false},
     {"ohos.permission.ANTIFRAUD_PICTURE_DETECT",       false},
-    {"ohos.permission.ANTIFRAUD_MODEL_DOWNLOAD",       false}
+    {"ohos.permission.ANTIFRAUD_MODEL_DOWNLOAD",       false},
     {"ohos.permission.CONTROL_SVC_CMD",         false},
     {"ohos.permission.ACCESS_DEVAUTH_CRED_MGR",             false},
     {"ohos.permission.ACCESS_DEVAUTH_CRED_PRIVILEGE",       false},
