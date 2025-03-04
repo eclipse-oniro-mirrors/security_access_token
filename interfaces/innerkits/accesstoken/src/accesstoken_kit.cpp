@@ -554,14 +554,12 @@ int32_t AccessTokenKit::RequestAppPermOnSetting(AccessTokenID tokenID)
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Called");
     return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
 }
 
 int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Called");
     return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback, SYSTEM_REGISTER_TYPE);
 }
 

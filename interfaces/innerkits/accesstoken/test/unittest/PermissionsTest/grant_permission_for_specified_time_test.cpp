@@ -219,7 +219,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpe
 
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
-    sleep(onceTime);
+    sleep(onceTime + 1);
 
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenKit::VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION, true));

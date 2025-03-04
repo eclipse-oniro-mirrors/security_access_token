@@ -36,6 +36,12 @@ public:
     static AbilityManagerAdapter& GetInstance();
 
     int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken);
+    int32_t KillProcessForPermissionUpdate(uint32_t accessTokenId);
+
+    enum class Message {
+        START_ABILITY = 1001,
+        KILL_PROCESS_FOR_PERMISSION_UPDATE = 5300,
+    };
 
 private:
     void InitProxy();

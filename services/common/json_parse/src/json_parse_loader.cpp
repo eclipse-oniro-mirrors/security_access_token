@@ -205,9 +205,7 @@ bool GetAtCfgFromJson(const CJson* j, AccessTokenServiceConfig& a)
         return false;
     }
 
-    if (!GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName)) {
-        return false;
-    }
+    GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName);
     return true;
 }
 
@@ -272,13 +270,11 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
         std::string fileContent;
         int32_t res = ReadCfgFile(filePath, fileContent);
         if (res != 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Read Cfg file [%{public}s] failed, error(%{public}d).",
-                filePath.c_str(), res);
             continue;
         }
 
         if (GetConfigValueFromFile(type, fileContent, config)) {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Get valid config value!");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Get valid config value from file [%{public}s]!", filePath.c_str());
             successFlag = true;
             break; // once get the config value, break the loop
         }

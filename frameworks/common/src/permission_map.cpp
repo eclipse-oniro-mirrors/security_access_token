@@ -622,9 +622,19 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.SET_PAC_URL",                          false},
     {"ohos.permission.ACCESS_DISK_PHY_INFO",    false},
     {"ohos.permission.MANAGE_EDM_POLICY",       false},
+    {"ohos.permission.ACCESS_USER_ACCOUNT_INFO",               false},
+    {"ohos.permission.ACCESS_VIRTUAL_SCREEN",   false},
     {"ohos.permission.ACCESS_CUSTOM_RINGTONE",               false},
     {"ohos.permission.PERFORM_LOCAL_DEBUG",       false},
-    {"ohos.permission.ACCESS_APP_CLONE_DIR",       false}
+    {"ohos.permission.ACCESS_APP_CLONE_DIR",       false},
+    {"ohos.permission.ACCESS_STARTUPGUIDE",       false},
+    {"ohos.permission.CONTROL_SVC_CMD",         false},
+    {"ohos.permission.ACCESS_DEVAUTH_CRED_MGR",             false},
+    {"ohos.permission.ACCESS_DEVAUTH_CRED_PRIVILEGE",       false},
+    {"ohos.permission.ACCESS_DEVAUTH_CRED_AUTH",            false},
+    {"ohos.permission.INSTALL_PLUGIN_BUNDLE",       false},
+    {"ohos.permission.UNINSTALL_PLUGIN_BUNDLE",       false},
+    {"ohos.permission.kernel.SUPPORT_PLUGIN",       false}
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

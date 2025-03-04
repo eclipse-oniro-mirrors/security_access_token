@@ -40,10 +40,12 @@ public:
     AbilityManagerAccessLoaderInterface() {}
     virtual ~AbilityManagerAccessLoaderInterface() {}
     virtual int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken);
+    virtual int32_t KillProcessForPermissionUpdate(uint32_t accessTokenId);
 };
 
 class AbilityManagerAccessLoader final: public AbilityManagerAccessLoaderInterface {
     int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken) override;
+    int32_t KillProcessForPermissionUpdate(uint32_t accessTokenId) override;
 };
 
 #ifdef __cplusplus

@@ -29,6 +29,11 @@ int32_t AbilityManagerAccessLoader::StartAbility(
 #endif
 }
 
+int32_t AbilityManagerAccessLoader::KillProcessForPermissionUpdate(uint32_t accessTokenId)
+{
+    return AbilityManagerAdapter::GetInstance().KillProcessForPermissionUpdate(accessTokenId);
+}
+
 void* Create()
 {
     return reinterpret_cast<void*>(new AbilityManagerAccessLoader);

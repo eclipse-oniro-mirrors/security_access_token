@@ -14,7 +14,6 @@
  */
 
 #include "ability_manager_adapter.h"
-#include "ability_manager_ipc_interface_code.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include <iremote_proxy.h>
@@ -101,8 +100,37 @@ int32_t AbilityManagerAdapter::StartAbility(const InnerWant &innerWant, const sp
         LOGE(ATM_DOMAIN, ATM_TAG, "RequestCode write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    int32_t error = abms->SendRequest(static_cast<uint32_t>(AbilityManagerInterfaceCode::START_ABILITY),
+    int32_t error = abms->SendRequest(static_cast<uint32_t>(AbilityManagerAdapter::Message::START_ABILITY),
         data, reply, option);
+    if (error != NO_ERROR) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SendRequest error: %{public}d", error);
+        return error;
+    }
+    return reply.ReadInt32();
+}
+
+int32_t AbilityManagerAdapter::KillProcessForPermissionUpdate(uint32_t accessTokenId)
+{
+    auto abms = GetProxy();
+    if (abms == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetProxy.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(ABILITY_MGR_DESCRIPTOR)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write WriteInterfaceToken.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(accessTokenId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    int32_t error = abms->SendRequest(static_cast<uint32_t>(
+        AbilityManagerAdapter::Message::KILL_PROCESS_FOR_PERMISSION_UPDATE), data, reply, option);
     if (error != NO_ERROR) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SendRequest error: %{public}d", error);
         return error;

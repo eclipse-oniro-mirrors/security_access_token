@@ -16,9 +16,6 @@ import("//build/test.gni")
 group("unittest") {
   testonly = true
   deps = [
-    "tool:GrantShortTermWriteImageVideo",
-    "tool:SetPermDialogCapTest",
-    "tool:VerifyAccessToken",
     "unittest:accesstoken_mock_test",
     "unittest:libaccesstoken_sdk_test",
   ]

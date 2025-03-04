@@ -41,7 +41,7 @@ public:
 
 class IBackgroundTaskMgr : public IRemoteBroker {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.resourceschedule.IBackgroundTaskMgr");
+    DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.BackgroundTaskMgr.IBackgroundTaskMgr");
 
     virtual int32_t SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber> &subscriber) = 0;
     virtual int32_t UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber> &subscriber) = 0;

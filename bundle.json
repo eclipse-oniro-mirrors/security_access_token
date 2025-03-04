@@ -230,6 +230,12 @@
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/tokensync/include"
           }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/kits/cj/accesstoken:cj_ability_access_ctrl_ffi"
+        },
+        {
+          "name": "//base/security/access_token/interfaces/kits/cj/screenlockfilemanager:cj_screen_lock_file_manager_ffi"
         }
       ],
       "test": [

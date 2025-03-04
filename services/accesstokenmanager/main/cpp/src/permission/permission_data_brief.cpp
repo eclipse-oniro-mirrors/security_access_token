@@ -91,11 +91,9 @@ int32_t PermissionDataBrief::AddBriefPermDataByTokenId(
 {
     auto iter = requestedPermData_.find(tokenID);
     if (iter != requestedPermData_.end()) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is cleared first.", tokenID);
         requestedPermData_.erase(tokenID);
     }
     requestedPermData_[tokenID] = listInput;
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is set.", tokenID);
     return RET_SUCCESS;
 }
 
