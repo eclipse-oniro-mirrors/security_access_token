@@ -90,7 +90,7 @@ void AccessTokenDb::InitRdb()
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
-    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_4, callback, res);
+    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_5, callback, res);
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
     }
@@ -370,6 +370,30 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     return 0;
 }
 
+int32_t AccessTokenDb::RestoreAndCommitIfCorrupt(const int32_t resultCode,
+    const std::shared_ptr<NativeRdb::RdbStore>& db)
+{
+    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
+        return resultCode;
+    }
+
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
+    int32_t res = db->Restore("");
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try commit again!");
+
+    res = db->Commit();
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Commit again, res is %{public}d.", res);
+        return res;
+    }
+
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenDb::DeleteAndInsertValues(
     const std::vector<AtmDataType>& delDataTypes, const std::vector<GenericValues>& delValues,
     const std::vector<AtmDataType>& addDataTypes, const std::vector<std::vector<GenericValues>>& addValues)
@@ -405,7 +429,14 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
             }
         }
 
-        db->Commit();
+        res = db->Commit();
+        if (res != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to commit, res is %{public}d.", res);
+            int32_t result = RestoreAndCommitIfCorrupt(res, db);
+            if (result != NativeRdb::E_OK) {
+                return result;
+            }
+        }
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();

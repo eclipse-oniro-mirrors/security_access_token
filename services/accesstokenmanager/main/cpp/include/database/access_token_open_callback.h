@@ -30,6 +30,7 @@ static constexpr const int32_t DATABASE_VERSION_1 = 1;
 static constexpr const int32_t DATABASE_VERSION_2 = 2;
 static constexpr const int32_t DATABASE_VERSION_3 = 3;
 static constexpr const int32_t DATABASE_VERSION_4 = 4;
+static constexpr const int32_t DATABASE_VERSION_5 = 5;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -52,19 +53,23 @@ public:
 private:
     // OnCreate
     int32_t CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore);
-    int32_t CreateNativeTokenInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionStateTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreatePermissionExtendValueTable(NativeRdb::RdbStore& rdbStore);
 
     // OnUpdate
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddRequestToggleStatusColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore);
+    int32_t RemoveIsGeneralFromPermissionState(NativeRdb::RdbStore& rdbStore);
+    int32_t RemoveUnusedTableAndColumn(NativeRdb::RdbStore& rdbStore);
+    int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
     int32_t HandleUpdateWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag);
     int32_t UpdateFromVersionOne(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
     int32_t UpdateFromVersionTwo(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
     int32_t UpdateFromVersionThree(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
+    int32_t UpdateFromVersionFour(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
 };
 } // namespace AccessToken
 } // namespace Security

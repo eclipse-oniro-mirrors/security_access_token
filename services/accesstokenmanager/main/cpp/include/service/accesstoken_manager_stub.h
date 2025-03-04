@@ -90,6 +90,8 @@ private:
     void InitUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply);
+    void GetReqPermissionByNameInner(MessageParcel& data, MessageParcel& reply);
+    void GetKernelPermissionsInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

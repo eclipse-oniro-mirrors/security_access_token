@@ -62,6 +62,10 @@ public:
 
     uint32_t GetDefPermissionsSize();
 
+    bool IsKernelPermission(const std::string& permissionName);
+
+    bool IsPermissionHasValue(const std::string& permissionName);
+
 private:
     PermissionDefinitionCache();
 
