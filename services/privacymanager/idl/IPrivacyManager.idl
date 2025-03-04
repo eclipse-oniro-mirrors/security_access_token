@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.Security.AccessToken;
+interface OHOS.Security.AccessToken.OnPermissionUsedRecordCallback;
+sequenceable OHOS.IRemoteObject;
+sequenceable OHOS.Security.AccessToken.AddPermParamInfoParcel;
+sequenceable OHOS.Security.AccessToken.PermissionUsedTypeInfoParcel;
+sequenceable OHOS.Security.AccessToken.PermissionUsedRequestParcel;
+sequenceable OHOS.Security.AccessToken.PermissionUsedResultParcel;
+sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
+
+interface OHOS.Security.AccessToken.IPrivacyManager {
+    [ipccode 1] void AddPermissionUsedRecord([in] AddPermParamInfoParcel infoParcel);
+    [ipccode 2, oneway] void AddPermissionUsedRecordAsync([in] AddPermParamInfoParcel infoParcel);
+    [ipccode 3] void StartUsingPermission([in] PermissionUsedTypeInfoParcel infoParcel, [in] IRemoteObject anonyStub);
+    [ipccode 4] void StartUsingPermissionCallback([in] PermissionUsedTypeInfoParcel infoParcel, [in] IRemoteObject cb, [in] IRemoteObject anonyStub);
+    [ipccode 5] void StopUsingPermission([in] unsigned int tokenID, [in] int pid, [in] String permissionName);
+    [ipccode 6] void RemovePermissionUsedRecords([in] unsigned int tokenID);
+    [ipccode 7] void GetPermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
+    [ipccode 8] void GetPermissionUsedRecordsAsync([in] PermissionUsedRequestParcel request, [in] OnPermissionUsedRecordCallback cb);
+    [ipccode 9] void RegisterPermActiveStatusCallback([in] List<String> permList, [in] IRemoteObject cb);
+    [ipccode 10] void UnRegisterPermActiveStatusCallback([in] IRemoteObject cb);
+    [ipccode 11] boolean IsAllowedUsingPermission([in] unsigned int tokenID, [in] String permissionName, [in] int pid);
+    [ipccode 12] void GetPermissionUsedTypeInfos([in] unsigned int tokenId, [in] String permissionName, [out] List<PermissionUsedTypeInfoParcel> resultsParcel);
+    [ipccode 13] void SetMutePolicy([in] unsigned int policyType, [in] unsigned int callerType, [in] boolean isMute, [in] unsigned int tokenID);
+    [ipccode 14] void SetHapWithFGReminder([in] unsigned int tokenId, [in] boolean isAllowed);
+    [ipccode 15] void SetPermissionUsedRecordToggleStatus([in] int userID, [in] boolean status);
+    [ipccode 16] void GetPermissionUsedRecordToggleStatus([in] int userID, [out] boolean status);
+    [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
+    [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
+    [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);
+    [ipccode 104, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSpecialSecCompEnhance([in] String bundleName, [out] List<SecCompEnhanceDataParcel> enhanceParcelList);
+}

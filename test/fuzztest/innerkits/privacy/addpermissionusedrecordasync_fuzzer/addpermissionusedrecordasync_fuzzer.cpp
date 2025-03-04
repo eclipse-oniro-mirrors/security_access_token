@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-#include "removepermissionusedrecordsstub_fuzzer.h"
+#include "addpermissionusedrecordasync_fuzzer.h"
 
-#include <string>
+#include <iostream>
 #include <thread>
+#include <string>
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "iprivacy_manager.h"
-#include "privacy_manager_service.h"
+#include "privacy_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool RemovePermissionUsedRecordsStubFuzzTest(const uint8_t* data, size_t size)
+    bool AddPermissionUsedRecordAsyncFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -36,30 +36,21 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteUint32(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()))) {
-            return false;
-        }
-        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
-            return false;
-        }
+        AddPermParamInfo info;
+        info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        info.permissionName = fuzzData.GenerateStochasticString();
+        info.successCount = fuzzData.GetData<int32_t>();
+        info.failCount = fuzzData.GetData<int32_t>();
+        info.type = fuzzData.GenerateStochasticEnmu<PermissionUsedType>(PERM_USED_TYPE_BUTT);
 
-        uint32_t code = static_cast<uint32_t>(
-            IPrivacyManagerIpcCode::COMMAND_REMOVE_PERMISSION_USED_RECORDS);
-
-        MessageParcel reply;
-        MessageOption option;
-        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-
-        return true;
+        return PrivacyKit::AddPermissionUsedRecord(info, true) == 0;
     }
-} // namespace OHOS
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::RemovePermissionUsedRecordsStubFuzzTest(data, size);
+    OHOS::AddPermissionUsedRecordAsyncFuzzTest(data, size);
     return 0;
 }

@@ -70,14 +70,16 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "../../src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "../../src/service/privacy_manager_service.cpp",
-      "../../src/service/privacy_manager_stub.cpp",
       "permission_record_manager_coverage_test.cpp",
       "sensitive_manager_coverage_test.cpp",
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:coverage_flags",
+      "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+    ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
@@ -90,6 +92,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common:accesstoken_service_common",
       "${access_token_path}/services/common/proxy_death:proxy_death_handler",
       "${access_token_path}/services/privacymanager:privacy_manager_service",
+      "${access_token_path}/services/privacymanager:privacy_manager_stub",
     ]
 
     external_deps = [

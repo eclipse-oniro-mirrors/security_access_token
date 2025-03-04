@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "addpermissionusedrecordstub_fuzzer.h"
+#include "addpermissionusedrecordasyncstub_fuzzer.h"
 
 #include <string>
 #include <thread>
@@ -28,7 +28,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool AddPermissionUsedRecordStubFuzzTest(const uint8_t* data, size_t size)
+    bool AddPermissionUsedRecordAsyncStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -48,7 +48,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_ADD_PERMISSION_USED_RECORD);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_ADD_PERMISSION_USED_RECORD_ASYNC);
 
         MessageParcel reply;
         MessageOption option;
@@ -62,6 +62,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AddPermissionUsedRecordStubFuzzTest(data, size);
+    OHOS::AddPermissionUsedRecordAsyncStubFuzzTest(data, size);
     return 0;
 }

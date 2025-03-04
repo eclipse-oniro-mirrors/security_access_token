@@ -17,7 +17,7 @@
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "i_privacy_manager.h"
+#include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -42,7 +42,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORD_TOGGLE_STATUS);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_GET_PERMISSION_USED_RECORD_TOGGLE_STATUS);
 
         MessageParcel reply;
         MessageOption option;

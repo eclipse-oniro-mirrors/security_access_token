@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,105 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
 import("../../access_token.gni")
+
+idl_gen_interface("privacy_manager_interface") {
+  sources = [ "./idl/IPrivacyManager.idl" ]
+  log_domainid = "0xD005A02"
+  log_tag = "PRIVACY"
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+config("privacy_manager_gen_config") {
+  include_dirs = [ "${target_gen_dir}" ]
+}
+
+ohos_source_set("privacy_manager_proxy") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  output_values = get_target_outputs(":privacy_manager_interface")
+
+  include_dirs = [
+    "${access_token_path}/frameworks/privacy/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/privacy/src",
+    "include",
+    "src",
+  ]
+
+  sources = filter_include(output_values, [ "*_proxy.cpp" ])
+
+  deps = [
+    ":privacy_manager_interface",
+    "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = []
+  if (security_component_enhance_enable) {
+    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  }
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+ohos_source_set("privacy_manager_stub") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  output_values = get_target_outputs(":privacy_manager_interface")
+
+  include_dirs = [
+    "${access_token_path}/frameworks/privacy/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/privacy/src",
+    "include",
+    "src",
+  ]
+
+  sources = filter_include(output_values, [ "*_stub.cpp" ])
+
+  deps = [
+    ":privacy_manager_interface",
+    "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = []
+  if (security_component_enhance_enable) {
+    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  }
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
 
 ohos_prebuilt_etc("privacy.rc") {
   source = "privacy.cfg"
@@ -88,7 +185,6 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "src/service/privacy_manager_service.cpp",
-      "src/service/privacy_manager_stub.cpp",
     ]
 
     cflags_cc = [
@@ -98,6 +194,7 @@ if (is_standard_system && ability_base_enable == true) {
     configs = [
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
+      "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
     ]
     defines = [ "FEATURE_DTMF_TONE" ]
 
@@ -109,6 +206,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common:accesstoken_service_common",
       "${access_token_path}/services/common/proxy_death:proxy_death_handler",
       "${access_token_path}/services/privacymanager:privacy.rc",
+      "${access_token_path}/services/privacymanager:privacy_manager_stub",
     ]
 
     external_deps = [
