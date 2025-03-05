@@ -446,82 +446,6 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetDefPermissions001
- * @tc.desc: Get permission definition info list after AllocHapToken function has been invoked.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
-{
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    std::vector<PermissionDef> permDefList;
-    int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permDefList.size());
-}
-
-/**
- * @tc.name: GetDefPermissions002
- * @tc.desc: Get permission definition info list after clear permission definition list
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
-{
-    HapPolicyParams testPolicyPrams = g_infoManagerTestPolicyPrams;
-    testPolicyPrams.permList.clear();
-    AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, testPolicyPrams);
-
-    AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                               g_infoManagerTestInfoParms.bundleName,
-                               g_infoManagerTestInfoParms.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    std::vector<PermissionDef> permDefList;
-    int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(0), permDefList.size());
-
-    AccessTokenKit::DeleteToken(tokenID);
-}
-
-/**
- * @tc.name: GetDefPermissions003
- * @tc.desc: Get permission definition info list that tokenID is invalid.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
-{
-    AccessTokenID tokenId = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    std::vector<PermissionDef> permDefList;
-    int ret = AccessTokenKit::GetDefPermissions(TEST_TOKENID_INVALID, permDefList);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-}
-
-/**
- * @tc.name: GetDefPermissions004
- * @tc.desc: GetDefPermissions is invoked multiple times.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
-{
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    for (int i = 0; i < CYCLE_TIMES; i++) {
-        std::vector<PermissionDef> permDefList;
-        int32_t ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-        ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(static_cast<uint32_t>(2), permDefList.size());
-    }
-}
-
-/**
  * @tc.name: GetReqPermissions001
  * @tc.desc: Get user granted permission state info.
  * @tc.type: FUNC
@@ -1163,50 +1087,6 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken003, TestSize.Level0)
     ASSERT_EQ(PERMISSION_DENIED, ret);
     AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_CAMERA, false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
-}
-
-/**
- * @tc.name: VerifyAccessToken004
- * @tc.desc: Verify permission after update.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
-{
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_A_MICRO, PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    HapTokenInfo hapInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionDef>  permDefList;
-    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionStateFull> permStatList;
-    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain",
-        .permList = permDefList,
-        .permStateList = permStatList
-    };
-    UpdateHapInfoParams info;
-    info.appIDDesc = "appIDDesc";
-    info.apiVersion = DEFAULT_API_VERSION;
-    info.isSystemApp = false;
-    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_A_MICRO, false);
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
 }
 
 /**

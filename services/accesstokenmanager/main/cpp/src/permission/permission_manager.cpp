@@ -154,11 +154,6 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
     return PermissionDefinitionCache::GetInstance().FindByPermissionName(permissionName, permissionDefResult);
 }
 
-void PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList)
-{
-    PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenID);
-}
-
 int PermissionManager::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant)
 {

@@ -272,19 +272,6 @@ HWTEST_F(AccessTokenMockTest, GetDefPermission001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetDefPermissions001
- * @tc.desc: GetDefPermissions with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, GetDefPermissions001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123;
-    std::vector<PermissionDef> permList;
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetDefPermissions(tokenId, permList));
-}
-
-/**
  * @tc.name: GetReqPermissions001
  * @tc.desc: GetReqPermissions with proxy is null
  * @tc.type: FUNC

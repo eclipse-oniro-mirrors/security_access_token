@@ -469,19 +469,8 @@ void HapTokenInfoInner::PermStateFullToString(const PermissionStatus& state, std
     info.append(R"(    })");
 }
 
-void HapTokenInfoInner::PermToString(const std::vector<PermissionDef>& permList,
-    const std::vector<PermissionStatus>& permStateList, std::string& info)
+void HapTokenInfoInner::PermToString(const std::vector<PermissionStatus>& permStateList, std::string& info)
 {
-    info.append(R"(  "permDefList": [)");
-    info.append("\n");
-    for (auto iter = permList.begin(); iter != permList.end(); iter++) {
-        PermDefToString(*iter, info);
-        if (iter != (permList.end() - 1)) {
-            info.append(",\n");
-        }
-    }
-    info.append("\n  ],\n");
-
     info.append(R"(  "permStateList": [)");
     info.append("\n");
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
@@ -507,11 +496,9 @@ void HapTokenInfoInner::ToString(std::string& info)
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
     info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
 
-    std::vector<PermissionDef> permList;
-    PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenInfoBasic_.tokenID);
     std::vector<PermissionStatus> permStateList;
     (void)GetPermissionStateList(permStateList);
-    PermToString(permList, permStateList, info);
+    PermToString(permStateList, info);
     info.append("}");
 }
 } // namespace AccessToken

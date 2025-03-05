@@ -178,43 +178,6 @@ int AccessTokenManagerProxy::GetDefPermission(
     return result;
 }
 
-int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
-    std::vector<PermissionDefParcel>& permList)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteUint32(tokenID)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint32 failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = reply.ReadInt32();
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
-    if (result != RET_SUCCESS) {
-        return result;
-    }
-    uint32_t defPermSize = reply.ReadUint32();
-    if (defPermSize > MAX_PERMISSION_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}u) is oversize.", defPermSize);
-        return ERR_OVERSIZE;
-    }
-    for (uint32_t i = 0; i < defPermSize; i++) {
-        sptr<PermissionDefParcel> permissionDef = reply.ReadParcelable<PermissionDefParcel>();
-        if (permissionDef != nullptr) {
-            permList.emplace_back(*permissionDef);
-        }
-    }
-    return result;
-}
-
 int AccessTokenManagerProxy::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {

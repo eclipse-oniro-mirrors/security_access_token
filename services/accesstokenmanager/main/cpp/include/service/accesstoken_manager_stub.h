@@ -38,7 +38,6 @@ private:
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
     void VerifyAccessTokenWithListInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
-    void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply);

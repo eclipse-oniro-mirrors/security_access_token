@@ -23,7 +23,6 @@ namespace AccessToken {
 enum class AccessTokenInterfaceCode {
     VERIFY_ACCESSTOKEN = 0x0000,
     GET_DEF_PERMISSION,
-    GET_DEF_PERMISSIONS,
     GET_REQ_PERMISSIONS,
     GET_PERMISSION_FLAG,
     GRANT_PERMISSION,
