@@ -538,6 +538,59 @@ HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1
     AccessTokenKit::GetPermissionManagerInfo(info);
     ASSERT_EQ(false, info.grantBundleName.empty());
 }
+
+/**
+ * @tc.name: GetKernelPermissionTest001
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level1)
+{
+    setuid(1);
+    std::vector<PermissionWithValue> kernelPermList;
+    int32_t ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+    setuid(0);
+
+    SetSelfTokenID(g_selfTokenId);
+    ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
+    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
+
+    ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
+    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(0, kernelPermList.size());
+}
+
+/**
+ * @tc.name: GetReqPermissionByNameTest001
+ * @tc.desc: test Ge
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, GetReqPermissionByNameTest001, TestSize.Level1)
+{
+    setuid(1);
+    std::string value;
+    int32_t ret = AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+    setuid(0);
+
+    SetSelfTokenID(g_selfTokenId);
+    ret = AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value);
+    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ret = AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.test1", value);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+
+    ret = AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.MANAGE_HAP_TOKENID", value);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -848,13 +848,6 @@ void AccessTokenManagerStub::GetKernelPermissionsInner(MessageParcel& data, Mess
             reply.WriteUint32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteUint32 failed.");
         return;
     }
-    
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingToken);
-        IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG,
-            reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
-        return;
-    }
 
     AccessTokenID tokenID;
     IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, data.ReadUint32(tokenID), "ReadUint32 failed.");
