@@ -175,19 +175,6 @@ void PermissionDefinitionCache::StorePermissionDef(AccessTokenID tokenID, std::v
     }
 }
 
-void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList,
-    AccessTokenID tokenId)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    auto it = permissionDefinitionMap_.begin();
-    while (it != permissionDefinitionMap_.end()) {
-        if (tokenId == it->second.tokenId) {
-            permList.emplace_back(it->second.permDef);
-        }
-        ++it;
-    }
-}
-
 int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>& permDefRes)
 {
     for (const GenericValues& defValue : permDefRes) {
@@ -207,6 +194,26 @@ uint32_t PermissionDefinitionCache::GetDefPermissionsSize()
 {
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     return static_cast<uint32_t>(permissionDefinitionMap_.size());
+}
+
+bool PermissionDefinitionCache::IsKernelPermission(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if ((it == permissionDefinitionMap_.end())) {
+        return false;
+    }
+    return it->second.permDef.isKernelEffect;
+}
+
+bool PermissionDefinitionCache::IsPermissionHasValue(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if ((it == permissionDefinitionMap_.end())) {
+        return false;
+    }
+    return it->second.permDef.hasValue;
 }
 } // namespace AccessToken
 } // namespace Security

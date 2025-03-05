@@ -1007,6 +1007,101 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest009, TestSize.Level1)
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     EXPECT_EQ(ret, PERMISSION_DENIED);
 }
+
+static void PreparePermissionDefinition(
+    HapInfoParams& infoParams, HapPolicyParams& policyParams)
+{
+    PermissionDef permDefBasic = {
+        .permissionName = "ohos.permission.test_basic",
+        .bundleName = "accesstoken_test",
+        .grantMode = 1,
+        .availableLevel = APL_SYSTEM_CORE,
+        .label = "label",
+        .labelId = 1,
+        .description = "test",
+        .descriptionId = 1,
+        .provisionEnable = true,
+        .isKernelEffect = true,
+        .hasValue = true,
+    };
+
+    PermissionDef permDef1 = permDefBasic;
+    permDef1.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    PermissionDef permDef2 = permDefBasic;
+    permDef2.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    permDef2.hasValue = false;
+
+    policyParams.permList = {permDef1, permDef2};
+
+    AccessTokenIDEx fullTokenId;
+
+    // update permission definition
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitHapTokenSpecsTest010
+ * @tc.desc: InitHapToken permission with value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest010, TestSize.Level1)
+{
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_SYSTEM_CORE;
+    PreparePermissionDefinition(infoParams, policyParams);
+
+    PermissionStateFull permissionStateFull_basic = {
+        .permissionName = "ohos.permission.test_basic",
+        .isGeneral = false,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_GRANTED},
+        .grantFlags = {PERMISSION_SYSTEM_FIXED}
+    };
+
+    PermissionStateFull permissionStateFull001 = permissionStateFull_basic;
+    permissionStateFull001.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    PermissionStateFull permissionStateFull002 = permissionStateFull_basic;
+    permissionStateFull002.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    policyParams.permStateList = {permissionStateFull001, permissionStateFull002};
+    policyParams.aclRequestedList = {
+        "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY",
+        "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION"
+    };
+    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "123";
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitHapTokenSpecsTest011
+ * @tc.desc: InitHapToken with over large aclExtendedMap
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level1)
+{
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_SYSTEM_CORE;
+
+    for (size_t i = 0; i < 520; i++) {
+        policyParams.aclExtendedMap[std::to_string(i)] = std::to_string(i);
+    }
+
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

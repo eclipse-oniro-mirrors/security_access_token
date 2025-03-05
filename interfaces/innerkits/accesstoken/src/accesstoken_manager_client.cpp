@@ -116,22 +116,6 @@ int AccessTokenManagerClient::GetDefPermission(
     return result;
 }
 
-int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    std::vector<PermissionDefParcel> parcelList;
-    int result = proxy->GetDefPermissions(tokenID, parcelList);
-    for (const auto& permParcel : parcelList) {
-        PermissionDef perm = permParcel.permissionDef;
-        permList.emplace_back(perm);
-    }
-    return result;
-}
-
 int AccessTokenManagerClient::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {
@@ -810,6 +794,28 @@ void AccessTokenManagerClient::ReleaseProxy()
     }
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
+}
+
+int32_t AccessTokenManagerClient::GetKernelPermissions(
+    AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetKernelPermissions(tokenId, kernelPermList);
+}
+
+int32_t AccessTokenManagerClient::GetReqPermissionByName(
+    AccessTokenID tokenId, const std::string& permissionName, std::string& value)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetReqPermissionByName(tokenId, permissionName, value);
 }
 } // namespace AccessToken
 } // namespace Security

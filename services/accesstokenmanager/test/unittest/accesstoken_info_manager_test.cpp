@@ -625,7 +625,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
+        tokenIdEx, info, policy.permStateList, policy);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "update the hap token";
 
@@ -657,12 +657,12 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
+        tokenIdEx, info, policy.permStateList, policy);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
     info.appIDDesc = std::string("updateAppId");
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
+        tokenIdEx, info, policy.permStateList, policy);
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
 }
 
@@ -686,7 +686,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
     hapInfoParams.apiVersion = DEFAULT_API_VERSION;
     hapInfoParams.isSystemApp = false;
     ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, hapInfoParams, policy.permStateList, policy.apl, policy.permList));
+        tokenIdEx, hapInfoParams, policy.permStateList, policy));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
@@ -1646,30 +1646,6 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
         "ohos.permission.CAMERA", isGranted, flag, changed));
 }
 
-/**
- * @tc.name: PermStateFullToString001
- * @tc.desc: PermissionPolicySet::PermStateFullToString function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::vector<PermissionStatus> permStateList;
-    permStateList.emplace_back(g_permState);
-
-    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
-
-    std::vector<BriefPermData> briefPermDataList;
-    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
-
-    std::string info;
-    std::vector<PermissionDef> permList;
-    // iter != end - 1
-    HapTokenInfoInner::PermToString(permList, permStateList, info);
-    ASSERT_TRUE(!info.empty());
-}
-
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: MapRemoteDeviceTokenToLocal001
@@ -1796,6 +1772,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     AccessTokenID tokenId = 0;
     GenericValues tokenValue;
     std::vector<GenericValues> permStateRes;
+    std::vector<GenericValues> extendedPermRes;
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;
@@ -1804,7 +1781,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     UpdateHapInfoParams hapInfo;
     hapInfo.apiVersion = DEFAULT_API_VERSION;
     hapInfo.isSystemApp = false;
-    hap->Update(hapInfo, policy.permStateList); // permPolicySet_ is null
+    hap->Update(hapInfo, policy.permStateList, policy); // permPolicySet_ is null
 
     std::string info;
     hap->ToString(info); // permPolicySet_ is null
@@ -1817,14 +1794,14 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     // bundleName invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes, extendedPermRes));
     tokenValue.Remove(TokenFiledConst::FIELD_BUNDLE_NAME);
 
     bundleName = "com.ohos.permissionmanger";
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     tokenValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes, extendedPermRes));
 }
 
 /**

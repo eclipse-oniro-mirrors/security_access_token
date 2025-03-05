@@ -44,6 +44,7 @@
 #include "permission_def.h"
 #include "permission_state_full.h"
 #include "permission_status.h"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -150,6 +151,7 @@ public:
     /** Whether the pre-authorization is non-cancelable */
     bool userCancelable = false;
 };
+
 /**
  * @brief Declares hap policy params class
  */
@@ -166,6 +168,7 @@ public:
     std::vector<std::string> aclRequestedList;
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
+    std::map<std::string, std::string> aclExtendedMap;
 };
 
 /**
@@ -201,6 +204,16 @@ public:
     std::vector<std::string> aclRequestedList;
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
+    std::map<std::string, std::string> aclExtendedMap;
+};
+
+/**
+ * @brief Declares permission with value
+ */
+class PermissionWithValue final {
+public:
+    std::string permissionName;
+    std::string value;
 };
 } // namespace AccessToken
 } // namespace Security

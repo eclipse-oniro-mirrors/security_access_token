@@ -45,7 +45,6 @@
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteRemoteDeviceTokens(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::~PermStateChangeCallbackCustomize()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetDefPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::PermissionDef&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetDefPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionDef, std::__h::allocator<OHOS::Security::AccessToken::PermissionDef>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
@@ -82,6 +81,8 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermissionForSpecifiedTime(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoExtension(unsigned int, OHOS::Security::AccessToken::HapTokenInfoExt&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RequestAppPermOnSetting(unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissionByName(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetKernelPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
         "";

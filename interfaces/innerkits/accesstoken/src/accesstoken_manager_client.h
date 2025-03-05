@@ -53,7 +53,6 @@ public:
     int VerifyAccessToken(AccessTokenID tokenID,
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
-    int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
@@ -100,6 +99,10 @@ public:
     int32_t UnRegisterTokenSyncCallback();
 #endif
 
+    int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();

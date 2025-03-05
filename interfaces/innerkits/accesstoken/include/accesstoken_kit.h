@@ -258,13 +258,6 @@ public:
      */
     static int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     /**
-     * @brief Get all permission definitions by token id.
-     * @param tokenID token id
-     * @param permList PermissionDef list quote, as query result
-     * @return error code, see access_token_error.h
-     */
-    static int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
-    /**
      * @brief Get all requested permission full state by token id and grant mode.
      * @param tokenID token id
      * @param reqPermList PermissionStateFull list quote, as query result
@@ -502,6 +495,24 @@ public:
      * @return tokenId
      */
     static uint64_t GetRenderTokenID(uint64_t tokenId);
+
+    /**
+     * @brief Get kernel permission and value by token id.
+     * @param tokenID token id
+     * @param kernelPermList PermissionWithValue quote, as query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetKernelPermissions(AccessTokenID tokenID, std::vector<PermissionWithValue>& kernelPermList);
+
+    /**
+     * @brief Get extended value of permission by token id and permission name.
+     * @param tokenID token id
+     * @param permissionName permission name
+     * @param value as result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetReqPermissionByName(
+        AccessTokenID tokenID, const std::string& permissionName, std::string& value);
 };
 } // namespace AccessToken
 } // namespace Security

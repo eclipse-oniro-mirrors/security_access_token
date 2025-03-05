@@ -82,6 +82,7 @@ static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& 
         policyOut.permStateList.emplace_back(tmp);
     }
     policyOut.checkIgnore = policyIn.checkIgnore;
+    policyOut.aclExtendedMap = policyIn.aclExtendedMap;
 }
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
@@ -112,11 +113,13 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, \
-permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
-        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(), policy.checkIgnore);
+permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(),
+        policy.aclExtendedMap.size(), policy.checkIgnore);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
-        !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
+        !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType) ||
+        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -150,11 +153,12 @@ int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateH
     const HapPolicyParams& policy, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, isSystemApp: %{public}d, \
-permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
+permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size(),
-        policy.checkIgnore);
+        policy.aclExtendedMap.size(), policy.checkIgnore);
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
-        (!DataValidator::IsAplNumValid(policy.apl))) {
+        (!DataValidator::IsAplNumValid(policy.apl)) ||
+        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -416,18 +420,6 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
     LOGD(ATM_DOMAIN, ATM_TAG, "GetDefPermission bundleName = %{public}s", permissionDefResult.bundleName.c_str());
 
     return ret;
-}
-
-int AccessTokenKit::GetDefPermissions(
-    AccessTokenID tokenID, std::vector<PermissionDef>& permDefList) __attribute__((no_sanitize("cfi")))
-{
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
-    if (tokenID == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return AccessTokenManagerClient::GetInstance().GetDefPermissions(tokenID, permDefList);
 }
 
 int AccessTokenKit::GetReqPermissions(
@@ -726,6 +718,25 @@ uint64_t AccessTokenKit::GetRenderTokenID(uint64_t tokenId)
 
     id = *reinterpret_cast<AccessTokenID *>(idInner);
     return static_cast<uint64_t>(id);
+}
+
+int32_t AccessTokenKit::GetKernelPermissions(
+    AccessTokenID tokenID, std::vector<PermissionWithValue>& kernelPermList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
+    return AccessTokenManagerClient::GetInstance().GetKernelPermissions(tokenID, kernelPermList);
+}
+
+int32_t AccessTokenKit::GetReqPermissionByName(
+    AccessTokenID tokenID, const std::string& permissionName, std::string& value)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "TokenID=%{public}d permissionName=%{public}s.", tokenID, permissionName.c_str());
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -53,7 +53,6 @@ public:
     virtual int VerifyAccessToken(AccessTokenID tokenID,
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
-    virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
@@ -107,7 +106,10 @@ public:
     virtual int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterTokenSyncCallback() = 0;
 #endif
-
+    virtual int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList) = 0;
+    virtual int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value) = 0;
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
     virtual int32_t InitUserPolicy(
         const std::vector<UserState>& userList, const std::vector<std::string>& permList) = 0;

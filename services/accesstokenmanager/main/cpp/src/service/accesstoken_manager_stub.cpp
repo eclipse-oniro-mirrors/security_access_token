@@ -165,21 +165,6 @@ void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageP
         reply.WriteParcelable(&permissionDefParcel), "Write PermissionDefParcel fail.");
 }
 
-void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply)
-{
-    AccessTokenID tokenID = data.ReadUint32();
-    std::vector<PermissionDefParcel> permList;
-
-    this->GetDefPermissions(tokenID, permList);
-    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(RET_SUCCESS), "WriteInt32 failed.");
-    LOGD(ATM_DOMAIN, ATM_TAG, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
-    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
-
-    for (const auto& permDef : permList) {
-        IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
-    }
-}
-
 void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -839,6 +824,60 @@ void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageP
     IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
 }
 
+void AccessTokenManagerStub::GetKernelPermissionsInner(MessageParcel& data, MessageParcel& reply)
+{
+    auto callingToken = IPCSkeleton::GetCallingTokenID();
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG,
+            reply.WriteUint32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteUint32 failed.");
+        return;
+    }
+    
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingToken);
+        IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG,
+            reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteInt32 failed.");
+        return;
+    }
+
+    AccessTokenID tokenID;
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, data.ReadUint32(tokenID), "ReadUint32 failed.");
+    std::vector<PermissionWithValue> kernelPermList;
+    int32_t result = this->GetKernelPermissions(tokenID, kernelPermList);
+    IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteUint32(kernelPermList.size()), "WriteUint32 failed.");
+    for (const auto& perm : kernelPermList) {
+        IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteString(perm.permissionName), "WriteString failed.");
+        IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteString(perm.value), "WriteString failed.");
+    }
+}
+
+void AccessTokenManagerStub::GetReqPermissionByNameInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG,
+            reply.WriteUint32(AccessTokenError::ERR_PERMISSION_DENIED), "WriteUint32 failed.");
+        return;
+    }
+
+    AccessTokenID tokenID;
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, data.ReadUint32(tokenID), "ReadUint32 failed.");
+    std::string permissionName;
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, data.ReadString(permissionName), "ReadUint32 failed.");
+    std::string resultValue;
+    int32_t result = this->GetReqPermissionByName(tokenID, permissionName, resultValue);
+    IF_FALSE_PRINT_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteString(resultValue), "WriteString failed.");
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -1222,6 +1261,10 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::ClearUserPolicyInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKENINFO_EXT)] =
         &AccessTokenManagerStub::GetHapTokenInfoExtensionInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_KERNEL_PERMISSIONS)] =
+        &AccessTokenManagerStub::GetKernelPermissionsInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_BY_NAME)] =
+        &AccessTokenManagerStub::GetReqPermissionByNameInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
@@ -1234,8 +1277,6 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::VerifyAccessTokenWithListInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
         &AccessTokenManagerStub::GetDefPermissionInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS)] =
-        &AccessTokenManagerStub::GetDefPermissionsInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_REQ_PERMISSIONS)] =
         &AccessTokenManagerStub::GetReqPermissionsInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_FLAG)] =

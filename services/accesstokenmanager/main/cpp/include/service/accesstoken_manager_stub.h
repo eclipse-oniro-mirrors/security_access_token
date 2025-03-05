@@ -38,7 +38,6 @@ private:
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
     void VerifyAccessTokenWithListInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
-    void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply);
@@ -90,6 +89,8 @@ private:
     void InitUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply);
+    void GetReqPermissionByNameInner(MessageParcel& data, MessageParcel& reply);
+    void GetKernelPermissionsInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

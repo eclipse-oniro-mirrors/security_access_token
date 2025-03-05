@@ -628,6 +628,9 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.PERFORM_LOCAL_DEBUG",       false},
     {"ohos.permission.ACCESS_APP_CLONE_DIR",       false},
     {"ohos.permission.ACCESS_STARTUPGUIDE",       false},
+    {"ohos.permission.ANTIFRAUD_DETECT",               false},
+    {"ohos.permission.ANTIFRAUD_PICTURE_DETECT",       false},
+    {"ohos.permission.ANTIFRAUD_MODEL_DOWNLOAD",       false},
     {"ohos.permission.CONTROL_SVC_CMD",         false},
     {"ohos.permission.ACCESS_DEVAUTH_CRED_MGR",             false},
     {"ohos.permission.ACCESS_DEVAUTH_CRED_PRIVILEGE",       false},
@@ -635,6 +638,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.INSTALL_PLUGIN_BUNDLE",       false},
     {"ohos.permission.UNINSTALL_PLUGIN_BUNDLE",       false},
     {"ohos.permission.kernel.SUPPORT_PLUGIN",       false},
+    {"ohos.permission.ACCESS_TRUST_LIST_OOBE_MANAGER",       false},
     {"ohos.permission.VISIBLE_WINDOW_INFO",       false}
 };
 

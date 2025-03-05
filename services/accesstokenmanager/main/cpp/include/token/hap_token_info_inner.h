@@ -40,12 +40,13 @@ public:
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
     virtual ~HapTokenInfoInner();
 
-    void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList);
+    void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
+        const HapPolicy& hapPolicy);
     void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl) const;
     void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
-        const std::vector<GenericValues>& permStateRes);
+        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
 
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
@@ -87,8 +88,8 @@ private:
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
     bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList);
-    static void PermToString(const std::vector<PermissionDef>& permList,
-        const std::vector<PermissionStatus>& permStateList, std::string& info);
+    void PermToString(const std::vector<PermissionStatus>& permStateList, std::string& info);
+    void PermStateFullToString(const PermissionStatus& state, std::string& info);
 
     HapTokenInfo tokenInfoBasic_;
 
