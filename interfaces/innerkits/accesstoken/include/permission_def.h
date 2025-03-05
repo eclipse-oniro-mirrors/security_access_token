@@ -74,6 +74,8 @@ public:
     std::string description = "";
     int descriptionId = 0;
     ATokenAvailableTypeEnum availableType = NORMAL;
+    bool isKernelEffect = false;
+    bool hasValue = false;
 };
 
 /**

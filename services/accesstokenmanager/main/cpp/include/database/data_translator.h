@@ -21,6 +21,7 @@
 #include "generic_values.h"
 #include "permission_def.h"
 #include "permission_status.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +34,7 @@ public:
         GenericValues& outGenericValues);
     static int TranslationIntoPermissionStatus(const GenericValues& inGenericValues,
         PermissionStatus& outPermissionState);
+    static int32_t TranslationIntoExtendedPermission(const GenericValues& inGenericValues, PermissionWithValue& perm);
 };
 } // namespace AccessToken
 } // namespace Security

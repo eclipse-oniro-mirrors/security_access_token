@@ -102,7 +102,10 @@ public:
     int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterTokenSyncCallback() override;
 #endif
-
+    int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList) override;
+    int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value) override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
@@ -114,6 +117,7 @@ public:
 
 private:
     void GetValidConfigFilePathList(std::vector<std::string>& pathList);
+    bool GetConfigGrantValueFromFile(std::string& fileContent);
     void GetConfigValue();
     bool Initialize();
     void AccessTokenServiceParamSet() const;

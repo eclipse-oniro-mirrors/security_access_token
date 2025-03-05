@@ -29,6 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMProxy"};
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
+static const int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 }
 
 AccessTokenManagerProxy::AccessTokenManagerProxy(const sptr<IRemoteObject>& impl)
@@ -1514,6 +1515,102 @@ int32_t AccessTokenManagerProxy::UpdateUserPolicy(const std::vector<UserState>& 
     LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
     return result;
 }
+
+int32_t AccessTokenManagerProxy::GetKernelPermissions(
+    AccessTokenID tokenID, std::vector<PermissionWithValue>& kernelPermList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteUint32(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_KERNEL_PERMISSIONS, data, reply)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read replay failed");
+        return ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read result failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    uint32_t size;
+    if (!reply.ReadUint32(size)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read size failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    if (size > MAX_EXTENDED_VALUE_LIST_SIZE) {
+        return AccessTokenError::ERR_OVERSIZE;
+    }
+    for (uint32_t i = 0; i < size; ++i) {
+        PermissionWithValue perm;
+        if (!reply.ReadString(perm.permissionName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read permission name failed.");
+            return AccessTokenError::ERR_READ_PARCEL_FAILED;
+        }
+        if (!reply.ReadString(perm.value)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read value failed.");
+            return AccessTokenError::ERR_READ_PARCEL_FAILED;
+        }
+        if (perm.value == "true") {
+            perm.value.clear();
+        }
+        kernelPermList.emplace_back(perm);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerProxy::GetReqPermissionByName(
+    AccessTokenID tokenID, const std::string& permissionName, std::string& value)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write interface token failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteUint32(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteString(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_BY_NAME, data, reply)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read replay failed");
+        return ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read result failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server data = %{public}d", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    if (!reply.ReadString(value)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read value failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+
+    return RET_SUCCESS;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

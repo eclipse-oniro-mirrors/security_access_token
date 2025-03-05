@@ -62,6 +62,8 @@ private:
     int32_t AddValues(const AtmDataType type, const std::vector<GenericValues>& addValues);
     int32_t RemoveValues(const AtmDataType type, const GenericValues& conditionValue);
 
+    int32_t RestoreAndCommitIfCorrupt(const int32_t resultCode, const std::shared_ptr<NativeRdb::RdbStore>& db);
+
     OHOS::Utils::RWLock rwLock_;
     std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;
     std::mutex dbLock_;

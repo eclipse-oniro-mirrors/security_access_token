@@ -208,6 +208,26 @@ uint32_t PermissionDefinitionCache::GetDefPermissionsSize()
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     return static_cast<uint32_t>(permissionDefinitionMap_.size());
 }
+
+bool PermissionDefinitionCache::IsKernelPermission(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if ((it == permissionDefinitionMap_.end())) {
+        return false;
+    }
+    return it->second.permDef.isKernelEffect;
+}
+
+bool PermissionDefinitionCache::IsPermissionHasValue(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if ((it == permissionDefinitionMap_.end())) {
+        return false;
+    }
+    return it->second.permDef.hasValue;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

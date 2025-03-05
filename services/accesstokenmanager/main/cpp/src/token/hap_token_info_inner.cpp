@@ -64,7 +64,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
-    PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, true);
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, policy.aclExtendedMap, true);
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
@@ -89,7 +89,8 @@ HapTokenInfoInner::~HapTokenInfoInner()
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
-void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList)
+void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
+    const HapPolicy& hapPolicy)
 {
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     if (info.isSystemApp) {
@@ -98,7 +99,7 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
         tokenInfoBasic_.tokenAttr &= ~SYSTEM_APP_FLAG;
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
-    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList);
+    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
 }
 
 void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
@@ -149,7 +150,8 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 
 int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     const GenericValues& tokenValue,
-    const std::vector<GenericValues>& permStateRes)
+    const std::vector<GenericValues>& permStateRes,
+    const std::vector<GenericValues> extendedPermRes)
 {
     tokenInfoBasic_.tokenID = tokenId;
     int ret = RestoreHapTokenBasicInfo(tokenValue);
@@ -157,7 +159,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
         return ret;
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
-    PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes);
+    PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes, extendedPermRes);
     return RET_SUCCESS;
 }
 
@@ -368,7 +370,13 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 #ifdef SUPPORT_SANDBOX_APP
     // update permission status with dlp permission rule.
     DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(tokenInfoBasic_.dlpType, permListOfHap);
-    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permListOfHap);
+    std::vector<PermissionWithValue> extendedPermList;
+    PermissionDataBrief::GetInstance().GetExetendedValueList(tokenInfoBasic_.tokenID, extendedPermList);
+    std::map<std::string, std::string> aclExtendedMap;
+    for (const auto& extendedperm : extendedPermList) {
+        aclExtendedMap[extendedperm.permissionName] = extendedperm.value;
+    }
+    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permListOfHap, aclExtendedMap);
 #endif
     if (!UpdateStatesToDB(tokenInfoBasic_.tokenID, permListOfHap)) {
         return ERR_DATABASE_OPERATE_FAILED;
@@ -440,16 +448,24 @@ void PermDefToString(const PermissionDef& def, std::string& info)
     info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
     info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
     info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
+    info.append(R"(      "isKernelEffect": )" + std::to_string(def.isKernelEffect) + ",\n");
+    info.append(R"(      "hasValue": )" + std::to_string(def.hasValue) + ",\n");
     info.append(R"(    })");
 }
 
-void PermStateFullToString(const PermissionStatus& state, std::string& info)
+void HapTokenInfoInner::PermStateFullToString(const PermissionStatus& state, std::string& info)
 {
     info.append(R"(    {)");
     info.append("\n");
     info.append(R"(      "permissionName": ")" + state.permissionName + R"(")" + ",\n");
     info.append(R"(      "grantStatus": ")" + std::to_string(state.grantStatus) + R"(")" + ",\n");
     info.append(R"(      "grantFlag": ")" + std::to_string(state.grantFlag) + R"(")" + ",\n");
+    std::string value;
+    (void)PermissionDataBrief::GetInstance().GetReqPermissionByName(
+        tokenInfoBasic_.tokenID, state.permissionName, value, false);
+    if (!value.empty()) {
+        info.append(R"(      "value": ")" + value + R"(")" + ",\n");
+    }
     info.append(R"(    })");
 }
 

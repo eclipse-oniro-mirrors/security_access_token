@@ -100,6 +100,10 @@ public:
     int32_t UnRegisterTokenSyncCallback();
 #endif
 
+    int32_t GetKernelPermissions(
+        AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetReqPermissionByName(
+        AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();

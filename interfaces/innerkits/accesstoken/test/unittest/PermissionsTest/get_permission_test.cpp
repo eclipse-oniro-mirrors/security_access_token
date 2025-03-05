@@ -479,6 +479,52 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetReqPermissions001
+ * @tc.desc: GetReqPermissions call failure.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetReqPermissions001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.GetReqPermissions",
+        .permList = {},
+        .permStateList = {}
+    };
+    HapInfoParams info = {
+        .userID = 100,
+        .bundleName = "test.GetReqPermissions.normal",
+        .instIndex = 0,
+        .appIDDesc = "test3",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false
+    };
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    int32_t selfUid = getuid();
+
+    setuid(0);
+    std::vector<PermissionStateFull> permStatList;
+    EXPECT_EQ(0, SetSelfTokenID(TestCommon::GetNativeToken("GetReqPermissions", nullptr, 0)));
+    setuid(1);
+    int32_t ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+
+    setuid(0);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    setuid(selfUid);
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+}
+
+/**
  * @tc.name: GetPermissionManagerInfoFuncTest001
  * @tc.desc:
  * @tc.type: FUNC

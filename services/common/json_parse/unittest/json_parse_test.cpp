@@ -543,6 +543,60 @@ HWTEST_F(JsonParseTest, ParserPermsRawDataTest008, TestSize.Level1)
     EXPECT_EQ(0, permDefList.size());
 }
 
+/**
+ * @tc.name: ParserPermsRawDataTest009
+ * @tc.desc: Invalid param
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(PermissionDefinitionParserTest, ParserPermsRawDataTest009, TestSize.Level1)
+{
+    PermissionDefinitionParser& instance = PermissionDefinitionParser::GetInstance();
+    std::string permsRawData = R"({"systemGrantPermissions":[)"\
+        R"({"name":"ohos.permission.PermDefParserTestA","grantMode":"system_grant","availableLevel":"system_basic",)"\
+        R"("availableType":"SERVICE","provisionEnable":true,"distributedSceneEnable":false}],)"\
+        R"("userGrantPermissions":[]})";
+    std::vector<PermissionDef> permDefList;
+    instance.ParserPermsRawData(permsRawData, permDefList);
+    EXPECT_EQ(1, permDefList.size());
+    EXPECT_EQ(false, permDefList[0].isKernelEffect);
+    EXPECT_EQ(false, permDefList[0].hasValue);
+    permDefList.clear();
+
+    permsRawData = R"({"systemGrantPermissions":[)"\
+        R"({"name":"ohos.permission.PermDefParserTestA","grantMode":"system_grant","availableLevel":"system_basic",)"\
+        R"("availableType":"SERVICE","provisionEnable":true,"distributedSceneEnable":false,)"\
+        R"("isKernelEffect":true}],)"\
+        R"("userGrantPermissions":[]})";
+    instance.ParserPermsRawData(permsRawData, permDefList);
+    EXPECT_EQ(1, permDefList.size());
+    EXPECT_EQ(true, permDefList[0].isKernelEffect);
+    EXPECT_EQ(false, permDefList[0].hasValue);
+    permDefList.clear();
+
+    permsRawData = R"({"systemGrantPermissions":[)"\
+    R"({"name":"ohos.permission.PermDefParserTestA","grantMode":"system_grant","availableLevel":"system_basic",)"\
+    R"("availableType":"SERVICE","provisionEnable":true,"distributedSceneEnable":false,)"\
+    R"("hasValue":true}],)"\
+    R"("userGrantPermissions":[]})";
+    instance.ParserPermsRawData(permsRawData, permDefList);
+    EXPECT_EQ(1, permDefList.size());
+    EXPECT_EQ(false, permDefList[0].isKernelEffect);
+    EXPECT_EQ(true, permDefList[0].hasValue);
+    permDefList.clear();
+
+    permsRawData = R"({"systemGrantPermissions":[)"\
+    R"({"name":"ohos.permission.PermDefParserTestA","grantMode":"system_grant","availableLevel":"system_basic",)"\
+    R"("availableType":"SERVICE","provisionEnable":true,"distributedSceneEnable":false,)"\
+    R"("isKernelEffect":true, "hasValue":true}],)"\
+    R"("userGrantPermissions":[]})";
+    instance.ParserPermsRawData(permsRawData, permDefList);
+    EXPECT_EQ(1, permDefList.size());
+    EXPECT_EQ(true, permDefList[0].isKernelEffect);
+    EXPECT_EQ(true, permDefList[0].hasValue);
+    permDefList.clear();
+}
+
 #ifdef SUPPORT_SANDBOX_APP
 static void PrepareJsonData1()
 {
