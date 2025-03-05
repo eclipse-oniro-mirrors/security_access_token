@@ -258,13 +258,6 @@ public:
      */
     static int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     /**
-     * @brief Get all permission definitions by token id.
-     * @param tokenID token id
-     * @param permList PermissionDef list quote, as query result
-     * @return error code, see access_token_error.h
-     */
-    static int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
-    /**
      * @brief Get all requested permission full state by token id and grant mode.
      * @param tokenID token id
      * @param reqPermList PermissionStateFull list quote, as query result

@@ -23,7 +23,6 @@ group("fuzztest") {
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",
     "deletetokenstub_fuzzer:DeleteTokenStubFuzzTest",
     "dumptokeninfostub_fuzzer:DumpTokenInfoStubFuzzTest",
-    "getdefpermissionsstub_fuzzer:GetDefPermissionsStubFuzzTest",
     "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
     "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
     "gethaptokeninfoextstub_fuzzer:GetHapTokenInfoExtStubFuzzTest",

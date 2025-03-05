@@ -64,7 +64,6 @@ public:
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
-    void GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);

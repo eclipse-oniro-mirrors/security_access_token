@@ -164,19 +164,6 @@ int AccessTokenManagerService::GetDefPermission(
     return PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult.permissionDef);
 }
 
-int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d", tokenID);
-    std::vector<PermissionDef> permVec;
-    PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
-    for (const auto& perm : permVec) {
-        PermissionDefParcel permParcel;
-        permParcel.permissionDef = perm;
-        permList.emplace_back(permParcel);
-    }
-    return RET_SUCCESS;
-}
-
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
 {

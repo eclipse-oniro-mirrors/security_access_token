@@ -422,18 +422,6 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
     return ret;
 }
 
-int AccessTokenKit::GetDefPermissions(
-    AccessTokenID tokenID, std::vector<PermissionDef>& permDefList) __attribute__((no_sanitize("cfi")))
-{
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
-    if (tokenID == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return AccessTokenManagerClient::GetInstance().GetDefPermissions(tokenID, permDefList);
-}
-
 int AccessTokenKit::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {

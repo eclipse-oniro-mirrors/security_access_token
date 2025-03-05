@@ -504,58 +504,6 @@ HWTEST_F(PermissionManagerTest, GetDefPermission002, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetDefPermissions001
- * @tc.desc: GetDefPermissions with invalid tokenid
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetDefPermissions001, TestSize.Level1)
-{
-    std::vector<PermissionDef> result;
-
-    AccessTokenID tokenId = 123;
-    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
-    ASSERT_TRUE(result.empty());
-}
-
-/**
- * @tc.name: GetDefPermissions002
- * @tc.desc: GetDefPermissions with valid tokenid
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetDefPermissions002, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams1, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionDef> result;
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
-    ASSERT_TRUE(!result.empty());
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
- * @tc.name: GetDefPermissions003
- * @tc.desc: GetDefPermissions with extension tokenId
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetDefPermissions003, TestSize.Level1)
-{
-    std::vector<PermissionDef> result;
-
-    AccessTokenID tokenId = 0;
-    PermissionManager::GetInstance().GetDefPermissions(tokenId, result);
-    ASSERT_TRUE(!result.empty());
-}
-
-/**
  * @tc.name: GetReqPermissions001
  * @tc.desc: GetReqPermissions with invalid tokenid
  * @tc.type: FUNC

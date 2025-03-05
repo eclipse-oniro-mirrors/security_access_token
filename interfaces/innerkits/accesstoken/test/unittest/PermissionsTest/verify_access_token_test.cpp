@@ -168,51 +168,6 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest002, TestSize.Level0)
 }
 
 /**
- * @tc.name: VerifyAccessTokenFuncTest003
- * @tc.desc: Verify permission after update.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest003, TestSize.Level0)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest003");
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    HapTokenInfo hapInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionDef>  permDefList;
-    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionStateFull> permStatList;
-    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain",
-        .permList = permDefList,
-        .permStateList = permStatList
-    };
-    UpdateHapInfoParams info;
-    info.appIDDesc = "appIDDesc";
-    info.apiVersion = DEFAULT_API_VERSION;
-    info.isSystemApp = false;
-    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
-}
-
-/**
  * @tc.name: VerifyAccessTokenAbnormalTest001
  * @tc.desc: Verify permission that tokenID or permission is invalid.
  * @tc.type: FUNC

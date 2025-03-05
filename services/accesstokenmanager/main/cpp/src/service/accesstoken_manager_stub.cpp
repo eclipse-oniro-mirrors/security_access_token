@@ -165,21 +165,6 @@ void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageP
         reply.WriteParcelable(&permissionDefParcel), "Write PermissionDefParcel fail.");
 }
 
-void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply)
-{
-    AccessTokenID tokenID = data.ReadUint32();
-    std::vector<PermissionDefParcel> permList;
-
-    this->GetDefPermissions(tokenID, permList);
-    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(RET_SUCCESS), "WriteInt32 failed.");
-    LOGD(ATM_DOMAIN, ATM_TAG, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
-    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteUint32(permList.size()), "WriteUint32 failed.");
-
-    for (const auto& permDef : permList) {
-        IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteParcelable(&permDef), "WriteParcelable fail.");
-    }
-}
-
 void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -1292,8 +1277,6 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::VerifyAccessTokenWithListInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
         &AccessTokenManagerStub::GetDefPermissionInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS)] =
-        &AccessTokenManagerStub::GetDefPermissionsInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_REQ_PERMISSIONS)] =
         &AccessTokenManagerStub::GetReqPermissionsInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_FLAG)] =

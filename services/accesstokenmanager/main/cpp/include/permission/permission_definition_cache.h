@@ -54,8 +54,6 @@ public:
 
     void StorePermissionDef(AccessTokenID tokenID, std::vector<GenericValues>& valueList);
 
-    void GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList, AccessTokenID tokenId);
-
     int32_t RestorePermDefInfo(std::vector<GenericValues>& permDefRes);
 
     bool HasHapPermissionDefinitionForHap(const std::string& permissionName);

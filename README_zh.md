@@ -69,7 +69,6 @@ ATM部件的架构图如下所示：
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | 查询指定tokenID对应的native的tokenInfo信息 |
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |
 | int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult); | 查询指定权限的权限定义信息 |
-| int GetDefPermissions(AccessTokenID tokenID, std::vector&lt;PermissionDef&gt;& permList); | 查询指定tokenID对应的hap包的权限定义集合 |
 | int GetReqPermissions(AccessTokenID tokenID, std::vector&lt;PermissionStateFull&gt;& reqPermList, bool isSystemGrant); | 查询指定tokenID对应的hap包申请的权限状态集合 |
 | int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName); | 查询指定tokenID的应用的指定权限 |
 | int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | 授予指定tokenID的应用的指定权限 |

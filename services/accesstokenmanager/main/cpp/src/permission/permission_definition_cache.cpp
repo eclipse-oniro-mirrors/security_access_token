@@ -175,19 +175,6 @@ void PermissionDefinitionCache::StorePermissionDef(AccessTokenID tokenID, std::v
     }
 }
 
-void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList,
-    AccessTokenID tokenId)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    auto it = permissionDefinitionMap_.begin();
-    while (it != permissionDefinitionMap_.end()) {
-        if (tokenId == it->second.tokenId) {
-            permList.emplace_back(it->second.permDef);
-        }
-        ++it;
-    }
-}
-
 int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>& permDefRes)
 {
     for (const GenericValues& defValue : permDefRes) {
