@@ -141,7 +141,7 @@ bool GetIntFromJson(const CJson* jsonObj, const std::string& key, int32_t& value
 
     CJson* jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
     if (jsonObjTmp != nullptr && cJSON_IsNumber(jsonObjTmp)) {
-        value = (int)cJSON_GetNumberValue(jsonObjTmp);
+        value = static_cast<int>(cJSON_GetNumberValue(jsonObjTmp));
         return true;
     }
     return false;
@@ -160,13 +160,7 @@ bool GetUnsignedIntFromJson(const CJson* jsonObj, const std::string& key, uint32
 
     CJson* jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
     if (jsonObjTmp != nullptr && cJSON_IsNumber(jsonObjTmp)) {
-        double realValue = cJSON_GetNumberValue(jsonObjTmp);
-        if (realValue < 0) {
-            int32_t tmpValue = static_cast<uint32_t>(realValue);
-            value = static_cast<uint32_t>(tmpValue);
-        } else {
-            value = static_cast<uint32_t>(realValue);
-        }
+        value = static_cast<uint32_t>(cJSON_GetNumberValue(jsonObjTmp));
         return true;
     }
     return false;
