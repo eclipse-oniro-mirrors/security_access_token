@@ -639,7 +639,9 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UNINSTALL_PLUGIN_BUNDLE",       false},
     {"ohos.permission.kernel.SUPPORT_PLUGIN",       false},
     {"ohos.permission.ACCESS_TRUST_LIST_OOBE_MANAGER",       false},
-    {"ohos.permission.VISIBLE_WINDOW_INFO",       false}
+    {"ohos.permission.VISIBLE_WINDOW_INFO",       false},
+    {"ohos.permission.READ_DLP_HIDE_SWITCH",                false},
+    {"ohos.permission.WRITE_DLP_HIDE_SWITCH",               false}
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
