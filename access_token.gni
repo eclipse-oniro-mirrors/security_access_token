@@ -34,6 +34,12 @@ if (vendor_config_exist) {
   access_token_impl_include_dirs = []
 }
 
+if (product_name != "qemu-arm-linux-min") {
+  qemu_disable = true
+} else {
+  qemu_disable = false
+}
+
 if (!defined(global_parts_info) ||
     defined(global_parts_info.distributedhardware_device_manager)) {
   token_sync_enable = true
