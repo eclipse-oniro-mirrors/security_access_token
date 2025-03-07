@@ -2188,7 +2188,9 @@
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": false,
+            "hasValue": true
         },
         {
             "name": "ohos.permission.AGENT_REQUIRE_FORM",
