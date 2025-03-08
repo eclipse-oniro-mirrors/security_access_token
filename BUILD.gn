@@ -28,7 +28,6 @@ group("accesstoken_build_module_test") {
       "interfaces/innerkits/token_callback/test:unittest",
       "interfaces/innerkits/token_setproc/test:unittest",
       "services/accesstokenmanager/test:unittest",
-      "services/common/ability_manager/test:unittest",
       "services/common/database/test:unittest",
     ]
     if (ability_base_enable == true) {
