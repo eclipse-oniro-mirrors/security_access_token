@@ -398,7 +398,7 @@ int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase
     int32_t ret = ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
-            "Read(%{public}s) failed, err = %{public}d.", NATIVE_TOKEN_CONFIG_FILE, ret);
+            "Read native token json file failed, err = %{public}d.", ret);
         return ret;
     }
     if (!ParserNativeRawData(nativeRawData, tokenInfos)) {
