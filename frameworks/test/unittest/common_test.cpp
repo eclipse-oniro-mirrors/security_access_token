@@ -74,7 +74,9 @@ HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 HWTEST_F(CommonTest, TransferOpcodeToPermission001, TestSize.Level1)
 {
     std::string permissionName;
-    EXPECT_TRUE(TransferOpcodeToPermission(0, permissionName));
+    uint32_t opCode;
+    EXPECT_TRUE(TransferPermissionToOpcode("ohos.permission.ANSWER_CALL", opCode));
+    EXPECT_TRUE(TransferOpcodeToPermission(opCode, permissionName));
     EXPECT_EQ(permissionName, "ohos.permission.ANSWER_CALL");
 }
 
@@ -89,6 +91,20 @@ HWTEST_F(CommonTest, TransferOpcodeToPermission002, TestSize.Level1)
     std::string permissionName;
     EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE, permissionName));
     EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE - 1, permissionName));
+}
+
+/*
+ * @tc.name: PermissionDefineMapTest
+ * @tc.desc: Test find permission difinition
+ * @tc.type: FUNC
+ * @tc.require:IBRDIV
+ */
+HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
+{
+    EXPECT_TRUE(IsDefinedPermission("ohos.permission.ANSWER_CALL"));
+    PermissionBriefDef permDef;
+    EXPECT_TRUE(GetPermissionBriefDef("ohos.permission.ANSWER_CALL", permDef));
+    EXPECT_TRUE(strcmp("ohos.permission.ANSWER_CALL", permDef.permissionName) == 0);
 }
 } // namespace AccessToken
 } // namespace Security
