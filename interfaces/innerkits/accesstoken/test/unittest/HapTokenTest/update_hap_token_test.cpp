@@ -1002,6 +1002,67 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level1)
 }
 
 /**
+ * @tc.name: UpdateHapTokenSpecsTest011
+ * @tc.desc: UpdateHapToken permission with value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level1)
+{
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_SYSTEM_CORE;
+    TestCommon::TestPrepareKernelPermissionDefinition(infoParams, policyParams);
+    TestCommon::TestPrepareKernelPermissionStatus(policyParams);
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "1"; // modified value
+    policyParams.aclExtendedMap.erase("ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"); // delete
+    auto it = policyParams.permStateList.begin();
+    while (it != policyParams.permStateList.end()) {
+        if (it->permissionName == "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY") {
+            policyParams.permStateList.erase(it);
+            break;
+        }
+        it++;
+    }
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = "AccessTokenTestAppID",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = true,
+        .appDistributionType = "",
+    };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // switch to shell token
+    SetSelfTokenID(g_selfTokenId);
+
+    std::vector<PermissionWithValue> kernelPermList;
+    ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(2, kernelPermList.size());
+
+    std::string value;
+    ret = AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("1", value);
+
+    ret = AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
+    ASSERT_EQ(ERR_PERMISSION_WITHOUT_VALUE, ret);
+
+    ret = AccessTokenKit::DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
+/**
  * @tc.name: UpdateHapTokenAbnormalTest001
  * @tc.desc: test invaild UpdateHapInfoParams.appIDDesc
  *           1.appIDDesc is too long

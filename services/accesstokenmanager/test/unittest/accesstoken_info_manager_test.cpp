@@ -49,6 +49,8 @@ static bool g_hasHapPermissionDefinition;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
+static constexpr int32_t MAX_VALUE_LENGTH = 1024;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",
@@ -495,6 +497,190 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
     ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
 }
 
+static void GetHapParams(HapInfoParams& infoParams, HapPolicy& policyParams)
+{
+    infoParams.userID = 0;
+    infoParams.bundleName = "com.ohos.AccessTokenTestBundle";
+    infoParams.instIndex = 0;
+    infoParams.appIDDesc = "AccessTokenTestAppID";
+    infoParams.apiVersion = DEFAULT_API_VERSION;
+    infoParams.isSystemApp = true;
+    infoParams.appDistributionType = "";
+
+    policyParams.apl = APL_SYSTEM_CORE;
+    policyParams.domain = "accesstoken_test_domain";
+}
+
+void TestPrepareKernelPermissionDefinition(HapInfoParams& infoParams, HapPolicy& policyParams)
+{
+    PermissionDef permDefBasic = {
+        .permissionName = "ohos.permission.test_basic",
+        .bundleName = "accesstoken_test",
+        .grantMode = 1,
+        .availableLevel = APL_SYSTEM_CORE,
+        .label = "label",
+        .labelId = 1,
+        .description = "test",
+        .descriptionId = 1,
+        .provisionEnable = true,
+        .isKernelEffect = true,
+        .hasValue = true,
+    };
+
+    PermissionDef permDef1 = permDefBasic;
+    permDef1.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    PermissionDef permDef2 = permDefBasic;
+    permDef2.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    permDef2.hasValue = false;
+    PermissionDef permDef3 = permDefBasic;
+    permDef3.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
+    permDef3.isKernelEffect = false;
+
+    policyParams.permList = {permDef1, permDef2, permDef3};
+}
+
+void TestPrepareKernelPermissionStatus(HapPolicy& policyParams)
+{
+    PermissionStatus permissionStatusBasic = {
+        .permissionName = "ohos.permission.test_basic",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = PERMISSION_SYSTEM_FIXED,
+    };
+
+    PermissionStatus PermissionStatus001 = permissionStatusBasic;
+    PermissionStatus001.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    PermissionStatus PermissionStatus002 = permissionStatusBasic;
+    PermissionStatus002.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    PermissionStatus PermissionStatus003 = permissionStatusBasic;
+    PermissionStatus003.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
+    PermissionStatus PermissionStatus004 = permissionStatusBasic;
+    PermissionStatus004.permissionName = "ohos.permission.CAMERA";
+    policyParams.permStateList = {PermissionStatus001, PermissionStatus002,
+                                  PermissionStatus003, PermissionStatus004};
+    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "123";
+    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"] = "456";
+    policyParams.aclExtendedMap["ohos.permission.test1"] = "test"; // filtered
+    policyParams.aclExtendedMap["ohos.permission.CAMERA"] = "789"; // filtered
+}
+
+/**
+ * @tc.name: InitHapToken004
+ * @tc.desc: aclExtendedMap size test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level1)
+{
+    HapInfoParcel info;
+    HapPolicyParcel policy;
+    GetHapParams(info.hapInfoParameter, policy.hapPolicy);
+
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    for (size_t i = 0; i < MAX_EXTENDED_MAP_SIZE - 1; i++) {
+        policy.hapPolicy.aclExtendedMap[std::to_string(i)] = std::to_string(i);
+    }
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policy.hapPolicy.aclExtendedMap[std::to_string(MAX_EXTENDED_MAP_SIZE - 1)] =
+        std::to_string(MAX_EXTENDED_MAP_SIZE - 1);
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policy.hapPolicy.aclExtendedMap[std::to_string(MAX_EXTENDED_MAP_SIZE)] =
+        std::to_string(MAX_EXTENDED_MAP_SIZE);
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ret = atManagerService_->DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitHapToken005
+ * @tc.desc: aclExtendedMap size test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level1)
+{
+    HapInfoParcel info;
+    HapPolicyParcel policy;
+    GetHapParams(info.hapInfoParameter, policy.hapPolicy);
+
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = "";
+    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    std::string testValue(MAX_VALUE_LENGTH - 1, '1');
+    policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    testValue.push_back('1');
+    policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    testValue.push_back('1');
+    policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+
+    ret = atManagerService_->DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitHapToken006
+ * @tc.desc: InitHapToken permission with value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
+{
+    HapInfoParcel info;
+    HapPolicyParcel policy;
+    GetHapParams(info.hapInfoParameter, policy.hapPolicy);
+    TestPrepareKernelPermissionDefinition(info.hapInfoParameter, policy.hapPolicy);
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    // update permission definition
+    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    TestPrepareKernelPermissionStatus(policy.hapPolicy);
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionWithValue> kernelPermList;
+    ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(2, kernelPermList.size());
+
+    std::string value;
+    ret = atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("123", value);
+
+    ret = atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("456", value);
+
+    ret = atManagerService_->DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
 /**
  * @tc.name: IsTokenIdExist001
  * @tc.desc: Verify the IsTokenIdExist exist accesstokenid.
@@ -689,6 +875,69 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
         tokenIdEx, hapInfoParams, policy.permStateList, policy));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
+
+/**
+ * @tc.name: UpdateHapToken004
+ * @tc.desc: UpdateHapToken permission with value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
+{
+    HapInfoParcel info;
+    HapPolicyParcel policy;
+    GetHapParams(info.hapInfoParameter, policy.hapPolicy);
+    TestPrepareKernelPermissionDefinition(info.hapInfoParameter, policy.hapPolicy);
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    // update permission definition
+    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    TestPrepareKernelPermissionStatus(policy.hapPolicy);
+    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policy.hapPolicy.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "1"; // modified value
+    policy.hapPolicy.aclExtendedMap.erase("ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"); // delete
+    auto it = policy.hapPolicy.permStateList.begin();
+    while (it != policy.hapPolicy.permStateList.end()) {
+        if (it->permissionName == "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY") {
+            policy.hapPolicy.permStateList.erase(it);
+            break;
+        }
+        it++;
+    }
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = "AccessTokenTestAppID",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = true,
+        .appDistributionType = "",
+    };
+    ret = atManagerService_->UpdateHapToken(fullTokenId, updateInfoParams, policy, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionWithValue> kernelPermList;
+    ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(2, kernelPermList.size());
+
+    std::string value;
+    ret = atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("1", value);
+
+    ret = atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
+    ASSERT_EQ(ERR_PERMISSION_WITHOUT_VALUE, ret);
+
+    ret = atManagerService_->DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
 
 #ifdef TOKEN_SYNC_ENABLE
 /**
