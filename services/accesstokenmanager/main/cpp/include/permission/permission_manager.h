@@ -58,12 +58,8 @@ public:
 
     void RegisterApplicationCallback();
     void RegisterAppManagerDeathCallback();
-    void AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
-        bool updateFlag);
-    void RemoveDefPermissions(AccessTokenID tokenID);
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
-    int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);

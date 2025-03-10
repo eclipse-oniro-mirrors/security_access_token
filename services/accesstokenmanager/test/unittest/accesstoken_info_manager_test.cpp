@@ -29,7 +29,6 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_loader.h"
 #endif
-#include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "token_modify_notifier.h"
 #undef private
@@ -44,8 +43,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
-static bool g_hasHapPermissionDefinition;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
@@ -137,32 +134,10 @@ void AccessTokenInfoManagerTest::SetUp()
 {
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
-    PermissionDef infoManagerPermDefA = {
-        .permissionName = "ohos.permission.CAMERA",
-        .bundleName = "accesstoken_test",
-        .grantMode = USER_GRANT,
-        .availableLevel = APL_NORMAL,
-        .provisionEnable = false,
-        .distributedSceneEnable = false,
-    };
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefA, 1);
-    PermissionDef infoManagerPermDefB = {
-        .permissionName = "ohos.permission.LOCATION",
-        .bundleName = "accesstoken_test",
-        .grantMode = USER_GRANT,
-        .availableLevel = APL_NORMAL,
-        .provisionEnable = false,
-        .distributedSceneEnable = false,
-    };
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefB, 1);
-    g_permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
-    g_hasHapPermissionDefinition = PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_;
 }
 
 void AccessTokenInfoManagerTest::TearDown()
 {
-    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = g_hasHapPermissionDefinition;
     atManagerService_ = nullptr;
 }
 
@@ -246,10 +221,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "add same hap token";
-    PermissionDef permDef;
-    ASSERT_EQ(RET_SUCCESS,
-        PermissionManager::GetInstance().GetDefPermission(g_infoManagerTestPermDef1.permissionName, permDef));
-    ASSERT_EQ(permDef.permissionName, g_infoManagerTestPermDef1.permissionName);
 
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
@@ -664,7 +635,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
     std::vector<PermissionWithValue> kernelPermList;
     ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(2, kernelPermList.size());
+    ASSERT_EQ(0, kernelPermList.size());
 
     std::string value;
     ret = atManagerService_->GetReqPermissionByName(
@@ -922,7 +893,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
     std::vector<PermissionWithValue> kernelPermList;
     ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(2, kernelPermList.size());
+    ASSERT_EQ(0, kernelPermList.size());
 
     std::string value;
     ret = atManagerService_->GetReqPermissionByName(
@@ -1652,68 +1623,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
 }
 
 /**
- * @tc.name: Insert001
- * @tc.desc: PermissionDefinitionCache::Insert function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, Insert001, TestSize.Level1)
-{
-    PermissionDef info = {
-        .permissionName = "ohos.permission.CAMERA",
-        .bundleName = "com.ohos.test",
-        .grantMode = 0,
-        .availableLevel = ATokenAplEnum::APL_NORMAL,
-        .provisionEnable = false,
-        .distributedSceneEnable = false,
-        .label = "buzhidao",
-        .labelId = 100, // 100 is random input
-        .description = "buzhidao",
-        .descriptionId = 100 // 100 is random input
-    };
-    AccessTokenID tokenId = 123; // 123 is random input
-
-    ASSERT_EQ(false, PermissionDefinitionCache::GetInstance().Insert(info, tokenId)); // permission has insert
-}
-
-/**
- * @tc.name: IsGrantedModeEqualInner001
- * @tc.desc: PermissionDefinitionCache::IsGrantedModeEqualInner function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, IsGrantedModeEqualInner001, TestSize.Level1)
-{
-    std::string permissionName = "ohos.permission.CAMERA";
-    int grantMode = 0;
-
-    // find permission not reach end
-    ASSERT_EQ(true, PermissionDefinitionCache::GetInstance().IsGrantedModeEqualInner(permissionName, grantMode));
-
-    permissionName = "ohos.permission.INVALID";
-    // can't find permission
-    ASSERT_EQ(false, PermissionDefinitionCache::GetInstance().IsGrantedModeEqualInner(permissionName, grantMode));
-}
-
-/**
- * @tc.name: RestorePermDefInfo001
- * @tc.desc: PermissionDefinitionCache::RestorePermDefInfo function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
-{
-    GenericValues value;
-    value.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
-
-    std::vector<GenericValues> values;
-    values.emplace_back(value);
-
-    // ret not RET_SUCCESS
-    ASSERT_NE(RET_SUCCESS, PermissionDefinitionCache::GetInstance().RestorePermDefInfo(values));
-}
-
-/**
  * @tc.name: IsPermissionDefValid001
  * @tc.desc: PermissionValidator::IsPermissionDefValid function test
  * @tc.type: FUNC
@@ -1814,18 +1723,6 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
  */
 HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 {
-    PermissionDef def = {
-        .permissionName = "ohos.permission.TEST",
-        .bundleName = "QueryPermissionFlag001",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .provisionEnable = false,
-        .distributedSceneEnable = false,
-        .label = "label",
-        .labelId = 1,
-        .description = "description",
-        .descriptionId = 1
-    };
     PermissionStatus perm = {
         .permissionName = "ohos.permission.TEST",
         .grantStatus = PermissionState::PERMISSION_DENIED,
@@ -1833,7 +1730,6 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
     };
 
     AccessTokenID tokenId = 0x280bc140; // 0x280bc140 is random native
-    PermissionDefinitionCache::GetInstance().Insert(def, tokenId);
     std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(perm);
 
@@ -2305,25 +2201,12 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
 
-    // permission is not defined and permissionHap is not installed
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = false;
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
-
-    // permission is not defined and permissionHap is installed
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = true;
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
-
     permissionName = "ohos.permission.CAMERA";
     // permission is not request
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
     // tokenId is native token, and permission is defined
-    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = true;
-    ASSERT_EQ(PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty(), false);
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 

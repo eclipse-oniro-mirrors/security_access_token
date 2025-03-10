@@ -115,16 +115,14 @@ HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level1)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     PermissionDef permDefResultAlpha;
-    int ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
-    ASSERT_EQ("ohos.permission.ALPHA", permDefResultAlpha.permissionName);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GetDefPermission(
+        "ohos.permission.ALPHA", permDefResultAlpha));
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 
     PermissionDef defResult;
-    ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", defResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GetDefPermission(
+        "ohos.permission.ALPHA", defResult));
 }
 
 /**

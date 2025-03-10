@@ -25,7 +25,6 @@
 #endif
 #define private public
 #include "accesstoken_info_manager.h"
-#include "permission_definition_cache.h"
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
@@ -235,32 +234,6 @@ void PermissionManagerTest::SetUp()
         return;
     }
     formStateObserver_ = std::make_shared<PermissionFormStateObserver>();
-
-    PermissionDef infoManagerPermDef = {
-        .permissionName = "ohos.permission.CAMERA",
-        .bundleName = "accesstoken_test",
-        .grantMode = USER_GRANT,
-        .availableLevel = APL_NORMAL,
-        .provisionEnable = false,
-        .distributedSceneEnable = false,
-        .label = "label",
-        .labelId = 1,
-        .description = "CAMERA",
-        .descriptionId = 1
-    };
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.APPROXIMATELY_LOCATION";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.LOCATION";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.CAPTURE_SCREEN";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.CHANGE_ABILITY_ENABLED_STATE";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
-    infoManagerPermDef.permissionName = "ohos.permission.COMMONEVENT_STICKY";
-    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
 }
 
 void PermissionManagerTest::TearDown()
@@ -465,42 +438,6 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
     uint32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.CAMERA", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
-}
-
-/**
- * @tc.name: GetDefPermission001
- * @tc.desc: GetDefPermission with invalid permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetDefPermission001, TestSize.Level1)
-{
-    std::string permissionName;
-    PermissionDef permissionDefResult;
-
-    // permissionName is empty
-    ASSERT_EQ(
-        ERR_PARAM_INVALID, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
-
-    // permissionName is not tmpty, but invalid
-    permissionName = "invalid permisiion";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
-        PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
-}
-
-/**
- * @tc.name: GetDefPermission002
- * @tc.desc: GetDefPermission with valid permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetDefPermission002, TestSize.Level1)
-{
-    std::string permissionName = "ohos.permission.CAMERA";
-    PermissionDef permissionDefResult;
-
-    // permissionName invalid
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
 }
 
 /**

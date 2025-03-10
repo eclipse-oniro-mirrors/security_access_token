@@ -19,11 +19,13 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "access_token_db.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_common_log.h"
 #include "constant_common.h"
+#include "data_validator.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "hisysevent_adapter.h"
@@ -36,9 +38,12 @@
 #include "parameter.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
+#include "permission_map.h"
+#include "permission_validator.h"
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
+#include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -161,7 +166,42 @@ int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Permission: %{public}s", permissionName.c_str());
-    return PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult.permissionDef);
+
+    // for ipc call not by accesstoken client
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    PermissionBriefDef briefDef;
+    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    ConvertPermissionBriefToDef(briefDef, permissionDefResult.permissionDef);
+
+    if (briefDef.grantMode == GrantMode::SYSTEM_GRANT) {
+        return 0;
+    }
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+
+    std::vector<GenericValues> results;
+    int32_t res = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, results);
+    if (res != 0) {
+        return res;
+    }
+
+    if (results.empty()) {
+        // user grant permission has define in map, not exsit in db
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    permissionDefResult.permissionDef.labelId = results[0].GetInt(TokenFiledConst::FIELD_LABEL_ID);
+    permissionDefResult.permissionDef.descriptionId = results[0].GetInt(TokenFiledConst::FIELD_DESCRIPTION_ID);
+
+    return 0;
 }
 
 int AccessTokenManagerService::GetReqPermissions(

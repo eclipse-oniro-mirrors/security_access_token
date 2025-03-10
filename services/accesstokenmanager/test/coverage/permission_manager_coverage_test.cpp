@@ -22,7 +22,6 @@
 #define private public
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
-#include "permission_definition_cache.h"
 #include "form_manager_access_client.h"
 #undef private
 #include "accesstoken_callback_stubs.h"

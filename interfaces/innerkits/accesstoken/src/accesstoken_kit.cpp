@@ -112,8 +112,8 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, \
-permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, permList: %{public}zu, "
+        "stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(),
         policy.aclExtendedMap.size(), policy.checkIgnore);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
@@ -416,10 +416,17 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    int ret = AccessTokenManagerClient::GetInstance().GetDefPermission(permissionName, permissionDefResult);
-    LOGD(ATM_DOMAIN, ATM_TAG, "GetDefPermission bundleName = %{public}s", permissionDefResult.bundleName.c_str());
+    PermissionBriefDef briefDef;
+    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
 
-    return ret;
+    if (briefDef.grantMode == GrantMode::SYSTEM_GRANT) {
+        ConvertPermissionBriefToDef(briefDef, permissionDefResult);
+        return 0;
+    }
+
+    return AccessTokenManagerClient::GetInstance().GetDefPermission(permissionName, permissionDefResult);
 }
 
 int AccessTokenKit::GetReqPermissions(

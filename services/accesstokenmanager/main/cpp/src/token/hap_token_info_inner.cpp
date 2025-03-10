@@ -24,7 +24,6 @@
 #include "data_validator.h"
 #include "short_grant_manager.h"
 #include "token_field_const.h"
-#include "permission_definition_cache.h"
 #include "permission_map.h"
 #include "permission_data_brief.h"
 #ifdef SUPPORT_SANDBOX_APP

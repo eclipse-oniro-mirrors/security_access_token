@@ -1046,7 +1046,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level1)
     std::vector<PermissionWithValue> kernelPermList;
     ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(2, kernelPermList.size());
+    ASSERT_EQ(0, kernelPermList.size());
 
     std::string value;
     ret = AccessTokenKit::GetReqPermissionByName(

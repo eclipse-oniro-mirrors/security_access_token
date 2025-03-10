@@ -20,10 +20,12 @@
 #include <string>
 #include "access_token.h"
 
+#include "access_token.h"
+#include "permission_def.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 struct PermissionBriefDef {
     char *permissionName;
     GrantMode grantMode;
@@ -40,6 +42,10 @@ bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
 bool IsUserGrantPermission(const std::string& permission);
 bool IsDefinedPermission(const std::string& permission);
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &permissionBriefDef);
+void GetPermissionBriefDef(uint32_t code, PermissionBriefDef &permissionBriefDef);
+void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef &def);
+bool IsPermissionValidForHap(const std::string& permissionName);
+size_t GetDefPermissionsSize();
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

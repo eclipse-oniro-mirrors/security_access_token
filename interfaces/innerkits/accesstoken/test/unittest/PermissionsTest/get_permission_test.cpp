@@ -200,55 +200,28 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionFuncTest001");
 
-    PermissionDef permDefResultAlpha;
-    int ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ("ohos.permission.ALPHA", permDefResultAlpha.permissionName);
+    PermissionDef permDef;
+    // permission name is empty
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetDefPermission("", permDef));
 
-    PermissionDef permDefResultBeta;
-    ret = AccessTokenKit::GetDefPermission("ohos.permission.BETA", permDefResultBeta);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ("ohos.permission.BETA", permDefResultBeta.permissionName);
-}
-
-/**
- * @tc.name: GetDefPermissionAbnormalTest001
- * @tc.desc: Get permission definition info that permission is invalid.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(GetPermissionTest, GetDefPermissionAbnormalTest001, TestSize.Level1)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionAbnormalTest001");
-
-    PermissionDef permDefResult;
-    int ret = AccessTokenKit::GetDefPermission("ohos.permission.GAMMA", permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-
-    ret = AccessTokenKit::GetDefPermission("", permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-
+    // permission name oversize
     std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
-    ret = AccessTokenKit::GetDefPermission(invalidPerm, permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-}
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetDefPermission(invalidPerm, permDef));
 
-/**
- * @tc.name: GetDefPermissionSpecTest001
- * @tc.desc: GetDefPermission is invoked multiple times.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(GetPermissionTest, GetDefPermissionSpecTest001, TestSize.Level0)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionSpecTest001");
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GetDefPermission(
+        "ohos.permission.ALPHA", permDef));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GetDefPermission(
+        "ohos.permission.BETA", permDef));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GetDefPermission(
+        "ohos.permission.GAMMA", permDef));
 
-    for (int j = 0; j < CYCLE_TIMES; j++) {
-        PermissionDef permDefResultAlpha;
-        int32_t ret = AccessTokenKit::GetDefPermission("ohos.permission.ALPHA", permDefResultAlpha);
-        ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ("ohos.permission.ALPHA", permDefResultAlpha.permissionName);
-    }
+    // get user grant permission define
+    ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef));
+    ASSERT_EQ("ohos.permission.CAMERA", permDef.permissionName);
+
+    // get system grant permission define
+    ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.PERMISSION_USED_STATS", permDef));
+    ASSERT_EQ("ohos.permission.PERMISSION_USED_STATS", permDef.permissionName);
 }
 
 /**
