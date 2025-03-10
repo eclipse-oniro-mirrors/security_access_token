@@ -3713,6 +3713,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PERSISTENT_BLUETOOTH_PEERS_MAC",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.WRITE_GTOKEN_POLICY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
