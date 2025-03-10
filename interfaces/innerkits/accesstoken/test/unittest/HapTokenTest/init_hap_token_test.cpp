@@ -36,6 +36,8 @@ namespace AccessToken {
 namespace {
 static AccessTokenID g_selfTokenId = 0;
 static constexpr int32_t THIRTY_TIME_CYCLES = 30;
+static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
+static constexpr int32_t MAX_VALUE_LENGTH = 1024;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
 const std::string OVER_SIZE_STR =
@@ -1008,41 +1010,9 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest009, TestSize.Level1)
     EXPECT_EQ(ret, PERMISSION_DENIED);
 }
 
-static void PreparePermissionDefinition(
-    HapInfoParams& infoParams, HapPolicyParams& policyParams)
-{
-    PermissionDef permDefBasic = {
-        .permissionName = "ohos.permission.test_basic",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_SYSTEM_CORE,
-        .label = "label",
-        .labelId = 1,
-        .description = "test",
-        .descriptionId = 1,
-        .provisionEnable = true,
-        .isKernelEffect = true,
-        .hasValue = true,
-    };
-
-    PermissionDef permDef1 = permDefBasic;
-    permDef1.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
-    PermissionDef permDef2 = permDefBasic;
-    permDef2.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
-    permDef2.hasValue = false;
-
-    policyParams.permList = {permDef1, permDef2};
-
-    AccessTokenIDEx fullTokenId;
-
-    // update permission definition
-    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
 /**
  * @tc.name: InitHapTokenSpecsTest010
- * @tc.desc: InitHapToken permission with value
+ * @tc.desc: aclExtendedMap size test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1052,38 +1022,34 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest010, TestSize.Level1)
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
     policyParams.apl = APL_SYSTEM_CORE;
-    PreparePermissionDefinition(infoParams, policyParams);
 
-    PermissionStateFull permissionStateFull_basic = {
-        .permissionName = "ohos.permission.test_basic",
-        .isGeneral = false,
-        .resDeviceID = {"local"},
-        .grantStatus = {PERMISSION_GRANTED},
-        .grantFlags = {PERMISSION_SYSTEM_FIXED}
-    };
-
-    PermissionStateFull permissionStateFull001 = permissionStateFull_basic;
-    permissionStateFull001.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
-    PermissionStateFull permissionStateFull002 = permissionStateFull_basic;
-    permissionStateFull002.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
-    policyParams.permStateList = {permissionStateFull001, permissionStateFull002};
-    policyParams.aclRequestedList = {
-        "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY",
-        "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION"
-    };
-    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "123";
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_EQ(RET_SUCCESS, ret);
 
+    for (size_t i = 0; i < MAX_EXTENDED_MAP_SIZE - 1; i++) {
+        policyParams.aclExtendedMap[std::to_string(i)] = std::to_string(i);
+    }
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policyParams.aclExtendedMap[std::to_string(MAX_EXTENDED_MAP_SIZE - 1)] =
+        std::to_string(MAX_EXTENDED_MAP_SIZE - 1);
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    policyParams.aclExtendedMap[std::to_string(MAX_EXTENDED_MAP_SIZE)] =
+        std::to_string(MAX_EXTENDED_MAP_SIZE);
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ret = AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
 /**
  * @tc.name: InitHapTokenSpecsTest011
- * @tc.desc: InitHapToken with over large aclExtendedMap
+ * @tc.desc: aclExtendedMap content size test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1094,13 +1060,71 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level1)
     TestCommon::GetHapParams(infoParams, policyParams);
     policyParams.apl = APL_SYSTEM_CORE;
 
-    for (size_t i = 0; i < 520; i++) {
-        policyParams.aclExtendedMap[std::to_string(i)] = std::to_string(i);
-    }
-
     AccessTokenIDEx fullTokenId;
+    policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = "";
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    std::string testValue(MAX_VALUE_LENGTH - 1, '1');
+    policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    testValue.push_back('1');
+    policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    testValue.push_back('1');
+    policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
+    ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+
+    ret = AccessTokenKit::DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitHapTokenSpecsTest012
+ * @tc.desc: InitHapToken permission with value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest012, TestSize.Level1)
+{
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_SYSTEM_CORE;
+    TestCommon::TestPrepareKernelPermissionDefinition(infoParams, policyParams);
+    TestCommon::TestPrepareKernelPermissionStatus(policyParams);
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // switch to shell token
+    SetSelfTokenID(g_selfTokenId);
+
+    std::vector<PermissionWithValue> kernelPermList;
+    ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(2, kernelPermList.size());
+
+    std::string value;
+    ret = AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("123", value);
+
+    ret = AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ("456", value);
+
+    ret = AccessTokenKit::DeleteToken(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
 }
 } // namespace AccessToken
 } // namespace Security
