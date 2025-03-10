@@ -73,6 +73,34 @@ int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rd
     return rdbStore.ExecuteSql(sql);
 }
 
+int32_t AccessTokenOpenCallback::CreateNativeTokenInfoTable(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_NATIVE_INFO, tableName);
+
+    std::string sql = "create table if not exists " + tableName;
+    sql.append(" (")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PROCESS_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_VERSION)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_ATTR)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_DCAP)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_NATIVE_ACLS)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_APL)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append("))");
+
+    return rdbStore.ExecuteSql(sql);
+}
+
 int32_t AccessTokenOpenCallback::CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -130,6 +158,7 @@ int32_t AccessTokenOpenCallback::CreatePermissionStateTable(NativeRdb::RdbStore&
         .append(TEXT_STR)
         .append(TokenFiledConst::FIELD_DEVICE_ID)
         .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_GRANT_IS_GENERAL + " integer,")
         .append(TokenFiledConst::FIELD_GRANT_STATE)
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_GRANT_FLAG)
@@ -198,6 +227,12 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
     int32_t res = CreateHapTokenInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table hap_token_info_table.");
+        return res;
+    }
+
+    res = CreateNativeTokenInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table native_token_info_table.");
         return res;
     }
 
@@ -321,122 +356,6 @@ int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdb
     return res;
 }
 
-static void CreateNewPermissionStateTable(std::string& newTableName, std::string& newCreateSql)
-{
-    newCreateSql = "create table if not exists " + newTableName;
-    newCreateSql.append(" (")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_DEVICE_ID)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_GRANT_STATE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_GRANT_FLAG)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(",")
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(",")
-        .append(TokenFiledConst::FIELD_DEVICE_ID)
-        .append("))");
-}
-
-int32_t AccessTokenOpenCallback::RemoveIsGeneralFromPermissionState(NativeRdb::RdbStore& rdbStore)
-{
-    std::string tableName = "permission_state_table";
-    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, tableName);
-    std::string newTableName = tableName + "_new";
-    std::string newCreateSql;
-
-    CreateNewPermissionStateTable(newTableName, newCreateSql);
-
-    // 1. create new permission_state_table without column is_general
-    int32_t res = rdbStore.ExecuteSql(newCreateSql);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table %{public}s, errCode is %{public}d.",
-            newCreateSql.c_str(), res);
-        return res;
-    }
-
-    // 2. copy data from permission_state_table to permission_state_table_new
-    std::string copyDataSql = "insert into " + newTableName + " select ";
-    copyDataSql.append(TokenFiledConst::FIELD_TOKEN_ID + ", ");
-    copyDataSql.append(TokenFiledConst::FIELD_PERMISSION_NAME + ", ");
-    copyDataSql.append(TokenFiledConst::FIELD_DEVICE_ID + ", ");
-    copyDataSql.append(TokenFiledConst::FIELD_GRANT_STATE + ", ");
-    copyDataSql.append(TokenFiledConst::FIELD_GRANT_FLAG + " from " + tableName);
-    res = rdbStore.ExecuteSql(copyDataSql);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to copy data from old table to new, errCode is %{public}d.", res);
-        return res;
-    }
-
-    // 3. drop permission_state_table
-    std::string dropOldSql = "drop table " + tableName;
-    res = rdbStore.ExecuteSql(dropOldSql);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to drop table %{public}s, errCode is %{public}d.", tableName.c_str(), res);
-        return res;
-    }
-
-    // 4. rename permission_state_table_new to permission_state_table
-    std::string renameSql = "alter table " + newTableName + " rename to " + tableName;
-    res = rdbStore.ExecuteSql(renameSql);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to rename new table to old, errCode is %{public}d.", res);
-        return res;
-    }
-
-    return NativeRdb::E_OK;
-}
-
-// remove is_general from permission_state_table and remove native_token_info_table
-int32_t AccessTokenOpenCallback::RemoveUnusedTableAndColumn(NativeRdb::RdbStore& rdbStore)
-{
-    rdbStore.BeginTransaction();
-
-    int32_t res = RemoveIsGeneralFromPermissionState(rdbStore);
-    if (res != NativeRdb::E_OK) {
-        rdbStore.RollBack();
-        return res;
-    }
-
-    // drop native_token_info_table
-    std::string dropOldSql = "drop table native_token_info_table";
-    res = rdbStore.ExecuteSql(dropOldSql);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to drop native_token_info_table, errCode is %{public}d.", res);
-        rdbStore.RollBack();
-        return res;
-    }
-
-    res = rdbStore.Commit();
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to commit, errCode is %{public}d.", res);
-        if (res != NativeRdb::E_SQLITE_CORRUPT) {
-            return res;
-        }
-
-        LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-        int32_t res = rdbStore.Restore("");
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
-            return res;
-        }
-
-        res = rdbStore.Commit();
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to commit again, res is %{public}d.", res);
-            return res;
-        }
-    }
-
-    return NativeRdb::E_OK;
-}
-
 int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -488,7 +407,7 @@ int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::Rdb
     return NativeRdb::E_OK;
 }
 
-int32_t AccessTokenOpenCallback::HandleUpdateWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag)
+int32_t AccessTokenOpenCallback::HandleUpgradeWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag)
 {
     int32_t res = NativeRdb::E_OK;
 
@@ -529,148 +448,29 @@ int32_t AccessTokenOpenCallback::HandleUpdateWithFlag(NativeRdb::RdbStore& rdbSt
             return res;
         }
 
-        res = RemoveUnusedTableAndColumn(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            return res;
-        }
-
         return AddKernelEffectAndHasValueColumn(rdbStore);
     }
 
     return res;
 }
 
-int32_t AccessTokenOpenCallback::UpdateFromVersionOne(NativeRdb::RdbStore& rdbStore, int32_t targetVersion)
+void AccessTokenOpenCallback::GetUpgradeFlag(int32_t currentVersion, int32_t targetVersion, uint32_t& flag)
 {
-    int32_t res = 0;
-    uint32_t flag = 0;
-
-    switch (targetVersion) {
-        case DATABASE_VERSION_2:
-            flag = FLAG_HANDLE_FROM_ONE_TO_TWO;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_3:
-            flag = FLAG_HANDLE_FROM_ONE_TO_TWO + FLAG_HANDLE_FROM_TWO_TO_THREE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_4:
-            flag = FLAG_HANDLE_FROM_ONE_TO_TWO + FLAG_HANDLE_FROM_TWO_TO_THREE + FLAG_HANDLE_FROM_THREE_TO_FOUR;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_5:
-            flag = FLAG_HANDLE_FROM_ONE_TO_TWO + FLAG_HANDLE_FROM_TWO_TO_THREE + FLAG_HANDLE_FROM_THREE_TO_FOUR +
-                FLAG_HANDLE_FROM_FOUR_TO_FIVE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        default:
-            break;
+    if ((targetVersion >= DATABASE_VERSION_2) && (currentVersion < DATABASE_VERSION_2)) {
+        flag += FLAG_HANDLE_FROM_ONE_TO_TWO;
     }
 
-    return res;
-}
-
-int32_t AccessTokenOpenCallback::UpdateFromVersionTwo(NativeRdb::RdbStore& rdbStore, int32_t targetVersion)
-{
-    int32_t res = 0;
-    uint32_t flag = 0;
-
-    switch (targetVersion) {
-        case DATABASE_VERSION_3:
-            flag = FLAG_HANDLE_FROM_TWO_TO_THREE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_4:
-            flag = FLAG_HANDLE_FROM_TWO_TO_THREE + FLAG_HANDLE_FROM_THREE_TO_FOUR;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_5:
-            flag = FLAG_HANDLE_FROM_TWO_TO_THREE + FLAG_HANDLE_FROM_THREE_TO_FOUR + FLAG_HANDLE_FROM_FOUR_TO_FIVE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        default:
-            break;
+    if ((targetVersion >= DATABASE_VERSION_3) && (currentVersion < DATABASE_VERSION_3)) {
+        flag += FLAG_HANDLE_FROM_TWO_TO_THREE;
     }
 
-    return res;
-}
-
-int32_t AccessTokenOpenCallback::UpdateFromVersionThree(NativeRdb::RdbStore& rdbStore, int32_t targetVersion)
-{
-    int32_t res = 0;
-    uint32_t flag = 0;
-
-    switch (targetVersion) {
-        case DATABASE_VERSION_4:
-            flag = FLAG_HANDLE_FROM_THREE_TO_FOUR;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_5:
-            flag = FLAG_HANDLE_FROM_THREE_TO_FOUR + FLAG_HANDLE_FROM_FOUR_TO_FIVE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        default:
-            break;
+    if ((targetVersion >= DATABASE_VERSION_4) && (currentVersion < DATABASE_VERSION_4)) {
+        flag += FLAG_HANDLE_FROM_THREE_TO_FOUR;
     }
 
-    return res;
-}
-
-int32_t AccessTokenOpenCallback::UpdateFromVersionFour(NativeRdb::RdbStore& rdbStore, int32_t targetVersion)
-{
-    int32_t res = 0;
-    uint32_t flag = 0;
-
-    switch (targetVersion) {
-        case DATABASE_VERSION_5:
-            flag = FLAG_HANDLE_FROM_FOUR_TO_FIVE;
-            res = HandleUpdateWithFlag(rdbStore, flag);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            break;
-
-        default:
-            break;
+    if ((targetVersion >= DATABASE_VERSION_5) && (currentVersion < DATABASE_VERSION_5)) {
+        flag += FLAG_HANDLE_FROM_FOUR_TO_FIVE;
     }
-
-    return res;
 }
 
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
@@ -678,42 +478,10 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from currentVersion %{public}d to targetVersion %{public}d.",
         currentVersion, targetVersion);
 
-    int32_t res = 0;
+    uint32_t flag = 0;
+    GetUpgradeFlag(currentVersion, targetVersion, flag);
 
-    switch (currentVersion) {
-        case DATABASE_VERSION_1:
-            res = UpdateFromVersionOne(rdbStore, targetVersion);
-            if (res != 0) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_2:
-            res = UpdateFromVersionTwo(rdbStore, targetVersion);
-            if (res != 0) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_3:
-            res = UpdateFromVersionThree(rdbStore, targetVersion);
-            if (res != 0) {
-                return res;
-            }
-            break;
-
-        case DATABASE_VERSION_4:
-            res = UpdateFromVersionFour(rdbStore, targetVersion);
-            if (res != 0) {
-                return res;
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    return res;
+    return HandleUpgradeWithFlag(rdbStore, flag);
 }
 } // namespace AccessToken
 } // namespace Security

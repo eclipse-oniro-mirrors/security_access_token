@@ -30,6 +30,7 @@ static const std::vector<std::string> g_StringTypeColumns = {
 
 static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
     {AtmDataType::ACCESSTOKEN_HAP_INFO, "hap_token_info_table"},
+    {AtmDataType::ACCESSTOKEN_NATIVE_INFO, "native_token_info_table"},
     {AtmDataType::ACCESSTOKEN_PERMISSION_DEF, "permission_definition_table"},
     {AtmDataType::ACCESSTOKEN_PERMISSION_STATE, "permission_state_table"},
     {AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, "permission_request_toggle_status_table"},

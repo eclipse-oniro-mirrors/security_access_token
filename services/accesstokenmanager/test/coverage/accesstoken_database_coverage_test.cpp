@@ -31,6 +31,16 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr uint32_t NOT_EXSIT_ATM_TYPE = 9;
+static constexpr uint32_t UPDATE_FLAG_1 = 1;
+static constexpr uint32_t UPDATE_FLAG_2 = 2;
+static constexpr uint32_t UPDATE_FLAG_3 = 3;
+static constexpr uint32_t UPDATE_FLAG_4 = 4;
+static constexpr uint32_t UPDATE_FLAG_6 = 6;
+static constexpr uint32_t UPDATE_FLAG_7 = 7;
+static constexpr uint32_t UPDATE_FLAG_8 = 8;
+static constexpr uint32_t UPDATE_FLAG_12 = 12;
+static constexpr uint32_t UPDATE_FLAG_14 = 14;
+static constexpr uint32_t UPDATE_FLAG_15 = 15;
 }
 class AccessTokenDatabaseCoverageTest : public testing::Test {
 public:
@@ -97,19 +107,46 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, Te
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level1)
 {
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
     AccessTokenOpenCallback callback;
+    uint32_t flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_1, DATABASE_VERSION_2, flag);
+    ASSERT_EQ(UPDATE_FLAG_1, flag);
 
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_1, DATABASE_VERSION_2));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_1, DATABASE_VERSION_3));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_1, DATABASE_VERSION_4));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_1, 0));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_2, DATABASE_VERSION_3));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_2, DATABASE_VERSION_4));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_2, 0));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_3, DATABASE_VERSION_4));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_3, 0));
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), 0, 0));
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_1, DATABASE_VERSION_3, flag);
+    ASSERT_EQ(UPDATE_FLAG_3, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_1, DATABASE_VERSION_4, flag);
+    ASSERT_EQ(UPDATE_FLAG_7, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_1, DATABASE_VERSION_5, flag);
+    ASSERT_EQ(UPDATE_FLAG_15, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_2, DATABASE_VERSION_3, flag);
+    ASSERT_EQ(UPDATE_FLAG_2, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_2, DATABASE_VERSION_4, flag);
+    ASSERT_EQ(UPDATE_FLAG_6, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_2, DATABASE_VERSION_5, flag);
+    ASSERT_EQ(UPDATE_FLAG_14, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_3, DATABASE_VERSION_4, flag);
+    ASSERT_EQ(UPDATE_FLAG_4, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_3, DATABASE_VERSION_5, flag);
+    ASSERT_EQ(UPDATE_FLAG_12, flag);
+
+    flag = 0;
+    callback.GetUpgradeFlag(DATABASE_VERSION_4, DATABASE_VERSION_5, flag);
+    ASSERT_EQ(UPDATE_FLAG_8, flag);
 }
 
 /*
