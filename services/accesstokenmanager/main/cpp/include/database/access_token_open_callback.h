@@ -53,23 +53,19 @@ public:
 private:
     // OnCreate
     int32_t CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateNativeTokenInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionStateTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionExtendValueTable(NativeRdb::RdbStore& rdbStore);
 
-    // OnUpdate
+    // OnUpgrade
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddRequestToggleStatusColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore);
-    int32_t RemoveIsGeneralFromPermissionState(NativeRdb::RdbStore& rdbStore);
-    int32_t RemoveUnusedTableAndColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
-    int32_t HandleUpdateWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag);
-    int32_t UpdateFromVersionOne(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
-    int32_t UpdateFromVersionTwo(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
-    int32_t UpdateFromVersionThree(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
-    int32_t UpdateFromVersionFour(NativeRdb::RdbStore& rdbStore, int32_t targetVersion);
+    void GetUpgradeFlag(int32_t currentVersion, int32_t targetVersion, uint32_t& flag);
+    int32_t HandleUpgradeWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag);
 };
 } // namespace AccessToken
 } // namespace Security
