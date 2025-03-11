@@ -1286,7 +1286,6 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
     if (!reply.ReadString(dumpInfo)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ReadString failed.");
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (dumpInfo=%{public}s).", dumpInfo.c_str());
 }
 
 int32_t AccessTokenManagerProxy::GetVersion(uint32_t& version)
