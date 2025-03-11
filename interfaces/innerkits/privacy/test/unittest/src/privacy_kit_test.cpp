@@ -1118,12 +1118,12 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
@@ -1170,11 +1170,11 @@ public:
  */
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
 {
-    std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
+    std::vector<std::string> permList1 = {"ohos.permission.READ_CONTACTS"};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest1>(permList1);
     callbackPtr1->type_ = PERM_INACTIVE;
 
-    std::vector<std::string> permList2 = {"ohos.permission.MICROPHONE"};
+    std::vector<std::string> permList2 = {"ohos.permission.READ_MEDIA"};
     auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(permList2);
     callbackPtr2->type_ = PERM_INACTIVE;
 
@@ -1186,29 +1186,29 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr3));
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_CONTACTS"));
 
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr1->type_);
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr3->type_);
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr1->type_);
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr2->type_);
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr3->type_);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_CONTACTS"));
 
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr3->type_);
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr1->type_);
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr3->type_);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr2->type_);
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr1->type_);
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr2->type_);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr2->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr2));
@@ -1433,17 +1433,17 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_CALL_LOG"));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_NE(INVALID_TOKENID, callbackPtr->callingTokenID_);
     ASSERT_NE(INVALID_USED_TYPE, callbackPtr->usedType_);
     ASSERT_NE(NOT_EXSIT_PID, callbackPtr->pid_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_CALL_LOG"));
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(
         g_tokenIdE, "ohos.permission.READ_CALL_LOG", NOT_EXSIT_PID));
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
 
     ASSERT_EQ(NOT_EXSIT_PID, callbackPtr->pid_);
 
@@ -1537,7 +1537,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
 
     PermissionUsedRequest request;
@@ -1840,7 +1840,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
 
     PermissionUsedRequest request;

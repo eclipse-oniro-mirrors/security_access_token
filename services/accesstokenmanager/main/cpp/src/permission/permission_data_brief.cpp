@@ -30,7 +30,6 @@
 #include "data_validator.h"
 #include "token_field_const.h"
 #include "data_translator.h"
-#include "permission_definition_cache.h"
 
 namespace OHOS {
 namespace Security {
@@ -60,17 +59,20 @@ bool PermissionDataBrief::GetPermissionBriefData(
     uint32_t code;
     if (PermissionValidator::IsGrantStatusValid(permState.grantStatus) &&
         TransferPermissionToOpcode(permState.permissionName, code)) {
+        PermissionBriefDef briefDef;
+        GetPermissionBriefDef(code, briefDef);
+
         briefPermData.status = static_cast<int8_t>(permState.grantStatus);
         briefPermData.permCode = code;
         briefPermData.flag = permState.grantFlag;
-        if (PermissionDefinitionCache::GetInstance().IsKernelPermission(permState.permissionName)) {
+        if (briefDef.isKernelEffect) {
             briefPermData.type = IS_KERNEL_EFFECT;
         } else {
             briefPermData.type = 0;
         }
 
         uint64_t key = (static_cast<uint64_t>(tokenID) << 32) | briefPermData.permCode;
-        if (PermissionDefinitionCache::GetInstance().IsPermissionHasValue(permState.permissionName)) {
+        if (briefDef.hasValue) {
             auto iter = aclExtendedMap.find(permState.permissionName);
             if (iter != aclExtendedMap.end()) {
                 extendedValue_[key] = iter->second;

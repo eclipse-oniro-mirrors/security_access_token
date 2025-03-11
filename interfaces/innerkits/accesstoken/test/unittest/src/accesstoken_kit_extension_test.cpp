@@ -786,7 +786,6 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterSelfPermStateChangeCallback004, Te
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
-        .permList = {},
         .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
     };
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1);
@@ -816,6 +815,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterSelfPermStateChangeCallback004, Te
     callbackPtr->ready_ = false;
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2));
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;

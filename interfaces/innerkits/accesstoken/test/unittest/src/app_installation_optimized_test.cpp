@@ -353,8 +353,8 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level1)
     };
     g_testHapInfoParams.appDistributionType = "";
     AccessTokenIDEx fullTokenId;
-    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::InitHapToken(
+        g_testHapInfoParams, testPolicyParam, fullTokenId));
 }
 
 /**
@@ -725,8 +725,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
         .permStateList = {g_infoManagerCameraState}
     };
     AccessTokenIDEx fullTokenId;
-    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId));
 
     HapPolicyParams testPolicyParam2 = {
         .apl = APL_SYSTEM_BASIC,
@@ -739,8 +738,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
         .isSystemApp = false
     };
     info.appDistributionType = "";
-    res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam2);
-    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam2));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 

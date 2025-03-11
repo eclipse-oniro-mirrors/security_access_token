@@ -110,7 +110,7 @@ private:
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
         const std::string& appId, const HapPolicy& policy, bool isUpdate);
-    int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
+    int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
@@ -135,6 +135,7 @@ private:
     bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
         const std::vector<std::string>& nativeAcls);
     int32_t GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
+    void NativeTokenStateToString(const NativeTokenInfoBase& native, std::string& info, std::string& invalidPermString);
     void NativeTokenToString(AccessTokenID tokenID, std::string& info);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     void UpdateHapToKernel(AccessTokenID tokenID, int32_t userId);

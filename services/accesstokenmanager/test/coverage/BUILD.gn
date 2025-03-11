@@ -30,7 +30,6 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_death_recipient.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_cache.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",

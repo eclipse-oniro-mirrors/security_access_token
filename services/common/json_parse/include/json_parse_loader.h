@@ -71,14 +71,12 @@ public:
     virtual bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
     virtual int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
-    virtual int32_t GetAllPermissionDef(std::vector<PermissionDef>& permDefList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
     bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
     int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
-    int32_t GetAllPermissionDef(std::vector<PermissionDef>& permDefList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
@@ -86,7 +84,6 @@ private:
         AccessTokenConfigValue& config);
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
     bool ParserNativeRawData(const std::string& nativeRawData, std::vector<NativeTokenInfoBase>& tokenInfos);
-    bool ParserPermDefRawData(const std::string& permsRawData, std::vector<PermissionDef>& permDefList);
     bool ParserDlpPermsRawData(const std::string& dlpPermsRawData, std::vector<PermissionDlpMode>& dlpPerms);
     int32_t ReadCfgFile(const std::string& file, std::string& rawData);
     bool IsDirExsit(const std::string& file);

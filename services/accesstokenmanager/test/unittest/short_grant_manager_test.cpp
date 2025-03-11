@@ -18,7 +18,6 @@
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_info_manager.h"
-#include "permission_definition_cache.h"
 
 #define private public
 #include "short_grant_manager.h"
@@ -66,18 +65,6 @@ void ShortGrantManagerTest::SetUp()
 #ifdef EVENTHANDLER_ENABLE
     ShortGrantManager::GetInstance().InitEventHandler();
 #endif
-
-    PermissionDef permDefAlpha = {
-        .permissionName = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .label = "label",
-        .labelId = 1,
-        .description = "annoying",
-        .descriptionId = 1
-    };
-    PermissionDefinitionCache::GetInstance().Insert(permDefAlpha, 537719865); // 537719865 means a tokenId.
 }
 
 void ShortGrantManagerTest::TearDown()

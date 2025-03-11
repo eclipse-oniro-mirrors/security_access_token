@@ -106,6 +106,37 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &pe
     return true;
 }
 
+void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef &permissionBriefDef)
+{
+    permissionBriefDef = g_permList[opCode];
+}
+
+void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef &def)
+{
+    def.permissionName = std::string(briefDef.permissionName);
+    def.grantMode = static_cast<int>(briefDef.grantMode);
+    def.availableLevel = briefDef.availableLevel;
+    def.provisionEnable = briefDef.provisionEnable;
+    def.distributedSceneEnable = briefDef.distributedSceneEnable;
+    def.availableType = briefDef.availableType;
+    def.isKernelEffect = briefDef.isKernelEffect;
+    def.hasValue = briefDef.hasValue;
+}
+
+bool IsPermissionValidForHap(const std::string& permissionName)
+{
+    uint32_t opCode;
+    if (!TransferPermissionToOpcode(permissionName, opCode)) {
+        return false;
+    }
+
+    return g_permList[opCode].availableType != ATokenAvailableTypeEnum::SERVICE;
+}
+
+size_t GetDefPermissionsSize()
+{
+    return MAX_PERM_SIZE;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

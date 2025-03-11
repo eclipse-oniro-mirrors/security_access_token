@@ -19,7 +19,7 @@
 #include "access_token.h"
 #include "accesstoken_common_log.h"
 #include "data_validator.h"
-#include "permission_definition_cache.h"
+#include "permission_map.h"
 
 namespace OHOS {
 namespace Security {
@@ -92,7 +92,7 @@ bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const 
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenType is %{public}d.", tokenType);
     if (tokenType == TOKEN_HAP) {
-        if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
+        if (!IsPermissionValidForHap(permissionName)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is not defined for hap.", permissionName.c_str());
             return false;
         }

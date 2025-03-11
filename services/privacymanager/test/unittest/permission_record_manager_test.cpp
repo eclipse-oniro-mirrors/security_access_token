@@ -396,7 +396,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
         PolicyType::PRIVACY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
+    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -405,12 +405,12 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-    std::string permissionName = "ohos.permission.MICROPHONE";
+    std::string permissionName = "ohos.permission.READ_MEDIA";
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName, CALLER_PID));
@@ -437,7 +437,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
 
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
         RANDOM_TOKENID);
-    std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
+    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -446,12 +446,12 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-    std::string permissionName = "ohos.permission.MICROPHONE";
+    std::string permissionName = "ohos.permission.READ_MEDIA";
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
 
-    usleep(500000); // 500000us = 0.5s
+    usleep(1000000); // 1000000us = 1s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName, CALLER_PID));
