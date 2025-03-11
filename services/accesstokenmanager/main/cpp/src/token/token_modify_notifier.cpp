@@ -58,7 +58,7 @@ void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
         LOGI(ATM_DOMAIN, ATM_TAG, "Observation token is not hap token");
         return;
     }
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
         observationSet_.insert(tokenID);
     }
@@ -66,7 +66,7 @@ void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
 
 void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Hap token is not observed");
         return;
@@ -78,7 +78,7 @@ void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 
 void TokenModifyNotifier::NotifyTokenModify(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Hap token is not observed");
         return;
@@ -115,14 +115,26 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Called!");
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start execution!");
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libtokensync_sdk failed.");
         return;
     }
-    for (AccessTokenID deleteToken : deleteTokenList_) {
+
+    std::vector<AccessTokenID> deleteList;
+    std::vector<AccessTokenID> modifiedList;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> listGuard(this->listLock_);
+        deleteList = deleteTokenList_;
+        modifiedList = modifiedTokenList_;
+        deleteTokenList_.clear();
+        modifiedTokenList_.clear();
+    }
+
+    for (AccessTokenID deleteToken : deleteList) {
         int ret = TOKEN_SYNC_SUCCESS;
         if (tokenSyncCallbackObject_ != nullptr) {
             ret = tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
@@ -133,7 +145,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         }
     }
 
-    for (AccessTokenID modifyToken : modifiedTokenList_) {
+    for (AccessTokenID modifyToken : modifiedList) {
         HapTokenInfoForSync hapSync;
         int ret = AccessTokenInfoManager::GetInstance().GetHapTokenSync(modifyToken, hapSync);
         if (ret != RET_SUCCESS) {
@@ -148,8 +160,6 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
             LOGE(ATM_DOMAIN, ATM_TAG, "Fail to update remote haptoken info, ret is %{public}d", ret);
         }
     }
-    deleteTokenList_.clear();
-    modifiedTokenList_.clear();
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Over!");
 }
@@ -157,7 +167,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
 int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (tokenSyncCallbackObject_ != nullptr) {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->notifyLock_);
         int32_t ret = tokenSyncCallbackObject_->GetRemoteHapTokenInfo(deviceID, tokenID);
         if (ret != TOKEN_SYNC_OPENSOURCE_DEVICE) {
             return ret;
@@ -175,7 +185,7 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
 
 int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
     tokenSyncCallbackObject_ = new TokenSyncCallbackProxy(callback);
     tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
@@ -185,7 +195,7 @@ int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>
 
 int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
     if (tokenSyncCallbackObject_ != nullptr && tokenSyncCallbackDeathRecipient_ != nullptr) {
         tokenSyncCallbackObject_->AsObject()->RemoveDeathRecipient(tokenSyncCallbackDeathRecipient_);
     }
