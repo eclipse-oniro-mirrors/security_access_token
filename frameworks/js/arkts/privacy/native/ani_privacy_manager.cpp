@@ -70,15 +70,20 @@ static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env *env, [[maybe_un
     std::string outputPermissionName = std::string(utf8Buffer);
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName Get %{public}s", outputPermissionName.c_str());
 
-    ani_int usedTypeRef = 0;
-    if (ANI_OK != env->Object_GetFieldByName_Int(options, "usedType", &usedTypeRef)) {
+    ani_ref usedTypeRef;
+    if (ANI_OK != env->Object_GetFieldByName_Ref(options, "usedType", &usedTypeRef)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild");
         return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
     }
+    ani_enum_item usedType = static_cast<ani_enum_item>(usedTypeRef);
+    
+    ani_int aniInt = 0;
+    if (ANI_OK != env->EnumItem_GetValue_Int(usedType, &aniInt)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "EnumItem_GetValue_Int Faild");
+        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+    }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Object_GetFieldByName_Ref usedTypeRef:%{public}d", usedTypeRef);
-
-    return AddPermissionUsedRecordSync(tokenID, outputPermissionName, successCount, failCount, usedTypeRef);
+    return AddPermissionUsedRecordSync(tokenID, outputPermissionName, successCount, failCount, aniInt);
 }
 
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
