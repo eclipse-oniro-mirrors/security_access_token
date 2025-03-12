@@ -6249,6 +6249,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.GET_EDM_CONFIG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 18,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
