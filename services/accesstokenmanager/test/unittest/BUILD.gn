@@ -78,12 +78,16 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/accesstokenmanager/test/unittest",
   ]
 
   sources = [
     "accesstoken_database_test.cpp",
     "accesstoken_info_manager_test.cpp",
+    "accesstoken_manager_service_test.cpp",
     "multi_thread_test.cpp",
+    "parameter.cpp",
+    "parameters.cpp",
     "permission_grant_event_test.cpp",
     "permission_manager_test.cpp",
     "short_grant_manager_test.cpp",
@@ -118,7 +122,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "googletest:gtest_main",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
-    "init:libbegetutil",
     "ipc:ipc_single",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",

@@ -35,7 +35,9 @@
 #include "ipc_skeleton.h"
 #include "json_parse_loader.h"
 #include "libraryloader.h"
+#include "memory_guard.h"
 #include "parameter.h"
+#include "parameters.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "permission_map.h"
@@ -60,6 +62,7 @@ const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbilit
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
 const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
 const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainAbility";
+const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 }
 
 const bool REGISTER_RESULT =
@@ -582,6 +585,11 @@ int32_t AccessTokenManagerService::UnRegisterTokenSyncCallback()
 void AccessTokenManagerService::DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Called");
+    bool isDeveloperMode = OHOS::system::GetBoolParameter(DEVELOPER_MODE_STATE, false);
+    if (!isDeveloperMode) {
+        dumpInfo = "Developer mode not support.";
+        return;
+    }
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpInfo);
 }
@@ -739,6 +747,7 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
 
 bool AccessTokenManagerService::Initialize()
 {
+    MemoryGuard guard;
     ReportSysEventPerformance();
     AccessTokenInfoManager::GetInstance().Init();
 

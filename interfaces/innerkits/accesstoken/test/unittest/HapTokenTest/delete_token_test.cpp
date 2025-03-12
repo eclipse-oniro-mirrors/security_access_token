@@ -164,6 +164,23 @@ HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DeleteTokenAbnormalTest002
+ * @tc.desc: Delete invalid tokenID, tokenID != TOKEN_HAP
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest002, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenAbnormalTest002");
+
+    // tokenID != TOKEN_HAP
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("hdcd");
+    ASSERT_EQ(TOKEN_SHELL, AccessTokenKit::GetTokenType(tokenID));
+    int ret = AccessTokenKit::DeleteToken(tokenID);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
+}
+
+/**
  * @tc.name: DeleteTokenSpecTest001
  * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delete it again.
  * @tc.type: FUNC
