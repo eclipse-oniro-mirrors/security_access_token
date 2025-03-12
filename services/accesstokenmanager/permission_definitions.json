@@ -2386,10 +2386,10 @@
             "name": "ohos.permission.QUERY_ACCESSIBILITY_ELEMENT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SERVICE",
+            "availableType": "SYSTEM",
             "since": 11,
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false
         },
         {
