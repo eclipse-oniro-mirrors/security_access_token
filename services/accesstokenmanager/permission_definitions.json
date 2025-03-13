@@ -3926,7 +3926,7 @@
             "name": "ohos.permission.UPDATE_CALENDAR_RRULE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "SERVICE",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
