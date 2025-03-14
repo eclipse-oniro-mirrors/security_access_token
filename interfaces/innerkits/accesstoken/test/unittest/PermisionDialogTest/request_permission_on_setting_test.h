@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,29 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef TOKENSYNC_KIT_TEST_H
-#define TOKENSYNC_KIT_TEST_H
+#ifndef REQUEST_PERMISSION_ON_SETTING_TEST_H
+#define REQUEST_PERMISSION_ON_SETTING_TEST_H
 
 #include <gtest/gtest.h>
 
-#include "access_token.h"
-#include "accesstoken_kit.h"
-#include "iservice_registry.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AccessTokenKitTest : public testing::Test {
+class RequestPermissionOnSettingTest : public testing::Test {
 public:
     static void SetUpTestCase();
-
     static void TearDownTestCase();
 
     void SetUp();
-
     void TearDown();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PRIVACY_KIT_TEST_H
+#endif // REQUEST_PERMISSION_ON_SETTING_TEST_H

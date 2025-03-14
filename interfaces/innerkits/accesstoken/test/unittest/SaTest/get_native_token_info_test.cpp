@@ -34,7 +34,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static int32_t g_selfUid;
@@ -43,18 +43,20 @@ static int32_t g_selfUid;
 void GetNativeTokenInfoTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void GetNativeTokenInfoTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void GetNativeTokenInfoTest::SetUp()
@@ -74,38 +76,68 @@ void GetNativeTokenInfoTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
-    TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, INVALID_TOKENID);
 }
 
 void GetNativeTokenInfoTest::TearDown()
 {
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 /**
  * @tc.name: GetNativeTokenInfoAbnormalTest001
- * @tc.desc: cannot get native token with invalid tokenID.
+ * @tc.desc: cannot get native token with invalid tokenID(0).
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GeTokenInfoAbnormalTest001, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GeTokenInfoAbnormalTest001");
     AccessTokenID tokenID = 0;
-    NativeTokenInfo findInfo;
-    int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
-    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+    NativeTokenInfo nativeInfo;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenInfo(tokenID, nativeInfo));
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo));
 }
 
 /**
- * @tc.name: GetNativeTokenInfoAbnormalTest002
+ * @tc.name: GetTokenInfoAbnormalTest002
+ * @tc.desc: 1. cannot get native token with invalid tokenID(hap); 1. cannot get hap token with invalid tokenID(native)
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest002, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest002");
+    MockNativeToken mock("accesstoken_service");
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenHap = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenHap);
+    AccessTokenID tokenNative = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    ASSERT_NE(INVALID_TOKENID, tokenNative);
+
+    NativeTokenInfo nativeInfo;
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenInfo(tokenHap, nativeInfo));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenHap, hapInfo));
+
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenNative, nativeInfo));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapTokenInfo(tokenNative, hapInfo));
+}
+
+/**
+ * @tc.name: GetTokenInfoAbnormalTest003
  * @tc.desc: GetNativeTokenInfo with no permission
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest003, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest002");
     g_selfUid = getuid();
@@ -115,37 +147,38 @@ HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoAbnormalTest002, TestSize.Lev
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
 
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+
     setuid(g_selfUid);
 }
 
 /**
  * @tc.name: GetNativeTokenInfoFuncTest001
- * @tc.desc: Get native token info success.
+ * @tc.desc: Get token info success.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoFuncTest001");
-    AccessTokenID tokenHap = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    MockNativeToken mock("accesstoken_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenHap = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenHap);
-
-    NativeTokenInfo nativeInfo;
-    HapTokenInfo hapInfo;
-
-    int ret = AccessTokenKit::GetHapTokenInfo(tokenHap, hapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
 
     AccessTokenID tokenNative = AccessTokenKit::GetNativeTokenId("token_sync_service");
     ASSERT_NE(INVALID_TOKENID, tokenNative);
 
-    ret = AccessTokenKit::GetNativeTokenInfo(tokenNative, nativeInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
+    NativeTokenInfo nativeInfo;
+    HapTokenInfo hapInfo;
 
-    ret = AccessTokenKit::GetHapTokenInfo(tokenNative, hapInfo);
-    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenHap, hapInfo));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenNative, nativeInfo));
 
-    AccessTokenKit::DeleteToken(tokenHap);
+
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenInfo(tokenHap, nativeInfo));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapTokenInfo(tokenNative, hapInfo));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -34,9 +34,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
-static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
 
 static HapPolicyParams g_PolicyPrams = {
@@ -57,12 +56,14 @@ void DumpTokenInfoTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
     g_selfUid = getuid();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void DumpTokenInfoTest::TearDownTestCase()
 {
     setuid(g_selfUid);
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void DumpTokenInfoTest::SetUp()
@@ -85,16 +86,13 @@ void DumpTokenInfoTest::TearDown()
 HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest001");
-    AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, g_PolicyPrams, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
-    g_testTokenIDEx = AccessTokenKit::GetHapTokenIDEx(g_InfoParms.userID,
-                                                      g_InfoParms.bundleName,
-                                                      g_InfoParms.instIndex);
-    ASSERT_NE(INVALID_TOKENID, g_testTokenIDEx.tokenIDEx);
     setuid(g_selfUid);
-    EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
     setuid(1234); // 1234: UID
-
 
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -105,6 +103,8 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest001, TestSize.Level1)
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     setuid(g_selfUid);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**

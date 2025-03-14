@@ -36,99 +36,37 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string TEST_BUNDLE_NAME = "ohos";
-static const int TEST_USER_ID = 0;
-
-HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
-HapPolicyParams g_infoManagerTestPolicyPramsBak = g_infoManagerTestPolicyPrams;
-
-HapInfoParams g_locationTestInfo = {
-    .userID = TEST_USER_ID,
-    .bundleName = "accesstoken_location_test",
-    .instIndex = 0,
-    .appIDDesc = "test2"
-};
-
+static MockHapToken* g_mock = nullptr;
 uint64_t g_selfShellTokenId;
+HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
 }
 
 void UnRegisterPermStateChangeCallbackTest::SetUpTestCase()
 {
     g_selfShellTokenId = GetSelfTokenID();
-    // clean up test cases
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                                          g_infoManagerTestNormalInfoParms.bundleName,
-                                                          g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    TestCommon::GetNativeTokenTest();
+    TestCommon::SetTestEvironment(g_selfShellTokenId);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    g_mock = new (std::nothrow) MockHapToken("UnRegisterPermStateChangeCallbackTest", reqPerm, true);
 }
 
 void UnRegisterPermStateChangeCallbackTest::TearDownTestCase()
 {
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
     SetSelfTokenID(g_selfShellTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void UnRegisterPermStateChangeCallbackTest::SetUp()
 {
-    setuid(0);
-    selfTokenId_ = GetSelfTokenID();
-    g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPramsBak;
-    HapInfoParams info = {
-        .userID = TEST_USER_ID,
-        .bundleName = TEST_BUNDLE_NAME,
-        .instIndex = 0,
-        .appIDDesc = "appIDDesc",
-        .apiVersion = 8,
-        .isSystemApp = true
-    };
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-    AccessTokenKit::AllocHapToken(info, policy);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void UnRegisterPermStateChangeCallbackTest::TearDown()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenId);
-    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-void UnRegisterPermStateChangeCallbackTest::AllocHapToken(std::vector<PermissionDef>& permissionDefs,
-    std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion)
-{
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    HapInfoParams info = g_locationTestInfo;
-    info.apiVersion = apiVersion;
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-
-    for (auto& permissionDef:permissionDefs) {
-        policy.permList.emplace_back(permissionDef);
-    }
-
-    for (auto& permissionStateFull:permissionStateFulls) {
-        policy.permStateList.emplace_back(permissionStateFull);
-    }
-
-    AccessTokenKit::AllocHapToken(info, policy);
 }
 
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
@@ -213,17 +151,406 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbac
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    {
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("UnRegisterPermStateChangeCallbackFuncTest001", reqPerm, false);
 
-    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
+        res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
+    }
 
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback001
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback with invalid input.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback001, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    SetSelfTokenID(g_selfShellTokenId);
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback002
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback repeatedly.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback002, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(AccessTokenError::ERR_CALLBACK_ALREADY_EXIST, res);
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback003
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback permList
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback003, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback004
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback permList
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback004, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static PermissionStateFull infoManagerTestStateB = {
+        .permissionName = "ohos.permission.GET_BUNDLE_INFO",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback005
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback permList
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback005, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    SetSelfTokenID(tokenID);
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback006
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback permList
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback006, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static PermissionStateFull infoManagerTestStateB = {
+        .permissionName = "ohos.permission.DISTRIBUTED_DATASYNC",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA", "ohos.permission.DISTRIBUTED_DATASYNC"};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
+    SetSelfTokenID(g_selfShellTokenId);
+
+    callbackPtr->ready_ = false;
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.DISTRIBUTED_DATASYNC", 2));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.DISTRIBUTED_DATASYNC", 2));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: UnRegisterSelfPermStateChangeCallback007
+ * @tc.desc: UnRegisterSelfPermStateChangeCallback permList
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback007, TestSize.Level1)
+{
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {infoManagerTestStateA}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.INVALID", "ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {tokenID};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    SetSelfTokenID(tokenID);
+    int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    SetSelfTokenID(g_selfShellTokenId);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+
+    res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(false, callbackPtr->ready_);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

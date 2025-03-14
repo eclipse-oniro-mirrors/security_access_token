@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
+#include "test_common.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
@@ -33,52 +34,50 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int CYCLE_TIMES = 100;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
-HapInfoParams g_infoManagerTestInfoParmsBak = g_infoManagerTestInfoParms;
+HapInfoParams g_infoParms = {
+    .userID = 1,
+    .bundleName = "accesstoken_test",
+    .instIndex = 0,
+    .appIDDesc = "test3",
+    .apiVersion = 8,
+    .appDistributionType = "enterprise_mdm"
+};
+static MockHapToken* g_mock = nullptr;
 };
 
 void ClearUserGrantedPermissionStateTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-
-    // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    TestCommon::SetTestEvironment(g_selfTokenId);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    g_mock = new (std::nothrow) MockHapToken("ClearUserGrantedPermissionStateTest", reqPerm);
 }
 
 void ClearUserGrantedPermissionStateTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-        g_infoManagerTestInfoParms.bundleName,
-        g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    SetSelfTokenID(g_selfTokenId);
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void ClearUserGrantedPermissionStateTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
-    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -91,14 +90,16 @@ void ClearUserGrantedPermissionStateTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
     TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(info, policy);
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void ClearUserGrantedPermissionStateTest::TearDown()
 {
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 /**
@@ -111,19 +112,16 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateFuncTest001");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
-    ASSERT_EQ(PERMISSION_DENIED, ret);
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false));
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
-    ASSERT_EQ(PERMISSION_DENIED, ret);
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false));
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -135,18 +133,6 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
 HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateFuncTest002");
-
-    PermissionDef g_infoManagerTestPermDef1 = {
-        .permissionName = "ohos.permission.test1",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .label = "label3",
-        .labelId = 1,
-        .description = "open the door",
-        .descriptionId = 1,
-        .availableType = MDM
-    };
     OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState1 = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
@@ -168,24 +154,25 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
         .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
         .grantFlags = {PERMISSION_USER_FIXED}
     };
-    OHOS::Security::AccessToken::HapPolicyParams infoManagerTestPolicyPrams = {
+    OHOS::Security::AccessToken::HapPolicyParams policyPrams = {
         .apl = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
         .domain = "test.domain",
-        .permList = {g_infoManagerTestPermDef1},
         .permStateList = {infoManagerTestState1, infoManagerTestState2, infoManagerTestState3}
     };
-    AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_infoParms, policyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
 
+    // PERMISSION_SYSTEM_FIXED, not clear permission
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
 
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SEND_MESSAGES", false));
 
     ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.RECEIVE_SMS", false));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -198,17 +185,15 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbn
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateAbnormalTest001");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
-    int ret = AccessTokenKit::ClearUserGrantedPermissionState(TEST_TOKENID_INVALID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(
+        AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::ClearUserGrantedPermissionState(TEST_TOKENID_INVALID));
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
 }
 
 /**
@@ -221,16 +206,14 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateSpe
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionStateSpecTets001");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     for (int i = 0; i < CYCLE_TIMES; i++) {
-        int32_t ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
-        ASSERT_EQ(RET_SUCCESS, ret);
-
-        ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
-        ASSERT_EQ(PERMISSION_DENIED, ret);
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+        ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false));
     }
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

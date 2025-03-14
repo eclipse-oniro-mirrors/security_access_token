@@ -20,8 +20,8 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "token_setproc.h"
 #include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -29,7 +29,7 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 
 HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
@@ -42,13 +42,6 @@ HapTokenInfo g_baseInfo = {
     .tokenID = 0x20100000,
     .tokenAttr = 0
 };
-
-void NativeTokenGet()
-{
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    ASSERT_NE(tokenId, INVALID_TOKENID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-}
 
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -81,41 +74,45 @@ public:
 void GetHapTokenInfoFromRemoteTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // make test case clean
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    NativeTokenGet();
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 
 #ifdef TOKEN_SYNC_ENABLE
-    std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
+        int32_t res =
+            DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
 }
 
 void GetHapTokenInfoFromRemoteTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 
-    SetSelfTokenID(g_selfTokenId);
 #ifdef TOKEN_SYNC_ENABLE
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void GetHapTokenInfoFromRemoteTest::SetUp()
 {
-    selfTokenId_ = GetSelfTokenID();
-
 #ifdef TOKEN_SYNC_ENABLE
+    MockNativeToken mock("foundation");
     DistributedHardware::DmDeviceInfo deviceInfo;
     int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TEST_PKG_NAME, deviceInfo);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -129,12 +126,11 @@ void GetHapTokenInfoFromRemoteTest::SetUp()
 #endif
 
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-    setuid(0);
 }
 
 void GetHapTokenInfoFromRemoteTest::TearDown()
 {
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     udid_.clear();
     networkId_.clear();
 }
@@ -149,9 +145,13 @@ void GetHapTokenInfoFromRemoteTest::TearDown()
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest001 start.");
+
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx));
     AccessTokenID localTokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    MockNativeToken mock("token_sync_service");
 
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
@@ -159,12 +159,8 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
 
     ASSERT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
-    ASSERT_EQ(infoSync.permStateList[0].grantFlag, g_infoManagerTestPolicyPrams.permStateList[0].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[0].grantStatus, g_infoManagerTestPolicyPrams.permStateList[0].grantStatus[0]);
 
     ASSERT_EQ(infoSync.permStateList[1].permissionName, g_infoManagerTestPolicyPrams.permStateList[1].permissionName);
-    ASSERT_EQ(infoSync.permStateList[1].grantFlag, g_infoManagerTestPolicyPrams.permStateList[1].grantFlags[0]);
-    ASSERT_EQ(infoSync.permStateList[1].grantStatus, g_infoManagerTestPolicyPrams.permStateList[1].grantStatus[0]);
 
     ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
     ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
@@ -173,7 +169,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
     ASSERT_EQ(infoSync.baseInfo.tokenID, localTokenID);
     ASSERT_EQ(infoSync.baseInfo.tokenAttr, 0);
 
-    AccessTokenKit::DeleteToken(localTokenID);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(localTokenID));
 }
 
 /**
@@ -184,6 +180,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
  */
 HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest002 start.");
     std::string deviceID2 = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);

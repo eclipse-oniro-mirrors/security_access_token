@@ -33,68 +33,19 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static AccessTokenID g_selfTokenId = 0;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
-static const std::string TEST_BUNDLE_NAME = "ohos";
-static const int TEST_USER_ID = 0;
-static constexpr int32_t DEFAULT_API_VERSION = 8;
-HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
-};
 
 void GetHapDlpFlagTest::SetUpTestCase()
 {
-    g_selfTokenId = GetSelfTokenID();
-
-    // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void GetHapDlpFlagTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    SetSelfTokenID(g_selfTokenId);
 }
 
 void GetHapDlpFlagTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-
-    setuid(0);
-    HapInfoParams info = {
-        .userID = TEST_USER_ID,
-        .bundleName = TEST_BUNDLE_NAME,
-        .instIndex = 0,
-        .appIDDesc = "appIDDesc",
-        .apiVersion = DEFAULT_API_VERSION
-    };
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-    TestCommon::TestPreparePermDefList(policy);
-    TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
 }
 
 void GetHapDlpFlagTest::TearDown()

@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "permission_map.h"
 #include "perm_setproc.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "tokenid_kit.h"
 
@@ -38,7 +39,6 @@ static const std::string GET_NETWORK_STATS = "ohos.permission.GET_NETWORK_STATS"
 static const std::string LOCATION = "ohos.permission.LOCATION";
 static const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-
 PermissionStateFull g_infoManagerInternetState = {
     .permissionName = INTERNET,
     .isGeneral = true,
@@ -83,53 +83,20 @@ HapPolicyParams g_testPolicyParams = {
 };
 
 uint64_t g_selfShellTokenId;
-
-PermissionStateFull g_tddPermReq = {
-    .permissionName = MANAGE_HAP_TOKEN_ID_PERMISSION,
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-PermissionStateFull g_tddPermGet = {
-    .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-PermissionStateFull g_tddPermRevoke = {
-    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-HapInfoParams g_tddHapInfoParams = {
-    .userID = 1,
-    .bundleName = "EdmPolicySetTest",
-    .instIndex = 0,
-    .appIDDesc = "test2",
-    .apiVersion = 11, // api version is 11
-    .isSystemApp = true
-};
-
-HapPolicyParams g_tddPolicyParams = {
-    .apl = APL_SYSTEM_CORE,
-    .domain = "test.domain2",
-    .permStateList = {g_tddPermReq, g_tddPermGet, g_tddPermRevoke}
-};
+static MockHapToken* g_mock = nullptr;
 }
 
 void EdmPolicySetTest::TearDownTestCase()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_tddHapInfoParams.userID,
-        g_tddHapInfoParams.bundleName,
-        g_tddHapInfoParams.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_testHapInfoParams.userID, g_testHapInfoParams.bundleName, g_testHapInfoParams.instIndex);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    EXPECT_EQ(0, SetSelfTokenID(g_selfShellTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void EdmPolicySetTest::SetUp()
@@ -144,23 +111,42 @@ void EdmPolicySetTest::TearDown()
 void EdmPolicySetTest::SetUpTestCase()
 {
     g_selfShellTokenId = GetSelfTokenID();
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_tddHapInfoParams, g_tddPolicyParams);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    TestCommon::SetTestEvironment(g_selfShellTokenId);
+
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back(MANAGE_HAP_TOKEN_ID_PERMISSION);
+    reqPerm.emplace_back(GET_SENSITIVE_PERMISSIONS);
+    reqPerm.emplace_back(REVOKE_SENSITIVE_PERMISSIONS);
+    g_mock = new (std::nothrow) MockHapToken("EdmPolicySetTest", reqPerm);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
 }
 
 /**
- * @tc.name: InitUserPolicy002
+ * @tc.name: InitUserPolicy001
  * @tc.desc: InitUserPolicy failed invalid userList size.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy001, TestSize.Level1)
 {
     const int32_t invalidSize = 1025; // 1025 is invalid size.
     std::vector<UserState> userList(invalidSize);
     std::vector<std::string> permList = { "ohos.permission.INTERNET" };
     int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
+
+/**
+ * @tc.name: InitUserPolicy002
+ * @tc.desc: InitUserPolicy failed empty userList.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level1)
+{
+    std::vector<UserState> userListEmtpy;
+    std::vector<std::string> permList = { "ohos.permission.INTERNET" };
+    int32_t ret = AccessTokenKit::InitUserPolicy(userListEmtpy, permList);
     EXPECT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 }
 
@@ -172,20 +158,6 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level1)
  */
 HWTEST_F(EdmPolicySetTest, InitUserPolicy003, TestSize.Level1)
 {
-    std::vector<UserState> userListEmtpy;
-    std::vector<std::string> permList = { "ohos.permission.INTERNET" };
-    int32_t ret = AccessTokenKit::InitUserPolicy(userListEmtpy, permList);
-    EXPECT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
-}
-
-/**
- * @tc.name: InitUserPolicy004
- * @tc.desc: InitUserPolicy failed empty userList.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level1)
-{
     UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
     const int32_t invalidSize = 1025; // 1025 is invalid size.
     std::vector<UserState> userList = { user };
@@ -195,12 +167,12 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level1)
 }
 
 /**
- * @tc.name: InitUserPolicy005
+ * @tc.name: InitUserPolicy004
  * @tc.desc: InitUserPolicy failed empty permList.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level1)
 {
     UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
     std::vector<UserState> userList = { user };
@@ -209,46 +181,79 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level1)
     EXPECT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 }
 
+
 /**
- * @tc.name: UpdateUserPolicy001
- * @tc.desc: UpdateUserPolicy failed with
- * policy uninitialized and ClearUserPolicy successfully with policy uninitialized.
+ * @tc.name: InitUserPolicy005
+ * @tc.desc: InitUserPolicy and the stock permission status is refreshed according to the policy.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UpdateUserPolicy001, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level1)
 {
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("foundation");
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     GTEST_LOG_(INFO) << "permissionSet OK ";
+    MockNativeToken mock("foundation");
 
-    UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
-    const std::vector<UserState> userList = { user };
-    int32_t res = AccessTokenKit::UpdateUserPolicy(userList);
-    EXPECT_EQ(res, AccessTokenError::ERR_USER_POLICY_NOT_INITIALIZED);
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    g_testHapInfoParams.userID = MOCK_USER_ID_10002;
+    AccessTokenIDEx fullIdUser2;
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    g_testHapInfoParams.userID = MOCK_USER_ID_10003;
+    AccessTokenIDEx fullIdUser3;
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser3));
 
-    res = AccessTokenKit::ClearUserPolicy();
-    EXPECT_EQ(res, RET_SUCCESS);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
+        PERMISSION_DENIED);
+
+    UserState user0 = {.userId = -1, .isActive = true};
+    UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = true};
+    UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = false};
+    UserState user3 = {.userId = MOCK_USER_ID_10003, .isActive = false};
+
+    std::vector<UserState> userList = { user0, user1, user2, user3 };
+    std::vector<std::string> permList = { INTERNET, GET_NETWORK_STATS, LOCATION };
+    EXPECT_EQ(RET_SUCCESS,  AccessTokenKit::InitUserPolicy(userList, permList));
+
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
+        PERMISSION_DENIED);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
+        PERMISSION_DENIED);
+    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, LOCATION),
+        PERMISSION_DENIED);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser3.tokenIdExStruct.tokenID));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy());
 }
 
 /**
- * @tc.name: InitUserPolicy008
+ * @tc.name: InitUserPolicy006
  * @tc.desc: Check permission status in the heap.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy008, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy006, TestSize.Level1)
 {
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("foundation");
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     GTEST_LOG_(INFO) << "permissionSet OK ";
+    MockNativeToken mock("foundation");
 
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
 
     UserState user0 = {.userId = -1, .isActive = true};
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = true};
@@ -263,70 +268,37 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy008, TestSize.Level1)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
 
     std::vector<PermissionStateFull> permStatList;
-    res = AccessTokenKit::GetReqPermissions(fullIdUser2.tokenIdExStruct.tokenID, permStatList, true);
-    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(fullIdUser2.tokenIdExStruct.tokenID, permStatList, true));
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
     EXPECT_EQ(INTERNET, permStatList[0].permissionName);
     EXPECT_EQ(PERMISSION_GRANTED, permStatList[0].grantStatus[0]);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
 
     res = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(res, 0);
 }
 
 /**
- * @tc.name: InitUserPolicy007
- * @tc.desc: InitUserPolicy and the stock permission status is refreshed according to the policy.
+ * @tc.name: UpdateUserPolicy001
+ * @tc.desc: UpdateUserPolicy failed with
+ * policy uninitialized and ClearUserPolicy successfully with policy uninitialized.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy007, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UpdateUserPolicy001, TestSize.Level1)
 {
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("foundation");
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     GTEST_LOG_(INFO) << "permissionSet OK ";
+    MockNativeToken mock("foundation");
 
-    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
-    AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
-    g_testHapInfoParams.userID = MOCK_USER_ID_10002;
-    AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
-    g_testHapInfoParams.userID = MOCK_USER_ID_10003;
-    AccessTokenIDEx fullIdUser3;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser3));
+    UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
+    const std::vector<UserState> userList = { user };
+    int32_t res = AccessTokenKit::UpdateUserPolicy(userList);
+    EXPECT_EQ(res, AccessTokenError::ERR_USER_POLICY_NOT_INITIALIZED);
 
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
-        PERMISSION_DENIED);
-
-    UserState user0 = {.userId = -1, .isActive = true};
-    UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = true};
-    UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = false};
-    UserState user3 = {.userId = MOCK_USER_ID_10003, .isActive = false};
-
-    std::vector<UserState> userList = { user0, user1, user2, user3 };
-    std::vector<std::string> permList = { INTERNET, GET_NETWORK_STATS, LOCATION };
-    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
-    EXPECT_EQ(ret, 0);
-
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
-        PERMISSION_DENIED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
-        PERMISSION_DENIED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, LOCATION),
-        PERMISSION_DENIED);
-
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser3.tokenIdExStruct.tokenID));
-
-    int32_t res = AccessTokenKit::ClearUserPolicy();
-    EXPECT_EQ(res, 0);
+    res = AccessTokenKit::ClearUserPolicy();
+    EXPECT_EQ(res, RET_SUCCESS);
 }
 
 /**
@@ -357,13 +329,16 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
 {
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
     g_testHapInfoParams.userID = MOCK_USER_ID_10003;
     AccessTokenIDEx fullIdUser3;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser3));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser3));
 
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = false};
     UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = true};
@@ -394,9 +369,9 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser3.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser3.tokenIdExStruct.tokenID));
 
     int32_t res = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(res, 0);
@@ -419,10 +394,12 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level1)
 
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
 
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
@@ -430,8 +407,8 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level1)
         PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
 
     // update the policy
     user1.isActive = false;
@@ -440,17 +417,19 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level1)
     int32_t ret = AccessTokenKit::UpdateUserPolicy(userListAfter);
     EXPECT_EQ(ret, 0);
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
     EXPECT_EQ(AccessTokenKit::ClearUserPolicy(), 0);
 }
 
@@ -471,10 +450,12 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level1)
 
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
 
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
@@ -500,8 +481,8 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level1)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
 
     int32_t res = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(res, 0);
@@ -517,10 +498,12 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level1)
 {
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser1));
 
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = false};
     UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = false};
@@ -540,8 +523,8 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level1)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser2.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
 }
 
 
@@ -562,7 +545,8 @@ HWTEST_F(EdmPolicySetTest, UserPolicyForUpdateHapTokenTest, TestSize.Level1)
     };
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullIdUser1));
+    EXPECT_EQ(RET_SUCCESS,
+        TestCommon::AllocTestHapToken(g_testHapInfoParams, testPolicyParams1, fullIdUser1));
 
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = false};
     std::vector<UserState> userList = { user1};
@@ -580,13 +564,14 @@ HWTEST_F(EdmPolicySetTest, UserPolicyForUpdateHapTokenTest, TestSize.Level1)
     info.appIDDesc = "TEST";
     info.apiVersion = 12;
     info.isSystemApp = false;
-    int32_t res = AccessTokenKit::UpdateHapToken(fullIdUser1, info, testPolicyParams2);
-    EXPECT_EQ(res, 0);
+    {
+        MockNativeToken mock("foundation");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullIdUser1, info, testPolicyParams2));
+    }
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
 
-    res = AccessTokenKit::ClearUserPolicy();
-    EXPECT_EQ(res, 0);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy());
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
 }

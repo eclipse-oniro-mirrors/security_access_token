@@ -23,6 +23,7 @@
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
+#include "test_common.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
 
@@ -31,37 +32,14 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 const std::string CERT_PERMISSION = "ohos.permission.ACCESS_CERT_MANAGER";
 const std::string CALENDAR_PERMISSION = "ohos.permission.WRITE_CALENDAR";
 const std::string APP_TRACKING_PERMISSION = "ohos.permission.APP_TRACKING_CONSENT";
 const std::string ACCESS_BLUETOOTH_PERMISSION = "ohos.permission.ACCESS_BLUETOOTH";
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t MAX_PERM_LIST_SIZE = 1024;
+static MockNativeToken* g_mock;
 
-PermissionStateFull g_tddPermReq = {
-    .permissionName = MANAGE_HAP_TOKENID_PERMISSION,
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-PermissionStateFull g_tddPermGrant = {
-    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-PermissionStateFull g_tddPermRevoke = {
-    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
 PermissionStateFull g_infoManagerCameraState = {
     .permissionName = APP_TRACKING_PERMISSION,
     .isGeneral = true,
@@ -110,21 +88,6 @@ PermissionStateFull g_infoManagerTestStateMdm = {
     .grantFlags = {0}
 };
 
-HapInfoParams g_tddHapInfoParams = {
-    .userID = 1,
-    .bundleName = "AppInstallationOptimizedTest",
-    .instIndex = 0,
-    .appIDDesc = "test2",
-    .apiVersion = 11, // api version is 11
-    .isSystemApp = true
-};
-
-HapPolicyParams g_tddPolicyParams = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain2",
-    .permStateList = {g_tddPermReq, g_tddPermGrant, g_tddPermRevoke}
-};
-
 HapInfoParams g_testHapInfoParams = {
     .userID = 1,
     .bundleName = "testName",
@@ -148,26 +111,26 @@ uint64_t g_selfShellTokenId;
 void AppInstallationOptimizedTest::SetUpTestCase()
 {
     g_selfShellTokenId = GetSelfTokenID();
-    // clean up test cases
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_tddHapInfoParams.userID,
-        g_tddHapInfoParams.bundleName,
-        g_tddHapInfoParams.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    TestCommon::SetTestEvironment(g_selfShellTokenId);
+    g_mock = new (std::nothrow) MockNativeToken("foundation");
 
-    tokenId = AccessTokenKit::GetHapTokenID(g_testHapInfoParams.userID,
-        g_testHapInfoParams.bundleName,
-        g_testHapInfoParams.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_tddHapInfoParams, g_tddPolicyParams);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_testHapInfoParams.userID, g_testHapInfoParams.bundleName, g_testHapInfoParams.instIndex);
+    AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void AppInstallationOptimizedTest::TearDownTestCase()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_tddHapInfoParams.userID,
-        g_tddHapInfoParams.bundleName,
-        g_tddHapInfoParams.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_testHapInfoParams.userID, g_testHapInfoParams.bundleName, g_testHapInfoParams.instIndex);
+    AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+
+    EXPECT_EQ(0, SetSelfTokenID(g_selfShellTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void AppInstallationOptimizedTest::SetUp()
@@ -189,7 +152,6 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken001, TestSize.Level1)
 {
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullTokenId);
-    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
@@ -216,7 +178,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken002, TestSize.Level1)
         fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_GRANTED);
     std::vector<PermissionStateFull> permStatList;
-    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, true);
+    res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList, true);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(CERT_PERMISSION, permStatList[0].permissionName);
@@ -244,8 +206,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level1)
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_DENIED);
     uint32_t flag;
-    AccessTokenKit::GetPermissionFlag(
-        fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, flag);
+    TestCommon::GetPermissionFlagByTest(fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, flag);
     EXPECT_EQ(flag, PERMISSION_DEFAULT_FLAG);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
@@ -275,7 +236,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION);
     EXPECT_EQ(ret, PERMISSION_GRANTED);
     std::vector<PermissionStateFull> permStatList;
-    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
+    res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(CALENDAR_PERMISSION, permStatList[0].permissionName);
@@ -310,7 +271,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level1)
     EXPECT_EQ(ret, PERMISSION_GRANTED);
 
     std::vector<PermissionStateFull> permStatList;
-    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
+    res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(CALENDAR_PERMISSION, permStatList[0].permissionName);
@@ -353,8 +314,8 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level1)
     };
     g_testHapInfoParams.appDistributionType = "";
     AccessTokenIDEx fullTokenId;
-    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::InitHapToken(
-        g_testHapInfoParams, testPolicyParam, fullTokenId));
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
 }
 
 /**
@@ -442,9 +403,9 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
     res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(res, PERMISSION_DENIED);
 
-    (void)AccessTokenKit::GrantPermission(
+    (void)TestCommon::GrantPermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_SET);
-    (void)AccessTokenKit::RevokePermission(
+    (void)TestCommon::RevokePermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_SET);
 
     testHapInfoParams1.instIndex++;
@@ -457,10 +418,10 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
     EXPECT_EQ(res, PERMISSION_GRANTED);
 
     std::vector<PermissionStateFull> permStatList1;
-    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
+    res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
     ASSERT_EQ(RET_SUCCESS, res);
     std::vector<PermissionStateFull> permStatList2;
-    res = AccessTokenKit::GetReqPermissions(dlpFullTokenId2.tokenIdExStruct.tokenID, permStatList2, false);
+    res = TestCommon::GetReqPermissionsByTest(dlpFullTokenId2.tokenIdExStruct.tokenID, permStatList2, false);
     ASSERT_EQ(permStatList2.size(), permStatList1.size());
     EXPECT_EQ(APP_TRACKING_PERMISSION, permStatList2[0].permissionName);
     EXPECT_EQ(permStatList2[0].grantStatus[0], PERMISSION_GRANTED);
@@ -495,11 +456,11 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
         fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
-    ret = AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, 0);
+    ret = TestCommon::GrantPermissionByTest(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, 0);
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenKit::GrantPermission(
+    ret = TestCommon::GrantPermissionByTest(
     fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION, PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(
@@ -545,12 +506,12 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::RevokePermission(
+    ret = TestCommon::RevokePermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStateFull> permStatList;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
+    int32_t res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList[0].permissionName);
@@ -569,7 +530,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> permStatList1;
-    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
+    res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList1.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList1[0].permissionName);
@@ -620,7 +581,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> permStatList1;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
+    int32_t res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList1.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, permStatList1[0].permissionName);
@@ -668,7 +629,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    int32_t res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
     ASSERT_EQ(CALENDAR_PERMISSION, state[1].permissionName);
@@ -725,7 +686,8 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
         .permStateList = {g_infoManagerCameraState}
     };
     AccessTokenIDEx fullTokenId;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId));
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     HapPolicyParams testPolicyParam2 = {
         .apl = APL_SYSTEM_BASIC,
@@ -738,7 +700,8 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
         .isSystemApp = false
     };
     info.appDistributionType = "";
-    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam2));
+    res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam2);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
@@ -874,7 +837,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    int32_t res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), state.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
@@ -919,7 +882,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    int32_t res = TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(1), state.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
@@ -946,10 +909,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::GrantPermission(
+    ret = TestCommon::GrantPermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::RevokePermission(
+    ret = TestCommon::RevokePermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
@@ -974,7 +937,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
     ASSERT_EQ(APP_TRACKING_PERMISSION, state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
@@ -1014,10 +977,10 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::GrantPermission(
+    ret = TestCommon::GrantPermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, APP_TRACKING_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_NE(RET_SUCCESS, ret);
-    ret = AccessTokenKit::RevokePermission(
+    ret = TestCommon::RevokePermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_NE(RET_SUCCESS, ret);
 
@@ -1031,7 +994,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams1);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
@@ -1068,7 +1031,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::RevokePermission(
+    ret = TestCommon::RevokePermissionByTest(
         fullTokenId.tokenIdExStruct.tokenID, CALENDAR_PERMISSION, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
 
@@ -1082,7 +1045,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams1);
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
-    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     ASSERT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
@@ -1171,19 +1134,19 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level1)
     testHapInfoParams.userID = -1;
     AccessTokenIDEx fullTokenId;
     int32_t res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    EXPECT_EQ(ERR_PARAM_INVALID, res);
     testHapInfoParams.userID = g_testHapInfoParams.userID;
 
     // invalid bundleName
     testHapInfoParams.bundleName = "";
     res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    EXPECT_EQ(ERR_PARAM_INVALID, res);
     testHapInfoParams.bundleName = g_testHapInfoParams.bundleName;
 
     // invalid dlpType
     testHapInfoParams.dlpType = -1;
     res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    EXPECT_EQ(ERR_PARAM_INVALID, res);
     testHapInfoParams.dlpType = g_testHapInfoParams.dlpType;
 
     int32_t invalidAppIdLen = 10241; // 10241 is invalid appid length
@@ -1191,7 +1154,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level1)
     std::string invalidAppIDDesc (invalidAppIdLen, 'x');
     testHapInfoParams.appIDDesc = invalidAppIDDesc;
     res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    EXPECT_EQ(ERR_PARAM_INVALID, res);
     testHapInfoParams.appIDDesc = g_testHapInfoParams.appIDDesc;
 }
 

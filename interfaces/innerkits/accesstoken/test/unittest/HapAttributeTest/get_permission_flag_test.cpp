@@ -34,57 +34,49 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static const int INVALID_PERMNAME_LEN = 260;
 static const int CYCLE_TIMES = 100;
-HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
-HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
-};
+static const std::string PERMISSION_MICROPHONE = "ohos.permission.MICROPHONE";
+static const std::string GRANT_SENSITIVE_PERMISSION = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+static MockHapToken* g_mock = nullptr;
+}
 
 void GetPermissionFlagTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenID != INVALID_TOKENID) {
+        TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    }
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back(GRANT_SENSITIVE_PERMISSION);
+    g_mock = new (std::nothrow) MockHapToken("GetPermissionFlagTest", reqPerm, true);
 }
 
 void GetPermissionFlagTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
+    // clean up test cases
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenID != INVALID_TOKENID) {
+        TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    }
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void GetPermissionFlagTest::SetUp()
@@ -104,14 +96,29 @@ void GetPermissionFlagTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
-    TestCommon::TestPreparePermStateList(policy);
+    PermissionStateFull permStatMicro = {
+        .permissionName = PERMISSION_MICROPHONE,
+        .isGeneral = true,
+        .resDeviceID = {"device3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+    };
 
-    AccessTokenKit::AllocHapToken(info, policy);
+    policy.permStateList.emplace_back(permStatMicro);
+
+    AccessTokenIDEx tokenIdEx = {0};
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 void GetPermissionFlagTest::TearDown()
 {
+    // clean up test cases
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenID != INVALID_TOKENID) {
+        TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    }
 }
 
 /**
@@ -123,18 +130,17 @@ void GetPermissionFlagTest::TearDown()
 HWTEST_F(GetPermissionFlagTest, GetPermissionFlagFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagFuncTest001");
-
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(
+        RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED));
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
-    ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -147,7 +153,8 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagAbnormalTest001");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     uint32_t flag;
@@ -161,11 +168,10 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level
     ret = AccessTokenKit::GetPermissionFlag(tokenID, invalidPerm, flag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
-    ret = AccessTokenKit::GetPermissionFlag(TEST_TOKENID_INVALID, "ohos.permission.MICROPHONE", flag);
+    ret = AccessTokenKit::GetPermissionFlag(TEST_TOKENID_INVALID, PERMISSION_MICROPHONE, flag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.ALPHA", flag);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
@@ -181,18 +187,17 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagSpecTest001");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
-        int32_t ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, PERMISSION_MICROPHONE, PERMISSION_USER_FIXED));
 
-        ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
         ASSERT_EQ(PERMISSION_USER_FIXED, flag);
     }
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -205,18 +210,16 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagSpecTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagSpecTest002");
 
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    bool isSystemApp = false;
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back(GRANT_SENSITIVE_PERMISSION);
+    MockHapToken mock("GetPermissionFlagSpecTest002", reqPerm, isSystemApp);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     uint32_t flag;
-    int ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
 }
 
 /**
@@ -229,22 +232,20 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagSpecTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagSpecTest003");
 
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    bool isSystemApp = true;
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back(GRANT_SENSITIVE_PERMISSION);
+    MockHapToken mock("GetPermissionFlagSpecTest003", reqPerm, isSystemApp);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(
+        RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED));
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

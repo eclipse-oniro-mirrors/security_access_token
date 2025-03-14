@@ -17,6 +17,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
@@ -25,18 +26,17 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 namespace {
-static AccessTokenID g_selfTokenId = 0;
-static AccessTokenIDEx g_testTokenIDEx = {0};
-static int32_t g_selfUid;
+static uint64_t g_selfTokenId = 0;
+static AccessTokenID g_testTokenID = 0;
 
-static HapPolicyParams g_PolicyPrams = {
+static HapPolicyParams g_policyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
 };
 
-static HapInfoParams g_InfoParms = {
+static HapInfoParams g_infoParms = {
     .userID = 1,
-    .bundleName = "ohos.test.bundle",
+    .bundleName = "GetRemoteNativeTokenIDTest",
     .instIndex = 0,
     .appIDDesc = "test.bundle",
     .isSystemApp = true
@@ -67,35 +67,33 @@ using namespace testing::ext;
 void GetRemoteNativeTokenIDTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-    g_selfUid = getuid();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void GetRemoteNativeTokenIDTest::TearDownTestCase()
 {
-    setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  tokenID is " << GetSelfTokenID();
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  uid is " << getuid();
 }
 
 void GetRemoteNativeTokenIDTest::SetUp()
 {
-    AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_infoParms, g_policyPrams, tokenIdEx));
 
-    g_testTokenIDEx = AccessTokenKit::GetHapTokenIDEx(g_InfoParms.userID,
-                                                      g_InfoParms.bundleName,
-                                                      g_InfoParms.instIndex);
-    ASSERT_NE(INVALID_TOKENID, g_testTokenIDEx.tokenIDEx);
-    setuid(g_selfUid);
-    EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
-    setuid(1234); // 1234: UID
+    g_testTokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, g_testTokenID);
+    EXPECT_EQ(0, SetSelfTokenID(g_testTokenID));
 }
 
 void GetRemoteNativeTokenIDTest::TearDown()
 {
-    setuid(g_selfUid);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    setuid(g_selfUid);
 }
 #ifdef TOKEN_SYNC_ENABLE
 /**

@@ -25,10 +25,10 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const int32_t INDEX_ZERO = 0;
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static int32_t g_selfUid;
 static std::string SHORT_TEMP_PERMISSION = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO";
+static MockHapToken* g_mock = nullptr;
 static PermissionStateFull g_permiState = {
     .permissionName = SHORT_TEMP_PERMISSION,
     .isGeneral = true,
@@ -52,17 +52,6 @@ static HapInfoParams g_infoParms = {
 };
 }
 
-static void NativeTokenGet()
-{
-    uint64_t tokenID;
-    const char **perms = new const char *[1]; // 1: array size
-    perms[INDEX_ZERO] = "ohos.permission.DISTRIBUTED_DATASYNC";
-
-    tokenID = TestCommon::GetNativeToken("GrantPermissionForSpecifiedTimeTest", perms, 1); // 1: array size
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
-    delete[] perms;
-}
-
 using namespace testing::ext;
 
 void GrantPermissionForSpecifiedTimeTest::SetUpTestCase()
@@ -70,32 +59,42 @@ void GrantPermissionForSpecifiedTimeTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
     g_selfUid = getuid();
 
-    NativeTokenGet();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO");
+    g_mock = new (std::nothrow) MockHapToken("GrantPermissionForSpecifiedTimeTest", reqPerm);
 }
 
 void GrantPermissionForSpecifiedTimeTest::TearDownTestCase()
 {
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void GrantPermissionForSpecifiedTimeTest::SetUp()
 {
     setuid(0);
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
-                                                          g_infoParms.bundleName,
-                                                          g_infoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
-    AccessTokenKit::AllocHapToken(g_infoParms, g_policyPrams);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    EXPECT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void GrantPermissionForSpecifiedTimeTest::TearDown()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
-                                                          g_infoParms.bundleName,
-                                                          g_infoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 /**
@@ -149,10 +148,9 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
     HapInfoParams infoParms = g_infoParms;
     policyPrams.permStateList.clear();
 
-    AccessTokenKit::AllocHapToken(infoParms, policyPrams);
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(infoParms.userID,
-                                                          infoParms.bundleName,
-                                                          infoParms.instIndex);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParms, policyPrams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t onceTime = 10; // 10: 10s
 
@@ -169,9 +167,9 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest003, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest003");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
-                                                          g_infoParms.bundleName,
-                                                          g_infoParms.instIndex);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t onceTime = 10; // 10: 10s
     std::string permission = "ohos.permission.CAMERA";
@@ -189,6 +187,8 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest004, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest004");
+    uint64_t selfTokenId = GetSelfTokenID();
+    SetSelfTokenID(g_selfTokenId);
     setuid(1234);
     AccessTokenID tokenId = 123;
     std::string permission = "permission";
@@ -196,6 +196,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
     setuid(g_selfUid);
+    SetSelfTokenID(selfTokenId);
 }
 
 /**
@@ -208,9 +209,9 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest001");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
-                                                          g_infoParms.bundleName,
-                                                          g_infoParms.instIndex);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t onceTime = 2;
 
@@ -235,9 +236,9 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpe
 HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest002");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoParms.userID,
-                                                          g_infoParms.bundleName,
-                                                          g_infoParms.instIndex);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t onceTime = 3;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef GET_SELF_PERMISSIONS_STATE_TEST_H
-#define GET_SELF_PERMISSIONS_STATE_TEST_H
+#ifndef ACCESSTOKEN_LOCATION_REQUEST_TEST_H
+#define ACCESSTOKEN_LOCATION_REQUEST_TEST_H
 
 #include <gtest/gtest.h>
 
-#include "access_token.h"
-#include "accesstoken_kit.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class GetSelfPermissionsStateTest : public testing::Test {
+class AccessTokenLocationRequestTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
@@ -36,4 +34,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // GET_SELF_PERMISSIONS_STATE_TEST_H
+#endif // ACCESSTOKEN_LOCATION_REQUEST_TEST_H

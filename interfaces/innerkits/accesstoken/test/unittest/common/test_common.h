@@ -26,9 +26,31 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+class MockNativeToken {
+public:
+    explicit MockNativeToken(const std::string& process);
+    ~MockNativeToken();
+private:
+    uint64_t selfToken_;
+};
+
+class MockHapToken {
+public:
+    explicit MockHapToken(
+        const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp = true);
+    ~MockHapToken();
+private:
+    uint64_t selfToken_;
+    uint32_t mockToken_;
+};
+
 class TestCommon {
 public:
     static constexpr int32_t DEFAULT_API_VERSION = 12;
+
+    static void SetTestEvironment(uint64_t shellTokenId);
+    static void ResetTestEvironment();
+    static uint64_t GetShellTokenId();
 
     static void GetHapParams(HapInfoParams& infoParams, HapPolicyParams& policyParams);
     static void TestPreparePermStateList(HapPolicyParams &policy);
@@ -41,9 +63,21 @@ public:
     static HapInfoParams GetInfoManagerTestNormalInfoParms();
     static HapInfoParams GetInfoManagerTestSystemInfoParms();
     static HapPolicyParams GetInfoManagerTestPolicyPrams();
-    static AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy);
+
+    static int32_t AllocTestHapToken(const HapInfoParams& hapInfo,
+        HapPolicyParams& hapPolicy, AccessTokenIDEx& tokenIdEx);
+    static AccessTokenIDEx AllocAndGrantHapTokenByTest(const HapInfoParams& info, HapPolicyParams& policy);
+    static int32_t DeleteTestHapToken(AccessTokenID tokenID);
     static void GetNativeTokenTest();
-    static uint64_t GetNativeToken(const char *processName, const char **perms, int32_t permNum);
+    static uint64_t GetNativeToken(const char* processName, const char** perms, int32_t permNum);
+    static AccessTokenID GetNativeTokenIdFromProcess(const std::string& process);
+    static AccessTokenIDEx GetHapTokenIdFromBundle(
+        int32_t userID, const std::string& bundleName, int32_t instIndex);
+    static int32_t GrantPermissionByTest(AccessTokenID tokenID, const std::string& permission, uint32_t flag);
+    static int32_t RevokePermissionByTest(AccessTokenID tokenID, const std::string& permission, uint32_t flag);
+    static int32_t GetReqPermissionsByTest(
+        AccessTokenID tokenID, std::vector<PermissionStateFull>& permStatList, bool isSystemGrant);
+    static int32_t GetPermissionFlagByTest(AccessTokenID tokenID, const std::string& permission, uint32_t& flag);
 };
 }  // namespace AccessToken
 }  // namespace Security

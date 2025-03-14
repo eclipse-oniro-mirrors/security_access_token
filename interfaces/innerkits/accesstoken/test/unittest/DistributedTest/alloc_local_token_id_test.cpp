@@ -20,8 +20,8 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "token_setproc.h"
 #include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -29,23 +29,17 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
+static AccessTokenID g_testTokenId = 0x20100000;
 
 HapTokenInfo g_baseInfo = {
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .tokenID = 0x20100000,
+    .tokenID = g_testTokenId,
     .tokenAttr = 0
 };
-
-void NativeTokenGet()
-{
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    ASSERT_NE(tokenId, INVALID_TOKENID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-}
 
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -78,30 +72,35 @@ public:
 void AllocLocalTokenIDTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-
-    NativeTokenGet();
-
+    TestCommon::SetTestEvironment(g_selfTokenId);
 #ifdef TOKEN_SYNC_ENABLE
-    std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
+        int32_t res =
+            DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
 }
 
 void AllocLocalTokenIDTest::TearDownTestCase()
 {
-    SetSelfTokenID(g_selfTokenId);
 #ifdef TOKEN_SYNC_ENABLE
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void AllocLocalTokenIDTest::SetUp()
 {
-    selfTokenId_ = GetSelfTokenID();
-
 #ifdef TOKEN_SYNC_ENABLE
+    MockNativeToken mock("foundation");
     DistributedHardware::DmDeviceInfo deviceInfo;
     int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TEST_PKG_NAME, deviceInfo);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -115,12 +114,11 @@ void AllocLocalTokenIDTest::SetUp()
 #endif
 
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-    setuid(0);
 }
 
 void AllocLocalTokenIDTest::TearDown()
 {
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     udid_.clear();
     networkId_.clear();
 }
@@ -128,15 +126,50 @@ void AllocLocalTokenIDTest::TearDown()
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: AllocLocalTokenIDFuncTest001
- * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.desc: test call AllocLocalTokenID by hap token(permission denied)
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
 HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest001 start.");
+    HapInfoParams infoParms = {
+        .userID = 1,
+        .bundleName = "GetHapTokenInfoFromRemoteTest",
+        .instIndex = 0,
+        .appIDDesc = "test.bundle",
+        .apiVersion = 8,
+        .appDistributionType = "enterprise_mdm"
+    };
+
+    HapPolicyParams policyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParms, policyPrams, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(tokenId, INVALID_TOKENID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));  // set self hap token
+
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    EXPECT_EQ(mapID, 0);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: AllocLocalTokenIDFuncTest002
+ * @tc.desc: get already mapping tokenInfo, makesure ipc right, by native token(permission pass)
+ * @tc.type: FUNC
+ * @tc.require:issue I5R4UF
+ */
+HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest002, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest002 start.");
+    MockNativeToken mock("token_sync_service");
     std::string deviceID1 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenId);
     PermissionStatus infoManagerTestState_1 = {
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
@@ -152,7 +185,7 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID1, remoteTokenInfo1);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 }
 #endif

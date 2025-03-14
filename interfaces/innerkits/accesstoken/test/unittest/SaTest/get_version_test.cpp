@@ -36,136 +36,28 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string TEST_BUNDLE_NAME = "ohos";
-static const int TEST_USER_ID = 0;
-
-HapInfoParams g_locationTestInfo = {
-    .userID = TEST_USER_ID,
-    .bundleName = "accesstoken_location_test",
-    .instIndex = 0,
-    .appIDDesc = "test2"
-};
-
-HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
-HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
-HapPolicyParams g_infoManagerTestPolicyPramsBak = g_infoManagerTestPolicyPrams;
-
 uint64_t g_selfShellTokenId;
-}
-
-void GetNativeTokenTest()
-{
-    uint64_t tokenId;
-    const char **perms = new const char *[4];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
-    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // 2 means the second permission
-    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
-
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 4,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .aplStr = "system_core",
-    };
-
-    infoInstance.processName = "TestCase";
-    tokenId = GetAccessTokenId(&infoInstance);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-    AccessTokenKit::ReloadNativeTokenInfo();
-    delete[] perms;
 }
 
 void GetVersionTest::SetUpTestCase()
 {
     g_selfShellTokenId = GetSelfTokenID();
-    // clean up test cases
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                                          g_infoManagerTestNormalInfoParms.bundleName,
-                                                          g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    GetNativeTokenTest();
+    TestCommon::SetTestEvironment(g_selfShellTokenId);
 }
 
 void GetVersionTest::TearDownTestCase()
 {
     SetSelfTokenID(g_selfShellTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void GetVersionTest::SetUp()
 {
-    setuid(0);
-    selfTokenId_ = GetSelfTokenID();
-    g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPramsBak;
-    HapInfoParams info = {
-        .userID = TEST_USER_ID,
-        .bundleName = TEST_BUNDLE_NAME,
-        .instIndex = 0,
-        .appIDDesc = "appIDDesc",
-        .apiVersion = 8,
-        .isSystemApp = true
-    };
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-    AccessTokenKit::AllocHapToken(info, policy);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 }
 
 void GetVersionTest::TearDown()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenId);
-    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-void GetVersionTest::AllocHapToken(std::vector<PermissionDef>& permissionDefs,
-    std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion)
-{
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    HapInfoParams info = g_locationTestInfo;
-    info.apiVersion = apiVersion;
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-
-    for (auto& permissionDef:permissionDefs) {
-        policy.permList.emplace_back(permissionDef);
-    }
-
-    for (auto& permissionStateFull:permissionStateFulls) {
-        policy.permStateList.emplace_back(permissionStateFull);
-    }
-
-    AccessTokenKit::AllocHapToken(info, policy);
 }
 
 /**
@@ -177,14 +69,11 @@ void GetVersionTest::AllocHapToken(std::vector<PermissionDef>& permissionDefs,
 HWTEST_F(GetVersionTest, GetVersionFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionFuncTest001");
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetVersionFuncTest001", reqPerm, false);
 
     uint32_t version;
-    int32_t res = AccessTokenKit::GetVersion(version);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetVersion(version));
 }
 
 /**
@@ -196,10 +85,8 @@ HWTEST_F(GetVersionTest, GetVersionFuncTest001, TestSize.Level1)
 HWTEST_F(GetVersionTest, GetVersionFuncTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionFuncTest002");
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetVersionFuncTest002", reqPerm, true);
 
     uint32_t version;
     int32_t res = AccessTokenKit::GetVersion(version);

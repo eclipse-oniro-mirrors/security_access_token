@@ -34,31 +34,40 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
+static const std::string TEST_PERMISSION = "ohos.permission.ALPHA";
+static MockNativeToken* g_mock;
+
+HapInfoParams g_infoParms = {
+    .userID = 1,
+    .bundleName = "GetHapTokenInfoFromRemoteTest",
+    .instIndex = 0,
+    .appIDDesc = "test.bundle",
+    .apiVersion = 8,
+    .appDistributionType = "enterprise_mdm"
 };
+
+HapPolicyParams g_policyPrams = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain",
+};
+}
 
 void DeleteTokenTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+
+    // native process with MANAGER_HAP_ID
+    g_mock = new (std::nothrow) MockNativeToken("foundation");
 
     // clean up test cases
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void DeleteTokenTest::TearDownTestCase()
@@ -66,19 +75,17 @@ void DeleteTokenTest::TearDownTestCase()
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    SetSelfTokenID(g_selfTokenId);
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void DeleteTokenTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-
-    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -91,14 +98,25 @@ void DeleteTokenTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
+    PermissionDef permissionDefAlpha = {
+        .permissionName = TEST_PERMISSION,
+        .bundleName = TEST_BUNDLE_NAME,
+        .grantMode = GrantMode::USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false
+    };
+    policy.permList.emplace_back(permissionDefAlpha);
     TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void DeleteTokenTest::TearDown()
 {
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenKit::DeleteToken(tokenID);
 }
 
 /**
@@ -172,12 +190,9 @@ HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
 HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenAbnormalTest002");
-
+    AccessTokenID tokenID = GetSelfTokenID(); // native token
     // tokenID != TOKEN_HAP
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("hdcd");
-    ASSERT_EQ(TOKEN_SHELL, AccessTokenKit::GetTokenType(tokenID));
-    int ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -190,7 +205,9 @@ HWTEST_F(DeleteTokenTest, DeleteTokenSpecTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenSpecTest001");
 
-    AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef USER_POLICY_TEST_H
-#define USER_POLICY_TEST_H
+#ifndef SET_PERM_DIALOG_CAP_TEST_H
+#define SET_PERM_DIALOG_CAP_TEST_H
 
 #include <gtest/gtest.h>
 
@@ -26,14 +26,16 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class UserPolicyTest : public testing::Test {
+class SetPermDialogCapTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
+    void DeleteTestToken() const;
+    AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy) const;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // USER_POLICY_TEST_H
+#endif // SET_PERM_DIALOG_CAP_TEST_H
