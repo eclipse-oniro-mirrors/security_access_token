@@ -5901,6 +5901,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MANAGE_APN_SETTING",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
