@@ -33,44 +33,38 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static const int TEST_USER_ID_INVALID = -1;
+static MockNativeToken* g_mock;
 HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
+HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
 }
 
 void GetHapTokenTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+    g_mock = new (std::nothrow) MockNativeToken("foundation");
 
     // clean up test cases
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 void GetHapTokenTest::TearDownTestCase()
 {
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    TestCommon::DeleteTestHapToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
     SetSelfTokenID(g_selfTokenId);
 }
 
@@ -78,7 +72,6 @@ void GetHapTokenTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
-    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -91,14 +84,17 @@ void GetHapTokenTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
     TestCommon::TestPreparePermStateList(policy);
 
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void GetHapTokenTest::TearDown()
 {
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 /**
@@ -119,7 +115,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
+    ret = TestCommon::DeleteTestHapToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 }
 
@@ -147,13 +143,16 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest002");
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "invalid bundlename", 0);
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "", 0);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
+
+    tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "invalid bundlename", 0);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
  * @tc.name: GetHapTokenIDAbnormalTest003
- * @tc.desc: cannot get hap tokenid with invalid bundlename.
+ * @tc.desc: cannot get hap tokenid with invalid instIndex.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -175,10 +174,9 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExFuncTest001");
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
-                                                              g_infoManagerTestPolicyPrams);
-
-    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(g_infoManagerTestSystemInfoParms.userID,
+    AccessTokenIDEx tokenIdEx;
+    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestSystemInfoParms.userID,
                                                                  g_infoManagerTestSystemInfoParms.bundleName,
                                                                  g_infoManagerTestSystemInfoParms.instIndex);
 
@@ -188,7 +186,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(hapTokenInfoRes.bundleName, g_infoManagerTestSystemInfoParms.bundleName);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -229,7 +227,10 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest003");
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, "", 0);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+
+    tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
     ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
@@ -256,7 +257,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoFuncTest001, TestSize.Level0)
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
 
     ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -294,6 +295,77 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level1)
 
     ret = AccessTokenKit::GetHapTokenInfoExtension(INVALID_TOKENID, hapTokenInfoExt);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
+
+/**
+ * @tc.name: IsSystemAppByFullTokenIDTest001
+ * @tc.desc: check systemapp level by TokenIDEx after AllocHapToken function set isSystemApp true.
+ * @tc.type: FUNC
+ * @tc.require: issueI60F1M
+ */
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level1)
+{
+    std::vector<std::string> reqPerm;
+    AccessTokenIDEx tokenIdEx = {0};
+    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(true, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = g_infoManagerTestSystemInfoParms.appIDDesc;
+    info.apiVersion = g_infoManagerTestSystemInfoParms.apiVersion;
+    info.isSystemApp = false;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
+    tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+
+    ASSERT_EQ(false, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: IsSystemAppByFullTokenIDTest002
+ * @tc.desc: check systemapp level by TokenIDEx after AllocHapToken function set isSystemApp false.
+ * @tc.type: FUNC
+ * @tc.require: issueI60F1M
+ */
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_TRUE(TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+
+    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    UpdateHapInfoParams info;
+    info.appIDDesc = g_infoManagerTestNormalInfoParms.appIDDesc;
+    info.apiVersion = g_infoManagerTestNormalInfoParms.apiVersion;
+    info.isSystemApp = true;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
+    tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+
+    ASSERT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: IsSystemAppByFullTokenIDTest003
+ * @tc.desc: check systemapp level by TokenIDEx after AllocHapToken function set isSystemApp false.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    bool res = AccessTokenKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

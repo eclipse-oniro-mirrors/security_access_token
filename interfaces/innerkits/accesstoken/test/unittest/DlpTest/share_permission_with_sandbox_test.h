@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_KIT_PERM_TEST_H
-#define ACCESSTOKEN_KIT_PERM_TEST_H
+#ifndef SHARE_PERMISSION_WITH_SANDBOX_TEST_H
+#define SHARE_PERMISSION_WITH_SANDBOX_TEST_H
 
 #include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AccessTokenDenyTest : public testing::Test {
+class SharePermissionTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
-    void SetUp();
     void TearDown();
+    void SetUp();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ACCESSTOKEN_KIT_PERM_TEST_H
+#endif // SHARE_PERMISSION_WITH_SANDBOX_TEST_H

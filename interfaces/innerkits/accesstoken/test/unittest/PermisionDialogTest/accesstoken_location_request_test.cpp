@@ -22,6 +22,7 @@
 #include "permission_grant_info.h"
 #include "permission_list_state.h"
 #include "permission_state_full.h"
+#include "test_common.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -30,6 +31,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static uint64_t g_selfTokenId = 0;
 static constexpr int32_t TEST_USER_ID = 100;
 static std::string TEST_BUNDLE_NAME = "accesstoken_location_request_test";
 static constexpr int32_t TEST_INST_INDEX = 0;
@@ -121,25 +123,32 @@ PermissionStateFull g_locationTestStateBack12 = {
 
 void AccessTokenLocationRequestTest::SetUpTestCase()
 {
-    setuid(0);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, TEST_INST_INDEX);
-    AccessTokenKit::DeleteToken(tokenId);
+    g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenId != INVALID_TOKENID) {
+        EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+    }
 }
 
 void AccessTokenLocationRequestTest::TearDownTestCase()
 {
+    SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void AccessTokenLocationRequestTest::SetUp()
 {
-    selfTokenId_ = GetSelfTokenID();
 }
 
 void AccessTokenLocationRequestTest::TearDown()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, TEST_INST_INDEX);
-    AccessTokenKit::DeleteToken(tokenId);
-    SetSelfTokenID(selfTokenId_);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenId != INVALID_TOKENID) {
+        EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+    }
 }
 
 AccessTokenIDEx AllocHapToken(std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion)
@@ -158,11 +167,33 @@ AccessTokenIDEx AllocHapToken(std::vector<PermissionStateFull>& permissionStateF
         .domain = "domain"
     };
 
-    for (auto& permissionStateFull:permissionStateFulls) {
+    for (const auto& permissionStateFull : permissionStateFulls) {
+        PermissionDef permDefResult;
+        if (AccessTokenKit::GetDefPermission(permissionStateFull.permissionName, permDefResult) != RET_SUCCESS) {
+            continue;
+        }
         policy.permStateList.emplace_back(permissionStateFull);
+        if (permDefResult.availableLevel > policy.apl) {
+            policy.aclRequestedList.emplace_back(permissionStateFull.permissionName);
+        }
     }
 
-    return AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenId, INVALID_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    for (const auto& permissionStateFull : permissionStateFulls) {
+        if (permissionStateFull.grantStatus[0] == PERMISSION_GRANTED) {
+            TestCommon::GrantPermissionByTest(
+                tokenId, permissionStateFull.permissionName, permissionStateFull.grantFlags[0]);
+        } else {
+            TestCommon::RevokePermissionByTest(
+                tokenId, permissionStateFull.permissionName, permissionStateFull.grantFlags[0]);
+        }
+    }
+    return tokenIdEx;
 }
 
 /**
@@ -225,6 +256,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList2.size());
     ASSERT_EQ(SETTING_OPER, permsList2[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -256,6 +290,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList3.size());
     ASSERT_EQ(PASS_OPER, permsList3[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -287,6 +324,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList4.size());
     ASSERT_EQ(INVALID_OPER, permsList4[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -319,6 +359,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList5.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList5[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -350,6 +393,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList6.size());
     ASSERT_EQ(INVALID_OPER, permsList6[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -382,6 +428,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList7.size());
     ASSERT_EQ(INVALID_OPER, permsList7[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -420,6 +469,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList8.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList8[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList8[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -453,11 +505,13 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Le
     permsList9.emplace_back(permAccurate9);
 
     PermissionGrantInfo info;
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList9, info);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList9, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList9.size());
     ASSERT_EQ(PASS_OPER, permsList9[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList9[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -496,6 +550,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList10.size());
     ASSERT_EQ(SETTING_OPER, permsList10[0].state);
     ASSERT_EQ(INVALID_OPER, permsList10[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -534,6 +591,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList11.size());
     ASSERT_EQ(PASS_OPER, permsList11[0].state);
     ASSERT_EQ(PASS_OPER, permsList11[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -574,7 +634,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList12[1].state);
 
     // grant back permission, get vague again, ret: DYNAMIC_OPER, state: DYNAMIC_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList121;
     permsList121.emplace_back(permVague12);
@@ -582,6 +642,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList121.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList121[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -621,7 +684,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList13[0].state);
     ASSERT_EQ(INVALID_OPER, permsList13[1].state);
     // grant back permission, get vague again, ret: PASS_OPER, state: PASS_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList131;
     permsList131.emplace_back(permVague13);
@@ -629,6 +692,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList131.size());
     ASSERT_EQ(PASS_OPER, permsList131[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -668,7 +734,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList14[0].state);
     ASSERT_EQ(INVALID_OPER, permsList14[1].state);
     // grant back permission, get vague again, ret: PASS_OPER, state: SETTING_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList141;
     permsList141.emplace_back(permVague14);
@@ -676,6 +742,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList141.size());
     ASSERT_EQ(SETTING_OPER, permsList141[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -715,7 +784,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList15[0].state);
     ASSERT_EQ(INVALID_OPER, permsList15[1].state);
     // grant back permission, get vague again, ret: PASS_OPER, state: PASS_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList151;
     permsList151.emplace_back(permVague15);
@@ -723,6 +792,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList151.size());
     ASSERT_EQ(PASS_OPER, permsList151[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -763,7 +835,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList16[1].state);
 
     // grant back permission, get accerate again, ret: PASS_OPER, state: INVALID_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList161;
     permsList161.emplace_back(permAccurate16);
@@ -771,6 +843,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList161.size());
     ASSERT_EQ(INVALID_OPER, permsList161[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -812,7 +887,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList17[1].state);
 
     // grant back permission, get accerate again, ret: PASS_OPER, state: INVALID_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList171;
     permsList171.emplace_back(permAccurate17);
@@ -820,6 +895,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret); // API>=11, only request accrtate, need pop dialog
     ASSERT_EQ(static_cast<uint32_t>(1), permsList171.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList171[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -867,7 +945,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList18[2].state);
 
     // grant back permission, get accerate&vague again, ret: DYNAMIC_OPER, state: DYNAMIC_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList181;
     permsList181.emplace_back(permVague18);
@@ -877,6 +955,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList181.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList181[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList181[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -924,7 +1005,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList19[2].state);
 
     // grant back permission, get accerate&vague again, ret: DYNAMIC_OPER, state: PASS_OPER + DYNAMIC_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList191;
     permsList191.emplace_back(permVague19);
@@ -934,6 +1015,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList191.size());
     ASSERT_EQ(PASS_OPER, permsList191[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList191[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -981,7 +1065,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList20[2].state);
 
     // grant back permission, get accerate&vague again, ret: PASS_OPER, state: PASS_OPER + PASS_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList201;
     permsList201.emplace_back(permVague20);
@@ -991,6 +1075,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList201.size());
     ASSERT_EQ(PASS_OPER, permsList201[0].state);
     ASSERT_EQ(PASS_OPER, permsList201[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1046,6 +1133,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList211.size());
     ASSERT_EQ(PASS_OPER, permsList211[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList211[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1101,6 +1191,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList221.size());
     ASSERT_EQ(PASS_OPER, permsList221[0].state);
     ASSERT_EQ(PASS_OPER, permsList221[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1147,7 +1240,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList23[1].state);
     ASSERT_EQ(INVALID_OPER, permsList23[2].state);
     // grant back permission, get accerate&vague again, ret: PASS_OPER, state: SETTING_OPER + INVALID_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList231;
     permsList231.emplace_back(permVague23);
@@ -1157,6 +1250,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList231.size());
     ASSERT_EQ(SETTING_OPER, permsList231[0].state);
     ASSERT_EQ(INVALID_OPER, permsList231[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1196,33 +1292,33 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Le
     permsList24.emplace_back(permBack24);
 
     PermissionGrantInfo info;
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList24, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList24, info));
     ASSERT_EQ(static_cast<uint32_t>(3), permsList24.size());
     ASSERT_EQ(INVALID_OPER, permsList24[0].state);
     ASSERT_EQ(INVALID_OPER, permsList24[1].state);
     ASSERT_EQ(INVALID_OPER, permsList24[2].state);
 
     // grant back permission, get accerate&vague again, ret: PASS_OPER, state: SETTING_OPER + SETTING_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList241;
     permsList241.emplace_back(permVague24);
     permsList241.emplace_back(permAccurate24);
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList241, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList241, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList241.size());
     ASSERT_EQ(SETTING_OPER, permsList241[0].state);
     ASSERT_EQ(SETTING_OPER, permsList241[1].state);
 
     // grant vague permission, get accerate&vague again, ret: PASS_OPER, state: PASS_OPER + SETTING_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PermissionFlag::PERMISSION_USER_FIXED));
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList241, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList241, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList241.size());
     ASSERT_EQ(PASS_OPER, permsList241[0].state);
     ASSERT_EQ(SETTING_OPER, permsList241[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1262,33 +1358,33 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Le
     permsList25.emplace_back(permBack25);
 
     PermissionGrantInfo info;
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList25, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList25, info));
     ASSERT_EQ(static_cast<uint32_t>(3), permsList25.size());
     ASSERT_EQ(INVALID_OPER, permsList25[0].state);
     ASSERT_EQ(INVALID_OPER, permsList25[1].state);
     ASSERT_EQ(INVALID_OPER, permsList25[2].state);
 
     // grant back permission, get accerate&vague again, ret: PASS_OPER, state: SETTING_OPER + INVALID_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList251;
     permsList251.emplace_back(permVague25);
     permsList251.emplace_back(permAccurate25);
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList251, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList251, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList251.size());
     ASSERT_EQ(SETTING_OPER, permsList251[0].state);
     ASSERT_EQ(INVALID_OPER, permsList251[1].state);
 
     // grant vague permission, get accerate&vague again, ret: DYNAMIC_OPER, state: PASS_OPER + DYNAMIC_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PermissionFlag::PERMISSION_USER_FIXED));
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList251, info);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
+    ASSERT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList251, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList251.size());
     ASSERT_EQ(PASS_OPER, permsList251[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList251[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1328,33 +1424,33 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Le
     permsList26.emplace_back(permBack26);
 
     PermissionGrantInfo info;
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList26, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList26, info));
     ASSERT_EQ(static_cast<uint32_t>(3), permsList26.size());
     ASSERT_EQ(INVALID_OPER, permsList26[0].state);
     ASSERT_EQ(INVALID_OPER, permsList26[1].state);
     ASSERT_EQ(INVALID_OPER, permsList26[2].state);
 
     // grant back permission, get accerate&vague again, ret: PASS_OPER, state: SETTING_OPER + SETTING_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList261;
     permsList261.emplace_back(permVague26);
     permsList261.emplace_back(permAccurate26);
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList261, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList261, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList261.size());
     ASSERT_EQ(SETTING_OPER, permsList261[0].state);
     ASSERT_EQ(SETTING_OPER, permsList261[1].state);
 
     // grant vague permission, get accerate&vague again, ret: PASS_OPER, state: PASS_OPER + SETTING_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PermissionFlag::PERMISSION_USER_FIXED));
-    ret = AccessTokenKit::GetSelfPermissionsState(permsList261, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList261, info));
     ASSERT_EQ(static_cast<uint32_t>(2), permsList261.size());
     ASSERT_EQ(PASS_OPER, permsList261[0].state);
     ASSERT_EQ(SETTING_OPER, permsList261[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1414,6 +1510,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList27[2].state);
     ASSERT_EQ(PASS_OPER, permsList27[3].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList27[4].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1445,6 +1544,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Le
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList28.size());
     ASSERT_EQ(INVALID_OPER, permsList28[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1476,6 +1578,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList29.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList29[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1507,6 +1612,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList30.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList30[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1545,6 +1653,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList31.size());
     ASSERT_EQ(INVALID_OPER, permsList31[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList31[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1583,6 +1694,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList32.size());
     ASSERT_EQ(INVALID_OPER, permsList32[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList32[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1620,6 +1734,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList33.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1665,6 +1782,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Le
     ASSERT_EQ(INVALID_OPER, permsList34[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList34[1].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList34[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1705,7 +1825,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList35[1].state);
 
     // grant back permission, get vague again, ret: DYNAMIC_OPER, state: DYNAMIC_OPER
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
         tokenID, "ohos.permission.LOCATION_IN_BACKGROUND", PermissionFlag::PERMISSION_USER_FIXED));
     std::vector<PermissionListState> permsList351;
     permsList351.emplace_back(permVague35);
@@ -1713,6 +1833,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList351.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList351[0].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1751,6 +1874,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState036, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList36.size());
     ASSERT_EQ(PASS_OPER, permsList36[0].state);
     ASSERT_EQ(INVALID_OPER, permsList36[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1789,6 +1915,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState037, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList37.size());
     ASSERT_EQ(SETTING_OPER, permsList37[0].state);
     ASSERT_EQ(INVALID_OPER, permsList37[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1827,6 +1956,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState038, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList38.size());
     ASSERT_EQ(PASS_OPER, permsList38[0].state);
     ASSERT_EQ(PASS_OPER, permsList38[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1865,6 +1997,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList39.size());
     ASSERT_EQ(INVALID_OPER, permsList39[0].state);
     ASSERT_EQ(INVALID_OPER, permsList39[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1904,6 +2039,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Le
     ASSERT_EQ(static_cast<uint32_t>(2), permsList40.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList40[0].state);
     ASSERT_EQ(SETTING_OPER, permsList40[1].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1949,6 +2087,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState041, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, permsList41[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList41[1].state);
     ASSERT_EQ(SETTING_OPER, permsList41[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -1994,6 +2135,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState042, TestSize.Le
     ASSERT_EQ(PASS_OPER, permsList42[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList42[1].state);
     ASSERT_EQ(SETTING_OPER, permsList42[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2039,6 +2183,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState043, TestSize.Le
     ASSERT_EQ(PASS_OPER, permsList43[0].state);
     ASSERT_EQ(PASS_OPER, permsList43[1].state);
     ASSERT_EQ(INVALID_OPER, permsList43[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2084,6 +2231,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState044, TestSize.Le
     ASSERT_EQ(PASS_OPER, permsList44[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList44[1].state);
     ASSERT_EQ(PASS_OPER, permsList44[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2129,6 +2279,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState045, TestSize.Le
     ASSERT_EQ(PASS_OPER, permsList45[0].state);
     ASSERT_EQ(PASS_OPER, permsList45[1].state);
     ASSERT_EQ(PASS_OPER, permsList45[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2174,6 +2327,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState046, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList46[0].state);
     ASSERT_EQ(INVALID_OPER, permsList46[1].state);
     ASSERT_EQ(INVALID_OPER, permsList46[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2219,6 +2375,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState047, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList47[0].state);
     ASSERT_EQ(SETTING_OPER, permsList47[1].state);
     ASSERT_EQ(INVALID_OPER, permsList47[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2264,6 +2423,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState048, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList48[0].state);
     ASSERT_EQ(INVALID_OPER, permsList48[1].state);
     ASSERT_EQ(SETTING_OPER, permsList48[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2309,6 +2471,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState049, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList49[0].state);
     ASSERT_EQ(SETTING_OPER, permsList49[1].state);
     ASSERT_EQ(SETTING_OPER, permsList49[2].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -2368,6 +2533,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState050, TestSize.Le
     ASSERT_EQ(SETTING_OPER, permsList50[2].state);
     ASSERT_EQ(PASS_OPER, permsList50[3].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList50[4].state);
+
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

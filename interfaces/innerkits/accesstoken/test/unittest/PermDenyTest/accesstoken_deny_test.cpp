@@ -16,6 +16,7 @@
 #include "accesstoken_deny_test.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
@@ -25,7 +26,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
 
@@ -68,24 +69,20 @@ void AccessTokenDenyTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
     g_selfUid = getuid();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void AccessTokenDenyTest::TearDownTestCase()
 {
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  tokenID is " << GetSelfTokenID();
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  uid is " << getuid();
 }
 
 void AccessTokenDenyTest::SetUp()
 {
-    AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
-
-    g_testTokenIDEx = AccessTokenKit::GetHapTokenIDEx(g_InfoParms.userID,
-                                                      g_InfoParms.bundleName,
-                                                      g_InfoParms.instIndex);
-    ASSERT_NE(INVALID_TOKENID, g_testTokenIDEx.tokenIDEx);
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
     setuid(1234); // 1234: UID
@@ -95,7 +92,6 @@ void AccessTokenDenyTest::TearDown()
 {
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    setuid(g_selfUid);
 }
 
 /**
@@ -241,6 +237,22 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetReqPermissions001
+ * @tc.desc: GetReqPermissions with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level1)
+{
+    std::vector<PermissionStateFull> permStatList;
+    AccessTokenID tokenID = 123; // 123: tokenid
+
+    // no permission
+    ASSERT_EQ(
+        AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetReqPermissions(tokenID, permStatList, false));
+}
+
+/**
  * @tc.name: GetPermissionFlag001
  * @tc.desc: GetPermissionFlag with no permission
  * @tc.type: FUNC
@@ -294,7 +306,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Leve
  */
 HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = 123; // 123: tokenid
     std::string permission = "ohos.permission.CAMERA";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GrantPermission(tokenId, permission, PERMISSION_USER_FIXED));
@@ -374,12 +386,13 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
     HapPolicyParams policyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
-        .permList = {},
-        .permStateList = {testState}
+        .permStateList = {testState},
+        .aclRequestedList = {"ohos.permission.GET_SENSITIVE_PERMISSIONS"}
     };
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, policyPrams);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, policyPrams, tokenIdEx));
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -387,17 +400,18 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
     auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfo);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
-    EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
 
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
     setuid(g_selfUid);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: ReloadNativeTokenInfo001
  * @tc.desc: ReloadNativeTokenInfo with no permission
@@ -408,6 +422,7 @@ HWTEST_F(AccessTokenDenyTest, ReloadNativeTokenInfo001, TestSize.Level1)
 {
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ReloadNativeTokenInfo());
 }
+#endif
 
 /**
  * @tc.name: GetNativeTokenId001
@@ -535,6 +550,19 @@ HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level
     uint32_t onceTime = 1;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
+}
+
+/**
+ * @tc.name: GetKernelPermissions001
+ * @tc.desc: GetKernelPermissions with permission denied
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::vector<PermissionWithValue> kernelPermList;
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetKernelPermissions(tokenId, kernelPermList));
 }
 } // namespace AccessToken
 } // namespace Security

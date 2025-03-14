@@ -13,15 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_KIT_SHORT_TIME_PERM_TEST_H
-#define ACCESSTOKEN_KIT_SHORT_TIME_PERM_TEST_H
+#ifndef APP_INSTALLATION_OPTIMIZED_TEST
+#define APP_INSTALLATION_OPTIMIZED_TEST
 
 #include <gtest/gtest.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AccessTokenShortTimePermTest : public testing::Test {
+class AppInstallationOptimizedTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
@@ -31,4 +36,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ACCESSTOKEN_KIT_SHORT_TIME_PERM_TEST_H
+#endif // APP_INSTALLATION_OPTIMIZED_TEST

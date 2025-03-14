@@ -20,6 +20,7 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "tokenid_kit.h"
 
@@ -32,6 +33,7 @@ static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.WRITE_MEDIA"
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string TEST_PERMISSION_REVOKE = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+static uint64_t g_selfTokenId = 0;
 
 HapInfoParams g_infoParmsCommon = {
     .userID = 1,
@@ -92,7 +94,6 @@ PermissionStateFull g_stateAll = {
 HapPolicyParams g_policyParams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
-    .permList = {},
     .permStateList = {g_stateFullControl, g_stateAll}
 };
 
@@ -100,9 +101,14 @@ HapPolicyParams g_policyParams = {
 
 void CloneAppPermissionTest::TearDownTestCase()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(1, "PermissionEnvironment", 0);
-    int32_t ret = AccessTokenKit::DeleteToken(tokenId);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(1, "PermissionEnvironment", 0);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    if (tokenId != INVALID_TOKENID) {
+        EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+    }
 }
 
 void CloneAppPermissionTest::SetUp()
@@ -116,6 +122,9 @@ void CloneAppPermissionTest::TearDown()
 
 void CloneAppPermissionTest::SetUpTestCase()
 {
+    g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+
     HapInfoParams infoParmsEnvironment = {
         .userID = 1,
         .bundleName = "PermissionEnvironment",
@@ -141,11 +150,10 @@ void CloneAppPermissionTest::SetUpTestCase()
     HapPolicyParams policyParams = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
-        .permList = {},
         .permStateList = {stateGrant, stateRevoke}
     };
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(infoParmsEnvironment, policyParams);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParmsEnvironment, policyParams, tokenIdEx));
     EXPECT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
@@ -155,9 +163,9 @@ void CloneAppPermissionTest::SetUpTestCase()
 static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    EXPECT_NE(0, tokenId);
+    EXPECT_NE(INVALID_TOKENID, tokenId);
     int ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_FULL_CONTROL, false);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
     ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_ALL, false);
@@ -202,15 +210,15 @@ HWTEST_F(CloneAppPermissionTest, OriginApp01, TestSize.Level1)
     ret = AccessTokenKit::VerifyAccessToken(tokenClone2, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -264,15 +272,15 @@ HWTEST_F(CloneAppPermissionTest, OriginApp02, TestSize.Level1)
     EXPECT_EQ(flag, 0);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -337,11 +345,11 @@ HWTEST_F(CloneAppPermissionTest, OriginApp03, TestSize.Level1)
     EXPECT_EQ(flag, PERMISSION_USER_FIXED);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenFullControl));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenRead));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone1));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenCommon));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenFullControl));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenRead));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone1));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone2));
 }
 
 /**
@@ -374,15 +382,15 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp01, TestSize.Level1)
     ret = AccessTokenKit::VerifyAccessToken(tokenClone2, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -437,15 +445,15 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp02, TestSize.Level1)
     EXPECT_EQ(flag, 0);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -508,11 +516,11 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp03, TestSize.Level1)
     EXPECT_EQ(flag, PERMISSION_USER_FIXED);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenFullControl));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenRead));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone1));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenCommon));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenFullControl));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenRead));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone1));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone2));
 }
 
 
@@ -546,15 +554,15 @@ HWTEST_F(CloneAppPermissionTest, CloneApp01, TestSize.Level1)
     ret = AccessTokenKit::VerifyAccessToken(tokenClone2, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -598,15 +606,15 @@ HWTEST_F(CloneAppPermissionTest, CloneApp02, TestSize.Level1)
     EXPECT_EQ(flag, 0);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -669,11 +677,11 @@ HWTEST_F(CloneAppPermissionTest, CloneApp03, TestSize.Level1)
     EXPECT_EQ(flag, PERMISSION_USER_FIXED);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenFullControl));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenRead));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone1));
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenClone2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenCommon));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenFullControl));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenRead));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone1));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenClone2));
 }
 
 
@@ -719,11 +727,11 @@ HWTEST_F(CloneAppPermissionTest, CloneApp04, TestSize.Level1)
     EXPECT_EQ(flag, 0);
     EXPECT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -776,14 +784,14 @@ HWTEST_F(CloneAppPermissionTest, CloneApp05, TestSize.Level1)
     dlpFlag = static_cast<int32_t>(idInner->dlpFlag);
     EXPECT_EQ(dlpFlag, 0);
 
-    ret = AccessTokenKit::DeleteToken(tokenCommon);
+    ret = TestCommon::DeleteTestHapToken(tokenCommon);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenFullControl);
+    ret = TestCommon::DeleteTestHapToken(tokenFullControl);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenRead);
+    ret = TestCommon::DeleteTestHapToken(tokenRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone1);
+    ret = TestCommon::DeleteTestHapToken(tokenClone1);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenClone2);
+    ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }

@@ -34,49 +34,24 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
-static const std::string TEST_BUNDLE_NAME = "ohos";
-static const int TEST_USER_ID = 0;
+static uint64_t g_selfTokenId = 0;
 };
 
 void GetNativeTokenIdTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-
-    // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    TestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void GetNativeTokenIdTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void GetNativeTokenIdTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-
-    setuid(0);
-    HapInfoParams info = {
-        .userID = TEST_USER_ID,
-        .bundleName = TEST_BUNDLE_NAME,
-        .instIndex = 0,
-        .appIDDesc = "appIDDesc",
-        .apiVersion = 8
-    };
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "domain"
-    };
-    TestCommon::TestPreparePermDefList(policy);
-    TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
 }
 
 void GetNativeTokenIdTest::TearDown()
@@ -109,10 +84,8 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest002");
     std::string processName = "hdcd";
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(tokenID));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetNativeTokenIdAbnormalTest002", reqPerm, true);
 
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
@@ -121,7 +94,6 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
 
     // restore environment
     setuid(selfUid);
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(g_selfTokenId));
 }
 
 /**
@@ -153,6 +125,8 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest001");
+    MockNativeToken mock("accesstoken_service");
+
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -164,7 +138,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
 
 /**
  * @tc.name: GetNativeTokenIdFuncTest002
- * @tc.desc: get native tokenid with hap.
+ * @tc.desc: get native tokenid.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -172,19 +146,14 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest002");
     std::string processName = "hdcd";
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
+    MockNativeToken mock("accesstoken_service");
 
-    tokenID = AccessTokenKit::GetNativeTokenId(processName);
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo));
     ASSERT_EQ(true, tokenInfo.processName == processName);
-
-    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 } // namespace AccessToken
 } // namespace Security

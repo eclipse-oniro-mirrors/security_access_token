@@ -42,7 +42,6 @@ public:
     void SetUp();
     void TearDown();
 
-    uint64_t selfTokenId_;
     std::string udid_;
     std::string networkId_;
 };

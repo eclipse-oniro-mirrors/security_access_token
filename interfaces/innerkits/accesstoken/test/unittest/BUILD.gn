@@ -37,6 +37,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
+    "Coverage/accesstoken_kit_coverage_test.cpp",
     "DistributedTest/alloc_local_token_id_test.cpp",
     "DistributedTest/delete_remote_device_tokens_test.cpp",
     "DistributedTest/delete_remote_token_test.cpp",
@@ -44,19 +45,23 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "DistributedTest/get_remote_native_tokenid_test.cpp",
     "DistributedTest/register_token_sync_callback_test.cpp",
     "DistributedTest/set_remote_hap_token_info_test.cpp",
+    "EdmPolicyTest/edm_policy_set_test.cpp",
     "HapAttributeTest/get_hap_dlp_flag_test.cpp",
     "HapAttributeTest/get_permission_flag_test.cpp",
     "HapAttributeTest/get_permissions_status_test.cpp",
-    "HapAttributeTest/get_self_permissions_state_test.cpp",
     "HapAttributeTest/permission_request_toggle_status_test.cpp",
-    "HapAttributeTest/set_perm_dialog_cap_test.cpp",
-    "HapAttributeTest/user_policy_test.cpp",
+    "HapTokenTest/alloc_hap_token_test.cpp",
+    "HapTokenTest/app_installation_optimized_test.cpp",
     "HapTokenTest/delete_token_test.cpp",
     "HapTokenTest/get_hap_token_test.cpp",
     "HapTokenTest/get_token_type_test.cpp",
     "HapTokenTest/init_hap_token_test.cpp",
     "HapTokenTest/update_hap_token_test.cpp",
     "PermDenyTest/accesstoken_deny_test.cpp",
+    "PermisionDialogTest/accesstoken_location_request_test.cpp",
+    "PermisionDialogTest/get_self_permission_state_test.cpp",
+    "PermisionDialogTest/request_permission_on_setting_test.cpp",
+    "PermisionDialogTest/set_perm_dialog_cap_test.cpp",
     "PermissionsTest/check_permission_map_test.cpp",
     "PermissionsTest/clear_user_granted__permission_state_test.cpp",
     "PermissionsTest/get_permission_test.cpp",
@@ -70,16 +75,8 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SaTest/get_native_token_id_test.cpp",
     "SaTest/get_native_token_info_test.cpp",
     "SaTest/get_version_test.cpp",
+    "SecurityComponentTest/security_component_grant_test.cpp",
     "common/test_common.cpp",
-    "src/accesstoken_kit_extension_test.cpp",
-    "src/accesstoken_kit_test.cpp",
-    "src/accesstoken_location_request_test.cpp",
-    "src/accesstoken_short_time_permission_test.cpp",
-    "src/app_installation_optimized_test.cpp",
-    "src/clone_app_permission_test.cpp",
-    "src/edm_policy_set_test.cpp",
-    "src/get_self_permission_state_test.cpp",
-    "src/security_component_grant_test.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -112,7 +109,13 @@ ohos_unittest("libaccesstoken_sdk_test") {
   }
   if (dlp_permission_enable == true) {
     cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [ "src/share_permission_with_sandbox_test.cpp" ]
+    sources += [
+      "DlpTest/clone_app_permission_test.cpp",
+      "DlpTest/share_permission_with_sandbox_test.cpp",
+    ]
+  }
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
   }
 }
 
@@ -178,5 +181,8 @@ ohos_unittest("accesstoken_mock_test") {
   }
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
   }
 }

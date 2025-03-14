@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_KIT_EXTENSION_TEST_H
-#define ACCESSTOKEN_KIT_EXTENSION_TEST_H
+#ifndef GET_SELF_PERMISSION_STATE_TEST_H
+#define GET_SELF_PERMISSION_STATE_TEST_H
 
 #include <gtest/gtest.h>
 
@@ -26,19 +26,17 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AccessTokenKitExtensionTest : public testing::Test {
+class GetSelfPermissionStateTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
-    void AllocHapToken(std::vector<PermissionDef>& permissionDefs,
-        std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
-
-    uint64_t selfTokenId_;
+    AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy) const;
+    void DeleteTestToken() const;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ACCESSTOKEN_KIT_EXTENSION_TEST_H
+#endif // GET_SELF_PERMISSION_STATE_TEST_H

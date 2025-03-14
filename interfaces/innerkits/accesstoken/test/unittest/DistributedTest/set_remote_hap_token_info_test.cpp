@@ -21,8 +21,8 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "token_setproc.h"
 #include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -30,23 +30,17 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
+static AccessTokenID g_testTokenId = 0x20100000;
 
 HapTokenInfo g_baseInfo = {
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .tokenID = 0x20100000,
+    .tokenID = g_testTokenId,
     .tokenAttr = 0
 };
-
-void NativeTokenGet()
-{
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    ASSERT_NE(tokenId, INVALID_TOKENID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-}
 
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -79,30 +73,36 @@ public:
 void SetRemoteHapTokenInfoTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-
-    NativeTokenGet();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
 #ifdef TOKEN_SYNC_ENABLE
-    std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
+        int32_t res =
+            DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
 }
 
 void SetRemoteHapTokenInfoTest::TearDownTestCase()
 {
-    SetSelfTokenID(g_selfTokenId);
 #ifdef TOKEN_SYNC_ENABLE
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void SetRemoteHapTokenInfoTest::SetUp()
 {
-    selfTokenId_ = GetSelfTokenID();
-
 #ifdef TOKEN_SYNC_ENABLE
+    MockNativeToken mock("foundation"); // distribute permission
     DistributedHardware::DmDeviceInfo deviceInfo;
     int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TEST_PKG_NAME, deviceInfo);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -116,12 +116,11 @@ void SetRemoteHapTokenInfoTest::SetUp()
 #endif
 
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-    setuid(0);
 }
 
 void SetRemoteHapTokenInfoTest::TearDown()
 {
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     udid_.clear();
     networkId_.clear();
 }
@@ -135,9 +134,10 @@ void SetRemoteHapTokenInfoTest::TearDown()
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest001 start.");
     std::string deviceID1 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenId);
     PermissionStatus infoManagerTestState2 = {
         .permissionName = "ohos.permission.CAMERA",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
@@ -154,7 +154,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     // check local map token
@@ -171,7 +171,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.L
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -201,15 +201,16 @@ void SetRemoteHapTokenInfoWithWrongInfo1(HapTokenInfo &wrongBaseInfo, const HapT
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest002 start.");
     std::string deviceID2 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID2, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID2, g_testTokenId);
     HapTokenInfo rightBaseInfo = {
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .tokenID = 0x20100000,
+        .tokenID = g_testTokenId,
         .tokenAttr = 0
     };
 
@@ -242,9 +243,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest003 start.");
     std::string deviceID3 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID3, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID3, g_testTokenId);
 
     PermissionStatus infoManagerTestState_3 = {
         .permissionName = "ohos.permission.test1",
@@ -263,13 +265,13 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID3, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID3, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -281,9 +283,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest004 start.");
     std::string deviceID4 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID4, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID4, g_testTokenId);
     PermissionStatus infoManagerTestState_4 = {
         .permissionName = "ohos.permission.CAMERA",
         .grantStatus = PermissionState::PERMISSION_DENIED, // first denied
@@ -300,7 +303,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
@@ -313,7 +316,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID4, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID4, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -325,9 +328,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest001 start.");
     std::string deviceID5 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID5, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID5, g_testTokenId);
     PermissionStatus infoManagerTestState5 = {
         .permissionName = "ohos.permission.test1",
         .grantStatus = PermissionState::PERMISSION_DENIED, // first denied
@@ -344,19 +348,24 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::GrantPermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
+    {
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("SetRemoteHapTokenInfoSpecTest001", reqPerm);
+        ret = AccessTokenKit::GrantPermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
+        ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
+    }
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID5, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID5, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -368,9 +377,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest002 start.");
     std::string deviceID6 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID6, g_testTokenId);
     PermissionStatus infoManagerTestState6 = {
         .permissionName = "ohos.permission.READ_AUDIO",
         .grantStatus = PermissionState::PERMISSION_GRANTED, // first grant
@@ -392,20 +402,24 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.READ_AUDIO", false);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::RevokePermission(
-        mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    EXPECT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
+    {
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("SetRemoteHapTokenInfoSpecTest002", reqPerm);
+        ret = AccessTokenKit::RevokePermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
+        ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
+    }
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.READ_AUDIO", false);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID6, g_testTokenId);
     EXPECT_EQ(ret, RET_SUCCESS);
 }
 
@@ -417,9 +431,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest003 start.");
     std::string deviceID7 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID7, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID7, g_testTokenId);
     PermissionStatus infoManagerTestState7 = {
         .permissionName = "ohos.permission.READ_AUDIO",
         .grantStatus = PermissionState::PERMISSION_DENIED, // first denied
@@ -436,13 +451,13 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::DeleteToken(mapID);
     ASSERT_NE(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID7, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID7, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -454,9 +469,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest004 start.");
     std::string deviceID8 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID8, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID8, g_testTokenId);
     int32_t DEFAULT_API_VERSION = 8;
     PermissionStatus infoManagerTestState8 = {
         .permissionName = "ohos.permission.test1",
@@ -474,7 +490,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
     AccessTokenIDEx tokenIdEx {
         .tokenIdExStruct.tokenID = mapID,
@@ -488,7 +504,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID8, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID8, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -500,9 +516,10 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest005 start.");
     std::string deviceID9 = udid_;
-    AccessTokenKit::DeleteRemoteToken(deviceID9, 0x20100000);
+    AccessTokenKit::DeleteRemoteToken(deviceID9, g_testTokenId);
     PermissionStatus infoManagerTestState9 = {
         .permissionName = "ohos.permission.CAMERA",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
@@ -519,19 +536,21 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(mapID);
-    ASSERT_EQ(ret, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(mapID));
+    }
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::DeleteRemoteToken(deviceID9, 0x20100000);
+    ret = AccessTokenKit::DeleteRemoteToken(deviceID9, g_testTokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
@@ -543,6 +562,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
  */
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest006 start.");
     std::string deviceID = udid_;
     HapTokenInfo baseInfo = {
@@ -579,7 +599,6 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.L
 HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoAbnormalTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoAbnormalTest001 start.");
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     std::string device = "device";
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));

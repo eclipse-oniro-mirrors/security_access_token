@@ -34,10 +34,11 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static MockHapToken* g_mock = nullptr;
 HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
 HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
@@ -46,42 +47,31 @@ HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPol
 void PermissionRequestToggleStatusTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    g_mock = new (std::nothrow) MockHapToken("PermissionRequestToggleStatusTest", reqPerm, true);
 }
 
 void PermissionRequestToggleStatusTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    SetSelfTokenID(g_selfTokenId);
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void PermissionRequestToggleStatusTest::SetUp()
@@ -101,14 +91,18 @@ void PermissionRequestToggleStatusTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
     TestCommon::TestPreparePermStateList(policy);
 
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void PermissionRequestToggleStatusTest::TearDown()
 {
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 /**
@@ -149,11 +143,9 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbno
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatus001");
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    MockHapToken mock("SetPermissionRequestToggleStatus001", reqPerm, false);
 
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
@@ -163,22 +155,18 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001,
 
 /**
  * @tc.name: SetPermissionRequestToggleStatus002
- * @tc.desc: SetPermissionRequestToggleStatus caller is a system app without related permissions.
+ * @tc.desc: SetPermissionRequestToggleStatus caller is a system app without permissions.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatus002");
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionRequestToggleStatus002", reqPerm, true);
 
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
-
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
@@ -195,49 +183,16 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002,
 
 /**
  * @tc.name: SetPermissionRequestToggleStatusSpecTest003
- * @tc.desc: SetPermissionRequestToggleStatus caller is a system app with related permissions.
+ * @tc.desc: SetPermissionRequestToggleStatus caller is a system app with permissions.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpecTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatusSpecTest003");
-
-    AccessTokenIDEx tokenIdEx = {0};
-
-    PermissionDef infoManagerTestPermDef = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .label = "label3",
-        .labelId = 1,
-        .description = "open the door",
-        .descriptionId = 1,
-        .availableType = MDM
-    };
-
-    PermissionStateFull infoManagerTestState = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
-    HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain3",
-        .permList = {infoManagerTestPermDef},
-        .permStateList = {infoManagerTestState}
-    };
-
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-
-    int32_t selfUid = getuid();
-    setuid(10001); // 10001： UID
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    MockHapToken mock("SetPermissionRequestToggleStatusSpecTest003", reqPerm, true);
 
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
@@ -248,9 +203,6 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpec
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
     ASSERT_EQ(RET_SUCCESS, ret);
-
-    // restore environment
-    setuid(selfUid);
 }
 
 /**
@@ -285,11 +237,9 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbno
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest001");
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest001", reqPerm, false);
 
     uint32_t status;
     int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
@@ -299,18 +249,15 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
 
 /**
  * @tc.name: GetPermissionRequestToggleStatusSpecTest002
- * @tc.desc: GetPermissionRequestToggleStatus caller is a system app without related permissions.
+ * @tc.desc: GetPermissionRequestToggleStatus caller is a system app without permissions.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest002");
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest002", reqPerm, true);
 
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
@@ -324,62 +271,6 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     setuid(selfUid);
 }
 
-static void AllocAndSetHapToken(void)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-
-    PermissionDef infoManagerTestPermDef1 = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .label = "label3",
-        .labelId = 1,
-        .description = "open the door",
-        .descriptionId = 1,
-        .availableType = MDM
-    };
-
-    PermissionStateFull infoManagerTestState1 = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
-    PermissionDef infoManagerTestPermDef2 = {
-        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS_TEST",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_NORMAL,
-        .label = "label3",
-        .labelId = 1,
-        .description = "open the door",
-        .descriptionId = 1,
-        .availableType = MDM
-    };
-
-    PermissionStateFull infoManagerTestState2 = {
-        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
-    HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain3",
-        .permList = {infoManagerTestPermDef1, infoManagerTestPermDef2},
-        .permStateList = {infoManagerTestState1, infoManagerTestState2}
-    };
-
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-}
-
 /**
  * @tc.name: GetPermissionRequestToggleStatusSpecTest003
  * @tc.desc: GetPermissionRequestToggleStatus caller is a system app with related permissions.
@@ -389,11 +280,10 @@ static void AllocAndSetHapToken(void)
 HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest003");
-
-    AllocAndSetHapToken();
-
-    int32_t selfUid = getuid();
-    setuid(10001); // 10001： UID
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest002", reqPerm, true);
 
     // Set a closed status value.
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -419,9 +309,6 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
         g_infoManagerTestSystemInfoParms.userID);
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
-
-    // restore environment
-    setuid(selfUid);
 }
 } // namespace AccessToken
 } // namespace Security

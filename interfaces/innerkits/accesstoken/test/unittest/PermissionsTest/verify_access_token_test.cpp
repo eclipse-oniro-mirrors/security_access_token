@@ -33,55 +33,33 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
-HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
 };
 
 void VerifyAccessTokenTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 void VerifyAccessTokenTest::TearDownTestCase()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
-                                            g_infoManagerTestNormalInfoParms.bundleName,
-                                            g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
-                                            g_infoManagerTestSystemInfoParms.bundleName,
-                                            g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void VerifyAccessTokenTest::SetUp()
@@ -93,22 +71,40 @@ void VerifyAccessTokenTest::SetUp()
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
         .instIndex = 0,
-        .appIDDesc = "appIDDesc",
+        .appIDDesc = "VerifyAccessTokenTest",
         .apiVersion = DEFAULT_API_VERSION
+    };
+
+    PermissionStateFull permStatMicro = {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .isGeneral = true,
+        .resDeviceID = {"device3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+    };
+    PermissionStateFull permStatLocation = {
+        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
+        .isGeneral = true,
+        .resDeviceID = {"device3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_FIXED}
     };
 
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
-        .domain = "domain"
+        .domain = "VerifyAccessTokenTest",
+        .permStateList = { permStatMicro, permStatLocation },
     };
-    TestCommon::TestPreparePermDefList(policy);
-    TestCommon::TestPreparePermStateList(policy);
 
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, INVALID_TOKENID);
 }
 
 void VerifyAccessTokenTest::TearDown()
 {
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 /**
@@ -120,9 +116,9 @@ void VerifyAccessTokenTest::TearDown()
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest001");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    int ret = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
@@ -130,7 +126,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest001, TestSize.Level0)
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
     ASSERT_EQ(PERMISSION_GRANTED, ret);
 
-    ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    ret = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
@@ -148,22 +144,23 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest001, TestSize.Level0)
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenFuncTest002");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SET_WIFI_INFO", PERMISSION_USER_FIXED);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    int ret =
+        TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION");
     ASSERT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", false);
     ASSERT_EQ(PERMISSION_GRANTED, ret);
 
-    ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.SET_WIFI_INFO", PERMISSION_USER_FIXED);
+    ret = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION");
     ASSERT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 }
 
@@ -176,8 +173,8 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenFuncTest002, TestSize.Level0)
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenAbnormalTest001");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     int ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GAMMA", false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
@@ -190,16 +187,16 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenAbnormalTest001, TestSize.Level
     ret = AccessTokenKit::VerifyAccessToken(tokenID, invalidPerm, false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
-    AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, "ohos.permission.SET_WIFI_INFO");
+    AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, "ohos.permission.APPROXIMATELY_LOCATION");
     ASSERT_EQ(PERMISSION_DENIED, ret);
-    AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, "ohos.permission.SET_WIFI_INFO", false);
+    AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, "ohos.permission.APPROXIMATELY_LOCATION", false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
     AccessTokenKit::DeleteToken(tokenID);
 
-    AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO");
+    AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION");
     ASSERT_EQ(PERMISSION_DENIED, ret);
-    AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
+    AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", false);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 }
 
@@ -212,16 +209,16 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenAbnormalTest001, TestSize.Level
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenWithListFuncTest001");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    int ret = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SET_WIFI_INFO", PERMISSION_USER_FIXED);
+    ret = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<std::string> permissionList;
     permissionList.emplace_back("ohos.permission.MICROPHONE");
-    permissionList.emplace_back("ohos.permission.SET_WIFI_INFO");
+    permissionList.emplace_back("ohos.permission.APPROXIMATELY_LOCATION");
 
     std::vector<int32_t> permStateList;
     ret = AccessTokenKit::VerifyAccessToken(tokenID, permissionList, permStateList);
@@ -235,9 +232,9 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListFuncTest001, TestSize.L
         ASSERT_EQ(PERMISSION_GRANTED, permStateList[i]);
     }
 
-    ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    ret = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.SET_WIFI_INFO", PERMISSION_USER_FIXED);
+    ret = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     permStateList.clear();
@@ -262,8 +259,8 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListFuncTest001, TestSize.L
 HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "VerifyAccessTokenWithListAbnormalTest001");
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     std::vector<std::string> permissionList;
     permissionList.emplace_back("ohos.permission.GAMMA");
@@ -289,7 +286,7 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListAbnormalTest001, TestSi
 
     permissionList.clear();
     permissionList.emplace_back("ohos.permission.MICROPHONE");
-    permissionList.emplace_back("ohos.permission.SET_WIFI_INFO");
+    permissionList.emplace_back("ohos.permission.APPROXIMATELY_LOCATION");
     permissionList.emplace_back(invalidPerm);
     permStateList.clear();
     ret = AccessTokenKit::VerifyAccessToken(TEST_TOKENID_INVALID, permissionList, permStateList);

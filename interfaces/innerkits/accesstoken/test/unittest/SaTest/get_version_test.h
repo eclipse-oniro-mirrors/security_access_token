@@ -32,10 +32,6 @@ public:
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
-    void AllocHapToken(std::vector<PermissionDef>& permissionDefs,
-        std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
-
-    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -611,6 +611,19 @@ HWTEST_F(AccessTokenMockTest, RequestAppPermOnSettingTest001, TestSize.Level1)
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RequestAppPermOnSetting(tokenId));
 }
+
+/**
+ * @tc.name: GetKernelPermissions001
+ * @tc.desc: GetKernelPermissions with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetKernelPermissions001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::vector<PermissionWithValue> kernelPermList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetKernelPermissions(tokenId, kernelPermList));
+}
 }  // namespace AccessToken
 }  // namespace Security
 }

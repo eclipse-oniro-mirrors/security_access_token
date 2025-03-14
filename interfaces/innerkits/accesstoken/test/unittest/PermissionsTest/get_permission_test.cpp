@@ -33,33 +33,34 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int INVALID_PERMNAME_LEN = 260;
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int CYCLE_TIMES = 100;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static const std::string TEST_PERMISSION = "ohos.permission.ALPHA";
 HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
+HapInfoParams g_infoManager = {
+    .userID = 1,
+    .bundleName = "accesstoken_test",
+    .instIndex = 0,
+    .appIDDesc = "test2",
+    .apiVersion = 8  // 8: api version
+};
 }
 
 void GetPermissionTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms,
-                                                              TestCommon::GetTestPolicyParams());
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 }
 
 void GetPermissionTest::TearDownTestCase()
@@ -67,19 +68,14 @@ void GetPermissionTest::TearDownTestCase()
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                            g_infoManagerTestInfoParms.bundleName,
-                                            g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void GetPermissionTest::SetUp()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
 
-    setuid(0);
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -92,46 +88,77 @@ void GetPermissionTest::SetUp()
         .apl = APL_NORMAL,
         .domain = "domain"
     };
-    TestCommon::TestPreparePermDefList(policy);
     TestCommon::TestPreparePermStateList(policy);
-
-    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void GetPermissionTest::TearDown()
 {
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenKit::DeleteToken(tokenID);
 }
 
 /**
  * @tc.name: GetPermissionUsedTypeAbnormalTest001
- * @tc.desc: Get hap permission visit type return invalid.
+ * @tc.desc: call GetPermissionUsedType by shell token(permission denied).
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
+    std::string permisson = "ohos.permission.CAMERA";
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    // caller is not native, IsPrivilegedCalling return false(uid != accesstoken_uid)
+    int32_t selfUid = getuid();
+    setuid(1);
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permisson));
+    setuid(selfUid);
+#else
+    // caller is not native, IsPrivilegedCalling return false
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permisson));
+#endif
+}
+
+/**
+ * @tc.name: GetPermissionUsedTypeAbnormalTest002
+ * @tc.desc: Get hap permission visit type return invalid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest002, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
 
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
-
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(g_selfTokenId, accessBluetooth));
-    AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back(accessBluetooth);
+    MockHapToken mockHap("GetPermissionUsedTypeAbnormalTest001", reqPerm, true);
+    AccessTokenID tokenID = GetSelfTokenID(); // get hap tokenId
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(0, accessBluetooth));
+    MockNativeToken mock("accesstoken_service"); // set native for self
 
+    // token is not hap
+    EXPECT_EQ(
+        PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_selfTokenId, accessBluetooth));
+
+    // invalid tokenid
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(0, accessBluetooth));
+
+    // permission is not reuqest
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
         AccessTokenKit::GetPermissionUsedType(tokenID, "ohos.permission.ACCELEROMETER"));
 
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(tokenID, "ohos.permission.xxxxx"));
+    // permission is not defined
+    EXPECT_EQ(
+        PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(tokenID, "ohos.permission.test"));
 
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    // permission is request, but not grant
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
 }
 
 /**
@@ -173,21 +200,15 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
         .domain = "test.domain3",
         .permStateList = {testState1, testState2, testState3}
     };
-    AccessTokenID tokenID = TestCommon::AllocTestToken(g_infoManagerTestInfoParms, testPolicyPrams);
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_infoManager, testPolicyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
-        AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
-
+    MockNativeToken mock("accesstoken_service"); // set native for self
+    EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE, AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
     EXPECT_EQ(PermUsedTypeEnum::NORMAL_TYPE, AccessTokenKit::GetPermissionUsedType(tokenID, sendMessages));
 
-    int32_t selfUid = getuid();
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
-    setuid(1);
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(tokenID, writeCalendar));
-    setuid(selfUid);
-    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -233,8 +254,12 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest001");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest001", reqPerm, true);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
@@ -244,8 +269,6 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", false);
     ASSERT_EQ(res, permStatList[0].grantStatus[0]);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -257,8 +280,12 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest002");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest002", reqPerm, true);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
@@ -268,8 +295,6 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SET_WIFI_INFO", false);
     ASSERT_EQ(ret, permStatList[0].grantStatus[0]);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -281,14 +306,17 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
 HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest003");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest003", reqPerm, true);
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    HapTokenInfo hapInfo;
-    int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> permStatList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatList, false));
+    ASSERT_NE(static_cast<uint32_t>(0), permStatList.size());
 
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
@@ -296,23 +324,48 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
     };
     policy.permStateList.clear();
     UpdateHapInfoParams info;
-    info.appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
+    info.appIDDesc = g_infoManager.appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
     info.isSystemApp = false;
-    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    {
+        MockNativeToken mock1("foundation");
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy));
+    }
 
     std::vector<PermissionStateFull> permStatUserList;
-    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatUserList, false);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatUserList, false));
     ASSERT_EQ(static_cast<uint32_t>(0), permStatUserList.size());
 
     std::vector<PermissionStateFull> permStatSystemList;
-    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatSystemList, true);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatSystemList, true));
     ASSERT_EQ(static_cast<uint32_t>(0), permStatSystemList.size());
+}
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+/**
+ * @tc.name: GetReqPermissionsFuncTest004
+ * @tc.desc: GetReqPermissions call failure.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest004, TestSize.Level0)
+{
+    int32_t selfUid = getuid();
+    std::vector<PermissionStateFull> permStatList;
+    {
+        // mock native token with no permission
+        MockNativeToken mock("accesstoken_service");
+        setuid(1);
+        ASSERT_EQ(ERR_PERMISSION_DENIED, AccessTokenKit::GetReqPermissions(GetSelfTokenID(), permStatList, false));
+    }
+
+    setuid(selfUid);
+    {
+        // mock hap token whit non system app
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("GetReqPermissionsFuncTest004", reqPerm, false);
+        ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetReqPermissions(GetSelfTokenID(), permStatList, false));
+    }
 }
 
 /**
@@ -324,15 +377,19 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
 HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsAbnormalTest001");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest002", reqPerm, true);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(TEST_TOKENID_INVALID, permStatList, false);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
-    AccessTokenKit::DeleteToken(tokenID);
+    TestCommon::DeleteTestHapToken(tokenID);
 
     ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
@@ -348,8 +405,12 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
 HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsSpecTest001");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest002", reqPerm, true);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionStateFull> permStatList;
@@ -358,53 +419,6 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
         ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
         ASSERT_EQ("ohos.permission.MICROPHONE", permStatList[0].permissionName);
     }
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
-}
-
-/**
- * @tc.name: GetReqPermissions001
- * @tc.desc: GetReqPermissions call failure.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(GetPermissionTest, GetReqPermissions001, TestSize.Level0)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "test.GetReqPermissions",
-        .permList = {},
-        .permStateList = {}
-    };
-    HapInfoParams info = {
-        .userID = 100,
-        .bundleName = "test.GetReqPermissions.normal",
-        .instIndex = 0,
-        .appIDDesc = "test3",
-        .apiVersion = DEFAULT_API_VERSION,
-        .isSystemApp = false
-    };
-
-    tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    int32_t selfUid = getuid();
-
-    setuid(0);
-    std::vector<PermissionStateFull> permStatList;
-    EXPECT_EQ(0, SetSelfTokenID(TestCommon::GetNativeToken("GetReqPermissions", nullptr, 0)));
-    setuid(1);
-    int32_t ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
-
-    setuid(0);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-    ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
-    setuid(selfUid);
-    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 /**
@@ -423,6 +437,89 @@ HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1
 }
 
 /**
+ * @tc.name: GetTokenIDByUserID001
+ * @tc.desc: Get token id by user id.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetTokenIDByUserID001, TestSize.Level1)
+{
+    MockNativeToken mock("accesstoken_service");
+    int32_t userID = -1;
+    std::unordered_set<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    userID = 100;
+    ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIdList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_NE(static_cast<uint32_t>(0), tokenIdList.size());
+}
+
+/**
+ * @tc.name: ReloadNativeTokenInfo001
+ * @tc.desc: test ReloadNativeTokenInfo.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo001, TestSize.Level1)
+{
+    int32_t ret = AccessTokenKit::ReloadNativeTokenInfo();
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+uint64_t GetNativeTokenTest(const char *processName, const char **perms, int32_t permNum)
+{
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = permNum,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .aplStr = "system_core",
+        .processName = processName,
+    };
+
+    tokenId = GetAccessTokenId(&infoInstance);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    return tokenId;
+}
+
+/**
+ * @tc.name: ReloadNativeTokenInfo002
+ * @tc.desc: ReloadNativeTokenInfo with same bundlename twicely.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo002, TestSize.Level1)
+{
+    const char **perms = new const char *[1];
+    perms[0] = "ohos.permission.MANAGE_HAP_TOKENID";
+    uint64_t token1 = GetNativeTokenTest("TestCase_core", perms, 1);
+    ASSERT_NE(INVALID_TOKENID, token1);
+    ASSERT_EQ(
+        PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(token1, "ohos.permission.MANAGE_HAP_TOKENID", false));
+
+    uint64_t token2 = GetNativeTokenTest("TestCase_core", nullptr, 0);
+    ASSERT_NE(INVALID_TOKENID, token2);
+
+    ASSERT_EQ(token1, token2);
+    ASSERT_EQ(
+        PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(token2, "ohos.permission.MANAGE_HAP_TOKENID", false));
+
+    uint64_t token3 = GetNativeTokenTest("TestCase_core", perms, 1);
+    ASSERT_NE(INVALID_TOKENID, token3);
+
+    ASSERT_EQ(token1, token3);
+    ASSERT_EQ(
+        PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(token3, "ohos.permission.MANAGE_HAP_TOKENID", false));
+}
+#endif
+
+/**
  * @tc.name: GetKernelPermissionTest001
  * @tc.desc:
  * @tc.type: FUNC
@@ -430,22 +527,21 @@ HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1
  */
 HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level1)
 {
-    setuid(1);
     std::vector<PermissionWithValue> kernelPermList;
-    int32_t ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
-    setuid(0);
+    {
+        // shell process， uid != 0
+        MockNativeToken mock("hdcd"); // set shell for self
+        setuid(1);
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetKernelPermissions(123, kernelPermList));
+        setuid(0);
+    }
 
-    SetSelfTokenID(g_selfTokenId);
-    ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
-    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
-
-    ret = AccessTokenKit::GetKernelPermissions(123, kernelPermList);
-    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
+    // native process
+    MockNativeToken mock("accesstoken_service");
+    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, AccessTokenKit::GetKernelPermissions(123, kernelPermList));
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList));
     EXPECT_EQ(0, kernelPermList.size());
 }
 
@@ -457,22 +553,28 @@ HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level1)
  */
 HWTEST_F(GetPermissionTest, GetReqPermissionByNameTest001, TestSize.Level1)
 {
-    setuid(1);
     std::string value;
-    int32_t ret = AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
-    setuid(0);
+    std::vector<PermissionWithValue> kernelPermList;
+    {
+        // shell process， uid != 0
+        MockNativeToken mock("hdcd"); // set shell for self
+        setuid(1);
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+            AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value));
+        setuid(0);
+    }
 
-    SetSelfTokenID(g_selfTokenId);
-    ret = AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value);
-    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID, ret);
+    // native process， uid != 0
+    MockNativeToken mock("accesstoken_service");
+    EXPECT_EQ(AccessTokenError::ERR_TOKEN_INVALID,
+        AccessTokenKit::GetReqPermissionByName(123, "ohos.permission.test1", value));
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ret = AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.test1", value);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
+        AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.test1", value));
 
-    ret = AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.MANAGE_HAP_TOKENID", value);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE,
+        AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.MANAGE_HAP_TOKENID", value));
 }
 } // namespace AccessToken
 } // namespace Security

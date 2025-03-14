@@ -20,8 +20,8 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "token_setproc.h"
 #include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -29,23 +29,17 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
-static AccessTokenID g_selfTokenId = 0;
+static uint64_t g_selfTokenId = 0;
+static AccessTokenID g_testTokenId = 0x20100000;
 
 HapTokenInfo g_baseInfo = {
     .ver = 1,
     .userID = 1,
     .bundleName = "com.ohos.access_token",
     .instIndex = 1,
-    .tokenID = 0x20100000,
+    .tokenID = g_testTokenId,
     .tokenAttr = 0
 };
-
-void NativeTokenGet()
-{
-    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    ASSERT_NE(tokenId, INVALID_TOKENID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-}
 
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -78,30 +72,36 @@ public:
 void RegisterTokenSyncCallbackTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-
-    NativeTokenGet();
+    TestCommon::SetTestEvironment(g_selfTokenId);
 
 #ifdef TOKEN_SYNC_ENABLE
-    std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
+        int32_t res =
+            DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
 }
 
 void RegisterTokenSyncCallbackTest::TearDownTestCase()
 {
-    SetSelfTokenID(g_selfTokenId);
 #ifdef TOKEN_SYNC_ENABLE
-    int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
-    ASSERT_EQ(res, RET_SUCCESS);
+    {
+        MockNativeToken mock("foundation");
+        int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
+        ASSERT_EQ(res, RET_SUCCESS);
+    }
 #endif
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    TestCommon::ResetTestEvironment();
 }
 
 void RegisterTokenSyncCallbackTest::SetUp()
 {
-    selfTokenId_ = GetSelfTokenID();
-
 #ifdef TOKEN_SYNC_ENABLE
+    MockNativeToken mock("foundation");
     DistributedHardware::DmDeviceInfo deviceInfo;
     int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TEST_PKG_NAME, deviceInfo);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -115,12 +115,11 @@ void RegisterTokenSyncCallbackTest::SetUp()
 #endif
 
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUp ok.");
-    setuid(0);
 }
 
 void RegisterTokenSyncCallbackTest::TearDown()
 {
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     udid_.clear();
     networkId_.clear();
 }
@@ -148,7 +147,6 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001
 HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackAbnormalTest002 start.");
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterTokenSyncCallback());
@@ -162,6 +160,7 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002
  */
 HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackFuncTest001, TestSize.Level1)
 {
+    MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackFuncTest001 start.");
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterTokenSyncCallback(callback));

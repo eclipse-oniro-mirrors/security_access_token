@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,44 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef REMOTE_TOKEN_KIT_TEST_H
-#define REMOTE_TOKEN_KIT_TEST_H
+#ifndef ALLOC_HAP_TOKEN_TEST_H
+#define ALLOC_HAP_TOKEN_TEST_H
 
 #include <gtest/gtest.h>
+
 #include "access_token.h"
-#ifdef TOKEN_SYNC_ENABLE
-#include "device_manager.h"
-#endif
+#include "accesstoken_kit.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#ifdef TOKEN_SYNC_ENABLE
-class TestDmInitCallback final : public OHOS::DistributedHardware::DmInitCallback {
-    void OnRemoteDied() override
-    {}
-};
-#endif
-
-class RemoteTokenKitTest : public testing::Test {
+class AllocHapTokenTest : public testing::Test {
 public:
     static void SetUpTestCase();
-
     static void TearDownTestCase();
-
     void SetUp();
-
     void TearDown();
-    unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
+    unsigned int GetAccessTokenID(int userID, const std::string& bundleName, int instIndex);
     void DeleteTestToken() const;
-    void AllocTestToken() const;
-    uint64_t selfTokenId_;
-    std::string udid_;
-    std::string networkId_;
+    AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy) const;
+    void GetDlpFlagTest(const HapInfoParams& info, const HapPolicyParams& policy, int flag);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // REMOTE_TOKEN_KIT_TEST_H
+#endif // ALLOC_HAP_TOKEN_TEST_H
