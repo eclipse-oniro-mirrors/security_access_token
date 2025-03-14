@@ -6001,6 +6001,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.kernel.ALLOW_USE_JITFORT_INTERFACE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
