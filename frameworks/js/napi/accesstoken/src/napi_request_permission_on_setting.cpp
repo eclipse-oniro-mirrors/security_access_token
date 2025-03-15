@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,6 +37,8 @@ const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
 const int32_t PERM_REVOKE_BY_USER = 5;
+bool g_windowFlag = false;
+std::mutex g_lockWindowFlag;
 std::mutex g_lockFlag;
 } // namespace
 static void ReturnPromiseResult(napi_env env, int32_t jsCode, napi_deferred deferred, napi_value result)
@@ -226,6 +228,10 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     if (code == -1) {
         this->reqContext_->errorCode = code;
     }
+    {
+        std::lock_guard<std::mutex> lock(g_lockWindowFlag);
+        g_windowFlag = false;
+    }
     PermissionResultsCallbackUI(
         TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->stateList, this->reqContext_);
 }
@@ -363,8 +369,22 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOn
         },
     };
 
+    {
+        std::lock_guard<std::mutex> lock(g_lockWindowFlag);
+        if (g_windowFlag) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "The request already exists.");
+            asyncContext->result = RET_FAILED;
+            asyncContext->errorCode = REQUEST_REALDY_EXIST;
+            return RET_FAILED;
+        }
+        g_windowFlag = true;
+    }
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
     if (asyncContext->result == RET_FAILED) {
+        {
+            std::lock_guard<std::mutex> lock(g_lockWindowFlag);
+            g_windowFlag = false;
+        }
         return RET_FAILED;
     }
     return JS_OK;
@@ -512,6 +532,10 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
         int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result);
+        if ((asyncContextHandle->asyncContextPtr->result == RET_FAILED) &&
+            (asyncContextHandle->asyncContextPtr->errorCode == REQUEST_REALDY_EXIST)) {
+            jsCode = TransferToJsErrorCode(REQUEST_REALDY_EXIST);
+        }
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));
