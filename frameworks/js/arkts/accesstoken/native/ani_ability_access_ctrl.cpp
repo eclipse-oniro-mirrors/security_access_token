@@ -20,10 +20,10 @@
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniAbilityAccessCtrl" };
 
-static ani_object CreateAtManager([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object)
+static ani_object CreateAtManager([[maybe_unused]] ani_env *env)
 {
     ani_object atManagerObj = {};
-    if (env == nullptr || object == nullptr) {
+    if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env or object");
         return atManagerObj;
     }
