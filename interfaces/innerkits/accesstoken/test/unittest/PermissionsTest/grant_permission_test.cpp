@@ -275,6 +275,36 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest003, TestSize.Level0)
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
+
+/**
+ * @tc.name: GrantPermissionSpecsTest004
+ * @tc.desc: success to revoke permission when granting permission twice by secure component.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest004, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GrantPermissionSpecsTest004", reqPerm, true);
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SECURE_PASTE", PERMISSION_COMPONENT_SET);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SECURE_PASTE", PERMISSION_COMPONENT_SET);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SECURE_PASTE", false);
+    ASSERT_EQ(PERMISSION_GRANTED, ret);
+
+    ret = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.SECURE_PASTE", PERMISSION_COMPONENT_SET);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SECURE_PASTE", false);
+    ASSERT_EQ(PERMISSION_DENIED, ret);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
