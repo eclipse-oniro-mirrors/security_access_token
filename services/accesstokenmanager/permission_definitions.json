@@ -3066,7 +3066,7 @@
             "name": "ohos.permission.TRIGGER_ACTIVATIONLOCK",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SERVICE",
+            "availableType": "SYSTEM",
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
