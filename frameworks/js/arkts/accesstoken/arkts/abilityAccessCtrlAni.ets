@@ -18,7 +18,7 @@ import { PermissionRequestResult } from 'PermissionRequestResult';
 
 export { Permissions, PermissionRequestResult };
 
-export class BusinessError<T = void> {
+class BusinessError<T = void> {
     code: number;
     data: T;
 }
