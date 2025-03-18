@@ -18,7 +18,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_service_mock_unittest") {
     subsystem_name = "security"
     part_name = "access_token"
-    module_out_path = part_name + "/" + part_name
+    module_out_path = "access_token/access_token"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
@@ -30,12 +30,14 @@ if (is_standard_system && ability_base_enable == true) {
       "../include",
       "mock/include",
       "include",
+      "common/include",
       "${access_token_path}/frameworks/inner_api/el5filekeymanager/include/",
     ]
 
     sources = [
       "../src/el5_filekey_manager_service.cpp",
       "../src/el5_filekey_manager_stub.cpp",
+      "common/src/el5_test_common.cpp",
       "mock/src/mock_ipc.cpp",
       "src/el5_filekey_manager_service_mock_unittest.cpp",
     ]
@@ -83,7 +85,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_service_unittest") {
     subsystem_name = "security"
     part_name = "access_token"
-    module_out_path = part_name + "/" + part_name
+    module_out_path = "access_token/access_token"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
@@ -146,7 +148,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_stub_unittest") {
     subsystem_name = "security"
     part_name = "access_token"
-    module_out_path = part_name + "/" + part_name
+    module_out_path = "access_token/access_token"
     sanitize = {
       cfi = true
       cfi_cross_dso = true

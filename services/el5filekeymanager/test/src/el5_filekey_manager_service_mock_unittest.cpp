@@ -17,6 +17,7 @@
 
 #include "accesstoken_kit.h"
 #include "el5_filekey_callback_stub.h"
+#include "el5_test_common.h"
 #include "mock_ipc.h"
 #include "token_setproc.h"
 
@@ -151,7 +152,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
     el5FilekeyManagerService_->service_ = nullptr;
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
@@ -168,7 +169,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
@@ -185,7 +186,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
     el5FilekeyManagerService_->service_ = nullptr;
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
@@ -202,7 +203,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
@@ -532,7 +533,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
     el5FilekeyManagerService_->service_ = nullptr;
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
@@ -549,7 +550,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
     MockIpc::SetCallingUid(20020025);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
