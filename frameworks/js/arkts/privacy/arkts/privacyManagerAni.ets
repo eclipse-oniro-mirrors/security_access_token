@@ -15,7 +15,7 @@
 
 import { Permissions } from 'permissions';
 
-export class BusinessError<T = void> {
+class BusinessError<T = void> {
     code: number;
     data: T;
  }
