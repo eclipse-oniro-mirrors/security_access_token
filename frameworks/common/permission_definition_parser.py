@@ -131,7 +131,21 @@ class PermissionDef(object):
 
 
 def parse_json(path):
+    extend_perm = {
+        'name' : 'ohos.permission.KERNEL_ATM_SELF_USE',
+        'grantMode' : 'system_grant',
+        'availableLevel' : 'system_core',
+        'availableType' : 'SYSTEM',
+        'since' : 18,
+        'deprecated' : '',
+        'provisionEnable' : True,
+        'distributedSceneEnable' : True,
+        'isKernelEffect' : True,
+        'hasValue' : True
+    }
+
     permission_list = []
+
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         index = 0
@@ -142,6 +156,7 @@ def parse_json(path):
         for perm in data["userGrantPermissions"]:
             permission_list.append(PermissionDef(perm, index))
             index += 1
+        permission_list.append(PermissionDef(extend_perm, index))
     return permission_list
 
 

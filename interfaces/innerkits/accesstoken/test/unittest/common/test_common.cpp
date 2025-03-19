@@ -208,41 +208,6 @@ void TestCommon::TestPreparePermDefList(HapPolicyParams &policy)
 }
 
 
-void TestCommon::TestPrepareKernelPermissionDefinition(
-    HapInfoParams& infoParams, HapPolicyParams& policyParams)
-{
-    PermissionDef permDefBasic = {
-        .permissionName = "ohos.permission.test_basic",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_SYSTEM_CORE,
-        .label = "label",
-        .labelId = 1,
-        .description = "test",
-        .descriptionId = 1,
-        .provisionEnable = true,
-        .isKernelEffect = true,
-        .hasValue = true,
-    };
-
-    PermissionDef permDef1 = permDefBasic;
-    permDef1.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
-    PermissionDef permDef2 = permDefBasic;
-    permDef2.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
-    permDef2.hasValue = false;
-    PermissionDef permDef3 = permDefBasic;
-    permDef3.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
-    permDef3.isKernelEffect = false;
-
-    policyParams.permList = {permDef1, permDef2, permDef3};
-
-    AccessTokenIDEx fullTokenId;
-
-    // update permission definition
-    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
 void TestCommon::TestPrepareKernelPermissionStatus(HapPolicyParams& policyParams)
 {
     PermissionStateFull permissionStatusBasic = {
@@ -254,18 +219,14 @@ void TestCommon::TestPrepareKernelPermissionStatus(HapPolicyParams& policyParams
     };
 
     PermissionStateFull permissionStateFull001 = permissionStatusBasic;
-    permissionStateFull001.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    permissionStateFull001.permissionName = "ohos.permission.KERNEL_ATM_SELF_USE";
     PermissionStateFull permissionStateFull002 = permissionStatusBasic;
-    permissionStateFull002.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    permissionStateFull002.permissionName = "ohos.permission.MICROPHONE";
     PermissionStateFull permissionStateFull003 = permissionStatusBasic;
-    permissionStateFull003.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
-    PermissionStateFull permissionStateFull004 = permissionStatusBasic;
-    permissionStateFull004.permissionName = "ohos.permission.CAMERA";
-    policyParams.permStateList = {permissionStateFull001, permissionStateFull002,
-                                  permissionStateFull003, permissionStateFull004};
-    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "123";
-    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"] = "456";
-    policyParams.aclExtendedMap["ohos.permission.test1"] = "test"; // filtered
+    permissionStateFull003.permissionName = "ohos.permission.CAMERA";
+    policyParams.permStateList = {permissionStateFull001, permissionStateFull002, permissionStateFull003};
+    policyParams.aclExtendedMap["ohos.permission.KERNEL_ATM_SELF_USE"] = "123";
+    policyParams.aclExtendedMap["ohos.permission.MICROPHONE"] = "456"; // filtered
     policyParams.aclExtendedMap["ohos.permission.CAMERA"] = "789"; // filtered
 }
 

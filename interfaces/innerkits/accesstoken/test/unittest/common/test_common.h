@@ -55,8 +55,6 @@ public:
     static void GetHapParams(HapInfoParams& infoParams, HapPolicyParams& policyParams);
     static void TestPreparePermStateList(HapPolicyParams &policy);
     static void TestPreparePermDefList(HapPolicyParams &policy);
-    static void TestPrepareKernelPermissionDefinition(
-        HapInfoParams& infoParams, HapPolicyParams& policyParams);
     static void TestPrepareKernelPermissionStatus(HapPolicyParams& policyParams);
     static HapPolicyParams GetTestPolicyParams();
     static HapInfoParams GetInfoManagerTestInfoParms();

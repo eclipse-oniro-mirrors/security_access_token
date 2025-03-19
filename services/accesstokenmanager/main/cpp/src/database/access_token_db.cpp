@@ -32,6 +32,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* DATABASE_NAME = "access_token.db";
 constexpr const char* ACCESSTOKEN_SERVICE_NAME = "accesstoken_service";
+static constexpr int32_t ACCESSTOKEN_CLEAR_MEMORY_SIZE = 4;
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -87,6 +88,7 @@ void AccessTokenDb::InitRdb()
     config.SetAllowRebuild(true);
     config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA); // Real-time dual-write backup database
     config.SetServiceName(std::string(ACCESSTOKEN_SERVICE_NAME));
+    config.SetClearMemorySize(ACCESSTOKEN_CLEAR_MEMORY_SIZE);
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
