@@ -6008,7 +6008,8 @@
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": true
         },
         {
             "name": "ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION",
@@ -6018,7 +6019,8 @@
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": true
         },
         {
             "name": "ohos.permission.SET_LAUNCH_REASON_MESSAGE",
