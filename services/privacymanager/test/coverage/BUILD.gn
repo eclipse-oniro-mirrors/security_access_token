@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -28,6 +28,8 @@ if (is_standard_system && ability_base_enable == true) {
 
     include_dirs = [
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/nativetoken/include",
+      "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
@@ -51,6 +53,7 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = [
+      "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src/privacy_test_common.cpp",
       "../../src/active/active_status_callback_manager.cpp",
       "../../src/active/perm_active_status_callback_death_recipient.cpp",
       "../../src/active/perm_active_status_change_callback_proxy.cpp",
@@ -81,6 +84,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
+      "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/common:accesstoken_service_common",

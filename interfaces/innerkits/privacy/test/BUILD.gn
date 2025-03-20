@@ -41,6 +41,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "mock/src/app_manager_access_client.cpp",
     "unittest/src/permission_deny_test.cpp",
     "unittest/src/privacy_kit_test.cpp",
+    "unittest/src/privacy_test_common.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]

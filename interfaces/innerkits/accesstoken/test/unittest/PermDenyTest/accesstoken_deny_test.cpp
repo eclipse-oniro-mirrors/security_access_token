@@ -398,31 +398,18 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
     scopeInfo.permList = {"ohos.permission.CAMERA"};
     scopeInfo.tokenIDs = {};
     auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfo);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
 
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
     setuid(g_selfUid);
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
-
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-/**
- * @tc.name: ReloadNativeTokenInfo001
- * @tc.desc: ReloadNativeTokenInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, ReloadNativeTokenInfo001, TestSize.Level1)
-{
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ReloadNativeTokenInfo());
-}
-#endif
 
 /**
  * @tc.name: GetNativeTokenId001

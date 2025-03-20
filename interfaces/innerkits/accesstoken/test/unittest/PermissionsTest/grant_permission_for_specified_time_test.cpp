@@ -154,8 +154,10 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
     ASSERT_NE(INVALID_TOKENID, tokenID);
     uint32_t onceTime = 10; // 10: 10s
 
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenKit::GrantPermissionForSpecifiedTime(tokenID, SHORT_TEMP_PERMISSION, onceTime));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**

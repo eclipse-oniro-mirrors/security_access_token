@@ -46,6 +46,7 @@
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
 
@@ -98,7 +99,7 @@ TokenSyncServiceTest::~TokenSyncServiceTest()
 void NativeTokenGet()
 {
     uint64_t tokenId = 0;
-    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    tokenId = TestCommon::GetNativeTokenIdFromProcess("token_sync_service");
     ASSERT_NE(tokenId, static_cast<AccessTokenID>(0));
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
@@ -107,10 +108,15 @@ void TokenSyncServiceTest::SetUpTestCase()
 {
     g_selfUid = getuid();
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+
     NativeTokenGet();
 }
 void TokenSyncServiceTest::TearDownTestCase()
-{}
+{
+    SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
+}
 void TokenSyncServiceTest::SetUp()
 {
     tokenSyncManagerService_ = DelayedSingleton<TokenSyncManagerService>::GetInstance();
@@ -253,15 +259,13 @@ public:
 static void DeleteAndAllocToken(AccessTokenID& tokenId)
 {
     // create local token
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
-
-    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenIDEx tokenIdEx1 = {0};
+    TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx1);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx1.tokenIdExStruct.tokenID);
 }
 
 /**
@@ -802,10 +806,10 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo008 start.");
     // create local token
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
     // tokenID is not exist
     std::string jsonBefore =

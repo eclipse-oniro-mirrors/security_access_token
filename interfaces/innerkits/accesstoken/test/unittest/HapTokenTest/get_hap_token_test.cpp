@@ -66,6 +66,7 @@ void GetHapTokenTest::TearDownTestCase()
         g_mock = nullptr;
     }
     SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
 }
 
 void GetHapTokenTest::SetUp()
@@ -183,10 +184,9 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(hapTokenInfoRes.bundleName, g_infoManagerTestSystemInfoParms.bundleName);
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+    EXPECT_EQ(hapTokenInfoRes.bundleName, g_infoManagerTestSystemInfoParms.bundleName);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -311,18 +311,18 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level1)
     ASSERT_EQ(true, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
-    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
     UpdateHapInfoParams info;
     info.appIDDesc = g_infoManagerTestSystemInfoParms.appIDDesc;
     info.apiVersion = g_infoManagerTestSystemInfoParms.apiVersion;
     info.isSystemApp = false;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
     tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
-    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
-    ASSERT_EQ(false, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(false, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -335,20 +335,20 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_TRUE(TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_TRUE(TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
-    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     UpdateHapInfoParams info;
     info.appIDDesc = g_infoManagerTestNormalInfoParms.appIDDesc;
     info.apiVersion = g_infoManagerTestNormalInfoParms.apiVersion;
     info.isSystemApp = true;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
     tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
-    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
-    ASSERT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -365,7 +365,7 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level1)
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     bool res = AccessTokenKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
     ASSERT_TRUE(res);
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security
