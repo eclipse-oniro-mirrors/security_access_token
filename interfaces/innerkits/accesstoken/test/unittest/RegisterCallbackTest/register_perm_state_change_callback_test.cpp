@@ -128,33 +128,33 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(tokenID, INVALID_TOKENID);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
 
-    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
     callbackPtr->ready_ = false;
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -201,17 +201,17 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
     ASSERT_NE(tokenID, INVALID_TOKENID);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_DENIED, res);
+    EXPECT_EQ(PERMISSION_DENIED, res);
 
     res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 }
 
 /**
@@ -244,14 +244,14 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
     ASSERT_NE(tokenID, INVALID_TOKENID);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
-    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
 /**
@@ -282,17 +282,17 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     callbackPtr->ready_ = false;
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
 
@@ -378,13 +378,13 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
     ASSERT_NE(tokenID, INVALID_TOKENID);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
-    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -423,17 +423,17 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
     scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
     scopeInfo.permList = {"ohos.permission.INVALID", "ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
     int32_t res = TestCommon::GrantPermissionByTest(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 }
 
 /**
@@ -505,16 +505,16 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
         scopeInfo.tokenIDs.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
         if (i == TOKENIDS_LIST_SIZE_MAX_TEST) {
             auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
-            ASSERT_EQ(
+            EXPECT_EQ(
                 AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1));
             break;
         }
         auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1));
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr1));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr1));
     }
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -575,7 +575,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     scopeInfo.permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     res = TestCommon::GrantPermissionByTest(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
     EXPECT_EQ(RET_SUCCESS, res);
@@ -599,11 +599,11 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
 /**
@@ -638,7 +638,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     scopeInfo.permList = {"ohos.permission.READ_MEDIA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     res = TestCommon::GrantPermissionByTest(tokenIdEx.tokenIdExStruct.tokenID,
         "ohos.permission.READ_MEDIA", PERMISSION_SYSTEM_FIXED);
@@ -657,12 +657,12 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 }
 
 /**
@@ -692,27 +692,27 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
 
     SetSelfTokenID(tokenID);
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     SetSelfTokenID(g_selfShellTokenId);
 
     res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_GRANTED, res);
+    EXPECT_EQ(PERMISSION_GRANTED, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     SetSelfTokenID(tokenID);
     res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     SetSelfTokenID(g_selfShellTokenId);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
@@ -744,23 +744,23 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
     callbackPtr->ready_ = false;
 
     SetSelfTokenID(tokenID);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
     SetSelfTokenID(g_selfShellTokenId);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     SetSelfTokenID(tokenID);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
     SetSelfTokenID(g_selfShellTokenId);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
@@ -793,27 +793,27 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
 
     SetSelfTokenID(tokenID);
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     SetSelfTokenID(g_selfShellTokenId);
 
     res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_GRANTED, res);
+    EXPECT_EQ(PERMISSION_GRANTED, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     SetSelfTokenID(tokenID);
     res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     SetSelfTokenID(g_selfShellTokenId);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
@@ -852,30 +852,30 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
     callbackPtr->ready_ = false;
 
     SetSelfTokenID(tokenID);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
     SetSelfTokenID(g_selfShellTokenId);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.MICROPHONE", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.MICROPHONE", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.MICROPHONE", 2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.MICROPHONE", 2));
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     SetSelfTokenID(tokenID);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
@@ -913,32 +913,32 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
 
     SetSelfTokenID(tokenID);
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr1);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     scopeInfo.permList = {"ohos.permission.INVALID", "ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     SetSelfTokenID(g_selfShellTokenId);
 
     res = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_GRANTED, res);
+    EXPECT_EQ(PERMISSION_GRANTED, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA", 2);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     SetSelfTokenID(tokenID);
     res = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, res);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
@@ -979,12 +979,12 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
         if (i == PERMS_LIST_SIZE_MAX_TEST) { // 1025 is a invalid size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+            EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
     }
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
@@ -1016,7 +1016,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
@@ -1061,7 +1061,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
 
     // tokenIDs size si 0,
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr1);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     scopeInfo.tokenIDs = {tokenID, tokenID2};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
@@ -1069,11 +1069,11 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
 
     // tokenIDs size != 1
     res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     SetSelfTokenID(g_selfShellTokenId);
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID2));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID2));
 }
 
 /**
@@ -1106,11 +1106,11 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
         if (i == MAX_CALLBACK_MAP_SIZE) { // 200 is the max size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION, res);
+            EXPECT_EQ(AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
         callbackList.emplace_back(callbackPtr);
     }
     for (int32_t i = 0; i < MAX_CALLBACK_MAP_SIZE; i++) { // release 200 callback

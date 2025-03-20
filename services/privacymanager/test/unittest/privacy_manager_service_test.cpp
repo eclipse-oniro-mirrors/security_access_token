@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,7 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_manager_service.h"
+#include "privacy_test_common.h"
 #include "proxy_death_callback_stub.h"
 #include "state_change_callback.h"
 #include "string_ex.h"
@@ -38,11 +39,11 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static AccessTokenID g_selfTokenId = 0;
 static constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
-static AccessTokenIDEx g_tokenID = {0};
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -65,20 +66,6 @@ static HapInfoParams g_InfoParms1 = {
     .appIDDesc = "privacy_test.bundleA",
     .isSystemApp = true
 };
-
-static HapPolicyParams g_PolicyPrams2 = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.B",
-    .permList = {},
-    .permStateList = {g_testState}
-};
-
-static HapInfoParams g_InfoParms2 = {
-    .userID = 1,
-    .bundleName = "ohos.privacy_test.bundleB",
-    .instIndex = 0,
-    .appIDDesc = "privacy_test.bundleB"
-};
 }
 
 class PrivacyManagerServiceTest : public testing::Test {
@@ -91,15 +78,17 @@ public:
 
     void TearDown();
     std::shared_ptr<PrivacyManagerService> privacyManagerService_;
-    uint64_t selfTokenId_;
 };
 
 void PrivacyManagerServiceTest::SetUpTestCase()
 {
+    g_selfTokenId = GetSelfTokenID();
+    PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void PrivacyManagerServiceTest::TearDownTestCase()
 {
+    PrivacyTestCommon::ResetTestEvironment();
 }
 
 void PrivacyManagerServiceTest::SetUp()
@@ -107,23 +96,18 @@ void PrivacyManagerServiceTest::SetUp()
     privacyManagerService_ = DelayedSingleton<PrivacyManagerService>::GetInstance();
     PermissionRecordManager::GetInstance().Register();
     EXPECT_NE(nullptr, privacyManagerService_);
-    g_tokenID = AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
-    AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
-    selfTokenId_ = GetSelfTokenID();
+
+    PrivacyTestCommon::AllocTestHapToken(g_InfoParms1, g_PolicyPrams1);
 }
 
 void PrivacyManagerServiceTest::TearDown()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    privacyManagerService_->RemovePermissionUsedRecords(tokenId);
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
-        g_InfoParms2.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    privacyManagerService_->RemovePermissionUsedRecords(tokenId);
+    PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    privacyManagerService_->RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+
     privacyManagerService_ = nullptr;
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -182,8 +166,9 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 {
     int32_t fd = 1; // 1: std output
     std::vector<std::u16string> args;
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(g_InfoParms1, g_PolicyPrams1);
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     args.emplace_back(Str8ToStr16("-t"));
     std::string tokenIdStr = std::to_string(tokenId);
     args.emplace_back(Str8ToStr16(tokenIdStr));
@@ -214,11 +199,12 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    MockNativeToken mock("privacy_service");
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME, -1));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME, -1));
@@ -243,7 +229,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
  */
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    AccessTokenID tokenId = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     // invalid tokenId
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME, -1));
 
@@ -251,8 +237,9 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 
     // invalid permission
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, "test", -1));
 }
@@ -265,10 +252,10 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
  */
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
 
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1));
 }
@@ -432,10 +419,8 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Le
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("AddPermissionUsedRecordInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     AddPermParamInfoParcel infoParcel;
@@ -468,8 +453,8 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("AddPermissionUsedRecordInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     AddPermParamInfoParcel infoParcel;
@@ -524,10 +509,8 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002,
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteInt32(userID));
@@ -577,10 +560,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002,
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteInt32(userID));
@@ -637,10 +618,8 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StartUsingPermissionInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     PermissionUsedTypeInfoParcel parcel;
@@ -670,8 +649,8 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StartUsingPermissionInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     PermissionUsedTypeInfoParcel parcel;
@@ -718,8 +697,8 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StartUsingPermissionCallbackInner001", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     PermissionUsedTypeInfoParcel parcel;
@@ -813,10 +792,8 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner002, TestSize.Level1
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StopUsingPermissionInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -843,8 +820,8 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StopUsingPermissionInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -893,9 +870,9 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSiz
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID nativeTokenID = AccessTokenKit::GetNativeTokenId("device_manager");
+    MockNativeToken mock("device_manager"); // set self tokenID to native device_manager
+    AccessTokenID nativeTokenID = GetSelfTokenID();
     ASSERT_NE(nativeTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(nativeTokenID); // set self tokenID to native device_manager
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -945,10 +922,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.L
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionUsedRecordsInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&request));
@@ -974,8 +949,8 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.L
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionUsedRecordsInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&request));
@@ -1033,10 +1008,8 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, Te
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("RegisterPermActiveStatusCallbackInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(permList.size()));
@@ -1059,8 +1032,8 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("RegisterPermActiveStatusCallbackInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(0));
@@ -1102,10 +1075,8 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("UnRegisterPermActiveStatusCallbackInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
@@ -1127,8 +1098,8 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    ASSERT_NE(g_tokenID.tokenIDEx, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to system app
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("UnRegisterPermActiveStatusCallbackInner003", reqPerm, true); // set self tokenID to system app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
@@ -1178,10 +1149,8 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner002, TestSize.L
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("IsAllowedUsingPermissionInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));

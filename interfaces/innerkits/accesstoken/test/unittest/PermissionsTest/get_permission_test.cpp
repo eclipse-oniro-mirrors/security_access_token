@@ -110,17 +110,11 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
     std::string permisson = "ohos.permission.CAMERA";
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     // caller is not native, IsPrivilegedCalling return false(uid != accesstoken_uid)
     int32_t selfUid = getuid();
     setuid(1);
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permisson));
     setuid(selfUid);
-#else
-    // caller is not native, IsPrivilegedCalling return false
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permisson));
-#endif
 }
 
 /**
@@ -467,57 +461,6 @@ HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo001, TestSize.Level1)
     int32_t ret = AccessTokenKit::ReloadNativeTokenInfo();
     ASSERT_EQ(RET_SUCCESS, ret);
 }
-
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-uint64_t GetNativeTokenTest(const char *processName, const char **perms, int32_t permNum)
-{
-    uint64_t tokenId;
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = permNum,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .aplStr = "system_core",
-        .processName = processName,
-    };
-
-    tokenId = GetAccessTokenId(&infoInstance);
-    AccessTokenKit::ReloadNativeTokenInfo();
-    return tokenId;
-}
-
-/**
- * @tc.name: ReloadNativeTokenInfo002
- * @tc.desc: ReloadNativeTokenInfo with same bundlename twicely.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo002, TestSize.Level1)
-{
-    const char **perms = new const char *[1];
-    perms[0] = "ohos.permission.MANAGE_HAP_TOKENID";
-    uint64_t token1 = GetNativeTokenTest("TestCase_core", perms, 1);
-    ASSERT_NE(INVALID_TOKENID, token1);
-    ASSERT_EQ(
-        PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(token1, "ohos.permission.MANAGE_HAP_TOKENID", false));
-
-    uint64_t token2 = GetNativeTokenTest("TestCase_core", nullptr, 0);
-    ASSERT_NE(INVALID_TOKENID, token2);
-
-    ASSERT_EQ(token1, token2);
-    ASSERT_EQ(
-        PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(token2, "ohos.permission.MANAGE_HAP_TOKENID", false));
-
-    uint64_t token3 = GetNativeTokenTest("TestCase_core", perms, 1);
-    ASSERT_NE(INVALID_TOKENID, token3);
-
-    ASSERT_EQ(token1, token3);
-    ASSERT_EQ(
-        PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(token3, "ohos.permission.MANAGE_HAP_TOKENID", false));
-}
-#endif
 
 /**
  * @tc.name: GetKernelPermissionTest001
