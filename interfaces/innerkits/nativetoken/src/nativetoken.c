@@ -33,6 +33,7 @@
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
+const uint64_t g_nativeFdTag = 0xD005A01;
 
 int32_t GetFileBuff(const char *cfg, char **retBuff)
 {
@@ -247,12 +248,13 @@ static int32_t ClearOrCreateCfgFile(void)
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
         return ATRET_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
 
 #ifdef WITH_SELINUX
     Restorecon(TOKEN_ID_CFG_FILE_PATH);
 #endif // WITH_SELINUX
 
-    close(fd);
+    fdsan_close_with_tag(fd, g_nativeFdTag);
     fd = -1;
 
     struct stat buf;
@@ -312,8 +314,9 @@ static int32_t GetRandomTokenId(uint32_t *randNum)
     if (fd < 0) {
         return ATRET_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
     len = read(fd, &random, sizeof(random));
-    (void)close(fd);
+    fdsan_close_with_tag(fd, g_nativeFdTag);
 
     if (len != sizeof(random)) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:read failed.", __func__);
@@ -404,12 +407,13 @@ static void WriteToFile(const cJSON *root)
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
             break;
         }
+        fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
         size_t strLen = strlen(jsonStr);
         ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         if (fsync(fd) != 0) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fsync failed, errno is %d.", __func__, errno);
         }
-        close(fd);
+        fdsan_close_with_tag(fd, g_nativeFdTag);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
@@ -703,6 +707,7 @@ static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
             "[%s]: Failed to open native token file, errno is %d.", __func__, errno);
         return ATRET_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
 #ifdef WITH_SELINUX
     Restorecon(TOKEN_ID_CFG_FILE_LOCK_PATH);
 #endif // WITH_SELINUX
@@ -723,7 +728,7 @@ static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
         }
     }
     if (ret == -1) {
-        close(fd);
+        fdsan_close_with_tag(fd, g_nativeFdTag);
         return ATRET_FAILED;
     }
     *lockFileFd = fd;
@@ -742,7 +747,7 @@ static void UnlockNativeTokenFile(int32_t lockFileFd)
         NativeTokenKmsg(NATIVETOKEN_KERROR,
             "[%s]: Failed to unlock file, errno is %d.", __func__, errno);
     }
-    close(lockFileFd);
+    fdsan_close_with_tag(lockFileFd, g_nativeFdTag);
 }
 
 static uint32_t AddOrUpdateTokenInfo(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
