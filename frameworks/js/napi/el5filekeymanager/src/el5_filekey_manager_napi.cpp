@@ -79,10 +79,10 @@ bool ParseDataType(const napi_env &env, napi_value args, int32_t &dataLockType)
 
 bool CheckDataType(napi_env env, int32_t dataLockType)
 {
-    if ((static_cast<DataLockType>(dataLockType) != DEFAULT_DATA) &&
-        (static_cast<DataLockType>(dataLockType) != MEDIA_DATA) &&
-        (static_cast<DataLockType>(dataLockType) != GROUP_ID_DATA) &&
-        (static_cast<DataLockType>(dataLockType) != ALL_DATA)) {
+    if ((static_cast<DataLockType>(dataLockType) != DataLockType::DEFAULT_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != DataLockType::MEDIA_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != DataLockType::GROUP_ID_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != DataLockType::ALL_DATA)) {
         ThrowError(env, EFM_ERR_INVALID_DATATYPE);
         return false;
     }
@@ -99,7 +99,7 @@ napi_value AcquireAccess(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    int32_t dataLockType = DEFAULT_DATA;
+    int32_t dataLockType = static_cast<int32_t>(DataLockType::DEFAULT_DATA);
     if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
         return nullptr;
     }
@@ -130,7 +130,7 @@ napi_value ReleaseAccess(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    int32_t dataLockType = DEFAULT_DATA;
+    int32_t dataLockType = static_cast<int32_t>(DataLockType::DEFAULT_DATA);
     if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
         return nullptr;
     }
@@ -161,7 +161,7 @@ napi_value QueryAppKeyState(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    int32_t dataLockType = DEFAULT_DATA;
+    int32_t dataLockType = static_cast<int32_t>(DataLockType::DEFAULT_DATA);
     if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
         return nullptr;
     }
@@ -216,8 +216,8 @@ static napi_value Init(napi_env env, napi_value exports)
 
     napi_value dataType = nullptr;
     napi_create_object(env, &dataType);
-    SetNamedProperty(env, dataType, MEDIA_DATA, "MEDIA_DATA");
-    SetNamedProperty(env, dataType, ALL_DATA, "ALL_DATA");
+    SetNamedProperty(env, dataType, static_cast<int32_t>(DataLockType::MEDIA_DATA), "MEDIA_DATA");
+    SetNamedProperty(env, dataType, static_cast<int32_t>(DataLockType::ALL_DATA), "ALL_DATA");
 
     napi_value accessStatus = nullptr;
     napi_create_object(env, &accessStatus);

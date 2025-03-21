@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -53,10 +53,8 @@ if (is_standard_system && ability_base_enable == true) {
     ]
     defines = []
     sources = [
-      "src/el5_filekey_callback_proxy.cpp",
       "src/el5_filekey_manager_service.cpp",
       "src/el5_filekey_manager_service_ability.cpp",
-      "src/el5_filekey_manager_stub.cpp",
     ]
 
     configs = []
@@ -65,13 +63,11 @@ if (is_standard_system && ability_base_enable == true) {
       cflags += [ "-DBINDER_IPC_32BIT" ]
     }
 
-    include_dirs = [
-      "${access_token_path}/services/el5filekeymanager/include",
-      "${access_token_path}/frameworks/inner_api/el5filekeymanager/include/",
-    ]
+    include_dirs = [ "${access_token_path}/services/el5filekeymanager/include" ]
 
     deps = [
       "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
+      "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_stub",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/services/el5filekeymanager:el5_filekey_manager_cfg",

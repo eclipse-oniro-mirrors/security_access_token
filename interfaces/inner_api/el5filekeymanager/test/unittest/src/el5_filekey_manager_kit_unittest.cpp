@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
 #include "el5_filekey_manager_kit_unittest.h"
 
 #include "accesstoken_kit.h"
-#include "el5_filekey_callback_stub.h"
+#include "el5_filekey_callback_interface_stub.h"
 #include "el5_filekey_manager_error.h"
 #include "el5_filekey_manager_kit.h"
 #include "token_setproc.h"
@@ -40,11 +40,12 @@ void El5FilekeyManagerKitTest::TearDown()
 {
 }
 
-class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
+class TestEl5FilekeyCallback : public El5FilekeyCallbackInterfaceStub {
 public:
-    void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
+    OHOS::ErrCode OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
     {
         GTEST_LOG_(INFO) << "OnRegenerateAppKey.";
+        return OHOS::ERR_OK;
     }
 };
 
@@ -56,7 +57,7 @@ public:
  */
 HWTEST_F(El5FilekeyManagerKitTest, AcquireAccess001, TestSize.Level1)
 {
-    DataLockType type = MEDIA_DATA;
+    DataLockType type = DataLockType::MEDIA_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -68,7 +69,7 @@ HWTEST_F(El5FilekeyManagerKitTest, AcquireAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, AcquireAccess002, TestSize.Level1)
 {
-    DataLockType type = ALL_DATA;
+    DataLockType type = DataLockType::ALL_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -80,7 +81,7 @@ HWTEST_F(El5FilekeyManagerKitTest, AcquireAccess002, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, ReleaseAccess001, TestSize.Level1)
 {
-    DataLockType type = MEDIA_DATA;
+    DataLockType type = DataLockType::MEDIA_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -92,7 +93,7 @@ HWTEST_F(El5FilekeyManagerKitTest, ReleaseAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, ReleaseAccess002, TestSize.Level1)
 {
-    DataLockType type = ALL_DATA;
+    DataLockType type = DataLockType::ALL_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -221,7 +222,7 @@ HWTEST_F(El5FilekeyManagerKitTest, DeleteGroupIDKey001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, QueryAppKeyState001, TestSize.Level1)
 {
-    DataLockType type = MEDIA_DATA;
+    DataLockType type = DataLockType::MEDIA_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -233,6 +234,6 @@ HWTEST_F(El5FilekeyManagerKitTest, QueryAppKeyState001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, QueryAppKeyState002, TestSize.Level1)
 {
-    DataLockType type = ALL_DATA;
+    DataLockType type = DataLockType::ALL_DATA;
     ASSERT_EQ(El5FilekeyManagerKit::QueryAppKeyState(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include "el5_filekey_manager_error.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "el5_filekey_manager_log.h"
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
 #include "screenlock_manager.h"
 #endif
@@ -241,8 +242,7 @@ int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& bundleName, in
     return service_->DeleteAppKey(bundleName, userId);
 }
 
-int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,
-    std::vector<std::pair<int32_t, std::string>> &keyInfos)
+int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos)
 {
     LOG_INFO("Get user %{public}d app key.", userId);
     if (userId < 0) {
@@ -264,7 +264,7 @@ int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,
 }
 
 int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
-    std::vector<std::pair<std::string, bool>> &loadInfos)
+    const std::vector<AppKeyLoadInfo> &loadInfos)
 {
     LOG_INFO("Change user %{public}d load infos.", userId);
     if (userId < 0) {

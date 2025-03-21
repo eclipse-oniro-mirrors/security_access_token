@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_CALLBACK_INTERFACE_H
-#define EL5_FILEKEY_CALLBACK_INTERFACE_H
+#ifndef EL5FILEKEYMANAGER_INCLUDE_APP_KEY_LOAD_INFO_H
+#define EL5FILEKEYMANAGER_INCLUDE_APP_KEY_LOAD_INFO_H
 
 #include <vector>
 
-#include "app_key_info.h"
+#include "message_parcel.h"
 #include "iremote_broker.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class El5FilekeyCallbackInterface : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.El5FilekeyCallback");
+struct AppKeyLoadInfo : public Parcelable {
+    std::string first;
+    bool second = false;
 
-    virtual void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos) = 0;
+    AppKeyLoadInfo() {}
+    AppKeyLoadInfo(std::string &first, bool second) : first(first), second(second) {}
 
-    enum Code {
-        ON_REGENERATE_APP_KEY = 0,
-    };
+    bool Marshalling(Parcel &parcel) const override;
+    static AppKeyLoadInfo *Unmarshalling(Parcel &parcel);
 };
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif // EL5_FILEKEY_CALLBACK_INTERFACE_H
+#endif // EL5FILEKEYMANAGER_INCLUDE_APP_KEY_LOAD_INFO_H

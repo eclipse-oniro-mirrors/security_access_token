@@ -210,13 +210,13 @@
           "name": "//base/security/access_token/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
           "header": {
             "header_files": [
-              "el5_filekey_manager_kit.h",
               "app_key_info.h",
-              "data_lock_type.h",
-              "el5_filekey_callback_interface.h",
+              "app_key_load_info.h",
+              "data_lock_type_ext.h",
               "el5_filekey_callback_stub.h",
               "el5_filekey_manager_error.h",
-              "el5_filekey_manager_kit.h"
+              "el5_filekey_manager_kit.h",
+              "user_app_key_info.h"
             ],
             "header_base": "//base/security/access_token/interfaces/inner_api/el5filekeymanager/include"
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,8 @@
 #include "el5_filekey_manager_service_mock_unittest.h"
 
 #include "accesstoken_kit.h"
-#include "el5_filekey_callback_stub.h"
+#include "el5_filekey_callback_interface_stub.h"
+#include "el5_filekey_manager_error.h"
 #include "el5_test_common.h"
 #include "mock_ipc.h"
 #include "token_setproc.h"
@@ -47,11 +48,12 @@ void El5FilekeyManagerServiceMockTest::TearDown()
 {
 }
 
-class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
+class TestEl5FilekeyCallback : public El5FilekeyCallbackInterfaceStub {
 public:
-    void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
+    OHOS::ErrCode OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
     {
         GTEST_LOG_(INFO) << "OnRegenerateAppKey.";
+        return OHOS::ERR_OK;
     }
 };
 
@@ -77,15 +79,15 @@ public:
         return EFM_SUCCESS;
     }
 
-    int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+    int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos)
     {
         int32_t key = 111;
         std::string info = "test";
-        keyInfos.emplace_back(std::make_pair(key, info));
+        keyInfos.emplace_back(UserAppKeyInfo(key, info));
         return EFM_SUCCESS;
     }
 
-    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos)
+    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, const std::vector<AppKeyLoadInfo> &loadInfos)
     {
         return EFM_SUCCESS;
     }
@@ -155,7 +157,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -172,7 +174,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -189,7 +191,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -206,7 +208,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -294,7 +296,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey001, TestSize.Level1)
     el5FilekeyManagerService_->service_ = nullptr;
 
     int32_t userId = 100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    std::vector<UserAppKeyInfo> keyInfos;
 
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
@@ -313,7 +315,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey002, TestSize.Level1)
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
     int32_t userId = 100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    std::vector<UserAppKeyInfo> keyInfos;
 
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
@@ -339,7 +341,8 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey003, TestSize.Level1)
     data.WriteBool(false);
 
     ASSERT_EQ(el5FilekeyManagerService_->OnRemoteRequest(
-        static_cast<uint32_t>(EFMInterfaceCode::GET_USER_APP_KEY), data, reply, option), OHOS::NO_ERROR);
+        static_cast<uint32_t>(El5FilekeyManagerInterfaceIpcCode::COMMAND_GET_USER_APP_KEY), data, reply, option),
+        OHOS::NO_ERROR);
 }
 
 /**
@@ -353,8 +356,9 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ChangeUserAppkeysLoadInfo001, TestSiz
     el5FilekeyManagerService_->service_ = nullptr;
 
     int32_t userId = 100;
-    std::vector<std::pair<std::string, bool>> loadInfos;
-    loadInfos.emplace_back(std::make_pair("", true));
+    std::vector<AppKeyLoadInfo> loadInfos;
+    std::string emptyStr("");
+    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
 
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
@@ -373,8 +377,9 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ChangeUserAppkeysLoadInfo002, TestSiz
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
     int32_t userId = 100;
-    std::vector<std::pair<std::string, bool>> loadInfos;
-    loadInfos.emplace_back(std::make_pair("", true));
+    std::vector<AppKeyLoadInfo> loadInfos;
+    std::string emptyStr("");
+    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
 
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
@@ -536,7 +541,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -553,7 +558,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
-    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DEFAULT_DATA), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
 }
 
 /**
@@ -652,7 +657,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level1)
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
     OHOS::MessageOption option;
-    uint32_t code = static_cast<uint32_t>(El5FilekeyCallbackInterface::Code::ON_REGENERATE_APP_KEY);
+    uint32_t code = static_cast<uint32_t>(El5FilekeyCallbackInterfaceIpcCode::COMMAND_ON_REGENERATE_APP_KEY);
 
     ASSERT_EQ(data.WriteInterfaceToken(El5FilekeyCallbackInterface::GetDescriptor()), true);
     data.WriteUint32(1); // infosSize

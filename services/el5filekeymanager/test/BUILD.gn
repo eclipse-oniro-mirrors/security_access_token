@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,7 +36,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     sources = [
       "../src/el5_filekey_manager_service.cpp",
-      "../src/el5_filekey_manager_stub.cpp",
       "common/src/el5_test_common.cpp",
       "mock/src/mock_ipc.cpp",
       "src/el5_filekey_manager_service_mock_unittest.cpp",
@@ -46,6 +45,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     deps = [
       "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
+      "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_stub",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
@@ -101,7 +101,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     sources = [
       "../src/el5_filekey_manager_service.cpp",
-      "../src/el5_filekey_manager_stub.cpp",
       "src/el5_filekey_manager_service_unittest.cpp",
     ]
 
@@ -109,6 +108,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     deps = [
       "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
+      "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_stub",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
@@ -164,7 +164,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     sources = [
       "../src/el5_filekey_manager_service.cpp",
-      "../src/el5_filekey_manager_stub.cpp",
       "src/el5_filekey_manager_stub_unittest.cpp",
     ]
 
@@ -172,6 +171,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     deps = [
       "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
+      "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_stub",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
