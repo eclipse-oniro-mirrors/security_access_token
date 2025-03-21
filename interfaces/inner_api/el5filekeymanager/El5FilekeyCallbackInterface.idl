@@ -13,9 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_CALLBACK_STUB_H
-#define EL5_FILEKEY_CALLBACK_STUB_H
+sequenceable OHOS.Security.AccessToken.AppKeyInfo;
 
-#include "el5_filekey_callback_interface_stub.h"
-
-#endif // EL5_FILEKEY_CALLBACK_STUB_H
+[callback] interface OHOS.Security.AccessToken.El5FilekeyCallbackInterface{
+    void OnRegenerateAppKey([inout] List<AppKeyInfo> infos);
+}

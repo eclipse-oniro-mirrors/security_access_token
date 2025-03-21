@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,8 @@
 #include "el5_filekey_manager_service_unittest.h"
 
 #include "accesstoken_kit.h"
-#include "el5_filekey_callback_stub.h"
+#include "el5_filekey_callback_interface_stub.h"
+#include "el5_filekey_manager_error.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -44,11 +45,12 @@ void El5FilekeyManagerServiceTest::TearDown()
 {
 }
 
-class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
+class TestEl5FilekeyCallback : public El5FilekeyCallbackInterfaceStub {
 public:
-    void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
+    OHOS::ErrCode OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
     {
         GTEST_LOG_(INFO) << "OnRegenerateAppKey.";
+        return OHOS::ERR_OK;
     }
 };
 
@@ -60,7 +62,7 @@ public:
  */
 HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::MEDIA_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -71,7 +73,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess002, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(ALL_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::ALL_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -94,7 +96,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess003, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::MEDIA_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -105,7 +107,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess002, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(ALL_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::ALL_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -144,7 +146,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, DeleteAppKey001, TestSize.Level1)
 HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey001, TestSize.Level1)
 {
     int32_t userId = 100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    std::vector<UserAppKeyInfo> keyInfos;
     ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_NO_PERMISSION);
 }
 
@@ -157,7 +159,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey001, TestSize.Level1)
 HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey002, TestSize.Level1)
 {
     int32_t userId = -100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    std::vector<UserAppKeyInfo> keyInfos;
     ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_INVALID_PARAMETER);
 }
 
@@ -170,8 +172,9 @@ HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey002, TestSize.Level1)
 HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo001, TestSize.Level1)
 {
     int32_t userId = 100;
-    std::vector<std::pair<std::string, bool>> loadInfos;
-    loadInfos.emplace_back(std::make_pair("", true));
+    std::vector<AppKeyLoadInfo> loadInfos;
+    std::string emptyStr("");
+    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
     ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_NO_PERMISSION);
 }
 
@@ -184,8 +187,9 @@ HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo001, TestSize.Le
 HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo002, TestSize.Level1)
 {
     int32_t userId = -100;
-    std::vector<std::pair<std::string, bool>> loadInfos;
-    loadInfos.emplace_back(std::make_pair("", true));
+    std::vector<AppKeyLoadInfo> loadInfos;
+    std::string emptyStr("");
+    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
     ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_INVALID_PARAMETER);
 }
 
@@ -246,7 +250,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, DeleteGroupIDKey001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState001, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::MEDIA_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -257,7 +261,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState002, TestSize.Level1)
 {
-    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(ALL_DATA), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::ALL_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**

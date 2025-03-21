@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,15 +11,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
 import("../../../access_token.gni")
+
+idl_gen_interface("el5_filekey_manager_interface") {
+  sources = [ "El5FilekeyManagerInterface.idl" ]
+  sources_callback = [ "El5FilekeyCallbackInterface.idl" ]
+  sources_common = [ "data_lock_type.idl" ]
+  subsystem_name = "security"
+  part_name = "access_token"
+}
 
 config("efm_innerkits") {
   visibility = [ ":*" ]
   include_dirs = [
     "include",
     "${access_token_path}/frameworks/inner_api/el5filekeymanager/include/",
+    "${target_gen_dir}",
   ]
+}
+
+ohos_source_set("el5_filekey_manager_proxy") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  output_values = get_target_outputs(":el5_filekey_manager_interface")
+  sources = []
+  sources += filter_include(output_values, [ "*callback_interface_stub.cpp" ])
+  sources += filter_include(output_values, [ "*manager_interface_proxy.cpp" ])
+  public_configs = [ ":efm_innerkits" ]
+  deps = [ ":el5_filekey_manager_interface" ]
+  external_deps = [ "ipc:ipc_core" ]
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+ohos_source_set("el5_filekey_manager_stub") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  output_values = get_target_outputs(":el5_filekey_manager_interface")
+  sources = []
+  sources += filter_include(output_values, [ "*callback_interface_proxy.cpp" ])
+  sources += filter_include(output_values, [ "*manager_interface_stub.cpp" ])
+  public_configs = [ ":efm_innerkits" ]
+  deps = [ ":el5_filekey_manager_interface" ]
+  external_deps = [ "ipc:ipc_core" ]
+  subsystem_name = "security"
+  part_name = "access_token"
 }
 
 ohos_shared_library("el5_filekey_manager_sdk") {
@@ -47,11 +91,13 @@ ohos_shared_library("el5_filekey_manager_sdk") {
 
   sources = [
     "src/app_key_info.cpp",
-    "src/el5_filekey_callback_stub.cpp",
+    "src/app_key_load_info.cpp",
     "src/el5_filekey_manager_client.cpp",
     "src/el5_filekey_manager_kit.cpp",
-    "src/el5_filekey_manager_proxy.cpp",
+    "src/user_app_key_info.cpp",
   ]
+
+  deps = [ ":el5_filekey_manager_proxy" ]
 
   external_deps = [
     "c_utils:utils",

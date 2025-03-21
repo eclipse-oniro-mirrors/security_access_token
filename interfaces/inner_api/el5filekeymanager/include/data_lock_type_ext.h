@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_CALLBACK_STUB_H
-#define EL5_FILEKEY_CALLBACK_STUB_H
+#ifndef EL5FILEKEYMANAGER_INCLUDE_DATA_LOCK_TYPE_EXT_H
+#define EL5FILEKEYMANAGER_INCLUDE_DATA_LOCK_TYPE_EXT_H
 
-#include "el5_filekey_callback_interface_stub.h"
+#include "data_lock_type.h"
 
-#endif // EL5_FILEKEY_CALLBACK_STUB_H
+#endif // EL5FILEKEYMANAGER_INCLUDE_DATA_LOCK_TYPE_EXT_H

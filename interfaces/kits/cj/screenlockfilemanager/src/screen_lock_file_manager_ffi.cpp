@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,12 +26,12 @@ namespace ScreenLockFileManager {
 extern "C" {
 int32_t FfiOHOSScreenLockFileManagerAcquireAccess()
 {
-    return El5FilekeyManagerKit::AcquireAccess(DEFAULT_DATA);
+    return El5FilekeyManagerKit::AcquireAccess(DataLockType::DEFAULT_DATA);
 }
 
 int32_t FfiOHOSScreenLockFileManagerReleaseAccess()
 {
-    return El5FilekeyManagerKit::ReleaseAccess(DEFAULT_DATA);
+    return El5FilekeyManagerKit::ReleaseAccess(DataLockType::DEFAULT_DATA);
 }
 }
 } // namespace ScreenLockFileManager

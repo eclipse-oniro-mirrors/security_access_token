@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,10 @@
 #include "el5_filekey_manager_client.h"
 
 #include "el5_filekey_manager_log.h"
-#include "el5_filekey_manager_proxy.h"
+#include "el5_filekey_manager_interface_proxy.h"
+#include "el5_filekey_manager_error.h"
+#include "app_key_load_info.h"
+#include "user_app_key_info.h"
 #include "iservice_registry.h"
 #include "refbase.h"
 #include "system_ability_definition.h"
@@ -77,17 +80,26 @@ int32_t El5FilekeyManagerClient::DeleteAppKey(const std::string &bundleName, int
 int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
     std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
+    std::vector<UserAppKeyInfo> userAppKeyInfos;
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->GetUserAppKey(userId, getAllFlag, keyInfos);
+        return proxy->GetUserAppKey(userId, getAllFlag, userAppKeyInfos);
     };
-    return CallProxyWithRetry(func, __FUNCTION__, SA_REQUEST_RETRY_TIMES);
+    int32_t ret = CallProxyWithRetry(func, __FUNCTION__, SA_REQUEST_RETRY_TIMES);
+    for (auto const &it : userAppKeyInfos) {
+        keyInfos.emplace_back(std::make_pair(it.first, it.second));
+    }
+    return ret;
 }
 
 int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
     std::vector<std::pair<std::string, bool>> &loadInfos)
 {
+    std::vector<AppKeyLoadInfo> appKeyLoadInfos;
+    for (auto &it : loadInfos) {
+        appKeyLoadInfos.emplace_back(AppKeyLoadInfo(it.first, it.second));
+    }
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->ChangeUserAppkeysLoadInfo(userId, loadInfos);
+        return proxy->ChangeUserAppkeysLoadInfo(userId, appKeyLoadInfos);
     };
     return CallProxyWithRetry(func, __FUNCTION__);
 }

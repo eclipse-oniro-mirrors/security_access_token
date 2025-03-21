@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,7 @@
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "el5_filkey_manager_subscriber.h"
 #endif
-#include "el5_filekey_manager_stub.h"
+#include "el5_filekey_manager_interface_stub.h"
 #include "el5_filekey_service_ext_interface.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
@@ -34,7 +34,7 @@ namespace Security {
 namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 
-class El5FilekeyManagerService : public El5FilekeyManagerStub {
+class El5FilekeyManagerService : public El5FilekeyManagerInterfaceStub {
 public:
     El5FilekeyManagerService();
     virtual ~El5FilekeyManagerService();
@@ -46,9 +46,8 @@ public:
     int32_t ReleaseAccess(DataLockType type) override;
     int32_t GenerateAppKey(uint32_t uid, const std::string& bundleName, std::string& keyId) override;
     int32_t DeleteAppKey(const std::string& bundleName, int32_t userId) override;
-    int32_t GetUserAppKey(int32_t userId, bool getAllFlag,
-        std::vector<std::pair<int32_t, std::string>> &keyInfos) override;
-    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) override;
+    int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos) override;
+    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, const std::vector<AppKeyLoadInfo> &loadInfos) override;
     int32_t SetFilePathPolicy() override;
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) override;
     int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) override;
