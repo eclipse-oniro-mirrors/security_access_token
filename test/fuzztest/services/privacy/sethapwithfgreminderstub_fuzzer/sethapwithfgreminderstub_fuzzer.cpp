@@ -33,9 +33,6 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-const uint8_t *g_baseFuzzData = nullptr;
-size_t g_baseFuzzSize = 0;
-size_t g_baseFuzzPos = 0;
     void GetNativeToken()
     {
         uint64_t tokenId;
