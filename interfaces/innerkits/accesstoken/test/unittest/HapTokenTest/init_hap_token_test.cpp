@@ -930,6 +930,39 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest013, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapTokenSpecsTest014
+ * @tc.desc: app.apl > policy.apl, extended permission not in aclExtendedMap
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest014, TestSize.Level1)
+{
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_SYSTEM_CORE;
+    TestCommon::TestPrepareKernelPermissionStatus(policyParams);
+    policyParams.aclExtendedMap.erase("ohos.permission.KERNEL_ATM_SELF_USE");
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+
+    std::vector<PermissionWithValue> kernelPermList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList));
+    EXPECT_EQ(1, kernelPermList.size());
+
+    std::string value;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
+    EXPECT_EQ("", value);
+
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
  * @tc.name: InitHapTokenAbnormalTest001
  * @tc.desc: Invaild HapInfoParams.
  * @tc.type: FUNC
