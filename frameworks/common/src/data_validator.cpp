@@ -27,23 +27,35 @@ namespace AccessToken {
 
 bool DataValidator::IsBundleNameValid(const std::string& bundleName)
 {
-    return !bundleName.empty() && (bundleName.length() <= MAX_LENGTH);
+    bool ret = (!bundleName.empty() && (bundleName.length() <= MAX_LENGTH));
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "bunldename %{public}s is invalid.", bundleName.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsLabelValid(const std::string& label)
 {
-    return label.length() <= MAX_LENGTH;
+    bool ret = (label.length() <= MAX_LENGTH);
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "label %{public}s is invalid.", label.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsDescValid(const std::string& desc)
 {
-    return desc.length() <= MAX_LENGTH;
+    bool ret = desc.length() <= MAX_LENGTH;
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "desc %{public}s is invalid.", desc.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
 {
     if (permissionName.empty() || (permissionName.length() > MAX_LENGTH)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid perm length(%{public}d).", static_cast<int32_t>(permissionName.length()));
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid perm length(%{public}d).", static_cast<int32_t>(permissionName.length()));
         return false;
     }
     return true;
@@ -51,12 +63,17 @@ bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
 
 bool DataValidator::IsUserIdValid(const int userId)
 {
-    return userId >= 0;
+    bool ret = (userId >= 0);
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "userId %{public}d is invalid.", userId);
+    }
+    return ret;
 }
 
 bool DataValidator::IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap)
 {
     if (aclExtendedMap.size() > MAX_EXTENDED_MAP_SIZE) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "aclExtendedMap is oversize %{public}zu.", aclExtendedMap.size());
         return false;
     }
     return true;
@@ -69,7 +86,7 @@ bool DataValidator::IsAclExtendedMapContentValid(const std::string& permissionNa
     }
 
     if (value.empty() || (value.length() > MAX_VALUE_LENGTH)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid value length(%{public}d).", static_cast<int32_t>(value.length()));
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid value length(%{public}d).", static_cast<int32_t>(value.length()));
         return false;
     }
     return true;
