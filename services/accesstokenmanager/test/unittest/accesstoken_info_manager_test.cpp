@@ -612,6 +612,38 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
 }
 
+
+/**
+ * @tc.name: InitHapToken007
+ * @tc.desc: InitHapToken app.apl > policy.apl, extended permission not in aclExtendedMap
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level1)
+{
+    HapInfoParcel info;
+    HapPolicyParcel policy;
+    GetHapParams(info.hapInfoParameter, policy.hapPolicy);
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+
+    TestPrepareKernelPermissionStatus(policy.hapPolicy);
+    policy.hapPolicy.aclExtendedMap.erase("ohos.permission.KERNEL_ATM_SELF_USE");
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+
+    std::vector<PermissionWithValue> kernelPermList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
+    EXPECT_EQ(1, kernelPermList.size());
+
+    std::string value;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
+    EXPECT_EQ("", value);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
+}
+
 /**
  * @tc.name: IsTokenIdExist001
  * @tc.desc: Verify the IsTokenIdExist exist accesstokenid.

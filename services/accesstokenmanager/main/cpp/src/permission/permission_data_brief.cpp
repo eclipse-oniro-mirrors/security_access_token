@@ -76,11 +76,10 @@ bool PermissionDataBrief::GetPermissionBriefData(
             auto iter = aclExtendedMap.find(permState.permissionName);
             if (iter != aclExtendedMap.end()) {
                 extendedValue_[key] = iter->second;
-                briefPermData.type |= HAS_VALUE;
             } else {
-                LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is not in aclExtendedMap.", permState.permissionName.c_str());
-                return false;
+                extendedValue_[key] = "";
             }
+            briefPermData.type |= HAS_VALUE;
         }
 
         if (briefPermData.type != 0) {
@@ -153,6 +152,9 @@ int32_t PermissionDataBrief::GetKernelPermissions(
                 return ERR_PERMISSION_WITHOUT_VALUE;
             }
             value = it->second;
+            if (value.empty()) {
+                value = "true";
+            }
         } else {
             value = "true";
         }
