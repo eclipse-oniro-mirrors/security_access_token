@@ -19,22 +19,25 @@
 #include "ani.h"
 #include "privacy_error.h"
 #include "privacy_kit.h"
+#include "ani_error.h"
 
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniPrivacyManager" };
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AniPrivacyManager" };
 constexpr int32_t MAX_LENGTH = 256;
 
 static int AddPermissionUsedRecordSync(
     ani_int tokenID, const std::string &permissionName, ani_int successCount, ani_int failCount, ani_int ntype)
 {
-    OHOS::Security::AccessToken::AddPermParamInfo info;
+    AddPermParamInfo info;
     info.tokenId = tokenID;
     info.permissionName = permissionName;
     info.successCount = successCount;
     info.failCount = failCount;
-    info.type = static_cast<OHOS::Security::AccessToken::PermissionUsedType>(ntype);
-    ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord %{public}d", info.type);
-    auto retCode = OHOS::Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(info);
-    ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord %{public}d", retCode);
+    info.type = static_cast<PermissionUsedType>(ntype);
+    auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
+    ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord retCode : %{public}d", retCode);
     return retCode;
 }
 
@@ -42,53 +45,56 @@ static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env *env, [[maybe_un
     ani_int tokenID, ani_string permissionName, ani_int successCount, ani_int failCount, ani_object options)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-
     ani_size strSize;
-    if (ANI_OK != env->String_GetUTF8Size(permissionName, &strSize)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get String_GetUTF8Size Faild");
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+    ani_status status = ANI_ERROR;
+    if (ANI_OK != (status = env->String_GetUTF8Size(permissionName, &strSize))) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            "AddPermissionUsedRecord", "");
+        return STSErrorCode::STS_ERROR_PARAM_ILLEGAL;
     }
-
     if (strSize > MAX_LENGTH) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "the max lenth :%{public}d", MAX_LENGTH);
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "the max lenth : %{public}d", MAX_LENGTH);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-
     std::vector<char> buffer(strSize + 1);
     char *utf8Buffer = buffer.data();
-
     ani_size bytesWritten = 0;
-    if (ANI_OK != env->String_GetUTF8(permissionName, utf8Buffer, strSize + 1, &bytesWritten)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get String_GetUTF8 Faild");
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+    if (ANI_OK != (status = env->String_GetUTF8(permissionName, utf8Buffer, strSize + 1, &bytesWritten))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get String_GetUTF8 Faild status : %{public}d", status);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-
     utf8Buffer[bytesWritten] = '\0';
     std::string outputPermissionName = std::string(utf8Buffer);
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName Get %{public}s", outputPermissionName.c_str());
-
     ani_ref usedTypeRef;
-    if (ANI_OK != env->Object_GetFieldByName_Ref(options, "usedType", &usedTypeRef)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild");
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+    if (ANI_OK != (status = env->Object_GetPropertyByName_Ref(options, "usedType", &usedTypeRef))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild status : %{public}d", status);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-    ani_enum_item usedType = static_cast<ani_enum_item>(usedTypeRef);
-    
-    ani_int aniInt = 0;
-    if (ANI_OK != env->EnumItem_GetValue_Int(usedType, &aniInt)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "EnumItem_GetValue_Int Faild");
-        return OHOS::Security::AccessToken::PrivacyError::ERR_PARAM_INVALID;
+    ani_int usedType = 0;
+    ani_boolean isUndefined = true;
+    if (ANI_OK != (status = env->Reference_IsUndefined(usedTypeRef, &isUndefined))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-
-    return AddPermissionUsedRecordSync(tokenID, outputPermissionName, successCount, failCount, aniInt);
+    if (!isUndefined) {
+        ani_enum_item usedTypeEnum = static_cast<ani_enum_item>(usedTypeRef);
+        if (ANI_OK != env->EnumItem_GetValue_Int(usedTypeEnum, &usedType)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "EnumItem_GetValue_Int Faild");
+            return PrivacyError::ERR_PARAM_INVALID;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL,"Object_GetFieldByName_Ref tokenID:%{public}d PermissionName:%{public}s \
+        successCount:%{public}d failCount:%{public}d usedType:%{public}d",
+        tokenID, outputPermissionName.c_str(), successCount, failCount, usedType);
+    return AddPermissionUsedRecordSync(tokenID, outputPermissionName, successCount, failCount, usedType);
 }
 
+extern "C"{
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ANI_Constructor called");
     if (vm == nullptr || result == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm or result");
         return ANI_INVALID_ARGS;
@@ -104,17 +110,16 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_NOT_FOUND;
     }
 
-    const char *className = "LprivacyManagerAni/privacyManager/PrivacyManagerInner;";
+    const char *className = "L@ohos/privacyManager/privacyManager/PrivacyManagerInner;";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
         return ANI_NOT_FOUND;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "array methods called");
     std::array methods = {
         ani_native_function{ "addPermissionUsedRecordSync",
-            "ILstd/core/String;IILprivacyManagerAni/privacyManager/AddPermissionUsedRecordOptions;:I",
+            "ILstd/core/String;IIL@ohos/privacyManager/privacyManager/AddPermissionUsedRecordOptionsInner;:I",
             reinterpret_cast<void *>(AddPermissionUsedRecord) },
     };
 
@@ -126,3 +131,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
     *result = ANI_VERSION_1;
     return ANI_OK;
 }
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
