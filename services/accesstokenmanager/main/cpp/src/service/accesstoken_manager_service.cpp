@@ -242,6 +242,19 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
     return ret == INVALID_OPER ? RET_FAILED : RET_SUCCESS;
 }
 
+static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionStatus>& permsList)
+{
+    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
+    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
+    if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GetReqPermissions failed, retUserGrant:%{public}d, retSysGrant:%{public}d",
+            retUserGrant, retSysGrant);
+        return false;
+    }
+    return true;
+}
+
 PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList)
 {
@@ -254,12 +267,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
 
     bool needRes = false;
     std::vector<PermissionStatus> permsList;
-    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
-    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
-    if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetReqPermissions failed, retUserGrant:%{public}d, retSysGrant:%{public}d",
-            retUserGrant, retSysGrant);
+    if (!GetAppReqPermissions(tokenID, permsList)) {
         return INVALID_OPER;
     }
 

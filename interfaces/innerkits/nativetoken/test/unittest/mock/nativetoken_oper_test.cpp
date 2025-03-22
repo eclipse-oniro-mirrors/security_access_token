@@ -66,7 +66,7 @@ static void SetTimes(void)
     g_strcpyTime = VALID_TIME;
 }
 
-static bool isFileEmpty(const std::string& fileName)
+static bool IsFileEmpty(const std::string& fileName)
 {
     FILE *file = fopen(fileName.c_str(), "r");
     if (file == nullptr) {
@@ -437,32 +437,32 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
 HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
 {
     SetTimes();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     g_parse = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArrayItemTime = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 8; // 8 times
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 17; // 17 times
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
@@ -522,13 +522,13 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
     g_parse = VALID_TIME;
     AtlibInit();
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     // UpdateInfoInCfgFile failed for SaveTokenIdToCfg
     // tokenNode->dcapsNum != dcapNumIn branch
     g_parse = 9; // 9 times
     EXPECT_EQ(Start("foundation"), 0);
-    EXPECT_EQ(isFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     g_printUnformatted = DEFAULT_TIME;
     EXPECT_NE(Start("process1"), 0);
