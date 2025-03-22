@@ -275,14 +275,14 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     std::vector<GenericValues> hapTokenResults;
     int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS || hapTokenResults.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
             "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
         return nullptr;
     }
     std::vector<GenericValues> permStateRes;
     ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
             "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
         return nullptr;
     }
@@ -291,7 +291,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     ret = AccessTokenDb::GetInstance().Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, extendedPermRes);
     if (ret != RET_SUCCESS) { // extendedPermRes may be empty
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_extend_value_table, err: %{public}d, "
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_extend_value_table, err: %{public}d, "
             "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
         return nullptr;
     }
@@ -299,7 +299,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
     ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes, extendedPermRes);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
             id, ret, hapTokenInfoMap_.size());
         return nullptr;
     }
@@ -404,7 +404,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
     if (type != TOKEN_HAP) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
         return ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> info;
@@ -415,17 +415,17 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
 
         if (hapTokenInfoMap_.count(id) == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", id);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", id);
             return ERR_TOKENID_NOT_EXIST;
         }
 
         info = hapTokenInfoMap_[id];
         if (info == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u is null.", id);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u is null.", id);
             return ERR_TOKEN_INVALID;
         }
         if (info->IsRemote()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", id);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", id);
             return ERR_IDENTITY_CHECK_FAILED;
         }
         std::string HapUniqueKey = GetHapUniqueStr(info);
@@ -435,17 +435,16 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         }
         hapTokenInfoMap_.erase(id);
     }
-    RemoveHapTokenInfoFromDb(info);
+    int32_t ret = RemoveHapTokenInfoFromDb(info);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remove info from db failed, ret is %{public}d", ret);
+    }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
     PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
 #endif
-
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP", HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
-        "INSTINDEX", info->GetInstIndex());
 
     return RET_SUCCESS;
 }
@@ -630,17 +629,17 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u parm format error!", tokenID);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u parm format error!", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid, can not update!", tokenID);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid, can not update!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     if (infoPtr->IsRemote()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not update!", tokenID);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not update!", tokenID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
     if (info.isSystemApp) {
@@ -655,15 +654,12 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 
     int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, hapPolicy, true);
     if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Add hap info %{public}u to db failed!", tokenID);
         return ret;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u bundle name %{public}s user %{public}d \
         inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
         infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
-    // DFX
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", tokenID, "USERID",
-        infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
 
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
@@ -961,11 +957,11 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     const std::string& appId, const HapPolicy& policy, bool isUpdate)
 {
     if (hapInfo == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token info is null!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token info is null!");
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (hapInfo->IsRemote()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "It is a remote hap!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "It is a remote hap!");
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     AccessTokenID tokenID = hapInfo->GetTokenID();
@@ -1044,7 +1040,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTo
     int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
         addValues);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
         return ret;
     }
     return RET_SUCCESS;

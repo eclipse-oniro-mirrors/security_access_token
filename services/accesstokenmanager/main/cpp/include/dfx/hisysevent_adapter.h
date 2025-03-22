@@ -34,6 +34,16 @@ enum UpdatePermStatusErrorCode {
     DLP_CHECK_FAILED = 1,
     UPDATE_PERMISSION_STATUS_FAILED = 2,
 };
+enum CommonSceneCode {
+    AT_COMMOM_START = 0,
+    AT_COMMON_FINISH = 1,
+};
+struct AccessTokenDfxInfo {
+    std::string permInfo;
+    std::string aclInfo;
+    std::string preauthInfo;
+    std::string extendInfo;
+};
 void ReportSysEventPerformance();
 void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSize, uint32_t permDefSize);
 void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg, int32_t errCode);

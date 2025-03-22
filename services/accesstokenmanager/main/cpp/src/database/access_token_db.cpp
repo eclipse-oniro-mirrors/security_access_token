@@ -244,6 +244,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Get table name failed, type=%{public}d!", static_cast<int32_t>(type));
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -251,6 +252,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
 
     AccessTokenDbUtil::ToRdbValueBucket(modifyValue, bucket);
     if (bucket.IsEmpty()) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "To rdb value bucket failed!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -262,7 +264,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -272,6 +274,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
                 tableName.c_str(), res);
             int32_t result = RestoreAndUpdateIfCorrupt(res, changedRows, bucket, predicates, db);
             if (result != NativeRdb::E_OK) {
+                LOGC(ATM_DOMAIN, ATM_TAG, "Failed to restore and update, result is %{public}d.", result);
                 return result;
             }
         }
@@ -298,19 +301,19 @@ int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& 
             LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
             res = db->Restore("");
             if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
+                LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
                 return res;
             }
             LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
 
             queryResultSet = db->Query(predicates, columns);
             if (queryResultSet == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s again.",
+                LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s again.",
                     predicates.GetTableName().c_str());
                 return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
             }
         } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get result count.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get result count.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
@@ -337,19 +340,20 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
         OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
         auto queryResultSet = db->Query(predicates, columns);
         if (queryResultSet == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s.",
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s.",
                 tableName.c_str());
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
         int32_t res = RestoreAndQueryIfCorrupt(predicates, columns, queryResultSet, db);
         if (res != 0) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Restore and query failed!");
             return res;
         }
 
@@ -382,14 +386,14 @@ int32_t AccessTokenDb::RestoreAndCommitIfCorrupt(const int32_t resultCode,
     LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
         return res;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try commit again!");
 
     res = db->Commit();
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Commit again, res is %{public}d.", res);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to Commit again, res is %{public}d.", res);
         return res;
     }
 
@@ -406,7 +410,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
         if (db == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -418,6 +422,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
             res = RemoveValues(delDataTypes[i], delValues[i]);
             if (res != 0) {
                 db->RollBack();
+                LOGC(ATM_DOMAIN, ATM_TAG, "Remove values failed, res is %{public}d.", res);
                 return res;
             }
         }
@@ -427,6 +432,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
             res = AddValues(addDataTypes[i], addValues[i]);
             if (res != 0) {
                 db->RollBack();
+                LOGC(ATM_DOMAIN, ATM_TAG, "Add values failed, res is %{public}d.", res);
                 return res;
             }
         }
@@ -436,6 +442,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to commit, res is %{public}d.", res);
             int32_t result = RestoreAndCommitIfCorrupt(res, db);
             if (result != NativeRdb::E_OK) {
+                LOGC(ATM_DOMAIN, ATM_TAG, "Failed to restore and commit, result is %{public}d.", result);
                 return result;
             }
         }

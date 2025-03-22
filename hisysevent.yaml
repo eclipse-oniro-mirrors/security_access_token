@@ -69,6 +69,9 @@ DEL_HAP:
   USERID: {type: INT32, desc: user id}
   BUNDLENAME: {type: STRING, desc: bundle name}
   INSTINDEX: {type: INT32, desc: inst index}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  DURATION: {type: INT64, desc: duration}
 
 PERM_DIALOG_STATUS_INFO:
   __BASE: {type: STATISTIC, level: MINOR, desc: status information of permission dialog}
@@ -93,6 +96,11 @@ UPDATE_PERMISSION:
   PERMISSION_NAME: {type: STRING, desc: permission name}
   PERMISSION_FLAG: {type: UINT32, desc: permission flag}
   GRANTED_FLAG: {type: BOOL, desc: grant or revoke}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
 
 UPDATE_HAP:
   __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: update hap to device}
@@ -100,6 +108,14 @@ UPDATE_HAP:
   USERID: {type: INT32, desc: user id}
   BUNDLENAME: {type: STRING, desc: bundle name}
   INSTINDEX: {type: INT32, desc: inst index}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  TOKENIDEX: {type: UINT64, desc: tokenIDEx}
+  PERM_INFO: {type: STRING, desc: perm info}
+  ACL_INFO: {type: STRING, desc: acl info}
+  PREAUTH_INFO: {type: STRING, desc: pre-auth info}
+  EXTEND_INFO: {type: STRING, desc: extend info}
+  DURATION: {type: INT64, desc: duration}
 
 CLEAR_USER_PERMISSION_STATE:
   __BASE: {type: BEHAVIOR, level: MINOR, desc: clear user permission state}
@@ -135,4 +151,10 @@ VERIFY_ACCESS_TOKEN_EVENT:
   EVENT_CODE: {type: INT32, desc: event code}
   SELF_TOKENID: {type: UINT32, desc: self tokenID}
   CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}
+
+ACCESSTOKEN_EXCEPTION:
+  __BASE: {type: FAULT, level: CRITICAL, desc: accesstoken exception}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  ERROR_MSG: {type: STRING, desc: error reason}
 

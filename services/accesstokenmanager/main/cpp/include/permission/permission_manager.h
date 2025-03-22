@@ -67,6 +67,8 @@ public:
         const std::string& bundleName, const std::string& abilityName);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag);
+    int32_t CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
+        bool isGranted, uint32_t flag);
     int32_t UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, bool needKill);
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);

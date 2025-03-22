@@ -96,12 +96,12 @@ public:
 class HapTokenInfo final {
 public:
     char ver;
-    int userID;
+    int userID = 0;
     std::string bundleName;
     /** which version of the SDK is used to develop this hap */
     int32_t apiVersion;
     /** instance index */
-    int instIndex;
+    int instIndex = 0;
     /**
      * dlp type, for details about the valid values,
      * see the definition of HapDlpType in the access_token.h file.

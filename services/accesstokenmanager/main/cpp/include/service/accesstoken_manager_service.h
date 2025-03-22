@@ -129,6 +129,8 @@ private:
     bool Initialize();
     void AccessTokenServiceParamSet() const;
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
+    int32_t UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl);
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;

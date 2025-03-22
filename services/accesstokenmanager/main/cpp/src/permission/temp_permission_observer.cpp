@@ -425,12 +425,12 @@ bool TempPermissionObserver::IsAllowGrantTempPermission(AccessTokenID tokenID, c
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenId(%{public}d)", tokenID);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid tokenId(%{public}d)", tokenID);
         return false;
     }
     auto iterator = std::find(g_tempPermission.begin(), g_tempPermission.end(), permissionName);
     if (iterator == g_tempPermission.end()) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Permission is not available to temp grant: %{public}s!", permissionName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "Permission is not available to temp grant: %{public}s!", permissionName.c_str());
         return false;
     }
     return CheckPermissionState(tokenID, permissionName, tokenInfo.bundleName);
