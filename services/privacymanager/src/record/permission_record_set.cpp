@@ -54,7 +54,8 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinusPermiss
     // filter active records with same tokenid and opcode in set
     auto iterRemoved = retList.begin();
     auto iterRemain = recordList.begin();
-    uint64_t removeKey, remainKey;
+    uint64_t removeKey;
+    uint64_t remainKey;
     while (iterRemoved != retList.end() && iterRemain != recordList.end()) {
         removeKey = iterRemoved->GetTokenIdAndPermCode();
         remainKey = iterRemain->GetTokenIdAndPermCode();
@@ -96,7 +97,8 @@ void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinusPermissi
     // filter records with same tokenid, opcode and pid in set
     auto iterRemoved = retList.begin();
     auto iterRemain = recordList.begin();
-    uint64_t removeKey, remainKey;
+    uint64_t removeKey;
+    uint64_t remainKey;
     while (iterRemoved != retList.end() && iterRemain != recordList.end()) {
         removeKey = iterRemoved->GetTokenIdAndPermCode();
         remainKey = iterRemain->GetTokenIdAndPermCode();
