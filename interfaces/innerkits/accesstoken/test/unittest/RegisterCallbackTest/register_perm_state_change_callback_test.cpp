@@ -650,7 +650,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     {
         std::vector<std::string> reqPerm;
         reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-        MockHapToken mock("RegisterPermStateChangeCallbackSpecTest004", reqPerm);
+        MockHapToken mock("RegisterPermStateChangeCallbackSpecTest005", reqPerm);
         EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID));
     }
     usleep(500000); // 500000us = 0.5s

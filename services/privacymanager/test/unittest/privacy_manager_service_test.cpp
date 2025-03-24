@@ -561,7 +561,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002,
     MessageOption option(MessageOption::TF_SYNC);
 
     std::vector<std::string> reqPerm;
-    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
+    MockHapToken mock("GetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteInt32(userID));

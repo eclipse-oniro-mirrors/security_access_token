@@ -125,12 +125,12 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level
  */
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest002, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest002");
 
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back(accessBluetooth);
-    MockHapToken mockHap("GetPermissionUsedTypeAbnormalTest001", reqPerm, true);
+    MockHapToken mockHap("GetPermissionUsedTypeAbnormalTest002", reqPerm, true);
     AccessTokenID tokenID = GetSelfTokenID(); // get hap tokenId
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
@@ -373,7 +373,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsAbnormalTest001");
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
-    MockHapToken mockHap("GetReqPermissionsFuncTest002", reqPerm, true);
+    MockHapToken mockHap("GetReqPermissionsAbnormalTest001", reqPerm, true);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -401,7 +401,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsSpecTest001");
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
-    MockHapToken mockHap("GetReqPermissionsFuncTest002", reqPerm, true);
+    MockHapToken mockHap("GetReqPermissionsSpecTest001", reqPerm, true);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

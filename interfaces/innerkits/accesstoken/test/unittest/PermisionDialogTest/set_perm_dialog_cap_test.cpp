@@ -111,7 +111,7 @@ HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level1)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    MockHapToken mock("SetPermDialogCapAbnormalTest001", reqPerm, true);
+    MockHapToken mock("SetPermDialogCapFuncTest001", reqPerm, true);
     uint64_t selfToken = GetSelfTokenID();
 
     LOGI(ATM_DOMAIN, ATM_TAG, "SetPermDialogCapFuncTest001");

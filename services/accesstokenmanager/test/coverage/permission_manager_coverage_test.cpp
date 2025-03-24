@@ -20,7 +20,6 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #define private public
-#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "form_manager_access_client.h"
 #undef private

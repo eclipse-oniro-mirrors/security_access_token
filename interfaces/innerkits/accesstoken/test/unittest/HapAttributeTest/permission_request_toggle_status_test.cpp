@@ -283,7 +283,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest002", reqPerm, true);
+    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest003", reqPerm, true);
 
     // Set a closed status value.
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
