@@ -26,6 +26,7 @@ ohos_unittest("libtoken_sync_service_coverage_test") {
   branch_protector_ret = "pac_ret"
 
   sources = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
     "../../src/command/base_remote_command.cpp",
     "../../src/command/delete_remote_token_command.cpp",
     "../../src/command/sync_remote_hap_token_command.cpp",
@@ -63,6 +64,7 @@ ohos_unittest("libtoken_sync_service_coverage_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     "${access_token_path}/services/common/json_parse/include",
     "${access_token_path}/services/common/handler/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/",
   ]
 
   deps = [

@@ -31,6 +31,8 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
+      "${access_token_path}/interfaces/innerkits/nativetoken/include",
+      "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
       "${access_token_path}/interfaces/innerkits/privacy/src",
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/json_parse/include",
@@ -51,6 +53,7 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = [
+      "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src/privacy_test_common.cpp",
       "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
       "../../src/active/active_status_callback_manager.cpp",
       "../../src/active/perm_active_status_callback_death_recipient.cpp",
@@ -86,6 +89,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
+      "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
       "${access_token_path}/services/common:accesstoken_service_common",

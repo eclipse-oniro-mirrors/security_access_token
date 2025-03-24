@@ -40,12 +40,18 @@ static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int CYCLE_TIMES = 100;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static MockHapToken* g_mock = nullptr;
 };
 
 void GrantPermissionTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
     TestCommon::SetTestEvironment(g_selfTokenId);
+
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
+    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    g_mock = new (std::nothrow) MockHapToken("GrantPermissionTest", reqPerm);
 
     // clean up test cases
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -55,6 +61,10 @@ void GrantPermissionTest::SetUpTestCase()
 
 void GrantPermissionTest::TearDownTestCase()
 {
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     TestCommon::DeleteTestHapToken(tokenID);
@@ -118,9 +128,6 @@ void GrantPermissionTest::TearDown()
 HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionFuncTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GrantPermissionFuncTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -149,9 +156,6 @@ HWTEST_F(GrantPermissionTest, GrantPermissionFuncTest001, TestSize.Level0)
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionAbnormalTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GrantPermissionAbnormalTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -185,9 +189,6 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest001, TestSize.Level0)
 HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionAbnormalTest002");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GrantPermissionAbnormalTest002", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -208,9 +209,6 @@ HWTEST_F(GrantPermissionTest, GrantPermissionAbnormalTest002, TestSize.Level0)
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionSpecsTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GrantPermissionSpecsTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -261,9 +259,6 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest002, TestSize.Level0)
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionSpecsTest003");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("GrantPermissionSpecsTest003", reqPerm, true);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -284,9 +279,6 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest003, TestSize.Level0)
  */
 HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest004, TestSize.Level0)
 {
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("GrantPermissionSpecsTest004", reqPerm, true);
-
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     int ret = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.SECURE_PASTE", PERMISSION_COMPONENT_SET);

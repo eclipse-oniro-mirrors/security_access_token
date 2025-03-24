@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include "on_permission_used_record_callback_stub.h"
 #include "privacy_kit.h"
 #include "privacy_error.h"
+#include "privacy_test_common.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -47,15 +48,17 @@ using namespace testing::ext;
 void PermDenyTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void PermDenyTest::TearDownTestCase()
 {
+    PrivacyTestCommon::ResetTestEvironment();
 }
 
 void PermDenyTest::SetUp()
 {
-    AccessTokenIDEx tokenIDEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+    AccessTokenIDEx tokenIDEx = PrivacyTestCommon::AllocTestHapToken(g_InfoParms, g_PolicyPrams);
 
     g_FullTokenId = tokenIDEx.tokenIDEx;
     g_testTokenId = tokenIDEx.tokenIdExStruct.tokenID;
@@ -65,8 +68,13 @@ void PermDenyTest::SetUp()
 void PermDenyTest::TearDown()
 {
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    AccessTokenKit::DeleteToken(g_testTokenId);
-    PrivacyKit::RemovePermissionUsedRecords(g_testTokenId);
+    PrivacyTestCommon::DeleteTestHapToken(g_testTokenId);
+    {
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+        MockHapToken mock("PermDenyTest", reqPerm, true);
+        PrivacyKit::RemovePermissionUsedRecords(g_testTokenId);
+    }
 }
 
 /**

@@ -132,19 +132,19 @@ HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level1)
     permsList.emplace_back(tmp);
 
     // test dialog is forbiddedn
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
     PermissionGrantInfo info;
-    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(selfToken));
+    EXPECT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfToken));
 
     // test dialog is not forbiddedn
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(tokenIdEx.tokenIDEx));
     ASSERT_NE(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(selfToken));
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfToken));
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1922 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -121,7 +121,7 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest003, TestSiz
     ASSERT_NE(INVALID_TOKENID, tokenID);
     AccessTokenKit::RequestAppPermOnSetting(tokenID);
 
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**

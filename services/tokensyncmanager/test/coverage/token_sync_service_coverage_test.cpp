@@ -45,6 +45,7 @@
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
 
@@ -93,7 +94,7 @@ TokenSyncServiceTest::~TokenSyncServiceTest()
 void NativeTokenGet()
 {
     uint64_t tokenId = 0;
-    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    tokenId = TestCommon::GetNativeTokenIdFromProcess("token_sync_service");
     ASSERT_NE(tokenId, static_cast<AccessTokenID>(0));
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
@@ -102,10 +103,14 @@ void TokenSyncServiceTest::SetUpTestCase()
 {
     g_selfUid = getuid();
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
     NativeTokenGet();
 }
 void TokenSyncServiceTest::TearDownTestCase()
-{}
+{
+    SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
+}
 void TokenSyncServiceTest::SetUp()
 {
     tokenSyncManagerService_ = DelayedSingleton<TokenSyncManagerService>::GetInstance();

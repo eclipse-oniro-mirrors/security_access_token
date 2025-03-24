@@ -265,18 +265,18 @@ HWTEST_F(AccessTokenCoverageTest, VerifyAccessToken005, TestSize.Level1)
     // ret = PERMISSION_GRANTED + firstTokenID = 0
     std::string permissionName = "ohos.permission.GET_BUNDLE_INFO";
     firstTokenID = 0;
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
+    EXPECT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName, false));
 
     firstTokenID = 1;
     // ret = PERMISSION_GRANTED + firstTokenID != 0
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+    EXPECT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName, false));
-    TestCommon::DeleteTestHapToken(callerTokenID);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(callerTokenID));
 
     callerTokenID = 0;
     // ret = PERMISSION_DENIED
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+    EXPECT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName, false));
 }
 

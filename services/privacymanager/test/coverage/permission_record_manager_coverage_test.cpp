@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,7 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_kit.h"
+#include "privacy_test_common.h"
 #include "state_change_callback.h"
 #include "time_util.h"
 #include "token_setproc.h"
@@ -113,28 +114,32 @@ public:
 void PermissionRecordManagerTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-    g_nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
+    PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
+
+    g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
 }
 
-void PermissionRecordManagerTest::TearDownTestCase() {}
+void PermissionRecordManagerTest::TearDownTestCase()
+{
+    PrivacyTestCommon::ResetTestEvironment();
+}
 
 void PermissionRecordManagerTest::SetUp()
 {
     PermissionRecordManager::GetInstance().Register();
 
-    AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
-    AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
+    PrivacyTestCommon::AllocTestHapToken(g_InfoParms1, g_PolicyPrams1);
+    PrivacyTestCommon::AllocTestHapToken(g_InfoParms2, g_PolicyPrams2);
 }
 
 void PermissionRecordManagerTest::TearDown()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
-        g_InfoParms2.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms2.userID, g_InfoParms2.bundleName, g_InfoParms2.instIndex);
+    PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 class PermissionRecordManagerCoverTestCb1 : public StateCustomizedCbk {
@@ -198,11 +203,14 @@ HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
 {
-    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx1 = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId1 = tokenIdEx1.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId1);
-    AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
-        g_InfoParms2.instIndex);
+
+    AccessTokenIDEx tokenIdEx2 = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms2.userID, g_InfoParms2.bundleName, g_InfoParms2.instIndex);
+    AccessTokenID tokenId2 = tokenIdEx2.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId2);
 
     ContinusPermissionRecord recordA1 = {
@@ -252,11 +260,13 @@ HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.CAMERA");
+    reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
+    MockHapToken mock("FindRecordsToUpdateAndExecutedTest001", reqPerm, false);
 
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    AccessTokenID tokenId = GetSelfTokenID();;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.CAMERA";
@@ -282,8 +292,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
  */
 HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.MICROPHONE";
@@ -307,8 +318,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
  */
 HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
     std::string permission = "ohos.permission.CAMERA";
@@ -331,8 +343,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
  */
 HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.CAMERA";
@@ -355,8 +368,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
  */
 HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
@@ -444,8 +458,9 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     PrivacyAppStateObserver observer;
@@ -517,9 +532,10 @@ HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
     PermissionUsedRecord inBundleRecord;
@@ -564,9 +580,10 @@ HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     std::string permission = "ohos.permission.READ_MEDIA";
     ASSERT_EQ(Constant::SUCCESS,
@@ -626,9 +643,10 @@ HWTEST_F(PermissionRecordManagerTest, PermissionListFilter001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, "ohos.permission.READ_MEDIA"), CALLER_PID));
@@ -768,9 +786,11 @@ static void GeneratePermissionRecord(AccessTokenID tokenID)
  */
 HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    MockNativeToken mock("privacy_service");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     GeneratePermissionRecord(tokenID);
     PermissionRecordManager::GetInstance().SetDefaultConfigValue();
@@ -820,9 +840,10 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     GeneratePermissionRecord(tokenID);
     PermissionRecordManager::GetInstance().SetDefaultConfigValue();
@@ -1002,11 +1023,12 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
 {
     std::set<ContinusPermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
     PermissionRecordManager::GetInstance().startRecordList_.clear();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.CAMERA");
+    reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
+    MockHapToken mock("FindRecordsToUpdateAndExecutedTest001", reqPerm, false);
 
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    AccessTokenID tokenId = GetSelfTokenID();;
 
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
     PermissionRecordManager::GetInstance().AddRecordToStartList(

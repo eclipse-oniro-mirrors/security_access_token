@@ -98,7 +98,7 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest001, TestSize.Level1)
     AtmToolsParamInfo info;
     info.tokenId = 123;
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
-    ASSERT_EQ("", dumpInfo);
+    EXPECT_EQ("", dumpInfo);
 
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));

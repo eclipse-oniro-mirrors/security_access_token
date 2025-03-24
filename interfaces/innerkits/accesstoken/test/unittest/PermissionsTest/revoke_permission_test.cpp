@@ -40,12 +40,17 @@ static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int CYCLE_TIMES = 100;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static MockHapToken* g_mock = nullptr;
 };
 
 void RevokePermissionTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
     TestCommon::SetTestEvironment(g_selfTokenId);
+
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    g_mock = new (std::nothrow) MockHapToken("RevokePermissionTest", reqPerm);
 
     // clean up test cases
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -55,6 +60,11 @@ void RevokePermissionTest::SetUpTestCase()
 
 void RevokePermissionTest::TearDownTestCase()
 {
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     TestCommon::DeleteTestHapToken(tokenID);
@@ -119,9 +129,6 @@ void RevokePermissionTest::TearDown()
 HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionFuncTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionFuncTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -150,9 +157,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionFuncTest001, TestSize.Level0)
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionAbnormalTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -173,9 +177,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest001, TestSize.Level0)
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest002");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionAbnormalTest002", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -206,9 +207,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest002, TestSize.Level0)
 HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionAbnormalTest003");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionAbnormalTest003", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -230,9 +228,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionAbnormalTest003, TestSize.Level0)
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionSpecsTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionSpecsTest001", reqPerm);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -284,9 +279,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest002, TestSize.Level0)
 HWTEST_F(RevokePermissionTest, RevokePermissionSpecsTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionSpecsTest003");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    MockHapToken mock("RevokePermissionSpecsTest003", reqPerm, true);
 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

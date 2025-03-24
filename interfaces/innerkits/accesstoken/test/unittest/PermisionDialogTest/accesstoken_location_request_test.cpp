@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1922 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -210,7 +210,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Le
     AccessTokenIDEx tokenIdEx = AllocHapToken(permissionStateFulls, BACKGROUND_LOCATION_API_VERSION);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermissionListState permVague1 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
@@ -222,9 +222,10 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Le
 
     PermissionGrantInfo info;
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList1, info);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList1.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
+    EXPECT_EQ(DYNAMIC_OPER, ret);
+    EXPECT_EQ(static_cast<uint32_t>(1), permsList1.size());
+    EXPECT_EQ(DYNAMIC_OPER, permsList1[0].state);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
