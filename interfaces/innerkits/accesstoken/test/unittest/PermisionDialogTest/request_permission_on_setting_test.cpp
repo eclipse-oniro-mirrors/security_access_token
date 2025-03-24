@@ -57,7 +57,7 @@ void RequestPermissionOnSettingTest::TearDown()
 HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest001, TestSize.Level1)
 {
     std::vector<std::string> reqPerm;
-    MockHapToken mock("RequestPermissionOnSettingTest", reqPerm, true);
+    MockHapToken mock("RequestAppPermOnSettingTest001", reqPerm, true);
 
     // invalid tokenID in client
     uint64_t tokenID = 0;
@@ -77,7 +77,7 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest001, TestSiz
 HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest002, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
-    MockHapToken("RequestPermissionOnSettingTest", reqPerm, false);
+    MockHapToken("RequestAppPermOnSettingTest002", reqPerm, false);
 
     AccessTokenID tokenID = 123;
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::RequestAppPermOnSetting(tokenID));
@@ -92,7 +92,7 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest002, TestSiz
 HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
-    MockHapToken("RequestPermissionOnSettingTest", reqPerm, true);
+    MockHapToken("RequestAppPermOnSettingTest003", reqPerm, true);
 
     HapInfoParams infoManager = {
         .userID = 1,
@@ -133,7 +133,7 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest003, TestSiz
 HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest004, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
-    MockHapToken("RequestPermissionOnSettingTest", reqPerm, true);
+    MockHapToken("RequestAppPermOnSettingTest004", reqPerm, true);
 
     AccessTokenKit::RequestAppPermOnSetting(GetSelfTokenID());
 }

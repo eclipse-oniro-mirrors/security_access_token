@@ -1026,7 +1026,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.CAMERA");
     reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
-    MockHapToken mock("FindRecordsToUpdateAndExecutedTest001", reqPerm, false);
+    MockHapToken mock("RemoveRecordFromStartListTest001", reqPerm, false);
 
     AccessTokenID tokenId = GetSelfTokenID();;
 
