@@ -482,34 +482,6 @@ static void GetHapParams(HapInfoParams& infoParams, HapPolicy& policyParams)
     policyParams.domain = "accesstoken_test_domain";
 }
 
-void TestPrepareKernelPermissionDefinition(HapInfoParams& infoParams, HapPolicy& policyParams)
-{
-    PermissionDef permDefBasic = {
-        .permissionName = "ohos.permission.test_basic",
-        .bundleName = "accesstoken_test",
-        .grantMode = 1,
-        .availableLevel = APL_SYSTEM_CORE,
-        .label = "label",
-        .labelId = 1,
-        .description = "test",
-        .descriptionId = 1,
-        .provisionEnable = true,
-        .isKernelEffect = true,
-        .hasValue = true,
-    };
-
-    PermissionDef permDef1 = permDefBasic;
-    permDef1.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
-    PermissionDef permDef2 = permDefBasic;
-    permDef2.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
-    permDef2.hasValue = false;
-    PermissionDef permDef3 = permDefBasic;
-    permDef3.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
-    permDef3.isKernelEffect = false;
-
-    policyParams.permList = {permDef1, permDef2, permDef3};
-}
-
 void TestPrepareKernelPermissionStatus(HapPolicy& policyParams)
 {
     PermissionStatus permissionStatusBasic = {
@@ -519,18 +491,14 @@ void TestPrepareKernelPermissionStatus(HapPolicy& policyParams)
     };
 
     PermissionStatus PermissionStatus001 = permissionStatusBasic;
-    PermissionStatus001.permissionName = "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY";
+    PermissionStatus001.permissionName = "ohos.permission.KERNEL_ATM_SELF_USE";
     PermissionStatus PermissionStatus002 = permissionStatusBasic;
-    PermissionStatus002.permissionName = "ohos.permission.kernel.DISABLE_CODE_MEMORY_PROTECTION";
+    PermissionStatus002.permissionName = "ohos.permission.MICROPHONE";
     PermissionStatus PermissionStatus003 = permissionStatusBasic;
-    PermissionStatus003.permissionName = "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY";
-    PermissionStatus PermissionStatus004 = permissionStatusBasic;
-    PermissionStatus004.permissionName = "ohos.permission.CAMERA";
-    policyParams.permStateList = {PermissionStatus001, PermissionStatus002,
-                                  PermissionStatus003, PermissionStatus004};
-    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "123";
-    policyParams.aclExtendedMap["ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"] = "456";
-    policyParams.aclExtendedMap["ohos.permission.test1"] = "test"; // filtered
+    PermissionStatus003.permissionName = "ohos.permission.CAMERA";
+    policyParams.permStateList = {PermissionStatus001, PermissionStatus002, PermissionStatus003};
+    policyParams.aclExtendedMap["ohos.permission.KERNEL_ATM_SELF_USE"] = "123";
+    policyParams.aclExtendedMap["ohos.permission.MICROPHONE"] = "456"; // filtered
     policyParams.aclExtendedMap["ohos.permission.CAMERA"] = "789"; // filtered
 }
 
@@ -620,36 +588,28 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
     HapInfoParcel info;
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
-    TestPrepareKernelPermissionDefinition(info.hapInfoParameter, policy.hapPolicy);
     AccessTokenIDEx fullTokenId;
     HapInfoCheckResult result;
-    // update permission definition
-    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
-    ASSERT_EQ(RET_SUCCESS, ret);
 
     TestPrepareKernelPermissionStatus(policy.hapPolicy);
-    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionWithValue> kernelPermList;
-    ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, kernelPermList.size());
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
+    EXPECT_EQ(1, kernelPermList.size());
 
     std::string value;
-    ret = atManagerService_->GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ("123", value);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
+    EXPECT_EQ("123", value);
 
-    ret = atManagerService_->GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ("456", value);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.MICROPHONE", value));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.CAMERA", value));
 
-    ret = atManagerService_->DeleteToken(tokenID);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
 }
 
 /**
@@ -858,55 +818,37 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
     HapInfoParcel info;
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
-    TestPrepareKernelPermissionDefinition(info.hapInfoParameter, policy.hapPolicy);
     AccessTokenIDEx fullTokenId;
     HapInfoCheckResult result;
-    // update permission definition
-    int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
-    ASSERT_EQ(RET_SUCCESS, ret);
 
     TestPrepareKernelPermissionStatus(policy.hapPolicy);
-    ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    ASSERT_EQ(RET_SUCCESS, ret);
 
-    policy.hapPolicy.aclExtendedMap["ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY"] = "1"; // modified value
-    policy.hapPolicy.aclExtendedMap.erase("ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY"); // delete
-    auto it = policy.hapPolicy.permStateList.begin();
-    while (it != policy.hapPolicy.permStateList.end()) {
-        if (it->permissionName == "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY") {
-            policy.hapPolicy.permStateList.erase(it);
-            break;
-        }
-        it++;
-    }
-
+    policy.hapPolicy.aclExtendedMap["ohos.permission.KERNEL_ATM_SELF_USE"] = "1"; // modified value
     UpdateHapInfoParams updateInfoParams = {
         .appIDDesc = "AccessTokenTestAppID",
         .apiVersion = DEFAULT_API_VERSION,
         .isSystemApp = true,
         .appDistributionType = "",
     };
-    ret = atManagerService_->UpdateHapToken(fullTokenId, updateInfoParams, policy, result);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdateHapToken(fullTokenId, updateInfoParams, policy, result));
 
     std::vector<PermissionWithValue> kernelPermList;
-    ret = atManagerService_->GetKernelPermissions(tokenID, kernelPermList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, kernelPermList.size());
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
+    EXPECT_EQ(1, kernelPermList.size());
 
     std::string value;
-    ret = atManagerService_->GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ("1", value);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
+    EXPECT_EQ("1", value);
 
-    ret = atManagerService_->GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
-    ASSERT_EQ(ERR_PERMISSION_WITHOUT_VALUE, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.MICROPHONE", value));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
+        tokenID, "ohos.permission.CAMERA", value));
 
-    ret = atManagerService_->DeleteToken(tokenID);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
 }
 
 

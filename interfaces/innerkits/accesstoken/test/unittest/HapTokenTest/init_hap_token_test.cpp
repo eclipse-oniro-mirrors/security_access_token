@@ -878,31 +878,26 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest012, TestSize.Level1)
     HapPolicyParams policyParams;
     TestCommon::GetHapParams(infoParams, policyParams);
     policyParams.apl = APL_SYSTEM_CORE;
-    TestCommon::TestPrepareKernelPermissionDefinition(infoParams, policyParams);
     TestCommon::TestPrepareKernelPermissionStatus(policyParams);
     AccessTokenIDEx fullTokenId;
-    int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
 
     std::vector<PermissionWithValue> kernelPermList;
-    ret = AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, kernelPermList.size());
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList));
+    EXPECT_EQ(1, kernelPermList.size());
 
     std::string value;
-    ret = AccessTokenKit::GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_WRITABLE_CODE_MEMORY", value);
-    ASSERT_NE(RET_SUCCESS, ret);
-    ASSERT_NE("123", value);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
+    EXPECT_EQ("123", value);
 
-    ret = AccessTokenKit::GetReqPermissionByName(
-        tokenID, "ohos.permission.kernel.ALLOW_EXECUTABLE_FORT_MEMORY", value);
-    ASSERT_NE(RET_SUCCESS, ret);
-    ASSERT_NE("456", value);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.MICROPHONE", value));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, AccessTokenKit::GetReqPermissionByName(
+        tokenID, "ohos.permission.CAMERA", value));
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
