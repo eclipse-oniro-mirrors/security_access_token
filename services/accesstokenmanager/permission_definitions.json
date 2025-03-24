@@ -6221,16 +6221,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.UPDATE_FONT",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": 18,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.VISIBLE_WINDOW_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
