@@ -803,7 +803,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 
     if (policy.apl < briefDef.availableLevel) {
         if (!briefDef.provisionEnable) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", briefDef.permissionName);
             return false;
         }
         bool isAclExist = false;
@@ -820,7 +820,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
         }
         
         if (!isAclExist) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s need acl.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s need acl.", briefDef.permissionName);
             return false;
         }
     }
@@ -892,7 +892,7 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         if (!IsAclSatisfied(briefDef, policy)) {
             result.permCheckResult.permissionName = state.permissionName;
             result.permCheckResult.rule = PERMISSION_ACL_RULE;
-            LOGE(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
             return false;
         }
 
@@ -900,7 +900,7 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
             result.permCheckResult.permissionName = state.permissionName;
             result.permCheckResult.rule = PERMISSION_EDM_RULE;
-            LOGE(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
             return false;
         }
         state.grantFlag = PERMISSION_DEFAULT_FLAG;

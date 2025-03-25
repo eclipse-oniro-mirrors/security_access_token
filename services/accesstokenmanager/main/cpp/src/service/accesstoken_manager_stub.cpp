@@ -23,6 +23,7 @@
 #include "memory_guard.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
+#include "hisysevent_adapter.h"
 #ifdef HICOLLIE_ENABLE
 #include "xcollie/xcollie.h"
 #endif // HICOLLIE_ENABLE
@@ -51,6 +52,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
 {
     MemoryGuard guard;
 
+    ClearThreadErrorMsg();
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     LOGD(ATM_DOMAIN, ATM_TAG, "Code %{public}u token %{public}u", code, callingTokenID);
     std::u16string descriptor = data.ReadInterfaceToken();
@@ -74,7 +76,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
 #ifdef HICOLLIE_ENABLE
             HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
 #endif // HICOLLIE_ENABLE
-
+            ReportSysCommonEventError(code, 0);
             return NO_ERROR;
         }
     }
