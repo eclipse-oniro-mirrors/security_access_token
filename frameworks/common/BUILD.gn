@@ -21,6 +21,8 @@ config("accesstoken_common_cxx_public_config") {
 
 action("permission_definition_parse") {
   script = "permission_definition_parser.py"
+  inputs = [ rebase_path("${access_token_path}") +
+             "/services/accesstokenmanager/permission_definitions.json" ]
   args = [
     "--input-json",
     rebase_path("${access_token_path}") +
@@ -29,6 +31,35 @@ action("permission_definition_parse") {
     rebase_path(target_out_dir) + "/permission_map_constant.h",
   ]
   outputs = [ "$target_out_dir" ]
+}
+
+ohos_static_library("accesstoken_static_log") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":accesstoken_common_cxx_public_config" ]
+
+  include_dirs = [ "include" ]
+
+  sources = [ "src/accesstoken_common_log.cpp" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
 }
 
 ohos_shared_library("accesstoken_common_cxx") {
@@ -61,7 +92,10 @@ ohos_shared_library("accesstoken_common_cxx") {
     "src/time_util.cpp",
   ]
 
-  deps = [ ":permission_definition_parse" ]
+  deps = [
+    ":accesstoken_static_log",
+    ":permission_definition_parse",
+  ]
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",

@@ -227,7 +227,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) > 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u info has exist.", id);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u info has exist.", id);
             return AccessTokenError::ERR_TOKENID_HAS_EXISTED;
         }
 
@@ -475,7 +475,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
         (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID) ||
          !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Hap token param failed");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -484,7 +484,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
             continue;
         }
         if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "acl extended content is unvalid.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "acl extended content is unvalid.");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -502,7 +502,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         LOGI(ATM_DOMAIN, ATM_TAG, "isRestore is true, tokenId is %{public}u", tokenId);
         int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (res != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Token Id register failed, res is %{public}d", res);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token Id register failed, res is %{public}d", res);
             return res;
         }
     } else {
@@ -510,7 +510,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
         tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
         if (tokenId == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
             return ERR_TOKENID_CREATE_FAILED;
         }
     }
@@ -528,7 +528,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false);
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         RemoveHapTokenInfoFromDb(tokenInfo);
         return ret;

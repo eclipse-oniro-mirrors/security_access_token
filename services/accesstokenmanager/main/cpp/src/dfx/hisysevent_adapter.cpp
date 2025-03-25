@@ -57,6 +57,19 @@ void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg,
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
     }
 }
+
+void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode)
+{
+    if (GetThreadErrorMsgLen() == 0) {
+        return;
+    }
+    int32_t ret = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", ipcCode, "ERROR_CODE", errCode,
+        "ERROR_MSG", GetThreadErrorMsg());
+    if (ret != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
+    }
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

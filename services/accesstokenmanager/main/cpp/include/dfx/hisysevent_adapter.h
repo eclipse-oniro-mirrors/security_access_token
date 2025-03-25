@@ -37,6 +37,8 @@ enum UpdatePermStatusErrorCode {
 void ReportSysEventPerformance();
 void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSize, uint32_t permDefSize);
 void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg, int32_t errCode);
+void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode);
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
