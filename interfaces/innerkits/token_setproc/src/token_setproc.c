@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -33,6 +34,8 @@
 #define INVAL_TOKEN_ID    0x0
 #define TOKEN_ID_LOWMASK 0xffffffff
 
+const uint64_t SET_PROC_FD_TAG = 0xD005A01;
+
 uint64_t GetSelfTokenID(void)
 {
     uint64_t token = INVAL_TOKEN_ID;
@@ -40,13 +43,14 @@ uint64_t GetSelfTokenID(void)
     if (fd < 0) {
         return INVAL_TOKEN_ID;
     }
+    fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_GET_TOKENID, &token);
     if (ret) {
-        close(fd);
+        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return INVAL_TOKEN_ID;
     }
 
-    close(fd);
+    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return token;
 }
 
@@ -56,13 +60,14 @@ int SetSelfTokenID(uint64_t tokenID)
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_SET_TOKENID, &tokenID);
     if (ret) {
-        close(fd);
+        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return ret;
     }
 
-    close(fd);
+    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return ACCESS_TOKEN_OK;
 }
 
@@ -73,13 +78,14 @@ uint64_t GetFirstCallerTokenID(void)
     if (fd < 0) {
         return INVAL_TOKEN_ID;
     }
+    fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_GET_FTOKENID, &token);
     if (ret) {
-        close(fd);
+        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return INVAL_TOKEN_ID;
     }
 
-    close(fd);
+    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return token;
 }
 
@@ -89,12 +95,13 @@ int SetFirstCallerTokenID(uint64_t tokenID)
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_SET_FTOKENID, &tokenID);
     if (ret) {
-        close(fd);
+        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return ret;
     }
 
-    close(fd);
+    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return ACCESS_TOKEN_OK;
 }

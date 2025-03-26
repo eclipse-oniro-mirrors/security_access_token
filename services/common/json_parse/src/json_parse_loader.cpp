@@ -14,6 +14,7 @@
  */
 #include "json_parse_loader.h"
 
+#include <cstdio>
 #include <fcntl.h>
 #include <memory>
 #include <set>
@@ -35,6 +36,7 @@ namespace AccessToken {
 namespace {
 constexpr int32_t MAX_NATIVE_CONFIG_FILE_SIZE = 5 * 1024 * 1024; // 5M
 constexpr size_t BUFFER_SIZE = 1024;
+constexpr uint64_t FD_TAG = 0xD005A01;
 
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 static constexpr const char* ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
@@ -82,22 +84,23 @@ int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& raw
         LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return ERR_FILE_OPERATE_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fstat failed.");
-        close(fd);
+        fdsan_close_with_tag(fd, FD_TAG);
         return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is invalid.");
-        close(fd);
+        fdsan_close_with_tag(fd, FD_TAG);
         return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is too large.");
-        close(fd);
+        fdsan_close_with_tag(fd, FD_TAG);
         return ERR_OVERSIZE;
     }
     rawData.reserve(statBuffer.st_size);
@@ -107,7 +110,7 @@ int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& raw
     while ((readLen = read(fd, buff, BUFFER_SIZE)) > 0) {
         rawData.append(buff, readLen);
     }
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
     if (readLen == 0) {
         return RET_SUCCESS;
     }

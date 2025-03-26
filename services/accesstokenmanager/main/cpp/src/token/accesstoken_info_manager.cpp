@@ -17,6 +17,7 @@
 
 #include <cinttypes>
 #include <cstdint>
+#include <cstdio>
 #include <fcntl.h>
 #include <unistd.h>
 #include <securec.h>
@@ -63,6 +64,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 #endif
 static const char* DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
+constexpr uint64_t FD_TAG = 0xD005A01;
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
@@ -1188,11 +1190,12 @@ void AccessTokenInfoManager::DumpToken()
         LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
         return;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     std::string dumpStr;
     AtmToolsParamInfoParcel infoParcel;
     DumpTokenInfo(infoParcel.info, dumpStr);
     dprintf(fd, "%s\n", dumpStr.c_str());
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
 }
 
 void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
