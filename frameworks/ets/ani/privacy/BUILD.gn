@@ -16,7 +16,7 @@ import("//build/config/components/ets_frontend/ets2abc_config.gni")
 import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 
-ohos_shared_library("ani_privacy_manager") {
+ohos_shared_library("privacy_ani") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -28,41 +28,63 @@ ohos_shared_library("ani_privacy_manager") {
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/frameworks/ets/ani/common/include",
   ]
-  sources = [ "native/ani_privacy_manager.cpp" ]
+  sources = [ "src/privacy_manager.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+  deps = [
+    "${access_token_path}/frameworks/ets/ani/common:libani_common",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+  ]
 
   external_deps = [
     "hilog:libhilog",
     "runtime_core:ani",
+    "runtime_core:libarkruntime",
   ]
 
   part_name = "access_token"
   subsystem_name = "security"
 }
 
-generate_static_abc("privacy_manager_abc") {
-  arktsconfig = "arktsconfig.json"
-  dst_file = "$target_out_dir/privacy_manager_ani.abc"
-  out_puts = [ "$target_out_dir/privacy_manager_ani.abc" ]
+generate_static_abc("privacy_manager") {
+  base_url = "./ets"
+  files = [ "./ets/@ohos.privacyManager.ets" ]
 
   is_boot_abc = "True"
-  device_dst_file = "/system/framework/privacy_manager_ani.abc"
+  device_dst_file = "/system/framework/privacy_manager.abc"
 }
 
-ohos_prebuilt_etc("privacy_manager_abc_file") {
-  source = "$target_out_dir/privacy_manager_ani.abc"
-  deps = [ ":privacy_manager_abc" ]
+ohos_prebuilt_etc("privacy_manager_etc") {
+  source = "$target_out_dir/privacy_manager.abc"
+  deps = [ ":privacy_manager" ]
   module_install_dir = "framework"
 
   part_name = "access_token"
   subsystem_name = "security"
 }
 
-group("privacy_manager_arkts") {
+generate_static_abc("main") {
+  base_url = "./ets"
+  files = [ "./ets/main.ets" ]
+
+  is_boot_abc = "True"
+  device_dst_file = "/system/framework/main.abc"
+}
+
+ohos_prebuilt_etc("main_etc") {
+  source = "$target_out_dir/main.abc"
+  deps = [ ":main" ]
+  module_install_dir = "framework"
+
+  part_name = "access_token"
+  subsystem_name = "security"
+}
+
+group("privacy_ets") {
   deps = [
-    ":ani_privacy_manager",
-    ":privacy_manager_abc_file",
+    ":main_etc",
+    ":privacy_ani",
+    ":privacy_manager_etc",
   ]
 }

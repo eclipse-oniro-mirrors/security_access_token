@@ -13,30 +13,16 @@
  * limitations under the License.
  */
 
+import { AsyncCallback, Callback ,BusinessError} from '@ohos.base'; 
 import { Permissions } from 'permissions';
 
-class BusinessError<T = void> {
-    code: number;
-    data: T;
- }
+export { Permissions }
 
- export { Permissions }
- 
- type AsyncCallback<T, E = void> = (err: BusinessError<E>, data: T) => void;
- 
- class Result<T, E>{
-     result:T;
-     error:E;
-     constructor(result: T , error: E) {
-         this.result = result;
-         this.error = error;
-     }
- }
- export namespace privacyManager {
+export default namespace privacyManager {
 
-    loadLibrary("ani_privacy_manager.z");
+    loadLibrary("privacy_ani.z");
 
-    export enum PermissionUsedType {
+    enum PermissionUsedType {
 
         NORMAL_TYPE = 0,
 
@@ -45,14 +31,18 @@ class BusinessError<T = void> {
         SECURITY_COMPONENT_TYPE = 2
     }
 
-    export class AddPermissionUsedRecordOptions {
-        usedType: PermissionUsedType;
+    interface AddPermissionUsedRecordOptions {
+        usedType?: PermissionUsedType;
     }
 
-    export class PrivacyManagerInner {
+    class AddPermissionUsedRecordOptionsInner implements AddPermissionUsedRecordOptions {
+        usedType: PermissionUsedType|undefined;
+    }
+
+    class PrivacyManagerInner {
 
         native addPermissionUsedRecordSync(tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
-            options: AddPermissionUsedRecordOptions): int;
+            options: AddPermissionUsedRecordOptionsInner): int;
 
     }
 
@@ -80,24 +70,22 @@ class BusinessError<T = void> {
         usedType: PermissionUsedType;
     }
 
+    function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
+        failCount: int, options?: AddPermissionUsedRecordOptions): Promise<int> {
 
-    export function addPermissionUsedRecord(tokenID: int, permissionName: string, successCount: int, failCount: int,
-        options?: AddPermissionUsedRecordOptions): Promise<int> {
+        let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE
 
-        let optionsLocal: AddPermissionUsedRecordOptions = {
-            usedType: PermissionUsedType.NORMAL_TYPE
+        let optionsLocal: AddPermissionUsedRecordOptionsInner = {
+            usedType: usedTypeTemp
         };
-        let optionsTmp = options ? options : optionsLocal
         let p = new Promise<int>((resolve: (v: int) => void, reject: (error: Object) => void) => {
             let p1 = taskpool.execute((): int => { return new PrivacyManagerInner().addPermissionUsedRecordSync(tokenID,
-                permissionName, successCount, failCount, optionsTmp) });
+                permissionName, successCount, failCount, optionsLocal) });
 
             p1.then((e: NullishType) => {
-                console.log("P1 then e = " + e + ".");
                 let r: Int = e as Int;
                 resolve(r.intValue());
             }, (err: Object): void => {
-                console.log("Promise exception.");
             });
         }
         );

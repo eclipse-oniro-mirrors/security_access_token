@@ -15,10 +15,11 @@ import("//base/security/access_token/access_token.gni")
 
 group("arkts_package") {
   deps = []
-  if (qemu_disable) {
+  if (support_jsapi) {
     deps += [
-      "accesstoken:accesstoken_arkts",
-      "privacy:privacy_manager_arkts",
+      "accesstoken:accesstoken_ets",
+      "common:common_ets",
+      "privacy:privacy_ets",
     ]
   }
 }
