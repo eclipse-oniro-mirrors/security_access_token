@@ -28,7 +28,6 @@ namespace {
 static uint32_t g_selfTokenId = 0;
 static uint64_t g_FullTokenId = 0;
 static uint32_t g_testTokenId = 0;
-
 static HapPolicyParams g_PolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
@@ -41,7 +40,6 @@ static HapInfoParams g_InfoParms = {
     .appIDDesc = "privacy_test.bundle",
     .isSystemApp = true
 };
-
 }
 using namespace testing::ext;
 
