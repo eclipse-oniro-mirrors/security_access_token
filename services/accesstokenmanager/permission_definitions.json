@@ -2761,6 +2761,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WRITE_PROTECTION_ADVICE_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 17,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.READ_PROTECTION_ADVICE_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 17,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.USE_FRAUD_MESSAGES_PICKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
