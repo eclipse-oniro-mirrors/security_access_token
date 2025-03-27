@@ -103,7 +103,11 @@ HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
     StartOrStopTokenSyncService(true);
 
     // service is starting, but no permission(shell process)
+    SetNativeTokenId("hdcd");
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
     ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
+    setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
@@ -130,7 +134,11 @@ HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level1)
     StartOrStopTokenSyncService(true);
 
     // service is starting, but no permission(shell process)
+    SetNativeTokenId("hdcd");
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
     ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo("", 0));
+    setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
@@ -158,7 +166,11 @@ HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
     StartOrStopTokenSyncService(true);
 
     // service is starting, but no permission(shell process)
+    SetNativeTokenId("hdcd");
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
     ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(0));
+    setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
