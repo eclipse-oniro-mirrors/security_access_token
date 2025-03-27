@@ -46,20 +46,21 @@ typedef enum {
     STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
 } STSErrorCode;
 std::string GetParamErrorMsg(const std::string& param, const std::string& type);
+std::string GetErrorMessage(uint32_t errCode);
 class BusinessErrorAni {
 public:
-    static ani_object CreateError(ani_env *env, ani_int code, const std::string &msg);
+    static ani_object CreateError(ani_env* env, ani_int code, const std::string& msg);
     static ani_object CreateCommonError(
-        ani_env *env, int32_t err, const std::string &functionName = "", const std::string &permissionName = "");
-    static ani_object CreateEnumError(ani_env *env, const std::string &parameter, const std::string &enumClass);
-    static void ThrowTooFewParametersError(ani_env *env, int32_t err);
-    static void ThrowParameterTypeError(ani_env *env, int32_t err,
-        const std::string &parameter, const std::string &type);
-    static void ThrowEnumError(ani_env *env, const std::string &parameter, const std::string &type);
-    static void ThrowError(ani_env *env, int32_t err, const std::string &msg = "");
+        ani_env* env, int32_t err, const std::string& functionName = "", const std::string& permissionName = "");
+    static ani_object CreateEnumError(ani_env* env, const std::string& parameter, const std::string& enumClass);
+    static void ThrowTooFewParametersError(ani_env* env, int32_t err);
+    static void ThrowParameterTypeError(ani_env* env, int32_t err,
+        const std::string& parameter, const std::string& type);
+    static void ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& type);
+    static void ThrowError(ani_env* env, int32_t err, const std::string& msg = "");
     static int32_t GetStsErrorCode(int32_t errCode);
 private:
-    static void ThrowError(ani_env *env, ani_object err);
+    static void ThrowError(ani_env* env, ani_object err);
 };
 }  // namespace AccessToken
 }  // namespace Security

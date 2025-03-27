@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-
-#ifndef  ABILITY_ACCESS_CTRL_H
-#define  ABILITY_ACCESS_CTRL_H
+#ifndef ABILITY_ACCESS_CTRL_H
+#define ABILITY_ACCESS_CTRL_H
 
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <mutex>
 
@@ -30,18 +30,18 @@
 #include "ui_content.h"
 #include "ui_extension_context.h"
 
-std::mutex g_lockCache;
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::condition_variable g_loadedCond;
+std::mutex g_lockCache;
 typedef unsigned int AccessTokenID;
 static std::atomic<int32_t> g_cnt = 0;
 constexpr uint32_t REPORT_CNT = 10;
 constexpr uint32_t VERIFY_TOKENID_INCONSISTENCY = 0;
 const int32_t PARAM_DEFAULT_VALUE = -1;
 
-static const char *PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 
 struct AtManagerAsyncContext {
     AccessTokenID tokenId = 0;
@@ -87,6 +87,7 @@ struct RequestAsyncContext {
     int32_t result = RET_SUCCESS;
     int32_t instanceId = -1;
     std::vector<std::string> permissionList;
+    std::vector<int32_t> grantResults;
     std::vector<int32_t> permissionsState;
     ani_object requestResult = nullptr;
     std::vector<bool> dialogShownResults;
@@ -98,6 +99,7 @@ struct RequestAsyncContext {
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
+    std::mutex loadlock;
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
@@ -105,14 +107,14 @@ struct RequestAsyncContext {
 
 class UIExtensionCallback {
 public:
-    explicit UIExtensionCallback(const std::shared_ptr<RequestAsyncContext> &reqContext);
+    explicit UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext);
     ~UIExtensionCallback();
     void SetSessionId(int32_t sessionId);
     void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want &result);
-    void OnReceive(const OHOS::AAFwk::WantParams &request);
-    void OnError(int32_t code, const std::string &name, const std::string &message);
-    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy> &uiProxy);
+    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
+    void OnReceive(const OHOS::AAFwk::WantParams& request);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
     void ReleaseHandler(int32_t code);
 
@@ -123,11 +125,11 @@ private:
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    AuthorizationResult(std::shared_ptr<RequestAsyncContext> &data) : data_(data) {}
+    AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
     virtual ~AuthorizationResult() override = default;
 
     virtual void GrantResultsCallback(
-        const std::vector<std::string> &permissionList, const std::vector<int> &grantResults) override;
+        const std::vector<std::string>& permissionList, const std::vector<int>& grantResults) override;
     virtual void WindowShownCallback() override;
 
 private:
@@ -136,9 +138,9 @@ private:
 
 class RequestAsyncInstanceControl {
 public:
-    static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext> &asyncContext);
+    static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
     static void ExecCallback(int32_t id);
-    static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext> &asyncContext, bool &isDynamic);
+    static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
 
 private:
     static std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> instanceIdMap_;
@@ -152,11 +154,10 @@ struct ResultCallback {
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
 
-std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>>
-    RequestAsyncInstanceControl::instanceIdMap_;
+std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> RequestAsyncInstanceControl::instanceIdMap_;
 std::mutex RequestAsyncInstanceControl::instanceIdMutex_;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif  // ABILITY_ACCESS_CTRL_H
+#endif // ABILITY_ACCESS_CTRL_H

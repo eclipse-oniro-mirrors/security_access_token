@@ -19,6 +19,12 @@ import type _PermissionRequestResult from 'security.PermissionRequestResult';
 import Context from 'application.Context'
 import hilog from '@ohos.hilog';
 
+function PARAM_ERROR_MSG(param: string, type: string): string {
+    return `Parameter Error. The type of "${param}" must be ${type}.`;
+}
+
+export const LOG_TAG = 0xC05A01;
+
 export { Permissions };
 
 export type PermissionRequestResult = _PermissionRequestResult;
@@ -79,6 +85,44 @@ export default namespace abilityAccessCtrl {
         LOCATION = 2,
     }
 
+    enum STSErrorCode {
+
+        STS_OK = 0,
+
+        STS_ERROR_PERMISSION_DENIED = 201,
+
+        STS_ERROR_NOT_SYSTEM_APP = 202,
+
+        STS_ERROR_PARAM_ILLEGAL = 401,
+
+        STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
+
+    } ;
+    function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
+        if (typeof context === "undefined" || context == null) {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            throw err;
+        }
+        if (typeof permissionList !== "object" || !Array.isArray(permissionList) || 
+            permissionList.length == 0 || typeof permissionList[0] !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionList", "Array<string>");
+            throw err;
+        }
+    }
+
+    function validateTokenAndPermission(tokenID: int, permissionName: Permissions): void {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "string");
+            throw err;
+        }
+    }
+
     native function createAtManager(): AtManager;
 
     interface AtManager {
@@ -105,76 +149,83 @@ export default namespace abilityAccessCtrl {
 
     class AtManagerInner implements AtManager {
         native checkAccessTokenANI(tokenID: int, permissionName: Permissions): int;
-        checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus{
+
+        verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
+            validateTokenAndPermission(tokenID, permissionName);
             let result = this.checkAccessTokenANI(tokenID, permissionName);
             if (result == 0) {
                 return GrantStatus.PERMISSION_GRANTED
             }
             return GrantStatus.PERMISSION_DENIED
         }
+
+        checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
+            validateTokenAndPermission(tokenID, permissionName);
+            let result = this.checkAccessTokenANI(tokenID, permissionName);
+            if (result == 0) {
+                return GrantStatus.PERMISSION_GRANTED
+            }
+            return GrantStatus.PERMISSION_DENIED
+        }
+
         checkAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus> {
-            let p = new Promise<GrantStatus>((resolve: (v: GrantStatus) => void, reject: (error: Object) => void) => {
-                let p1 = taskpool.execute((): int => { return new AtManagerInner().checkAccessTokenANI(tokenID,
-                    permissionName)});
-                p1.then((e: NullishType) => {
-                    if(e == 0){
-                        resolve(GrantStatus.PERMISSION_GRANTED);
-                    }else{
-                        resolve(GrantStatus.PERMISSION_DENIED);
-                    }
-                }, (err: Object): void => {
+            validateTokenAndPermission(tokenID, permissionName);
+            let p = new Promise<GrantStatus>((resolve: (v: GrantStatus)
+                => void, reject: (error: BusinessError) => void) => {
+                    let p1 = taskpool.execute((): GrantStatus => { return new AtManagerInner().checkAccessTokenANI(tokenID,
+                        permissionName) as GrantStatus;});
+                    p1.then((e: NullishType) => {
+                        if (e == 0) {
+                            resolve(GrantStatus.PERMISSION_GRANTED);
+                        } else {
+                            resolve(GrantStatus.PERMISSION_DENIED);
+                        }
+                    }).catch((err: BusinessError): void => {
+                        reject(err);
+                    });
                 });
-            });
             return p;
         }
 
-        verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus{
-            let result = this.checkAccessTokenANI(tokenID, permissionName);
-            if (result == 0) {
-                return GrantStatus.PERMISSION_GRANTED
-            }
-            return GrantStatus.PERMISSION_DENIED
-        }
-
         native requestPermissionsFromUserExecute(context: Context,
-            permissionList: Array<Permissions>):PermissionRequestResult;
+            permissionList: Array<Permissions>): PermissionRequestResult;
 
-        requestPermissionsFromUser(
-            context: Context,
-            permissionList: Array<Permissions>,
-            callback:AsyncCallback<PermissionRequestResult,void>):void{
-            let p2 = taskpool.execute((): PermissionRequestResult => { 
+        requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>,
+            callback:AsyncCallback<PermissionRequestResult,void>): void {
+            validateRequestParams(context, permissionList);
+            let p2 = taskpool.execute((): PermissionRequestResult => {
                 return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
                 p2.then((e: NullishType) => {
-                    hilog.info(0xC05A01, 'requestPermissionsFromUser',`AsyncCallback success.`);
+                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`AsyncCallback success.`);
                     let retError = new BusinessError<void>();
-                    retError.code = 0;
                     callback(retError, e as PermissionRequestResult)
-                    },(err: Object): void => {
-                        hilog.info(0xC05A01, 'requestPermissionsFromUser',`AsyncCallback failed.`);
-                });
-            }
-        
-        requestPermissionsFromUser(
-            context: Context, 
-            permissionList: Array<Permissions>): Promise<PermissionRequestResult>{
+                },(err: BusinessError): void=> {
+                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
+                    if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
+                        throw err;
+                    }
+                    callback(err, PermissionRequestResult)
+                })
+        }
+
+        requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>): 
+            Promise<PermissionRequestResult> {
+            validateRequestParams(context, permissionList);
             let p = new Promise<PermissionRequestResult>((resolve: (v: PermissionRequestResult) => 
-                void, reject: (error: Object) => void) => {
-                    let p1 = taskpool.execute((): PermissionRequestResult => 
-                    { let tmp = new AtManagerInner().requestPermissionsFromUserExecute(
-                        context ,
-                        permissionList) 
-                        hilog.info(0xC05A01, 'requestPermissionsFromUser',
-                        "requestPermissionsFromUser tmp");
-                        return tmp;
-                        });
-                    p1.then((e :NullishType)=>{
-                        hilog.info(0xC05A01, 'requestPermissionsFromUser',`Promise success.`);
+                void, reject: (error: BusinessError) => void) => {
+                    let p1 = taskpool.execute((): PermissionRequestResult =>
+                    { return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
+                    p1.then((e: NullishType)=> {
+                        hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise success.`);
                         let r : PermissionRequestResult =  e as PermissionRequestResult;
                         resolve(r);
-                    }, (err: Object): void => {
-                        hilog.info(0xC05A01, 'requestPermissionsFromUser',`Promise failed.`);
-                });                           
+                    }).catch((err: BusinessError): void => {
+                        hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
+                        if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
+                            throw err;
+                        }
+                        reject(err);
+                    });
             });
             return p;
         }

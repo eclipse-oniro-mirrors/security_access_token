@@ -64,26 +64,8 @@ ohos_prebuilt_etc("privacy_manager_etc") {
   subsystem_name = "security"
 }
 
-generate_static_abc("main") {
-  base_url = "./ets"
-  files = [ "./ets/main.ets" ]
-
-  is_boot_abc = "True"
-  device_dst_file = "/system/framework/main.abc"
-}
-
-ohos_prebuilt_etc("main_etc") {
-  source = "$target_out_dir/main.abc"
-  deps = [ ":main" ]
-  module_install_dir = "framework"
-
-  part_name = "access_token"
-  subsystem_name = "security"
-}
-
 group("privacy_ets") {
   deps = [
-    ":main_etc",
     ":privacy_ani",
     ":privacy_manager_etc",
   ]

@@ -56,7 +56,7 @@ static const std::unordered_map<uint32_t, const char *> g_errorStringMap = {
     { STS_ERROR_PARAM_ILLEGAL, ERR_MSG_PARAM_TYPE_ERROR },
 };
 
-void BusinessErrorAni::ThrowError(ani_env *env, int32_t err, const std::string &msg)
+void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& msg)
 {
     if (env == nullptr) {
         return;
@@ -65,7 +65,7 @@ void BusinessErrorAni::ThrowError(ani_env *env, int32_t err, const std::string &
     ThrowError(env, error);
 }
 
-ani_object BusinessErrorAni::CreateError(ani_env *env, ani_int code, const std::string &msg)
+ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::string& msg)
 {
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
@@ -97,7 +97,7 @@ ani_object BusinessErrorAni::CreateError(ani_env *env, ani_int code, const std::
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
         return nullptr;
     }
-    status = env->Object_SetField_Int(obj, field, code);
+    status = env->Object_SetField_Double(obj, field, code);
     if (status != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Double : %{public}d", status);
         return nullptr;
@@ -123,8 +123,18 @@ std::string GetParamErrorMsg(const std::string& param, const std::string& type)
     return msg;
 }
 
+std::string GetErrorMessage(uint32_t errCode)
+{
+    auto iter = g_errorStringMap.find(errCode);
+    if (iter != g_errorStringMap.end()) {
+        return iter->second;
+    }
+    std::string errMsg = "Unknown error, errCode + " + std::to_string(errCode) + ".";
+    return errMsg;
+}
+
 void BusinessErrorAni::ThrowParameterTypeError(
-    ani_env *env, int32_t err, const std::string &parameter, const std::string &type)
+    ani_env* env, int32_t err, const std::string& parameter, const std::string& type)
 {
     if (env == nullptr) {
         return;
@@ -133,7 +143,7 @@ void BusinessErrorAni::ThrowParameterTypeError(
     ThrowError(env, error);
 }
 
-void BusinessErrorAni::ThrowTooFewParametersError(ani_env *env, int32_t err)
+void BusinessErrorAni::ThrowTooFewParametersError(ani_env* env, int32_t err)
 {
     if (env == nullptr) {
         return;
@@ -142,7 +152,7 @@ void BusinessErrorAni::ThrowTooFewParametersError(ani_env *env, int32_t err)
 }
 
 ani_object BusinessErrorAni::CreateCommonError(
-    ani_env *env, int32_t err, const std::string &functionName, const std::string &permissionName)
+    ani_env* env, int32_t err, const std::string& functionName, const std::string& permissionName)
 {
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
@@ -167,7 +177,7 @@ ani_object BusinessErrorAni::CreateCommonError(
     return CreateError(env, err, errMessage);
 }
 
-void BusinessErrorAni::ThrowEnumError(ani_env *env, const std::string &parameter, const std::string &type)
+void BusinessErrorAni::ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& type)
 {
     if (env == nullptr) {
         return;
@@ -176,7 +186,7 @@ void BusinessErrorAni::ThrowEnumError(ani_env *env, const std::string &parameter
     ThrowError(env, error);
 }
 
-ani_object BusinessErrorAni::CreateEnumError(ani_env *env, const std::string &parameter, const std::string &enumClass)
+ani_object BusinessErrorAni::CreateEnumError(ani_env* env, const std::string& parameter, const std::string& enumClass)
 {
     if (env == nullptr) {
         return nullptr;
@@ -198,7 +208,7 @@ ani_object BusinessErrorAni::CreateEnumError(ani_env *env, const std::string &pa
     return CreateError(env, STS_ERROR_PARAM_ILLEGAL, errMessage);
 }
 
-void BusinessErrorAni::ThrowError(ani_env *env, ani_object err)
+void BusinessErrorAni::ThrowError(ani_env* env, ani_object err)
 {
     if (err == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "err is nullptr");
