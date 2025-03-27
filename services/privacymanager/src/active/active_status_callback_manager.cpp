@@ -154,12 +154,6 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
 
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& info)
 {
-    if (info.type == PERM_ACTIVE_IN_BACKGROUND) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,
-            "CALLER_TOKENID", info.tokenID, "PERMISSION_NAME", info.permissionName, "REASON", "background call");
-    }
-
 #ifdef EVENTHANDLER_ENABLE
     if (eventHandler_ == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get EventHandler");
