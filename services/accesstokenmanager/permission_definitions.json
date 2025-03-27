@@ -5904,7 +5904,7 @@
             "name": "ohos.permission.MANAGE_APN_SETTING",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableType": "NORMAL",
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
