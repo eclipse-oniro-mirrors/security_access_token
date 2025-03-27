@@ -399,13 +399,14 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
-    AccessTokenID selfTokenId = static_cast<AccessTokenID>(GetSelfTokenID());
-    if (asyncContext->tokenId != selfTokenId) {
+    AccessTokenIDEx selfTokenIdEx = {GetSelfTokenID()};
+    if (!AccessTokenKit::IsSystemAppByFullTokenID(static_cast<uint64_t>(selfTokenIdEx.tokenIDEx)) &&
+        asyncContext->tokenId != selfTokenIdEx.tokenIdExStruct.tokenID) {
         int32_t cnt = g_cnt.fetch_add(1);
         if (cnt % REPORT_CNT == 0) {
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
-                "SELF_TOKENID", selfTokenId, "CONTEXT_TOKENID", asyncContext->tokenId);
+                "SELF_TOKENID", selfTokenIdEx.tokenIdExStruct.tokenID, "CONTEXT_TOKENID", asyncContext->tokenId);
         }
     }
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
@@ -474,13 +475,14 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
         return;
     }
-    AccessTokenID selfTokenId = static_cast<AccessTokenID>(GetSelfTokenID());
-    if (asyncContext->tokenId != selfTokenId) {
+    AccessTokenIDEx selfTokenIdEx = {GetSelfTokenID()};
+    if (!AccessTokenKit::IsSystemAppByFullTokenID(static_cast<uint64_t>(selfTokenIdEx.tokenIDEx)) &&
+        asyncContext->tokenId != selfTokenIdEx.tokenIdExStruct.tokenID) {
         int32_t cnt = g_cnt.fetch_add(1);
         if (cnt % REPORT_CNT == 0) {
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
-                "SELF_TOKENID", selfTokenId, "CONTEXT_TOKENID", asyncContext->tokenId);
+                "SELF_TOKENID", selfTokenIdEx.tokenIdExStruct.tokenID, "CONTEXT_TOKENID", asyncContext->tokenId);
         }
     }
 
@@ -612,8 +614,9 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return nullptr;
     }
     if (syncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
-        int32_t cnt = g_cnt.fetch_add(1);
-        if (cnt % REPORT_CNT == 0) {
+        int32_t cnt = g_cnt;
+        if (!AccessTokenKit::IsSystemAppByFullTokenID(selfTokenId) && cnt % REPORT_CNT == 0) {
+            g_cnt.fetch_add(1);
             AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
