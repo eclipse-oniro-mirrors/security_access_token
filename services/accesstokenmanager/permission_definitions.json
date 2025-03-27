@@ -4241,6 +4241,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.FOWNER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 16,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_ACCOUNT_RECOMMENDATION_DATA",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
