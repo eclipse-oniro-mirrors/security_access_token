@@ -19,7 +19,7 @@
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "accesstoken_service_ipc_interface_code.h"
+#include "iaccess_token_manager.h"
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"

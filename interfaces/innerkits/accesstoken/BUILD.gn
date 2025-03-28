@@ -41,7 +41,10 @@ if (is_standard_system) {
 
     output_name = "libaccesstoken_sdk"
 
-    public_configs = [ ":accesstoken" ]
+    public_configs = [
+      ":accesstoken",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+    ]
 
     include_dirs = [
       "${access_token_path}/frameworks/accesstoken/include",
@@ -55,7 +58,6 @@ if (is_standard_system) {
       "src/accesstoken_death_recipient.cpp",
       "src/accesstoken_kit.cpp",
       "src/accesstoken_manager_client.cpp",
-      "src/accesstoken_manager_proxy.cpp",
       "src/perm_state_change_callback_customize.cpp",
     ]
 
@@ -63,6 +65,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
     ]
 
     external_deps = [

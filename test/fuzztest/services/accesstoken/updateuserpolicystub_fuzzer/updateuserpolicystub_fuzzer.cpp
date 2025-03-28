@@ -23,7 +23,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 
@@ -85,7 +85,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::UPDATE_USER_POLICY);
+            IAccessTokenManagerIpcCode::COMMAND_UPDATE_USER_POLICY);
 
         MessageParcel reply;
         MessageOption option;

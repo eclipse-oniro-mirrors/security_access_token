@@ -26,7 +26,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_client.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "token_setproc.h"
 
 using namespace std;
@@ -110,7 +110,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK);
+            IAccessTokenManagerIpcCode::COMMAND_REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK);
 
         MessageParcel reply;
         MessageOption option;

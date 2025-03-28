@@ -143,14 +143,16 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_innerkit_path}/src/accesstoken_death_recipient.cpp",
     "${access_token_innerkit_path}/src/accesstoken_kit.cpp",
     "${access_token_innerkit_path}/src/accesstoken_manager_client.cpp",
-    "${access_token_innerkit_path}/src/accesstoken_manager_proxy.cpp",
     "${access_token_innerkit_path}/src/perm_state_change_callback_customize.cpp",
     "../mock/src/iservice_registry.cpp",
     "ProxyMockTest/accesstoken_mock_test.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  ]
 
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
@@ -158,6 +160,7 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
   ]
 
   external_deps = [

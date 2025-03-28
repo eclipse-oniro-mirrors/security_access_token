@@ -55,11 +55,11 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/hap_token_info_for_sync_parcel.cpp",
     "src/hap_token_info_parcel.cpp",
     "src/native_token_info_parcel.cpp",
+    "src/perm_state_change_scope_parcel.cpp",
     "src/permission_def_parcel.cpp",
     "src/permission_grant_info_parcel.cpp",
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
-    "src/permission_state_change_scope_parcel.cpp",
     "src/permission_status_parcel.cpp",
   ]
 

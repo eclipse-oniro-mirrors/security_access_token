@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -56,6 +56,7 @@ access_token_deps = [
   "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   "${access_token_path}/services/accesstokenmanager:access_token.rc",
   "${access_token_path}/services/accesstokenmanager/etc:param_files",
+  "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
   "${access_token_path}/services/common:accesstoken_service_common",
   "${access_token_path}/services/common/json_parse:accesstoken_cjson_utils",
 ]
@@ -100,7 +101,6 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",

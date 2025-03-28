@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -91,7 +91,6 @@ if (is_standard_system) {
       "main/cpp/src/permission/short_grant_manager.cpp",
       "main/cpp/src/permission/temp_permission_observer.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
-      "main/cpp/src/service/accesstoken_manager_stub.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
       "main/cpp/src/token/accesstoken_info_manager.cpp",
       "main/cpp/src/token/hap_token_info_inner.cpp",
@@ -105,6 +104,7 @@ if (is_standard_system) {
     configs = [
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
     ]
 
     if (dlp_permission_enable == true) {
@@ -125,6 +125,7 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
       "${access_token_path}/services/accesstokenmanager:permission_definition_config",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
       "${access_token_path}/services/common:accesstoken_service_common",
     ]
 

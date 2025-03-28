@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.Security.AccessToken;
+sequenceable OHOS.Security.AccessToken.PermissionDefParcel;
+sequenceable OHOS.Security.AccessToken.PermissionStatusParcel;
+sequenceable OHOS.Security.AccessToken.PermissionListStateParcel;
+sequenceable OHOS.Security.AccessToken.PermissionGrantInfoParcel;
+sequenceable OHOS.Security.AccessToken.HapInfoParcel;
+sequenceable OHOS.Security.AccessToken.HapPolicyParcel;
+sequenceable OHOS.Security.AccessToken.NativeTokenInfoParcel;
+sequenceable OHOS.Security.AccessToken.HapTokenInfoParcel;
+sequenceable OHOS.Security.AccessToken.PermStateChangeScopeParcel;
+sequenceable OHOS.IRemoteObject;
+sequenceable OHOS.Security.AccessToken.HapTokenInfoForSyncParcel;
+sequenceable OHOS.Security.AccessToken.HapBaseInfoParcel;
+sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
+
+import IdlCommon;
+
+option_stub_hooks on;
+
+interface OHOS.Security.AccessToken.IAccessTokenManager{
+    [ipccode 1] void VerifyAccessToken([in] unsigned int tokenID, [in] String permissionName);
+    [ipccode 2] void GetDefPermission([in] String permissionName, [out] PermissionDefParcel permissionDefResult);
+    [ipccode 3] void GetReqPermissions([in] unsigned int tokenID, [out] List<PermissionStatusParcel> reqPermList, [in] boolean isSystemGrant);
+    [ipccode 4] void GetPermissionFlag([in] unsigned int tokenID, [in] String permissionName, [out] unsigned int flag);
+    [ipccode 5] void GrantPermission([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int flag);
+    [ipccode 6] void RevokePermission([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int flag);
+    [ipccode 7] void ClearUserGrantedPermissionState([in] unsigned int tokenID);
+    [ipccode 8] void AllocHapToken([in] HapInfoParcel hapInfo, [in] HapPolicyParcel policyParcel, [out] unsigned long fullTokenId);
+    [ipccode 9] void DeleteToken([in] unsigned int tokenID);
+    [ipccode 10] void InitHapToken([in] HapInfoParcel info, [in] HapPolicyParcel policy, [out] unsigned long fullTokenId, [out] HapInfoCheckResultIdl resultInfoIdl);
+    [ipccode 11] void SetPermissionRequestToggleStatus([in] String permissionName, [in] unsigned int status, [in] int userID);
+    [ipccode 12] void GetPermissionRequestToggleStatus([in] String permissionName, [out] unsigned int status, [in] int userID);
+    [ipccode 13] void GrantPermissionForSpecifiedTime([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int onceTime);
+    [ipccode 14] void RequestAppPermOnSetting([in] unsigned int tokenID);
+    [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
+
+    [ipccode 18] void GetHapTokenID([in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
+    [ipccode 19] void AllocLocalTokenID([in] String remoteDeviceID, [in] unsigned int remoteTokenID, [out] unsigned int tokenId);
+    [ipccode 20] void GetNativeTokenInfo([in] unsigned int tokenID, [out] NativeTokenInfoParcel nativeTokenInfoRes);
+    [ipccode 21] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes);
+    [ipccode 22] void UpdateHapToken([inout] unsigned long fullTokenId, [in] UpdateHapInfoParamsIdl infoIdl, [in] HapPolicyParcel policyParcel, [out] HapInfoCheckResultIdl resultInfoIdl);
+    [ipccode 23] void GetTokenIDByUserID([in] int userID, [out] List<unsigned int> tokenIdList);
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 32] void GetHapTokenInfoFromRemote([in] unsigned int tokenID, [out] HapTokenInfoForSyncParcel hapSyncParcel);
+
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 34] void SetRemoteHapTokenInfo([in] String deviceID, [in] HapTokenInfoForSyncParcel hapSyncParcel);
+
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 36] void DeleteRemoteToken([in] String deviceID, [in] unsigned int tokenID);
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 37] void DeleteRemoteDeviceTokens([in] String deviceID);
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 38] void GetRemoteNativeTokenID([in] String deviceID, [in] unsigned int tokenID, [out] unsigned int tokenId);
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 39] void RegisterTokenSyncCallback([in] IRemoteObject cb);
+    [macrodef TOKEN_SYNC_ENABLE, ipccode 40] void UnRegisterTokenSyncCallback();
+    [ipccode 48, ipcoutcapacity 2000] void DumpTokenInfo([in] AtmToolsParamInfoParcel infoParcel, [out] String tokenInfo);
+    [ipccode 49] void GetSelfPermissionsState([inout] List<PermissionListStateParcel> permListParcel, [out] PermissionGrantInfoParcel infoParcel, [out] int permOper);
+    [ipccode 50] void GetPermissionsStatus([in] unsigned int tokenID, [inout] List<PermissionListStateParcel>permListParcel);
+    [ipccode 51] void RegisterPermStateChangeCallback([in] PermStateChangeScopeParcel scope, [in] IRemoteObject cb);
+    [ipccode 52] void UnRegisterPermStateChangeCallback([in] IRemoteObject cb);
+    [ipccode 53, macrondef ATM_BUILD_VARIANT_USER_ENABLE] void ReloadNativeTokenInfo();
+    [ipccode 54] void GetNativeTokenId([in] String processName, [out] unsigned int tokenID);
+    [ipccode 55] void SetPermDialogCap([in] HapBaseInfoParcel hapBaseInfoParcel, [in] boolean enable);
+    [ipccode 56] void GetPermissionUsedType([in] unsigned int tokenID, [in] String permissionName, [out] int permUsedType);
+
+    [ipccode 58] void GetVersion([out] unsigned int version);
+    [ipccode 59] void GetPermissionManagerInfo([out] PermissionGrantInfoParcel infoParcel);
+
+    [ipccode 61] void InitUserPolicy([in] List<UserStateIdl> userIdlList, [in] List<String> permList);
+    [ipccode 62] void UpdateUserPolicy([in] List<UserStateIdl> userIdlList);
+    [ipccode 63] void ClearUserPolicy();
+    [ipccode 64] void GetHapTokenInfoExtension([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes, [out] String appID);
+    [ipccode 65] void RegisterSelfPermStateChangeCallback([in] PermStateChangeScopeParcel scope, [in] IRemoteObject cb);
+    [ipccode 66] void UnRegisterSelfPermStateChangeCallback([in] IRemoteObject cb);
+    [ipccode 67] void GetKernelPermissions([in] unsigned int tokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
+    [ipccode 68] void GetReqPermissionByName([in] unsigned int tokenId, [in] String permissionName, [out] String value);
+    [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);   
+}
