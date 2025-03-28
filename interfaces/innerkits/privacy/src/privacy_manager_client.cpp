@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,6 +30,7 @@ namespace {
 const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -56,6 +57,21 @@ PrivacyManagerClient::~PrivacyManagerClient()
     ReleaseProxy();
 }
 
+static int32_t ConvertResult(int32_t ret)
+{
+    switch (ret) {
+        case ERR_INVALID_DATA:
+            ret = ERR_WRITE_PARCEL_FAILED;
+            break;
+        case ERR_TRANSACTION_FAILED:
+            ret = ERR_SERVICE_ABNORMAL;
+            break;
+        default:
+            return ret;
+    }
+    return ret;
+}
+
 int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
 {
     auto proxy = GetProxy();
@@ -65,7 +81,13 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     }
     AddPermParamInfoParcel infoParcel;
     infoParcel.info = info;
-    return proxy->AddPermissionUsedRecord(infoParcel, asyncMode);
+    int32_t ret;
+    if (asyncMode) {
+        ret = proxy->AddPermissionUsedRecordAsync(infoParcel);
+    } else {
+        ret = proxy->AddPermissionUsedRecord(infoParcel);
+    }
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
@@ -76,7 +98,8 @@ int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    return proxy->SetPermissionUsedRecordToggleStatus(userID, status);
+    int32_t ret = proxy->SetPermissionUsedRecordToggleStatus(userID, status);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
@@ -87,7 +110,8 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    return proxy->GetPermissionUsedRecordToggleStatus(userID, status);
+    int32_t ret = proxy->GetPermissionUsedRecordToggleStatus(userID, status);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(
@@ -110,7 +134,8 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
-    return proxy->StartUsingPermission(parcel, anonyStub);
+    int32_t ret = proxy->StartUsingPermission(parcel, anonyStub);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
@@ -161,13 +186,13 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
-    result = proxy->StartUsingPermission(parcel, callbackWrap->AsObject(), anonyStub);
+    result = proxy->StartUsingPermissionCallback(parcel, callbackWrap->AsObject(), anonyStub);
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     }
-    return result;
+    return ConvertResult(result);
 }
 
 int32_t PrivacyManagerClient::StopUsingPermission(
@@ -187,7 +212,8 @@ int32_t PrivacyManagerClient::StopUsingPermission(
         }
     }
 
-    return proxy->StopUsingPermission(tokenID, pid, permissionName);
+    int32_t ret = proxy->StopUsingPermission(tokenID, pid, permissionName);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
@@ -197,7 +223,8 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RemovePermissionUsedRecords(tokenID);
+    int32_t ret = proxy->RemovePermissionUsedRecords(tokenID);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(
@@ -214,7 +241,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
     requestParcel.request = request;
     int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, resultParcel);
     result = resultParcel.result;
-    return ret;
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request,
@@ -228,7 +255,8 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
 
     PermissionUsedRequestParcel requestParcel;
     requestParcel.request = request;
-    return proxy->GetPermissionUsedRecords(requestParcel, callback);
+    int32_t ret = proxy->GetPermissionUsedRecordsAsync(requestParcel, callback);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
@@ -285,7 +313,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         activeCbkMap_[callback] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     }
-    return result;
+    return ConvertResult(result);
 }
 
 int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
@@ -308,7 +336,7 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     if (result == RET_SUCCESS) {
         activeCbkMap_.erase(goalCallback);
     }
-    return result;
+    return ConvertResult(result);
 }
 
 bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
@@ -319,7 +347,9 @@ bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return false;
     }
-    return proxy->IsAllowedUsingPermission(tokenID, permissionName, pid);
+    bool isAllowed = false;
+    proxy->IsAllowedUsingPermission(tokenID, permissionName, pid, isAllowed);
+    return isAllowed;
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
@@ -332,7 +362,8 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
     }
     SecCompEnhanceDataParcel registerParcel;
     registerParcel.enhanceData = enhance;
-    return proxy->RegisterSecCompEnhance(registerParcel);
+    int32_t ret = proxy->RegisterSecCompEnhance(registerParcel);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
@@ -342,7 +373,8 @@ int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return proxy->UpdateSecCompEnhance(pid, seqNum);
+    int32_t ret = proxy->UpdateSecCompEnhance(pid, seqNum);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
@@ -355,7 +387,7 @@ int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData&
     SecCompEnhanceDataParcel parcel;
     int32_t res = proxy->GetSecCompEnhance(pid, parcel);
     if (res != RET_SUCCESS) {
-        return res;
+        return ConvertResult(res);
     }
     enhance = parcel.enhanceData;
     return RET_SUCCESS;
@@ -372,7 +404,7 @@ int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundle
     std::vector<SecCompEnhanceDataParcel> parcelList;
     int32_t res = proxy->GetSpecialSecCompEnhance(bundleName, parcelList);
     if (res != RET_SUCCESS) {
-        return res;
+        return ConvertResult(res);
     }
 
     std::transform(parcelList.begin(), parcelList.end(), std::back_inserter(enhanceList),
@@ -393,7 +425,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
     std::vector<PermissionUsedTypeInfoParcel> resultsParcel;
     int32_t res = proxy->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
     if (res != RET_SUCCESS) {
-        return res;
+        return ConvertResult(res);
     }
 
     std::transform(resultsParcel.begin(), resultsParcel.end(), std::back_inserter(results),
@@ -409,7 +441,8 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->SetMutePolicy(policyType, callerType, isMute, tokenID);
+    int32_t ret = proxy->SetMutePolicy(policyType, callerType, isMute, tokenID);
+    return ConvertResult(ret);
 }
 
 int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
@@ -419,7 +452,8 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->SetHapWithFGReminder(tokenId, isAllowed);
+    int32_t ret = proxy->SetHapWithFGReminder(tokenId, isAllowed);
+    return ConvertResult(ret);
 }
 
 uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const
@@ -433,13 +467,12 @@ void PrivacyManagerClient::InitProxy()
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
-            LOGD(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
+            LOGE(PRI_DOMAIN, PRI_TAG, "GetSystemAbilityManager is null");
             return;
         }
-        auto privacySa = sam->CheckSystemAbility(IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
+        auto privacySa = sam->CheckSystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE);
         if (privacySa == nullptr) {
-            LOGD(PRI_DOMAIN, PRI_TAG, "CheckSystemAbility %{public}d is null",
-                IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
+            LOGE(PRI_DOMAIN, PRI_TAG, "CheckSystemAbility %{public}d is null", SA_ID_PRIVACY_MANAGER_SERVICE);
             return;
         }
 
@@ -449,7 +482,7 @@ void PrivacyManagerClient::InitProxy()
         }
         proxy_ = new PrivacyManagerProxy(privacySa);
         if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
-            LOGD(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
+            LOGE(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
         }
     }
 }

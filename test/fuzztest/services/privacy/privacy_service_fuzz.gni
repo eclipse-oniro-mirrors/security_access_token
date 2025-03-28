@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -49,6 +49,7 @@ privacy_deps = [
   "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   "${access_token_path}/services/common:accesstoken_service_common",
   "${access_token_path}/services/common/proxy_death:proxy_death_handler",
+  "${access_token_path}/services/privacymanager:privacy_manager_stub",
 ]
 
 privacy_external_deps = [
@@ -85,7 +86,6 @@ privacy_sources = [
   "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_adapter.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_adapter.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
-  "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
 ]
 
 privacy_cflags_cc = [

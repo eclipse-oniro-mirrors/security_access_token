@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,7 @@
 #include "accesstoken_fuzzdata.h"
 #undef private
 #include "errors.h"
-#include "i_privacy_manager.h"
+#include "iprivacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
@@ -46,7 +46,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_GET_SEC_COMP_ENHANCE);
 
         MessageParcel reply;
         MessageOption option;

@@ -28,7 +28,10 @@ ohos_fuzztest("GetPermissionUsedRecordToggleStatusStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+  ]
 
   include_dirs = privacy_include_dirs
 

@@ -649,6 +649,9 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
 int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
+    if (callback == nullptr) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     auto task = [request, callback]() {
         LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;

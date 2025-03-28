@@ -18,6 +18,7 @@ group("fuzztest") {
   if (is_standard_system && ability_base_enable == true) {
     deps += [
       "addpermissionusedrecord_fuzzer:AddPermissionUsedRecordFuzzTest",
+      "addpermissionusedrecordasync_fuzzer:AddPermissionUsedRecordAsyncFuzzTest",
       "getpermissionusedrecords_fuzzer:GetPermissionUsedRecordsFuzzTest",
       "getpermissionusedrecordtogglestatus_fuzzer:GetPermissionUsedRecordToggleStatusFuzzTest",
       "getpermissionusedtypeinfos_fuzzer:GetPermissionUsedTypeInfosFuzzTest",

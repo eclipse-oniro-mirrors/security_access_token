@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,7 @@
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "i_privacy_manager.h"
+#include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -48,7 +48,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_START_USING_PERMISSION);
 
         MessageParcel reply;
         MessageOption option;

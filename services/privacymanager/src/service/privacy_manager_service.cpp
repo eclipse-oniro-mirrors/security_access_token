@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include <cstring>
 
 #include "access_token.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "active_status_callback_manager.h"
 #include "ipc_skeleton.h"
@@ -29,16 +30,27 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#include "privacy_error.h"
 #include "privacy_manager_proxy_death_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
 #include "system_ability_definition.h"
 #include "string_ex.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+constexpr const char* PERMISSION_RECORD_TOGGLE = "ohos.permission.PERMISSION_RECORD_TOGGLE";
+constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
+constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
+static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
+static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
+static const uint32_t PERM_LIST_SIZE_MAX = 1024;
+}
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
@@ -87,9 +99,16 @@ void PrivacyManagerService::OnStop()
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
-int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
-    bool asyncMode)
+int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s, succCnt: %{public}d,"
         " failCnt: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
         infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
@@ -97,14 +116,43 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
+int32_t PrivacyManagerService::AddPermissionUsedRecordAsync(const AddPermParamInfoParcel& infoParcel)
+{
+    return AddPermissionUsedRecord(infoParcel);
+}
+
 int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_RECORD_TOGGLE)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+    if (userID != 0 && !IsPrivilegedCalling()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
 }
@@ -155,15 +203,31 @@ void PrivacyManagerService::ReleaseDeathStub(int32_t callerPid)
 int32_t PrivacyManagerService::StartUsingPermission(
     const PermissionUsedTypeInfoParcel &infoParcel, const sptr<IRemoteObject>& anonyStub)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callerPid);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
+int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsedTypeInfoParcel &infoParcel,
     const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
@@ -173,6 +237,14 @@ int32_t PrivacyManagerService::StartUsingPermission(const PermissionUsedTypeInfo
 int32_t PrivacyManagerService::StopUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u, pid: %{public}d, perm: %{public}s",
         tokenId, pid, permissionName.c_str());
     int32_t callerPid = IPCSkeleton::GetCallingPid();
@@ -189,14 +261,30 @@ int32_t PrivacyManagerService::StopUsingPermission(
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsAccessTokenCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u", tokenId);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     return Constant::SUCCESS;
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
-    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
+    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     std::string permissionList;
     for (const auto& perm : request.request.permissionList) {
         permissionList.append(perm);
@@ -208,20 +296,41 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 
     PermissionUsedResult permissionRecord;
     int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
-    result.result = permissionRecord;
+    resultParcel.result = permissionRecord;
     return ret;
 }
 
-int32_t PrivacyManagerService::GetPermissionUsedRecords(
+int32_t PrivacyManagerService::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
-    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    if (permList.size() > PERM_LIST_SIZE_MAX) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "permList oversize");
+        return PrivacyError::ERR_OVERSIZE;
+    }
+
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
         IPCSkeleton::GetCallingTokenID(), permList, callback);
 }
@@ -235,11 +344,19 @@ int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataPa
 
 int32_t PrivacyManagerService::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
+    if (!IsSecCompServiceCalling()) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     return PrivacySecCompEnhanceAgent::GetInstance().UpdateSecCompEnhance(pid, seqNum);
 }
 
 int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
 {
+    if (!IsSecCompServiceCalling()) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     SecCompEnhanceData enhanceData;
     int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
     if (res != RET_SUCCESS) {
@@ -254,6 +371,10 @@ int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceData
 int32_t PrivacyManagerService::GetSpecialSecCompEnhance(const std::string& bundleName,
     std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
 {
+    if (!IsSecCompServiceCalling()) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     std::vector<SecCompEnhanceData> enhanceList;
     PrivacySecCompEnhanceAgent::GetInstance().GetSpecialSecCompEnhance(bundleName, enhanceList);
     for (const auto& enhance : enhanceList) {
@@ -334,20 +455,42 @@ int32_t PrivacyManagerService::Dump(int32_t fd, const std::vector<std::u16string
 
 int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     return PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
-bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
-    int32_t pid)
+int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t pid, bool& isAllowed)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, perm: %{public}s, pid: %{public}d.",
         tokenId, permissionName.c_str(), pid);
-    return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
+    isAllowed = PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
+    return ERR_OK;
 }
 
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
     AccessTokenID tokenID)
 {
+    if (!VerifyPermission(SET_MUTE_POLICY)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "PolicyType %{public}d, callerType %{public}d, isMute %{public}d, tokenId %{public}u",
         policyType, callerType, isMute, tokenID);
     return PermissionRecordManager::GetInstance().SetMutePolicy(
@@ -356,6 +499,10 @@ int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t calle
 
 int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
 {
+    if (!VerifyPermission(SET_FOREGROUND_HAP_REMINDER)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
     return PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
 }
@@ -363,12 +510,23 @@ int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAll
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
     const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {
-    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
 
+    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
     std::vector<PermissionUsedTypeInfo> results;
     int32_t res = PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
     if (res != RET_SUCCESS) {
         return res;
+    }
+
+    if (results.size() > MAX_PERMISSION_USED_TYPE_SIZE) {
+        return PrivacyError::ERR_OVERSIZE;
     }
 
     for (const auto& result : results) {
@@ -409,6 +567,50 @@ bool PrivacyManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
 #endif
+    return true;
+}
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool PrivacyManagerService::IsSecCompServiceCalling()
+{
+    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (secCompTokenId_ == 0) {
+        secCompTokenId_ = AccessTokenKit::GetNativeTokenId("security_component_service");
+    }
+    return tokenCaller == secCompTokenId_;
+}
+#endif
+
+bool PrivacyManagerService::IsPrivilegedCalling() const
+{
+    // shell process is root in debug mode.
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    return callingUid == ROOT_UID;
+#else
+    return false;
+#endif
+}
+
+bool PrivacyManagerService::IsAccessTokenCalling() const
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    return callingUid == ACCESSTOKEN_UID;
+}
+
+bool PrivacyManagerService::IsSystemAppCalling() const
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+}
+
+bool PrivacyManagerService::VerifyPermission(const std::string& permission) const
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission) == PERMISSION_DENIED) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission denied(callingTokenID=%{public}d)", callingTokenID);
+        return false;
+    }
     return true;
 }
 } // namespace AccessToken
