@@ -4423,16 +4423,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.CONTROL_SVC_CMD",
-            "grantMode": "system_grant",
-            "availableLevel": "system_core",
-            "availableType": "SERVICE",
-            "since": 18,
-            "deprecated": "",
-            "provisionEnable": false,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.ACCESS_DEVAUTH_CRED_MGR",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
