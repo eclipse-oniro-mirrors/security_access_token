@@ -614,9 +614,8 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return nullptr;
     }
     if (syncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
-        int32_t cnt = g_cnt;
+        int32_t cnt = g_cnt.fetch_add(1);
         if (!AccessTokenKit::IsSystemAppByFullTokenID(selfTokenId) && cnt % REPORT_CNT == 0) {
-            g_cnt.fetch_add(1);
             AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
