@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,7 +24,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
 #include "token_setproc.h"
@@ -120,7 +120,7 @@ size_t g_baseFuzzPos = 0;
             }
 
             uint32_t code = static_cast<uint32_t>(
-                AccessTokenInterfaceCode::GET_PERMISSIONS_STATUS);
+                IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSIONS_STATUS);
             MessageParcel reply;
             MessageOption option;
             bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);

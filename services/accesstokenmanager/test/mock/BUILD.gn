@@ -36,7 +36,6 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
@@ -89,7 +88,10 @@ ohos_unittest("libpermission_manager_mock_test") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  ]
 
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
@@ -100,6 +102,7 @@ ohos_unittest("libpermission_manager_mock_test") {
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
     "${access_token_path}/services/common:accesstoken_service_common",
   ]
 

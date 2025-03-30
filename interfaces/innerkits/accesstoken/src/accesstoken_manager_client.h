@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
@@ -28,7 +29,7 @@
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_info.h"

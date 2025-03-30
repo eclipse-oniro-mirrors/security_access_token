@@ -23,7 +23,7 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "token_setproc.h"
 
 using namespace std;
@@ -50,7 +50,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN);
+            IAccessTokenManagerIpcCode::COMMAND_DELETE_REMOTE_DEVICE_TOKENS);
 
         MessageParcel reply;
         MessageOption option;

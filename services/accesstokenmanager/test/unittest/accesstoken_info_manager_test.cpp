@@ -35,6 +35,7 @@
 #include "permission_validator.h"
 #include "string_ex.h"
 #include "token_setproc.h"
+#include "system_ability_definition.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -48,6 +49,7 @@ static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
+static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",
@@ -107,6 +109,7 @@ static PermissionStatus g_permState = {
 };
 
 #ifdef TOKEN_SYNC_ENABLE
+static uint32_t tokenSyncId_ = 0;
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackMock : public TokenSyncCallbackStub {
 public:
@@ -122,12 +125,14 @@ public:
 
 void AccessTokenInfoManagerTest::SetUpTestCase()
 {
+    g_selfTokenId = GetSelfTokenID();
     AccessTokenInfoManager::GetInstance().Init();
 }
 
 void AccessTokenInfoManagerTest::TearDownTestCase()
 {
     sleep(3); // delay 3 minutes
+    SetSelfTokenID(g_selfTokenId);
 }
 
 void AccessTokenInfoManagerTest::SetUp()
@@ -387,9 +392,10 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
     hapPolicyParcel.hapPolicy.domain = "test.domain";
-    AccessTokenIDEx tokenIdEx;
-    HapInfoCheckResult result;
-    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, fullTokenId, result));
 }
 
 /**
@@ -413,10 +419,10 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
     hapPolicyParcel.hapPolicy.domain = "test.domain";
-    AccessTokenIDEx tokenIdEx;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
-        atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx, result));
+        atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, fullTokenId, result));
 }
 
 /**
@@ -454,18 +460,29 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
         .permList = {},
         .permStateList = { permissionStateA, permissionStateB }
     };
-    AccessTokenIDEx fullTokenId = {0};
+    uint64_t fullTokenId;;
+    HapInfoCheckResultIdl resultInfoIdl;
     HapInfoCheckResult result;
 
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
+    ASSERT_EQ(0,
+        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+
+    PermissionInfoCheckResult permCheckResult;
+    permCheckResult.permissionName = resultInfoIdl.permissionName;
+    int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
+    permCheckResult.rule = PermissionRulesEnum(rule);
+    result.permCheckResult = permCheckResult;
     ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
     ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
     permissionStateA.permissionName = "ohos.permission.ENTERPRISE_MANAGE_SETTINGS";
     policy.hapPolicy.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
     policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
-    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
-    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
-    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
+    ASSERT_EQ(0,
+        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+
+    ASSERT_EQ(resultInfoIdl.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    rule = static_cast<int32_t>(resultInfoIdl.rule);
+    ASSERT_EQ(PermissionRulesEnum(rule), PERMISSION_EDM_RULE);
 }
 
 static void GetHapParams(HapInfoParams& infoParams, HapPolicy& policyParams)
@@ -514,8 +531,8 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level1)
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
 
-    AccessTokenIDEx fullTokenId;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;;
+    HapInfoCheckResultIdl result;
     int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -529,12 +546,14 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level1)
         std::to_string(MAX_EXTENDED_MAP_SIZE - 1);
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenIDEx tokenIDEx = {fullTokenId};
+    AccessTokenID tokenID = tokenIDEx.tokenIdExStruct.tokenID;
 
     policy.hapPolicy.aclExtendedMap[std::to_string(MAX_EXTENDED_MAP_SIZE)] =
         std::to_string(MAX_EXTENDED_MAP_SIZE);
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+
     ret = atManagerService_->DeleteToken(tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
@@ -551,8 +570,8 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level1)
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
 
-    AccessTokenIDEx fullTokenId;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
     policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = "";
     int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -566,12 +585,13 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level1)
     policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenIDEx tokenIDEx = {fullTokenId};
+    AccessTokenID tokenID = tokenIDEx.tokenIdExStruct.tokenID;
 
     testValue.push_back('1');
     policy.hapPolicy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
 
     ret = atManagerService_->DeleteToken(tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -588,14 +608,14 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
     HapInfoParcel info;
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
-    AccessTokenIDEx fullTokenId;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
 
     TestPrepareKernelPermissionStatus(policy.hapPolicy);
     ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    AccessTokenID tokenID = static_cast<AccessTokenID>(fullTokenId);
 
-    std::vector<PermissionWithValue> kernelPermList;
+    std::vector<PermissionWithValueIdl> kernelPermList;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
     EXPECT_EQ(1, kernelPermList.size());
 
@@ -624,15 +644,15 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level1)
     HapInfoParcel info;
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
-    AccessTokenIDEx fullTokenId;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
 
     TestPrepareKernelPermissionStatus(policy.hapPolicy);
     policy.hapPolicy.aclExtendedMap.erase("ohos.permission.KERNEL_ATM_SELF_USE");
     ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    AccessTokenID tokenID = static_cast<AccessTokenID>(fullTokenId);
 
-    std::vector<PermissionWithValue> kernelPermList;
+    std::vector<PermissionWithValueIdl> kernelPermList;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
     EXPECT_EQ(1, kernelPermList.size());
 
@@ -850,15 +870,15 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
     HapInfoParcel info;
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
-    AccessTokenIDEx fullTokenId;
-    HapInfoCheckResult result;
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
 
     TestPrepareKernelPermissionStatus(policy.hapPolicy);
     ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId, result));
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    AccessTokenID tokenID = static_cast<AccessTokenID>(fullTokenId);
 
     policy.hapPolicy.aclExtendedMap["ohos.permission.KERNEL_ATM_SELF_USE"] = "1"; // modified value
-    UpdateHapInfoParams updateInfoParams = {
+    UpdateHapInfoParamsIdl updateInfoParams = {
         .appIDDesc = "AccessTokenTestAppID",
         .apiVersion = DEFAULT_API_VERSION,
         .isSystemApp = true,
@@ -866,7 +886,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
     };
     EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdateHapToken(fullTokenId, updateInfoParams, policy, result));
 
-    std::vector<PermissionWithValue> kernelPermList;
+    std::vector<PermissionWithValueIdl> kernelPermList;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetKernelPermissions(tokenID, kernelPermList));
     EXPECT_EQ(1, kernelPermList.size());
 
@@ -1117,6 +1137,15 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
     TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
 }
 
+void setPermission()
+{
+    setuid(0);
+    if (tokenSyncId_ == 0) {
+        tokenSyncId_ = AccessTokenInfoManager::GetInstance().GetNativeTokenId("token_sync_service");
+    }
+    SetSelfTokenID(tokenSyncId_);
+}
+
 /**
  * @tc.name: RegisterTokenSyncCallback001
  * @tc.desc: TokenModifyNotifier::RegisterTokenSyncCallback function test
@@ -1125,7 +1154,7 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level1)
 {
-    setuid(3020);
+    setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
@@ -1133,6 +1162,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
     EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
     EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackDeathRecipient_);
     
+    setuid(3020);
     EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_)).WillOnce(testing::Return(FAKE_SYNC_RET));
     EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_->GetRemoteHapTokenInfo("", 0));
     
@@ -1143,6 +1173,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
     EXPECT_CALL(*callback, UpdateRemoteHapTokenInfo(testing::_)).WillOnce(testing::Return(FAKE_SYNC_RET));
     EXPECT_EQ(FAKE_SYNC_RET,
         TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(tokenInfo));
+    setPermission();
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
     EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
@@ -1158,12 +1189,13 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level1)
 {
-    setuid(3020);
+    setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
     EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
+    setuid(3020);
     EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_))
         .WillOnce(testing::Return(FAKE_SYNC_RET));
     EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance().GetRemoteHapTokenInfo("", 0));
@@ -1199,6 +1231,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
 
     TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
     TokenModifyNotifier::GetInstance().deleteTokenList_ = deleteTokenList;
+    setPermission();
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
     setuid(0);
@@ -1212,10 +1245,11 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
 {
-    setuid(3020);
+    setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS, atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
+    setuid(3020);
     EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_))
         .WillOnce(testing::Return(FAKE_SYNC_RET));
     EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance()
@@ -1225,6 +1259,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
         .WillOnce(testing::Return(TOKEN_SYNC_OPENSOURCE_DEVICE));
     EXPECT_EQ(TOKEN_SYNC_IPC_ERROR, TokenModifyNotifier::GetInstance()
         .GetRemoteHapTokenInfo("invalid_id", 0)); // this is a test input
+    setPermission();
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
     setuid(0);
@@ -2081,8 +2116,9 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level1)
     hapPolicyParcel.hapPolicy.apl = ATokenAplEnum::APL_NORMAL;
     hapPolicyParcel.hapPolicy.domain = "test.domain";
 
-    AccessTokenIDEx tokenIDEx = atManagerService_->AllocHapToken(hapinfoParcel, hapPolicyParcel);
-    ASSERT_EQ(INVALID_TOKENID, tokenIDEx.tokenIDEx);
+    uint64_t tokenIDEx;
+    atManagerService_->AllocHapToken(hapinfoParcel, hapPolicyParcel, tokenIDEx);
+    ASSERT_EQ(INVALID_TOKENID, tokenIDEx);
 }
 
 /**
@@ -2131,34 +2167,6 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
     EXPECT_NE(nullptr, tokenSyncKit);
 }
 #endif
-
-/**
- * @tc.name: OnRemoteRequest001
- * @tc.desc: Test OnRemoteRequest
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, OnRemoteRequest001, TestSize.Level1)
-{
-    uint32_t code = 0;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    data.WriteInterfaceToken(u"this is a test interface");
-    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, atManagerService_->OnRemoteRequest(code, data, reply, option));
-
-    std::map<uint32_t, AccessTokenManagerStub::RequestFuncType> oldMap = atManagerService_->requestFuncMap_;
-    atManagerService_->requestFuncMap_.clear();
-    atManagerService_->requestFuncMap_[1] = nullptr;
-
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    EXPECT_NE(NO_ERROR, atManagerService_->OnRemoteRequest(code, data, reply, option));
-
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    EXPECT_NE(NO_ERROR, atManagerService_->OnRemoteRequest(1, data, reply, option));
-
-    atManagerService_->requestFuncMap_ = oldMap;
-}
 
 /**
  * @tc.name: VerifyNativeAccessToken001

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,16 +15,18 @@
 
 #include "accesstoken_manager_client.h"
 
-#include "accesstoken_common_log.h"
 #include "access_token_error.h"
-#include "accesstoken_manager_proxy.h"
+#include "access_token_manager_proxy.h"
+#include "accesstoken_callbacks.h"
+#include "accesstoken_common_log.h"
 #include "atm_tools_param_info_parcel.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
+#include "idl_common.h"
 #include "iservice_registry.h"
 #include "parameter.h"
+#include "perm_state_change_scope_parcel.h"
 #include "permission_grant_info_parcel.h"
-#include "accesstoken_callbacks.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +35,11 @@ namespace {
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 std::recursive_mutex g_instanceMutex;
+static const int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
+static const int MAX_PERMISSION_SIZE = 1000;
+static const int32_t MAX_USER_POLICY_SIZE = 1024;
+static const int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
+const size_t NUMBER_TWO = 2;
 } // namespace
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
@@ -59,6 +66,21 @@ AccessTokenManagerClient::~AccessTokenManagerClient()
     ReleaseProxy();
 }
 
+static int32_t ConvertResult(int32_t ret)
+{
+    switch (ret) {
+        case ERR_INVALID_DATA:
+            ret = ERR_WRITE_PARCEL_FAILED;
+            break;
+        case ERR_TRANSACTION_FAILED:
+            ret = ERR_SERVICE_ABNORMAL;
+            break;
+        default:
+            return ret;
+    }
+    return ret;
+}
+
 PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string &permissionName)
 {
@@ -67,14 +89,28 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    return proxy->GetPermissionUsedType(tokenID, permissionName);
+    int32_t permUsedType;
+    int32_t errCode = proxy->GetPermissionUsedType(tokenID, permissionName, permUsedType);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return PermUsedTypeEnum::INVALID_USED_TYPE;
+    }
+    PermUsedTypeEnum result = static_cast<PermUsedTypeEnum>(permUsedType);
+    return result;
 }
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     auto proxy = GetProxy();
     if (proxy != nullptr) {
-        return proxy->VerifyAccessToken(tokenID, permissionName);
+        int32_t errCode = proxy->VerifyAccessToken(tokenID, permissionName);
+        if (errCode != RET_SUCCESS) {
+            errCode = ConvertResult(errCode);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+            return PERMISSION_DENIED;
+        }
+        return errCode;
     }
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -99,7 +135,12 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->VerifyAccessToken(tokenID, permissionList, permStateList);
+    int32_t errCode = proxy->VerifyAccessToken(tokenID, permissionList, permStateList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 int AccessTokenManagerClient::GetDefPermission(
@@ -113,6 +154,10 @@ int AccessTokenManagerClient::GetDefPermission(
     PermissionDefParcel permissionDefParcel;
     int result = proxy->GetDefPermission(permissionName, permissionDefParcel);
     permissionDefResult = permissionDefParcel.permissionDef;
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", result);
+    }
     return result;
 }
 
@@ -126,6 +171,18 @@ int AccessTokenManagerClient::GetReqPermissions(
     }
     std::vector<PermissionStatusParcel> parcelList;
     int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", result);
+        return result;
+    }
+
+    uint32_t reqPermSize = parcelList.size();
+    if (reqPermSize > MAX_PERMISSION_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}u) is oversize.", reqPermSize);
+        return ERR_OVERSIZE;
+    }
+
     for (const auto& permParcel : parcelList) {
         PermissionStateFull perm;
         perm.permissionName = permParcel.permState.permissionName;
@@ -146,7 +203,12 @@ int AccessTokenManagerClient::GetPermissionFlag(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GetPermissionFlag(tokenID, permissionName, flag);
+    int32_t result = proxy->GetPermissionFlag(tokenID, permissionName, flag);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, flag=%{public}d).", result, flag);
+    return result;
 }
 
 PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList,
@@ -172,16 +234,33 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
         parcelList.emplace_back(permParcel);
     }
     PermissionGrantInfoParcel infoParcel;
-    PermissionOper result = proxy->GetSelfPermissionsState(parcelList, infoParcel);
+    int32_t permOper;
+    int32_t errCode = proxy->GetSelfPermissionsState(parcelList, infoParcel, permOper);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return INVALID_OPER;
+    }
+
+    size_t size = parcelList.size();
+    if (size != (len * NUMBER_TWO)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
+            size, len);
+        return INVALID_OPER;
+    }
+    if (size > MAX_PERMISSION_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) is oversize.", size);
+        return INVALID_OPER;
+    }
 
     for (uint32_t i = 0; i < len; i++) {
-        PermissionListState perm = parcelList[i].permsState;
+        PermissionListState perm = parcelList[i + len].permsState;
         permList[i].state = perm.state;
         permList[i].errorReason = perm.errorReason;
     }
 
     info = infoParcel.info;
-    return result;
+    return static_cast<PermissionOper>(permOper);
 }
 
 int32_t AccessTokenManagerClient::GetPermissionsStatus(
@@ -208,10 +287,20 @@ int32_t AccessTokenManagerClient::GetPermissionsStatus(
     }
     int32_t result = proxy->GetPermissionsStatus(tokenID, parcelList);
     if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", result);
         return result;
     }
+
+    size_t size = parcelList.size();
+    if (size != (len * NUMBER_TWO)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
+            size, len);
+        return ERR_SIZE_NOT_EQUAL;
+    }
+
     for (uint32_t i = 0; i < len; i++) {
-        PermissionListState perm = parcelList[i].permsState;
+        PermissionListState perm = parcelList[i + len].permsState;
         permList[i].state = perm.state;
     }
 
@@ -225,7 +314,12 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GrantPermission(tokenID, permissionName, flag);
+    int32_t result = proxy->GrantPermission(tokenID, permissionName, flag);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
@@ -235,7 +329,12 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RevokePermission(tokenID, permissionName, flag);
+    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
@@ -246,7 +345,12 @@ int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
+    int32_t result = proxy->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID tokenID)
@@ -256,7 +360,12 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->ClearUserGrantedPermissionState(tokenID);
+    int32_t result = proxy->ClearUserGrantedPermissionState(tokenID);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
@@ -267,7 +376,12 @@ int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::st
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->SetPermissionRequestToggleStatus(permissionName, status, userID);
+    int32_t result = proxy->SetPermissionRequestToggleStatus(permissionName, status, userID);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
@@ -278,7 +392,12 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
+    int32_t result = proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    return result;
 }
 
 int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
@@ -288,7 +407,12 @@ int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RequestAppPermOnSetting(tokenID);
+    int32_t result = proxy->RequestAppPermOnSetting(tokenID);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
 }
 
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
@@ -358,6 +482,10 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
         std::lock_guard<std::mutex> lock(callbackMutex_);
         callbackMap_[customizedCb] = callback;
     }
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -385,6 +513,10 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     if (result == RET_SUCCESS) {
         callbackMap_.erase(goalCallback);
     }
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
     return result;
 }
 
@@ -401,7 +533,16 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     hapInfoParcel.hapInfoParameter = info;
     hapPolicyParcel.hapPolicy = policy;
 
-    return proxy->AllocHapToken(hapInfoParcel, hapPolicyParcel);
+    uint64_t fullTokenId;
+    int32_t errCode = proxy->AllocHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return tokenIdEx;
+    }
+    tokenIdEx.tokenIDEx = fullTokenId;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}llu).", tokenIdEx.tokenIDEx);
+    return tokenIdEx;
 }
 
 int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicy& policy,
@@ -417,7 +558,24 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     hapInfoParcel.hapInfoParameter = info;
     hapPolicyParcel.hapPolicy = policy;
 
-    return proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId, result);
+    HapInfoCheckResultIdl resultInfoIdl;
+    uint64_t fullToken = 0;
+    int32_t res = proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullToken, resultInfoIdl);
+    if (fullToken == 0 && res == RET_SUCCESS) {
+        res = AccessTokenError::ERR_PERM_REQUEST_CFG_FAILED;
+        PermissionInfoCheckResult permCheckResult;
+        permCheckResult.permissionName = resultInfoIdl.permissionName;
+        int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
+        permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
+        result.permCheckResult = permCheckResult;
+    }
+    fullTokenId.tokenIDEx = fullToken;
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}llu).",
+        res, fullTokenId.tokenIDEx);
+    return res;
 }
 
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
@@ -427,7 +585,12 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->DeleteToken(tokenID);
+    int32_t result = proxy->DeleteToken(tokenID);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}u).", result, tokenID);
+    return result;
 }
 
 ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
@@ -437,7 +600,13 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return TOKEN_INVALID;
     }
-    return static_cast<ATokenTypeEnum>(proxy->GetTokenType(tokenID));
+    int32_t tokenType = static_cast<int32_t>(TOKEN_INVALID);
+    int32_t result = proxy->GetTokenType(tokenID, tokenType);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    }
+    return static_cast<ATokenTypeEnum>(tokenType);
 }
 
 AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
@@ -449,7 +618,15 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return result;
     }
-    return proxy->GetHapTokenID(userID, bundleName, instIndex);
+    uint64_t fullTokenId;
+    int32_t errCode = proxy->GetHapTokenID(userID, bundleName, instIndex, fullTokenId);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return result;
+    }
+    result.tokenIDEx = fullTokenId;
+    return result;
 }
 
 AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
@@ -460,7 +637,15 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return INVALID_TOKENID;
     }
-    return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    uint32_t tokenId;
+    int32_t errCode = proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID, tokenId);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return INVALID_TOKENID;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", tokenId);
+    return tokenId;
 }
 
 int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
@@ -473,7 +658,28 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicy = policy;
-    return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel, result);
+    UpdateHapInfoParamsIdl infoIdl;
+    infoIdl.appIDDesc = info.appIDDesc;
+    infoIdl.apiVersion = info.apiVersion;
+    infoIdl.isSystemApp = info.isSystemApp;
+    infoIdl.appDistributionType = info.appDistributionType;
+    HapInfoCheckResultIdl resultInfoIdl;
+    uint64_t fullTokenId = tokenIdEx.tokenIDEx;
+    int32_t res = proxy->UpdateHapToken(fullTokenId, infoIdl, hapPolicyParcel, resultInfoIdl);
+    tokenIdEx.tokenIDEx = fullTokenId;
+    if (res == RET_SUCCESS && resultInfoIdl.realResult != RET_SUCCESS) {
+        res = AccessTokenError::ERR_PERM_REQUEST_CFG_FAILED;
+        PermissionInfoCheckResult permCheckResult;
+        permCheckResult.permissionName = resultInfoIdl.permissionName;
+        int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
+        permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
+        result.permCheckResult = permCheckResult;
+    }
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    return res;
 }
 
 int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
@@ -483,7 +689,15 @@ int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unorde
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GetTokenIDByUserID(userID, tokenIdList);
+    std::vector<uint32_t> tokenIds;
+    auto result = proxy->GetTokenIDByUserID(userID, tokenIds);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+        return result;
+    }
+    std::copy(tokenIds.begin(), tokenIds.end(), std::inserter(tokenIdList, tokenIdList.begin()));
+    return result;
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
@@ -495,6 +709,11 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
     }
     HapTokenInfoParcel hapTokenInfoParcel;
     int res = proxy->GetHapTokenInfo(tokenID, hapTokenInfoParcel);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+        return res;
+    }
 
     hapTokenInfoRes = hapTokenInfoParcel.hapTokenInfoParams;
     return res;
@@ -509,6 +728,11 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     }
     NativeTokenInfoParcel nativeTokenInfoParcel;
     int res = proxy->GetNativeTokenInfo(tokenID, nativeTokenInfoParcel);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+        return res;
+    }
     nativeTokenInfoRes = nativeTokenInfoParcel.nativeTokenInfoParams;
     return res;
 }
@@ -521,7 +745,13 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->ReloadNativeTokenInfo();
+    int32_t res = proxy->ReloadNativeTokenInfo();
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+        return res;
+    }
+    return res;
 }
 #endif
 
@@ -535,6 +765,11 @@ int AccessTokenManagerClient::GetHapTokenInfoExtension(AccessTokenID tokenID, Ha
 
     HapTokenInfoParcel hapTokenInfoParcel;
     int res = proxy->GetHapTokenInfoExtension(tokenID, hapTokenInfoParcel, info.appID);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+        return res;
+    }
     info.baseInfo = hapTokenInfoParcel.hapTokenInfoParams;
     return res;
 }
@@ -546,7 +781,14 @@ AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& proc
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return INVALID_TOKENID;
     }
-    return proxy->GetNativeTokenId(processName);
+    uint32_t tokenID;
+    ErrCode errCode = proxy->GetNativeTokenId(processName, tokenID);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return INVALID_TOKENID;
+    }
+    return tokenID;
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -560,6 +802,11 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
 
     HapTokenInfoForSyncParcel hapSyncParcel;
     int res = proxy->GetHapTokenInfoFromRemote(tokenID, hapSyncParcel);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", res);
+        return res;
+    }
     hapSync = hapSyncParcel.hapTokenInfoForSyncParams;
     return res;
 }
@@ -576,6 +823,10 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
     hapSyncParcel.hapTokenInfoForSyncParams = hapSync;
 
     int res = proxy->SetRemoteHapTokenInfo(deviceID, hapSyncParcel);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
     return res;
 }
 
@@ -588,6 +839,10 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
     }
 
     int res = proxy->DeleteRemoteToken(deviceID, tokenID);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
     return res;
 }
 
@@ -599,8 +854,15 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
         return INVALID_TOKENID;
     }
 
-    AccessTokenID res = proxy->GetRemoteNativeTokenID(deviceID, tokenID);
-    return res;
+    uint32_t tokenId;
+    ErrCode errCode = proxy->GetRemoteNativeTokenID(deviceID, tokenID, tokenId);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return INVALID_TOKENID;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", tokenId);
+    return tokenId;
 }
 
 int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& deviceID)
@@ -612,6 +874,10 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     }
 
     int res = proxy->DeleteRemoteDeviceTokens(deviceID);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
     return res;
 }
 
@@ -637,6 +903,10 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
         tokenSyncCallback_ = callback;
         syncCallbackImpl_ = syncCallback;
     }
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
     return res;
 }
 
@@ -653,6 +923,10 @@ int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
         tokenSyncCallback_ = nullptr;
         syncCallbackImpl_ = nullptr;
     }
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
     return res;
 }
 #endif
@@ -667,7 +941,11 @@ void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std:
 
     AtmToolsParamInfoParcel infoParcel;
     infoParcel.info = info;
-    proxy->DumpTokenInfo(infoParcel, dumpInfo);
+    int32_t errCode = proxy->DumpTokenInfo(infoParcel, dumpInfo);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
 }
 
 int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
@@ -678,7 +956,12 @@ int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    return proxy->GetVersion(version);
+    int32_t errCode = proxy->GetVersion(version);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 void AccessTokenManagerClient::InitProxy()
@@ -690,10 +973,10 @@ void AccessTokenManagerClient::InitProxy()
             return;
         }
         sptr<IRemoteObject> accesstokenSa =
-            sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
+            sam->GetSystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
         if (accesstokenSa == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "GetSystemAbility %{public}d is null",
-                IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
+                SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
             return;
         }
 
@@ -741,7 +1024,12 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
     }
     HapBaseInfoParcel hapBaseInfoParcel;
     hapBaseInfoParcel.hapBaseInfo = hapBaseInfo;
-    return proxy->SetPermDialogCap(hapBaseInfoParcel, enable);
+    int32_t errCode = proxy->SetPermDialogCap(hapBaseInfoParcel, enable);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& info)
@@ -752,7 +1040,12 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
         return;
     }
     PermissionGrantInfoParcel infoParcel;
-    proxy->GetPermissionManagerInfo(infoParcel);
+    int32_t errorCode = proxy->GetPermissionManagerInfo(infoParcel);
+    if (errorCode != RET_SUCCESS) {
+        errorCode = ConvertResult(errorCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errorCode);
+        return;
+    }
     info = infoParcel.info;
 }
 
@@ -764,7 +1057,27 @@ int32_t AccessTokenManagerClient::InitUserPolicy(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->InitUserPolicy(userList, permList);
+
+    size_t userLen = userList.size();
+    size_t permLen = permList.size();
+    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE) || (permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu or permLen %{public}zu is invalid", userLen, permLen);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    std::vector<UserStateIdl> userIdlList;
+    for (const auto& userSate : userList) {
+        UserStateIdl userIdl;
+        userIdl.userId = userSate.userId;
+        userIdl.isActive = userSate.isActive;
+        userIdlList.emplace_back(userIdl);
+    }
+    int32_t errCode = proxy->InitUserPolicy(userIdlList, permList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 int32_t AccessTokenManagerClient::ClearUserPolicy()
@@ -774,7 +1087,12 @@ int32_t AccessTokenManagerClient::ClearUserPolicy()
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->ClearUserPolicy();
+    int32_t errCode = proxy->ClearUserPolicy();
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>& userList)
@@ -784,7 +1102,26 @@ int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>&
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->UpdateUserPolicy(userList);
+
+    size_t userLen = userList.size();
+    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu is invalid.", userLen);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    std::vector<UserStateIdl> userIdlList;
+    for (const auto& userSate : userList) {
+        UserStateIdl userIdl;
+        userIdl.userId = userSate.userId;
+        userIdl.isActive = userSate.isActive;
+        userIdlList.emplace_back(userIdl);
+    }
+    int32_t errCode = proxy->UpdateUserPolicy(userIdlList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 
 void AccessTokenManagerClient::ReleaseProxy()
@@ -804,7 +1141,29 @@ int32_t AccessTokenManagerClient::GetKernelPermissions(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GetKernelPermissions(tokenId, kernelPermList);
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    int32_t errCode = proxy->GetKernelPermissions(tokenId, kernelPermIdlList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+
+    if (kernelPermIdlList.size() > MAX_EXTENDED_VALUE_LIST_SIZE) {
+        return AccessTokenError::ERR_OVERSIZE;
+    }
+
+    for (const auto& item : kernelPermIdlList) {
+        PermissionWithValue tmp;
+        tmp.permissionName = item.permissionName;
+        tmp.value = item.value;
+        if (tmp.value == "true") {
+            tmp.value.clear();
+        }
+        kernelPermList.emplace_back(tmp);
+    }
+
+    return errCode;
 }
 
 int32_t AccessTokenManagerClient::GetReqPermissionByName(
@@ -815,7 +1174,12 @@ int32_t AccessTokenManagerClient::GetReqPermissionByName(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->GetReqPermissionByName(tokenId, permissionName, value);
+    int32_t errCode = proxy->GetReqPermissionByName(tokenId, permissionName, value);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
 }
 } // namespace AccessToken
 } // namespace Security

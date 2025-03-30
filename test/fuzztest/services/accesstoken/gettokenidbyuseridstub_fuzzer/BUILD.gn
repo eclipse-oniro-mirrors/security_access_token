@@ -32,7 +32,10 @@ ohos_fuzztest("GetTokenIDByUserIDStubFuzzTest") {
 
   deps = access_token_deps
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  ]
 
   external_deps = access_token_external_deps
 

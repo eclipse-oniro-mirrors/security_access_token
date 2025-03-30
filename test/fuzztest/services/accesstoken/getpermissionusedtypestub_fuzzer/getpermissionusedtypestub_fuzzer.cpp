@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,7 +24,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "hap_info_parcel.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -52,7 +52,7 @@ bool GetPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     uint32_t code = static_cast<uint32_t>(
-        AccessTokenInterfaceCode::GET_USER_GRANTED_PERMISSION_USED_TYPE);
+        IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSION_USED_TYPE);
 
     MessageParcel reply;
     MessageOption option;

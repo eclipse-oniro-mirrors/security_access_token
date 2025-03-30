@@ -20,7 +20,7 @@
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "accesstoken_service_ipc_interface_code.h"
+#include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -855,12 +855,12 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level1)
     policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
     ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
 
     testValue.push_back('1');
     policyParams.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"] = testValue;
     ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
 
     ret = AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);

@@ -27,7 +27,7 @@
 #include "parcel.h"
 #include "parcel_utils.h"
 #include "permission_grant_info_parcel.h"
-#include "permission_state_change_scope_parcel.h"
+#include "perm_state_change_scope_parcel.h"
 #include "permission_state_change_info_parcel.h"
 #include "permission_status_parcel.h"
 
