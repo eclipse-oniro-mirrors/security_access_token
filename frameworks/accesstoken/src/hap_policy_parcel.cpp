@@ -75,6 +75,35 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
     return true;
 }
 
+static bool ReadLeftHapPolicyParcel(Parcel& in, HapPolicyParcel* hapPolicyParcel)
+{
+    uint32_t infoSize;
+    RETURN_IF_FALSE(in.ReadUint32(infoSize));
+    RETURN_IF_FALSE((infoSize <= MAX_PERMLIST_SIZE));
+    for (uint32_t i = 0; i < infoSize; i++) {
+        PreAuthorizationInfo info;
+        RETURN_IF_FALSE(in.ReadString(info.permissionName));
+        RETURN_IF_FALSE(in.ReadBool(info.userCancelable));
+        hapPolicyParcel->hapPolicy.preAuthorizationInfo.emplace_back(info);
+    }
+    int32_t checkIgnore;
+    RETURN_IF_FALSE(in.ReadInt32(checkIgnore));
+    hapPolicyParcel->hapPolicy.checkIgnore = HapPolicyCheckIgnore(checkIgnore);
+
+    uint32_t extSize;
+    RETURN_IF_FALSE(in.ReadUint32(extSize));
+    RETURN_IF_FALSE((extSize <= MAX_ACL_MAP_SIZE));
+    for (uint32_t i = 0; i < extSize; i++) {
+        std::string perm;
+        std::string value;
+        RETURN_IF_FALSE(in.ReadString(perm));
+        RETURN_IF_FALSE(in.ReadString(value));
+        hapPolicyParcel->hapPolicy.aclExtendedMap[perm] = value;
+    }
+
+    return true;
+}
+
 HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 {
     auto* hapPolicyParcel = new (std::nothrow) HapPolicyParcel();
@@ -114,29 +143,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
         RELEASE_IF_FALSE(in.ReadString(acl), hapPolicyParcel);
         hapPolicyParcel->hapPolicy.aclRequestedList.emplace_back(acl);
     }
-    uint32_t infoSize;
-    RELEASE_IF_FALSE(in.ReadUint32(infoSize), hapPolicyParcel);
-    RELEASE_IF_FALSE((infoSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
-    for (uint32_t i = 0; i < infoSize; i++) {
-        PreAuthorizationInfo info;
-        RELEASE_IF_FALSE(in.ReadString(info.permissionName), hapPolicyParcel);
-        RELEASE_IF_FALSE(in.ReadBool(info.userCancelable), hapPolicyParcel);
-        hapPolicyParcel->hapPolicy.preAuthorizationInfo.emplace_back(info);
-    }
-    int32_t checkIgnore;
-    RELEASE_IF_FALSE(in.ReadInt32(checkIgnore), hapPolicyParcel);
-    hapPolicyParcel->hapPolicy.checkIgnore = HapPolicyCheckIgnore(checkIgnore);
-
-    uint32_t extSize;
-    RELEASE_IF_FALSE(in.ReadUint32(extSize), hapPolicyParcel);
-    RELEASE_IF_FALSE((extSize <= MAX_ACL_MAP_SIZE), hapPolicyParcel);
-    for (uint32_t i = 0; i < extSize; i++) {
-        std::string perm;
-        std::string value;
-        RELEASE_IF_FALSE(in.ReadString(perm), hapPolicyParcel);
-        RELEASE_IF_FALSE(in.ReadString(value), hapPolicyParcel);
-        hapPolicyParcel->hapPolicy.aclExtendedMap[perm] = value;
-    }
+    RELEASE_IF_FALSE(ReadLeftHapPolicyParcel(in, hapPolicyParcel), hapPolicyParcel);
     return hapPolicyParcel;
 }
 } // namespace AccessToken

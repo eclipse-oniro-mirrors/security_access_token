@@ -133,13 +133,6 @@ int32_t DataTranslator::TranslationIntoExtendedPermission(
         return ERR_PARAM_INVALID;
     }
     perm.value = inGenericValues.GetString(TokenFiledConst::FIELD_VALUE);
-    if (perm.value.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Extended Permission value is empty");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "extended value empty");
-        return ERR_PARAM_INVALID;
-    }
 
     return RET_SUCCESS;
 }

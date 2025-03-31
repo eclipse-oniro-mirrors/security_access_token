@@ -460,9 +460,9 @@ void HapTokenInfoInner::PermStateFullToString(const PermissionStatus& state, std
     info.append(R"(      "grantStatus": ")" + std::to_string(state.grantStatus) + R"(")" + ",\n");
     info.append(R"(      "grantFlag": ")" + std::to_string(state.grantFlag) + R"(")" + ",\n");
     std::string value;
-    (void)PermissionDataBrief::GetInstance().GetReqPermissionByName(
+    int32_t ret = PermissionDataBrief::GetInstance().GetReqPermissionByName(
         tokenInfoBasic_.tokenID, state.permissionName, value, false);
-    if (!value.empty()) {
+    if (ret == RET_SUCCESS) {
         info.append(R"(      "value": ")" + value + R"(")" + ",\n");
     }
     info.append(R"(    })");
