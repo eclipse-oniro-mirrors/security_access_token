@@ -6391,6 +6391,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.HIVIEW_TRACE_MANAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
