@@ -265,16 +265,8 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     return RET_SUCCESS;
 }
 
-std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerFromDb(AccessTokenID id)
 {
-    {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        auto iter = hapTokenInfoMap_.find(id);
-        if (iter != hapTokenInfoMap_.end()) {
-            return iter->second;
-        }
-    }
-
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
@@ -317,6 +309,18 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
         " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
         hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());
     return hap;
+}
+
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
+{
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        auto iter = hapTokenInfoMap_.find(id);
+        if (iter != hapTokenInfoMap_.end()) {
+            return iter->second;
+        }
+    }
+    return GetHapTokenInfoInnerFromDb(id);
 }
 
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
