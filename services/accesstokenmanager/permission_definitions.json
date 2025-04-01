@@ -1121,6 +1121,16 @@
             "distributedSceneEnable": true
         },
         {
+            "name": "ohos.permission.UNLOCK_DEVELOPER_MODE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 9,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
             "name": "ohos.permission.ACCESS_CERT_MANAGER_INTERNAL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
