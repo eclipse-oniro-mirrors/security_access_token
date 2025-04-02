@@ -42,7 +42,7 @@ accesstoken_manager_service_source = [
 ]
 
 ohos_unittest("libpermission_manager_mock_test") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {

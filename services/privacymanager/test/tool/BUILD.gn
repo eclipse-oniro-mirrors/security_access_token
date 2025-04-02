@@ -15,7 +15,7 @@ import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
 ohos_unittest("CreateCameraWindowTest") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {

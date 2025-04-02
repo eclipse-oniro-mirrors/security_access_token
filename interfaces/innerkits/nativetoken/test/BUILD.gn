@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../../access_token.gni")
 
 ohos_unittest("libnativetoken_test") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {
@@ -44,7 +44,7 @@ ohos_unittest("libnativetoken_test") {
 }
 
 ohos_unittest("libnativetoken_mock_test") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {

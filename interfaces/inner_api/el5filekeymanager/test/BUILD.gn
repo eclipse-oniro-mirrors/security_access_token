@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../../access_token.gni")
 
 ohos_unittest("el5_filekey_manager_kit_unittest") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = "access_token/access_token"
   sanitize = {
