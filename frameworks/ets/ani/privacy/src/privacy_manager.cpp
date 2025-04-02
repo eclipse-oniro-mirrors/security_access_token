@@ -28,7 +28,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 constexpr int32_t MAX_LENGTH = 256;
 
 static int AddPermissionUsedRecordSync(
-    ani_int tokenID, const std::string &permissionName, ani_int successCount, ani_int failCount, ani_int ntype)
+    ani_int tokenID, const std::string& permissionName, ani_int successCount, ani_int failCount, ani_int ntype)
 {
     AddPermParamInfo info;
     info.tokenId = tokenID;
@@ -41,7 +41,7 @@ static int AddPermissionUsedRecordSync(
     return retCode;
 }
 
-static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
+static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_int tokenID, ani_string permissionName, ani_int successCount, ani_int failCount, ani_object options)
 {
     if (env == nullptr) {
@@ -99,7 +99,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm or result");
         return ANI_INVALID_ARGS;
     }
-    ani_env *env;
+    ani_env* env;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
         return ANI_OUT_OF_MEMORY;
