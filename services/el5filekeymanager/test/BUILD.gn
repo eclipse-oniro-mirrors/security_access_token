@@ -16,7 +16,7 @@ import("../../../access_token.gni")
 
 if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_service_mock_unittest") {
-    subsystem_name = "security"
+    subsystem_name = "accesscontrol"
     part_name = "access_token"
     module_out_path = "access_token/access_token"
     sanitize = {
@@ -83,7 +83,7 @@ if (is_standard_system && ability_base_enable == true) {
   }
 
   ohos_unittest("el5_filekey_manager_service_unittest") {
-    subsystem_name = "security"
+    subsystem_name = "accesscontrol"
     part_name = "access_token"
     module_out_path = "access_token/access_token"
     sanitize = {
@@ -146,7 +146,7 @@ if (is_standard_system && ability_base_enable == true) {
   }
 
   ohos_unittest("el5_filekey_manager_stub_unittest") {
-    subsystem_name = "security"
+    subsystem_name = "accesscontrol"
     part_name = "access_token"
     module_out_path = "access_token/access_token"
     sanitize = {

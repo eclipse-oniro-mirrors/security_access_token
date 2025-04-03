@@ -16,7 +16,7 @@ import("../../../../access_token.gni")
 
 if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("libprivacy_manager_service_coverage_test") {
-    subsystem_name = "security"
+    subsystem_name = "accesscontrol"
     part_name = "access_token"
     module_out_path = part_name + "/" + part_name
     sanitize = {
