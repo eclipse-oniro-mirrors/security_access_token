@@ -25,7 +25,6 @@ privacy_include_dirs = [
   "${access_token_path}/services/privacymanager/include/common",
   "${access_token_path}/services/privacymanager/include/database",
   "${access_token_path}/services/privacymanager/include/record",
-  "${access_token_path}/services/privacymanager/include/seccomp",
   "${access_token_path}/services/privacymanager/include/service",
   "${access_token_path}/services/privacymanager/include/proxy",
   "${access_token_path}/services/privacymanager/include/sensitive",

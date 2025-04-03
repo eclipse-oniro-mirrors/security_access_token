@@ -32,9 +32,6 @@
 #include "permission_record_manager.h"
 #include "privacy_error.h"
 #include "privacy_manager_proxy_death_param.h"
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "privacy_sec_comp_enhance_agent.h"
-#endif
 #include "system_ability_definition.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
@@ -335,57 +332,6 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
         IPCSkeleton::GetCallingTokenID(), permList, callback);
 }
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "Pid: %{public}d", enhanceParcel.enhanceData.pid);
-    return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
-}
-
-int32_t PrivacyManagerService::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
-{
-    if (!IsSecCompServiceCalling()) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    return PrivacySecCompEnhanceAgent::GetInstance().UpdateSecCompEnhance(pid, seqNum);
-}
-
-int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
-{
-    if (!IsSecCompServiceCalling()) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    SecCompEnhanceData enhanceData;
-    int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
-    if (res != RET_SUCCESS) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Pid: %{public}d get enhance failed ", pid);
-        return res;
-    }
-
-    enhanceParcel.enhanceData = enhanceData;
-    return RET_SUCCESS;
-}
-
-int32_t PrivacyManagerService::GetSpecialSecCompEnhance(const std::string& bundleName,
-    std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
-{
-    if (!IsSecCompServiceCalling()) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    std::vector<SecCompEnhanceData> enhanceList;
-    PrivacySecCompEnhanceAgent::GetInstance().GetSpecialSecCompEnhance(bundleName, enhanceList);
-    for (const auto& enhance : enhanceList) {
-        SecCompEnhanceDataParcel parcel;
-        parcel.enhanceData = enhance;
-        enhanceParcelList.emplace_back(parcel);
-    }
-    return RET_SUCCESS;
-}
-#endif
-
 int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector<std::u16string>& args)
 {
     if (args.size() < 2) { // 2 :need two args 0:command 1:tokenId
@@ -569,17 +515,6 @@ bool PrivacyManagerService::Initialize()
 #endif
     return true;
 }
-
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-bool PrivacyManagerService::IsSecCompServiceCalling()
-{
-    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (secCompTokenId_ == 0) {
-        secCompTokenId_ = AccessTokenKit::GetNativeTokenId("security_component_service");
-    }
-    return tokenCaller == secCompTokenId_;
-}
-#endif
 
 bool PrivacyManagerService::IsPrivilegedCalling() const
 {

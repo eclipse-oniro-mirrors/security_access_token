@@ -93,6 +93,9 @@ if (is_standard_system) {
     if (token_sync_enable == true) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
     }
+    if (security_component_enhance_enable == true) {
+      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+    }
   }
 }
 

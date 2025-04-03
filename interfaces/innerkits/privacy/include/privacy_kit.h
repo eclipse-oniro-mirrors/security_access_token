@@ -45,9 +45,6 @@
 #include "permission_used_type_info.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_param.h"
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "sec_comp_enhance_data.h"
-#endif
 #include "state_customized_cbk.h"
 
 namespace OHOS {
@@ -157,36 +154,6 @@ public:
      */
     static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    /**
-     * @brief Register security component enhance data when security component service did not start
-     * @param enhance enhance data
-     * @return error code, see privacy_error.h
-     */
-    static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
-    /**
-     * @brief update security component enhance data
-     * @param pid process id
-     * @param seqNum sequence number
-     * @return error code, see privacy_error.h
-     */
-    static int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
-    /**
-     * @brief get security component enhance data
-     * @param pid process id
-     * @param enhance enhance data
-     * @return error code, see privacy_error.h
-     */
-    static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
-    /**
-     * @brief get special security component enhance data
-     * @param bundleName bundle name
-     * @param enhanceList enhance data
-     * @return error code, see privacy_error.h
-     */
-    static int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
-        std::vector<SecCompEnhanceData>& enhanceList);
-#endif
     /**
      * @brief query permission used type.
      * @param tokenId token id, if 0 return all tokenIds

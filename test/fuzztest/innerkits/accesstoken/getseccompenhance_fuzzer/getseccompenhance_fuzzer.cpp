@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getspecialseccompenhance_fuzzer.h"
+#include "getseccompenhance_fuzzer.h"
 
 #include <iostream>
 #include <thread>
@@ -22,13 +22,13 @@
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "privacy_kit.h"
+#include "accesstoken_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetSpecialSecCompEnhanceFuzzTest(const uint8_t* data, size_t size)
+    bool GetSecCompEnhanceFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -36,9 +36,9 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        std::vector<SecCompEnhanceData> enhanceList;
+        SecCompEnhanceData secData;
 
-        return PrivacyKit::GetSpecialSecCompEnhance(fuzzData.GenerateStochasticString(), enhanceList) == 0;
+        return AccessTokenKit::GetSecCompEnhance(fuzzData.GetData<int32_t>(), secData) == 0;
     }
 }
 
@@ -46,6 +46,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetSpecialSecCompEnhanceFuzzTest(data, size);
+    OHOS::GetSecCompEnhanceFuzzTest(data, size);
     return 0;
 }

@@ -60,4 +60,11 @@ group("fuzztest") {
     "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
     "verifyaccesstokenwithlist_fuzzer:VerifyAccessTokenWithListFuzzTest",
   ]
+  if (security_component_enhance_enable) {
+    deps += [
+      "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
+      "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
+      "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
+    ]
+  }
 }

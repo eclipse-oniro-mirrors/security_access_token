@@ -215,30 +215,6 @@ bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::stri
     return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName, pid);
 }
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-int32_t PrivacyKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
-{
-    return PrivacyManagerClient::GetInstance().RegisterSecCompEnhance(enhance);
-}
-
-int32_t PrivacyKit::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
-{
-    return PrivacyManagerClient::GetInstance().UpdateSecCompEnhance(pid, seqNum);
-}
-
-int32_t PrivacyKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
-{
-    return PrivacyManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);
-}
-
-int32_t PrivacyKit::GetSpecialSecCompEnhance(const std::string& bundleName,
-    std::vector<SecCompEnhanceData>& enhanceList)
-{
-    return PrivacyManagerClient::GetInstance().
-        GetSpecialSecCompEnhance(bundleName, enhanceList);
-}
-#endif
-
 int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
     std::vector<PermissionUsedTypeInfo>& results)
 {

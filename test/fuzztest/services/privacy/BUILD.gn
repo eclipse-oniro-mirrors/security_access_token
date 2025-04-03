@@ -35,14 +35,5 @@ group("fuzztest") {
       "stopusingpermissionstub_fuzzer:StopUsingPermissionStubFuzzTest",
       "unregisterpermactivestatuscallbackstub_fuzzer:UnRegisterPermActiveStatusCallbackStubFuzzTest",
     ]
-
-    if (security_component_enhance_enable) {
-      deps += [
-        "getseccompenhancestub_fuzzer:GetSecCompEnhanceStubFuzzTest",
-        "getspecialseccompenhancestub_fuzzer:GetSpecialSecCompEnhanceStubFuzzTest",
-        "registerseccompenhancestub_fuzzer:RegisterSecCompEnhanceStubFuzzTest",
-        "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
-      ]
-    }
   }
 }

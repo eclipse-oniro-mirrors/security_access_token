@@ -194,5 +194,12 @@ if (is_standard_system) {
         "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
       ]
     }
+
+    if (security_component_enhance_enable == true) {
+      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+      include_dirs += [ "main/cpp/include/seccomp" ]
+      sources +=
+          [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
+    }
   }
 }

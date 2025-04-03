@@ -86,10 +86,6 @@ if (is_standard_system) {
       "-DDEBUG_API_PERFORMANCE",
     ]
 
-    if (security_component_enhance_enable == true) {
-      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-    }
-
     if (build_variant == "user") {
       cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
     }

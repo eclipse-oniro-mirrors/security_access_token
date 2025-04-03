@@ -821,6 +821,23 @@ int32_t AccessTokenKit::GetReqPermissionByName(
     }
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t AccessTokenKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
+{
+    return AccessTokenManagerClient::GetInstance().RegisterSecCompEnhance(enhance);
+}
+
+int32_t AccessTokenKit::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
+{
+    return AccessTokenManagerClient::GetInstance().UpdateSecCompEnhance(pid, seqNum);
+}
+
+int32_t AccessTokenKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
+{
+    return AccessTokenManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

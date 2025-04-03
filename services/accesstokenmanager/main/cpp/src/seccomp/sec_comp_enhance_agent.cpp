@@ -12,76 +12,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "privacy_sec_comp_enhance_agent.h"
+#include "sec_comp_enhance_agent.h"
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_manager.h"
 #include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
-#include "privacy_error.h"
 #include "securec.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string SCENE_BOARD_PKG_NAME = "com.ohos.sceneboard";
 std::recursive_mutex g_instanceMutex;
 }
-void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
+void AppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OnProcessDied pid %{public}d", processData.pid);
-    PrivacySecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "OnProcessDied pid %{public}d", processData.pid);
+    SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
 }
 
-void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
+void SecCompAppManagerDeathCallback::NotifyAppManagerDeath()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "AppManagerDeath called");
+    LOGI(ATM_DOMAIN, ATM_TAG, "AppManagerDeath called");
 
-    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
+    SecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
-PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
+SecCompEnhanceAgent& SecCompEnhanceAgent::GetInstance()
 {
-    static PrivacySecCompEnhanceAgent* instance = nullptr;
+    static SecCompEnhanceAgent* instance = nullptr;
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            PrivacySecCompEnhanceAgent* tmp = new PrivacySecCompEnhanceAgent();
+            SecCompEnhanceAgent* tmp = new SecCompEnhanceAgent();
             instance = std::move(tmp);
         }
     }
     return *instance;
 }
 
-void PrivacySecCompEnhanceAgent::InitAppObserver()
+void SecCompEnhanceAgent::InitAppObserver()
 {
     if (observer_ != nullptr) {
         return;
     }
-    observer_ = new (std::nothrow) PrivacyAppUsingSecCompStateObserver();
+    observer_ = new (std::nothrow) AppUsingSecCompStateObserver();
     if (observer_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "New observer failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "New observer failed.");
         return;
     }
     if (AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_) != 0) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Register observer failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Register observer failed.");
         observer_ = nullptr;
         return;
     }
     if (appManagerDeathCallback_ == nullptr) {
-        appManagerDeathCallback_ = std::make_shared<PrivacySecCompAppManagerDeathCallback>();
+        appManagerDeathCallback_ = std::make_shared<SecCompAppManagerDeathCallback>();
         AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
     }
 }
 
-PrivacySecCompEnhanceAgent::PrivacySecCompEnhanceAgent()
+SecCompEnhanceAgent::SecCompEnhanceAgent()
 {
     InitAppObserver();
 }
 
-PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
+SecCompEnhanceAgent::~SecCompEnhanceAgent()
 {
     if (observer_ != nullptr) {
         AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
@@ -89,37 +89,37 @@ PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
     }
 }
 
-void PrivacySecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
+void SecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "OnAppMgrRemoteDiedHandle.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "OnAppMgrRemoteDiedHandle.");
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     secCompEnhanceData_.clear();
     observer_ = nullptr;
 }
 
-void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
+void SecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             secCompEnhanceData_.erase(iter);
-            LOGI(PRI_DOMAIN, PRI_TAG, "Remove pid %{public}d data.", pid);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Remove pid %{public}d data.", pid);
             return;
         }
     }
-    LOGE(PRI_DOMAIN, PRI_TAG, "Not found pid %{public}d data.", pid);
+    LOGE(ATM_DOMAIN, ATM_TAG, "Not found pid %{public}d data.", pid);
     return;
 }
 
-int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData)
+int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
     int pid = IPCSkeleton::GetCallingPid();
     if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
         [pid](const auto& e) { return e.pid == pid; })) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Register sec comp enhance exist, pid %{public}d.", pid);
-            return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+            LOGE(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance exist, pid %{public}d.", pid);
+            return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
     }
     SecCompEnhanceData enhance;
     enhance.callback = enhanceData.callback;
@@ -128,60 +128,41 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
-    enhance.isSceneBoard = false;
     if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
-        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
-    }
-    HapTokenInfo info;
-    if (AccessTokenKit::GetHapTokenInfo(enhance.token, info) == AccessTokenKitRet::RET_SUCCESS) {
-        if (info.bundleName == SCENE_BOARD_PKG_NAME) {
-            enhance.isSceneBoard = true;
-        }
+        return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
     }
     secCompEnhanceData_.emplace_back(enhance);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;
 }
 
-int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
+int32_t SecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             iter->seqNum = seqNum;
-            LOGI(PRI_DOMAIN, PRI_TAG, "Update pid=%{public}d data successful.", pid);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Update pid=%{public}d data successful.", pid);
             return RET_SUCCESS;
         }
     }
     return ERR_PARAM_INVALID;
 }
 
-int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData)
+int32_t SecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             enhanceData = *iter;
-            LOGI(PRI_DOMAIN, PRI_TAG, "Get pid %{public}d data.", pid);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Get pid %{public}d data.", pid);
             return RET_SUCCESS;
         }
     }
     return ERR_PARAM_INVALID;
-}
-
-int32_t PrivacySecCompEnhanceAgent::GetSpecialSecCompEnhance(const std::string& bundleName,
-    std::vector<SecCompEnhanceData>& enhanceList)
-{
-    std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
-    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); iter++) {
-        if ((*iter).isSceneBoard) {
-            enhanceList.emplace_back(*iter);
-        }
-    }
-    return RET_SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

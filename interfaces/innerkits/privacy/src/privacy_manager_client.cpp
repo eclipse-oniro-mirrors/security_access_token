@@ -19,9 +19,6 @@
 #include "iservice_registry.h"
 #include "privacy_error.h"
 #include "privacy_manager_proxy.h"
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "sec_comp_enhance_data_parcel.h"
-#endif
 
 namespace OHOS {
 namespace Security {
@@ -351,67 +348,6 @@ bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const
     proxy->IsAllowedUsingPermission(tokenID, permissionName, pid, isAllowed);
     return isAllowed;
 }
-
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    SecCompEnhanceDataParcel registerParcel;
-    registerParcel.enhanceData = enhance;
-    int32_t ret = proxy->RegisterSecCompEnhance(registerParcel);
-    return ConvertResult(ret);
-}
-
-int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    int32_t ret = proxy->UpdateSecCompEnhance(pid, seqNum);
-    return ConvertResult(ret);
-}
-
-int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    SecCompEnhanceDataParcel parcel;
-    int32_t res = proxy->GetSecCompEnhance(pid, parcel);
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-    enhance = parcel.enhanceData;
-    return RET_SUCCESS;
-}
-
-int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundleName,
-    std::vector<SecCompEnhanceData>& enhanceList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    std::vector<SecCompEnhanceDataParcel> parcelList;
-    int32_t res = proxy->GetSpecialSecCompEnhance(bundleName, parcelList);
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-
-    std::transform(parcelList.begin(), parcelList.end(), std::back_inserter(enhanceList),
-        [](SecCompEnhanceDataParcel pair) { return pair.enhanceData; });
-    return RET_SUCCESS;
-}
-#endif
 
 int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
     std::vector<PermissionUsedTypeInfo>& results)

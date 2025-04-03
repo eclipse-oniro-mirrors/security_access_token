@@ -14,10 +14,10 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
-import("../privacy_service_fuzz.gni")
+import("../access_token_service_fuzz.gni")
 
 ohos_fuzztest("RegisterSecCompEnhanceStubFuzzTest") {
-  module_out_path = module_output_path_service_privacy
+  module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
   sources = [ "registerseccompenhancestub_fuzzer.cpp" ]
@@ -31,25 +31,21 @@ ohos_fuzztest("RegisterSecCompEnhanceStubFuzzTest") {
 
   configs = [
     "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
   ]
 
-  include_dirs = privacy_include_dirs
+  include_dirs = access_token_include_dirs
 
-  sources += privacy_sources
-  sources += [ "${access_token_path}/services/privacymanager/src/seccomp/privacy_sec_comp_enhance_agent.cpp" ]
+  sources += access_token_sources
+  sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
 
-  defines = privacy_defines
-
-  cflags_cc = privacy_cflags_cc
+  cflags_cc = access_token_cflags_cc
   cflags_cc += [
     "-DSECURITY_COMPONENT_ENHANCE_ENABLE",
     "-DTOKEN_SYNC_ENABLE",
   ]
 
-  deps = privacy_deps
+  deps = access_token_deps
 
-  deps += [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
-
-  external_deps = privacy_external_deps
+  external_deps = access_token_external_deps
 }

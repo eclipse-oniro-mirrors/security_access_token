@@ -72,10 +72,6 @@ struct SecCompEnhanceData {
      */
     uint32_t seqNum;
     /**
-     * mark whether sceneboard application or not.
-     */
-    bool isSceneBoard;
-    /**
      * key to encrypt ipc message.
      */
     uint8_t key[AES_KEY_STORAGE_LEN];

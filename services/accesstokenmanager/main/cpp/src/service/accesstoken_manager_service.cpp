@@ -24,6 +24,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "constant_common.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
@@ -42,6 +43,9 @@
 #include "permission_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_agent.h"
+#endif
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
@@ -1254,6 +1258,17 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
     return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
 
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool AccessTokenManagerService::IsSecCompServiceCalling()
+{
+    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (secCompTokenId_ == 0) {
+        this->GetNativeTokenId("security_component_service", secCompTokenId_);
+    }
+    return tokenCaller == secCompTokenId_;
+}
+#endif
+
 int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)
 {
     ClearThreadErrorMsg();
@@ -1273,6 +1288,40 @@ int32_t AccessTokenManagerService::CallbackExit(uint32_t code, int32_t result)
     ReportSysCommonEventError(code, 0);
     return ERR_OK;
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t AccessTokenManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Pid: %{public}d", enhanceParcel.enhanceData.pid);
+    return SecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
+}
+
+int32_t AccessTokenManagerService::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    return SecCompEnhanceAgent::GetInstance().UpdateSecCompEnhance(pid, seqNum);
+}
+
+int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    SecCompEnhanceData enhanceData;
+    int32_t res = SecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
+    if (res != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Pid: %{public}d get enhance failed ", pid);
+        return res;
+    }
+
+    enhanceParcel.enhanceData = enhanceData;
+    return RET_SUCCESS;
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

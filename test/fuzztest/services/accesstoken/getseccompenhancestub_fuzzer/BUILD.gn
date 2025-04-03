@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,31 +14,35 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
+import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("GetSecCompEnhanceFuzzTest") {
-  module_out_path = module_output_path_interface_privacy
+ohos_fuzztest("GetSecCompEnhanceStubFuzzTest") {
+  module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/test/fuzztest/common",
-  ]
+
+  sources = [ "getseccompenhancestub_fuzzer.cpp" ]
+
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "getseccompenhance_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
-
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  cflags_cc = [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_core",
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
   ]
+
+  include_dirs = access_token_include_dirs
+
+  sources += access_token_sources
+  sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
+
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+
+  deps = access_token_deps
+
+  external_deps = access_token_external_deps
 }

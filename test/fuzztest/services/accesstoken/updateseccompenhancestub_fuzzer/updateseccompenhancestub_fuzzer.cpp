@@ -20,13 +20,13 @@
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
+#include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
-#include "iprivacy_manager.h"
+#include "iaccess_token_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
-#include "privacy_manager_service.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -41,7 +41,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
 
         MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
             return false;
         }
@@ -50,11 +50,11 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_UPDATE_SEC_COMP_ENHANCE);
+        uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_SEC_COMP_ENHANCE);
 
         MessageParcel reply;
         MessageOption option;
-        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;
     }

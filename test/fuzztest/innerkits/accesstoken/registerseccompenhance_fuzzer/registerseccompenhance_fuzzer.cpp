@@ -22,7 +22,7 @@
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "privacy_kit.h"
+#include "accesstoken_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -44,7 +44,7 @@ namespace OHOS {
         secData.sessionId = fuzzData.GetData<uint32_t>();
         secData.seqNum = fuzzData.GetData<uint32_t>();
 
-        return PrivacyKit::RegisterSecCompEnhance(secData) == 0;
+        return AccessTokenKit::RegisterSecCompEnhance(secData) == 0;
     }
 }
 

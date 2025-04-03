@@ -25,45 +25,43 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PrivacyAppUsingSecCompStateObserver : public ApplicationStateObserverStub {
+class AppUsingSecCompStateObserver : public ApplicationStateObserverStub {
 public:
-    PrivacyAppUsingSecCompStateObserver() = default;
-    ~PrivacyAppUsingSecCompStateObserver() = default;
+    AppUsingSecCompStateObserver() = default;
+    ~AppUsingSecCompStateObserver() = default;
 
     void OnProcessDied(const ProcessData &processData) override;
-    DISALLOW_COPY_AND_MOVE(PrivacyAppUsingSecCompStateObserver);
+    DISALLOW_COPY_AND_MOVE(AppUsingSecCompStateObserver);
 };
 
-class PrivacySecCompAppManagerDeathCallback : public AppManagerDeathCallback {
+class SecCompAppManagerDeathCallback : public AppManagerDeathCallback {
 public:
-    PrivacySecCompAppManagerDeathCallback() = default;
-    ~PrivacySecCompAppManagerDeathCallback() = default;
+    SecCompAppManagerDeathCallback() = default;
+    ~SecCompAppManagerDeathCallback() = default;
 
     void NotifyAppManagerDeath() override;
-    DISALLOW_COPY_AND_MOVE(PrivacySecCompAppManagerDeathCallback);
+    DISALLOW_COPY_AND_MOVE(SecCompAppManagerDeathCallback);
 };
 
-class PrivacySecCompEnhanceAgent final {
+class SecCompEnhanceAgent final {
 public:
-    static PrivacySecCompEnhanceAgent& GetInstance();
-    virtual ~PrivacySecCompEnhanceAgent();
+    static SecCompEnhanceAgent& GetInstance();
+    virtual ~SecCompEnhanceAgent();
 
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
-    int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
-        std::vector<SecCompEnhanceData>& enhanceList);
     void RemoveSecCompEnhance(int pid);
     void OnAppMgrRemoteDiedHandle();
 
 private:
-    PrivacySecCompEnhanceAgent();
+    SecCompEnhanceAgent();
     void InitAppObserver();
-    DISALLOW_COPY_AND_MOVE(PrivacySecCompEnhanceAgent);
+    DISALLOW_COPY_AND_MOVE(SecCompEnhanceAgent);
 
 private:
-    sptr<PrivacyAppUsingSecCompStateObserver> observer_ = nullptr;
-    std::shared_ptr<PrivacySecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
+    sptr<AppUsingSecCompStateObserver> observer_ = nullptr;
+    std::shared_ptr<SecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
 };
