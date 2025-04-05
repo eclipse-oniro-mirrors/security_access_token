@@ -47,6 +47,8 @@ struct RequestGlobalSwitchAsyncContext : public AtManagerAsyncWorkData {
     napi_value requestResult = nullptr;
     int32_t errorCode = -1;
     bool switchStatus = false;
+    int32_t instanceId = -1;
+    bool isDynamic = true;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
@@ -64,6 +66,18 @@ struct RequestGlobalSwitchAsyncContextHandle {
     }
 
     std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContextPtr;
+};
+
+class RequestGlobalSwitchAsyncInstanceControl {
+    public:
+        static void AddCallbackByInstanceId(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext);
+        static void ExecCallback(int32_t id);
+        static void CheckDynamicRequest(
+            std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext, bool& isDynamic);
+        static void UpdateQueueData(const std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext);
+    private:
+        static std::map<int32_t, std::vector<std::shared_ptr<RequestGlobalSwitchAsyncContext>>> instanceIdMap_;
+        static std::mutex instanceIdMutex_;
 };
 
 class SwitchOnSettingUICallback {
