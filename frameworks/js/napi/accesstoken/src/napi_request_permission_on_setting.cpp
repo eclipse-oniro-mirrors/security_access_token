@@ -24,6 +24,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::map<int32_t, std::vector<std::shared_ptr<RequestPermOnSettingAsyncContext>>>
+    RequestOnSettingAsyncInstanceControl::instanceIdMap_;
+std::mutex RequestOnSettingAsyncInstanceControl::instanceIdMutex_;
 namespace {
 const std::string PERMISSION_KEY = "ohos.user.setting.permission";
 const std::string PERMISSION_RESULT_KEY = "ohos.user.setting.permission.result";
@@ -37,8 +40,6 @@ const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
 const int32_t PERM_REVOKE_BY_USER = 5;
-bool g_windowFlag = false;
-std::mutex g_lockWindowFlag;
 std::mutex g_lockFlag;
 } // namespace
 static void ReturnPromiseResult(napi_env env, int32_t jsCode, napi_deferred deferred, napi_value result)
@@ -228,10 +229,8 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     if (code == -1) {
         this->reqContext_->errorCode = code;
     }
-    {
-        std::lock_guard<std::mutex> lock(g_lockWindowFlag);
-        g_windowFlag = false;
-    }
+    RequestOnSettingAsyncInstanceControl::UpdateQueueData(this->reqContext_);
+    RequestOnSettingAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
     PermissionResultsCallbackUI(
         TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->stateList, this->reqContext_);
 }
@@ -369,22 +368,8 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOn
         },
     };
 
-    {
-        std::lock_guard<std::mutex> lock(g_lockWindowFlag);
-        if (g_windowFlag) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "The request already exists.");
-            asyncContext->result = RET_FAILED;
-            asyncContext->errorCode = REQUEST_REALDY_EXIST;
-            return RET_FAILED;
-        }
-        g_windowFlag = true;
-    }
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
     if (asyncContext->result == RET_FAILED) {
-        {
-            std::lock_guard<std::mutex> lock(g_lockWindowFlag);
-            g_windowFlag = false;
-        }
         return RET_FAILED;
     }
     return JS_OK;
@@ -400,6 +385,144 @@ static int32_t StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
     return CreateUIExtension(want, asyncContext);
+}
+
+static void GetInstanceId(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
+{
+    auto task = [asyncContext]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            return;
+        }
+        asyncContext->instanceId = uiContent->GetInstanceId();
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:GetInstanceId");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+    LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d", asyncContext->instanceId);
+}
+
+void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
+    std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d", asyncContext->instanceId);
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        auto iter = instanceIdMap_.find(asyncContext->instanceId);
+        // id is existed mean a pop window is showing, add context to waiting queue
+        if (iter != instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d has existed.", asyncContext->instanceId);
+            instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
+            return;
+        }
+        // make sure id is in map to indicate a pop-up window is showing
+        instanceIdMap_[asyncContext->instanceId] = {};
+    }
+    StartUIExtension(asyncContext);
+}
+
+bool static CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
+{
+    if (permList.size() != tmpPermList.size()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm list size not equal, CurrentPermList size: %{public}zu.", tmpPermList.size());
+        return false;
+    }
+
+    for (const auto& item : permList) {
+        auto iter = std::find_if(tmpPermList.begin(), tmpPermList.end(), [item](const std::string& perm) {
+            return item == perm;
+        });
+        if (iter == tmpPermList.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Different permission lists.");
+            return false;
+        }
+    }
+    return true;
+}
+
+void RequestOnSettingAsyncInstanceControl::UpdateQueueData(
+    const std::shared_ptr<RequestPermOnSettingAsyncContext>& reqContext)
+{
+    if (reqContext->errorCode != RET_SUCCESS) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "The queue data does not need to be updated.");
+        return;
+    }
+    for (const int32_t item : reqContext->stateList) {
+        if (item != PERMISSION_GRANTED) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "The queue data does not need to be updated");
+            return;
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        int32_t id = reqContext->instanceId;
+        auto iter = instanceIdMap_.find(id);
+        if (iter == instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
+            return;
+        }
+        std::vector<std::string> permList = reqContext->permissionList;
+        LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+        for (auto& asyncContext : iter->second) {
+            std::vector<std::string> tmpPermList = asyncContext->permissionList;
+            
+            if (CheckPermList(permList, tmpPermList)) {
+                asyncContext->errorCode = reqContext->errorCode;
+                asyncContext->stateList = reqContext->stateList;
+                asyncContext->isDynamic = false;
+            }
+        }
+    }
+}
+
+void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
+{
+    std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext = nullptr;
+    bool isDynamic = false;
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        auto iter = instanceIdMap_.find(id);
+        if (iter == instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
+            return;
+        }
+        while (!iter->second.empty()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+            asyncContext = iter->second[0];
+            iter->second.erase(iter->second.begin());
+            CheckDynamicRequest(asyncContext, isDynamic);
+            if (isDynamic) {
+                break;
+            }
+        }
+        if (iter->second.empty()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map is empty", id);
+            instanceIdMap_.erase(id);
+        }
+    }
+    if (isDynamic) {
+        StartUIExtension(asyncContext);
+    }
+}
+
+void RequestOnSettingAsyncInstanceControl::CheckDynamicRequest(
+    std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext, bool& isDynamic)
+{
+    isDynamic = asyncContext->isDynamic;
+    if (!isDynamic) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission exsion");
+        PermissionResultsCallbackUI(
+            TransferToJsErrorCode(asyncContext->errorCode), asyncContext->stateList, asyncContext);
+        return;
+    }
 }
 
 napi_value NapiRequestPermissionOnSetting::RequestPermissionOnSetting(napi_env env, napi_callback_info info)
@@ -508,8 +631,10 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env 
         return;
     }
 
+    GetInstanceId(asyncContextHandle->asyncContextPtr);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
-    StartUIExtension(asyncContextHandle->asyncContextPtr);
+
+    RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
     if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
@@ -532,10 +657,6 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
         int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result);
-        if ((asyncContextHandle->asyncContextPtr->result == RET_FAILED) &&
-            (asyncContextHandle->asyncContextPtr->errorCode == REQUEST_REALDY_EXIST)) {
-            jsCode = TransferToJsErrorCode(REQUEST_REALDY_EXIST);
-        }
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));
