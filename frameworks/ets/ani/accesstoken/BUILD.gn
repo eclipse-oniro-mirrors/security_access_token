@@ -51,6 +51,7 @@ ohos_shared_library("accesstoken_ani") {
     "ace_engine:ace_uicontent",
     "c_utils:utils",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",
