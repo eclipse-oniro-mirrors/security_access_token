@@ -139,7 +139,7 @@ private:
 
 class RequestAsyncInstanceControl {
 public:
-    static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
+    static bool AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
     static void ExecCallback(int32_t id);
     static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
 

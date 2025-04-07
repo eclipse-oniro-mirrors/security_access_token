@@ -23,6 +23,7 @@
 #include "accesstoken_log.h"
 #include "ani_base_context.h"
 #include "ani_error.h"
+#include "hisysevent.h"
 #include "parameter.h"
 #include "permission_list_state.h"
 #include "token_setproc.h"
@@ -55,7 +56,6 @@ static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& perm
     const std::vector<int>& grantResults, std::shared_ptr<RequestAsyncContext>& data, std::vector<int>& newGrantResults)
 {
     size_t size = permissions.size();
-
     for (size_t i = 0; i < size; i++) {
         int result = static_cast<int>(data->permissionsState[i]);
         if (data->permissionsState[i] == AccessToken::DYNAMIC_OPER) {
@@ -158,22 +158,20 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
 #endif
 }
 
-static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
+static bool CreateServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     if (!asyncContext->uiAbilityFlag) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result = RET_FAILED;
-        asyncContext->loadlock.unlock();
-        return;
+        return false;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Create window failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result = RET_FAILED;
-        asyncContext->loadlock.unlock();
-        return;
+        return false;
     }
     OHOS::AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
@@ -196,9 +194,10 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncCo
         want, asyncContext->abilityContext->GetToken());
     ACCESSTOKEN_LOG_INFO(LABEL, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu", ret,
         asyncContext->tokenId, asyncContext->permissionList.size());
+    return true;
 }
 
-static void CreateUIExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
+static bool CreateUIExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     OHOS::AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
@@ -221,6 +220,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext>& asyncContext
         [uiExtCallback]() { uiExtCallback->OnDestroy(); },
     };
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
+    return true;
 }
 
 static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
@@ -247,10 +247,6 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 
 static ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string>& cArray)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
     ani_size length = cArray.size();
     ani_array_ref aArrayRef = nullptr;
     ani_class aStringcls = nullptr;
@@ -277,10 +273,6 @@ static ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string
 
 static ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
     ani_size length = cArray.size();
     ani_array_int aArrayInt = nullptr;
     if (env->Array_New_Int(length, &aArrayInt) != ANI_OK) {
@@ -300,10 +292,6 @@ static ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArr
 
 static ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
     ani_size length = cArray.size();
     ani_array_boolean aArrayBool = nullptr;
     if (env->Array_New_Boolean(length, &aArrayBool) != ANI_OK) {
@@ -328,10 +316,6 @@ static ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray
 template<typename valueType>
 static inline bool CallSetter(ani_env* env, ani_class cls, ani_object object, const char* setterName, valueType value)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return false;
-    }
     ani_status status = ANI_ERROR;
     ani_field fieldValue;
     if (env->Class_FindField(cls, setterName, &fieldValue) != ANI_OK) {
@@ -347,16 +331,11 @@ static inline bool CallSetter(ani_env* env, ani_class cls, ani_object object, co
 
 std::string ANIUtils_ANIStringToStdString(ani_env* env, ani_string ani_str)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return "";
-    }
     ani_size strSize;
     if (env->String_GetUTF8Size(ani_str, &strSize) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size error");
         return "";
     }
-
     std::vector<char> buffer(strSize + 1);
     char* utf8_buffer = buffer.data();
 
@@ -365,26 +344,20 @@ std::string ANIUtils_ANIStringToStdString(ani_env* env, ani_string ani_str)
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8 error");
         return "";
     }
-
     utf8_buffer[bytes_written] = '\0';
     std::string content = std::string(utf8_buffer);
     return content;
 }
 
-static bool processArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object, ani_object arrayObj,
-    std::vector<std::string>& permissionLists)
+static bool ProcessArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_array_ref arrayObj, std::vector<std::string>& permissionList)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
+    ani_size length;
+    if (ANI_OK != env->Array_GetLength(arrayObj, &length)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength FAILED");
         return false;
     }
-    ani_double length;
-    if (ANI_OK != env->Object_GetPropertyByName_Double(arrayObj, "length", &length)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Ref length Failed");
-        return false;
-    }
-
-    for (int i = 0; i < static_cast<int>(length); i++) {
+    for (ani_size i = 0; i < length; i++) {
         ani_ref stringEntryRef;
         if (ANI_OK != env->Object_CallMethodByName_Ref(
             arrayObj, "$_get", "I:Lstd/core/Object;", &stringEntryRef, static_cast<ani_int>(i))) {
@@ -395,7 +368,7 @@ static bool processArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] a
         if (strEntryRef.empty()) {
             return false;
         } else {
-            permissionLists.emplace_back(strEntryRef);
+            permissionList.emplace_back(strEntryRef);
         }
     }
     return true;
@@ -403,10 +376,6 @@ static bool processArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] a
 
 static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
     ani_status status = ANI_ERROR;
     ani_class cls = nullptr;
     if ((status = env->FindClass("Lsecurity/PermissionRequestResult/PermissionRequestResult;", &cls)) != ANI_OK) {
@@ -432,12 +401,15 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
     ani_ref intAuthResults = ConvertAniArrayInt(env, state);
     ani_ref boolDialogShownResults = ConvertAniArrayBool(env, asyncContext->dialogShownResults);
     ani_ref intPermissionQueryResults = ConvertAniArrayInt(env, asyncContext->permissionQueryResults);
-    bool errFalg = CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), strPermissions);
-    errFalg = CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), intAuthResults);
-    errFalg = CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), boolDialogShownResults);
-    errFalg = CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), intPermissionQueryResults);
-    if (!errFalg || strPermissions == nullptr || intAuthResults == nullptr || boolDialogShownResults == nullptr ||
+    if (strPermissions == nullptr || intAuthResults == nullptr || boolDialogShownResults == nullptr ||
         intPermissionQueryResults == nullptr) {
+        asyncContext->result = RET_FAILED;
+        return nullptr;
+    }
+    if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), strPermissions) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), intAuthResults) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), boolDialogShownResults) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), intPermissionQueryResults)) {
         asyncContext->result = RET_FAILED;
         return nullptr;
     }
@@ -450,13 +422,11 @@ static ani_object DealWithResult(ani_env* env, std::shared_ptr<RequestAsyncConte
     if (asyncContext->result == RET_SUCCESS) {
         resultObj = WrapResult(env, asyncContext);
     }
-
     if (asyncContext->result != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(asyncContext->result);
         BusinessErrorAni::ThrowParameterTypeError(env, stsCode, "WrapResult", GetErrorMessage(stsCode));
         return nullptr;
     }
-
     return resultObj;
 }
 
@@ -482,10 +452,6 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
 static ani_status ConvertContext(
     ani_env* env, const ani_object& aniContext, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return ANI_ERROR;
-    }
     auto context = OHOS::AbilityRuntime::GetStageModeContext(env, aniContext);
     if (context == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetStageModeContext failed");
@@ -493,16 +459,12 @@ static ani_status ConvertContext(
     }
     asyncContext->abilityContext =
         OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(context);
-    if (asyncContext->abilityContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertTo AbilityContext failed");
-        return ANI_ERROR;
-    }
-    auto abilityInfo = asyncContext->abilityContext->GetApplicationInfo();
-    if (abilityInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetApplicationInfo failed");
-        return ANI_ERROR;
-    }
     if (asyncContext->abilityContext != nullptr) {
+        auto abilityInfo = asyncContext->abilityContext->GetApplicationInfo();
+        if (abilityInfo == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetApplicationInfo failed");
+            return ANI_ERROR;
+        }
         asyncContext->uiAbilityFlag = true;
         asyncContext->tokenId = abilityInfo->accessTokenId;
         asyncContext->bundleName = abilityInfo->bundleName;
@@ -524,33 +486,23 @@ static ani_status ConvertContext(
     return ANI_OK;
 }
 
-static bool ParseRequestPermissionFromUser(
-    ani_env* env, ani_object aniContext, ani_object permission, std::shared_ptr<RequestAsyncContext>& asyncContext)
+static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, ani_array_ref permissionList,
+    std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     if (ConvertContext(env, aniContext, asyncContext) != ANI_OK) {
         BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
             "RequestPermissionsFromUserExecute", GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-
-    if (!processArrayString(env, nullptr, permission, asyncContext->permissionList)) {
+    if (!ProcessArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
         return false;
     }
-
     return true;
 }
 
 static bool RequestPermissionsFromUserProcess([[maybe_unused]] ani_env* env,
     std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
-    if (selfTokenID != asyncContext->tokenId) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
-        asyncContext->result = RET_FAILED;
-        return false;
-    }
-
     if (!IsDynamicRequest(asyncContext)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "It does not need to request permission");
         asyncContext->needDynamicRequest = false;
@@ -560,50 +512,64 @@ static bool RequestPermissionsFromUserProcess([[maybe_unused]] ani_env* env,
         }
         return false;
     }
-
     GetInstanceId(asyncContext);
     asyncContext->loadlock.lock();
+    bool lockFlag = false;
     if (asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
         ACCESSTOKEN_LOG_INFO(
             LABEL, "Pop service extension dialog, uiContentFlag=%{public}d", asyncContext->uiContentFlag);
         if (asyncContext->uiContentFlag) {
-            RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
+            lockFlag = RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
         } else {
-            CreateServiceExtension(asyncContext);
+            lockFlag = CreateServiceExtension(asyncContext);
         }
     } else if (asyncContext->instanceId == -1) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Pop service extension dialog, instanceId is -1.");
-        CreateServiceExtension(asyncContext);
+        lockFlag = CreateServiceExtension(asyncContext);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName.c_str(),
+            "UIEXTENSION_FLAG", false);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "Pop ui extension dialog");
         asyncContext->uiExtensionFlag = true;
-        RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
+        lockFlag = RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName, "UIEXTENSION_FLAG",
+            false);
         if (!asyncContext->uiExtensionFlag) {
             ACCESSTOKEN_LOG_WARN(LABEL, "Pop uiextension dialog fail, start to pop service extension dialog.");
-            asyncContext->loadlock.lock();
-            RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
+            lockFlag = RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
         }
     }
-
+    if (!lockFlag) {
+        asyncContext->loadlock.unlock();
+    }
     return true;
 }
 
 static ani_object RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_object aniContext, ani_object permission)
+    ani_object aniContext, ani_array_ref permissionList)
 {
-    if (permission == nullptr || env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission or env null");
+    if (env == nullptr || permissionList == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionList or env null");
         return nullptr;
     }
     std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>();
-    if (!ParseRequestPermissionFromUser(env, aniContext, permission, asyncContext)) {
+    if (!ParseRequestPermissionFromUser(env, aniContext, permissionList, asyncContext)) {
         return nullptr;
     }
-
 #ifdef EVENTHANDLER_ENABLE
     asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
 #endif
-    if (!RequestPermissionsFromUserProcess(env, asyncContext)) {
+    bool errTokenID = true;
+    static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
+    if (selfTokenID != asyncContext->tokenId) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
+        asyncContext->result = RET_FAILED;
+        errTokenID = false;
+    }
+    if (!RequestPermissionsFromUserProcess(env, asyncContext) || !errTokenID) {
         return DealWithResult(env, asyncContext);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "uiExtensionFlag: %{public}d, uiContentFlag: %{public}d, uiAbilityFlag: %{public}d ",
@@ -661,12 +627,16 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
             RequestAsyncInstanceControl::instanceIdMap_.erase(id);
         }
     }
+    bool lockFlag = true;
     if (isDynamic) {
         if (asyncContext->uiExtensionFlag) {
-            CreateUIExtension(asyncContext);
+            lockFlag = CreateUIExtension(asyncContext);
         } else {
-            CreateServiceExtension(asyncContext);
+            lockFlag = CreateServiceExtension(asyncContext);
         }
+    }
+    if (!lockFlag) {
+        asyncContext->loadlock.unlock();
     }
 }
 
@@ -675,7 +645,6 @@ void RequestAsyncInstanceControl::CheckDynamicRequest(
 {
     asyncContext->permissionsState.clear();
     asyncContext->dialogShownResults.clear();
-    asyncContext->errorReasons.clear();
     if (!IsDynamicRequest(asyncContext)) {
         RequestResultsHandler(asyncContext->permissionList, asyncContext->permissionsState, asyncContext);
         return;
@@ -683,21 +652,22 @@ void RequestAsyncInstanceControl::CheckDynamicRequest(
     isDynamic = true;
 }
 
-void RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
+bool RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     std::lock_guard<std::mutex> lock(instanceIdMutex_);
     auto iter = RequestAsyncInstanceControl::instanceIdMap_.find(asyncContext->instanceId);
     if (iter != RequestAsyncInstanceControl::instanceIdMap_.end()) {
         RequestAsyncInstanceControl::instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
-        asyncContext->loadlock.unlock();
-        return;
+        return false;
     }
     RequestAsyncInstanceControl::instanceIdMap_[asyncContext->instanceId] = {};
+    bool lockFlag = true;
     if (asyncContext->uiExtensionFlag) {
-        CreateUIExtension(asyncContext);
+        lockFlag = CreateUIExtension(asyncContext);
     } else {
-        CreateServiceExtension(asyncContext);
+        lockFlag = CreateServiceExtension(asyncContext);
     }
+    return lockFlag;
 }
 
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
@@ -877,12 +847,6 @@ static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
 static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_int tokenID, ani_string permissionName)
 {
-    static uint64_t selfTokenId = GetSelfTokenID();
-    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();
-    if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
-        return AccessToken::PermissionState::PERMISSION_DENIED;
-    }
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
         return AccessToken::PermissionState::PERMISSION_DENIED;
@@ -898,8 +862,15 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
             GetParamErrorMsg("permissionName", "string"));
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
+    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
+        return AccessToken::PermissionState::PERMISSION_DENIED;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     asyncContext->tokenId = tokenID;
     asyncContext->permissionName = stdPermissionName;
+    static uint64_t selfTokenId = GetSelfTokenID();
     if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
         asyncContext->result = AccessToken::AccessTokenKit::VerifyAccessToken(tokenID, stdPermissionName);
         return static_cast<ani_int>(asyncContext->result);
