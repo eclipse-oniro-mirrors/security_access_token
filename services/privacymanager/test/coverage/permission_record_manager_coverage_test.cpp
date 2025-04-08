@@ -35,6 +35,7 @@
 #include "state_change_callback.h"
 #include "time_util.h"
 #include "token_setproc.h"
+#include "on_permission_used_record_callback_stub.h"
 
 using namespace testing;
 using namespace testing::ext;
@@ -56,6 +57,7 @@ static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
 static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t TEST_USER_ID_11 = 11;
+static constexpr int32_t INVALID_CODE = 9999;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -476,6 +478,9 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     appStateData.accessTokenId = tokenId;
     observer.OnAppStopped(appStateData);
 
+    appStateData.state = INVALID_CODE;
+    observer.OnAppStopped(appStateData);
+
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
@@ -855,6 +860,130 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
 
     PermissionUsedResult result;
     EXPECT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
+}
+
+/**
+ * @tc.name: GetRecords005
+ * @tc.desc: test ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level1)
+{
+    PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
+
+    AddPermParamInfo info;
+
+    PermissionRecord result;
+    EXPECT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().GetPermissionRecord(info, result));
+
+    PermissionRecordManager::GetInstance().ExecuteDeletePermissionRecordTask();
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatus001
+ * @tc.desc: test ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    MockNativeToken mock("privacy_service");
+
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, false));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true));
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    GeneratePermissionRecord(tokenID);
+
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, false));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, true));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, false));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, true));
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatus001
+ * @tc.desc: test ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    bool res = true;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res));
+
+    PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMapFromDb();
+}
+
+class TestUsedRecordCallback : public OnPermissionUsedRecordCallbackStub {
+public:
+    TestUsedRecordCallback() = default;
+    virtual ~TestUsedRecordCallback() = default;
+    void OnQueried(ErrCode code, PermissionUsedResult& result) {}
+};
+
+/**
+ * @tc.name: GetPermissionUsedRecordsAsync001
+ * @tc.desc: test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    PermissionUsedRequest request;
+    request.tokenId = tokenID;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+
+    OHOS::sptr<TestUsedRecordCallback> cb(new TestUsedRecordCallback());
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request, cb));
+}
+
+/**
+ * @tc.name: GetLockScreenStatus001
+ * @tc.desc: test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetLockScreenStatus001, TestSize.Level1)
+{
+    EXPECT_NE(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().GetLockScreenStatus(true));
+}
+
+/**
+ * @tc.name: SetHapWithFGReminder001
+ * @tc.desc: test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetHapWithFGReminder001, TestSize.Level1)
+{
+    EXPECT_NE(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().SetHapWithFGReminder(123, true));
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    EXPECT_NE(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenID, true));
+    EXPECT_NE(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenID, false));
 }
 
 /**

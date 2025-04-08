@@ -22,12 +22,12 @@
 #include "on_permission_used_record_callback_stub.h"
 #define private public
 #include "permission_record_manager.h"
+#include "privacy_manager_service.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "perm_active_status_change_callback.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
-#include "privacy_manager_service.h"
 #include "privacy_test_common.h"
 #include "proxy_death_callback_stub.h"
 #include "state_change_callback.h"
@@ -46,6 +46,9 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
+static constexpr int32_t COMMON_EVENT_SERVICE_ID = 3299;
+static constexpr int32_t SCREENLOCK_SERVICE_ID = 3704;
+static constexpr int32_t INVALID_CODE = 999;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -472,6 +475,24 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002,
 }
 
 /**
+ * @tc.name: SetPermissionUsedRecordToggleStatusInner003
+ * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner003", reqPerm, true); // set self tokenID to system app
+
+    int32_t ret = privacyManagerService_->SetPermissionUsedRecordToggleStatus(userID, status);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
  * @tc.name: GetPermissionUsedRecordToggleStatusInner001
  * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
  * @tc.type: FUNC
@@ -502,6 +523,24 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002,
 
     int32_t ret = privacyManagerService_->GetPermissionUsedRecordToggleStatus(userID, status);
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatusInner003
+ * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionUsedRecordToggleStatusInner003", reqPerm, true); // set self tokenID to system app
+
+    int32_t ret = privacyManagerService_->GetPermissionUsedRecordToggleStatus(userID, status);
+    ASSERT_EQ(RET_SUCCESS, ret);
 }
 
 /**
@@ -747,6 +786,21 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner003, TestSiz
 
     // native token device_manager don't have request permission
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, privacyManagerService_->RemovePermissionUsedRecords(tokenID));
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecordsInner004
+ * @tc.desc: RemovePermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner004, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is invalid tokenID
+
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("RemovePermissionUsedRecordsInner004", reqPerm, true); // set self tokenID to system app
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->RemovePermissionUsedRecords(tokenID));
 }
 
 /**
@@ -1111,6 +1165,25 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetMutePolicyInner002
+ * @tc.desc: SetMutePolicyInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is invalid tokenID
+    uint32_t policyType = 0;
+    uint32_t callerType = 0;
+    bool isMute = false;
+
+    MockNativeToken mock("camera_service");
+
+    int32_t ret = privacyManagerService_->SetMutePolicy(policyType, callerType, isMute, tokenID);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
  * @tc.name: SetHapWithFGReminderInner001
  * @tc.desc: SetHapWithFGReminderInner test.
  * @tc.type: FUNC
@@ -1127,6 +1200,24 @@ HWTEST_F(PrivacyManagerServiceTest, SetHapWithFGReminderInner001, TestSize.Level
     // systemapp with need permission
     int32_t ret = privacyManagerService_->SetHapWithFGReminder(tokenID, isAllowed);
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: GetProxyDeathHandle001
+ * @tc.desc: GetProxyDeathHandle test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level1)
+{
+    auto handler1 = privacyManagerService_->GetProxyDeathHandler();
+    ASSERT_NE(nullptr, handler1);
+    auto handler2 = privacyManagerService_->GetProxyDeathHandler();
+    ASSERT_NE(nullptr, handler2);
+
+    privacyManagerService_->OnAddSystemAbility(COMMON_EVENT_SERVICE_ID, "123");
+    privacyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "123");
+    privacyManagerService_->OnAddSystemAbility(INVALID_CODE, "123");
 }
 } // namespace AccessToken
 } // namespace Security
