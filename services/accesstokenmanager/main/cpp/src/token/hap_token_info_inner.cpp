@@ -22,6 +22,7 @@
 #include "access_token_error.h"
 #include "data_translator.h"
 #include "data_validator.h"
+#include "hisysevent_adapter.h"
 #include "short_grant_manager.h"
 #include "token_field_const.h"
 #include "permission_map.h"
@@ -280,6 +281,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     int32_t ret = PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenInfoBasic_.tokenID,
         permissionName, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Update date brief failed, ret is %{public}d", ret);
         return ret;
     }
     if (ShortGrantManager::GetInstance().IsShortGrantPermission(permissionName)) {

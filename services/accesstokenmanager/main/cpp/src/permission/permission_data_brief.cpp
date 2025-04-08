@@ -411,7 +411,7 @@ int32_t PermissionDataBrief::UpdatePermStateList(
 {
     auto iterPermData = requestedPermData_.find(tokenId);
     if (iterPermData == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
+        LOGC(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
         return ERR_TOKEN_INVALID;
     }
     std::vector<BriefPermData>& permBriefDatalist = requestedPermData_[tokenId];
@@ -420,12 +420,12 @@ int32_t PermissionDataBrief::UpdatePermStateList(
             return opCode == permData.permCode;
         });
     if (iter == permBriefDatalist.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission not request!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     
     if ((static_cast<uint32_t>(iter->flag) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission fixed by system!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Permission fixed by system!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     iter->status = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
@@ -450,7 +450,7 @@ int32_t PermissionDataBrief::UpdateSecCompGrantedPermList(AccessTokenID tokenId,
             if (status == PERMISSION_GRANTED) {
                 return RET_SUCCESS;
             } else {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Permission has been revoked by user.");
+                LOGC(ATM_DOMAIN, ATM_TAG, "Permission has been revoked by user.");
                 return ERR_PERMISSION_DENIED;
             }
         } else {
