@@ -658,7 +658,7 @@ bool RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<Reques
     auto iter = RequestAsyncInstanceControl::instanceIdMap_.find(asyncContext->instanceId);
     if (iter != RequestAsyncInstanceControl::instanceIdMap_.end()) {
         RequestAsyncInstanceControl::instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
-        return false;
+        return true;
     }
     RequestAsyncInstanceControl::instanceIdMap_[asyncContext->instanceId] = {};
     bool lockFlag = true;
