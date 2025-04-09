@@ -4463,36 +4463,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.INSTALL_PLUGIN_BUNDLE",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": 18,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
-            "name": "ohos.permission.UNINSTALL_PLUGIN_BUNDLE",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": 18,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
-            "name": "ohos.permission.kernel.SUPPORT_PLUGIN",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "NORMAL",
-            "since": 18,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
-        },
-        {
             "name": "ohos.permission.FOWNER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
