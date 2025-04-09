@@ -175,11 +175,7 @@ export default namespace abilityAccessCtrl {
                     let p1 = taskpool.execute((): GrantStatus => { return new AtManagerInner().checkAccessTokenANI(tokenID,
                         permissionName) as GrantStatus;});
                     p1.then((e: NullishType) => {
-                        if (e == 0) {
-                            resolve(GrantStatus.PERMISSION_GRANTED);
-                        } else {
-                            resolve(GrantStatus.PERMISSION_DENIED);
-                        }
+                        resolve(e as GrantStatus);
                     }).catch((err: BusinessError): void => {
                         reject(err);
                     });

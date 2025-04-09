@@ -44,8 +44,6 @@ export default namespace privacyManager {
 
         STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
 
-        INVALID_VALUE = -999,
-
     } ;
 
     interface AddPermissionUsedRecordOptions {
@@ -85,18 +83,19 @@ export default namespace privacyManager {
             throw err;
         }
 
-        let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE
+        let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
         let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: usedTypeTemp };
-        let p = new Promise<int>((resolve: (v: int) => void, reject: (error: Object) => void) => {
+        let p = new Promise<int>((resolve: (v: int) => void, reject: (error: BusinessError) => void) => {
             let p1 = taskpool.execute((): int => { return new PrivacyManagerInner().addPermissionUsedRecordSync(
                 tokenID, permissionName, successCount, failCount, optionsLocal) });
             p1.then((e: NullishType) => {
-                if (e != STSErrorCode.INVALID_VALUE) {
-                    let r: Int = e as Int;
-                    resolve(r.intValue());
-                }
+                let r: Int = e as Int;
+                resolve(r.intValue());
             }).catch((err: BusinessError): void => {
-                if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
+                if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL ||
+                err.code == STSErrorCode.STS_ERROR_PERMISSION_DENIED  ||
+                err.code == STSErrorCode.STS_ERROR_NOT_SYSTEM_APP ||
+                err.code == STSErrorCode.STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT) {
                     throw err;
                 }
                 reject(err);
@@ -119,16 +118,17 @@ export default namespace privacyManager {
             return new PrivacyManagerInner().addPermissionUsedRecordSync(tokenID, permissionName,
                 successCount, failCount, optionsLocal)});
         p2.then((e: NullishType) => {
-            if (e != STSErrorCode.INVALID_VALUE) {
-                let err = new BusinessError<void>()
-                err.code = e as int
-                callback(err, undefined)
-            }
+            let err = new BusinessError<void>();
+            err.code = e as int;
+            callback(err, undefined);
         },(err: BusinessError): void=> {
-            if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
-                throw err;
-            }
-            callback(err, undefined)
+            if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL ||
+                err.code == STSErrorCode.STS_ERROR_PERMISSION_DENIED  ||
+                err.code == STSErrorCode.STS_ERROR_NOT_SYSTEM_APP ||
+                err.code == STSErrorCode.STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT) {
+                    throw err;
+            };
+            callback(err, undefined);
         })
     }
 }
