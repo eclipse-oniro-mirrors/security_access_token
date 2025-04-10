@@ -31,7 +31,7 @@ constexpr const char* ERR_MSG_PARAM_NUMBER_ERROR =
     "BusinessError 401: Parameter error. The number of parameters is incorrect.";
 constexpr const char* ERR_MSG_ENUM_EROOR = "Parameter error. The value of $ is not a valid enum $.";
 constexpr const char* ERR_MSG_BUSINESS_ERROR = "BusinessError $: ";
-constexpr const char* ERR_MSG_PARAM_TYPE_ERROR = "Parameter error. The type of $ must be $.";
+constexpr const char* ERR_MSG_PARAM_TYPE_ERROR = "Parameter error. The errMsg of $ must be $.";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
@@ -56,12 +56,12 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PARAM_ILLEGAL, ERR_MSG_PARAM_TYPE_ERROR },
 };
 
-void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& msg)
+void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
 {
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateError(env, err, msg);
+    ani_object error = CreateError(env, err, errMsg);
     ThrowError(env, error);
 }
 
@@ -117,9 +117,9 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
     return obj;
 }
 
-std::string GetParamErrorMsg(const std::string& param, const std::string& type)
+std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg)
 {
-    std::string msg = "Parameter Error. The type of \"" + param + "\" must be " + type + ".";
+    std::string msg = "Parameter Error. The errMsg of \"" + param + "\" must be " + errMsg + ".";
     return msg;
 }
 
@@ -133,13 +133,12 @@ std::string GetErrorMessage(uint32_t errCode)
     return errMsg;
 }
 
-void BusinessErrorAni::ThrowParameterTypeError(
-    ani_env* env, int32_t err, const std::string& parameter, const std::string& type)
+void BusinessErrorAni::ThrowParameterTypeError(ani_env* env, int32_t err, const std::string& errMsg)
 {
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateCommonError(env, err, parameter, type);
+    ani_object error = CreateCommonError(env, err, errMsg);
     ThrowError(env, error);
 }
 
@@ -151,8 +150,7 @@ void BusinessErrorAni::ThrowTooFewParametersError(ani_env* env, int32_t err)
     ThrowError(env, err, ERR_MSG_PARAM_NUMBER_ERROR);
 }
 
-ani_object BusinessErrorAni::CreateCommonError(
-    ani_env* env, int32_t err, const std::string& functionName, const std::string& permissionName)
+ani_object BusinessErrorAni::CreateCommonError(ani_env* env, int32_t err, const std::string& errMsg)
 {
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
@@ -168,21 +166,20 @@ ani_object BusinessErrorAni::CreateCommonError(
     }
     iter = errMessage.find("$");
     if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, functionName);
         iter = errMessage.find("$");
         if (iter != std::string::npos) {
-            errMessage = errMessage.replace(iter, 1, permissionName);
+            errMessage = errMessage.replace(iter, 1, errMsg);
         }
     }
     return CreateError(env, err, errMessage);
 }
 
-void BusinessErrorAni::ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& type)
+void BusinessErrorAni::ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& errMsg)
 {
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateEnumError(env, parameter, type);
+    ani_object error = CreateEnumError(env, parameter, errMsg);
     ThrowError(env, error);
 }
 

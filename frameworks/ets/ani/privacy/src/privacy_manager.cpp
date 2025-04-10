@@ -77,57 +77,59 @@ static int32_t GetStsErrorCode(int32_t errCode)
     return stsCode;
 }
 
-static int AddPermissionUsedRecordSync(ani_env* env, const AddPermParamInfo& info)
+static void AddPermissionUsedRecordSync(ani_env* env, const AddPermParamInfo& info)
 {
     auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
-        BusinessErrorAni::ThrowParameterTypeError(
-            env, stsCode, "AddPermissionUsedRecordSync", GetErrorMessage(stsCode));
-        return STSErrorCode::STS_ERROR_INNER;
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord retCode : %{public}d", retCode);
-    return retCode;
 }
 
-static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+static void AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_int tokenID, ani_string permissionName, ani_int successCount, ani_int failCount, ani_object options)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
-        return STSErrorCode::STS_ERROR_INNER;
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
     }
     ani_size strSize;
     ani_status status = ANI_ERROR;
     if (ANI_OK != (status = env->String_GetUTF8Size(permissionName, &strSize))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size_Faild status : %{public}d", status);
-        return STSErrorCode::STS_ERROR_INNER;
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
     }
     std::vector<char> buffer(strSize + 1);
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
     if (ANI_OK != (status = env->String_GetUTF8(permissionName, utf8Buffer, strSize + 1, &bytesWritten))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get String_GetUTF8 Faild status : %{public}d", status);
-        return STSErrorCode::STS_ERROR_INNER;
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
     }
     utf8Buffer[bytesWritten] = '\0';
     std::string outputPermissionName = std::string(utf8Buffer);
     ani_ref usedTypeRef;
     if (ANI_OK != (status = env->Object_GetPropertyByName_Ref(options, "usedType", &usedTypeRef))) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild status : %{public}d", status);
-        return STSErrorCode::STS_ERROR_INNER;
+        return;
     }
     ani_int usedType = 0;
     ani_boolean isUndefined = true;
     if (ANI_OK != (status = env->Reference_IsUndefined(usedTypeRef, &isUndefined))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
-        return STSErrorCode::STS_ERROR_INNER;
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
     }
     if (!isUndefined) {
         ani_enum_item usedTypeEnum = static_cast<ani_enum_item>(usedTypeRef);
         if (ANI_OK != env->EnumItem_GetValue_Int(usedTypeEnum, &usedType)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "EnumItem_GetValue_Int Faild");
-            return STSErrorCode::STS_ERROR_INNER;
+            BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+            return;
         }
     }
     AddPermParamInfo info;
@@ -136,7 +138,7 @@ static ani_int AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_un
     info.successCount = successCount;
     info.failCount = failCount;
     info.type = static_cast<PermissionUsedType>(usedType);
-    return AddPermissionUsedRecordSync(env, info);
+    AddPermissionUsedRecordSync(env, info);
 }
 
 extern "C" {
@@ -166,7 +168,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 
     std::array methods = {
         ani_native_function { "addPermissionUsedRecordSync",
-            "ILstd/core/String;IIL@ohos/privacyManager/privacyManager/AddPermissionUsedRecordOptionsInner;:I",
+            "ILstd/core/String;IIL@ohos/privacyManager/privacyManager/AddPermissionUsedRecordOptionsInner;:V",
             reinterpret_cast<void*>(AddPermissionUsedRecord) },
     };
 
