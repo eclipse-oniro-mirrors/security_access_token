@@ -209,6 +209,11 @@ int HapTokenInfoInner::GetDlpType() const
     return tokenInfoBasic_.dlpType;
 }
 
+AccessTokenAttr HapTokenInfoInner::GetAttr() const
+{
+    return tokenInfoBasic_.tokenAttr;
+}
+
 std::string HapTokenInfoInner::GetBundleName() const
 {
     return tokenInfoBasic_.bundleName;

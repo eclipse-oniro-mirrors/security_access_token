@@ -34,7 +34,6 @@
 #include "hitrace_meter.h"
 #endif
 #include "ipc_skeleton.h"
-#include "json_parse_loader.h"
 #include "libraryloader.h"
 #include "memory_guard.h"
 #include "parameter.h"
@@ -85,6 +84,13 @@ static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 constexpr uint32_t TIMEOUT = 40; // 40s
 thread_local int32_t g_timerId = 0;
 #endif // HICOLLIE_ENABLE
+
+constexpr uint32_t BITMAP_INDEX_1 = 1;
+constexpr uint32_t BITMAP_INDEX_2 = 2;
+constexpr uint32_t BITMAP_INDEX_3 = 3;
+constexpr uint32_t BITMAP_INDEX_4 = 4;
+constexpr uint32_t BITMAP_INDEX_5 = 5;
+constexpr uint32_t BITMAP_INDEX_6 = 6;
 }
 
 const bool REGISTER_RESULT =
@@ -611,14 +617,71 @@ static void TransferHapPolicy(const HapPolicy& policyIn, HapPolicy& policyOut)
     policyOut.aclExtendedMap = policyIn.aclExtendedMap;
 }
 
+void AccessTokenManagerService::ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy)
+{
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::INSTALL_START;
+    dfxInfo.tokenId = info.hapInfoParameter.tokenID;
+    dfxInfo.userId = info.hapInfoParameter.userID;
+    dfxInfo.bundleName = info.hapInfoParameter.bundleName;
+    dfxInfo.instIndex = info.hapInfoParameter.instIndex;
+    dfxInfo.dlpType = static_cast<HapDlpType>(info.hapInfoParameter.dlpType);
+    dfxInfo.isRestore = info.hapInfoParameter.isRestore;
+
+    dfxInfo.permInfo = std::to_string(policy.hapPolicy.permStateList.size()) + " : [";
+    for (const auto& permState : policy.hapPolicy.permStateList) {
+        dfxInfo.permInfo.append(permState.permissionName + ", ");
+    }
+    dfxInfo.permInfo.append("]");
+
+    dfxInfo.aclInfo = std::to_string(policy.hapPolicy.aclRequestedList.size()) + " : [";
+    for (const auto& perm : policy.hapPolicy.aclRequestedList) {
+        dfxInfo.aclInfo.append(perm + ", ");
+    }
+    dfxInfo.aclInfo.append("]");
+
+    dfxInfo.preauthInfo = std::to_string(policy.hapPolicy.preAuthorizationInfo.size()) + " : [";
+    for (const auto& preAuthInfo : policy.hapPolicy.preAuthorizationInfo) {
+        dfxInfo.preauthInfo.append(preAuthInfo.permissionName + ", ");
+    }
+    dfxInfo.preauthInfo.append("]");
+
+    dfxInfo.extendInfo = std::to_string(policy.hapPolicy.aclExtendedMap.size()) + " : {";
+    for (const auto& aclExtend : policy.hapPolicy.aclExtendedMap) {
+        dfxInfo.extendInfo.append(aclExtend.first + ": " + aclExtend.second + ", ");
+    }
+    dfxInfo.extendInfo.append("}");
+
+    ReportSysEventAddHap(dfxInfo);
+}
+
+void AccessTokenManagerService::ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info,
+    int64_t beginTime, int32_t errorCode)
+{
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::INSTALL_FINISH;
+    dfxInfo.tokenId = fullTokenId.tokenIdExStruct.tokenID;
+    dfxInfo.tokenIdEx = fullTokenId;
+    dfxInfo.userId = info.hapInfoParameter.userID;
+    dfxInfo.bundleName = info.hapInfoParameter.bundleName;
+    dfxInfo.instIndex = info.hapInfoParameter.instIndex;
+    dfxInfo.duration = endTime - beginTime;
+    dfxInfo.errorCode = errorCode;
+    ReportSysEventAddHap(dfxInfo);
+}
+
 int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy,
     uint64_t& fullTokenId, HapInfoCheckResultIdl& resultInfoIdl)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    ReportAddHap(info, policy);
+
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", tokenID);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", tokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
@@ -635,11 +698,13 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
             resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
             int32_t rule = permCheckResult.permCheckResult.rule;
             resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(rule);
+            ReportAddHapFinish({0}, info, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_OK;
         }
     } else {
         if (!PermissionManager::GetInstance().InitDlpPermissionList(
             info.hapInfoParameter.bundleName, info.hapInfoParameter.userID, initializedList)) {
+            ReportAddHapFinish({0}, info, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     }
@@ -649,9 +714,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policyCopy.hapPolicy, tokenIdEx);
     fullTokenId = tokenIdEx.tokenIDEx;
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
+    ReportAddHapFinish(tokenIdEx, info, beginTime, ret);
 
     return ret;
 }
@@ -1208,8 +1271,50 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     }
 }
 
-void AccessTokenManagerService::GetConfigValue()
+void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& atConfig,
+    int32_t& cancelTime, uint32_t& parseConfigFlag)
 {
+    parseConfigFlag = 0;
+    // set value from config
+    if (!atConfig.grantBundleName.empty()) {
+        grantBundleName_ = atConfig.grantBundleName;
+        parseConfigFlag = 0x1;
+    }
+    if (!atConfig.grantAbilityName.empty()) {
+        grantAbilityName_ = atConfig.grantAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_1;
+    }
+    if (!atConfig.grantServiceAbilityName.empty()) {
+        grantServiceAbilityName_ = atConfig.grantServiceAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_2;
+    }
+    if (!atConfig.permStateAbilityName.empty()) {
+        permStateAbilityName_ = atConfig.permStateAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_3;
+    }
+    if (!atConfig.globalSwitchAbilityName.empty()) {
+        globalSwitchAbilityName_ = atConfig.globalSwitchAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_4;
+    }
+    if (atConfig.cancelTime != 0) {
+        cancelTime = atConfig.cancelTime;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_5;
+    }
+    if (!atConfig.applicationSettingAbilityName.empty()) {
+        applicationSettingAbilityName_ = atConfig.applicationSettingAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_6;
+    }
+}
+
+void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
+{
+    grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
+    grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+    grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+    permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
+    globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+    int32_t cancelTime = 0;
+    applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
@@ -1218,30 +1323,9 @@ void AccessTokenManagerService::GetConfigValue()
     }
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
-        // set value from config
-        grantBundleName_ = value.atConfig.grantBundleName.empty() ?
-            GRANT_ABILITY_BUNDLE_NAME : value.atConfig.grantBundleName;
-        grantAbilityName_ = value.atConfig.grantAbilityName.empty() ?
-            GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantAbilityName;
-        grantServiceAbilityName_ = value.atConfig.grantServiceAbilityName.empty() ?
-            GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantServiceAbilityName;
-        permStateAbilityName_ = value.atConfig.permStateAbilityName.empty() ?
-            PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
-        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
-            GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
-        applicationSettingAbilityName_ = value.atConfig.applicationSettingAbilityName.empty() ?
-            APPLICATION_SETTING_ABILITY_NAME : value.atConfig.applicationSettingAbilityName;
-        TempPermissionObserver::GetInstance().SetCancelTime(value.atConfig.cancleTime);
-    } else {
-        LOGI(ATM_DOMAIN, ATM_TAG, "No config file or config file is not valid, use default values");
-        grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
-        grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-        grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-        permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
-        globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
-        applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
+        SetFlagIfNeed(value.atConfig, cancelTime, parseConfigFlag);
     }
-
+    TempPermissionObserver::GetInstance().SetCancelTime(cancelTime);
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
         "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
         "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s.",
@@ -1284,13 +1368,26 @@ bool AccessTokenManagerService::Initialize()
 {
     MemoryGuard guard;
     ReportSysEventPerformance();
-    AccessTokenInfoManager::GetInstance().Init();
+
+    uint32_t hapSize = 0;
+    uint32_t nativeSize = 0;
+    uint32_t pefDefSize = 0;
+    uint32_t dlpSize = 0;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();
     ShortGrantManager::GetInstance().InitEventHandler();
 #endif
-    GetConfigValue();
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.pid = getpid();
+    dfxInfo.hapSize = hapSize;
+    dfxInfo.nativeSize = nativeSize;
+    dfxInfo.permDefSize = pefDefSize;
+    dfxInfo.dlpSize = dlpSize;
+    GetConfigValue(dfxInfo.parseConfigFlag);
+
+    ReportSysEventServiceStart(dfxInfo);
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success");
     return true;
 }

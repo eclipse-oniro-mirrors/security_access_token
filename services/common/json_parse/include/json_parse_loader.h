@@ -32,7 +32,7 @@ struct AccessTokenServiceConfig final {
     std::string grantServiceAbilityName;
     std::string permStateAbilityName;
     std::string globalSwitchAbilityName;
-    int32_t cancleTime = 0;
+    int32_t cancelTime = 0;
     std::string applicationSettingAbilityName;
 };
 

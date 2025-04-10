@@ -27,6 +27,7 @@
 #include "access_token.h"
 #include "hap_token_info.h"
 #include "iremote_object.h"
+#include "json_parse_loader.h"
 #include "nocopyable.h"
 #include "singleton.h"
 #include "system_ability.h"
@@ -125,12 +126,17 @@ public:
 private:
     void GetValidConfigFilePathList(std::vector<std::string>& pathList);
     bool GetConfigGrantValueFromFile(std::string& fileContent);
-    void GetConfigValue();
+    void SetFlagIfNeed(const AccessTokenServiceConfig& atConfig, int32_t& cancelTime, uint32_t& parseConfigFlag);
+    void GetConfigValue(uint32_t& parseConfigFlag);
     bool Initialize();
     void AccessTokenServiceParamSet() const;
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
     int32_t UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl);
+    void ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy);
+    void ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info, int64_t beginTime,
+        int32_t errorCode);
+
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;

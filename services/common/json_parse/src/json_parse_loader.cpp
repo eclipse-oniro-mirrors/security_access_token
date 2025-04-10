@@ -181,7 +181,7 @@ bool GetAtCfgFromJson(const CJson* j, AccessTokenServiceConfig& a)
         return false;
     }
 
-    if (!GetIntFromJson(j, TEMP_PERM_CANCLE_TIME_KEY, a.cancleTime)) {
+    if (!GetIntFromJson(j, TEMP_PERM_CANCLE_TIME_KEY, a.cancelTime)) {
         return false;
     }
 

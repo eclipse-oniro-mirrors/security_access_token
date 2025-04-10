@@ -62,7 +62,11 @@ namespace OHOS {
         if (enable) {
             AccessTokenID accesstoken = AccessTokenKit::GetNativeTokenId("token_sync_service");
             SetSelfTokenID(accesstoken);
-            AccessTokenInfoManager::GetInstance().Init();
+            uint32_t hapSize = 0;
+            uint32_t nativeSize = 0;
+            uint32_t pefDefSize = 0;
+            uint32_t dlpSize = 0;
+            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
         }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");

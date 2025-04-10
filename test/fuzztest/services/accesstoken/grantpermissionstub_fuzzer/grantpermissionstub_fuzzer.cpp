@@ -75,7 +75,11 @@ namespace OHOS {
             AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
             tokenIdHap = tokenIdEx.tokenIDEx;
             SetSelfTokenID(tokenIdHap);
-            AccessTokenInfoManager::GetInstance().Init();
+            uint32_t hapSize = 0;
+            uint32_t nativeSize = 0;
+            uint32_t pefDefSize = 0;
+            uint32_t dlpSize = 0;
+            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
         }
         bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {

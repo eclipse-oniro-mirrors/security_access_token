@@ -39,11 +39,13 @@ void ReportSysEventPerformance()
     }
 }
 
-void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSize, uint32_t permDefSize)
+void ReportSysEventServiceStart(const AccessTokenDfxInfo& info)
 {
     int32_t ret = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "PID", pid, "HAP_SIZE", hapSize, "NATIVE_SIZE", nativeSize, "PERM_DEFINITION_SIZE", permDefSize);
+        "PID", info.pid, "HAP_SIZE", info.hapSize, "NATIVE_SIZE", info.nativeSize,
+        "PERM_DEFINITION_SIZE", info.permDefSize, "DLP_PERMISSION_SIZE", info.dlpSize,
+        "PARSE_CONFIG_FLAG", info.parseConfigFlag);
     if (ret != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
     }
@@ -70,6 +72,28 @@ void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode)
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
     }
     ClearThreadErrorMsg();
+}
+
+void ReportSysEventAddHap(const AccessTokenDfxInfo& info)
+{
+    if ((info.sceneCode != AddHapSceneCode::INSTALL_START) &&
+        (info.sceneCode != AddHapSceneCode::TOKEN_ID_CHANGE) &&
+        (info.sceneCode != AddHapSceneCode::INIT) &&
+        (info.sceneCode != AddHapSceneCode::MAP) &&
+        (info.sceneCode != AddHapSceneCode::INSTALL_FINISH)) {
+        return;
+    }
+    int32_t res = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "SCENE_CODE", info.sceneCode, "TOKENID", info.tokenId, "ORI_TOKENID", info.oriTokenId,
+        "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx), "USERID", info.userId,
+        "BUNDLENAME", info.bundleName, "INSTINDEX", info.instIndex, "DLP_TYPE", info.dlpType,
+        "IS_RESTORE", info.isRestore, "PERM_INFO", info.permInfo, "ACL_INFO", info.aclInfo,
+        "PREAUTH_INFO", info.preauthInfo, "EXTEND_INFO", info.extendInfo, "DURATION", info.duration,
+        "ERROR_CODE", info.errorCode);
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", res);
+    }
 }
 } // namespace AccessToken
 } // namespace Security

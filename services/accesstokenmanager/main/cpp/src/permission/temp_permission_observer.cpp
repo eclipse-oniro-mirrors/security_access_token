@@ -214,7 +214,7 @@ void PermissionAppManagerDeathCallback::NotifyAppManagerDeath()
     TempPermissionObserver::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
-TempPermissionObserver::TempPermissionObserver() : cancleTimes_(DEFAULT_CANCLE_MILLISECONDS)
+TempPermissionObserver::TempPermissionObserver() : cancelTimes_(DEFAULT_CANCLE_MILLISECONDS)
 {}
 
 TempPermissionObserver::~TempPermissionObserver()
@@ -633,7 +633,7 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
         LOGI(ATM_DOMAIN, ATM_TAG, "Token: %{public}d, delay revoke permission end", tokenID);
     });
-    eventHandler->ProxyPostTask(delayed, taskName, cancleTimes_);
+    eventHandler->ProxyPostTask(delayed, taskName, cancelTimes_);
     return true;
 #else
     LOGW(ATM_DOMAIN, ATM_TAG, "Eventhandler is not existed");
@@ -659,13 +659,13 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
 #endif
 }
 
-void TempPermissionObserver::SetCancelTime(int32_t cancleTime)
+void TempPermissionObserver::SetCancelTime(int32_t cancelTime)
 {
-    if (cancleTime != 0) {
-        cancleTimes_ = cancleTime;
+    if (cancelTime != 0) {
+        cancelTimes_ = cancelTime;
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "CancleTimes_ is %{public}d.", cancleTimes_);
+    LOGI(ATM_DOMAIN, ATM_TAG, "CancelTimes_ is %{public}d.", cancelTimes_);
 }
 } // namespace AccessToken
 } // namespace Security
