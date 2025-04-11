@@ -868,7 +868,7 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    asyncContext->tokenId = tokenID;
+    asyncContext->tokenId = static_cast<AccessTokenID>(tokenID);
     asyncContext->permissionName = stdPermissionName;
     static uint64_t selfTokenId = GetSelfTokenID();
     if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
