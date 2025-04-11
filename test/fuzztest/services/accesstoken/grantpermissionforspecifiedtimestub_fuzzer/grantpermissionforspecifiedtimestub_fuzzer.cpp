@@ -49,7 +49,7 @@ namespace OHOS {
             return false;
         }
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManagerIpcCode::COMMAND_ALLOC_HAP_TOKEN);
+            IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION_FOR_SPECIFIED_TIME);
 
         MessageParcel reply;
         MessageOption option;
