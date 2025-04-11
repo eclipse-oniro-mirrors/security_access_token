@@ -133,7 +133,7 @@ static void AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_unuse
         }
     }
     AddPermParamInfo info;
-    info.tokenId = tokenID;
+    info.tokenId = static_cast<AccessTokenID>(tokenID);
     info.permissionName = outputPermissionName;
     info.successCount = successCount;
     info.failCount = failCount;
