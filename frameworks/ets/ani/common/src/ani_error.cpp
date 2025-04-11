@@ -77,7 +77,6 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
     ani_object obj = nullptr;
 
     ani_status status = env->FindClass(BUSINESS_ERROR_CLASS, &cls);
-
     if (status != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass : %{public}d", status);
         return nullptr;
