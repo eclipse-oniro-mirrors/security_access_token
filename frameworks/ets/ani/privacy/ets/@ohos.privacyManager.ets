@@ -56,7 +56,7 @@ export default namespace privacyManager {
 
     class PrivacyManagerInner {
         native addPermissionUsedRecordSync(tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
-            options: AddPermissionUsedRecordOptionsInner): int;
+            options: AddPermissionUsedRecordOptionsInner): void;
     }
 
     interface UsedRecordDetail {
@@ -75,7 +75,7 @@ export default namespace privacyManager {
     }
 
     function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
-        failCount: int, options?: AddPermissionUsedRecordOptions): Promise<int> {
+        failCount: int, options?: AddPermissionUsedRecordOptions): Promise<void> {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -85,19 +85,12 @@ export default namespace privacyManager {
 
         let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
         let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: usedTypeTemp };
-        let p = new Promise<int>((resolve: (v: int) => void, reject: (error: BusinessError) => void) => {
-            let p1 = taskpool.execute((): int => { return new PrivacyManagerInner().addPermissionUsedRecordSync(
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => { return new PrivacyManagerInner().addPermissionUsedRecordSync(
                 tokenID, permissionName, successCount, failCount, optionsLocal) });
-            p1.then((e: NullishType) => {
-                let r: Int = e as Int;
-                resolve(r.intValue());
+            p1.then(() => {
+                resolve(undefined);
             }).catch((err: BusinessError): void => {
-                if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL ||
-                err.code == STSErrorCode.STS_ERROR_PERMISSION_DENIED  ||
-                err.code == STSErrorCode.STS_ERROR_NOT_SYSTEM_APP ||
-                err.code == STSErrorCode.STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT) {
-                    throw err;
-                }
                 reject(err);
             });
         });
@@ -112,22 +105,14 @@ export default namespace privacyManager {
             err.data = PARAM_ERROR_MSG("permissionName", "string");
             throw err;
         }
-
         let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: PermissionUsedType.NORMAL_TYPE };
-        let p2 = taskpool.execute((): int => {
+        let p2 = taskpool.execute((): void => {
             return new PrivacyManagerInner().addPermissionUsedRecordSync(tokenID, permissionName,
                 successCount, failCount, optionsLocal)});
-        p2.then((e: NullishType) => {
+        p2.then(() => {
             let err = new BusinessError<void>();
-            err.code = e as int;
             callback(err, undefined);
         },(err: BusinessError): void=> {
-            if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL ||
-                err.code == STSErrorCode.STS_ERROR_PERMISSION_DENIED  ||
-                err.code == STSErrorCode.STS_ERROR_NOT_SYSTEM_APP ||
-                err.code == STSErrorCode.STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT) {
-                    throw err;
-            };
             callback(err, undefined);
         })
     }

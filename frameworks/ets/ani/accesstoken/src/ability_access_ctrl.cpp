@@ -424,7 +424,7 @@ static ani_object DealWithResult(ani_env* env, std::shared_ptr<RequestAsyncConte
     }
     if (asyncContext->result != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(asyncContext->result);
-        BusinessErrorAni::ThrowParameterTypeError(env, stsCode, "WrapResult", GetErrorMessage(stsCode));
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         return nullptr;
     }
     return resultObj;
@@ -491,10 +491,12 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
 {
     if (ConvertContext(env, aniContext, asyncContext) != ANI_OK) {
         BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
-            "RequestPermissionsFromUserExecute", GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
+            GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
     if (!ProcessArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionList", "Array<string>"));
         return false;
     }
     return true;
@@ -852,14 +854,14 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     if (tokenID == 0) {
-        BusinessErrorAni::ThrowParameterTypeError(
-            env, STSErrorCode::STS_ERROR_PARAM_INVALID, "CheckAccessTokenSync", GetParamErrorMsg("tokenID", "int"));
+        BusinessErrorAni::ThrowError(
+            env, STSErrorCode::STS_ERROR_PARAM_INVALID, GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     std::string stdPermissionName = ANIUtils_ANIStringToStdString(env, static_cast<ani_string>(permissionName));
     if (stdPermissionName.empty() || stdPermissionName.length() > MAX_LENGTH) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_INVALID, "CheckAccessTokenSync",
-            GetParamErrorMsg("permissionName", "string"));
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();

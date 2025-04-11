@@ -171,15 +171,15 @@ export default namespace abilityAccessCtrl {
         checkAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus> {
             validateTokenAndPermission(tokenID, permissionName);
             let p = new Promise<GrantStatus>((resolve: (v: GrantStatus)
-                => void, reject: (error: BusinessError) => void) => {
-                    let p1 = taskpool.execute((): GrantStatus => { return new AtManagerInner().checkAccessTokenANI(tokenID,
-                        permissionName) as GrantStatus;});
-                    p1.then((e: NullishType) => {
-                        resolve(e as GrantStatus);
-                    }).catch((err: BusinessError): void => {
-                        reject(err);
-                    });
+                    => void, reject: (error: BusinessError) => void) => {
+                let p1 = taskpool.execute((): GrantStatus => { return new AtManagerInner().checkAccessTokenANI(tokenID,
+                    permissionName) as GrantStatus;});
+                p1.then((e: NullishType) => {
+                    resolve(e as GrantStatus);
+                }).catch((err: BusinessError): void => {
+                    reject(err);
                 });
+            });
             return p;
         }
 
@@ -191,17 +191,14 @@ export default namespace abilityAccessCtrl {
             validateRequestParams(context, permissionList);
             let p2 = taskpool.execute((): PermissionRequestResult => {
                 return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
-                p2.then((e: NullishType) => {
-                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`AsyncCallback success.`);
-                    let retError = new BusinessError<void>();
-                    callback(retError, e as PermissionRequestResult)
-                },(err: BusinessError): void=> {
-                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
-                    if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
-                        throw err;
-                    }
-                    callback(err, PermissionRequestResult)
-                })
+            p2.then((e: NullishType) => {
+                hilog.info(LOG_TAG, 'requestPermissionsFromUser',`AsyncCallback success.`);
+                let retError = new BusinessError<void>();
+                callback(retError, e as PermissionRequestResult)
+            },(err: BusinessError): void=> {
+                hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
+                callback(err, PermissionRequestResult)
+            })
         }
 
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>): 
@@ -209,19 +206,16 @@ export default namespace abilityAccessCtrl {
             validateRequestParams(context, permissionList);
             let p = new Promise<PermissionRequestResult>((resolve: (v: PermissionRequestResult) => 
                 void, reject: (error: BusinessError) => void) => {
-                    let p1 = taskpool.execute((): PermissionRequestResult =>
+                let p1 = taskpool.execute((): PermissionRequestResult =>
                     { return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
-                    p1.then((e: NullishType)=> {
-                        hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise success.`);
-                        let r : PermissionRequestResult =  e as PermissionRequestResult;
-                        resolve(r);
-                    }).catch((err: BusinessError): void => {
-                        hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
-                        if (err.code == STSErrorCode.STS_ERROR_PARAM_ILLEGAL) {
-                            throw err;
-                        }
-                        reject(err);
-                    });
+                p1.then((e: NullishType)=> {
+                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise success.`);
+                    let r : PermissionRequestResult =  e as PermissionRequestResult;
+                    resolve(r);
+                }).catch((err: BusinessError): void => {
+                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
+                    reject(err);
+                });
             });
             return p;
         }
