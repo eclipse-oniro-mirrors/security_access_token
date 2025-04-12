@@ -538,6 +538,13 @@ public:
      */
     static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
 #endif
+
+    /**
+     * Whether it is a atomic service
+     * @param tokenId token id.
+     * @return bool
+     */
+    static bool IsAtomicServiceByFullTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -88,6 +88,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetKernelPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
+        OHOS::Security::AccessToken::AccessTokenKit::IsAtomicServiceByFullTokenID*;
         "";
         "";
     };
