@@ -90,7 +90,7 @@ uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, 
 {
     cJSON *strArrJson = cJSON_GetObjectItem(cjsonItem, attr->strKey);
     int32_t size = cJSON_GetArraySize(strArrJson);
-    if (size > attr->maxStrNum) {
+    if (size > MAX_MALLOC_SIZE) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:size = %d is invalid.", __func__, size);
         return ATRET_FAILED;
     }

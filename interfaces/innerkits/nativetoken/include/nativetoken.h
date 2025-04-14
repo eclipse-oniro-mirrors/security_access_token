@@ -42,6 +42,7 @@ extern "C" {
 #define TOKEN_RANDOM_MASK ((1 << 20) - 1)
 #define MAX_RETRY_LOCK_TIMES 10
 #define SLEEP_TIME (500*1000)
+#define MAX_MALLOC_SIZE 8192
 
 #define ATRET_FAILED 1
 #define ATRET_SUCCESS 0
