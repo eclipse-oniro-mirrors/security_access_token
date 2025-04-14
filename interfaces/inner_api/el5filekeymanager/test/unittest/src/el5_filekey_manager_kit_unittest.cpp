@@ -16,6 +16,7 @@
 #include "el5_filekey_manager_kit_unittest.h"
 
 #include "accesstoken_kit.h"
+#include "user_app_key_info.h"
 #include "el5_filekey_callback_interface_stub.h"
 #include "el5_filekey_manager_error.h"
 #include "el5_filekey_manager_kit.h"
@@ -135,6 +136,26 @@ HWTEST_F(El5FilekeyManagerKitTest, GetUserAppKey001, TestSize.Level1)
     int32_t userId = 100;
     std::vector<std::pair<int32_t, std::string>> keyInfos;
     ASSERT_EQ(El5FilekeyManagerKit::GetUserAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: UserAppKeyInfo001
+ * @tc.desc: interface coverage
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerKitTest, UserAppKeyInfo001, TestSize.Level0)
+{
+    std::string mockKeyInfo("mockKeyInfo");
+    UserAppKeyInfo src(100, mockKeyInfo);
+    OHOS::Parcel parcel{};
+    EXPECT_TRUE(src.Marshalling(parcel));
+
+    UserAppKeyInfo *dst = UserAppKeyInfo::Unmarshalling(parcel);
+    EXPECT_NE(dst, nullptr);
+    EXPECT_EQ(src.first, dst->first);
+    EXPECT_EQ(src.second, dst->second);
+    delete dst;
 }
 
 /**

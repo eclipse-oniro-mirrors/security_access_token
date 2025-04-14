@@ -18,7 +18,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_service_mock_unittest") {
     subsystem_name = "accesscontrol"
     part_name = "access_token"
-    module_out_path = "access_token/access_token"
+    module_out_path = "access_token/el5_filekey_manager"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
@@ -85,7 +85,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_service_unittest") {
     subsystem_name = "accesscontrol"
     part_name = "access_token"
-    module_out_path = "access_token/access_token"
+    module_out_path = "access_token/el5_filekey_manager"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
@@ -148,7 +148,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("el5_filekey_manager_stub_unittest") {
     subsystem_name = "accesscontrol"
     part_name = "access_token"
-    module_out_path = "access_token/access_token"
+    module_out_path = "access_token/el5_filekey_manager"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
