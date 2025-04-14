@@ -6083,6 +6083,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ALLOW_ACCESS_TIPS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 18,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GET_DOMAIN_ACCOUNT_SERVER_CONFIGS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
