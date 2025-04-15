@@ -25,7 +25,7 @@ namespace Security {
 namespace AccessToken {
 class IBackgroundTaskSubscriber : public IRemoteBroker {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.resourceschedule.IBackgroundTaskSubscriber");
+    DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.BackgroundTaskMgr.IBackgroundTaskSubscriber");
 
     virtual void OnContinuousTaskStart(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) = 0;
