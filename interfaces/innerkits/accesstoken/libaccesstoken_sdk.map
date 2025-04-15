@@ -86,6 +86,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateSecCompEnhance(int, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSecCompEnhance(int, OHOS::Security::AccessToken::SecCompEnhanceData&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetKernelPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetSelfPermissionStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::TypePermissionOper&)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
         "";

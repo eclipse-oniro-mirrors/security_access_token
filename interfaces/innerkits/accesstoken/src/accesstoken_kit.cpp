@@ -37,6 +37,7 @@ static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
+static const int MAX_LENGTH = 256;
 } // namespace
 
 PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
@@ -277,6 +278,14 @@ int AccessTokenKit::GetNativeTokenInfo(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
+}
+
+int32_t AccessTokenKit::GetSelfPermissionStatus(const std::string& permissionName, PermissionOper& status)
+{
+    if (permissionName.empty() || permissionName.size() > MAX_LENGTH) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetSelfPermissionStatus(permissionName, status);
 }
 
 PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionListState>& permList,

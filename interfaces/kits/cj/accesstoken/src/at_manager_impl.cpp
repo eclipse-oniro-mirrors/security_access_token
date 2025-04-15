@@ -33,7 +33,7 @@ namespace CJSystemapi {
 std::mutex g_lockForPermStateChangeRegisters;
 std::vector<RegisterPermStateChangeInfo*> g_permStateChangeRegisters;
 std::mutex g_lockCache;
-std::map<std::string, PermissionStatusCache> g_cache;
+std::map<std::string, GrantStatusCache> g_cache;
 static PermissionParamCache g_paramCache;
 std::mutex g_lockForPermRequestCallbacks;
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
