@@ -49,6 +49,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
@@ -91,9 +92,18 @@ PermissionManager::PermissionManager()
     if (ret < 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d", ret);
         paramValue_ = 0;
+    } else {
+        paramValue_ = static_cast<uint64_t>(std::atoll(value));
+    }
+
+    char flagValue[VALUE_MAX_LEN] = {0};
+    ret = GetParameter(PERMISSION_STATUS_FLAG_CHANGE_KEY, "", flagValue, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Return default flag value, ret=%{public}d", ret);
+        paramFlagValue_ = 0;
         return;
     }
-    paramValue_ = static_cast<uint64_t>(std::atoll(value));
+    paramFlagValue_ = static_cast<uint64_t>(std::atoll(flagValue));
 }
 
 PermissionManager::~PermissionManager()
@@ -317,6 +327,18 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
     }
 }
 
+void PermissionManager::ParamFlagUpdate()
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permFlagParamSetLock_);
+    paramFlagValue_++;
+    LOGD(ATM_DOMAIN, ATM_TAG,
+        "paramFlagValue_ change %{public}llu", static_cast<unsigned long long>(paramFlagValue_));
+    int32_t res = SetParameter(PERMISSION_STATUS_FLAG_CHANGE_KEY, std::to_string(paramFlagValue_).c_str());
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter failed %{public}d", res);
+    }
+}
+
 void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
@@ -365,6 +387,10 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             "INT_VAL2", static_cast<int32_t>(flag), "NEED_KILL", needKill);
         return ret;
     }
+
+    // notify flag change
+    ParamFlagUpdate();
+
     if (statusChanged) {
         NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke

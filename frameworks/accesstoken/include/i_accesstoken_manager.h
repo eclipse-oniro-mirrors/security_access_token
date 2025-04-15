@@ -61,6 +61,7 @@ public:
     virtual int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
         int32_t userID = 0) = 0;
     virtual int32_t RequestAppPermOnSetting(AccessTokenID tokenID) = 0;
+    virtual int32_t GetSelfPermissionStatus(const std::string& permissionName, int32_t& status) = 0;
     virtual PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int32_t GetPermissionsStatus(

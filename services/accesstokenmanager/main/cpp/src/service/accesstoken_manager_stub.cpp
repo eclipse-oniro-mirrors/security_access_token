@@ -204,6 +204,24 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     }
 }
 
+void AccessTokenManagerStub::GetSelfPermissionStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    std::string permissionName;
+    if (!data.ReadString(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadString fail");
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+
+    int32_t status;
+    int32_t result = this->GetSelfPermissionStatus(permissionName, status);
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(status), "WriteInt32 failed.");
+}
+
 void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
 {
     std::vector<PermissionListStateParcel> permList;
@@ -1289,6 +1307,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION)] =
         &AccessTokenManagerStub::ClearUserGrantedPermissionStateInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_SELF_PERMISSION_STATUS)] =
+        &AccessTokenManagerStub::GetSelfPermissionStatusInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =
         &AccessTokenManagerStub::GetSelfPermissionsStateInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSIONS_STATUS)] =

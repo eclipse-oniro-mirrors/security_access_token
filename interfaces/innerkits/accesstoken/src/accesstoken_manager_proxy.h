@@ -60,6 +60,7 @@ public:
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
+    int32_t GetSelfPermissionStatus(const std::string& permissionName, int32_t& status) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetPermissionsStatus(

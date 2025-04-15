@@ -39,6 +39,7 @@ group("fuzztest") {
     "getreqpermissionbynamestub_fuzzer:GetReqPermissionByNameStubFuzzTest",
     "getreqpermissionsstub_fuzzer:GetReqPermissionsStubFuzzTest",
     "getselfpermissionsstatestub_fuzzer:GetSelfPermissionsStateStubFuzzTest",
+    "getselfpermissionstatusstub_fuzzer:GetSelfPermissionStatusStubFuzzTest",
     "gettokenidbyuseridstub_fuzzer:GetTokenIDByUserIDStubFuzzTest",
     "gettokentypestub_fuzzer:GetTokenTypeStubFuzzTest",
     "grantpermissionforspecifiedtimestub_fuzzer:GrantPermissionForSpecifiedTimeStubFuzzTest",
