@@ -126,7 +126,11 @@ public:
 void AccessTokenInfoManagerTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-    AccessTokenInfoManager::GetInstance().Init();
+    uint32_t hapSize = 0;
+    uint32_t nativeSize = 0;
+    uint32_t pefDefSize = 0;
+    uint32_t dlpSize = 0;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
 }
 
 void AccessTokenInfoManagerTest::TearDownTestCase()
@@ -1560,7 +1564,11 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
 {
     AccessTokenInfoManager::GetInstance().hasInited_ = true;
-    AccessTokenInfoManager::GetInstance().Init();
+    uint32_t hapSize = 0;
+    uint32_t nativeSize = 0;
+    uint32_t pefDefSize = 0;
+    uint32_t dlpSize = 0;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }
@@ -1586,7 +1594,8 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
 {
     std::shared_ptr<HapTokenInfoInner> info = nullptr;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+    AccessTokenID oriTokenId = 0;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info, oriTokenId));
 }
 
 /**
@@ -1613,7 +1622,8 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(infoPtr));
+    AccessTokenID oriTokenId = 0;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(infoPtr, oriTokenId));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }

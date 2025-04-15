@@ -17,6 +17,7 @@
 #define ACCESSTOKEN_HISYSEVENT_ADAPTER_H
 
 #include <string>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -38,16 +39,41 @@ enum CommonSceneCode {
     AT_COMMOM_START = 0,
     AT_COMMON_FINISH = 1,
 };
+enum AddHapSceneCode {
+    INSTALL_START = 0,
+    TOKEN_ID_CHANGE,
+    INIT,
+    MAP,
+    INSTALL_FINISH,
+};
 struct AccessTokenDfxInfo {
+    AddHapSceneCode sceneCode;
+    AccessTokenID tokenId;
+    AccessTokenID oriTokenId;
+    AccessTokenIDEx tokenIdEx;
+    int32_t userId;
+    std::string bundleName;
+    int32_t instIndex;
+    HapDlpType dlpType;
+    bool isRestore;
     std::string permInfo;
     std::string aclInfo;
     std::string preauthInfo;
     std::string extendInfo;
+    uint64_t duration;
+    int32_t errorCode;
+    int32_t pid;
+    uint32_t hapSize;
+    uint32_t nativeSize;
+    uint32_t permDefSize;
+    uint32_t dlpSize;
+    uint32_t parseConfigFlag;
 };
 void ReportSysEventPerformance();
-void ReportSysEventServiceStart(int32_t pid, uint32_t hapSize, uint32_t nativeSize, uint32_t permDefSize);
+void ReportSysEventServiceStart(const AccessTokenDfxInfo& info);
 void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg, int32_t errCode);
 void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode);
+void ReportSysEventAddHap(const AccessTokenDfxInfo& info);
 
 } // namespace AccessToken
 } // namespace Security

@@ -19,6 +19,8 @@ ACCESSTOKEN_SERVICE_START:
   HAP_SIZE: {type: UINT32, desc: hap token size}
   NATIVE_SIZE: {type: UINT32, desc: native token size}
   PERM_DEFINITION_SIZE: {type: UINT32, desc: permission definition size}
+  DLP_PERMISSION_SIZE: {type: UINT32, desc: dlp permission size}
+  PARSE_CONFIG_FLAG: {type: UINT32, desc: parse config policy file value flag}
 
 ACCESSTOKEN_SERVICE_START_ERROR:
   __BASE: {type: FAULT, level: CRITICAL, desc: service startup error}
@@ -58,10 +60,21 @@ PERMISSION_SYNC:
 
 ADD_HAP:
   __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: add a hap to device}
+  SCENE_CODE: {type: INT32, desc: scene code}
   TOKENID: {type: UINT32, desc: token id}
+  ORI_TOKENID: {type: UINT32, desc: original token id}
+  TOKENIDEX: {type: UINT64, desc: token id ex}
   USERID: {type: INT32, desc: user id}
   BUNDLENAME: {type: STRING, desc: bundle name}
   INSTINDEX: {type: INT32, desc: inst index}
+  DLP_TYPE: {type: UINT32, desc: dlp type}
+  IS_RESTORE: {type: BOOL, desc: is restore scene}
+  PERM_INFO: {type: STRING, desc: request permission list}
+  ACL_INFO: {type: STRING, desc: acl permission list}
+  PREAUTH_INFO: {type: STRING, desc: preauth permission list}
+  EXTEND_INFO: {type: STRING, desc: extend permission map}
+  DURATION: {type: UINT64, desc: time required for installing an application}
+  ERROR_CODE: {type: INT32, desc: error code}
 
 DEL_HAP:
   __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: delete a hap from device}

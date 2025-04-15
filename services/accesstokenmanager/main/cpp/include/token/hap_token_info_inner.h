@@ -52,6 +52,7 @@ public:
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
     int GetDlpType() const;
+    AccessTokenAttr GetAttr() const;
     std::string GetBundleName() const;
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;

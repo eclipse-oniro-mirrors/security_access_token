@@ -46,7 +46,7 @@ class AccessTokenInfoManager final {
 public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
-    void Init();
+    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
@@ -104,10 +104,14 @@ private:
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);
 
+    int32_t AddHapInfoToCache(const GenericValues& tokenValue, const std::vector<GenericValues>& permStateRes,
+        const std::vector<GenericValues>& extendedPermRes);
     void InitHapTokenInfos(uint32_t& hapSize);
-    int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info);
+    void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
+    int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
+    int32_t RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId);
     int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
         const std::string& appId, const HapPolicy& policy, bool isUpdate);
     int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);

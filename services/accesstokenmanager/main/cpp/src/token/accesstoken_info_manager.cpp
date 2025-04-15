@@ -85,7 +85,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     this->hasInited_ = false;
 }
 
-void AccessTokenInfoManager::Init()
+void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
     if (hasInited_) {
@@ -105,23 +105,26 @@ void AccessTokenInfoManager::Init()
         ReportSysEventServiceStartError(
             INIT_NATIVE_TOKENINFO_ERROR, "GetAllNativeTokenInfo fail from native json.", ret);
     }
-    uint32_t hapSize = 0;
-    uint32_t nativeSize = tokenInfos.size();
-    InitHapTokenInfos(hapSize);
-    InitNativeTokenInfos(tokenInfos);
-    uint32_t pefDefSize = GetDefPermissionsSize();
-    ReportSysEventServiceStart(getpid(), hapSize, nativeSize, pefDefSize);
-    LOGI(ATM_DOMAIN, ATM_TAG, "InitTokenInfo end, hapSize %{public}d, nativeSize %{public}d, pefDefSize %{public}d.",
-        hapSize, nativeSize, pefDefSize);
 
 #ifdef SUPPORT_SANDBOX_APP
     std::vector<PermissionDlpMode> dlpPerms;
     ret = policy->GetDlpPermissions(dlpPerms);
+    dlpSize = dlpPerms.size();
     if (ret == RET_SUCCESS) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Load dlpPer size=%{public}zu.", dlpPerms.size());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Load dlpPer size=%{public}zu.", dlpSize);
         DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
     }
 #endif
+
+    InitHapTokenInfos(hapSize);
+    nativeSize = tokenInfos.size();
+    InitNativeTokenInfos(tokenInfos);
+    pefDefSize = GetDefPermissionsSize();
+
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "InitTokenInfo end, hapSize %{public}u, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
+        hapSize, nativeSize, pefDefSize, dlpSize);
+
     hasInited_ = true;
     LOGI(ATM_DOMAIN, ATM_TAG, "Init success");
 }
@@ -151,6 +154,57 @@ void AccessTokenInfoManager::InitDmCallback(void)
 }
 #endif
 
+int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValue,
+    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes)
+{
+    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+    if (result != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
+            "RegisterTokenId fail, " + bundle + std::to_string(tokenId), result);
+        return result;
+    }
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes, extendedPermRes);
+    if (result != RET_SUCCESS) {
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u restore failed.", tokenId);
+        return result;
+    }
+
+    AccessTokenID oriTokenId = 0;
+    result = AddHapTokenInfo(hap, oriTokenId);
+    if (result != RET_SUCCESS) {
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add failed.", tokenId);
+        ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
+            "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), result);
+        return result;
+    }
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
+    tokenIdEx.tokenIdExStruct.tokenAttr = hap->GetAttr();
+
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::INIT;
+    dfxInfo.tokenId = tokenId;
+    dfxInfo.tokenIdEx = tokenIdEx;
+    dfxInfo.userId = hap->GetUserID();
+    dfxInfo.bundleName = hap->GetBundleName();
+    dfxInfo.instIndex = hap->GetInstIndex();
+    ReportSysEventAddHap(dfxInfo);
+
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        " Restore hap token %{public}u bundle name %{public}s user %{public}d,"
+        " permSize %{public}d, inst %{public}d ok!",
+        tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
+
+    return RET_SUCCESS;
+}
+
 void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
 {
     GenericValues conditionValue;
@@ -171,36 +225,11 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
     }
     for (const GenericValues& tokenValue : hapTokenRes) {
-        AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-        int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-        if (result != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
-            ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
-                "RegisterTokenId fail, " + bundle + std::to_string(tokenId), result);
-            continue;
-        }
-        std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-        result = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes, extendedPermRes);
-        if (result != RET_SUCCESS) {
-            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u restore failed.", tokenId);
-            continue;
-        }
-
-        result = AddHapTokenInfo(hap);
-        if (result != RET_SUCCESS) {
-            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add failed.", tokenId);
-            ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
-                "AddHapTokenInfo fail, " + bundle + std::to_string(tokenId), result);
+        ret = AddHapInfoToCache(tokenValue, permStateRes, extendedPermRes);
+        if (ret != RET_SUCCESS) {
             continue;
         }
         hapSize++;
-        LOGI(ATM_DOMAIN, ATM_TAG,
-            " Restore hap token %{public}u bundle name %{public}s user %{public}d,"
-            " permSize %{public}d, inst %{public}d ok!",
-            tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
     }
 }
 
@@ -218,7 +247,7 @@ std::string AccessTokenInfoManager::GetHapUniqueStr(const std::shared_ptr<HapTok
     return GetHapUniqueStr(info->GetUserID(), info->GetBundleName(), info->GetInstIndex());
 }
 
-int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info)
+int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId)
 {
     if (info == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token info is null.");
@@ -245,13 +274,9 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         hapTokenInfoMap_[id] = info;
     }
     if (idRemoved != INVALID_TOKENID) {
+        oriTokenId = idRemoved;
         RemoveHapTokenInfo(idRemoved);
     }
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
-        "INSTINDEX", info->GetInstIndex());
-
     // add hap to kernel
     int32_t userId = info->GetUserID();
     {
@@ -489,27 +514,40 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
             continue;
         }
         if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "acl extended content is unvalid.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Acl extended content is invalid.");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
     return ERR_OK;
 }
 
-int AccessTokenInfoManager::CreateHapTokenInfo(
-    const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx)
+void AccessTokenInfoManager::ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+    AccessTokenID oriTokenId)
 {
-    if (CheckHapInfoParam(info, policy) != ERR_OK) {
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    AccessTokenID tokenId = info.tokenID;
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::TOKEN_ID_CHANGE;
+    dfxInfo.tokenId = hapInfo->GetTokenID();
+    dfxInfo.oriTokenId = oriTokenId;
+    dfxInfo.userId = hapInfo->GetUserID();
+    dfxInfo.bundleName = hapInfo->GetBundleName();
+    dfxInfo.instIndex = hapInfo->GetInstIndex();
+    ReportSysEventAddHap(dfxInfo);
+}
+
+int32_t AccessTokenInfoManager::RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId)
+{
+    int32_t res = RET_SUCCESS;
+
     if (info.isRestore) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "isRestore is true, tokenId is %{public}u", tokenId);
-        int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+        LOGI(ATM_DOMAIN, ATM_TAG, "IsRestore is true, tokenId is %{public}u.", info.tokenID);
+
+        res = AccessTokenIDManager::GetInstance().RegisterTokenId(info.tokenID, TOKEN_HAP);
         if (res != RET_SUCCESS) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Token Id register failed, res is %{public}d", res);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token Id register failed, errCode is %{public}d.", res);
             return res;
         }
+
+        tokenId = info.tokenID;
     } else {
         int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
         int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
@@ -520,6 +558,20 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         }
     }
 
+    return res;
+}
+
+int AccessTokenInfoManager::CreateHapTokenInfo(
+    const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx)
+{
+    if (CheckHapInfoParam(info, policy) != ERR_OK) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    AccessTokenID tokenId;
+    int32_t ret = RegisterTokenId(info, tokenId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
 #ifdef SUPPORT_SANDBOX_APP
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     HapPolicy policyNew = policy;
@@ -530,14 +582,26 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
-    AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false);
-    int ret = AddHapTokenInfo(tokenInfo);
+    ret = AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "AddHapTokenInfoToDb failed, errCode is %{public}d.", ret);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        return ret;
+    }
+
+    AccessTokenID oriTokenID = 0;
+    ret = AddHapTokenInfo(tokenInfo, oriTokenID);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         RemoveHapTokenInfoFromDb(tokenInfo);
         return ret;
     }
+
+    if (oriTokenID != 0) {
+        ReportAddHapIdChange(tokenInfo, oriTokenID);
+    }
+
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d isRestore %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex(), info.isRestore);
@@ -722,11 +786,20 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(mapID, hapSync);
     hap->SetRemote(true);
 
-    int ret = AddHapTokenInfo(hap);
+    AccessTokenID oriTokenId = 0;
+    int ret = AddHapTokenInfo(hap, oriTokenId);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Add local token failed.");
         return ret;
     }
+
+    AccessTokenDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::MAP;
+    dfxInfo.tokenId = hap->GetTokenID();
+    dfxInfo.userId = hap->GetUserID();
+    dfxInfo.bundleName = hap->GetBundleName();
+    dfxInfo.instIndex = hap->GetInstIndex();
+    ReportSysEventAddHap(dfxInfo);
 
     return RET_SUCCESS;
 }
