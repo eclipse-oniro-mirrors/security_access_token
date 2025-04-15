@@ -234,7 +234,7 @@
             "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
@@ -2549,7 +2549,7 @@
             "availableType": "NORMAL",
             "since": 11,
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false
         },
         {
