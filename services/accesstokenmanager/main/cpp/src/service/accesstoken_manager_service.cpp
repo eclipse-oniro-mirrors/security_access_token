@@ -260,6 +260,21 @@ int AccessTokenManagerService::GetReqPermissions(
     return ret;
 }
 
+int32_t AccessTokenManagerService::GetSelfPermissionStatus(const std::string& permissionName, int32_t& status)
+{
+    status = INVALID_OPER;
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    PermissionListStateParcel parcel;
+    parcel.permsState.permissionName = permissionName;
+    parcel.permsState.state = INVALID_OPER;
+    std::vector<PermissionListStateParcel> list{parcel};
+    (void)GetPermissionsState(callingTokenID, list);
+    if (!list.empty()) {
+        status = static_cast<int32_t>(list[0].permsState.state);
+    }
+    return ERR_OK;
+}
+
 int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
     PermissionGrantInfoParcel& infoParcel, int32_t& permOper)
 {

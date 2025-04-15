@@ -342,6 +342,19 @@ HWTEST_F(AccessTokenMockTest, GetPermissionRequestToggleStatus001, TestSize.Leve
 }
 
 /**
+ * @tc.name: GetSelfPermissionStatus001
+ * @tc.desc: GetSelfPermissionStatus with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSelfPermissionStatus001, TestSize.Level1)
+{
+    std::string permission = "ohos.permission.CAMERA";
+    PermissionOper status;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSelfPermissionStatus(permission, status));
+}
+
+/**
  * @tc.name: GetSelfPermissionsState001
  * @tc.desc: GetSelfPermissionsState with proxy is null
  * @tc.type: FUNC
