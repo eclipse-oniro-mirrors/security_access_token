@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,138 +12,11 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("../../../../access_token.gni")
-
-ohos_unittest("libaccesstoken_sdk_test") {
-  subsystem_name = "security"
-  part_name = "access_token"
-  module_out_path = part_name + "/" + part_name
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  branch_protector_ret = "pac_ret"
-
-  include_dirs = [
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/frameworks/common/include",
-    "../include",
-    "../src",
-    "${access_token_path}/interfaces/innerkits/nativetoken/include",
-    "${access_token_path}/interfaces/innerkits/token_setproc/include",
-  ]
-
-  sources = [
-    "unittest/src/accesstoken_deny_test.cpp",
-    "unittest/src/accesstoken_kit_extension_test.cpp",
-    "unittest/src/accesstoken_kit_test.cpp",
-    "unittest/src/accesstoken_location_request_test.cpp",
-    "unittest/src/app_installation_optimized_test.cpp",
-    "unittest/src/clone_app_permission_test.cpp",
-    "unittest/src/remote_token_kit_test.cpp",
-    "unittest/src/security_component_grant_test.cpp",
-  ]
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  deps = [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "../:libaccesstoken_sdk",
-    "../:libtokenid_sdk",
-  ]
-
-  external_deps = [
-    "c_utils:utils",
-    "dsoftbus:softbus_client",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-    "samgr:samgr_proxy",
-  ]
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-  if (dlp_permission_enable == true) {
-    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [ "unittest/src/share_permission_with_sandbox_test.cpp" ]
-  }
-}
-
-ohos_unittest("accesstoken_mock_test") {
-  subsystem_name = "security"
-  part_name = "access_token"
-  module_out_path = part_name + "/" + part_name
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  branch_protector_ret = "pac_ret"
-
-  include_dirs = [
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/frameworks/tokensync/include",
-    "${access_token_path}/interfaces/innerkits/nativetoken/include",
-    "../../token_setproc/include",
-    "../include",
-    "../src",
-  ]
-
-  sources = [
-    "../src/accesstoken_callback_stubs.cpp",
-    "../src/accesstoken_callbacks.cpp",
-    "../src/accesstoken_death_recipient.cpp",
-    "../src/accesstoken_kit.cpp",
-    "../src/accesstoken_manager_client.cpp",
-    "../src/accesstoken_manager_proxy.cpp",
-    "../src/perm_state_change_callback_customize.cpp",
-    "mock/src/iservice_registry.cpp",
-    "unittest/accesstoken_mock_test/accesstoken_kit_test.cpp",
-  ]
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  deps = [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "../:libtokenid_sdk",
-    "//third_party/googletest:gmock_main",
-    "//third_party/googletest:gtest_main",
-  ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "init:libbeget_proxy",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "ipc:libdbinder",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-  ]
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-}
 
 group("unittest") {
   testonly = true
   deps = [
-    ":accesstoken_mock_test",
-    ":libaccesstoken_sdk_test",
-    "tool:SetPermDialogCapTest",
+    "unittest:accesstoken_mock_test",
+    "unittest:libaccesstoken_sdk_test",
   ]
 }

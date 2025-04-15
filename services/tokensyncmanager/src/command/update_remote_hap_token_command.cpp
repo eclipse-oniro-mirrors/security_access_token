@@ -16,7 +16,7 @@
 #include "update_remote_hap_token_command.h"
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
@@ -25,10 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "UpdateRemoteHapTokenCommand"};
-}
 
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
     const std::string &srcDeviceId, const std::string &dstDeviceId, const HapTokenInfoForSync& tokenInfo)
@@ -44,36 +40,37 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
 
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json)
 {
-    nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
-    if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+    CJsonUnique jsonObject = CreateJsonFromString(json);
+    if (jsonObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonObject is invalid.");
         return;
     }
-    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
+    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
 
-    if ((jsonObject.find("HapTokenInfos") != jsonObject.end()) && (jsonObject.at("HapTokenInfos").is_object())) {
-        nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfos").get<nlohmann::json>();
+    CJson *hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfos");
+    if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, updateTokenInfo_);
     }
 }
 
 std::string UpdateRemoteHapTokenCommand::ToJsonPayload()
 {
-    nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
-    j["HapTokenInfos"] = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
-    return j.dump();
+    CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
+    CJsonUnique HapTokenInfos = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
+    AddObjToJson(j, "HapTokenInfos", HapTokenInfos);
+    return PackJsonToString(j);
 }
 
 void UpdateRemoteHapTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "end as: UpdateRemoteHapTokenCommand");
+    LOGD(ATM_DOMAIN, ATM_TAG, "End as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: UpdateRemoteHapTokenCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Execute: start as: UpdateRemoteHapTokenCommand");
 
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
@@ -82,7 +79,7 @@ void UpdateRemoteHapTokenCommand::Execute()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
+        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
@@ -97,13 +94,13 @@ void UpdateRemoteHapTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: UpdateRemoteHapTokenCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Execute: end as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Finish()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Finish: end as: DeleteUidPermissionCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Finish: end as: DeleteUidPermissionCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security

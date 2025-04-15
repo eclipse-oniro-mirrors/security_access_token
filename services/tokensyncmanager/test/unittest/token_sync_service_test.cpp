@@ -28,7 +28,7 @@
 
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
@@ -36,21 +36,22 @@
 #include "device_info_manager.h"
 #include "device_info_repository.h"
 #include "device_info.h"
+#include "device_manager.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 #include "i_token_sync_manager.h"
+#define private public
 #include "remote_command_manager.h"
+#undef private
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
 
 using namespace std;
 using namespace testing::ext;
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
 
 namespace OHOS {
 namespace Security {
@@ -58,7 +59,6 @@ namespace AccessToken {
 static std::vector<std::thread> threads_;
 static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
     std::make_shared<SoftBusDeviceConnectionListener>();
-static std::string g_networkID = "deviceid-1";
 static std::string g_udid = "deviceid-1:udid-001";
 static int32_t g_selfUid;
 static AccessTokenID g_selfTokenId = 0;
@@ -70,13 +70,13 @@ public:
     ~TokenSyncServiceTest();
     static void SetUpTestCase();
     static void TearDownTestCase();
-    void OnDeviceOffline(const DmDeviceInfo &info);
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info);
     void SetUp();
     void TearDown();
     std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
 };
 
-static DmDeviceInfo g_devInfo = {
+static DistributedHardware::DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
     .deviceName = "remote_mock",
@@ -85,7 +85,6 @@ static DmDeviceInfo g_devInfo = {
 };
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
 static constexpr int MAX_RETRY_TIMES = 10;
 static constexpr int32_t DEVICEID_MAX_LEN = 256;
 }
@@ -100,7 +99,7 @@ TokenSyncServiceTest::~TokenSyncServiceTest()
 void NativeTokenGet()
 {
     uint64_t tokenId = 0;
-    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    tokenId = TestCommon::GetNativeTokenIdFromProcess("token_sync_service");
     ASSERT_NE(tokenId, static_cast<AccessTokenID>(0));
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
@@ -109,10 +108,15 @@ void TokenSyncServiceTest::SetUpTestCase()
 {
     g_selfUid = getuid();
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
+
     NativeTokenGet();
 }
 void TokenSyncServiceTest::TearDownTestCase()
-{}
+{
+    SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
+}
 void TokenSyncServiceTest::SetUp()
 {
     tokenSyncManagerService_ = DelayedSingleton<TokenSyncManagerService>::GetInstance();
@@ -120,7 +124,7 @@ void TokenSyncServiceTest::SetUp()
 }
 void TokenSyncServiceTest::TearDown()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "TearDown start.");
     tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
@@ -133,13 +137,13 @@ void TokenSyncServiceTest::TearDown()
     }
 }
 
-void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
+void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
@@ -150,7 +154,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(udid);
         DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, offline failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "uuid or udid is empty, offline failed.");
     }
 }
 
@@ -251,6 +255,18 @@ public:
     TestBaseRemoteCommand() {}
     virtual ~TestBaseRemoteCommand() = default;
 };
+
+static void DeleteAndAllocToken(AccessTokenID& tokenId)
+{
+    // create local token
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+
+    AccessTokenIDEx tokenIdEx1 = {0};
+    TestCommon::AllocTestHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx1);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx1.tokenIdExStruct.tokenID);
+}
 
 /**
  * @tc.name: ProcessOneCommand001
@@ -423,14 +439,13 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
 {
-    NativeTokenInfoForSync native1 = {
-        .baseInfo.apl = APL_NORMAL,
-        .baseInfo.ver = 1,
-        .baseInfo.processName = "token_sync_test",
-        .baseInfo.dcap = {"AT_CAP"},
-        .baseInfo.tokenID = 1,
-        .baseInfo.tokenAttr = 0,
-        .baseInfo.nativeAcls = {},
+    NativeTokenInfoBase native1 = {
+        .ver = 1,
+        .processName = "token_sync_test",
+        .dcap = {"AT_CAP"},
+        .tokenID = 1,
+        .tokenAttr = 0,
+        .nativeAcls = {},
     };
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
     EXPECT_NE(nullptr, cmd->ToNativeTokenInfoJson(native1));
@@ -445,57 +460,47 @@ HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
 HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
 {
     HapTokenInfo baseInfo = {
-        .apl = APL_NORMAL,
         .ver = 1,
         .userID = 1,
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
-        .appID = "testtesttesttest",
-        .deviceID = "id",
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
 
-    PermissionStateFull infoManagerTestState = {
+    PermissionStatus infoManagerTestState = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
-    std::vector<PermissionStateFull> permStateList;
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+    std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
         .permStateList = permStateList
     };
-    nlohmann::json hapTokenJson;
+    CJsonUnique hapTokenJson;
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
     hapTokenJson = cmd->ToHapTokenInfosJson(remoteTokenInfo);
 
     HapTokenInfoForSync hap;
-    cmd->FromHapTokenBasicInfoJson(hapTokenJson, hap.baseInfo);
-    cmd->FromPermStateListJson(hapTokenJson, hap.permStateList);
+    cmd->FromHapTokenBasicInfoJson(hapTokenJson.get(), hap.baseInfo);
+    cmd->FromPermStateListJson(hapTokenJson.get(), hap.permStateList);
 
-    PermissionStateFull state1 = {
+    PermissionStatus state1 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local", "local1"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
-    nlohmann::json permStateJson;
-    cmd->ToPermStateJson(permStateJson, state1);
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+    CJsonUnique permStateJson = CreateJson();
+    cmd->ToPermStateJson(permStateJson.get(), state1);
 
-    PermissionStateFull state2 = {
+    PermissionStatus state2 = {
         .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED, PermissionFlag::PERMISSION_SYSTEM_FIXED}};
-    cmd->ToPermStateJson(permStateJson, state2);
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+    cmd->ToPermStateJson(permStateJson.get(), state2);
 
     EXPECT_EQ(hap.baseInfo.tokenID, remoteTokenInfo.baseInfo.tokenID);
-    EXPECT_EQ(hap.baseInfo.apl, remoteTokenInfo.baseInfo.apl);
 }
 
 /**
@@ -508,28 +513,29 @@ HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    nlohmann::json nativeTokenListJsonNull;
-    NativeTokenInfoForSync tokenNull;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull, tokenNull);
+    CJsonUnique nativeTokenListJsonNull = CreateJson();
+    NativeTokenInfoBase tokenNull;
+    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull.get(), tokenNull);
 
-    nlohmann::json hapTokenJsonNull;
+    CJsonUnique hapTokenJsonNull = CreateJson();
     HapTokenInfo hapTokenBasicInfoNull;
-    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull, hapTokenBasicInfoNull);
+    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull.get(), hapTokenBasicInfoNull);
 
-    NativeTokenInfoForSync native1 = {
-        .baseInfo.apl = APL_NORMAL,
-        .baseInfo.ver = 2,
-        .baseInfo.processName = "token_sync_test",
-        .baseInfo.dcap = {"AT_CAP"},
-        .baseInfo.tokenID = 1,
-        .baseInfo.tokenAttr = 0,
-        .baseInfo.nativeAcls = {},
+    NativeTokenInfoBase native1 = {
+        .apl = APL_NORMAL,
+        .ver = 2,
+        .processName = "token_sync_test",
+        .dcap = {"AT_CAP"},
+        .tokenID = 1,
+        .tokenAttr = 0,
+        .nativeAcls = {},
     };
-    nlohmann::json nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
-    NativeTokenInfoForSync token;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJson, token);
-    EXPECT_EQ(token.baseInfo.processName, "token_sync_test");
-    EXPECT_EQ(token.baseInfo.apl, ATokenAplEnum::APL_NORMAL);
+
+    CJsonUnique nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
+    NativeTokenInfoBase token;
+    cmd->FromNativeTokenInfoJson(nativeTokenListJson.get(), token);
+    EXPECT_EQ(token.processName, "token_sync_test");
+    EXPECT_EQ(token.apl, ATokenAplEnum::APL_NORMAL);
 }
 
 /**
@@ -542,35 +548,32 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    nlohmann::json hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"grantConfig\\\":[{\\\"resDeviceID\\\":\\\"device\\\", "
-        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    std::vector<PermissionStateFull> permStateListNull;
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    CJsonUnique hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+
+    std::vector<PermissionStatus> permStateListNull;
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
+        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"isGeneral\\\":1, \\\"grantConfig\\\":[{"
-        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
-    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 }
 
@@ -582,39 +585,31 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo002 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo002 start.");
 
     ResetUuidMock();
 
-    // create local token
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = 0;
+    DeleteAndAllocToken(tokenId);
 
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":";
-    std::string tokenJsonStr = std::to_string(tokenIdEx.tokenIdExStruct.tokenID);
     std::string jsonAfter = ",\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
         "\\\"srcDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
         "\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    std::string recvJson = jsonBefore + tokenJsonStr + jsonAfter;
+    std::string recvJson = jsonBefore + std::to_string(tokenId) + jsonAfter;
 
     unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
     ResetSendMessFlagMock();
+
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo); // create channel
 
     char networkId[DEVICEID_MAX_LEN + 1];
@@ -645,13 +640,12 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo003 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo003 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // apl is error
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":11,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -678,13 +672,12 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo004 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo004 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // lost tokenID
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -711,13 +704,12 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo005 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo005 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // instIndex is not number
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":\\\"aaa\\\","
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
@@ -745,12 +737,11 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo006 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo006 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // mock_token_sync lost \\\"
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync,\\\"deviceID\\\":"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync,"
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
@@ -780,13 +771,12 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo007 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo007 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
     // statusCode error
     g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":11,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"mock_token_sync\\\","
+        "\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
@@ -814,18 +804,18 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo008 start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo008 start.");
     // create local token
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID);
 
     // tokenID is not exist
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
-        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\"{\\\"HapTokenInfo\\\":{\\\"bundleName\\\":\\\"\\\","
+        "\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":";
@@ -856,166 +846,6 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
 }
 
 /**
- * @tc.name: SyncNativeTokens001
- * @tc.desc: when device is online, sync remote nativetoken which has no dcaps
- * @tc.type: FUNC
- * @tc.require:AR000GK6T6
- */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens001 start.");
-    g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
-    // 0x28000001 token has no dcaps
-    g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"NativeTokenInfos\\\":[{\\\"apl\\\":3,\\\"processName\\\":\\\"attest\\\","
-        "\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088640,\\\"version\\\":1,"
-        "\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]},"
-        "{\\\"apl\\\":3,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
-        "\\\"version\\\":1,\\\"dcaps\\\":[]}],"
-        "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
-        "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
-        "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
-        "\"type\":\"response\"}";
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    sleep(3);
-
-    ResetSendMessFlagMock();
-    threads_.emplace_back(std::thread(SendTaskThread));
-    sleep(6);
-
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-    int ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
-    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
-    ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
-    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
-
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-}
-
-/**
- * @tc.name: SyncNativeTokens002
- * @tc.desc: when device is online, sync remote nativetokens status failed
- * @tc.type: FUNC
- * @tc.require:AR000GK6T6
- */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens002 start.");
-    g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
-    g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"NativeTokenInfos\\\":[{\\\"apl\\\":3,\\\"processName\\\":\\\"attest\\\","
-        "\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088640,\\\"version\\\":1,"
-        "\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]},"
-        "{\\\"apl\\\":3,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
-        "\\\"version\\\":1,\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]}],"
-        "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
-        "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
-        "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":-2,"
-        "\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\",\"type\":\"response\"}";
-
-
-    threads_.emplace_back(std::thread(SendTaskThread));
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    sleep(6);
-
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-}
-
-/**
- * @tc.name: SyncNativeTokens003
- * @tc.desc: when device is online, sync remote nativetokens which parameter is wrong
- * @tc.type: FUNC
- * @tc.require:AR000GK6T6
- */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens003, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens003 start.");
-    g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
-    // apl is error
-    g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"NativeTokenInfos\\\":[{\\\"apl\\\":11,\\\"processName\\\":\\\"attest\\\","
-        "\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088640,\\\"version\\\":1,"
-        "\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]},"
-        "{\\\"apl\\\":11,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
-        "\\\"version\\\":1,\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]}],"
-        "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
-        "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
-        "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
-        "\"type\":\"response\"}";
-
-    threads_.emplace_back(std::thread(SendTaskThread));
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    sleep(6);
-
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
-}
-
-/**
- * @tc.name: SyncNativeTokens004
- * @tc.desc: test remote hap recv func
- * @tc.type: FUNC
- * @tc.require:AR000GK6T5
- */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens004 start.");
-
-    ResetUuidMock();
-
-    std::string recvJson =
-        "{\"commandName\":\"SyncRemoteNativeTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
-        "\"{\\\"NativeTokenInfos\\\":null,\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestTokenId\\\":,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
-        "\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
-    int recvLen = 0x1000;
-    CompressMock(recvJson, recvBuffer, recvLen);
-
-    ResetSendMessFlagMock();
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    char networkId[DEVICEID_MAX_LEN + 1];
-    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
-
-    PeerSocketInfo info = {
-        .networkId = networkId,
-    };
-    SoftBusSocketListener::OnBind(1, info);
-    SoftBusSocketListener::OnClientBytes(1, recvBuffer, recvLen);
-    int count = 0;
-    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
-        sleep(1);
-        count++;
-    }
-    free(recvBuffer);
-
-    std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "ec23cd2d-");
-}
-
-/**
  * @tc.name: DeleteRemoteTokenCommand001
  * @tc.desc: test delete remote token command
  * @tc.type: FUNC
@@ -1042,34 +872,6 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
     deleteRemoteTokenCommand->Execute();
     deleteRemoteTokenCommand->Finish();
     ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.statusCode, Constant::SUCCESS);
-}
-
-/**
- * @tc.name: NewSyncRemoteNativeTokenCommand001
- * @tc.desc: test delete remote token command
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(TokenSyncServiceTest, NewSyncRemoteNativeTokenCommand001, TestSize.Level1)
-{
-    std::string srcDeviceId = "001";
-    std::string dstDeviceId = "002";
-    std::shared_ptr<SyncRemoteNativeTokenCommand> nativeTokenCommand =
-        RemoteCommandFactory::GetInstance().NewSyncRemoteNativeTokenCommand(srcDeviceId, dstDeviceId);
-    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.commandName, "SyncRemoteNativeTokenCommand");
-    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.uniqueId, "SyncRemoteNativeTokenCommand");
-    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.srcDeviceId, srcDeviceId);
-    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.dstDeviceId, dstDeviceId);
-    ASSERT_EQ(
-        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
-        nativeTokenCommand->remoteProtocol_.responseVersion, 2);
-    ASSERT_EQ(
-        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
-        nativeTokenCommand->remoteProtocol_.requestVersion, 2);
-    nativeTokenCommand->Finish();
-    nativeTokenCommand->Prepare();
-    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.statusCode, Constant::SUCCESS);
-    nativeTokenCommand->Finish();
 }
 
 /**
@@ -1591,31 +1393,61 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
     SoftBusSocketListener::OnShutdown(OUT_OF_MAP_SOCKET, SHUTDOWN_REASON_UNKNOWN);
 }
 
+/**
+ * @tc.name: ProcessDeviceCommandImmediately001
+ * @tc.desc: ProcessDeviceCommandImmediately function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessDeviceCommandImmediately001, TestSize.Level1)
+{
+    std::string udid = "test_udId_1";
+    RemoteCommandManager::GetInstance().executors_[udid] = nullptr;
+    int32_t ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately(udid);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    ASSERT_EQ(1, RemoteCommandManager::GetInstance().executors_.erase(udid));
+}
+
+/**
+ * @tc.name: ProcessBufferedCommandsWithThread001
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommandsWithThread function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommandsWithThread001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    executor->ProcessBufferedCommandsWithThread();
+    EXPECT_FALSE(executor->running_);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+    executor->commands_.emplace_back(cmd);
+    executor->running_ = true;
+    executor->ProcessBufferedCommandsWithThread();
+    executor->running_ = false;
+    executor->ProcessBufferedCommandsWithThread();
+    EXPECT_TRUE(executor->running_);
+}
+
 namespace {
-PermissionStateFull g_infoManagerTestUpdateState1 = {
+PermissionStatus g_infoManagerTestUpdateState1 = {
     .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {1}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = 1
 };
 
-PermissionStateFull g_infoManagerTestUpdateState2 = {
+PermissionStatus g_infoManagerTestUpdateState2 = {
     .permissionName = "ohos.permission.ANSWER_CALL",
-    .isGeneral = false,
-    .resDeviceID = {"device 1", "device 2"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-    .grantFlags = {1, 2}
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = 1
 };
 
 HapTokenInfo g_remoteHapInfoBasic = {
-    .apl = APL_NORMAL,
     .ver = 1,
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 1,
-    .appID = "testtesttesttest",
-    .deviceID = "0",
     .tokenID = 0x20000001,
     .tokenAttr = 0
 };

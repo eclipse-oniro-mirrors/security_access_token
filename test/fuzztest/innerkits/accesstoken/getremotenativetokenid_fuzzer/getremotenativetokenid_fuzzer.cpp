@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -34,10 +35,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID nativeTokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-
-        tokenId = AccessTokenKit::GetRemoteNativeTokenID(testName, nativeTokenId);
+        AccessTokenFuzzData fuzzData(data, size);
+        tokenId = AccessTokenKit::GetRemoteNativeTokenID(
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<AccessTokenID>());
 #endif
         return tokenId != 0;
     }

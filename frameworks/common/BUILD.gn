@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,6 +17,49 @@ import("../../access_token.gni")
 config("accesstoken_common_cxx_public_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
+}
+
+action("permission_definition_parse") {
+  script = "permission_definition_parser.py"
+  inputs = [ rebase_path("${access_token_path}") +
+             "/services/accesstokenmanager/permission_definitions.json" ]
+  args = [
+    "--input-json",
+    rebase_path("${access_token_path}") +
+        "/services/accesstokenmanager/permission_definitions.json",
+    "--output-path",
+    rebase_path(target_out_dir) + "/permission_map_constant.h",
+  ]
+  outputs = [ "$target_out_dir" ]
+}
+
+ohos_static_library("accesstoken_static_log") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":accesstoken_common_cxx_public_config" ]
+
+  include_dirs = [ "include" ]
+
+  sources = [ "src/accesstoken_common_log.cpp" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
 }
 
 ohos_shared_library("accesstoken_common_cxx") {
@@ -39,23 +82,30 @@ ohos_shared_library("accesstoken_common_cxx") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
+    rebase_path(target_out_dir),
   ]
 
   sources = [
     "src/constant_common.cpp",
     "src/data_validator.cpp",
-    "src/json_parser.cpp",
     "src/permission_map.cpp",
+    "src/time_util.cpp",
   ]
 
+  deps = [
+    ":accesstoken_static_log",
+    ":permission_definition_parse",
+  ]
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",
-    "json:nlohmann_json_static",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 }

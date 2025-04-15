@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -32,12 +34,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
 
-        int32_t result = PrivacyKit::IsAllowedUsingPermission(tokenId, testName);
-
-        return result == RET_SUCCESS;
+        return PrivacyKit::IsAllowedUsingPermission(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
+            fuzzData.GenerateStochasticString(), fuzzData.GetData<int32_t>());
     }
 }
 

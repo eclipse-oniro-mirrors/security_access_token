@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,115 +16,130 @@
 #ifndef ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 #define ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 
+#include <algorithm>
 #include <atomic>
 #include <map>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
 #include "atm_tools_param_info.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "device_manager.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
-#include "native_token_info_inner.h"
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
-#include "thread_pool.h"
-#endif
+#include "native_token_info_base.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
+#ifdef TOKEN_SYNC_ENABLE
+class AccessTokenDmInitCallback final : public DistributedHardware::DmInitCallback {
+    void OnRemoteDied() override
+    {}
+};
+#endif
 
 class AccessTokenInfoManager final {
 public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
     void Init();
+    void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
-    std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
-    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& infoParcel);
+    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
-    std::shared_ptr<PermissionPolicySet> GetNativePermissionPolicySet(AccessTokenID id);
-    std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
-    int32_t AddAllNativeTokenInfoToDb(void);
-    int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID);
-    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
+    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
+    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-        const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
-        const std::vector<PermissionDef>& permList);
+        const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
-    void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+    int32_t ClearUserPolicy();
     bool GetPermDialogCap(AccessTokenID tokenID);
-    int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
     void DumpToken();
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
     void ReduceDumpTaskNum();
+    void ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
+    bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
+    int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
+    void InitDmCallback(void);
     int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSync& hapSync);
-    void GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync);
-    int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     bool IsRemoteHapTokenValid(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
-    std::string GetUdidByNodeId(const std::string &nodeId);
 #endif
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    int32_t GetCurTaskNum();
-    void AddCurTaskNum();
-    void ReduceCurTaskNum();
-#endif
+    bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
+    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
+    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
+    int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetReqPermissionByName(AccessTokenID tokenId, const std::string& permissionName, std::string& value);
 
 private:
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);
 
-    void InitHapTokenInfos();
-    void InitNativeTokenInfos();
+    void InitHapTokenInfos(uint32_t& hapSize);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info);
-    int AddNativeTokenInfo(const std::shared_ptr<NativeTokenInfoInner>& info);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
-    bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
-    void StoreAllTokenInfo();
-    int AddHapTokenInfoToDb(AccessTokenID tokenID);
-    int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
+    int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const std::string& appId, const HapPolicy& policy, bool isUpdate);
+    int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
     void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
-    void DumpAllHapTokenInfo(std::string& dumpInfo);
+    void DumpAllHapTokenname(std::string& dumpInfo);
     void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
-    void DumpAllNativeTokenInfo(std::string& dumpInfo);
-
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::atomic_int32_t curTaskNum_;
-    std::shared_ptr<ffrt::queue> ffrtTaskQueue_ = std::make_shared<ffrt::queue>("TokenStore");
-#else
-    OHOS::ThreadPool tokenDataWorker_;
-#endif
+    void DumpAllNativeTokenName(std::string& dumpInfo);
+    int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
+        const std::vector<std::string>& permList, std::map<int32_t, bool>& changedUserList);
+    int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
+        std::map<int32_t, bool>& changedUserList);
+    int32_t UpdatePermissionStateToKernel(const std::vector<std::string>& permCodeList,
+        const std::map<AccessTokenID, bool>& tokenIdList);
+    int32_t UpdatePermissionStateToKernel(const std::map<AccessTokenID, bool>& tokenIdList);
+    void GetGoalHapList(std::map<AccessTokenID, bool>& tokenIdList,
+        std::map<int32_t, bool>& changedUserList);
+    int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
+    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
+    void GetNativePermissionList(const NativeTokenInfoBase& native,
+        std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
+        const std::vector<std::string>& nativeAcls);
+    int32_t GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
+    void NativeTokenStateToString(const NativeTokenInfoBase& native, std::string& info, std::string& invalidPermString);
+    void NativeTokenToString(AccessTokenID tokenID, std::string& info);
+    int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
+    void UpdateHapToKernel(AccessTokenID tokenID, int32_t userId);
+    std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     bool hasInited_;
     std::atomic_int32_t dumpTaskNum_;
 
@@ -135,8 +150,11 @@ private:
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
-    std::map<int, std::shared_ptr<NativeTokenInfoInner>> nativeTokenInfoMap_;
-    std::map<std::string, AccessTokenID> nativeTokenIdMap_;
+    std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
+
+    OHOS::Utils::RWLock userPolicyLock_;
+    std::vector<int32_t> inactiveUserList_;
+    std::vector<std::string> permPolicyList_;
 };
 } // namespace AccessToken
 } // namespace Security

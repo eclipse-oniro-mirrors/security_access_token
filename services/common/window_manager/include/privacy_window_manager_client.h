@@ -60,6 +60,7 @@ private:
     sptr<ISceneSessionManagerLite> GetSSMLiteProxy();
     void InitWMSProxy();
     sptr<IWindowManager> GetWMSProxy();
+    void RemoveDeathRecipient();
 
     sptr<PrivacyWindowManagerDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

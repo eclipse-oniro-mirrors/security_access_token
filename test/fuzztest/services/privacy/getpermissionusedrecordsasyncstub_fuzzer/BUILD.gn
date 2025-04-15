@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,6 +14,7 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
+import("../privacy_service_fuzz.gni")
 
 ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
   module_out_path = module_output_path_service_privacy
@@ -28,122 +29,22 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  include_dirs = [
-    "${access_token_path}/frameworks/privacy/include",
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/privacy/include",
-    "${access_token_path}/interfaces/innerkits/privacy/src",
-    "${access_token_path}/services/privacymanager/include/active",
-    "${access_token_path}/services/privacymanager/include/common",
-    "${access_token_path}/services/privacymanager/include/database",
-    "${access_token_path}/services/privacymanager/include/record",
-    "${access_token_path}/services/privacymanager/include/service",
-    "${access_token_path}/services/privacymanager/include/sensitive",
-    "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
-    "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
-    "${access_token_path}/services/common/ability_manager/include",
-    "${access_token_path}/services/common/app_manager/include",
-    "${access_token_path}/services/common/database/include",
-    "${access_token_path}/services/common/libraryloader/include",
-    "${access_token_path}/services/common/power_manager/include",
-    "${access_token_path}/services/common/screenlock_manager/include",
-    "${access_token_path}/services/common/utils/include",
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
   ]
 
-  sources += [
-    "${access_token_path}/services/common/app_manager/src/app_manager_access_client.cpp",
-    "${access_token_path}/services/common/app_manager/src/app_manager_access_proxy.cpp",
-    "${access_token_path}/services/common/app_manager/src/app_manager_death_recipient.cpp",
-    "${access_token_path}/services/common/app_manager/src/app_state_data.cpp",
-    "${access_token_path}/services/common/app_manager/src/app_status_change_callback.cpp",
-    "${access_token_path}/services/common/app_manager/src/process_data.cpp",
-    "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
-    "${access_token_path}/services/privacymanager/src/active/active_status_callback_manager.cpp",
-    "${access_token_path}/services/privacymanager/src/active/perm_active_status_callback_death_recipient.cpp",
-    "${access_token_path}/services/privacymanager/src/active/perm_active_status_change_callback_proxy.cpp",
-    "${access_token_path}/services/privacymanager/src/active/state_change_callback_proxy.cpp",
-    "${access_token_path}/services/privacymanager/src/common/constant.cpp",
-    "${access_token_path}/services/privacymanager/src/database/data_translator.cpp",
-    "${access_token_path}/services/privacymanager/src/database/permission_used_record_db.cpp",
-    "${access_token_path}/services/privacymanager/src/database/privacy_field_const.cpp",
-    "${access_token_path}/services/privacymanager/src/record/on_permission_used_record_callback_proxy.cpp",
-    "${access_token_path}/services/privacymanager/src/record/permission_record.cpp",
-    "${access_token_path}/services/privacymanager/src/record/permission_record_manager.cpp",
-    "${access_token_path}/services/privacymanager/src/record/permission_record_repository.cpp",
-    "${access_token_path}/services/privacymanager/src/record/permission_used_record_cache.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_service_callback_stub.cpp",
-    "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
-    "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
-  ]
+  include_dirs = privacy_include_dirs
 
-  if (use_musl) {
-    if (use_jemalloc && use_jemalloc_dfx_intf) {
-      defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
-    }
-  }
+  sources += privacy_sources
 
-  cflags_cc = [
-    "-DHILOG_ENABLE",
-    "-DFUZZ_ENABLE",
-  ]
+  defines = privacy_defines
 
-  deps = [
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-    "${access_token_path}/services/common:accesstoken_service_common",
-  ]
+  cflags_cc = privacy_cflags_cc
 
-  external_deps = [
-    "ability_base:want",
-    "audio_framework:audio_client",
-    "c_utils:utils",
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "sqlite:sqlite",
-  ]
+  deps = privacy_deps
 
-  if (common_event_service_enable) {
-    cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
-    external_deps += [ "common_event_service:cesfwk_innerkits" ]
-    sources += [ "${access_token_path}/services/privacymanager/src/common/privacy_common_event_subscriber.cpp" ]
-  }
+  deps += [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
 
-  if (window_manager_enable && access_token_camera_float_window_enable) {
-    cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
-    include_dirs +=
-        [ "${access_token_path}/services/common/window_manager/include" ]
-  }
-
-  if (theme_screenlock_mgr_enable) {
-    cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
-    external_deps += [ "screenlock_mgr:screenlock_client" ]
-  }
-
-  if (access_token_background_task_mgr_continuous_task_enable == true) {
-    cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
-    include_dirs += [ "${access_token_path}/services/privacymanager/include/background_task_manager" ]
-    sources += [
-      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_access_client.cpp",
-      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_access_proxy.cpp",
-      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_death_recipient.cpp",
-      "${access_token_path}/services/privacymanager/src/background_task_manager/continuous_task_callback_info.cpp",
-      "${access_token_path}/services/privacymanager/src/background_task_manager/continuous_task_change_callback.cpp",
-    ]
-  }
+  external_deps = privacy_external_deps
 }

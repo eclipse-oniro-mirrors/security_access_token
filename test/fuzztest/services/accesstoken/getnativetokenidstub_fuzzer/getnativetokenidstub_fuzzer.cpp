@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,8 +21,9 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "permission_def_parcel.h"
 
 using namespace std;
@@ -37,8 +38,8 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateStochasticString());
         
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -47,7 +48,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID);
+            IAccessTokenManagerIpcCode::COMMAND_GET_NATIVE_TOKEN_ID);
 
         MessageParcel reply;
         MessageOption option;

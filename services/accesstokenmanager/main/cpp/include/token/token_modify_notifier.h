@@ -56,7 +56,8 @@ private:
 
     bool hasInited_;
     OHOS::Utils::RWLock initLock_;
-    OHOS::Utils::RWLock Notifylock_;
+    OHOS::Utils::RWLock listLock_;
+    OHOS::Utils::RWLock notifyLock_;
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::atomic_int32_t curTaskNum_;
 #else
@@ -66,7 +67,9 @@ private:
     std::vector<AccessTokenID> deleteTokenList_;
     std::vector<AccessTokenID> modifiedTokenList_;
     sptr<ITokenSyncCallback> tokenSyncCallbackObject_ = nullptr;
+#ifdef TOKEN_SYNC_ENABLE
     sptr<TokenSyncCallbackDeathRecipient> tokenSyncCallbackDeathRecipient_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

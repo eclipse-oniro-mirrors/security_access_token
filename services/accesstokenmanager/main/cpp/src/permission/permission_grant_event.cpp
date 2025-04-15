@@ -17,7 +17,7 @@
 #include <ctime>
 #include <unistd.h>
 #include "accesstoken_dfx_define.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {

@@ -33,6 +33,7 @@
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
+const uint64_t g_nativeFdTag = 0xD005A01;
 
 int32_t GetFileBuff(const char *cfg, char **retBuff)
 {
@@ -55,6 +56,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     }
 
     if (fileStat.st_size == 0) {
+        NativeTokenKmsg(NATIVETOKEN_KINFO, "[%s]: file is empty", __func__);
         *retBuff = NULL;
         return ATRET_SUCCESS;
     }
@@ -109,29 +111,71 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     ret |= GetAplFromJson(cjsonItem, tokenNode);
 
     StrAttrSet(&attr, MAX_DCAP_LEN, MAX_DCAPS_NUM, DCAPS_KEY_NAME);
-    ret |= GetInfoArrFromJson(cjsonItem, tokenNode->dcaps, &(tokenNode->dcapsNum), &attr);
+    ret |= GetInfoArrFromJson(cjsonItem, &tokenNode->dcaps, &(tokenNode->dcapsNum), &attr);
     if (ret != ATRET_SUCCESS) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for dcaps.", __func__);
         return ATRET_FAILED;
     }
 
     StrAttrSet(&attr, MAX_PERM_LEN, MAX_PERM_NUM, PERMS_KEY_NAME);
-    ret = GetInfoArrFromJson(cjsonItem, tokenNode->perms, &(tokenNode->permsNum), &attr);
+    ret = GetInfoArrFromJson(cjsonItem, &tokenNode->perms, &(tokenNode->permsNum), &attr);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for perms.", __func__);
         return ATRET_FAILED;
     }
 
     StrAttrSet(&attr, MAX_PERM_LEN, MAX_PERM_NUM, ACLS_KEY_NAME);
-    ret = GetInfoArrFromJson(cjsonItem, tokenNode->acls, &(tokenNode->aclsNum), &attr);
+    ret = GetInfoArrFromJson(cjsonItem, &tokenNode->acls, &(tokenNode->aclsNum), &attr);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenNode->permsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for acls.", __func__);
         return ATRET_FAILED;
     }
     return ATRET_SUCCESS;
+}
+
+static void FreeTokenNode(NativeTokenList **node)
+{
+    if (node == NULL || *node == NULL) {
+        return;
+    }
+    FreeStrArray(&(*node)->dcaps, (*node)->dcapsNum - 1);
+    FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
+    FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
+    free(*node);
+    *node = NULL;
+}
+
+static void RemoveNodeFromList(NativeTokenList **node)
+{
+    if (node == NULL || *node == NULL || g_tokenListHead == NULL) {
+        return;
+    }
+    NativeTokenList *tmp = g_tokenListHead->next;
+    while (tmp != NULL) {
+        if (tmp->next == *node) {
+            tmp->next = (*node)->next;
+            FreeTokenNode(node);
+            return;
+        }
+        tmp = tmp->next;
+    }
+}
+
+static void FreeTokenList(void)
+{
+    if (g_tokenListHead == NULL) {
+        return;
+    }
+    NativeTokenList *tmp = g_tokenListHead->next;
+    while (tmp != NULL) {
+        NativeTokenList *toFreeNode = tmp;
+        tmp = tmp->next;
+        FreeTokenNode(&toFreeNode);
+    }
+    g_tokenListHead->next = NULL;
 }
 
 static int32_t GetTokenList(const cJSON *object)
@@ -143,21 +187,28 @@ static int32_t GetTokenList(const cJSON *object)
         return ATRET_FAILED;
     }
     int32_t arraySize = cJSON_GetArraySize(object);
+    if (arraySize <= 0) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:array is empty.", __func__);
+        return ATRET_FAILED;
+    }
 
     for (int32_t i = 0; i < arraySize; i++) {
         tmp = (NativeTokenList *)malloc(sizeof(NativeTokenList));
         if (tmp == NULL) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
+            FreeTokenList();
             return ATRET_FAILED;
         }
         cJSON *cjsonItem = cJSON_GetArrayItem(object, i);
         if (cjsonItem == NULL) {
             free(tmp);
+            FreeTokenList();
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
         if (GetNativeTokenFromJson(cjsonItem, tmp) != ATRET_SUCCESS) {
             free(tmp);
+            FreeTokenList();
             return ATRET_FAILED;
         }
 
@@ -190,19 +241,20 @@ static int32_t ParseTokenInfo(void)
     return ret;
 }
 
-static int32_t CreateCfgFile(void)
+static int32_t ClearOrCreateCfgFile(void)
 {
-    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
         return ATRET_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
 
 #ifdef WITH_SELINUX
     Restorecon(TOKEN_ID_CFG_FILE_PATH);
 #endif // WITH_SELINUX
 
-    close(fd);
+    fdsan_close_with_tag(fd, g_nativeFdTag);
     fd = -1;
 
     struct stat buf;
@@ -226,16 +278,24 @@ int32_t AtlibInit(void)
         return ATRET_FAILED;
     }
     g_tokenListHead->next = NULL;
+    int32_t isClearOrCreate = 0;
 
     int32_t ret = ParseTokenInfo();
     if (ret != ATRET_SUCCESS) {
-        free(g_tokenListHead);
-        g_tokenListHead = NULL;
-        return ret;
+        if (g_tokenListHead->next != NULL) {
+            return ATRET_FAILED;
+        }
+        ret = ClearOrCreateCfgFile();
+        if (ret != ATRET_SUCCESS) {
+            free(g_tokenListHead);
+            g_tokenListHead = NULL;
+            return ret;
+        }
+        isClearOrCreate = 1;
     }
 
     if (g_tokenListHead->next == NULL) {
-        if (CreateCfgFile() != ATRET_SUCCESS) {
+        if (isClearOrCreate == 0 && ClearOrCreateCfgFile() != ATRET_SUCCESS) {
             free(g_tokenListHead);
             g_tokenListHead = NULL;
             return ATRET_FAILED;
@@ -254,8 +314,9 @@ static int32_t GetRandomTokenId(uint32_t *randNum)
     if (fd < 0) {
         return ATRET_FAILED;
     }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
     len = read(fd, &random, sizeof(random));
-    (void)close(fd);
+    fdsan_close_with_tag(fd, g_nativeFdTag);
 
     if (len != sizeof(random)) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:read failed.", __func__);
@@ -346,12 +407,13 @@ static void WriteToFile(const cJSON *root)
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
             break;
         }
+        fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
         size_t strLen = strlen(jsonStr);
         ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         if (fsync(fd) != 0) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fsync failed, errno is %d.", __func__, errno);
         }
-        close(fd);
+        fdsan_close_with_tag(fd, g_nativeFdTag);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
@@ -450,16 +512,30 @@ static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplR
     return ATRET_SUCCESS;
 }
 
-static uint32_t CreateStrArray(int32_t num, const char **strArr, char **strArrRes)
+static uint32_t CreateStrArray(int32_t num, const char **strArr, char ***strArrRes)
 {
+    if (num > MAX_PERM_NUM) {
+        return ATRET_FAILED;
+    }
+    if (num == 0) {
+        *strArrRes = NULL;
+        return ATRET_SUCCESS;
+    }
+    *strArrRes = (char **)malloc(num * sizeof(char *));
+    if (*strArrRes == NULL) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]: strArrRes malloc failed.", __func__);
+        return ATRET_FAILED;
+    }
     for (int32_t i = 0; i < num; i++) {
-        strArrRes[i] = (char *)malloc(sizeof(char) * (strlen(strArr[i]) + 1));
-        if (strArrRes[i] == NULL ||
-            (strcpy_s(strArrRes[i], strlen(strArr[i]) + 1, strArr[i]) != EOK)) {
+        size_t length = strlen(strArr[i]);
+        (*strArrRes)[i] = (char *)malloc(sizeof(char) * length + 1);
+        if ((*strArrRes)[i] == NULL ||
+            (strcpy_s((*strArrRes)[i], length + 1, strArr[i]) != EOK)) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
             FreeStrArray(strArrRes, i);
             return ATRET_FAILED;
         }
+        (*strArrRes)[i][length] = '\0';
     }
     return ATRET_SUCCESS;
 }
@@ -491,18 +567,18 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     tokenNode->permsNum = tokenInfo->permsNum;
     tokenNode->aclsNum = tokenInfo->aclsNum;
 
-    if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, tokenNode->dcaps) != ATRET_SUCCESS) {
+    if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, &tokenNode->dcaps) != ATRET_SUCCESS) {
         free(tokenNode);
         return ATRET_FAILED;
     }
-    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, tokenNode->perms) != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenInfo->dcapsNum - 1);
+    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, &tokenNode->perms) != ATRET_SUCCESS) {
+        FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
         free(tokenNode);
         return ATRET_FAILED;
     }
-    if (CreateStrArray(tokenInfo->aclsNum, tokenInfo->acls, tokenNode->acls) != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenInfo->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenInfo->permsNum - 1);
+    if (CreateStrArray(tokenInfo->aclsNum, tokenInfo->acls, &tokenNode->acls) != ATRET_SUCCESS) {
+        FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenInfo->permsNum - 1);
         free(tokenNode);
         return ATRET_FAILED;
     }
@@ -547,25 +623,19 @@ static int32_t ComparePermsInfo(const NativeTokenList *tokenNode,
     return 0;
 }
 
-static uint32_t UpdateStrArrayInList(char *strArr[], int32_t *strNum,
+static uint32_t UpdateStrArrayInList(char **strArr[], int32_t *strNum,
     const char **strArrNew, int32_t strNumNew)
 {
-    for (int32_t i = 0; i < *strNum; i++) {
-        free(strArr[i]);
-        strArr[i] = NULL;
+    if (strNum == NULL) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strNum length is invalid.", __func__);
+        return ATRET_FAILED;
     }
 
+    FreeStrArray(strArr, *strNum - 1);
+
     *strNum = strNumNew;
-    for (int32_t i = 0; i < strNumNew; i++) {
-        size_t len = strlen(strArrNew[i]) + 1;
-        strArr[i] = (char *)malloc(sizeof(char) * len);
-        if (strArr[i] == NULL || (strcpy_s(strArr[i], len, strArrNew[i]) != EOK)) {
-            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
-            FreeStrArray(strArr, i);
-            return ATRET_FAILED;
-        }
-    }
-    return ATRET_SUCCESS;
+
+    return CreateStrArray(strNumNew, strArrNew, strArr);
 }
 
 static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
@@ -573,21 +643,22 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
 {
     tokenNode->apl = GetAplLevel(tokenInfo->aplStr);
 
-    uint32_t ret = UpdateStrArrayInList(tokenNode->dcaps, &(tokenNode->dcapsNum),
+    uint32_t ret = UpdateStrArrayInList(&tokenNode->dcaps, &(tokenNode->dcapsNum),
         tokenInfo->dcaps, tokenInfo->dcapsNum);
     if (ret != ATRET_SUCCESS) {
         return ret;
     }
-    ret = UpdateStrArrayInList(tokenNode->perms, &(tokenNode->permsNum),
+    ret = UpdateStrArrayInList(&tokenNode->perms, &(tokenNode->permsNum),
         tokenInfo->perms, tokenInfo->permsNum);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        return ret;
     }
-    ret = UpdateStrArrayInList(tokenNode->acls, &(tokenNode->aclsNum),
+    ret = UpdateStrArrayInList(&tokenNode->acls, &(tokenNode->aclsNum),
         tokenInfo->acls, tokenInfo->aclsNum);
     if (ret != ATRET_SUCCESS) {
-        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
-        FreeStrArray(tokenNode->perms, tokenNode->permsNum - 1);
+        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
     }
     return ret;
 }
@@ -627,18 +698,99 @@ static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
+
+static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
+{
+    int32_t fd = open(TOKEN_ID_CFG_FILE_LOCK_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR,
+            "[%s]: Failed to open native token file, errno is %d.", __func__, errno);
+        return ATRET_FAILED;
+    }
+    fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
+#ifdef WITH_SELINUX
+    Restorecon(TOKEN_ID_CFG_FILE_LOCK_PATH);
+#endif // WITH_SELINUX
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // lock entire file
+    int32_t ret = -1;
+    for (int i = 0; i < MAX_RETRY_LOCK_TIMES; i++) {
+        ret = fcntl(fd, F_SETLK, &lock);
+        if (ret == -1) {
+            NativeTokenKmsg(NATIVETOKEN_KERROR,
+                "[%s]: Failed to lock the file, try %d time, errno is %d.", __func__, i, errno);
+            usleep(SLEEP_TIME);
+        } else {
+            break;
+        }
+    }
+    if (ret == -1) {
+        fdsan_close_with_tag(fd, g_nativeFdTag);
+        return ATRET_FAILED;
+    }
+    *lockFileFd = fd;
+    return ATRET_SUCCESS;
+}
+
+static void UnlockNativeTokenFile(int32_t lockFileFd)
+{
+    struct flock lock;
+    lock.l_type = F_UNLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+
+    if (fcntl(lockFileFd, F_SETLK, &lock) == -1) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR,
+            "[%s]: Failed to unlock file, errno is %d.", __func__, errno);
+    }
+    fdsan_close_with_tag(lockFileFd, g_nativeFdTag);
+}
+
+static uint32_t AddOrUpdateTokenInfo(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
+    int32_t apl, NativeAtId *tokenId)
+{
+    uint32_t ret = ATRET_SUCCESS;
+    if (tokenNode == NULL) {
+        ret = AddNewTokenToListAndFile(tokenInfo, apl, tokenId);
+    } else {
+        int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
+        int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
+        if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
+            ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
+            if (ret != ATRET_SUCCESS) {
+                RemoveNodeFromList(&tokenNode);
+                return ATRET_FAILED;
+            }
+            ret = UpdateInfoInCfgFile(tokenNode);
+        }
+    }
+    return ret;
+}
+
 uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
 {
     NativeAtId tokenId = 0;
     uint64_t result = 0;
     int32_t apl;
     NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
-
-    if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
+    int32_t fd = -1;
+    uint32_t ret = LockNativeTokenFile(&fd);
+    if (ret != ATRET_SUCCESS) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]: Failed to lock file", __func__);
         return INVALID_TOKEN_ID;
     }
-    uint32_t ret = CheckProcessInfo(tokenInfo, &apl);
+
+    if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
+        UnlockNativeTokenFile(fd);
+        return INVALID_TOKEN_ID;
+    }
+    ret = CheckProcessInfo(tokenInfo, &apl);
     if (ret != ATRET_SUCCESS) {
+        UnlockNativeTokenFile(fd);
         return INVALID_TOKEN_ID;
     }
 
@@ -651,21 +803,14 @@ uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
         tokenNode = tokenNode->next;
     }
 
-    if (tokenNode == NULL) {
-        ret = AddNewTokenToListAndFile(tokenInfo, apl, &tokenId);
-    } else {
-        int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
-        int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
-        if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
-            ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
-            ret |= UpdateInfoInCfgFile(tokenNode);
-        }
-    }
+    ret = AddOrUpdateTokenInfo(tokenInfo, tokenNode, apl, &tokenId);
     if (ret != ATRET_SUCCESS) {
+        UnlockNativeTokenFile(fd);
         return INVALID_TOKEN_ID;
     }
 
     atPoint->tokenId = tokenId;
     atPoint->tokenAttr = 0;
+    UnlockNativeTokenFile(fd);
     return result;
 }

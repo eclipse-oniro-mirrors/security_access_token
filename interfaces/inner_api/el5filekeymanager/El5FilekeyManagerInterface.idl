@@ -1,0 +1,34 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.Security.AccessToken;
+import data_lock_type;
+import El5FilekeyCallbackInterface;
+sequenceable OHOS.Security.AccessToken.UserAppKeyInfo;
+sequenceable OHOS.Security.AccessToken.AppKeyLoadInfo;
+
+interface OHOS.Security.AccessToken.El5FilekeyManagerInterface{
+    void AcquireAccess([in] DataLockType type);
+    void ReleaseAccess([in] DataLockType type);
+    void GenerateAppKey([in] unsigned int uid, [in] String bundleName, [inout] String keyId);
+    void DeleteAppKey([in] String bundleName, [in] int userId);
+    void GetUserAppKey([in] int userId, [in] boolean getAllFlag, [inout] List<UserAppKeyInfo> keyInfos);
+    void ChangeUserAppkeysLoadInfo([in] int userId, [in] List<AppKeyLoadInfo> loadInfos);
+    void SetFilePathPolicy();
+    void RegisterCallback([in] El5FilekeyCallbackInterface cb);
+    void GenerateGroupIDKey([in] unsigned int uid, [in] String groupID, [inout] String keyId);
+    void DeleteGroupIDKey([in] unsigned int uid, [in] String groupID);
+    void QueryAppKeyState([in] DataLockType type);
+}

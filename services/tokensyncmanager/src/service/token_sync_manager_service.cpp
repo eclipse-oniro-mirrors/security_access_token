@@ -17,19 +17,17 @@
 
 #include <securec.h>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "constant_common.h"
 #include "device_info_repository.h"
 #include "device_info.h"
 #include "remote_command_manager.h"
 #include "soft_bus_manager.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerService"};
-}
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<TokenSyncManagerService>::GetInstance().get());
@@ -37,39 +35,47 @@ const bool REGISTER_RESULT =
 TokenSyncManagerService::TokenSyncManagerService()
     : SystemAbility(SA_ID_TOKENSYNC_MANAGER_SERVICE, false), state_(ServiceRunningState::STATE_NOT_START)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenSyncManagerService()");
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService()");
 }
 
 TokenSyncManagerService::~TokenSyncManagerService()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "~TokenSyncManagerService()");
+    LOGI(ATM_DOMAIN, ATM_TAG, "~TokenSyncManagerService()");
 }
 
 void TokenSyncManagerService::OnStart()
 {
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "TokenSyncManagerService has already started!");
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService has already started!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenSyncManagerService is starting");
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService is starting");
     if (!Initialize()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize");
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<TokenSyncManagerService>::GetInstance().get());
     if (!ret) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, TokenSyncManagerService start successfully!");
+    (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, TokenSyncManagerService start successfully!");
 }
 
 void TokenSyncManagerService::OnStop()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
     SoftBusManager::GetInstance().Destroy();
+}
+
+void TokenSyncManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    if (systemAbilityId == DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID) {
+        SoftBusManager::GetInstance().Initialize();
+    }
 }
 
 #ifdef EVENTHANDLER_ENABLE
@@ -87,13 +93,13 @@ std::shared_ptr<AccessEventHandler> TokenSyncManagerService::GetRecvEventHandler
 int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID) || tokenID == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Params is wrong.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "Params is wrong.");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
     DeviceInfo devInfo;
     bool result = DeviceInfoRepository::GetInstance().FindDeviceInfo(deviceID, DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "FindDeviceInfo failed");
+        LOGI(ATM_DOMAIN, ATM_TAG, "FindDeviceInfo failed");
         return TOKEN_SYNC_REMOTE_DEVICE_INVALID;
     }
     std::string udid = devInfo.deviceId.uniqueDeviceId;
@@ -103,18 +109,18 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
 
     const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(udid, syncRemoteHapTokenCommand);
     if (resultCode != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_INFO(LABEL,
+        LOGI(ATM_DOMAIN, ATM_TAG,
             "RemoteExecutorManager executeCommand SyncRemoteHapTokenCommand failed, return %{public}d", resultCode);
         return TOKEN_SYNC_COMMAND_EXECUTE_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get resultCode: %{public}d", resultCode);
     return TOKEN_SYNC_SUCCESS;
 }
 
 int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Params is wrong, token id is invalid.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "Params is wrong, token id is invalid.");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
 
@@ -122,7 +128,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
+            LOGI(ATM_DOMAIN, ATM_TAG, "No need notify local device");
             continue;
         }
         const std::shared_ptr<DeleteRemoteTokenCommand> deleteRemoteTokenCommand =
@@ -132,11 +138,11 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, deleteRemoteTokenCommand);
         if (resultCode != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL,
+            LOGI(ATM_DOMAIN, ATM_TAG,
                 "RemoteExecutorManager executeCommand DeleteRemoteTokenCommand failed, return %{public}d", resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get resultCode: %{public}d", resultCode);
     }
     return TOKEN_SYNC_SUCCESS;
 }
@@ -147,7 +153,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
     std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
+            LOGI(ATM_DOMAIN, ATM_TAG, "No need notify local device");
             continue;
         }
 
@@ -158,12 +164,12 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, updateRemoteHapTokenCommand);
         if (resultCode != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL,
+            LOGI(ATM_DOMAIN, ATM_TAG,
                 "RemoteExecutorManager executeCommand updateRemoteHapTokenCommand failed, return %{public}d",
                 resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get resultCode: %{public}d", resultCode);
     }
 
     return TOKEN_SYNC_SUCCESS;
@@ -172,22 +178,21 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
 bool TokenSyncManagerService::Initialize()
 {
 #ifdef EVENTHANDLER_ENABLE
-    sendRunner_ = AppExecFwk::EventRunner::Create(true);
+    sendRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!sendRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a sendRunner.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create a sendRunner.");
         return false;
     }
 
     sendHandler_ = std::make_shared<AccessEventHandler>(sendRunner_);
-    recvRunner_ = AppExecFwk::EventRunner::Create(true);
+    recvRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!recvRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create a recvRunner.");
         return false;
     }
 
     recvHandler_ = std::make_shared<AccessEventHandler>(recvRunner_);
 #endif
-    SoftBusManager::GetInstance().Initialize();
     return true;
 }
 } // namespace AccessToken

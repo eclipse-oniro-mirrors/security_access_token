@@ -60,7 +60,7 @@ void MockAppMgrService::SwitchForeOrBackGround(uint32_t tokenId, int32_t flag)
     data.pid = 0;
     data.accessTokenId = tokenId;
     data.state = flag;
-    observer_->OnForegroundApplicationChanged(data);
+    observer_->OnAppStateChanged(data);
 }
 }
 }

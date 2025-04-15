@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -47,20 +47,24 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/privacy/include",
+      "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
+      "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
+      "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/database/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/utils/include",
       "main/cpp/include/callback",
+      "main/cpp/include/database",
+      "main/cpp/include/dfx",
       "main/cpp/include/service",
       "main/cpp/include/form_manager",
       "main/cpp/include/token",
       "main/cpp/include/permission",
-      "main/cpp/include/database",
     ]
 
     include_dirs += access_token_impl_include_dirs
@@ -70,40 +74,42 @@ if (is_standard_system) {
       "main/cpp/src/callback/callback_death_recipients.cpp",
       "main/cpp/src/callback/callback_manager.cpp",
       "main/cpp/src/database/access_token_db.cpp",
+      "main/cpp/src/database/access_token_db_util.cpp",
+      "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
+      "main/cpp/src/dfx/hisysevent_adapter.cpp",
       "main/cpp/src/form_manager/form_instance.cpp",
       "main/cpp/src/form_manager/form_manager_access_client.cpp",
       "main/cpp/src/form_manager/form_manager_access_proxy.cpp",
       "main/cpp/src/form_manager/form_manager_death_recipient.cpp",
       "main/cpp/src/form_manager/form_status_change_callback.cpp",
-      "main/cpp/src/form_manager/running_form_info.cpp",
-      "main/cpp/src/permission/permission_definition_cache.cpp",
-      "main/cpp/src/permission/permission_definition_parser.cpp",
+      "main/cpp/src/permission/permission_data_brief.cpp",
       "main/cpp/src/permission/permission_grant_event.cpp",
       "main/cpp/src/permission/permission_manager.cpp",
-      "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
+      "main/cpp/src/permission/short_grant_manager.cpp",
       "main/cpp/src/permission/temp_permission_observer.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
-      "main/cpp/src/service/accesstoken_manager_stub.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
       "main/cpp/src/token/accesstoken_info_manager.cpp",
       "main/cpp/src/token/hap_token_info_inner.cpp",
-      "main/cpp/src/token/native_token_info_inner.cpp",
-      "main/cpp/src/token/native_token_receptor.cpp",
     ]
     sources += access_token_impl_sources
 
-    cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "../../config:coverage_flags" ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-fvisibility=hidden",
+    ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+    ]
 
     if (dlp_permission_enable == true) {
       cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-      sources += [
-        "main/cpp/src/permission/dlp_permission_set_manager.cpp",
-        "main/cpp/src/permission/dlp_permission_set_parser.cpp",
-      ]
+      sources += [ "main/cpp/src/permission/dlp_permission_set_manager.cpp" ]
     }
 
     if (build_variant == "user") {
@@ -119,6 +125,7 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
       "${access_token_path}/services/accesstokenmanager:permission_definition_config",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
       "${access_token_path}/services/common:accesstoken_service_common",
     ]
 
@@ -126,15 +133,13 @@ if (is_standard_system) {
 
     external_deps = [
       "c_utils:utils",
-      "dsoftbus:softbus_client",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "init:libbegetutil",
-      "ipc:ipc_core",
-      "json:nlohmann_json_static",
+      "ipc:ipc_single",
+      "relational_store:native_rdb",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
-      "sqlite:sqlite",
     ]
 
     if (ohos_indep_compiler_enable) {
@@ -161,6 +166,8 @@ if (is_standard_system) {
 
       include_dirs +=
           [ "${access_token_path}/interfaces/innerkits/tokensync/include" ]
+
+      external_deps += [ "device_manager:devicemanagersdk" ]
     }
 
     if (hiviewdfx_hitrace_native_enable == true) {
@@ -176,13 +183,15 @@ if (is_standard_system) {
 
     if (access_token_background_task_mgr_continuous_task_enable == true) {
       cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
-      include_dirs += [ "main/cpp/include/background_task_manager" ]
+      include_dirs += [
+        "${access_token_path}/services/common/background_task_manager/include",
+      ]
       sources += [
-        "main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
-        "main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
-        "main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
-        "main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
-        "main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
+        "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_client.cpp",
+        "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_proxy.cpp",
+        "${access_token_path}/services/common/background_task_manager/src/background_task_manager_death_recipient.cpp",
+        "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
+        "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
       ]
     }
   }

@@ -28,24 +28,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RemoteCommandExecutor"};
 static const std::string TASK_NAME = "RemoteCommandExecutor::ProcessBufferedCommandsWithThread";
 }  // namespace
 RemoteCommandExecutor::RemoteCommandExecutor(const std::string &targetNodeId)
     : targetNodeId_(targetNodeId), ptrChannel_(nullptr), mutex_(), commands_(), running_(false)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "RemoteCommandExecutor()");
+    LOGD(ATM_DOMAIN, ATM_TAG, "RemoteCommandExecutor()");
 }
 
 RemoteCommandExecutor::~RemoteCommandExecutor()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "~RemoteCommandExecutor() begin");
+    LOGD(ATM_DOMAIN, ATM_TAG, "~RemoteCommandExecutor() begin");
     running_ = false;
 }
 
 const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std::string &targetNodeId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "CreateChannel: targetNodeId=%{public}s",
+    LOGD(ATM_DOMAIN, ATM_TAG, "CreateChannel: targetNodeId=%{public}s",
         ConstantCommon::EncryptDevId(targetNodeId).c_str());
     // only consider SoftBusChannel
     std::shared_ptr<RpcChannel> ptrChannel = std::make_shared<SoftBusChannel>(targetNodeId);
@@ -58,18 +57,18 @@ const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std
 int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand)
 {
     if (ptrCommand == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "targetNodeId %{public}s, attempt to process on null command.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, attempt to process on null command.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::SUCCESS;
     }
     const std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "targetNodeId %{public}s, process one command start, uniqueId: %{public}s",
+    LOGI(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, process one command start, uniqueId: %{public}s",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
 
     ptrCommand->Prepare();
     int status = ptrCommand->remoteProtocol_.statusCode;
     if (status != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "targetNodeId %{public}s, process one command error, uniqueId: %{public}s, message: "
             "prepare failure code %{public}d", ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
             uniqueId.c_str(), status);
@@ -84,12 +83,12 @@ int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCom
     // otherwise a remote device
     CreateChannelIfNeeded();
     if (ptrChannel_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "targetNodeId %{public}s, channel is null.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, channel is null.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::FAILURE;
     }
     if (ptrChannel_->BuildConnection() != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "targetNodeId %{public}s, channel is not ready.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, channel is not ready.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::FAILURE;
     }
@@ -103,13 +102,13 @@ int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCom
 int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand)
 {
     if (ptrCommand == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "targetNodeId %{public}s, attempt to add an empty command.",
+        LOGD(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, attempt to add an empty command.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::INVALID_COMMAND;
     }
 
     const std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "targetNodeId %{public}s, add uniqueId %{public}s",
+    LOGD(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, add uniqueId %{public}s",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
@@ -117,7 +116,7 @@ int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand>& 
     // make sure do not have the same command in the command buffer
     if (std::any_of(commands_.begin(), commands_.end(),
         [uniqueId](const auto& buffCommand) {return buffCommand->remoteProtocol_.uniqueId == uniqueId; })) {
-            ACCESSTOKEN_LOG_WARN(LABEL,
+            LOGW(ATM_DOMAIN, ATM_TAG,
                 "targetNodeId %{public}s, add uniqueId %{public}s, already exist in the buffer, skip",
                 ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
                 uniqueId.c_str());
@@ -133,13 +132,13 @@ int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand>& 
  */
 int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "begin, targetNodeId: %{public}s, standalone: %{public}d",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Begin, targetNodeId: %{public}s, standalone: %{public}d",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(), standalone);
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
 
     if (commands_.empty()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "no command, targetNodeId %{public}s",
+        LOGW(ATM_DOMAIN, ATM_TAG, "No command, targetNodeId %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         running_ = false;
         return Constant::SUCCESS;
@@ -149,14 +148,14 @@ int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
     while (true) {
         // interrupt
         if (!running_) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "end with running flag == false, targetNodeId: %{public}s",
+            LOGI(ATM_DOMAIN, ATM_TAG, "End with running flag == false, targetNodeId: %{public}s",
                 ConstantCommon::EncryptDevId(targetNodeId_).c_str());
             return Constant::FAILURE;
         }
         // end
         if (commands_.empty()) {
             running_ = false;
-            ACCESSTOKEN_LOG_INFO(LABEL, "end, no command left, targetNodeId: %{public}s",
+            LOGI(ATM_DOMAIN, ATM_TAG, "End, no command left, targetNodeId: %{public}s",
                 ConstantCommon::EncryptDevId(targetNodeId_).c_str());
             return Constant::SUCCESS;
         }
@@ -168,7 +167,7 @@ int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
             commands_.pop_front();
             continue;
         } else if (status == Constant::FAILURE_BUT_CAN_RETRY) {
-            ACCESSTOKEN_LOG_WARN(LABEL,
+            LOGW(ATM_DOMAIN, ATM_TAG,
                 "execute failed and wait to retry, targetNodeId: %{public}s, message: %{public}s, and will retry ",
                 ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
                 bufferedCommand->remoteProtocol_.message.c_str());
@@ -181,7 +180,7 @@ int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
         } else {
             // this command failed, move on to execute next command
             commands_.pop_front();
-            ACCESSTOKEN_LOG_ERROR(LABEL,
+            LOGE(ATM_DOMAIN, ATM_TAG,
                 "execute failed, targetNodeId: %{public}s, commandName: %{public}s, message: %{public}s",
                 ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
                 bufferedCommand->remoteProtocol_.commandName.c_str(),
@@ -195,39 +194,46 @@ int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
  */
 void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "begin, targetNodeId: %{public}s", ConstantCommon::EncryptDevId(targetNodeId_).c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Begin, targetNodeId: %{public}s", ConstantCommon::EncryptDevId(targetNodeId_).c_str());
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
 
     if (commands_.empty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "No buffered commands. targetNodeId: %{public}s",
+        LOGI(ATM_DOMAIN, ATM_TAG, "No buffered commands. targetNodeId: %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return;
     }
     if (running_) {
         // task is running, do not need to start one more
-        ACCESSTOKEN_LOG_WARN(LABEL, "task busy. targetNodeId: %{public}s",
+        LOGW(ATM_DOMAIN, ATM_TAG, "Task busy. targetNodeId: %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return;
     }
 
     running_ = true;
-    const std::function<void()> runner = std::bind(&RemoteCommandExecutor::ProcessBufferedCommands, this, true);
+    const std::function<void()> runner = [weak = weak_from_this()]() {
+        auto self = weak.lock();
+        if (self == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "RemoteCommandExecutor is nullptr");
+            return;
+        }
+        self->ProcessBufferedCommands(true);
+    };
 
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return;
     }
     bool result = handler->ProxyPostTask(runner, TASK_NAME);
     if (!result) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "post task failed, targetNodeId: %{public}s",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Post task failed, targetNodeId: %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
     }
 #endif
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "post task succeed, targetNodeId: %{public}s, taskName: %{public}s",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
         TASK_NAME.c_str());
@@ -237,7 +243,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     const std::shared_ptr<BaseRemoteCommand>& ptrCommand, const bool isRemote)
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "TargetNodeId %{public}s, uniqueId %{public}s, remote %{public}d: start to execute.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, uniqueId %{public}s, remote %{public}d: start to execute.",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str(), isRemote);
 
     ptrCommand->remoteProtocol_.statusCode = Constant::STATUS_CODE_BEFORE_RPC;
@@ -246,12 +252,12 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
         // Local device, play myself.
         ptrCommand->Execute();
         int code = ClientProcessResult(ptrCommand);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Command finished with status: %{public}d, message: %{public}s.",
+        LOGD(ATM_DOMAIN, ATM_TAG, "Command finished with status: %{public}d, message: %{public}s.",
             ptrCommand->remoteProtocol_.statusCode, ptrCommand->remoteProtocol_.message.c_str());
         return code;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Command executed uniqueId %{public}s.", uniqueId.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Command executed uniqueId %{public}s.", uniqueId.c_str());
 
     std::string responseString;
     int32_t repeatTimes = SoftBusManager::GetInstance().GetRepeatTimes(); // repeat 5 times if responseString empty
@@ -262,7 +268,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
             break; // when responseString is not empty, break the loop
         }
 
-        ACCESSTOKEN_LOG_WARN(LABEL,
+        LOGW(ATM_DOMAIN, ATM_TAG,
             "TargetNodeId %{public}s, uniqueId %{public}s, execute remote command error, response is empty.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
     }
@@ -278,7 +284,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
         RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(
             ptrCommand->remoteProtocol_.commandName, responseString);
     if (ptrResponseCommand == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TargetNodeId %{public}s, get null response command!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, get null response command!",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::FAILURE;
     }
@@ -286,7 +292,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     if (commands_.empty()) {
         ptrChannel_->CloseConnection();
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Command finished with status: %{public}d, message: %{public}s.",
+    LOGD(ATM_DOMAIN, ATM_TAG, "Command finished with status: %{public}d, message: %{public}s.",
         ptrResponseCommand->remoteProtocol_.statusCode, ptrResponseCommand->remoteProtocol_.message.c_str());
     return result;
 }
@@ -295,7 +301,7 @@ void RemoteCommandExecutor::CreateChannelIfNeeded()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     if (ptrChannel_ != nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "targetNodeId %{public}s, channel is exist.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, channel is exist.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return;
     }
@@ -307,7 +313,7 @@ int RemoteCommandExecutor::ClientProcessResult(const std::shared_ptr<BaseRemoteC
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
     if (ptrCommand->remoteProtocol_.statusCode == Constant::STATUS_CODE_BEFORE_RPC) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "targetNodeId %{public}s, uniqueId %{public}s, status code after RPC is same as before, the remote side "
             "may not "
             "support this command",
@@ -319,13 +325,13 @@ int RemoteCommandExecutor::ClientProcessResult(const std::shared_ptr<BaseRemoteC
     ptrCommand->Finish();
     int status = ptrCommand->remoteProtocol_.statusCode;
     if (status != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
+        LOGE(ATM_DOMAIN, ATM_TAG,
             "targetNodeId %{public}s, uniqueId %{public}s, execute failed, message: %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
             uniqueId.c_str(),
             ptrCommand->remoteProtocol_.message.c_str());
     } else {
-        ACCESSTOKEN_LOG_INFO(LABEL,
+        LOGI(ATM_DOMAIN, ATM_TAG,
             "targetNodeId %{public}s, uniqueId %{public}s, execute succeed.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
             uniqueId.c_str());

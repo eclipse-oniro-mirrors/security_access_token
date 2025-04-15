@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "service/accesstoken_manager_service.h"
 
 using namespace std;
@@ -31,37 +32,36 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    void ConstructorParam(const std::string& testName, AccessTokenID tokenId, HapPolicyParcel& hapPolicyParcel)
+    void ConstructorParam(AccessTokenFuzzData& fuzzData, HapPolicyParcel& hapPolicyParcel)
     {
-        PermissionDef testPermDef = {.permissionName = testName,
-            .bundleName = testName,
+        std::string permissionName(fuzzData.GenerateStochasticString());
+        PermissionDef testPermDef = {.permissionName = permissionName,
+            .bundleName = fuzzData.GenerateStochasticString(),
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = testName,
+            .label = fuzzData.GenerateStochasticString(),
             .labelId = 1,
-            .description = testName,
+            .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
-        PermissionStateFull testState = {.permissionName = testName,
-            .isGeneral = true,
-            .resDeviceID = {testName},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1}};
-        HapPolicyParams policy = {.apl = APL_NORMAL,
-            .domain = testName,
+        PermissionStatus testState = {.permissionName = permissionName,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .grantFlag = 1};
+        HapPolicy policy = {.apl = APL_NORMAL,
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}};
-        hapPolicyParcel.hapPolicyParameter = policy;
+        hapPolicyParcel.hapPolicy = policy;
     }
     bool UpdateHapTokenStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         int32_t apiVersion = 8;
         HapPolicyParcel hapPolicyParcel;
-        ConstructorParam(testName, tokenId, hapPolicyParcel);
+        ConstructorParam(fuzzData, hapPolicyParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -71,7 +71,7 @@ namespace OHOS {
         if (!datas.WriteBool(false)) {
             return false;
         }
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
         if (!datas.WriteInt32(apiVersion)) {
@@ -80,7 +80,7 @@ namespace OHOS {
         if (!datas.WriteParcelable(&hapPolicyParcel)) {
             return false;
         }
-        uint32_t code = static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN);
+        uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN);
         MessageParcel reply;
         MessageOption option;
         bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);

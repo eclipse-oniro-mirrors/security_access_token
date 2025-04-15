@@ -16,7 +16,7 @@
 #ifndef PERMISSION_VALIDATOR_H
 #define PERMISSION_VALIDATOR_H
 #include "permission_def.h"
-#include "permission_state_full.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -32,15 +32,13 @@ public:
     static bool IsToggleStatusValid(const uint32_t status);
     static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
-    static bool IsPermissionStateValid(const PermissionStateFull& permState);
+    static bool IsPermissionStateValid(const PermissionStatus& permState);
     static void FilterInvalidPermissionDef(
         const std::vector<PermissionDef>& permList, std::vector<PermissionDef>& result);
     static void FilterInvalidPermissionState(ATokenTypeEnum tokenType, bool doPermAvailableCheck,
-        const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result);
+        const std::vector<PermissionStatus>& permList, std::vector<PermissionStatus>& result);
     static bool IsGrantModeValid(int grantMode);
     static bool IsGrantStatusValid(int grantStatus);
-private:
-    static void DeduplicateResDevID(const PermissionStateFull& permState, PermissionStateFull& result);
 };
 }  // namespace AccessToken
 }  // namespace Security

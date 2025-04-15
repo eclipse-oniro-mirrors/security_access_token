@@ -24,11 +24,11 @@
 extern "C" {
 #endif
 
-extern void FreeStrArray(char **arr, int32_t num);
+extern void FreeStrArray(char ***arr, int32_t num);
 extern uint32_t GetProcessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode);
 extern uint32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode);
 extern uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode);
-extern uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int32_t *strNum, StrArrayAttr *attr);
+extern uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, StrArrayAttr *attr);
 extern cJSON *CreateNativeTokenJsonObject(const NativeTokenList *curr);
 extern uint32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *record);
 

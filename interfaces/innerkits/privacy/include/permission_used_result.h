@@ -78,6 +78,8 @@ struct PermissionUsedRecord {
     std::string permissionName;
     /** permission access count */
     int32_t accessCount = 0;
+    /** permission security access count: picker + seccom */
+    int32_t secAccessCount = 0;
     /** permission reject count */
     int32_t rejectCount = 0;
     /** permission last access timestamp */

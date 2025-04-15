@@ -16,35 +16,80 @@
 #include "data_validator.h"
 
 #include "access_token.h"
+#include "accesstoken_common_log.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
+#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
 bool DataValidator::IsBundleNameValid(const std::string& bundleName)
 {
-    return !bundleName.empty() && (bundleName.length() <= MAX_LENGTH);
+    bool ret = (!bundleName.empty() && (bundleName.length() <= MAX_LENGTH));
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "bunldename %{public}s is invalid.", bundleName.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsLabelValid(const std::string& label)
 {
-    return label.length() <= MAX_LENGTH;
+    bool ret = (label.length() <= MAX_LENGTH);
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "label %{public}s is invalid.", label.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsDescValid(const std::string& desc)
 {
-    return desc.length() <= MAX_LENGTH;
+    bool ret = desc.length() <= MAX_LENGTH;
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "desc %{public}s is invalid.", desc.c_str());
+    }
+    return ret;
 }
 
 bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
 {
-    return !permissionName.empty() && (permissionName.length() <= MAX_LENGTH);
+    if (permissionName.empty() || (permissionName.length() > MAX_LENGTH)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid perm length(%{public}d).", static_cast<int32_t>(permissionName.length()));
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsUserIdValid(const int userId)
 {
-    return userId >= 0;
+    bool ret = (userId >= 0);
+    if (!ret) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "userId %{public}d is invalid.", userId);
+    }
+    return ret;
+}
+
+bool DataValidator::IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap)
+{
+    if (aclExtendedMap.size() > MAX_EXTENDED_MAP_SIZE) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "aclExtendedMap is oversize %{public}zu.", aclExtendedMap.size());
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value)
+{
+    if (!IsPermissionNameValid(permissionName)) {
+        return false;
+    }
+
+    if (value.empty() || (value.length() > MAX_VALUE_LENGTH)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid value length(%{public}d).", static_cast<int32_t>(value.length()));
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsToggleStatusValid(const uint32_t status)
@@ -80,7 +125,11 @@ bool DataValidator::IsProcessNameValid(const std::string& processName)
 
 bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
 {
-    return !deviceId.empty() && (deviceId.length() <= MAX_LENGTH);
+    if (deviceId.empty() || (deviceId.length() > MAX_LENGTH)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid deviceId length(%{public}d).", static_cast<int32_t>(deviceId.length()));
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsDcapValid(const std::string& dcap)
@@ -103,7 +152,11 @@ bool DataValidator::IsPermissionFlagValid(uint32_t flag)
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)
 {
-    return id != 0;
+    if (id == 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid token.");
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsDlpTypeValid(int dlpType)
@@ -123,7 +176,42 @@ bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
 
 bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
 {
-    return ((type == NORMAL_TYPE) || (type == PICKER_TYPE) || (type == SECURITY_COMPONENT_TYPE));
+    if ((type != NORMAL_TYPE) && (type != PICKER_TYPE) && (type != SECURITY_COMPONENT_TYPE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsPolicyTypeValid(uint32_t type)
+{
+    PolicyType policyType = static_cast<PolicyType>(type);
+    if ((policyType != EDM) && (policyType != PRIVACY) && (policyType != TEMPORARY)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsCallerTypeValid(uint32_t type)
+{
+    CallerType callerType = static_cast<CallerType>(type);
+    if ((callerType != MICROPHONE) && (callerType != CAMERA)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsHapCaller(AccessTokenID id)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    ATokenTypeEnum type = static_cast<ATokenTypeEnum>(idInner->type);
+    if (type != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not hap(%{public}d).", id);
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

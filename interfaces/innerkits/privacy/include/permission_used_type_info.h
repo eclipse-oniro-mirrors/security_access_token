@@ -48,6 +48,8 @@ namespace AccessToken {
 struct PermissionUsedTypeInfo {
     AccessTokenID tokenId;
     std::string permissionName;
+    /** for input parameter only **/
+    int32_t pid;
     /** enum PermissionUsedType, see permission_used_type.h */
     PermissionUsedType type = NORMAL_TYPE;
 };

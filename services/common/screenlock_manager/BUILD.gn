@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../../access_token.gni")
 
-config("accesstoken_service_common_abillity_manager_config") {
+config("accesstoken_screenlock_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
@@ -32,11 +32,14 @@ ohos_shared_library("accesstoken_screenlock_manager") {
 
     include_dirs = [ "include" ]
 
-    sources = [ "src/screenlock_manager_access_loader.cpp" ]
+    sources = [ "src/screenlock_manager_loader.cpp" ]
 
-    cflags_cc = []
-    configs = [ "${access_token_path}/config:coverage_flags" ]
-    public_configs = [ ":accesstoken_service_common_abillity_manager_config" ]
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
+    public_configs = [ ":accesstoken_screenlock_config" ]
 
     external_deps = [
       "c_utils:utils",

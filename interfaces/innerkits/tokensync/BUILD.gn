@@ -15,7 +15,8 @@ import("../../../access_token.gni")
 
 config("tokensync") {
   visibility = [ ":*" ]
-  include_dirs = [ "include" ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/tokensync/include" ]
 }
 
 if (is_standard_system) {
@@ -37,7 +38,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "include",
+      "${access_token_path}/interfaces/innerkits/tokensync/include",
       "src",
     ]
 
@@ -60,7 +61,10 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
   }

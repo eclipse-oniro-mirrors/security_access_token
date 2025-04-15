@@ -21,28 +21,23 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-namespace {
-bool NativeTokenGet()
-{
-    AccessTokenID token = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    if (token == 0) {
-        return false;
-    }
-    SetSelfTokenID(token);
-    return true;
-}
-};
 
 namespace OHOS {
+    bool NativeTokenGet()
+    {
+        AccessTokenID token = AccessTokenKit::GetNativeTokenId("token_sync_service");
+        if (token == 0) {
+            return false;
+        }
+        SetSelfTokenID(token);
+        return true;
+    }
     bool RegisterTokenSyncCallbackFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
     #ifdef TOKEN_SYNC_ENABLE
-        if (!NativeTokenGet()) {
-            return false;
-        }
         int32_t result = AccessTokenKit::UnRegisterTokenSyncCallback();
         return result == RET_SUCCESS;
     #else
@@ -54,6 +49,9 @@ namespace OHOS {
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+#ifdef TOKEN_SYNC_ENABLE
+    OHOS::NativeTokenGet();
+#endif
     /* Run your code on data */
     OHOS::RegisterTokenSyncCallbackFuzzTest(data, size);
     return 0;

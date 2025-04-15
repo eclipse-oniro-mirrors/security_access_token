@@ -41,7 +41,10 @@ if (is_standard_system) {
 
     output_name = "libaccesstoken_sdk"
 
-    public_configs = [ ":accesstoken" ]
+    public_configs = [
+      ":accesstoken",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+    ]
 
     include_dirs = [
       "${access_token_path}/frameworks/accesstoken/include",
@@ -55,27 +58,28 @@ if (is_standard_system) {
       "src/accesstoken_death_recipient.cpp",
       "src/accesstoken_kit.cpp",
       "src/accesstoken_manager_client.cpp",
-      "src/accesstoken_manager_proxy.cpp",
       "src/perm_state_change_callback_customize.cpp",
     ]
 
     deps = [
-      ":libtokenid_sdk",
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+      "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
     ]
 
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
-      "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     cflags_cc = [
       "-DHILOG_ENABLE",
@@ -119,7 +123,10 @@ if (is_standard_system) {
       "hilog:libhilog",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     cflags_cc = [ "-DHILOG_ENABLE" ]
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]

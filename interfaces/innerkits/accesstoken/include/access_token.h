@@ -114,6 +114,7 @@ typedef enum TypeATokenAplEnum {
     APL_NORMAL = 1,
     APL_SYSTEM_BASIC = 2,
     APL_SYSTEM_CORE = 3,
+    APL_ENUM_BUTT,
 } ATokenAplEnum;
 
 /**
@@ -126,6 +127,7 @@ typedef enum TypeATokenAvailableTypeEnum {
     MDM,
     SYSTEM_AND_MDM,
     SERVICE,
+    ENTERPRISE_NORMAL,
     AVAILABLE_TYPE_BUTT,
 } ATokenAvailableTypeEnum;
 
@@ -230,6 +232,27 @@ typedef enum TypePermissionOper {
     BUTT_OPER,
 } PermissionOper;
 
+
+/**
+ * @brief Permission operation result details
+ */
+typedef enum TypePermissionErrorReason {
+    /** The operation is successful */
+    REQ_SUCCESS = 0,
+    /** The permission name is invalid */
+    PERM_INVALID = 1,
+    /** The requested has not been declared */
+    PERM_NOT_DECLEARED = 2,
+    /** The conditions for requesting the permission are not met */
+    CONDITIONS_NOT_MET = 3,
+    /** The user does not agree to the Privacy Statement */
+    PRIVACY_STATEMENT_NOT_AGREED = 4,
+    /** The permission cannot be requested in a pop-up window */
+    UNABLE_POP_UP = 5,
+    /** The service is abnormal */
+    SERVICE_ABNORMAL = 12,
+} PermissionErrorReason;
+
 /**
  * @brief Dlp types
  */
@@ -241,6 +264,16 @@ typedef enum DlpType {
 } HapDlpType;
 
 /**
+ * @brief User permission policy status.
+ */
+typedef struct {
+    /** user id */
+    int32_t userId;
+    /** active status */
+    bool isActive;
+} UserState;
+
+/**
  * @brief Dlp permission type
  */
 typedef enum TypeDlpPerm {
@@ -248,6 +281,16 @@ typedef enum TypeDlpPerm {
     DLP_PERM_FULL_CONTROL = 1,
     DLP_PERM_NONE = 2,
 } DlpPermMode;
+
+/**
+ * @brief Atm toggle mode type
+ */
+typedef enum TypeToggleModeType {
+    /** toggle mode is request */
+    TOGGLE_REQUEST = 0,
+    /** toggle mode is record */
+    TOGGLE_RECORD,
+} ToggleModeType;
 
 /**
  * @brief Atm tools operate type
@@ -267,11 +310,40 @@ typedef enum TypeOptType {
     PERM_GRANT,
     /** revoke permission */
     PERM_REVOKE,
-    /** set toggle status */
+    /** set toggle request/record status */
     TOGGLE_SET,
-    /** get toggle status */
+    /** get toggle request/record status */
     TOGGLE_GET,
 } OptType;
+
+/**
+ * @brief PermssionRule
+ */
+typedef enum TypePermissionRulesEnum {
+    PERMISSION_EDM_RULE = 0,
+    PERMISSION_ACL_RULE
+} PermissionRulesEnum;
+
+/**
+ * @brief Permission change registration type
+ */
+typedef enum RegisterPermissionChangeType {
+    /** system app register permissions state change info of selected haps */
+    SYSTEM_REGISTER_TYPE = 0,
+    /** app register permissions state change info of itself */
+    SELF_REGISTER_TYPE = 1,
+} RegisterPermChangeType;
+
+/**
+ * @brief Whether acl check
+ */
+typedef enum HapPolicyCheckIgnoreType {
+    /** normal */
+    NONE = 0,
+    /** ignore acl check */
+    ACL_IGNORE_CHECK,
+} HapPolicyCheckIgnore;
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

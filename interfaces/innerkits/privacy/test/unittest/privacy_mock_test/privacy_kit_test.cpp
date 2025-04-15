@@ -127,8 +127,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
 {
     AccessTokenID tokenId = 0xff;
-    std::string device = "device";
-    int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId, device);
+    int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId);
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
@@ -218,6 +217,33 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermissionTest001, TestSize.Level1)
     ASSERT_EQ(false, ret);
 }
 
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatus001
+ * @tc.desc: SetPermissionUsedRecordToggleStatus proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+    int32_t ret = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordToggleStatus001
+ * @tc.desc: GetPermissionUsedRecordToggleStatus proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 1;
+    bool status = true;
+    int32_t ret = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID, status);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
 
 } // namespace AccessToken
 } // namespace Security

@@ -15,6 +15,7 @@
 
 #include "nativetoken_klog.h"
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "securec.h"
 
@@ -28,12 +29,15 @@ static const char *LOG_LEVEL_STR[] = {"ERROR", "WARNING", "INFO"};
 #endif
 
 static int g_fd = -1;
+const uint64_t g_nativeKmsgFdTag = 0xD005A01;
+
 static void NativeTokenOpenLogDevice(void)
 {
     int fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC);
     if (fd >= 0) {
         g_fd = fd;
     }
+    fdsan_exchange_owner_tag(g_fd, 0, g_nativeKmsgFdTag);
     return;
 }
 
@@ -52,7 +56,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     va_start(vargs, fmt);
     char tmpFmt[MAX_LOG_SIZE];
     if (vsnprintf_s(tmpFmt, MAX_LOG_SIZE, MAX_LOG_SIZE - 1, fmt, vargs) == -1) {
-        close(g_fd);
+        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
         va_end(vargs);
         return -1;
@@ -62,7 +66,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     int res = snprintf_s(logInfo, MAX_LOG_SIZE, MAX_LOG_SIZE - 1, "[pid=%d][%s][%s] %s",
         getpid(), "access_token", LOG_LEVEL_STR[logLevel], tmpFmt);
     if (res == -1) {
-        close(g_fd);
+        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
         va_end(vargs);
         return -1;
@@ -70,7 +74,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     va_end(vargs);
 
     if (write(g_fd, logInfo, strlen(logInfo)) < 0) {
-        close(g_fd);
+        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
     }
     return 0;

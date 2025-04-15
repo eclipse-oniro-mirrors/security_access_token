@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,9 +20,10 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -36,8 +37,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char *>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
+        std::string testName(fuzzData.GenerateStochasticString());
 
         MessageParcel inData;
         inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -46,7 +48,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID);
+            IAccessTokenManagerIpcCode::COMMAND_ALLOC_LOCAL_TOKEN_I_D);
 
         MessageParcel reply;
         MessageOption option;

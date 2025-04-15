@@ -19,11 +19,12 @@
 #include "iremote_stub.h"
 #include "nocopyable.h"
 #include "privacy_window_manager_interface.h"
-#include "window_manager_loader.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+using WindowChangeCallback = void (*)(uint32_t, bool);
+
 class PrivacyWindowManagerAgent : public IRemoteStub<IWindowManagerAgent> {
 public:
     PrivacyWindowManagerAgent(WindowChangeCallback callback);

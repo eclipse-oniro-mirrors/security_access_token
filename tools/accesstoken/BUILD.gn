@@ -19,7 +19,10 @@ ohos_executable("atm") {
   subsystem_name = "security"
   part_name = "access_token"
 
-  include_dirs = [ "include" ]
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "include",
+  ]
 
   sources = [
     "src/atm_command.cpp",
@@ -34,6 +37,10 @@ ohos_executable("atm") {
   ]
 
   cflags = []
+
+  if (build_variant == "user") {
+    cflags_cc = [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
 
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]

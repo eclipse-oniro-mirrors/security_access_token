@@ -15,16 +15,13 @@
 
 #include "token_sync_manager_proxy.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "parcel.h"
 #include "string_ex.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerProxy"};
-}
 
 TokenSyncManagerProxy::TokenSyncManagerProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<ITokenSyncManager>(impl)
 {}
@@ -37,11 +34,11 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     MessageParcel data;
     data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write deviceID");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write deviceID");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
 
@@ -49,18 +46,18 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
 
@@ -69,7 +66,7 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     MessageParcel data;
     data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenID");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
 
@@ -77,18 +74,18 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
 
@@ -101,7 +98,7 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
     tokenInfoParcel.hapTokenInfoForSyncParams = tokenInfo;
 
     if (!data.WriteParcelable(&tokenInfoParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenInfo");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write tokenInfo");
         return TOKEN_SYNC_PARAMS_INVALID;
     }
 
@@ -109,18 +106,18 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
 } // namespace AccessToken

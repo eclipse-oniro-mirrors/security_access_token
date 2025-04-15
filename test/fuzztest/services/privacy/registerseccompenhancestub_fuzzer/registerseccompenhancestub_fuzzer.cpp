@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,31 +18,69 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_callbacks.h"
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "errors.h"
-#include "i_privacy_manager.h"
+#include "hap_token_info.h"
+#include "iprivacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
+#include "securec.h"
+#include "token_sync_kit_interface.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+namespace {
+class TokenSyncCallbackImpl : public TokenSyncKitInterface {
+public:
+    ~TokenSyncCallbackImpl() = default;
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
+    {
+        return 0;
+    };
+
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
+    {
+        return 0;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
+    {
+        return 0;
+    };
+};
+}
+
     bool RegisterSecCompEnhanceStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
+        sptr<TokenSyncCallback> callback =
+            sptr<TokenSyncCallback>(new TokenSyncCallback(std::make_shared<TokenSyncCallbackImpl>()));
+
+        AccessTokenFuzzData fuzzData(data, size);
+
         SecCompEnhanceData secData;
-        secData.callback = nullptr;
-        secData.pid = static_cast<int32_t>(size);
-        secData.token = static_cast<AccessTokenID>(size);
-        secData.challenge = static_cast<uint64_t>(size);
-        secData.sessionId = static_cast<int32_t>(size);
-        secData.seqNum = static_cast<int32_t>(size);
+        secData.callback = callback->AsObject();
+        secData.pid = fuzzData.GetData<int32_t>();
+        secData.token = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        secData.challenge = fuzzData.GetData<uint64_t>();
+        secData.sessionId = fuzzData.GetData<uint32_t>();
+        secData.seqNum = fuzzData.GetData<uint32_t>();
+        if (size < AES_KEY_STORAGE_LEN) {
+            return false;
+        }
+        if (memcpy_s(secData.key, AES_KEY_STORAGE_LEN, data, AES_KEY_STORAGE_LEN) != EOK) {
+            return false;
+        }
 
         SecCompEnhanceDataParcel enhance;
         enhance.enhanceData = secData;
@@ -53,7 +91,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_REGISTER_SEC_COMP_ENHANCE);
 
         MessageParcel reply;
         MessageOption option;

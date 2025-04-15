@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,8 +21,9 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -36,9 +37,10 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char *>(data), size);
-        uint32_t status = static_cast<uint32_t>(size);
-        int32_t userID = static_cast<int32_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateStochasticString());
+        uint32_t status = fuzzData.GetData<int32_t>();
+        int32_t userID = fuzzData.GetData<int32_t>();
         MessageParcel sendData;
         if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor()) ||
             !sendData.WriteString(testName) || !sendData.WriteUint32(status) ||
@@ -47,7 +49,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS);
+            IAccessTokenManagerIpcCode::COMMAND_SET_PERMISSION_REQUEST_TOGGLE_STATUS);
 
         MessageParcel reply;
         MessageOption option;

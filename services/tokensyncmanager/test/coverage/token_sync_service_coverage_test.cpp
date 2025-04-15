@@ -25,11 +25,12 @@
 #include "remote_command_executor.h"
 #include "token_sync_manager_service.h"
 #include "soft_bus_manager.h"
+#include "soft_bus_channel.h"
 #undef private
 
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
@@ -44,40 +45,18 @@
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
+#include "test_common.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
 
 using namespace std;
 using namespace testing::ext;
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static std::vector<std::thread> threads_;
-static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
-    std::make_shared<SoftBusDeviceConnectionListener>();
-static std::string g_networkID = "deviceid-1";
-static std::string g_udid = "deviceid-1:udid-001";
-static int32_t g_selfUid;
-static AccessTokenID g_selfTokenId = 0;
-static const int32_t OUT_OF_MAP_SOCKET = 2;
-
-class TokenSyncServiceTest : public testing::Test {
-public:
-    TokenSyncServiceTest();
-    ~TokenSyncServiceTest();
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-    void OnDeviceOffline(const DmDeviceInfo &info);
-    void SetUp();
-    void TearDown();
-    std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
-};
-
-static DmDeviceInfo g_devInfo = {
+namespace {
+static DistributedHardware::DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
     .deviceName = "remote_mock",
@@ -85,9 +64,25 @@ static DmDeviceInfo g_devInfo = {
     .networkId = "deviceid-1"
 };
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
+static std::vector<std::thread> threads_;
+static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
+    std::make_shared<SoftBusDeviceConnectionListener>();
+static int32_t g_selfUid;
+static AccessTokenID g_selfTokenId = 0;
+static const int32_t OUT_OF_MAP_SOCKET = 2;
 }
+
+class TokenSyncServiceTest : public testing::Test {
+public:
+    TokenSyncServiceTest();
+    ~TokenSyncServiceTest();
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info);
+    void SetUp();
+    void TearDown();
+    std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
+};
 
 TokenSyncServiceTest::TokenSyncServiceTest()
 {
@@ -99,7 +94,7 @@ TokenSyncServiceTest::~TokenSyncServiceTest()
 void NativeTokenGet()
 {
     uint64_t tokenId = 0;
-    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    tokenId = TestCommon::GetNativeTokenIdFromProcess("token_sync_service");
     ASSERT_NE(tokenId, static_cast<AccessTokenID>(0));
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
@@ -108,10 +103,14 @@ void TokenSyncServiceTest::SetUpTestCase()
 {
     g_selfUid = getuid();
     g_selfTokenId = GetSelfTokenID();
+    TestCommon::SetTestEvironment(g_selfTokenId);
     NativeTokenGet();
 }
 void TokenSyncServiceTest::TearDownTestCase()
-{}
+{
+    SetSelfTokenID(g_selfTokenId);
+    TestCommon::ResetTestEvironment();
+}
 void TokenSyncServiceTest::SetUp()
 {
     tokenSyncManagerService_ = DelayedSingleton<TokenSyncManagerService>::GetInstance();
@@ -119,7 +118,7 @@ void TokenSyncServiceTest::SetUp()
 }
 void TokenSyncServiceTest::TearDown()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "TearDown start.");
     tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
@@ -132,13 +131,13 @@ void TokenSyncServiceTest::TearDown()
     }
 }
 
-void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
+void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
@@ -149,7 +148,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(udid);
         DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, offline failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "uuid or udid is empty, offline failed.");
     }
 }
 
@@ -187,8 +186,27 @@ HWTEST_F(TokenSyncServiceTest, CloseSocket001, TestSize.Level1)
  */
 HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level1)
 {
+    SoftBusManager::GetInstance().Initialize();
+    SoftBusManager::GetInstance().SetDefaultConfigValue();
     ASSERT_EQ("", SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(""));
     ASSERT_EQ("", SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(""));
+}
+
+/**
+ * @tc.name: InsertCallbackAndExcute001
+ * @tc.desc: Ond
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level1)
+{
+    SoftBusDeviceConnectionListener listener;
+    listener.OnDeviceOffline(g_devInfo);
+    SoftBusChannel channel("test");
+    std::string test("test");
+    channel.InsertCallback(0, test);
+    ASSERT_EQ(true, channel.isSocketUsing_);
+    ASSERT_EQ("", channel.ExecuteCommand("test", "test"));
 }
 }  // namespace AccessToken
 }  // namespace Security

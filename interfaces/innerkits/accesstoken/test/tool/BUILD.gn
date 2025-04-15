@@ -39,3 +39,48 @@ ohos_executable("SetPermDialogCapTest") {
   subsystem_name = "security"
   part_name = "access_token"
 }
+
+ohos_executable("GrantShortTermWriteImageVideo") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [ "grant_short_term_write_imagevideo.cpp" ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+ohos_executable("VerifyAccessToken") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [ "verify_acesstoken.cpp" ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}

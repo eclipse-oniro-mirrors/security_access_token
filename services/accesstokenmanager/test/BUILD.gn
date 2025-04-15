@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,152 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/test.gni")
-import("../../../access_token.gni")
-
-accesstoken_manager_service_source = [
-  "../main/cpp/src/callback/callback_manager.cpp",
-  "../main/cpp/src/callback/callback_death_recipients.cpp",
-  "../main/cpp/src/callback/accesstoken_callback_proxys.cpp",
-  "../main/cpp/src/database/access_token_db.cpp",
-  "../main/cpp/src/database/data_translator.cpp",
-  "../main/cpp/src/database/token_field_const.cpp",
-  "../main/cpp/src/form_manager/form_instance.cpp",
-  "../main/cpp/src/form_manager/form_manager_access_client.cpp",
-  "../main/cpp/src/form_manager/form_manager_access_proxy.cpp",
-  "../main/cpp/src/form_manager/form_manager_death_recipient.cpp",
-  "../main/cpp/src/form_manager/form_status_change_callback.cpp",
-  "../main/cpp/src/form_manager/running_form_info.cpp",
-  "../main/cpp/src/permission/permission_definition_cache.cpp",
-  "../main/cpp/src/permission/permission_grant_event.cpp",
-  "../main/cpp/src/permission/permission_manager.cpp",
-  "../main/cpp/src/permission/permission_policy_set.cpp",
-  "../main/cpp/src/permission/permission_validator.cpp",
-  "../main/cpp/src/permission/permission_definition_parser.cpp",
-  "../main/cpp/src/permission/temp_permission_observer.cpp",
-  "../main/cpp/src/service/accesstoken_manager_service.cpp",
-  "../main/cpp/src/service/accesstoken_manager_stub.cpp",
-  "../main/cpp/src/token/accesstoken_id_manager.cpp",
-  "../main/cpp/src/token/accesstoken_info_manager.cpp",
-  "../main/cpp/src/token/hap_token_info_inner.cpp",
-  "../main/cpp/src/token/native_token_info_inner.cpp",
-  "../main/cpp/src/token/native_token_receptor.cpp",
-]
-
-ohos_unittest("libaccesstoken_manager_service_standard_test") {
-  subsystem_name = "security"
-  part_name = "access_token"
-  module_out_path = part_name + "/" + part_name
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-    blocklist = "${access_token_path}/cfi_blocklist.txt"
-  }
-  branch_protector_ret = "pac_ret"
-
-  include_dirs = [
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/frameworks/tokensync/include",
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/main/cpp/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/src",
-    "${access_token_path}/interfaces/innerkits/nativetoken/include",
-    "${access_token_path}/services/common/app_manager/include",
-    "${access_token_path}/services/common/database/include",
-    "${access_token_path}/services/common/handler/include",
-    "${access_token_path}/services/common/libraryloader/include",
-    "${access_token_path}/services/common/utils/include",
-    "../main/cpp/include/callback",
-    "../main/cpp/include/database",
-    "../main/cpp/include/device",
-    "../main/cpp/include/form_manager",
-    "../main/cpp/include/permission",
-    "../main/cpp/include/service",
-    "../main/cpp/include/token",
-  ]
-
-  sources = [
-    "unittest/cpp/src/accesstoken_database_test.cpp",
-    "unittest/cpp/src/accesstoken_info_manager_test.cpp",
-    "unittest/cpp/src/native_token_receptor_test.cpp",
-    "unittest/cpp/src/permission_definition_parser_test.cpp",
-    "unittest/cpp/src/permission_grant_event_test.cpp",
-    "unittest/cpp/src/permission_manager_test.cpp",
-  ]
-  sources += accesstoken_manager_service_source
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-
-  if (dlp_permission_enable == true) {
-    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [
-      "../main/cpp/src/permission/dlp_permission_set_manager.cpp",
-      "../main/cpp/src/permission/dlp_permission_set_parser.cpp",
-    ]
-  }
-
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  deps = [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "${access_token_path}/services/common:accesstoken_service_common",
-    "//third_party/googletest:gmock_main",
-    "//third_party/googletest:gtest_main",
-  ]
-
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    sources += [
-      "../main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-      "../main/cpp/src/token/token_modify_notifier.cpp",
-    ]
-    include_dirs += [
-      "${access_token_path}/interfaces/innerkits/tokensync/include",
-      "${access_token_path}/interfaces/innerkits/tokensync/src",
-    ]
-  }
-
-  external_deps = [
-    "c_utils:utils",
-    "dsoftbus:softbus_client",
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "json:nlohmann_json_static",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "sqlite:sqlite",
-  ]
-
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (access_token_background_task_mgr_continuous_task_enable == true) {
-    cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
-    include_dirs += [ "../main/cpp/include/background_task_manager" ]
-    sources += [
-      "../main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
-      "../main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
-      "../main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
-      "../main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
-      "../main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
-    ]
-  }
-}
-
 group("unittest") {
   testonly = true
-  deps = [ ":libaccesstoken_manager_service_standard_test" ]
+  deps = [
+    "coverage:libaccesstoken_manager_service_coverage_test",
+    "mock:libpermission_manager_mock_test",
+    "unittest:libaccesstoken_manager_service_standard_test",
+  ]
 }

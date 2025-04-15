@@ -24,7 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
+constexpr uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
 }
 
 El5FilekeyManagerSubscriber::El5FilekeyManagerSubscriber(const EventFwk::CommonEventSubscribeInfo &subscribeInfo)

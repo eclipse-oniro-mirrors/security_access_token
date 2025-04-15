@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -31,10 +32,10 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
         uint32_t status;
-        int32_t userID = static_cast<int32_t>(size);
-        int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(testName, status, userID);
+        int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(
+            fuzzData.GenerateStochasticString(), status, fuzzData.GetData<int32_t>());
 
         return result == RET_SUCCESS;
     }

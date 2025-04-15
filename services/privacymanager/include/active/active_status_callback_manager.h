@@ -23,7 +23,8 @@
 #include "access_event_handler.h"
 #endif
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
+#include "active_change_response_info.h"
 #include "perm_active_status_callback_death_recipient.h"
 #include "perm_active_status_change_callback_proxy.h"
 
@@ -37,6 +38,7 @@ struct CallbackData {
         : permList_(permList), callbackObject_(callback)
     {}
 
+    AccessTokenID registerTokenId {0};
     std::vector<std::string> permList_;
     sptr<IRemoteObject> callbackObject_;
 };
@@ -48,16 +50,14 @@ public:
     static ActiveStatusCallbackManager& GetInstance();
 
     int32_t AddCallback(
-        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
-    void ExecuteCallbackAsync(
-        AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType);
+    void ExecuteCallbackAsync(ActiveChangeResponse& info);
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
 #endif
-    void ActiveStatusChange(AccessTokenID tokenId, const std::string& permName,
-        const std::string& deviceId, ActiveChangeType changeType);
+    void ActiveStatusChange(ActiveChangeResponse& info);
 private:
     std::mutex mutex_;
     std::vector<CallbackData> callbackDataList_;

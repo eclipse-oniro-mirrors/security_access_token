@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../../access_token.gni")
 
 ohos_unittest("lib_code_signature_analysis_test") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {
@@ -36,13 +36,11 @@ ohos_unittest("lib_code_signature_analysis_test") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [
-    "../../analysis_model:libcodesignature_analysis",
-    "//third_party/googletest:gmock",
-    "//third_party/googletest:gtest",
-  ]
+  deps = [ "../../analysis_model:libcodesignature_analysis" ]
   external_deps = [
     "bounds_checking_function:libsec_static",
+    "googletest:gmock",
+    "googletest:gtest",
     "hilog:libhilog",
   ]
 }

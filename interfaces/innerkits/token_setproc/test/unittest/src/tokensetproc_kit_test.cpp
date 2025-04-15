@@ -28,12 +28,12 @@ static const uint32_t INVALID_OP_CODE = 65532;
 static uint32_t g_tokeId = 5000;
 static const std::vector<uint32_t> g_opCodeList = {0, 1, 2, 3, 4, 5, 63, 128};
 static const std::vector<bool> g_statusList = {true, true, false, false, false, false, true, false};
-static uint32_t g_gelfUid;
+static uint32_t g_selfUid;
 static const int32_t CYCLE_TIMES = 1000;
 
 void TokensetprocKitTest::SetUpTestCase()
 {
-    g_gelfUid = getuid();
+    g_selfUid = getuid();
 }
 
 void TokensetprocKitTest::TearDownTestCase()
@@ -45,7 +45,7 @@ void TokensetprocKitTest::SetUp()
 void TokensetprocKitTest::TearDown()
 {
     RemovePermissionFromKernel(g_tokeId);
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -71,7 +71,8 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel002, TestSize.Level1)
     std::vector<uint32_t> opcodeList = {0, 1, 2};
     std::vector<bool> statusList = {0, 0};
     ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
-    setuid(g_gelfUid);
+    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    setuid(g_selfUid);
 }
 
 /**
@@ -86,7 +87,8 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel003, TestSize.Level1)
     std::vector<uint32_t> opcodeList;
     std::vector<bool> statusList;
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
-    setuid(g_gelfUid);
+    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    setuid(g_selfUid);
 }
 
 /**
@@ -100,7 +102,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel004, TestSize.Level1)
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -128,7 +130,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel005, TestSize.Level1)
     ASSERT_EQ(true, isGranted);
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
 
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -156,7 +158,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel006, TestSize.Level1)
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
 
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -174,7 +176,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level1)
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token2, g_opCodeList, g_statusList));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token1));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token2));
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -200,7 +202,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level1)
     for (uint32_t i = 0; i < tokenList.size(); i++) {
         RemovePermissionFromKernel(tokenList[i]);
     }
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 
@@ -233,7 +235,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level1)
     ASSERT_EQ(g_statusList[0], isGranted);
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -259,7 +261,7 @@ HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel002, TestSize.Level1)
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -337,7 +339,7 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel001, TestSize.Level1)
         ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[i], isGranted));
         EXPECT_EQ(false, isGranted);
     }
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -364,7 +366,7 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel002, TestSize.Level1)
     EXPECT_EQ(true, isGranted);
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -436,7 +438,7 @@ HWTEST_F(TokensetprocKitTest, Mulitpulthread001, TestSize.Level1)
     (void)pthread_join(tid[0], nullptr);
     (void)pthread_join(tid[1], nullptr);
 
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }
 
 /**
@@ -479,5 +481,5 @@ HWTEST_F(TokensetprocKitTest, APICostTimeTest001, TestSize.Level1)
     for (uint32_t i = 0; i < tokenList.size(); i++) {
         RemovePermissionFromKernel(tokenList[i]);
     }
-    setuid(g_gelfUid);
+    setuid(g_selfUid);
 }

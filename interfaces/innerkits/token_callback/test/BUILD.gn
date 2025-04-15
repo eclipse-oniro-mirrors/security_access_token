@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../../access_token.gni")
 
 ohos_unittest("libtoken_callback_test") {
-  subsystem_name = "security"
+  subsystem_name = "accesscontrol"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
   sanitize = {
@@ -37,7 +37,7 @@ ohos_unittest("libtoken_callback_test") {
   deps = [ "../:libtoken_callback_sdk" ]
   external_deps = [
     "c_utils:utils",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
   ]
 }
 

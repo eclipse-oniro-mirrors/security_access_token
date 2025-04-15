@@ -22,6 +22,7 @@
 #define MAX_DEVICE_ID_SIZE 1024
 #define MAX_RECORD_SIZE 1024
 #define MAX_ACCESS_RECORD_SIZE 500
+#define MAX_ACL_MAP_SIZE 512
 
 namespace OHOS {
 namespace Security {

@@ -15,17 +15,12 @@
 
 #include "state_change_callback_proxy.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "perm_active_response_parcel.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "StateChangeCallbackProxy"
-};
-}
 
 StateChangeCallbackProxy::StateChangeCallbackProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<IStateChangeCallback>(impl) {
@@ -40,12 +35,11 @@ void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isS
     data.WriteInterfaceToken(IStateChangeCallback::GetDescriptor());
 
     if (!data.WriteUint32(tokenId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Write tokenId");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Write tokenId");
         return;
     }
-
     if (!data.WriteBool(isShowing)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Write isShowing");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Write isShowing");
         return;
     }
 
@@ -53,17 +47,17 @@ void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isS
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service null.");
         return;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IStateChangeCallback::STATE_CHANGE_CALLBACK), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Send request fail, result: %{public}d", requestResult);
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequest success");
+    LOGI(PRI_DOMAIN, PRI_TAG, "SendRequest success");
 }
 } // namespace AccessToken
 } // namespace Security

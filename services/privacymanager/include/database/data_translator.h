@@ -29,7 +29,7 @@ class DataTranslator final {
 public:
     static int32_t TranslationIntoGenericValues(const PermissionUsedRequest& request,
         GenericValues& andGenericValues);
-    static int32_t TranslationGenericValuesIntoPermissionUsedRecord(
+    static int32_t TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
         const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
 };
 } // namespace AccessToken

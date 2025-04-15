@@ -16,7 +16,7 @@
 #include "sync_remote_hap_token_command.h"
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "constant_common.h"
 #include "base_remote_command.h"
@@ -24,10 +24,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SyncRemoteHapTokenCommand"};
-}
 
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     const std::string &srcDeviceId, const std::string &dstDeviceId, AccessTokenID id) : requestTokenId_(id)
@@ -38,10 +34,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     remoteProtocol_.dstDeviceId = dstDeviceId;
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
     remoteProtocol_.requestVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
-    hapTokenInfo_.baseInfo.apl = APL_NORMAL;
-    hapTokenInfo_.baseInfo.appID = "";
     hapTokenInfo_.baseInfo.bundleName = "";
-    hapTokenInfo_.baseInfo.deviceID = "";
     hapTokenInfo_.baseInfo.instIndex = 0;
     hapTokenInfo_.baseInfo.dlpType = 0;
     hapTokenInfo_.baseInfo.tokenAttr = 0;
@@ -53,10 +46,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 {
     requestTokenId_ = 0;
-    hapTokenInfo_.baseInfo.apl = APL_INVALID;
-    hapTokenInfo_.baseInfo.appID = "";
     hapTokenInfo_.baseInfo.bundleName = "";
-    hapTokenInfo_.baseInfo.deviceID = "";
     hapTokenInfo_.baseInfo.instIndex = 0;
     hapTokenInfo_.baseInfo.dlpType = 0;
     hapTokenInfo_.baseInfo.tokenAttr = 0;
@@ -64,40 +54,39 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
     hapTokenInfo_.baseInfo.userID = 0;
     hapTokenInfo_.baseInfo.ver = DEFAULT_TOKEN_VERSION;
 
-    nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
-    if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+    CJsonUnique jsonObject = CreateJsonFromString(json);
+    if (jsonObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "JsonObject is invalid.");
         return;
     }
-    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
-    if ((jsonObject.find("requestTokenId") != jsonObject.end()) && (jsonObject.at("requestTokenId").is_number())) {
-        jsonObject.at("requestTokenId").get_to(requestTokenId_);
-    }
+    BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
+    GetUnsignedIntFromJson(jsonObject, "requestTokenId", requestTokenId_);
 
-    if ((jsonObject.find("HapTokenInfo") != jsonObject.end()) && (jsonObject.at("HapTokenInfo").is_object())) {
-        nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfo").get<nlohmann::json>();
+    CJson *hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfo");
+    if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, hapTokenInfo_);
     }
 }
 
 std::string SyncRemoteHapTokenCommand::ToJsonPayload()
 {
-    nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
-    j["requestTokenId"] = requestTokenId_;
-    j["HapTokenInfo"] = BaseRemoteCommand::ToHapTokenInfosJson(hapTokenInfo_);
-    return j.dump();
+    CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
+    AddUnsignedIntToJson(j, "requestTokenId", requestTokenId_);
+    CJsonUnique HapTokenInfo = BaseRemoteCommand::ToHapTokenInfosJson(hapTokenInfo_);
+    AddObjToJson(j, "HapTokenInfo", HapTokenInfo);
+    return PackJsonToString(j);
 }
 
 void SyncRemoteHapTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, " end as: SyncRemoteHapTokenCommand");
+    LOGD(ATM_DOMAIN, ATM_TAG, " end as: SyncRemoteHapTokenCommand");
 }
 
 void SyncRemoteHapTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteHapTokenCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Execute: start as: SyncRemoteHapTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -110,18 +99,18 @@ void SyncRemoteHapTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: SyncRemoteHapTokenCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Execute: end as: SyncRemoteHapTokenCommand");
 }
 
 void SyncRemoteHapTokenCommand::Finish()
 {
     if (remoteProtocol_.statusCode != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Finish: end as: SyncRemoteHapTokenCommand get remote result error.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Finish: end as: SyncRemoteHapTokenCommand get remote result error.");
         return;
     }
     AccessTokenKit::SetRemoteHapTokenInfo(remoteProtocol_.dstDeviceId, hapTokenInfo_);
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Finish: end as: SyncRemoteHapTokenCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Finish: end as: SyncRemoteHapTokenCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security

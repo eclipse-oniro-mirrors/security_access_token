@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,19 @@
 # limitations under the License.
 
 domain: ACCESS_TOKEN
+
+ACCESSTOKEN_SERVICE_START:
+  __BASE: {type: STATISTIC, level: CRITICAL, tag: usability, desc: service startup}
+  PID: {type: INT32, desc: access token service pid}
+  HAP_SIZE: {type: UINT32, desc: hap token size}
+  NATIVE_SIZE: {type: UINT32, desc: native token size}
+  PERM_DEFINITION_SIZE: {type: UINT32, desc: permission definition size}
+
+ACCESSTOKEN_SERVICE_START_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: service startup error}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  ERROR_MSG: {type: STRING, desc: error reason}
 
 PERMISSION_VERIFY_REPORT:
   __BASE: {type: SECURITY, level: CRITICAL, desc: permission verification error}
@@ -56,6 +69,9 @@ DEL_HAP:
   USERID: {type: INT32, desc: user id}
   BUNDLENAME: {type: STRING, desc: bundle name}
   INSTINDEX: {type: INT32, desc: inst index}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  DURATION: {type: INT64, desc: duration}
 
 PERM_DIALOG_STATUS_INFO:
   __BASE: {type: STATISTIC, level: MINOR, desc: status information of permission dialog}
@@ -68,3 +84,77 @@ GRANT_TEMP_PERMISSION:
   TOKENID: {type: UINT32, desc: tokenID}
   BUNDLENAME: {type: STRING, desc: bundle name}
   PERMISSION_NAME: {type: STRING, desc: permission name}
+
+REQUEST_PERMISSIONS_FROM_USER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
+
+UPDATE_PERMISSION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: grant or revoke permission}
+  TOKENID: {type: UINT32, desc: tokenID}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+  PERMISSION_FLAG: {type: UINT32, desc: permission flag}
+  GRANTED_FLAG: {type: BOOL, desc: grant or revoke}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+
+UPDATE_HAP:
+  __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: update hap to device}
+  TOKENID: {type: UINT32, desc: token id}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  TOKENIDEX: {type: UINT64, desc: tokenIDEx}
+  PERM_INFO: {type: STRING, desc: perm info}
+  ACL_INFO: {type: STRING, desc: acl info}
+  PREAUTH_INFO: {type: STRING, desc: pre-auth info}
+  EXTEND_INFO: {type: STRING, desc: extend info}
+  DURATION: {type: INT64, desc: duration}
+
+CLEAR_USER_PERMISSION_STATE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: clear user permission state}
+  TOKENID: {type: UINT32, desc: tokenid to be cleared}
+  TOKENID_LEN: {type: UINT32, desc: amount of realated sandbox app accesstoken}
+
+SET_PERMISSION_DIALOG_CAP:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: set permission dialog capability}
+  TOKENID: {type: UINT32, desc: token id}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+  ENABLE: {type: BOOL, desc: enable or disable}
+
+REQ_PERM_FROM_USER_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: failed to request permission from user}
+  ERROR_CODE: {type: INT32, desc: error code}
+  SELF_TOKENID: {type: UINT32, desc: self tokenID}
+  CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}
+
+UPDATE_PERMISSION_STATUS_ERROR:
+  __BASE: {type: FAULT, level: CRITICAL, desc: failed to grant or revoke permission}
+  ERROR_CODE: {type: INT32, desc: error code}
+  TOKENID: {type: UINT32, desc: tokenID}
+  PERM: {type: STRING, desc: permission name}
+  BUNDLE_NAME: {type: STRING, desc: bundle name}
+  INT_VAL1: {type: INT32, desc: hap dlp type/return value}
+  INT_VAL2: {type: INT32, desc: permission dlp mode/update permission flag}
+  NEED_KILL: {type: BOOL, desc: need kill hap}
+
+VERIFY_ACCESS_TOKEN_EVENT:
+  __BASE: {type: STATISTIC, level: CRITICAL, desc: verify access token event}
+  EVENT_CODE: {type: INT32, desc: event code}
+  SELF_TOKENID: {type: UINT32, desc: self tokenID}
+  CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}
+
+ACCESSTOKEN_EXCEPTION:
+  __BASE: {type: FAULT, level: CRITICAL, desc: accesstoken exception}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  ERROR_MSG: {type: STRING, desc: error reason}
+

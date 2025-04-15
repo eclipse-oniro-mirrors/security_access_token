@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,16 +18,19 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+#ifdef TOKEN_SYNC_ENABLE
 const int CONSTANTS_NUMBER_TWO = 2;
+#endif
 
 namespace OHOS {
     bool DeleteRemoteTokenStubFuzzTest(const uint8_t* data, size_t size)
@@ -37,8 +40,9 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateStochasticString());
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -50,7 +54,7 @@ namespace OHOS {
         }
        
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO);
+            IAccessTokenManagerIpcCode::COMMAND_DELETE_REMOTE_TOKEN);
 
         MessageParcel reply;
         MessageOption option;

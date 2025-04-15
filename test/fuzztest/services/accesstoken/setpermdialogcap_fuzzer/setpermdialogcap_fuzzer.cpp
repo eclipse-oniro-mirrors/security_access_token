@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,9 +20,10 @@
 #include <vector>
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
 #include "token_setproc.h"
@@ -60,22 +61,22 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char *>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
         HapBaseInfoParcel baseInfoParcel;
-        baseInfoParcel.hapBaseInfo.userID = static_cast<int32_t>(size);
-        baseInfoParcel.hapBaseInfo.bundleName = testName;
-        baseInfoParcel.hapBaseInfo.instIndex = static_cast<int32_t>(size);
+        baseInfoParcel.hapBaseInfo.userID = fuzzData.GetData<int32_t>();
+        baseInfoParcel.hapBaseInfo.bundleName = fuzzData.GenerateStochasticString();
+        baseInfoParcel.hapBaseInfo.instIndex = fuzzData.GetData<int32_t>();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteParcelable(&baseInfoParcel)) {
             return false;
         }
-        uint32_t code = static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY);
+        uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_SET_PERM_DIALOG_CAP);
 
         MessageParcel reply;
         MessageOption option;
-        GetNativeToken();
+
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         return true;
     }
@@ -85,6 +86,7 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
+    OHOS::GetNativeToken();
     OHOS::SetPermDialogCapFuzzTest(data, size);
     return 0;
 }

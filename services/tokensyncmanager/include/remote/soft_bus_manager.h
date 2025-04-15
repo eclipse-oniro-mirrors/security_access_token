@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <cinttypes>
+#include <map>
 #include <memory>
 #include <string>
 #include <thread>
@@ -82,22 +83,22 @@ public:
     /**
      * @brief Get UUID(networkId) by deviceNodeId.
      *
-     * @param deviceNodeId The valid networkId or deviceId(UDID) or deviceUuid.
+     * @param networkId The valid networkId.
      * @return uuid if deviceManager is ready, empty string otherwise.
      * @since 1.0
      * @version 1.0
      */
-    std::string GetUniversallyUniqueIdByNodeId(const std::string &deviceNodeId);
+    std::string GetUniversallyUniqueIdByNodeId(const std::string &networkId);
 
     /**
      *  @brief Get deviceId(UDID) by deviceNodeId.
      *
-     * @param deviceNodeId The valid networkId or deviceId(UDID) or deviceUuid.
+     * @param networkId The valid networkId.
      * @return udid if deviceManager work correctly, empty string otherwise.
      * @since 1.0
      * @version 1.0
      */
-    std::string GetUniqueDeviceIdByNodeId(const std::string &deviceNodeId);
+    std::string GetUniqueDeviceIdByNodeId(const std::string &networkId);
 
     bool GetNetworkIdBySocket(const int32_t socket, std::string& networkId);
 
@@ -129,9 +130,6 @@ private:
      * @version 1.0
      */
     int AddTrustedDeviceInfo();
-
-    std::string GetUuidByNodeId(const std::string &nodeId) const;
-    std::string GetUdidByNodeId(const std::string &nodeId) const;
 
     void SetDefaultConfigValue();
     void GetConfigValue();

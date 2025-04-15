@@ -51,6 +51,10 @@ public:
     const static std::string FIELD_GRANT_IS_GENERAL;
     const static std::string FIELD_GRANT_STATE;
     const static std::string FIELD_GRANT_FLAG;
+    const static std::string FIELD_REQUEST_TOGGLE_STATUS;
+    const static std::string FIELD_KERNEL_EFFECT;
+    const static std::string FIELD_HAS_VALUE;
+    const static std::string FIELD_VALUE;
 };
 } // namespace AccessToken
 } // namespace Security

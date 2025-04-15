@@ -16,16 +16,13 @@
 #include "token_callback_stub.h"
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "string_ex.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "TokenCallbackStub"
-};
 static const int32_t LIST_SIZE_MAX = 200;
 static const int32_t FAILED = -1;
 }
@@ -38,10 +35,10 @@ static std::string to_utf8(std::u16string str16)
 int32_t TokenCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenCallback::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -49,7 +46,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
         uint32_t permListSize = data.ReadUint32();
         if (permListSize > LIST_SIZE_MAX) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail %{public}u", permListSize);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
@@ -61,7 +58,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
 
         uint32_t statusListSize = data.ReadUint32();
         if (statusListSize != permListSize) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read statusListSize fail %{public}u", statusListSize);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read statusListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;

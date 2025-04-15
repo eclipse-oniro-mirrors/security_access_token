@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "tokenid_kit.h"
 #include "accesstoken_kit.h"
@@ -32,7 +33,8 @@ namespace OHOS {
             return false;
         }
 
-        uint64_t tokenId = static_cast<uint64_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         uint64_t retTokenId = TokenIdKit::GetRenderTokenID(tokenId);
 
         return retTokenId != tokenId;

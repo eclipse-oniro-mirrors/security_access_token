@@ -23,6 +23,7 @@ namespace Security {
 namespace AccessToken {
 class PrivacyFiledConst {
 public:
+    const static std::string FIELD_USER_ID;
     const static std::string FIELD_TOKEN_ID;
     const static std::string FIELD_DEVICE_ID;
     const static std::string FIELD_OP_CODE;

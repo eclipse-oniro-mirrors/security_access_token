@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -32,29 +34,23 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        std::vector<std::string> permissionList;
-        permissionList.emplace_back(testName);
-        int64_t beginTimeMillis = static_cast<int64_t>(size);
-        int64_t endTimeMillis = static_cast<int64_t>(size);
-
+        AccessTokenFuzzData fuzzData(data, size);
+        std::vector<std::string> permissionList = {fuzzData.GenerateStochasticString()};
         PermissionUsedRequest request = {
-            .tokenId = tokenId,
-            .isRemote = false,
-            .deviceId = testName,
-            .bundleName = testName,
+            .tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
+            .isRemote = fuzzData.GenerateStochasticBool(),
+            .deviceId = fuzzData.GenerateStochasticString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .permissionList = permissionList,
-            .beginTimeMillis = beginTimeMillis,
-            .endTimeMillis = endTimeMillis,
-            .flag = static_cast<PermissionUsageFlag>(size)
+            .beginTimeMillis = fuzzData.GetData<int64_t>(),
+            .endTimeMillis = fuzzData.GetData<int64_t>(),
+            .flag = fuzzData.GenerateStochasticEnmu<PermissionUsageFlag>(
+                FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
 
         PermissionUsedResult res;
 
-        int32_t result = PrivacyKit::GetPermissionUsedRecords(request, res);
-
-        return result == RET_SUCCESS;
+        return PrivacyKit::GetPermissionUsedRecords(request, res) == 0;
     }
 }
 

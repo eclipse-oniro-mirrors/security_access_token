@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,12 +36,16 @@ if (is_standard_system) {
 
     output_name = "libprivacy_sdk"
 
-    public_configs = [ ":pricacy" ]
+    public_configs = [
+      ":pricacy",
+      "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+    ]
 
     include_dirs = [
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "include",
       "src",
     ]
 
@@ -53,7 +57,6 @@ if (is_standard_system) {
       "src/privacy_death_recipient.cpp",
       "src/privacy_kit.cpp",
       "src/privacy_manager_client.cpp",
-      "src/privacy_manager_proxy.cpp",
       "src/state_change_callback.cpp",
       "src/state_change_callback_stub.cpp",
       "src/state_customized_cbk.cpp",
@@ -62,10 +65,14 @@ if (is_standard_system) {
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "${access_token_path}/services/common/proxy_death:proxy_death_stub",
+      "${access_token_path}/services/privacymanager:privacy_manager_proxy",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     external_deps = [
       "c_utils:utils",
@@ -81,6 +88,10 @@ if (is_standard_system) {
 
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+    }
+
+    if (build_variant == "user") {
+      cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
     }
   }
 }

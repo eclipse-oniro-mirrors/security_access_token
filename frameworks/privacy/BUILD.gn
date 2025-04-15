@@ -27,12 +27,16 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
 
   include_dirs = [
     "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/privacy/src",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   sources = [
     "src/add_perm_param_info_parcel.cpp",
@@ -44,10 +48,6 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/permission_used_type_info_parcel.cpp",
     "src/used_record_detail_parcel.cpp",
   ]
-
-  if (access_token_feature_dtmf_tone) {
-    defines = [ "FEATURE_DTMF_TONE" ]
-  }
 
   external_deps = [ "c_utils:utils" ]
 

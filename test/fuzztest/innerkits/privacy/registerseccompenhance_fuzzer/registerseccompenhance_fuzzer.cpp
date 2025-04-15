@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -32,16 +34,17 @@ namespace OHOS {
             return false;
         }
 
+        AccessTokenFuzzData fuzzData(data, size);
+
         SecCompEnhanceData secData;
         secData.callback = nullptr;
-        secData.pid = static_cast<int32_t>(size);
-        secData.token = static_cast<AccessTokenID>(size);
-        secData.challenge = static_cast<uint64_t>(size);
-        secData.sessionId = static_cast<int32_t>(size);
-        secData.seqNum = static_cast<int32_t>(size);
+        secData.pid = fuzzData.GetData<int32_t>();
+        secData.token = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        secData.challenge = fuzzData.GetData<uint64_t>();
+        secData.sessionId = fuzzData.GetData<uint32_t>();
+        secData.seqNum = fuzzData.GetData<uint32_t>();
 
-        int32_t result = PrivacyKit::RegisterSecCompEnhance(secData);
-        return result == RET_SUCCESS;
+        return PrivacyKit::RegisterSecCompEnhance(secData) == 0;
     }
 }
 

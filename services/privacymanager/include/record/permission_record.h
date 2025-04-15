@@ -16,6 +16,7 @@
 #ifndef PERMISSION_RECORD_H
 #define PERMISSION_RECORD_H
 
+#include <set>
 #include "active_change_response_info.h"
 #include "generic_values.h"
 #include "permission_used_type.h"
@@ -38,6 +39,31 @@ struct PermissionRecord {
 
     static void TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values);
     static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
+};
+
+struct ContinusPermissionRecord {
+    uint32_t tokenId = 0;
+    int32_t opCode = 0;
+    int32_t status = 0;
+    int32_t pid = 0;
+    int32_t callerPid = 0;
+
+    bool operator < (const ContinusPermissionRecord& other) const;
+
+    uint64_t GetTokenIdAndPermCode() const;
+    uint64_t GetTokenIdAndPid() const;
+    bool IsEqualRecord(const ContinusPermissionRecord& record) const;
+    bool IsEqualTokenId(const ContinusPermissionRecord& record) const;
+    bool IsEqualPermCode(const ContinusPermissionRecord& record) const;
+    bool IsEqualCallerPid(const ContinusPermissionRecord& record) const;
+    bool IsEqualPid(const ContinusPermissionRecord& record) const;
+    bool IsEqualTokenIdAndPid(const ContinusPermissionRecord& record) const;
+    static bool IsPidValid(int32_t pid);
+};
+
+struct PermissionRecordCache {
+    PermissionRecord record;
+    bool needUpdateToDb = false;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -17,21 +17,20 @@
 
 #include <cinttypes>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenIdKit"};
 static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 }
 
 bool TokenIdKit::IsSystemAppByFullTokenID(uint64_t tokenId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenId=%{public}" PRId64, tokenId);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Called, tokenId=%{public}" PRId64, tokenId);
     return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
 }
 
@@ -39,7 +38,7 @@ uint64_t TokenIdKit::GetRenderTokenID(uint64_t tokenId)
 {
     AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
     if (id == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return tokenId;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);

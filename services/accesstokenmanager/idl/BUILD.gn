@@ -1,0 +1,125 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/components/idl_tool/idl.gni")
+import("//build/ohos.gni")
+import("../../../access_token.gni")
+
+idl_gen_interface("access_token_manager_interface") {
+  sources = [ "IAccessTokenManager.idl" ]
+  sources_common = [ "IdlCommon.idl" ]
+  log_domainid = "0xD005A01"
+  log_tag = "ATM"
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+config("access_token_manager_gen_config") {
+  include_dirs = [ "${target_gen_dir}" ]
+}
+
+ohos_source_set("access_token_manager_proxy") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  cflags_cc = []
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+
+  output_values = get_target_outputs(":access_token_manager_interface")
+
+  include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
+    "src",
+  ]
+
+  sources = filter_include(output_values,
+                           [
+                             "*_proxy.cpp",
+                             "*idl_common.cpp",
+                           ])
+
+  deps = [
+    ":access_token_manager_interface",
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+ohos_source_set("access_token_manager_stub") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  cflags_cc = []
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+
+  output_values = get_target_outputs(":access_token_manager_interface")
+
+  include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
+    "src",
+  ]
+
+  sources = filter_include(output_values,
+                           [
+                             "*_stub.cpp",
+                             "*idl_common.cpp",
+                           ])
+
+  deps = [
+    ":access_token_manager_interface",
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}

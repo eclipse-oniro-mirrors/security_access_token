@@ -31,7 +31,7 @@ struct HapPolicyParcel final : public Parcelable {
 
     static HapPolicyParcel *Unmarshalling(Parcel &in);
 
-    HapPolicyParams hapPolicyParameter;
+    HapPolicy hapPolicy;
 };
 }  // namespace AccessToken
 }  // namespace Security

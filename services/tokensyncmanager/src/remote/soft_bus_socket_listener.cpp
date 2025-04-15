@@ -15,7 +15,7 @@
 
 #include "soft_bus_socket_listener.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "constant.h"
 #include "remote_command_manager.h"
 #include "socket.h"
@@ -25,9 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusSocketListener"};
-}
-namespace {
 static const int32_t MAX_ONBYTES_RECEIVED_DATA_LEN = 1024 * 1024 * 10;
 } // namespace
 
@@ -36,10 +33,10 @@ std::map<int32_t, std::string> SoftBusSocketListener::socketBindMap_;
 
 void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd is %{public}d.", socket);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd is %{public}d.", socket);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Socket fd invalid.");
         return;
     }
 
@@ -55,10 +52,10 @@ void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
 
 void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d shutdown because %{public}u.", socket, reason);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd %{public}d shutdown because %{public}u.", socket, reason);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Socket fd invalid.");
         return;
     }
 
@@ -73,7 +70,7 @@ void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
 bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::string& networkId)
 {
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Socket fd invalid.");
         return false;
     }
 
@@ -88,24 +85,24 @@ bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::stri
 
 void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint32_t dataLen)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d, recv len %{public}d.", socket, dataLen);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
     if ((socket <= Constant::INVALID_SOCKET_FD) || (data == nullptr) ||
         (dataLen == 0) || (dataLen > MAX_ONBYTES_RECEIVED_DATA_LEN)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Params invalid.");
         return;
     }
 
     std::string networkId;
     if (!GetNetworkIdBySocket(socket, networkId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket invalid, bind service first.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Socket invalid, bind service first.");
         return;
     }
 
     // channel create in SoftBusDeviceConnectionListener::OnDeviceOnline->RemoteCommandManager::NotifyDeviceOnline
     auto channel = RemoteCommandManager::GetInstance().GetExecutorChannel(networkId);
     if (channel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetExecutorChannel failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetExecutorChannel failed");
         return;
     }
     channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
@@ -113,11 +110,11 @@ void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint
 
 void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uint32_t dataLen)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d, recv len %{public}d.", socket, dataLen);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
     if ((socket <= Constant::INVALID_SOCKET_FD) || (data == nullptr) ||
         (dataLen == 0) || (dataLen > MAX_ONBYTES_RECEIVED_DATA_LEN)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Params invalid.");
         return;
     }
 
@@ -126,12 +123,12 @@ void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uin
         // channel create in SoftBusDeviceConnectionListener::OnDeviceOnline->RemoteCommandManager::NotifyDeviceOnline
         auto channel = RemoteCommandManager::GetInstance().GetExecutorChannel(networkId);
         if (channel == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetExecutorChannel failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "GetExecutorChannel failed");
             return;
         }
         channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "unkonow socket.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Unkonow socket.");
     }
 }
 

@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -50,14 +52,13 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        std::vector<std::string> permList = {testName};
+        AccessTokenFuzzData fuzzData(data, size);
+
+        std::vector<std::string> permList = {fuzzData.GenerateStochasticString()};
         auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
 
-        int32_t result = PrivacyKit::RegisterPermActiveStatusCallback(callback);
-
-        return result == RET_SUCCESS;
+        return PrivacyKit::RegisterPermActiveStatusCallback(callback) == 0;
     }
 }
 

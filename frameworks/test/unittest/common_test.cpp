@@ -23,7 +23,6 @@
 #define private public
 #include "permission_map.h"
 #undef private
-#include "json_parser.h"
 
 using namespace testing::ext;
 
@@ -32,19 +31,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 const static uint32_t MAX_PERM_SIZE = 2048;
-const static uint32_t MAX_CONFIG_FILE_SIZE = 5 * 1024;
-const static std::string TEST_JSON_PATH = "/data/test.json";
-const static std::string TEST_STR =
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
-    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA";
 }
 class CommonTest : public testing::Test  {
 public:
@@ -88,7 +74,9 @@ HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 HWTEST_F(CommonTest, TransferOpcodeToPermission001, TestSize.Level1)
 {
     std::string permissionName;
-    EXPECT_TRUE(TransferOpcodeToPermission(0, permissionName));
+    uint32_t opCode;
+    EXPECT_TRUE(TransferPermissionToOpcode("ohos.permission.ANSWER_CALL", opCode));
+    EXPECT_TRUE(TransferOpcodeToPermission(opCode, permissionName));
     EXPECT_EQ(permissionName, "ohos.permission.ANSWER_CALL");
 }
 
@@ -106,55 +94,17 @@ HWTEST_F(CommonTest, TransferOpcodeToPermission002, TestSize.Level1)
 }
 
 /*
- * @tc.name: GetUnsignedIntFromJson001
- * @tc.desc: GetUnsignedIntFromJson
+ * @tc.name: PermissionDefineMapTest
+ * @tc.desc: Test find permission difinition
  * @tc.type: FUNC
- * @tc.require: issueI6024A
+ * @tc.require:IBRDIV
  */
-HWTEST_F(CommonTest, GetUnsignedIntFromJson001, TestSize.Level1)
+HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
 {
-    const nlohmann::json json;
-    u_int32_t out = 0;
-    EXPECT_FALSE(JsonParser::GetUnsignedIntFromJson(json, "tokenId", out));
-    EXPECT_EQ(0, out);
-}
-
-/*
- * @tc.name: ReadCfgFile001
- * @tc.desc: GetUnsignedIntFromJson json invalid
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(CommonTest, ReadCfgFile001, TestSize.Level1)
-{
-    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT);
-    EXPECT_NE(-1, fd);
-    std::string rawData;
-    EXPECT_EQ(ERR_PARAM_INVALID, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
-    for (int i = 0; i < MAX_CONFIG_FILE_SIZE; i++) {
-        size_t strLen = strlen(TEST_STR.c_str());
-        write(fd, TEST_STR.c_str(), strLen);
-    }
-    EXPECT_EQ(ERR_OVERSIZE, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
-    close(fd);
-    sleep(5);
-
-    remove(TEST_JSON_PATH.c_str());
-}
-
-/*
- * @tc.name: IsDirExsit001
- * @tc.desc: IsDirExsit input param error
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(CommonTest, IsDirExsit001, TestSize.Level1)
-{
-    EXPECT_FALSE(JsonParser::IsDirExsit(""));
-    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT);
-    EXPECT_NE(-1, fd);
-
-    EXPECT_FALSE(JsonParser::IsDirExsit(TEST_JSON_PATH.c_str()));
+    EXPECT_TRUE(IsDefinedPermission("ohos.permission.ANSWER_CALL"));
+    PermissionBriefDef permDef;
+    EXPECT_TRUE(GetPermissionBriefDef("ohos.permission.ANSWER_CALL", permDef));
+    EXPECT_TRUE(strcmp("ohos.permission.ANSWER_CALL", permDef.permissionName) == 0);
 }
 } // namespace AccessToken
 } // namespace Security

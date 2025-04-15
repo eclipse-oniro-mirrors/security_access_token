@@ -159,10 +159,13 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
     ActiveChangeResponseParcel activeChangeResponseParcel;
 
     activeChangeResponseParcel.changeResponse = {
+        .callingTokenID = 100,
         .tokenID = 100,
         .permissionName = "ohos.permission.CAMERA",
         .deviceId = "device",
         .type = PERM_INACTIVE,
+        .usedType = NORMAL_TYPE,
+        .pid = -1,
     };
 
     Parcel parcel;
@@ -171,10 +174,13 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
     std::shared_ptr<ActiveChangeResponseParcel> readedData(ActiveChangeResponseParcel::Unmarshalling(parcel));
     EXPECT_EQ(true, readedData != nullptr);
 
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.callingTokenID, readedData->changeResponse.callingTokenID);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.tokenID, readedData->changeResponse.tokenID);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.permissionName, readedData->changeResponse.permissionName);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.deviceId, readedData->changeResponse.deviceId);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.type, readedData->changeResponse.type);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.usedType, readedData->changeResponse.usedType);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.pid, readedData->changeResponse.pid);
 }
 
 /**
@@ -387,6 +393,7 @@ void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
     UsedRecordDetail detailIns = {0, 0, 0L, 0L, 0};
     EXPECT_EQ(true, out.WriteString("permissionName"));
     EXPECT_EQ(true, out.WriteInt32(1));
+    EXPECT_EQ(true, out.WriteInt32(0));
     EXPECT_EQ(true, out.WriteInt32(1));
     EXPECT_EQ(true, out.WriteInt64(0L));
     EXPECT_EQ(true, out.WriteInt64(0L));

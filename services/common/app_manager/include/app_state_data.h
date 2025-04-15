@@ -49,6 +49,9 @@ struct AppStateData : public Parcelable {
     std::string callerBundleName;
     bool isSplitScreenMode = false;
     bool isFloatingWindowMode = false;
+    bool isSpecifyTokenId = false;
+    int32_t appIndex = 0;
+    bool isPreloadModule = false;
 };
 }  // namespace AccessToken
 }  // namespace Security

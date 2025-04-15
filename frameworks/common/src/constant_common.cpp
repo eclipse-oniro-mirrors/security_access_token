@@ -15,14 +15,16 @@
 
 #include "constant_common.h"
 #include <string>
+
+#include "access_token.h"
 #include "parameter.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string REPLACE_TARGET = "****";
-static const std::string REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
+constexpr const char* REPLACE_TARGET = "****";
+constexpr const char* REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
 } // namespace
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
@@ -51,6 +53,31 @@ std::string ConstantCommon::GetLocalDeviceId()
     }
     return localDeviceId;
 }
+
+bool ConstantCommon::IsPermOperatedByUser(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return (uFlag & PERMISSION_USER_FIXED) || (uFlag & PERMISSION_USER_SET);
+}
+
+bool ConstantCommon::IsPermOperatedBySystem(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_GRANTED_BY_POLICY);
+}
+
+bool ConstantCommon::IsPermGrantedBySecComp(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return uFlag & PERMISSION_COMPONENT_SET;
+}
+
+uint32_t ConstantCommon::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag)
+{
+    uint32_t unmaskedFlag = (fullFlag) & (~removedFlag);
+    return unmaskedFlag;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

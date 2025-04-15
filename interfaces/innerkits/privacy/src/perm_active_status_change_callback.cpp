@@ -16,14 +16,11 @@
 #include "perm_active_status_change_callback.h"
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionActiveStatusChangeCallback"
-};
 PermActiveStatusChangeCallback::PermActiveStatusChangeCallback(
     const std::shared_ptr<PermActiveStatusCustomizedCbk> &customizedCallback)
     : customizedCallback_(customizedCallback)
@@ -35,7 +32,7 @@ PermActiveStatusChangeCallback::~PermActiveStatusChangeCallback()
 void PermActiveStatusChangeCallback::ActiveStatusChangeCallback(ActiveChangeResponse& result)
 {
     if (customizedCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
+        LOGE(PRI_DOMAIN, PRI_TAG, "CustomizedCallback_ is nullptr");
         return;
     }
 

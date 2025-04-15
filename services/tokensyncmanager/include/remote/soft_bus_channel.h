@@ -25,8 +25,8 @@
 #include <string>
 #include <zlib.h>
 
-#include "accesstoken_log.h"
-#include "nlohmann/json.hpp"
+#include "accesstoken_common_log.h"
+#include "cjson_utils.h"
 #include "rpc_channel.h"
 #include "socket.h"
 #include "random.h"
@@ -331,12 +331,12 @@ public:
      */
     std::string ToJson() const
     {
-        nlohmann::json json;
-        json["type"] = this->type_;
-        json["id"] = this->id_;
-        json["commandName"] = this->commandName_;
-        json["jsonPayload"] = this->jsonPayload_;
-        return json.dump();
+        CJsonUnique json = CreateJson();
+        AddStringToJson(json, "type", this->type_);
+        AddStringToJson(json, "id", this->id_);
+        AddStringToJson(json, "commandName", this->commandName_);
+        AddStringToJson(json, "jsonPayload", this->jsonPayload_);
+        return PackJsonToString(json);
     }
 
     const std::string &GetType() const

@@ -12,7 +12,8 @@
 # limitations under the License.
 
 access_token_path = "//base/security/access_token"
-audio_framework_path = "//foundation/multimedia/audio_framework"
+access_token_innerkit_path =
+    "//base/security/access_token/interfaces/innerkits/accesstoken"
 module_output_path_interface_privacy =
     "access_token/access_token/interface_privacy"
 module_output_path_interface_access_token =
@@ -141,7 +142,13 @@ if (!defined(global_parts_info) ||
 
 declare_args() {
   access_token_camera_float_window_enable = true
-  access_token_feature_dtmf_tone = true
+}
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.appsecurityprivacy_security_privacy_server)) {
+  access_token_app_security_privacy_service_enable = true
+} else {
+  access_token_app_security_privacy_service_enable = false
 }
 
 if (!defined(global_parts_info) ||

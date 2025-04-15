@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,7 @@
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "el5_filkey_manager_subscriber.h"
 #endif
-#include "el5_filekey_manager_stub.h"
+#include "el5_filekey_manager_interface_stub.h"
 #include "el5_filekey_service_ext_interface.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
@@ -34,29 +34,40 @@ namespace Security {
 namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 
-class El5FilekeyManagerService : public El5FilekeyManagerStub {
+class El5FilekeyManagerService : public El5FilekeyManagerInterfaceStub {
 public:
     El5FilekeyManagerService();
     virtual ~El5FilekeyManagerService();
 
     int32_t Init();
+    void UnInit();
 
     int32_t AcquireAccess(DataLockType type) override;
     int32_t ReleaseAccess(DataLockType type) override;
     int32_t GenerateAppKey(uint32_t uid, const std::string& bundleName, std::string& keyId) override;
-    int32_t DeleteAppKey(const std::string& keyId) override;
-    int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos) override;
-    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) override;
+    int32_t DeleteAppKey(const std::string& bundleName, int32_t userId) override;
+    int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos) override;
+    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, const std::vector<AppKeyLoadInfo> &loadInfos) override;
+    int32_t SetFilePathPolicy() override;
+    int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) override;
+    int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) override;
+    int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) override;
+    int32_t QueryAppKeyState(DataLockType type) override;
 
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId);
+    int32_t SetPolicyScreenLocked();
+    int32_t HandleUserCommonEvent(const std::string &eventName, int32_t userId);
     void PostDelayedUnloadTask(uint32_t delayedTime);
     void CancelDelayedUnloadTask();
+    int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
     ServiceRunningState serviceRunningState_ = ServiceRunningState::STATE_NOT_START;
 
     bool IsSystemApp();
     int32_t CheckReqLockPermission(DataLockType type, bool& isApp);
-    bool VerifyCallingProcess(const std::string &validCaller, const AccessTokenID &callerTokenId);
+    bool VerifyNativeCallingProcess(const std::string &validCaller, const AccessTokenID &callerTokenId);
+    bool VerifyHapCallingProcess(int32_t userId, const std::string &validCaller, const AccessTokenID &callerTokenId);
 
     El5FilekeyServiceExtInterface* service_ = nullptr;
 #ifdef COMMON_EVENT_SERVICE_ENABLE
@@ -65,6 +76,7 @@ private:
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_;
 #endif
+    void *handler_{nullptr};
 
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerService);
 };

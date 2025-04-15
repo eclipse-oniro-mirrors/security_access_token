@@ -21,10 +21,13 @@ namespace Security {
 namespace AccessToken {
 bool ActiveChangeResponseParcel::Marshalling(Parcel& out) const
 {
+    RETURN_IF_FALSE(out.WriteUint32(this->changeResponse.callingTokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->changeResponse.tokenID));
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.permissionName));
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.deviceId));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.type));
+    RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.usedType));
+    RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.pid));
     return true;
 }
 
@@ -35,6 +38,8 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
         return nullptr;
     }
 
+    RELEASE_IF_FALSE(in.ReadUint32(activeChangeResponseParcel->changeResponse.callingTokenID),
+        activeChangeResponseParcel);
     RELEASE_IF_FALSE(in.ReadUint32(activeChangeResponseParcel->changeResponse.tokenID), activeChangeResponseParcel);
     RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.permissionName),
         activeChangeResponseParcel);
@@ -43,6 +48,10 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     int32_t type;
     RELEASE_IF_FALSE(in.ReadInt32(type), activeChangeResponseParcel);
     activeChangeResponseParcel->changeResponse.type = static_cast<ActiveChangeType>(type);
+    int32_t usedType;
+    RELEASE_IF_FALSE(in.ReadInt32(usedType), activeChangeResponseParcel);
+    activeChangeResponseParcel->changeResponse.usedType = static_cast<PermissionUsedType>(usedType);
+    RELEASE_IF_FALSE(in.ReadInt32(activeChangeResponseParcel->changeResponse.pid), activeChangeResponseParcel);
     return activeChangeResponseParcel;
 }
 } // namespace AccessToken

@@ -24,31 +24,33 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_db.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
+#include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
+#include "iaccess_token_manager.h"
 #include "ipc_skeleton.h"
+#include "hisysevent_adapter.h"
 #include "parameter.h"
-#include "permission_definition_cache.h"
+#include "short_grant_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "perm_setproc.h"
+#include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
-#include "perm_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
-static constexpr int32_t BASE_USER_RANGE = 200000;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
@@ -59,7 +61,8 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.RECEIVE_WAP_MESSAGES",
     "ohos.permission.SEND_MESSAGES",
     "ohos.permission.READ_CALL_LOG",
-    "ohos.permission.WRITE_CALL_LOG"
+    "ohos.permission.WRITE_CALL_LOG",
+    "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 }
@@ -87,7 +90,7 @@ PermissionManager::PermissionManager()
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(PERMISSION_STATUS_CHANGE_KEY, "", value, VALUE_MAX_LEN - 1);
     if (ret < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d", ret);
         paramValue_ = 0;
         return;
     }
@@ -97,238 +100,75 @@ PermissionManager::PermissionManager()
 PermissionManager::~PermissionManager()
 {}
 
-void PermissionManager::ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList)
-{
-    for (const auto& tokenId : tokenIdList) {
-        std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
-            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-        if (tokenInfoPtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is invalid, tokenId=%{public}u", tokenId);
-            continue;
-        }
-        std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
-        if (permPolicySet != nullptr) {
-            permPolicySet->ClearSecCompGrantedPerm();
-        }
-    }
-}
-
-void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
-    bool updateFlag)
-{
-    std::vector<PermissionDef> permFilterList;
-    PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
-    ACCESSTOKEN_LOG_INFO(LABEL, "permFilterList size: %{public}zu", permFilterList.size());
-    for (const auto& perm : permFilterList) {
-        if (updateFlag) {
-            PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
-            continue;
-        }
-
-        if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
-            PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
-        } else {
-            ACCESSTOKEN_LOG_INFO(LABEL, "permission %{public}s has define",
-                TransferPermissionDefToString(perm).c_str());
-        }
-    }
-}
-
-void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u", __func__, tokenID);
-    std::shared_ptr<HapTokenInfoInner> tokenInfo =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params(tokenID: %{public}u)!", tokenID);
-        return;
-    }
-    std::string bundleName = tokenInfo->GetBundleName();
-    PermissionDefinitionCache::GetInstance().DeleteByBundleName(bundleName);
-}
-
 int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, can not find tokenInfo!", tokenID);
-        return PERMISSION_DENIED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid params!", tokenID);
-        return PERMISSION_DENIED;
-    }
-
-    return permPolicySet->VerifyPermissionStatus(permissionName);
+    return HapTokenInfoInner::VerifyPermissionStatus(tokenID, permissionName); // 从data获取
 }
 
-int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    std::shared_ptr<NativeTokenInfoInner> tokenInfoPtr =
-        AccessTokenInfoManager::GetInstance().GetNativeTokenInfoInner(tokenID);
-    if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
-        return PERMISSION_DENIED;
-    }
-
-    NativeTokenInfo info;
-    tokenInfoPtr->TranslateToNativeTokenInfo(info);
-    if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "permission definition set has not been installed!");
-            if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_NATIVE) {
-                return PERMISSION_GRANTED;
-            }
-            ACCESSTOKEN_LOG_ERROR(LABEL, "token: %{public}d type error!", tokenID);
-            return PERMISSION_DENIED;
-        }
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return PERMISSION_DENIED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetNativePermissionPolicySet(tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return PERMISSION_DENIED;
-    }
-
-    return permPolicySet->VerifyPermissionStatus(permissionName);
-}
-
-PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     if ((tokenID == INVALID_TOKENID) ||
         (TOKEN_HAP != AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d is invalid.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d is invalid.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-
-    PermissionDef permissionDefResult;
-    int ret = GetDefPermission(permissionName, permissionDefResult);
-    if (RET_SUCCESS != ret) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Query permission info of %{public}s failed.", permissionName.c_str());
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
-    if (USER_GRANT != permissionDefResult.grantMode) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not user grant for permission=%{public}s.", permissionName.c_str());
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
-
-    std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, can not find tokenInfo.", tokenID);
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, invalid params.", tokenID);
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
-
-    return permPolicySet->GetUserGrantedPermissionUsedType(permissionName);
-}
-
-int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    if (tokenID == INVALID_TOKENID) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
-            static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return PERMISSION_DENIED;
-    }
-
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid params!", tokenID);
-        return PERMISSION_DENIED;
-    }
-
-    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID);
-    if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
-        return VerifyNativeAccessToken(tokenID, permissionName);
-    }
-    if (tokenType == TOKEN_HAP) {
-        return VerifyHapAccessToken(tokenID, permissionName);
-    }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid tokenType!", tokenID);
-    return PERMISSION_DENIED;
-}
-
-int PermissionManager::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
-{
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    // all permissions can be obtained.
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    return PermissionDefinitionCache::GetInstance().FindByPermissionName(permissionName, permissionDefResult);
-}
-
-int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList)
-{
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    permPolicySet->GetDefPermissions(permList);
-    return RET_SUCCESS;
+    PermUsedTypeEnum ret = HapTokenInfoInner::GetPermissionUsedType(tokenID, permissionName);
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "Application %{public}u apply for %{public}s for type %{public}d.", tokenID, permissionName.c_str(), ret);
+    return ret;
 }
 
 int PermissionManager::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: %{public}u, isSystemGrant: %{public}d",
-        __func__, tokenID, isSystemGrant);
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, isSystemGrant: %{public}d", tokenID, isSystemGrant);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
-    std::vector<PermissionStateFull> tmpList;
-    permPolicySet->GetPermissionStateFulls(tmpList);
+    std::vector<PermissionStatus> tmpList;
+    int32_t ret = infoPtr->GetPermissionStateList(tmpList);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStateList failed, token %{public}u is invalid.", tokenID);
+        return ret;
+    }
     for (const auto& perm : tmpList) {
-        PermissionDef permDef;
-        GetDefPermission(perm.permissionName, permDef);
-        if (permDef.grantMode == mode) {
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(perm.permissionName, briefDef)) {
+            continue;
+        }
+
+        if (briefDef.grantMode == mode) {
             reqPermList.emplace_back(perm);
         }
     }
     return RET_SUCCESS;
 }
 
-static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& permsList,
-    const std::string &permission, int32_t& status, uint32_t& flag)
+static bool IsPermissionRequestedInHap(const std::vector<PermissionStatus>& permsList,
+    PermissionListState& permState, int32_t& status, uint32_t& flag)
 {
-    if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permission)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no definition for hap permission: %{public}s!", permission.c_str());
+    const std::string permission = permState.permissionName;
+    if (!IsPermissionValidForHap(permission)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "No definition for hap permission: %{public}s!", permission.c_str());
+        permState.errorReason = PERM_INVALID;
         return false;
     }
-    auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStateFull& perm) {
+    auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStatus& perm) {
         return permission == perm.permissionName;
     });
     if (iter == permsList.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "can not find permission: %{public}s define!", permission.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "Can not find permission: %{public}s define!", permission.c_str());
+        permState.errorReason = PERM_NOT_DECLEARED;
         return false;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
-        permission.c_str(), iter->grantStatus[0], iter->grantFlags[0]);
-    status = iter->grantStatus[0];
-    flag = static_cast<uint32_t>(iter->grantFlags[0]);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
+        permission.c_str(), iter->grantStatus, iter->grantFlag);
+    status = iter->grantStatus;
+    flag = static_cast<uint32_t>(iter->grantFlag);
     return true;
 }
 
@@ -338,7 +178,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     // Specified apps can get the permission by pre-authorization instead of Pop-ups.
     auto iterator = std::find(g_notDisplayedPerms.begin(), g_notDisplayedPerms.end(), permission);
     if (iterator != g_notDisplayedPerms.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "permission is not available to common apps: %{public}s!", permission.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "Permission is not available to common apps: %{public}s!", permission.c_str());
         return true;
     }
 
@@ -348,7 +188,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     int32_t dlpType = AccessTokenInfoManager::GetInstance().GetHapTokenDlpType(callingTokenId);
     if ((dlpType != DLP_COMMON) &&
         !DlpPermissionSetManager::GetInstance().IsPermissionAvailableToDlpHap(dlpType, permission)) {
-        ACCESSTOKEN_LOG_WARN(LABEL,
+        LOGW(ATM_DOMAIN, ATM_TAG,
             "callingTokenId is not allowed to grant dlp permission: %{public}s!", permission.c_str());
         return true;
     }
@@ -357,257 +197,123 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     return false;
 }
 
-void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStateFull>& permsList,
+void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStatus>& permsList,
     PermissionListState& permState, int32_t apiVersion)
 {
     int32_t goalGrantStatus;
     uint32_t goalGrantFlag;
-    int32_t userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
 
     // api8 require vague location permission refuse directly because there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
         permState.state = INVALID_OPER;
+        permState.errorReason = CONDITIONS_NOT_MET;
         return;
     }
-    if (!IsPermissionRequestedInHap(permsList, permState.permissionName, goalGrantStatus, goalGrantFlag)) {
+    if (!IsPermissionRequestedInHap(permsList, permState, goalGrantStatus, goalGrantFlag)) {
         permState.state = INVALID_OPER;
         return;
     }
     if (IsPermissionRestrictedByRules(permState.permissionName)) {
         permState.state = INVALID_OPER;
+        permState.errorReason = UNABLE_POP_UP;
         return;
     }
-
-    if (FindPermRequestToggleStatusFromDb(userID, permState.permissionName)) {
-        permState.state = SETTING_OPER;
-        return;
-    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s: status: %{public}d, flag: %{public}d",
+        permState.permissionName.c_str(), goalGrantStatus, goalGrantFlag);
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
 
         if ((goalGrantFlag == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlag & PERMISSION_USER_SET) != 0) ||
             ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0) || ((goalGrantFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
             permState.state = DYNAMIC_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
         if ((goalGrantFlag & PERMISSION_USER_FIXED) != 0) {
             permState.state = SETTING_OPER;
+            permState.errorReason = REQ_SUCCESS;
             return;
         }
     }
     permState.state = PASS_OPER;
+    permState.errorReason = REQ_SUCCESS;
     return;
 }
 
 int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, permissionName: %{public}s",
-        __func__, tokenID, permissionName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s", tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName:%{public}s invalid!", permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
+    if (!IsDefinedPermission(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    int32_t fullFlag;
-    int32_t ret = permPolicySet->QueryPermissionFlag(permissionName, fullFlag);
+    uint32_t fullFlag;
+    int32_t ret = HapTokenInfoInner::QueryPermissionFlag(tokenID, permissionName, fullFlag);
     if (ret == RET_SUCCESS) {
-        flag = permPolicySet->GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
+        flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
     }
     return ret;
 }
 
-void PermissionManager::PermDefToString(const PermissionDef& def, std::string& info) const
+AbilityManagerAccessLoaderInterface* PermissionManager::GetAbilityManager()
 {
-    info.append(R"(    {)");
-    info.append("\n");
-    info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
-    info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
-    info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
-    info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
-    info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");
-    info.append(R"(      "label": ")" + def.label + R"(")" + ",\n");
-    info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
-    info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
-    info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
-    info.append(R"(    })");
-}
-
-int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all permission definition info.");
-
-    std::vector<GenericValues> permDefRes;
-
-    dumpInfo.append(R"({)");
-    dumpInfo.append("\n");
-    dumpInfo.append(R"(  "permDefList": [)");
-    dumpInfo.append("\n");
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
-    for (auto iter = permDefRes.begin(); iter != permDefRes.end(); iter++) {
-        PermissionDef def;
-        int32_t ret = DataTranslator::TranslationIntoPermissionDef(*iter, def);
-        if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "PermDef is wrong.");
-            return ret;
-        }
-        PermDefToString(def, dumpInfo);
-        if (iter != (permDefRes.end() - 1)) {
-            dumpInfo.append(",\n");
-        }
-        dumpInfo.append("\n");
-    }
-    dumpInfo.append("\n  ]\n");
-    dumpInfo.append("}");
-    return RET_SUCCESS;
-}
-
-bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    std::vector<GenericValues> permRequestToggleStatusRes;
-
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        permRequestToggleStatusRes);
-    for (const GenericValues& permRequestToggleStatus: permRequestToggleStatusRes) {
-        int32_t id = permRequestToggleStatus.GetInt(TokenFiledConst::FIELD_USER_ID);
-        if (id != userID) {
-            continue;
-        }
-
-        std::string permission = permRequestToggleStatus.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        if (permission == permissionName) {
-            return true;
+    if (abilityManagerLoader_ == nullptr) {
+        std::lock_guard<std::mutex> lock(abilityManagerMutex_);
+        if (abilityManagerLoader_ == nullptr) {
+            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
         }
     }
 
-    return false;
+    return abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
 }
 
-void PermissionManager::AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName)
+int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
+    const std::string& bundleName, const std::string& abilityName)
 {
-    std::vector<GenericValues> permRequestToggleStatusValues;
-    GenericValues genericValues;
+    LOGI(ATM_DOMAIN, ATM_TAG, "bundleName=%{public}s, abilityName=%{public}s, hapInfo.bundleName=%{public}s",
+        bundleName.c_str(), abilityName.c_str(), hapInfo.bundleName.c_str());
 
-    genericValues.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    permRequestToggleStatusValues.emplace_back(genericValues);
+    InnerWant innerWant = {
+        .bundleName = bundleName,
+        .abilityName = abilityName,
+        .hapBundleName = hapInfo.bundleName,
+        .hapAppIndex = hapInfo.instIndex,
+        .hapUserID = hapInfo.userID,
+        .callerTokenId = IPCSkeleton::GetCallingTokenID()
+    };
 
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        permRequestToggleStatusValues);
-}
-
-void PermissionManager::DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    GenericValues values;
-    values.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    values.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values);
-}
-
-int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
-    int32_t userID)
-{
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
+    if (abilityManager == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, status=%{public}d", userID,
-        permissionName.c_str(), status);
-    if (!PermissionValidator::IsUserIdValid(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
+    ErrCode err = abilityManager->StartAbility(innerWant, nullptr);
+    if (err != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to StartAbility, err:%{public}d", err);
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to set.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionValidator::IsToggleStatusValid(status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Status is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    if (status == PermissionRequestToggleStatus::CLOSED) {
-        AddPermRequestToggleStatusToDb(userID, permissionName);
-    } else {
-        DeletePermRequestToggleStatusFromDb(userID, permissionName);
-    }
-
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
-        "TOGGLE_STATUS", status);
-
-    return 0;
-}
-
-int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-    int32_t userID)
-{
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
-    if (!PermissionValidator::IsUserIdValid(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to get.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    bool ret = FindPermRequestToggleStatusFromDb(userID, permissionName);
-    if (ret) {
-        status = PermissionRequestToggleStatus::CLOSED;
-    } else {
-        status = PermissionRequestToggleStatus::OPEN;
-    }
-
-    return 0;
+    return ERR_OK;
 }
 
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
-    if (filtered || (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName) &&
+    if (filtered || (IsUserGrantPermission(permissionName) &&
         ((flag != PERMISSION_GRANTED_BY_POLICY) && (flag != PERMISSION_SYSTEM_FIXED)))) {
         paramValue_++;
-        ACCESSTOKEN_LOG_DEBUG(LABEL,
+        LOGD(ATM_DOMAIN, ATM_TAG,
             "paramValue_ change %{public}llu", static_cast<unsigned long long>(paramValue_));
         int32_t res = SetParameter(PERMISSION_STATUS_CHANGE_KEY, std::to_string(paramValue_).c_str());
         if (res != 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter failed %{public}d", res);
+            LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter failed %{public}d", res);
         }
     }
 }
@@ -615,8 +321,8 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
 void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
-    int32_t changeType = isGranted ? GRANTED : REVOKED;
+    LOGI(ATM_DOMAIN, ATM_TAG, "IsUpdated");
+    int32_t changeType = isGranted ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
 
     // set to kernel(grant/revoke)
     SetPermToKernel(tokenID, permissionName, isGranted);
@@ -636,77 +342,88 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
 }
 
 int32_t PermissionManager::UpdateTokenPermissionState(
-    AccessTokenID tokenID, const std::string& permissionName, bool isGranted, uint32_t flag)
+    AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill)
 {
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "tokenInfo is null, tokenId=%{public}u", id);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
-        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
+
+    int32_t ret = UpdateTokenPermissionStateCheck(infoPtr, id, permission, isGranted, flag);
+    if (ret != ERR_OK) {
+        return ret;
     }
-    if (flag == PERMISSION_ALLOW_THIS_TIME) {
-        if (isGranted) {
-            if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(tokenID, permissionName)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
-                    tokenID, permissionName.c_str());
-                return ERR_IDENTITY_CHECK_FAILED;
+
+    // statusBefore cannot use VerifyPermissionStatus in permPolicySet, because the function exclude secComp
+    bool isSecCompGrantedBefore = HapTokenInfoInner::IsPermissionGrantedWithSecComp(id, permission);
+    bool statusChanged = false;
+    ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Update info perm status failed, ret is %{public}d", ret);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID", id,
+            "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret,
+            "INT_VAL2", static_cast<int32_t>(flag), "NEED_KILL", needKill);
+        return ret;
+    }
+    if (statusChanged) {
+        NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
+        // To notify kill process when perm is revoke
+        if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
+            AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
+            if (abilityManager == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
+            } else if ((ret = abilityManager->KillProcessForPermissionUpdate(id)) != ERR_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "kill process failed, ret=%{public}d.", ret);
             }
         }
     }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
+
+#ifdef TOKEN_SYNC_ENABLE
+    TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
+#endif
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
+    AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag)
+{
+    if (infoPtr->IsRemote()) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remote token can not update");
+        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
     }
+    if ((flag == PERMISSION_ALLOW_THIS_TIME) && isGranted) {
+        if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(id, permission)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Id:%{public}d fail to grant permission:%{public}s", id, permission.c_str());
+            return ERR_IDENTITY_CHECK_FAILED;
+        }
+    }
+
 #ifdef SUPPORT_SANDBOX_APP
     int32_t hapDlpType = infoPtr->GetDlpType();
     if (hapDlpType != DLP_COMMON) {
-        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
+        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permission);
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
-                tokenID, permissionName.c_str());
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to %{public}u", permission.c_str(), id);
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", id, "PERM",
+                permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType, "INT_VAL2", permDlpMode);
             return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
 #endif
-    int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permissionName);
-    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    int32_t statusAfter = permPolicySet->VerifyPermissionStatus(permissionName);
-    if (statusAfter != statusBefore) {
-        NotifyWhenPermissionStateUpdated(tokenID, permissionName, isGranted, flag, infoPtr);
-    }
-
-#ifdef TOKEN_SYNC_ENABLE
-    TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
-#endif
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
-    return RET_SUCCESS;
+    return ERR_OK;
 }
 
-int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
-    bool isGranted, uint32_t flag)
+int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, uint32_t flag, bool needKill)
 {
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (!PermissionValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag);
+    int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag, needKill);
     if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Update permission %{public}u %{public}s failed, ret is %{public}d", tokenID,
+            permissionName.c_str(), ret);
         return ret;
     }
 
@@ -715,26 +432,86 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     std::vector<AccessTokenID> tokenIdList;
     AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
     for (const auto& id : tokenIdList) {
-        (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag);
+        (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag, needKill);
     }
 #endif
+
     return RET_SUCCESS;
+}
+
+int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, uint32_t flag)
+{
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "permissionName: %{public}s, Invalid params!", permissionName.c_str());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!IsDefinedPermission(permissionName)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+    if (!PermissionValidator::IsPermissionFlagValid(flag)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "flag: %{public}d, Invalid params!", flag);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    bool needKill = false;
+    // To kill process when perm is revoke
+    if (!isGranted && flag != PERMISSION_COMPONENT_SET) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is revoked, kill process(%{public}u).",
+            permissionName.c_str(), tokenID);
+        needKill = true;
+    }
+
+    return UpdatePermission(tokenID, permissionName, isGranted, flag, needKill);
+}
+
+int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, uint32_t flag)
+{
+    HapTokenInfo hapInfo;
+    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    ClearThreadErrorMsg();
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
+        "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
+        "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
+
+    int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag);
+
+    uint32_t newFlag = flag;
+    if (ret == RET_SUCCESS && GetPermissionFlag(tokenID, permissionName, flag) == RET_SUCCESS) {
+        flag = newFlag;
+    }
+
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted,
+        "ERROR_CODE", ret);
+    ReportSysCommonEventError(static_cast<int32_t>(isGranted ? IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
+        IAccessTokenManagerIpcCode::COMMAND_REVOKE_PERMISSION), ret);
+    return ret;
 }
 
 int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
-        __func__, tokenID, permissionName.c_str(), flag);
-    return CheckAndUpdatePermission(tokenID, permissionName, true, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
+        tokenID, permissionName.c_str(), flag);
+    return CheckAndUpdatePermissionInner(tokenID, permissionName, true, flag);
 }
 
 int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
-        __func__, tokenID, permissionName.c_str(), flag);
-    return CheckAndUpdatePermission(tokenID, permissionName, false, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
+        tokenID, permissionName.c_str(), flag);
+    return CheckAndUpdatePermissionInner(tokenID, permissionName, false, flag);
+}
+
+int32_t PermissionManager::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, onceTime: %{public}d",
+        tokenID, permissionName.c_str(), onceTime);
+    return ShortGrantManager::GetInstance().RefreshPermission(tokenID, permissionName, onceTime);
 }
 
 void PermissionManager::ScopeToString(
@@ -747,7 +524,7 @@ void PermissionManager::ScopeToString(
     std::string permStr;
     permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenidStr = %{public}s permStr =%{public}s",
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenidStr = %{public}s permStr =%{public}s",
         tokenidStr.c_str(), permStr.c_str());
 }
 
@@ -761,24 +538,24 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
             tokenIdSet.insert(tokenId);
             continue;
         }
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d invalid!", tokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}d invalid!", tokenId);
     }
     std::set<std::string> permSet;
     for (const auto& permissionName : scopeSrc.permList) {
-        if (PermissionDefinitionCache::GetInstance().HasDefinition(permissionName) &&
+        if (IsDefinedPermission(permissionName) &&
             permSet.count(permissionName) == 0) {
             scopeRes.permList.emplace_back(permissionName);
             permSet.insert(permissionName);
             continue;
         }
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission %{public}s invalid!", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission %{public}s invalid!", permissionName.c_str());
     }
     if ((scopeRes.tokenIDs.empty()) && (!scopeSrc.tokenIDs.empty())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "valid tokenid size is 0!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Valid tokenid size is 0!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if ((scopeRes.permList.empty()) && (!scopeSrc.permList.empty())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Valid permission size is 0!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     ScopeToString(scopeRes.tokenIDs, scopeRes.permList);
@@ -788,7 +565,6 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
 int32_t PermissionManager::AddPermStateChangeCallback(
     const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
     PermStateChangeScope scopeRes;
     int32_t result = ScopeFilter(scope, scopeRes);
     if (result != RET_SUCCESS) {
@@ -799,6 +575,7 @@ int32_t PermissionManager::AddPermStateChangeCallback(
 
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
+    LOGI(ATM_DOMAIN, ATM_TAG, "Called");
     return CallbackManager::GetInstance().RemoveCallback(callback);
 }
 
@@ -808,14 +585,14 @@ bool PermissionManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& a
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
     ATokenTypeEnum tokenType = (ATokenTypeEnum)(idInner->type);
     if (tokenType != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid token type %{public}d", tokenType);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid token type %{public}d", tokenType);
         return false;
     }
 
     HapTokenInfo hapInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get hap token info error!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get hap token info error!");
         return false;
     }
 
@@ -827,12 +604,12 @@ bool PermissionManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& a
 bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid permissionName %{public}s", permissionName.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "Invalid permissionName %{public}s", permissionName.c_str());
         return false;
     }
 
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "permission %{public}s has no definition ", permissionName.c_str());
+    if (!IsDefinedPermission(permissionName)) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s has no definition ", permissionName.c_str());
         return false;
     }
     return true;
@@ -865,199 +642,127 @@ bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListSta
         }
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "vague index is %{public}d, accurate index is %{public}d, background index is %{public}d!",
         locationIndex.vagueIndex, locationIndex.accurateIndex, locationIndex.backIndex);
 
     return hasFound;
 }
 
-bool PermissionManager::GetStateWithVaguePermission(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex)
+bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
+    std::vector<PermissionListStateParcel>& reqPermList, std::vector<PermissionStatus>& permsList,
+    int32_t apiVersion, const LocationIndex& locationIndex)
 {
-    bool needRes = false;
-    GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
-    needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
+    bool needVagueDynamic = false;
+    bool needAccurateDynamic = false; // needVagueDynamic-false, 1. not request;2. request but not equal to DYNAMIC_OPER
+    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
+        GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
+        needVagueDynamic = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
+    }
+
     if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+        bool isVagueGranted = VerifyHapAccessToken(tokenID, VAGUE_LOCATION_PERMISSION_NAME) == PERMISSION_GRANTED;
         // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
         GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
-        if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
-            ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
-            (reqPermList[locationIndex.vagueIndex].permsState.state == INVALID_OPER))) {
-            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+        needAccurateDynamic = reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER;
+
+        // update permsState
+        if (needAccurateDynamic) {
+            // vague permissoion is not pop and permission status os not granted
+            if (!needVagueDynamic && !isVagueGranted) {
+                reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.accurateIndex].permsState.errorReason = CONDITIONS_NOT_MET;
+                needAccurateDynamic = false;
+            }
         }
-        needRes = needRes || (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER);
     }
+
     if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
+        if (apiVersion >= BACKGROUND_LOCATION_API_VERSION) {
+            // background permission
+            // with back and vague permission, request back can not pop dynamic dialog
+            if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
+                reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.vagueIndex].permsState.errorReason = CONDITIONS_NOT_MET;
+            }
+            if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+                reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.accurateIndex].permsState.errorReason = CONDITIONS_NOT_MET;
+            }
+            reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+            reqPermList[locationIndex.backIndex].permsState.errorReason = CONDITIONS_NOT_MET;
+            return false;
+        }
         // with back and vague permission
         // back state is SETTING_OPER when dynamic pop-up dialog appears and INVALID_OPER when it doesn't
         GetSelfPermissionState(permsList, reqPermList[locationIndex.backIndex].permsState, apiVersion);
         if (reqPermList[locationIndex.backIndex].permsState.state == DYNAMIC_OPER) {
-            if (((locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) &&
-                (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER)) ||
-                (reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER)) {
+            if (needAccurateDynamic || needVagueDynamic) {
                 reqPermList[locationIndex.backIndex].permsState.state = SETTING_OPER;
+                reqPermList[locationIndex.backIndex].permsState.errorReason = REQ_SUCCESS;
             } else {
                 reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+                reqPermList[locationIndex.backIndex].permsState.errorReason = CONDITIONS_NOT_MET;
             }
         }
     }
-    return needRes;
+    return needVagueDynamic || needAccurateDynamic;
 }
 
-bool PermissionManager::GetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
-{
-    struct LocationIndex locationIndex;
-    if (!GetLocationPermissionIndex(reqPermList, locationIndex)) {
-        return false;
-    }
-    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
-        return GetStateWithVaguePermission(reqPermList, permsList, apiVersion, locationIndex);
-    }
-    // permission handle without vague location, accurate and back can't be requested
-    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-    }
-    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
-        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
-    }
-    return false;
-}
-
-bool PermissionManager::GetStateWithVaguePermissionBackGroundVersion(
+bool PermissionManager::LocationPermissionSpecialHandle(
+    AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex)
-{
-    bool needRes = false;
-    GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
-    needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
-    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
-        GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
-        if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
-            ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
-            (reqPermList[locationIndex.vagueIndex].permsState.state == INVALID_OPER))) {
-            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-        }
-        needRes = needRes || (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER);
-    }
-    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
-        // with back and vague permission, request back can not pop dynamic dialog
-        reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
-        if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-        }
-        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
-        needRes = false;
-    }
-    return needRes;
-}
-
-bool PermissionManager::GetLocationPermissionStateBackGroundVersion(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
+    std::vector<PermissionStatus>& permsList, int32_t apiVersion)
 {
     struct LocationIndex locationIndex;
     if (!GetLocationPermissionIndex(reqPermList, locationIndex)) {
         return false;
     }
-    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
-        return GetStateWithVaguePermissionBackGroundVersion(reqPermList, permsList, apiVersion, locationIndex);
-    }
-    // permission handle without vague location, accurate and back can't be requested
-    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-    }
-    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
-        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
-    }
-    return false;
-}
-
-bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
-{
-    bool needRes = false;
-    if (apiVersion < BACKGROUND_LOCATION_API_VERSION) {
-        needRes = GetLocationPermissionState(reqPermList, permsList, apiVersion);
-    } else {
-        needRes = GetLocationPermissionStateBackGroundVersion(reqPermList, permsList, apiVersion);
-    }
-    return needRes;
-}
-
-void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
-{
-    if (ClearUserGrantedPermission(tokenID) != RET_SUCCESS) {
-        return;
-    }
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
-    for (const auto& id : tokenIdList) {
-        (void)ClearUserGrantedPermission(id);
-    }
+    return GetLocationPermissionState(tokenID, reqPermList, permsList, apiVersion, locationIndex);
 }
 
 void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
     const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID)
 {
     for (uint32_t i = 0; i < grantedPermListBefore.size(); i++) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "grantedPermListBefore[i] %{public}s.", grantedPermListBefore[i].c_str());
         auto it = find(grantedPermListAfter.begin(), grantedPermListAfter.end(), grantedPermListBefore[i]);
         if (it == grantedPermListAfter.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListBefore[i], REVOKED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListBefore[i], STATE_CHANGE_REVOKED);
             ParamUpdate(grantedPermListBefore[i], 0, true);
         }
     }
     for (uint32_t i = 0; i < grantedPermListAfter.size(); i++) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "grantedPermListAfter[i] %{public}s.", grantedPermListAfter[i].c_str());
         auto it = find(grantedPermListBefore.begin(), grantedPermListBefore.end(), grantedPermListAfter[i]);
         if (it == grantedPermListBefore.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListAfter[i], GRANTED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListAfter[i], STATE_CHANGE_GRANTED);
             ParamUpdate(grantedPermListAfter[i], 0, false);
         }
     }
 }
 
-int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
+bool PermissionManager::IsPermissionStateOrFlagMatched(const PermissionStatus& state1,
+    const PermissionStatus& state2)
 {
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u is invalid.", tokenID);
-        return ERR_PARAM_INVALID;
+    return ((state1.grantStatus == state2.grantStatus) && (state1.grantFlag == state2.grantFlag));
+}
+
+void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStatus>& stateListBefore,
+    std::vector<PermissionStatus>& stateListAfter, std::vector<PermissionStatus>& stateChangeList)
+{
+    uint32_t size = stateListBefore.size();
+
+    for (uint32_t i = 0; i < size; ++i) {
+        PermissionStatus state1 = stateListBefore[i];
+        PermissionStatus state2 = stateListAfter[i];
+
+        if (!IsPermissionStateOrFlagMatched(state1, state2)) {
+            stateChangeList.emplace_back(state2);
+        }
     }
-    if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "it is a remote hap token %{public}u!", tokenID);
-        return ERR_IDENTITY_CHECK_FAILED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return ERR_PARAM_INVALID;
-    }
-    std::vector<std::string> grantedPermListBefore;
-    permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
-
-    // reset permission.
-    permPolicySet->ResetUserGrantPermissionStatus();
-    // clear security component granted permission which is not requested in module.json.
-    permPolicySet->ClearSecCompGrantedPerm();
-
-#ifdef SUPPORT_SANDBOX_APP
-    // update permission status with dlp permission rule.
-    std::vector<PermissionStateFull> permListOfHap;
-    permPolicySet->GetPermissionStateFulls(permListOfHap);
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
-        infoPtr->GetDlpType(), permListOfHap);
-    permPolicySet->Update(permListOfHap);
-#endif
-
-    std::vector<std::string> grantedPermListAfter;
-    permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
-
-    // clear
-    AddPermToKernel(tokenID, permPolicySet);
-
-    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
-    return RET_SUCCESS;
 }
 
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
@@ -1065,82 +770,103 @@ void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timesta
     grantEvent_.NotifyPermGrantStoreResult(result, timestamp);
 }
 
-std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)
+void PermissionManager::AddNativePermToKernel(AccessTokenID tokenID,
+    const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
-    std::string infos;
-    infos.append(R"({"permissionName": ")" + inPermissionDef.permissionName + R"(")");
-    infos.append(R"(, "bundleName": ")" + inPermissionDef.bundleName + R"(")");
-    infos.append(R"(, "grantMode": )" + std::to_string(inPermissionDef.grantMode));
-    infos.append(R"(, "availableLevel": )" + std::to_string(inPermissionDef.availableLevel));
-    infos.append(R"(, "provisionEnable": )" + std::to_string(inPermissionDef.provisionEnable));
-    infos.append(R"(, "distributedSceneEnable": )" + std::to_string(inPermissionDef.distributedSceneEnable));
-    infos.append(R"(, "label": ")" + inPermissionDef.label + R"(")");
-    infos.append(R"(, "labelId": )" + std::to_string(inPermissionDef.labelId));
-    infos.append(R"(, "description": ")" + inPermissionDef.description + R"(")");
-    infos.append(R"(, "descriptionId": )" + std::to_string(inPermissionDef.descriptionId));
-    infos.append(R"(, "availableType": )" + std::to_string(inPermissionDef.availableType));
-    infos.append("}");
-    return infos;
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
 }
 
-void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy)
+void PermissionManager::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList)
 {
-    if (policy == nullptr) {
-        return;
+    std::vector<uint32_t> permCodeList;
+    for (const auto &permission : permList) {
+        uint32_t code;
+        if (!TransferPermissionToOpcode(permission, code)) {
+            continue;
+        }
+        permCodeList.emplace_back(code);
     }
+
     std::vector<uint32_t> opCodeList;
     std::vector<bool> statusList;
-    policy->GetPermissionStateList(opCodeList, statusList);
+    HapTokenInfoInner::GetPermStatusListByTokenId(tokenID, permCodeList, opCodeList, statusList);
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d", tokenID, opCodeList.size(), ret);
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
 }
 
 void PermissionManager::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
 }
 
-void PermissionManager::SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted)
+void PermissionManager::SetPermToKernel(
+    AccessTokenID tokenID, const std::string& permissionName, bool isGranted)
 {
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
         return;
     }
     int32_t ret = SetPermissionToKernel(tokenID, code, isGranted);
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
         tokenID, permissionName.c_str(), ret);
 }
 
-bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicyParams& policy)
+bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 {
-    if (policy.apl < permDef.availableLevel) {
-        if (!permDef.provisionEnable) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s provisionEnable is false.", permDef.permissionName.c_str());
+    if (policy.checkIgnore == HapPolicyCheckIgnore::ACL_IGNORE_CHECK) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s ignore acl check.", briefDef.permissionName);
+        return true;
+    }
+
+    if (policy.apl < briefDef.availableLevel) {
+        if (!briefDef.provisionEnable) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", briefDef.permissionName);
             return false;
         }
-        auto isAclExist = std::any_of(
-            policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [permDef](const auto &perm) {
-            return permDef.permissionName == perm;
-        });
+        bool isAclExist = false;
+        if (briefDef.hasValue) {
+            isAclExist = std::any_of(
+                policy.aclExtendedMap.begin(), policy.aclExtendedMap.end(), [briefDef](const auto &perm) {
+                return std::string(briefDef.permissionName) == perm.first;
+            });
+        } else {
+            isAclExist = std::any_of(
+                policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [briefDef](const auto &perm) {
+                return std::string(briefDef.permissionName) == perm;
+            });
+        }
+        
         if (!isAclExist) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s need acl.", permDef.permissionName.c_str());
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s need acl.", briefDef.permissionName);
             return false;
         }
     }
     return true;
 }
 
-bool IsPermAvailableRangeSatisfied(const PermissionDef& permDef, const std::string& appDistributionType)
+bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType)
 {
-    if ((appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) &&
-        permDef.availableType == ATokenAvailableTypeEnum::MDM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is a mdm permission, the hap is not a mdm application.",
-            permDef.permissionName.c_str());
-        return false;
+    if (briefDef.availableType == ATokenAvailableTypeEnum::MDM) {
+        if (appDistributionType == "none") {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Debug app use permission: %{public}s.",
+                briefDef.permissionName);
+            return true;
+        }
+        if (appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
+                briefDef.permissionName);
+            return false;
+        }
     }
     return true;
 }
@@ -1152,7 +878,7 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
             return info.permissionName == permissionName;
         });
     if (iter == list.end()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Permission(%{public}s) is not in the list", permissionName.c_str());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Permission(%{public}s) is not in the list", permissionName.c_str());
         return false;
     }
 
@@ -1161,51 +887,55 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
 }
 
 bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int32_t userId,
-    std::vector<PermissionStateFull>& initializedList)
+    std::vector<PermissionStatus>& initializedList)
 {
     // get dlp original app
     AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(userId, bundleName, 0);
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenId.tokenIdExStruct.tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+    std::shared_ptr<HapTokenInfoInner> infoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId.tokenIdExStruct.tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenId.tokenIdExStruct.tokenID);
         return false;
     }
-    permPolicySet->GetPermissionStateFulls(initializedList);
+    (void)infoPtr->GetPermissionStateList(initializedList);
     return true;
 }
 
-bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
-    const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
+bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicy& policy,
+    std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu.",
-        policy.permStateList.size(), policy.preAuthorizationInfo.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
+        "ACLRequestedList size %{public}zu.",
+        policy.permStateList.size(), policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
 
     for (auto state : policy.permStateList) {
-        PermissionDef permDef;
-        int32_t ret = PermissionManager::GetInstance().GetDefPermission(
-            state.permissionName, permDef);
-        if (ret != AccessToken::AccessTokenKitRet::RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get definition of %{public}s failed, ret = %{public}d.",
-                state.permissionName.c_str(), ret);
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
+                state.permissionName.c_str());
             continue;
         }
-        if (!IsAclSatisfied(permDef, policy)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Acl of %{public}s is invalid.", permDef.permissionName.c_str());
+
+        if (!IsAclSatisfied(briefDef, policy)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_ACL_RULE;
+            LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
             return false;
         }
 
         // edm check
-        if (!IsPermAvailableRangeSatisfied(permDef, appDistributionType)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Available range of %{public}s is invalid.", permDef.permissionName.c_str());
+        if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
+            result.permCheckResult.permissionName = state.permissionName;
+            result.permCheckResult.rule = PERMISSION_EDM_RULE;
+            LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
             return false;
         }
-        state.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
-        state.grantStatus[0] = PERMISSION_DENIED;
+        state.grantFlag = PERMISSION_DEFAULT_FLAG;
+        state.grantStatus = PERMISSION_DENIED;
 
-        if (permDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
-            state.grantFlags[0] = PERMISSION_SYSTEM_FIXED;
-            state.grantStatus[0] = PERMISSION_GRANTED;
+        if (briefDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
+            state.grantFlag = PERMISSION_SYSTEM_FIXED;
+            state.grantStatus = PERMISSION_GRANTED;
             initializedList.emplace_back(state);
             continue;
         }
@@ -1215,12 +945,12 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         }
         bool userCancelable = true;
         if (IsUserGrantPermPreAuthorized(policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
-            state.grantFlags[0] = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
-            state.grantStatus[0] = PERMISSION_GRANTED;
+            state.grantFlag = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
+            state.grantStatus = PERMISSION_GRANTED;
         }
         initializedList.emplace_back(state);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "After, request perm list size: %{public}zu.", initializedList.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
 

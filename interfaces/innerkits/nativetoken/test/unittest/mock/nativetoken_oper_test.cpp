@@ -14,6 +14,7 @@
  */
 
 #include "nativetoken_oper_test.h"
+#include <fstream>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
@@ -41,8 +42,10 @@ void TokenOperTest::TearDown()
 {}
 static const int32_t VALID_TIME = 100;
 static const int32_t DEFAULT_TIME = -1;
+static const char *TOKEN_ID_CFG_FILE_COPY_PATH = "/data/service/el0/access_token/nativetoken_copy.json";
 extern int g_getArrayItemTime;
 extern int g_getObjectItem;
+extern int g_strcpyTime;
 extern NativeTokenList *g_tokenListHead;
 
 static void SetTimes(void)
@@ -60,6 +63,57 @@ static void SetTimes(void)
     g_parse = VALID_TIME;
     g_getArraySize = VALID_TIME;
     g_printUnformatted = VALID_TIME;
+    g_strcpyTime = VALID_TIME;
+}
+
+static bool IsFileEmpty(const std::string& fileName)
+{
+    FILE *file = fopen(fileName.c_str(), "r");
+    if (file == nullptr) {
+        std::cout << "fopen failed " << fileName << std::endl;
+        return false;
+    }
+    (void)fseek(file, 0, SEEK_END);
+    bool flag = false;
+    if (ftell(file) == 0) {
+        flag = true;
+    }
+    (void)fclose(file);
+    return flag;
+}
+
+static int32_t ClearFile(const char* fileName)
+{
+    int32_t fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        return -1;
+    }
+
+    close(fd);
+    return 0;
+}
+
+static void CopyNativeTokenJson(const std::string& sourceFileName, const std::string& destFileName)
+{
+    // if dest file exists, clear it;
+    if (access(destFileName.c_str(), F_OK) == 0) {
+        if (ClearFile(destFileName.c_str()) != 0) {
+            std::cout << "dest file exists, failed to remove dest file" << std::endl;
+            return;
+        }
+    }
+
+    std::ifstream sourceFile(sourceFileName, std::ios::binary);
+    std::ofstream destFile(destFileName, std::ios::binary);
+    if (!sourceFile.is_open()) {
+        std::cout << "open source file " << sourceFileName << "failed" << std::endl;
+        return;
+    }
+
+    destFile << sourceFile.rdbuf();
+
+    sourceFile.close();
+    destFile.close();
 }
 
 /**
@@ -133,6 +187,12 @@ HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level1)
     tokenNode.dcapsNum = 1;
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
+    tokenNode.dcaps = static_cast<char **>(malloc(tokenNode.dcapsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    tokenNode.perms = static_cast<char **>(malloc(tokenNode.permsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.perms, nullptr);
+    tokenNode.acls = static_cast<char **>(malloc(tokenNode.aclsNum * sizeof(char *)));
+    EXPECT_NE(tokenNode.acls, nullptr);
 
     std::string stringJson1 = R"([)"\
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
@@ -161,10 +221,15 @@ HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
     SetTimes();
     NativeTokenList tokenNode;
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
+    int32_t newDcapsNum = 2;
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
-    tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
-    EXPECT_NE(tokenNode.dcaps[0], nullptr);
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * newDcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    for (int32_t i = 0; i < newDcapsNum; ++i) {
+        tokenNode.dcaps[i] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
+        EXPECT_NE(tokenNode.dcaps[i], nullptr);
+    }
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
@@ -193,7 +258,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
 
     cJSON_Delete(jsonRoot);
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, newDcapsNum - 1);
 }
 
 /**
@@ -207,10 +272,15 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
     SetTimes();
     NativeTokenList tokenNode;
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
+    int32_t newDcapsNum = 2;
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
-    tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
-    EXPECT_NE(tokenNode.dcaps[0], nullptr);
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * newDcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
+    for (int32_t i = 0; i < newDcapsNum; ++i) {
+        tokenNode.dcaps[i] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
+        EXPECT_NE(tokenNode.dcaps[i], nullptr);
+    }
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
     tokenNode.aclsNum = 0;
     tokenNode.permsNum = 0;
@@ -224,18 +294,29 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
 
     // perms update failed
     tokenNode.permsNum = 1;
+    tokenNode.perms = static_cast<char **>(malloc(sizeof(char *) * tokenNode.permsNum));
+    EXPECT_NE(tokenNode.perms, nullptr);
+    tokenNode.perms[0] = nullptr;
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
-    // perms update failed
-    tokenNode.aclsNum = 1;
+    // acls update failed
     tokenNode.perms[0] = static_cast<char *>(malloc(sizeof(char) * MAX_PERM_LEN));
-    EXPECT_NE(tokenNode.perms[0], nullptr);
     (void)strcpy_s(tokenNode.perms[0], MAX_PERM_LEN, "x");
+    tokenNode.aclsNum = 1;
+    tokenNode.acls = static_cast<char **>(malloc(sizeof(char *) * tokenNode.aclsNum));
+    EXPECT_NE(tokenNode.acls, nullptr);
+    tokenNode.acls[0] = nullptr;
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
+
+    tokenNode.acls[0] = static_cast<char *>(malloc(sizeof(char) * MAX_PERM_LEN));
+    EXPECT_NE(tokenNode.acls[0], nullptr);
+    (void)strcpy_s(tokenNode.acls[0], MAX_PERM_LEN, "x");
+    EXPECT_EQ(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
     cJSON_Delete(json);
-    free(tokenNode.dcaps[0]);
-    free(tokenNode.perms[0]);
+    FreeStrArray(&tokenNode.dcaps, newDcapsNum - 1);
+    FreeStrArray(&tokenNode.perms, tokenNode.permsNum - 1);
+    FreeStrArray(&tokenNode.acls, tokenNode.aclsNum - 1);
 }
 
 /**
@@ -260,6 +341,8 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * tokenNode.dcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
     tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
     EXPECT_NE(tokenNode.dcaps[0], nullptr);
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "x");
@@ -302,7 +385,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
     g_addItemToObject = 35; // 35 times
     EXPECT_EQ(CreateNativeTokenJsonObject(&tokenNode), nullptr);
 
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, tokenNode.dcapsNum - 1);
 }
 
 /**
@@ -319,6 +402,8 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
     (void)strcpy_s(tokenNode.processName, MAX_PROCESS_NAME_LEN + 1, "process5");
     tokenNode.apl = 1;
     tokenNode.dcapsNum = 1;
+    tokenNode.dcaps = static_cast<char **>(malloc(sizeof(char *) * tokenNode.dcapsNum));
+    EXPECT_NE(tokenNode.dcaps, nullptr);
     tokenNode.dcaps[0] = static_cast<char *>(malloc(sizeof(char) * MAX_DCAP_LEN));
     EXPECT_NE(tokenNode.dcaps[0], nullptr);
     (void)strcpy_s(tokenNode.dcaps[0], MAX_DCAP_LEN, "y");
@@ -340,7 +425,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
     // cJSON_AddItemToObject failed 172
     g_addItemToObject = 44; // 44 times
     EXPECT_EQ(CreateNativeTokenJsonObject(&tokenNode), nullptr);
-    free(tokenNode.dcaps[0]);
+    FreeStrArray(&tokenNode.dcaps, tokenNode.dcapsNum - 1);
 }
 
 /**
@@ -352,26 +437,35 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
 HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
 {
     SetTimes();
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     g_parse = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArrayItemTime = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = DEFAULT_TIME;
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 8; // 8 times
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 17; // 17 times
     AtlibInit();
-    EXPECT_EQ(g_tokenListHead, nullptr);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }
 
 static int32_t Start(const char *processName)
@@ -420,15 +514,21 @@ static int32_t Start(const char *processName)
 HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
 {
     SetTimes();
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
 
     NativeTokenInfoParams tokenInfo;
     g_parse = DEFAULT_TIME;
     EXPECT_EQ(GetAccessTokenId(&tokenInfo), 0);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    g_parse = VALID_TIME;
+    AtlibInit();
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     // UpdateInfoInCfgFile failed for SaveTokenIdToCfg
     // tokenNode->dcapsNum != dcapNumIn branch
-    g_parse = 8; // 8 times
+    g_parse = 9; // 9 times
     EXPECT_EQ(Start("foundation"), 0);
+    EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     g_printUnformatted = DEFAULT_TIME;
     EXPECT_NE(Start("process1"), 0);
@@ -437,4 +537,34 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
     EXPECT_NE(Start("processUnique"), 0);
 
     EXPECT_NE(Start("processUnique1"), 0);
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
+}
+
+/**
+ * @tc.name: RemoveNodeFromList001
+ * @tc.desc: GetInfoArrFromJson successfully.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level1)
+{
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
+    AtlibInit();
+    EXPECT_NE(g_tokenListHead, nullptr);
+    g_strcpyTime = 0;
+    EXPECT_EQ(Start("foundation"), 0);
+
+    // check the node whether exsits in the list
+    NativeTokenList *node = g_tokenListHead->next;
+    while (node != nullptr) {
+        if (strcmp(node->processName, "foundation") == 0) {
+            break;
+        }
+        node = node->next;
+    }
+    EXPECT_EQ(node, nullptr);
+
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }

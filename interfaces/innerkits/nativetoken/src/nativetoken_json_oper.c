@@ -19,14 +19,21 @@
 
 #include "nativetoken_klog.h"
 
-void FreeStrArray(char **arr, int32_t num)
+void FreeStrArray(char ***arr, int32_t num)
 {
+    if (arr == NULL || *arr == NULL) {
+        return;
+    }
+
     for (int32_t i = 0; i <= num; i++) {
-        if (arr[i] != NULL) {
-            free(arr[i]);
-            arr[i] = NULL;
+        if ((*arr)[i] != NULL) {
+            free((*arr)[i]);
+            (*arr)[i] = NULL;
         }
     }
+
+    free(*arr);
+    *arr = NULL;
 }
 
 uint32_t GetProcessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
@@ -79,7 +86,7 @@ uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int32_t *strNum, StrArrayAttr *attr)
+uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, StrArrayAttr *attr)
 {
     cJSON *strArrJson = cJSON_GetObjectItem(cjsonItem, attr->strKey);
     int32_t size = cJSON_GetArraySize(strArrJson);
@@ -87,30 +94,42 @@ uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int32_t *strNum, S
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:size = %d is invalid.", __func__, size);
         return ATRET_FAILED;
     }
+    if (size == 0) {
+        *strArr = NULL;
+        return ATRET_SUCCESS;
+    }
     *strNum = size;
+    *strArr = (char **)malloc(size * sizeof(char *));
+    if (*strArr == NULL) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strArr malloc failed.", __func__);
+        return ATRET_FAILED;
+    }
 
     for (int32_t i = 0; i < size; i++) {
         cJSON *item = cJSON_GetArrayItem(strArrJson, i);
         if ((item == NULL) || (!cJSON_IsString(item)) || (item->valuestring == NULL)) {
+            FreeStrArray(strArr, i - 1);
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
         size_t length = strlen(item->valuestring);
         if (length > attr->maxStrLen) {
+            FreeStrArray(strArr, i - 1);
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:item length %zu is invalid.", __func__, length);
             return ATRET_FAILED;
         }
-        strArr[i] = (char *)malloc(sizeof(char) * (length + 1));
-        if (strArr[i] == NULL) {
+        (*strArr)[i] = (char *)malloc(sizeof(char) * (length + 1));
+        if ((*strArr)[i] == NULL) {
             FreeStrArray(strArr, i - 1);
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:malloc invalid.", __func__);
             return ATRET_FAILED;
         }
-        if (strcpy_s(strArr[i], length + 1, item->valuestring) != EOK) {
+        if (strcpy_s((*strArr)[i], length + 1, item->valuestring) != EOK) {
             FreeStrArray(strArr, i);
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strcpy_s failed.", __func__);
             return ATRET_FAILED;
         }
+        (*strArr)[i][length] = '\0';
     }
     return ATRET_SUCCESS;
 }

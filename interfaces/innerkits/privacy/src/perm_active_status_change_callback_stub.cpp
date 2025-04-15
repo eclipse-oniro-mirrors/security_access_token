@@ -15,7 +15,7 @@
 
 #include "perm_active_status_change_callback_stub.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "privacy_error.h"
 #include "perm_active_response_parcel.h"
 #include "string_ex.h"
@@ -23,19 +23,14 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermActiveStatusChangeCallbackStub"
-};
-}
 
 int32_t PermActiveStatusChangeCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
+    LOGD(PRI_DOMAIN, PRI_TAG, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPermActiveStatusCallback::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -43,7 +38,7 @@ int32_t PermActiveStatusChangeCallbackStub::OnRemoteRequest(
     if (msgCode == static_cast<int32_t>(PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE)) {
         sptr<ActiveChangeResponseParcel> resultSptr = data.ReadParcelable<ActiveChangeResponseParcel>();
         if (resultSptr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
+            LOGE(PRI_DOMAIN, PRI_TAG, "ReadParcelable fail");
             return ERR_READ_PARCEL_FAILED;
         }
 

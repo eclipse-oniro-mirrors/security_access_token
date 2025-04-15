@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,17 +13,39 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_CODE_H
-#define PERMISSION_CODE_H
+#ifndef PERMISSION_MAP_H
+#define PERMISSION_MAP_H
 
 #include <map>
 #include <string>
+#include "access_token.h"
+
+#include "access_token.h"
+#include "permission_def.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+struct PermissionBriefDef {
+    char *permissionName;
+    GrantMode grantMode;
+    ATokenAplEnum availableLevel;
+    ATokenAvailableTypeEnum availableType;
+    bool provisionEnable;
+    bool distributedSceneEnable;
+    bool isKernelEffect;
+    bool hasValue;
+};
+
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
 bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
+bool IsUserGrantPermission(const std::string& permission);
+bool IsDefinedPermission(const std::string& permission);
+bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &permissionBriefDef);
+void GetPermissionBriefDef(uint32_t code, PermissionBriefDef &permissionBriefDef);
+void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef &def);
+bool IsPermissionValidForHap(const std::string& permissionName);
+size_t GetDefPermissionsSize();
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

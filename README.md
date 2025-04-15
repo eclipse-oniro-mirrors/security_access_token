@@ -55,14 +55,12 @@ The following figure shows the ATM architecture.
 | int GetTokenTypeFlag(AccessTokenID tokenID); | Obtains the type of a trusted token ID.|
 | int GetTokenType(FullTokenID tokenID); | Obtains the type of an access token.|
 | int GetTokenTypeFlag(FullTokenID tokenID); | Obtains the type of a trusted token ID.|
-| int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | Checks whether the native process corresponding to the given token ID has the specified distributed capability.|
 | AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token ID of an app.|
 | AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token ID of an app.|
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | Obtains the token information about an OpenHarmony Ability Package (HAP).|
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | Obtains the native token information.|
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | Checks whether an access token has the specified permission.|
 | int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult); | Obtains definition information about the specified permission.|
-| int GetDefPermissions(AccessTokenID tokenID, std::vector&lt;PermissionDef&gt;& permList); | Obtains the permission definition set of a HAP.|
 | int GetReqPermissions(AccessTokenID tokenID, std::vector&lt;PermissionStateFull&gt;& reqPermList, bool isSystemGrant); | Obtains the status set of the permission requested by a HAP.|
 | int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName); | Obtains the permissions of the app with the specified token ID.|
 | int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | Grants a permission to the app with the specified token ID.|
@@ -75,7 +73,6 @@ ATM provides unified access control for apps and allows apps or service abilitie
 
 #### Native Process
 -  Before a native process starts, it calls **GetAccessTokenId** to obtain a token ID, and then calls **SetSelfTokenID** to set the token ID to the kernel.
--  During the running of a native process, it calls **GetNativeTokenInfo** or **CheckNativeDCap** to obtain the token information, including the distributed capability and APL.
 
 #### App HAP
 -  When an app is installed, **AllocHapToken** is called to obtain the token ID of the app.

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,21 +20,25 @@ group("accesstoken_build_module_test") {
   if (is_standard_system) {
     deps += [
       "frameworks/test/unittest:unittest",
+      "interfaces/inner_api/el5filekeymanager/test:unittest",
       "interfaces/innerkits/accesstoken/test:unittest",
       "interfaces/innerkits/analysis_model/test:unittest",
-      "interfaces/innerkits/el5filekeymanager/test:unittest",
       "interfaces/innerkits/nativetoken/test:unittest",
       "interfaces/innerkits/privacy/test:unittest",
       "interfaces/innerkits/token_callback/test:unittest",
       "interfaces/innerkits/token_setproc/test:unittest",
       "services/accesstokenmanager/test:unittest",
       "services/common/database/test:unittest",
+      "services/common/json_parse/test:unittest"
     ]
     if (ability_base_enable == true) {
       deps += [
         "services/el5filekeymanager/test:unittest",
         "services/privacymanager/test:unittest",
       ]
+    }
+    if (window_manager_enable == true) {
+      deps += [ "services/common/window_manager/test:unittest" ]
     }
   }
   if (token_sync_enable == true) {

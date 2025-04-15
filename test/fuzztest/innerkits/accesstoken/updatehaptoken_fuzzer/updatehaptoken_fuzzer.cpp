@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -31,36 +32,37 @@ namespace OHOS {
             return false;
         }
 
+        AccessTokenFuzzData fuzzData(data, size);
         AccessTokenIDEx tokenIDex = {
-            .tokenIdExStruct.tokenID = static_cast<AccessTokenID>(size),
-            .tokenIdExStruct.tokenAttr = static_cast<AccessTokenAttr>(size),
+            .tokenIdExStruct.tokenID = fuzzData.GetData<AccessTokenID>(),
+            .tokenIdExStruct.tokenAttr = fuzzData.GetData<AccessTokenAttr>(),
         };
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        std::string permissionName = fuzzData.GenerateStochasticString();
         PermissionDef testPermDef;
-        testPermDef.permissionName = testName;
-        testPermDef.bundleName = testName;
+        testPermDef.permissionName = permissionName;
+        testPermDef.bundleName = fuzzData.GenerateStochasticString();
         testPermDef.grantMode = 1;
         testPermDef.availableLevel = APL_NORMAL;
-        testPermDef.label = testName;
+        testPermDef.label = fuzzData.GenerateStochasticString();
         testPermDef.labelId = 1;
-        testPermDef.description = testName;
+        testPermDef.description = fuzzData.GenerateStochasticString();
         testPermDef.descriptionId = 1;
 
         PermissionStateFull testState;
-        testState.permissionName = testName;
+        testState.permissionName = permissionName;
         testState.isGeneral = true;
-        testState.resDeviceID = {testName};
+        testState.resDeviceID = {fuzzData.GenerateStochasticString()};
         testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
         testState.grantFlags = {1};
         HapPolicyParams TestPolicyParams = {
             .apl = APL_NORMAL,
-            .domain = testName,
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
             .permStateList = {testState}
         };
         UpdateHapInfoParams info;
-        info.appIDDesc = testName;
+        info.appIDDesc = fuzzData.GenerateStochasticString();
         info.apiVersion = 8; // 8 means the version
         info.isSystemApp = false;
 

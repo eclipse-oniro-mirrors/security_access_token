@@ -24,6 +24,7 @@ bool PermissionListStateParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->permsState.permissionName));
     RETURN_IF_FALSE(out.WriteInt32(static_cast<int32_t>(this->permsState.state)));
+    RETURN_IF_FALSE(out.WriteInt32(static_cast<int32_t>(this->permsState.errorReason)));
     return true;
 }
 
@@ -38,9 +39,13 @@ PermissionListStateParcel* PermissionListStateParcel::Unmarshalling(Parcel& in)
     int32_t state;
     RELEASE_IF_FALSE(in.ReadInt32(state), permissionStateParcel);
     if (state >= static_cast<int32_t>(BUTT_OPER) || state < static_cast<int32_t>(SETTING_OPER)) {
+        delete permissionStateParcel;
         return nullptr;
     }
     permissionStateParcel->permsState.state = static_cast<PermissionOper>(state);
+    int32_t errorReason;
+    RELEASE_IF_FALSE(in.ReadInt32(errorReason), permissionStateParcel);
+    permissionStateParcel->permsState.errorReason = static_cast<PermissionErrorReason>(errorReason);
 
     return permissionStateParcel;
 }

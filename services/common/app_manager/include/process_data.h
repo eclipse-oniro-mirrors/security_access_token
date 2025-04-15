@@ -65,7 +65,9 @@ struct ProcessData : public Parcelable {
 
     std::string bundleName;
     int32_t pid = 0;
-    int32_t uid = 0;
+    int32_t uid = 0; // host uid
+    int32_t hostPid = 0;
+    int32_t gpuPid = 0;
     int32_t renderUid = -1;
     AppProcessState state;
     bool isContinuousTask = false;
@@ -75,9 +77,14 @@ struct ProcessData : public Parcelable {
     int32_t processChangeReason = 0;
     std::string processName;
     ProcessType processType = ProcessType::NORMAL;
-    int32_t extensionType;
+    int32_t extensionType = 0;
     uint32_t accessTokenId = 0;
-    bool isTestMode = false;
+    bool isTestMode = false; // Indicates whether the process is started by aa test
+    int32_t exitReason = 0;
+    std::string exitMsg = "";
+    int32_t childUid = -1;
+    bool isPreload = false;
+    bool isPreloadModule = false;
 };
 }  // namespace AccessToken
 }  // namespace Security

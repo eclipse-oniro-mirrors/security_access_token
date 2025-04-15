@@ -38,7 +38,10 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   branch_protector_ret = "pac_ret"
 
   public_configs = [ ":accesstoken_communication_adapter_cxx_public_config" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
   include_dirs = [
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "include",
@@ -51,14 +54,13 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/hap_policy_parcel.cpp",
     "src/hap_token_info_for_sync_parcel.cpp",
     "src/hap_token_info_parcel.cpp",
-    "src/native_token_info_for_sync_parcel.cpp",
     "src/native_token_info_parcel.cpp",
+    "src/perm_state_change_scope_parcel.cpp",
     "src/permission_def_parcel.cpp",
     "src/permission_grant_info_parcel.cpp",
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
-    "src/permission_state_change_scope_parcel.cpp",
-    "src/permission_state_full_parcel.cpp",
+    "src/permission_status_parcel.cpp",
   ]
 
   external_deps = [ "c_utils:utils" ]

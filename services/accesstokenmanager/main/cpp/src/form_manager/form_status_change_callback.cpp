@@ -15,7 +15,7 @@
 
 #include "form_status_change_callback.h"
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 
 namespace OHOS {
@@ -23,26 +23,23 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t MAX_ALLOW_SIZE = 8 * 1024;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "FormStateObserverStub"
-};
 }
 
 FormStateObserverStub::FormStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "FormStateObserverStub Instance create.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "FormStateObserverStub Instance create.");
 }
 
 FormStateObserverStub::~FormStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "FormStateObserverStub Instance destroy.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "FormStateObserverStub Instance destroy.");
 }
 
 int32_t FormStateObserverStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "FormStateObserverStub: ReadInterfaceToken failed.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "FormStateObserverStub: ReadInterfaceToken failed.");
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IJsFormStateObserver::Message>(code)) {
@@ -51,7 +48,7 @@ int32_t FormStateObserverStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case code: %{public}d.", code);
+            LOGD(ATM_DOMAIN, ATM_TAG, "Default case code: %{public}d.", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
@@ -65,13 +62,13 @@ int32_t FormStateObserverStub::HandleNotifyWhetherFormsVisible(MessageParcel &da
     std::vector<FormInstance> formInstances;
     int32_t infoSize = data.ReadInt32();
     if (infoSize < 0 || infoSize > MAX_ALLOW_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid size: %{public}d.", infoSize);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid size: %{public}d.", infoSize);
         return ERR_OVERSIZE;
     }
     for (int32_t i = 0; i < infoSize; i++) {
         std::unique_ptr<FormInstance> info(data.ReadParcelable<FormInstance>());
         if (info == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Read Parcelable infos.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Read Parcelable infos.");
             return RET_FAILED;
         }
         formInstances.emplace_back(*info);

@@ -34,6 +34,7 @@ public:
         VERISION_1,
         VERISION_2,
         VERISION_3,
+        VERISION_4
     };
 
     void Open();
@@ -52,6 +53,7 @@ public:
 
 private:
     inline static const std::string PRAGMA_VERSION_COMMAND = "PRAGMA user_version";
+    inline static const std::string PRAGMA_WAL_COMMAND = "PRAGMA journal_mode=WAL";
     static const int32_t GENERAL_ERROR = -1;
 
     const std::string dbName_;
@@ -59,6 +61,7 @@ private:
     int32_t currentVersion_;
     sqlite3* db_;
 
+    void SetWal() const;
     int32_t GetVersion() const;
     void SetVersion() const;
 };

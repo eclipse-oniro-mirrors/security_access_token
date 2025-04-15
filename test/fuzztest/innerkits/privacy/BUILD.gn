@@ -18,11 +18,15 @@ group("fuzztest") {
   if (is_standard_system && ability_base_enable == true) {
     deps += [
       "addpermissionusedrecord_fuzzer:AddPermissionUsedRecordFuzzTest",
+      "addpermissionusedrecordasync_fuzzer:AddPermissionUsedRecordAsyncFuzzTest",
       "getpermissionusedrecords_fuzzer:GetPermissionUsedRecordsFuzzTest",
+      "getpermissionusedrecordtogglestatus_fuzzer:GetPermissionUsedRecordToggleStatusFuzzTest",
       "getpermissionusedtypeinfos_fuzzer:GetPermissionUsedTypeInfosFuzzTest",
       "isallowedusingpermission_fuzzer:IsAllowedUsingPermissionFuzzTest",
       "registerpermactivestatuscallback_fuzzer:RegisterPermActiveStatusCallbackFuzzTest",
       "removepermissionusedrecords_fuzzer:RemovePermissionUsedRecordsFuzzTest",
+      "setmutepolicy_fuzzer:SetMutePolicyFuzzTest",
+      "setpermissionusedrecordtogglestatus_fuzzer:SetPermissionUsedRecordToggleStatusFuzzTest",
       "startusingpermission001_fuzzer:StartUsingPermission001FuzzTest",
       "startusingpermission_fuzzer:StartUsingPermissionFuzzTest",
       "stopusingpermission_fuzzer:StopUsingPermissionFuzzTest",

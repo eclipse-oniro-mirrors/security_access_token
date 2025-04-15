@@ -63,18 +63,17 @@ ATM部件的架构图如下所示：
 | int GetTokenTypeFlag(AccessTokenID tokenID); | 查询指定可信tokenID的类型 |
 | int GetTokenType(FullTokenID tokenID); | 查询指定tokenID的类型 |
 | int GetTokenTypeFlag(FullTokenID tokenID); | 查询指定可信tokenID的类型 |
-| int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | 检测指定tokenID对应的native进程是否具有指定的分布式能力 |
 | AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenId |
 | AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenIDEx |
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | 查询指定tokenID对应的hap包的tokenInfo信息 |
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | 查询指定tokenID对应的native的tokenInfo信息 |
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |
 | int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult); | 查询指定权限的权限定义信息 |
-| int GetDefPermissions(AccessTokenID tokenID, std::vector&lt;PermissionDef&gt;& permList); | 查询指定tokenID对应的hap包的权限定义集合 |
 | int GetReqPermissions(AccessTokenID tokenID, std::vector&lt;PermissionStateFull&gt;& reqPermList, bool isSystemGrant); | 查询指定tokenID对应的hap包申请的权限状态集合 |
 | int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName); | 查询指定tokenID的应用的指定权限 |
 | int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | 授予指定tokenID的应用的指定权限 |
 | int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | 撤销指定tokenID的应用的指定权限 |
+| int GrantPermissionForSpecifiedTime(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime, uint32_t maxTime); | 授权指定tokenID的应用固定授权时间的指定权限 |
 | int ClearUserGrantedPermissionState(AccessTokenID tokenID); | 清空指定tokenID的应用的user_grant权限状态 |
 | uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr); | 创建获取native进程的tokenId |
 
@@ -83,7 +82,6 @@ ATM提供了统一的应用权限访问控制功能，支持应用程序或者SA
 
 #### native进程
 -  在native进程拉起前，需要调用GetAccessTokenId函数，获取该native进程的TokenID；再调用SetSelfTokenID将进程TokenID设置到内核中。
--  在native进程运行过程中，可以通过调用GetNativeTokenInfo、CheckNativeDCap来查验对应进程所具备的token信息，包括分布式能力、APL等级等信息。
 
 #### 应用hap
 -  在应用安装时，需要调用AllocHapToken创建获取该应用的TokenID。

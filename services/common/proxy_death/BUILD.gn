@@ -1,0 +1,81 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../access_token.gni")
+
+config("proxy_death_handler_configs") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
+
+ohos_source_set("proxy_death_stub") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [ "include" ]
+
+  sources = [ "src/proxy_death_callback_stub.cpp" ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+  public_configs = [ ":proxy_death_handler_configs" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+}
+
+ohos_source_set("proxy_death_handler") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [ "include" ]
+
+  sources = [
+    "src/proxy_death_handler.cpp",
+    "src/proxy_death_recipient.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+  public_configs = [ ":proxy_death_handler_configs" ]
+
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+}

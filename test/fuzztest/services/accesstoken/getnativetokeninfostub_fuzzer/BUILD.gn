@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,6 +14,7 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
+import("../access_token_service_fuzz.gni")
 
 ohos_fuzztest("GetNativeTokenInfoStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
@@ -28,145 +29,22 @@ ohos_fuzztest("GetNativeTokenInfoStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  include_dirs = [
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include",
+  include_dirs = access_token_include_dirs
+
+  deps = access_token_deps
+
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
   ]
 
-  deps = [
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-  ]
-
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-  ]
-
-  include_dirs += [
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/privacy/include",
-    "${access_token_path}/interfaces/innerkits/tokensync/src",
-    "${access_token_path}/services/common/app_manager/include",
-    "${access_token_path}/services/common/database/include",
-    "${access_token_path}/services/common/handler/include",
-    "${access_token_path}/services/common/utils/include",
-  ]
+  external_deps = access_token_external_deps
 
   include_dirs += access_token_impl_include_dirs
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 
-  sources += [
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_client.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_proxy.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_death_recipient.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_cache.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_policy_set.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_info_inner.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
-  ]
+  sources += access_token_sources
 
   sources += access_token_impl_sources
-
-  if (dlp_permission_enable == true) {
-    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_parser.cpp",
-    ]
-  }
-
-  deps += [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-    "${access_token_path}/services/accesstokenmanager:access_token.rc",
-    "${access_token_path}/services/common:accesstoken_service_common",
-  ]
-
-  deps += [ "${access_token_path}/services/accesstokenmanager/etc:param_files" ]
-
-  external_deps += [
-    "dsoftbus:softbus_client",
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "hitrace:hitrace_meter",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "json:nlohmann_json_static",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "sqlite:sqlite",
-  ]
-
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-
-  if (hicollie_enable == true) {
-    external_deps += [ "hicollie:libhicollie" ]
-    cflags_cc += [ "-DHICOLLIE_ENABLE" ]
-  }
-
-  if (token_sync_enable == true) {
-    cflags_cc += [
-      "-DTOKEN_SYNC_ENABLE",
-      "-DFUZZ_ENABLE",
-    ]
-
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
-      "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
-    ]
-
-    include_dirs += [
-      "${access_token_path}/interfaces/innerkits/tokensync/include",
-      "${access_token_path}/services/common/libraryloader/include",
-    ]
-  }
-  if (access_token_background_task_mgr_continuous_task_enable == true) {
-    include_dirs += [ "${access_token_path}/services/accesstokenmanager/main/cpp/include/background_task_manager" ]
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
-    ]
-  }
 }

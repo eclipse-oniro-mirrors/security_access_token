@@ -64,6 +64,8 @@
                 <filteritem type="filepath" name=".idea/.*" desc="IDE temp files"/>
                 <filteritem type="filepath" name="projectroot/[a-zA-Z0-9]{20,}.sh" desc="Temp files"/>
                 <filteritem type="filepath" name="src/test/.*" desc="Test files"/>
+                <filteritem type="filepath" name="figures/framework_en.png" desc="icon"/>
+                <filteritem type="filepath" name="figures/framework.png" desc="icon"/>
             </filefilter>
             <filefilter name="defaultPolicyFilter" desc="Filters for compatibility，license header policies">
                 <filteritem type="filepath" name="src/main/java/ohos/oat/analysis/headermatcher/.*" desc="License matcher rules, not license header"/>

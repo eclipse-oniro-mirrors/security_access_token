@@ -1,0 +1,94 @@
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../../access_token.gni")
+
+config("cj_ability_access_ctrl_ffi_config") {
+  include_dirs = [ "include" ]
+}
+
+ohos_shared_library("cj_ability_access_ctrl_ffi") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/token_callback/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "../../napi/common/include",
+  ]
+
+  if (!defined(defines)) {
+    defines = []
+  }
+
+  if (!ohos_indep_compiler_enable && product_name != "ohos-sdk") {
+    sources = [
+      "src/ability_access_ctrl_ffi.cpp",
+      "src/at_manager_impl.cpp",
+      "src/request_global_switch_on_setting.cpp",
+      "src/request_permission_on_setting.cpp",
+    ]
+
+    deps = [
+      "${access_token_path}/frameworks/js/napi/common:libnapi_common",
+      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "${access_token_path}/interfaces/innerkits/token_callback:libtoken_callback_sdk",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    ]
+
+    external_deps = [
+      "ability_base:want",
+      "ability_runtime:ability_context_native",
+      "ability_runtime:ability_manager",
+      "ability_runtime:abilitykit_native",
+      "ability_runtime:napi_base_context",
+      "ability_runtime:ui_extension",
+      "ace_engine:ace_uicontent",
+      "c_utils:utils",
+      "hilog:libhilog",
+      "init:libbegetutil",
+      "ipc:ipc_single",
+      "napi:ace_napi",
+      "napi:cj_bind_ffi",
+      "napi:cj_bind_native",
+    ]
+  } else {
+    defines += [ "PREVIEWER" ]
+    sources = [ "src/ability_access_ctrl_mock.cpp" ]
+    external_deps = [ "napi:cj_bind_ffi" ]
+  }
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  public_configs = [ ":cj_ability_access_ctrl_ffi_config" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+
+  if (current_os == "ohos") {
+    defines += [ "OHOS_PLATFORM" ]
+  }
+
+  if (current_os == "mingw") {
+    defines += [ "WINDOWS_PLATFORM" ]
+  }
+  innerapi_tags = [ "platformsdk" ]
+  subsystem_name = "security"
+  part_name = "access_token"
+}

@@ -58,27 +58,8 @@ public:
      * see the definition of ATokenAplEnum in the access_token.h file.
      */
     ATokenAplEnum apl;
-    unsigned char ver;
     /** native process name */
     std::string processName;
-    /** capsbility list */
-    std::vector<std::string> dcap;
-    AccessTokenID tokenID;
-    /** token attribute */
-    AccessTokenAttr tokenAttr;
-    /** native process access control permission list */
-    std::vector<std::string> nativeAcls;
-};
-
-/**
- * @brief Declares native token info for distributed synchronize class
- */
-class NativeTokenInfoForSync final {
-public:
-    /** native token info */
-    NativeTokenInfo baseInfo;
-    /** permission state list */
-    std::vector<PermissionStateFull> permStateList;
 };
 } // namespace AccessToken
 } // namespace Security

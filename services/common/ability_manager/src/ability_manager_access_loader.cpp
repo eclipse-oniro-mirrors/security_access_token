@@ -14,22 +14,26 @@
  */
 #include "ability_manager_access_loader.h"
 
-#include "ability_manager_client.h"
+#include "ability_manager_adapter.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 int32_t AbilityManagerAccessLoader::StartAbility(
-    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int32_t requestCode, int32_t userId)
+    const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken)
 {
 #ifdef ABILITY_RUNTIME_ENABLE
-    return AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want, callerToken, requestCode, userId);
+    return AbilityManagerAdapter::GetInstance().StartAbility(innerWant, callerToken);
 #else
     return 0;
 #endif
 }
 
-extern "C" {
+int32_t AbilityManagerAccessLoader::KillProcessForPermissionUpdate(uint32_t accessTokenId)
+{
+    return AbilityManagerAdapter::GetInstance().KillProcessForPermissionUpdate(accessTokenId);
+}
+
 void* Create()
 {
     return reinterpret_cast<void*>(new AbilityManagerAccessLoader);
@@ -41,7 +45,6 @@ void Destroy(void* loaderPtr)
     if (loader != nullptr) {
         delete loader;
     }
-}
 }
 } // namespace AccessToken
 } // namespace Security

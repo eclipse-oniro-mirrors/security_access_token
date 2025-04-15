@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 
 using namespace std;
@@ -29,10 +30,9 @@ namespace OHOS {
             return false;
         }
 
-        int userID = static_cast<int>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        int instIndex = static_cast<int>(size);
-        int32_t result = AccessTokenKit::GetHapTokenID(userID, testName, instIndex);
+        AccessTokenFuzzData fuzzData(data, size);
+        int32_t result = AccessTokenKit::GetHapTokenID(
+            fuzzData.GetData<int>(), fuzzData.GenerateStochasticString(), fuzzData.GetData<int>());
 
         return result == RET_SUCCESS;
     }

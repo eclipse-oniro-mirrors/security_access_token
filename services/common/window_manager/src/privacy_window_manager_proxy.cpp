@@ -14,15 +14,12 @@
  */
 
 #include "privacy_window_manager_proxy.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-    constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerProxy"};
-}
 
 int32_t PrivacyWindowManagerProxy::RegisterWindowManagerAgent(WindowManagerAgentType type,
     const sptr<IWindowManagerAgent>& windowManagerAgent)
@@ -31,24 +28,29 @@ int32_t PrivacyWindowManagerProxy::RegisterWindowManagerAgent(WindowManagerAgent
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(static_cast<uint32_t>(type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write type failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write type failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteRemoteObject(windowManagerAgent->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write IWindowManagerAgent failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write IWindowManagerAgent failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IWindowManager::WindowManagerMessage::TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed");
         return error;
     }
     return reply.ReadInt32();
@@ -61,25 +63,30 @@ int32_t PrivacyWindowManagerProxy::UnregisterWindowManagerAgent(WindowManagerAge
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(static_cast<uint32_t>(type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write type failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write type failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteRemoteObject(windowManagerAgent->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write IWindowManagerAgent failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Write IWindowManagerAgent failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IWindowManager::WindowManagerMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed");
         return error;
     }
 

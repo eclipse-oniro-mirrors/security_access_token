@@ -15,17 +15,12 @@
 
 #include "on_permission_used_record_callback_proxy.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "permission_used_result_parcel.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "OnPermissionUsedRecordCallbackProxy"
-};
-}
 
 OnPermissionUsedRecordCallbackProxy::OnPermissionUsedRecordCallbackProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<OnPermissionUsedRecordCallback>(impl) {
@@ -39,14 +34,14 @@ void OnPermissionUsedRecordCallbackProxy::OnQueried(ErrCode code, PermissionUsed
     MessageParcel data;
     data.WriteInterfaceToken(OnPermissionUsedRecordCallback::GetDescriptor());
     if (!data.WriteInt32(code)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(code)");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteParcelable(code)");
         return;
     }
 
     PermissionUsedResultParcel usedResultParcel;
     usedResultParcel.result = result;
     if (!data.WriteParcelable(&usedResultParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(result)");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to WriteParcelable(result)");
         return;
     }
 
@@ -54,17 +49,17 @@ void OnPermissionUsedRecordCallbackProxy::OnQueried(ErrCode code, PermissionUsed
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service null.");
         return;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(PrivacyPermissionRecordInterfaceCode::ON_QUERIED), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Send request fail, result: %{public}d", requestResult);
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequest success");
+    LOGI(PRI_DOMAIN, PRI_TAG, "SendRequest success");
 }
 } // namespace AccessToken
 } // namespace Security

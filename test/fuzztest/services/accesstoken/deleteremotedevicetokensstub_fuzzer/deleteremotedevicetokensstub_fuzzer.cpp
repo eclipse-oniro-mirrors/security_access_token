@@ -18,16 +18,19 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+#ifdef TOKEN_SYNC_ENABLE
 const int CONSTANTS_NUMBER_TWO = 2;
+#endif
 
 namespace OHOS {
     bool DeleteRemoteDeviceTokensStubFuzzTest(const uint8_t* data, size_t size)
@@ -37,7 +40,8 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateStochasticString());
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -46,7 +50,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN);
+            IAccessTokenManagerIpcCode::COMMAND_DELETE_REMOTE_DEVICE_TOKENS);
 
         MessageParcel reply;
         MessageOption option;

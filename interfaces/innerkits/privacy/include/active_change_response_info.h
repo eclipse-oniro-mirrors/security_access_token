@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "permission_used_type.h"
 
 namespace OHOS {
 namespace Security {
@@ -50,6 +51,7 @@ enum ActiveChangeType {
     PERM_INACTIVE = 0,
     PERM_ACTIVE_IN_FOREGROUND = 1,
     PERM_ACTIVE_IN_BACKGROUND = 2,
+    PERM_TEMPORARY_CALL,
 };
 
 /**
@@ -64,6 +66,7 @@ enum LockScreenStatusChangeType {
  * @brief Permission active state change response struct
  */
 struct ActiveChangeResponse {
+    AccessTokenID callingTokenID;
     AccessTokenID tokenID;
     std::string permissionName;
     std::string deviceId;
@@ -72,6 +75,8 @@ struct ActiveChangeResponse {
      * see the definition above.
      */
     ActiveChangeType type;
+    PermissionUsedType usedType;
+    int32_t pid;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -23,18 +23,15 @@
 #include "access_token.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
-#include "native_token_info.h"
-#include "native_token_info_inner.h"
 #include "nocopyable.h"
 #include "rwlock.h"
-#include "thread_pool.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 class AccessTokenRemoteDevice final {
 public:
-    std::string DeviceID_; // networkID
+    std::string deviceID_; // networkID
     std::map<AccessTokenID, AccessTokenID> MappingTokenIDPairMap_;
 };
 

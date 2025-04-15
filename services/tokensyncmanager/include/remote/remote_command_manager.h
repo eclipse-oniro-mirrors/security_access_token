@@ -21,7 +21,7 @@
 #include <mutex>
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "base_remote_command.h"
 #include "constant.h"
 #include "data_validator.h"

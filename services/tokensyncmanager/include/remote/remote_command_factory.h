@@ -24,7 +24,6 @@
 #include "delete_remote_token_command.h"
 #include "hap_token_info.h"
 #include "sync_remote_hap_token_command.h"
-#include "sync_remote_native_token_command.h"
 #include "update_remote_hap_token_command.h"
 
 namespace OHOS {
@@ -42,9 +41,6 @@ public:
 
     std::shared_ptr<UpdateRemoteHapTokenCommand> NewUpdateRemoteHapTokenCommand(const std::string &srcDeviceId,
         const std::string &dstDeviceId, const HapTokenInfoForSync& tokenInfo);
-
-    std::shared_ptr<SyncRemoteNativeTokenCommand> NewSyncRemoteNativeTokenCommand(const std::string &srcDeviceId,
-        const std::string &dstDeviceId);
 
     std::shared_ptr<BaseRemoteCommand> NewRemoteCommandFromJson(
         const std::string &commandName, const std::string &commandJsonString);

@@ -17,6 +17,7 @@
 
 #include <cerrno>
 #include <cstdint>
+#include <cstdio>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -25,6 +26,7 @@ namespace Security {
 namespace AccessToken {
 const uint32_t UINT32_T_BITS = 32;
 const uint32_t MAX_PERM_SIZE = 64;
+constexpr uint64_t FD_TAG = 0xD005A01;
 struct IoctlAddPermData {
     uint32_t token;
     uint32_t perm[MAX_PERM_SIZE] = { 0 };
@@ -53,8 +55,7 @@ int32_t AddPermissionToKernel(
     }
     size_t size = opCodeList.size();
     if (size == 0) {
-        RemovePermissionFromKernel(tokenID);
-        return ACCESS_TOKEN_OK;
+        return RemovePermissionFromKernel(tokenID);
     }
     struct IoctlAddPermData data;
     data.token = tokenID;
@@ -74,8 +75,9 @@ int32_t AddPermissionToKernel(
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_ADD_PERMISSIONS, &data);
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
     if (ret != ACCESS_TOKEN_OK) {
         return errno;
     }
@@ -89,8 +91,9 @@ int32_t RemovePermissionFromKernel(uint32_t tokenID)
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_REMOVE_PERMISSIONS, &tokenID);
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
     if (ret) {
         return errno;
     }
@@ -110,8 +113,9 @@ int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_SET_PERMISSION, &data);
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
     if (ret != ACCESS_TOKEN_OK) {
         return errno;
     }
@@ -132,8 +136,9 @@ int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGrante
     if (fd < 0) {
         return ACCESS_TOKEN_OPEN_ERROR;
     }
+    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_GET_PERMISSION, &data);
-    close(fd);
+    fdsan_close_with_tag(fd, FD_TAG);
     if (ret < 0) {
         return errno;
     }

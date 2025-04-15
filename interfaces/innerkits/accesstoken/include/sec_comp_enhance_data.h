@@ -44,6 +44,8 @@ namespace AccessToken {
 /**
  * @brief Declares security component enhance data struct only for security component service
  */
+
+static constexpr int32_t AES_KEY_STORAGE_LEN = 64;
 struct SecCompEnhanceData {
     /**
      * callback remote object for checking security component valid.
@@ -64,15 +66,19 @@ struct SecCompEnhanceData {
     /**
      * sessionId for register.
      */
-    int32_t sessionId;
+    uint32_t sessionId;
     /**
      * sequence number of session.
      */
-    int32_t seqNum;
+    uint32_t seqNum;
+    /**
+     * mark whether sceneboard application or not.
+     */
+    bool isSceneBoard;
     /**
      * key to encrypt ipc message.
      */
-    std::string key;
+    uint8_t key[AES_KEY_STORAGE_LEN];
 };
 
 } // namespace AccessToken

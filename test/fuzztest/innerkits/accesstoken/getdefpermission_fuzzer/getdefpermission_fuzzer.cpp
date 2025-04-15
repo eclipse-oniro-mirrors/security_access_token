@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 #include "permission_def.h"
@@ -33,18 +34,9 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        PermissionDef PERMISSIONDEF = {
-            .permissionName = testName,
-            .bundleName = testName,
-            .grantMode = 1,
-            .availableLevel = APL_NORMAL,
-            .label = testName,
-            .labelId = 1,
-            .description = testName,
-            .descriptionId = 1
-        };
-        int32_t result = AccessTokenKit::GetDefPermission(testName, PERMISSIONDEF);
+        AccessTokenFuzzData fuzzData(data, size);
+        PermissionDef PERMISSIONDEF;
+        int32_t result = AccessTokenKit::GetDefPermission(fuzzData.GenerateStochasticString(), PERMISSIONDEF);
 
         return result == RET_SUCCESS;
     }

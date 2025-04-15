@@ -18,44 +18,35 @@
 #include "remote_command_manager.h"
 #include "soft_bus_manager.h"
 #include "device_info_manager.h"
+#include "device_manager.h"
 #include "iservice_registry.h"
-#include "softbus_bus_center.h"
 #include "soft_bus_socket_listener.h"
 #include "system_ability_definition.h"
 #include "constant_common.h"
-#include "device_manager.h"
 #include "dm_device_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
-
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusDeviceConnectionListener"};
-}
 
 const std::string ACCESSTOKEN_PACKAGE_NAME = "ohos.security.distributed_access_token";
 
 SoftBusDeviceConnectionListener::SoftBusDeviceConnectionListener()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "SoftBusDeviceConnectionListener()");
+    LOGD(ATM_DOMAIN, ATM_TAG, "SoftBusDeviceConnectionListener()");
 }
 SoftBusDeviceConnectionListener::~SoftBusDeviceConnectionListener()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "~SoftBusDeviceConnectionListener()");
+    LOGD(ATM_DOMAIN, ATM_TAG, "~SoftBusDeviceConnectionListener()");
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
         ConstantCommon::EncryptDevId(networkId).c_str(),
         ConstantCommon::EncryptDevId(uuid).c_str(),
@@ -66,7 +57,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
             networkId, uuid, udid, info.deviceName, std::to_string(info.deviceTypeId));
         RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, online failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uuid or udid is empty, online failed.");
     }
     // no need to load local permissions by now.
 }
@@ -75,26 +66,26 @@ void SoftBusDeviceConnectionListener::UnloadTokensyncService()
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get samgr failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get samgr failed.");
         return ;
     }
     int32_t ret = samgr->UnloadSystemAbility(TOKEN_SYNC_MANAGER_SERVICE_ID);
     if (ret != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Remove system ability failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remove system ability failed.");
     }
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
     if ((uuid == "") || (udid == "")) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid or udid is empty, offline failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uuid or udid is empty, offline failed.");
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s,  uuid: %{public}s, udid: %{public}s.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "NetworkId: %{public}s,  uuid: %{public}s, udid: %{public}s.",
         ConstantCommon::EncryptDevId(networkId).c_str(),
         ConstantCommon::EncryptDevId(uuid).c_str(),
         ConstantCommon::EncryptDevId(udid).c_str());
@@ -105,32 +96,32 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 
     std::string packageName = ACCESSTOKEN_PACKAGE_NAME;
     std::string extra = "";
-    std::vector<DmDeviceInfo> deviceList;
+    std::vector<DistributedHardware::DmDeviceInfo> deviceList;
 
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().GetTrustedDeviceList(packageName,
         extra, deviceList);
     if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetTrustedDeviceList error, result: %{public}d", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetTrustedDeviceList error, result: %{public}d", ret);
         return;
     }
 
     if (deviceList.empty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "There is no remote decice online, exit tokensync process");
+        LOGI(ATM_DOMAIN, ATM_TAG, "There is no remote decice online, exit tokensync process");
 
         UnloadTokensyncService();
     }
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceReady(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceReady(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    std::string networkId = std::string(info.networkId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceChanged(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceChanged(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    std::string networkId = std::string(info.networkId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 }  // namespace AccessToken
 }  // namespace Security

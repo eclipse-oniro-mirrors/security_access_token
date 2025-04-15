@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,10 +20,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_manager_service.h"
 #include "hap_info_parcel.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -31,44 +32,44 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    void ConstructorParam(const std::string& testName, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
+    void ConstructorParam(AccessTokenFuzzData& fuzzData, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
     {
+        std::string permissionName = fuzzData.GenerateStochasticString();
+        std::string bundleName = fuzzData.GenerateStochasticString();
         PermissionDef testPermDef = {
-            .permissionName = testName,
-            .bundleName = testName,
+            .permissionName = permissionName,
+            .bundleName = bundleName,
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = testName,
+            .label = fuzzData.GenerateStochasticString(),
             .labelId = 1,
-            .description = testName,
+            .description = fuzzData.GenerateStochasticString(),
             .descriptionId = 1};
-        PermissionStateFull TestState = {
-            .permissionName = testName,
-            .isGeneral = true,
-            .resDeviceID = {testName},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1},
+        PermissionStatus testState = {
+            .permissionName = permissionName,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .grantFlag = 1,
         };
-        HapInfoParams TestInfoParms = {
+        HapInfoParams testInfoParms = {
             .userID = 1,
-            .bundleName = testName,
+            .bundleName = bundleName,
             .instIndex = 0,
-            .appIDDesc = testName};
+            .appIDDesc = fuzzData.GenerateStochasticString()};
         PreAuthorizationInfo info1 = {
-            .permissionName = testName,
+            .permissionName = permissionName,
             .userCancelable = true
         };
-        HapPolicyParams TestPolicyPrams = {
+        HapPolicy testPolicy = {
             .apl = APL_NORMAL,
-            .domain = testName,
+            .domain = fuzzData.GenerateStochasticString(),
             .permList = {testPermDef},
-            .permStateList = {TestState},
-            .aclRequestedList = {testName},
+            .permStateList = {testState},
+            .aclRequestedList = {permissionName},
             .preAuthorizationInfo = {info1}
         };
 
-        hapInfoParcel.hapInfoParameter = TestInfoParms;
-        hapPolicyParcel.hapPolicyParameter = TestPolicyPrams;
+        hapInfoParcel.hapInfoParameter = testInfoParms;
+        hapPolicyParcel.hapPolicy = testPolicy;
     }
 
     bool AllocHapTokenStubFuzzTest(const uint8_t* data, size_t size)
@@ -77,10 +78,10 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char *>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
         HapInfoParcel hapInfoParcel;
         HapPolicyParcel hapPolicyParcel;
-        ConstructorParam(testName, hapInfoParcel, hapPolicyParcel);
+        ConstructorParam(fuzzData, hapInfoParcel, hapPolicyParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -92,7 +93,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::ALLOC_TOKEN_HAP);
+            IAccessTokenManagerIpcCode::COMMAND_ALLOC_HAP_TOKEN);
 
         MessageParcel reply;
         MessageOption option;

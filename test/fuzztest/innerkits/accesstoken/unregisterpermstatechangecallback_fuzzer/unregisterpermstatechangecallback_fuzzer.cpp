@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 
 using namespace std;
@@ -48,11 +49,10 @@ namespace OHOS {
             return false;
         }
 
+        AccessTokenFuzzData fuzzData(data, size);
         PermStateChangeScope scopeInfos;
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        scopeInfos.permList = { testName };
-        scopeInfos.tokenIDs = { tokenId };
+        scopeInfos.permList = { fuzzData.GenerateStochasticString() };
+        scopeInfos.tokenIDs = { fuzzData.GetData<AccessTokenID>() };
         auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfos);
         int32_t result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
 

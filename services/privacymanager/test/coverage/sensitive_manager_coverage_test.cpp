@@ -15,19 +15,13 @@
 
 #include <gtest/gtest.h>
 
+#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "app_manager_access_client.h"
-#include "app_manager_access_proxy.h"
 #include "app_state_data.h"
 #define private public
-#include "audio_manager_privacy_client.h"
+#include "audio_manager_adapter.h"
 #undef private
-#include "audio_manager_privacy_proxy.h"
-#define private public
-#include "camera_manager_privacy_client.h"
-#undef private
-#include "camera_manager_privacy_proxy.h"
-#include "camera_service_callback_stub.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -58,14 +52,14 @@ void SensitiveManagerCoverageTest::TearDown()
 {
 }
 
-class TestCallBack2 : public ApplicationStateObserverStub {
+class SensitiveManagerCoverageTestCb1 : public ApplicationStateObserverStub {
 public:
-    TestCallBack2() = default;
-    virtual ~TestCallBack2() = default;
+    SensitiveManagerCoverageTestCb1() = default;
+    virtual ~SensitiveManagerCoverageTestCb1() = default;
 
-    void OnForegroundApplicationChanged(const AppStateData &appStateData)
+    void OnAppStateChanged(const AppStateData &appStateData)
     {
-        GTEST_LOG_(INFO) << "OnForegroundApplicationChanged, state is "
+        GTEST_LOG_(INFO) << "OnAppStateChanged, state is "
             << appStateData.state;
     }
 };
@@ -79,7 +73,7 @@ public:
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -87,7 +81,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&appData));
-    uint32_t code = 10;
+    uint32_t code = -1;
     ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // code default
 }
 
@@ -100,7 +94,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -111,7 +105,39 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
     ASSERT_EQ(true, data.WriteParcelable(&appData));
     // code not default + state = 3
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
+    
+    OHOS::MessageParcel data2;
+    OHOS::MessageParcel reply2;
+    ASSERT_EQ(true, data2.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data2.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED), data2, reply2, option));
+
+    OHOS::MessageParcel data3;
+    OHOS::MessageParcel reply3;
+    ASSERT_EQ(true, data3.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data3.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED), data3, reply3, option));
+    
+    OHOS::MessageParcel data4;
+    OHOS::MessageParcel reply4;
+    ASSERT_EQ(true, data4.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data4.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED), data4, reply4, option));
+    
+    OHOS::MessageParcel data5;
+    OHOS::MessageParcel reply5;
+    ASSERT_EQ(true, data5.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, data5.WriteParcelable(&appData));
+    // code not default + state = 3
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED), data5, reply5, option));
 }
 
 /**
@@ -123,7 +149,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -134,86 +160,46 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
     ASSERT_EQ(true, data.WriteParcelable(&appData));
     // code not default + state = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data, reply, option));
 }
-
-class TestCallBack3 : public CameraServiceCallbackStub {
-public:
-    TestCallBack3() = default;
-    virtual ~TestCallBack3() = default;
-
-    int32_t OnCameraMute(bool muteMode)
-    {
-        GTEST_LOG_(INFO) << "OnCameraMute, muteMode is " << muteMode;
-        return 0;
-    }
-};
 
 /**
  * @tc.name: OnRemoteRequest004
- * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
+ * @tc.desc: ApplicationStateObserverStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
 {
-    bool muteMode = false;
-    TestCallBack3 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
-    OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
 
-    ASSERT_EQ(true, data.WriteInterfaceToken(ICameraMuteServiceCallback::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteBool(muteMode));
-    uint32_t code = 10;
-    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // msgCode default
-}
+    OHOS::MessageParcel data1;
+    ASSERT_EQ(true, data1.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED), data1, reply, option);
+    
+    OHOS::MessageParcel data2;
+    ASSERT_EQ(true, data2.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED), data2, reply, option);
 
-/**
- * @tc.name: OnRemoteRequest005
- * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest005, TestSize.Level1)
-{
-    bool muteMode = false;
-    TestCallBack3 callback;
-
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(ICameraMuteServiceCallback::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteBool(muteMode));
-    // msgId = 0
-    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        PrivacyCameraMuteServiceInterfaceCode::CAMERA_CALLBACK_MUTE_MODE), data, reply, option));
-}
-
-/*
- * @tc.name: AudioRemoteDiedHandle001
- * @tc.desc: test audio remote die
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerCoverageTest, AudioRemoteDiedHandle001, TestSize.Level1)
-{
-    AudioManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    EXPECT_EQ(AudioManagerPrivacyClient::GetInstance().proxy_, nullptr);
-}
-
-/*
- * @tc.name: CameraRemoteDiedHandle001
- * @tc.desc: test camera remote die
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerCoverageTest, CameraRemoteDiedHandle001, TestSize.Level1)
-{
-    CameraManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    EXPECT_EQ(CameraManagerPrivacyClient::GetInstance().proxy_, nullptr);
+    OHOS::MessageParcel data3;
+    ASSERT_EQ(true, data3.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED), data3, reply, option);
+    
+    OHOS::MessageParcel data4;
+    ASSERT_EQ(true, data4.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED), data4, reply, option);
+    
+    OHOS::MessageParcel data5;
+    ASSERT_EQ(true, data5.WriteInterfaceToken(IApplicationStateObserver::GetDescriptor()));
+    callback.OnRemoteRequest(static_cast<uint32_t>(
+        IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED), data5, reply, option);
 }
 } // namespace AccessToken
 } // namespace Security

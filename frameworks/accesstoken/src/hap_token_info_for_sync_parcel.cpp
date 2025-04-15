@@ -18,7 +18,7 @@
 #include "hap_token_info_parcel.h"
 #include "parcel_utils.h"
 #include "permission_state_full.h"
-#include "permission_state_full_parcel.h"
+#include "permission_status_parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,16 +27,16 @@ bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 {
     HapTokenInfoParcel baseInfoParcel;
     baseInfoParcel.hapTokenInfoParams = this->hapTokenInfoForSyncParams.baseInfo;
-    out.WriteParcelable(&baseInfoParcel);
+    RETURN_IF_FALSE(out.WriteParcelable(&baseInfoParcel));
 
-    const std::vector<PermissionStateFull>& permStateList = this->hapTokenInfoForSyncParams.permStateList;
+    const std::vector<PermissionStatus>& permStateList = this->hapTokenInfoForSyncParams.permStateList;
     uint32_t permStateListSize = permStateList.size();
     RETURN_IF_FALSE(permStateListSize <= MAX_PERMLIST_SIZE);
     RETURN_IF_FALSE(out.WriteUint32(permStateListSize));
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
-        out.WriteParcelable(&permStateParcel);
+        PermissionStatusParcel permStateParcel;
+        permStateParcel.permState = permStateList[i];
+        RETURN_IF_FALSE(out.WriteParcelable(&permStateParcel));
     }
 
     return true;
@@ -57,10 +57,10 @@ HapTokenInfoForSyncParcel* HapTokenInfoForSyncParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint32(permStateListSize), hapTokenInfoForSyncParcel);
     RELEASE_IF_FALSE((permStateListSize <= MAX_PERMLIST_SIZE), hapTokenInfoForSyncParcel);
     for (uint32_t i = 0; i < permStateListSize; i++) {
-        sptr<PermissionStateFullParcel> permissionStateParcel = in.ReadParcelable<PermissionStateFullParcel>();
+        sptr<PermissionStatusParcel> permissionStateParcel = in.ReadParcelable<PermissionStatusParcel>();
         RELEASE_IF_FALSE(permissionStateParcel != nullptr, hapTokenInfoForSyncParcel);
         hapTokenInfoForSyncParcel->hapTokenInfoForSyncParams.permStateList.emplace_back(
-            permissionStateParcel->permStatFull);
+            permissionStateParcel->permState);
     }
     return hapTokenInfoForSyncParcel;
 }

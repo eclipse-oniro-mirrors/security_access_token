@@ -38,8 +38,9 @@ public:
     virtual ~El5FilekeyManagerServiceAbility() final;
 
 private:
-    void OnStart() final;
+    void OnStart(const SystemAbilityOnDemandReason &startReason) final;
     void OnStop() final;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerServiceAbility);
     DECLARE_SYSTEM_ABILITY(El5FilekeyManagerServiceAbility);
@@ -50,5 +51,4 @@ private:
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-
 #endif // EL5_FILEKEY_MANAGER_SERVICE_ABILITY_H

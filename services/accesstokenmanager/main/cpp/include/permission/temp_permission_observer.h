@@ -25,7 +25,6 @@
 #include "access_event_handler.h"
 #endif
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_change_callback.h"
@@ -41,8 +40,10 @@ public:
     PermissionAppStateObserver() = default;
     ~PermissionAppStateObserver() = default;
 
-    void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
-    void OnProcessDied(const ProcessData &processData) override;
+    void OnAppStopped(const AppStateData &appStateData) override;
+    void OnAppStateChanged(const AppStateData &appStateData) override;
+    void OnAppCacheStateChanged(const AppStateData &appStateData) override;
+
     DISALLOW_COPY_AND_MOVE(PermissionAppStateObserver);
 };
 
@@ -85,17 +86,21 @@ public:
     void OnAppMgrRemoteDiedHandle();
 
     bool IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool CheckPermissionState(AccessTokenID tokenID, const std::string& permissionName, const std::string& bundleName);
     void AddTempPermTokenToList(AccessTokenID tokenID,
         const std::string& bundleName, const std::string& permissionName, const std::vector<bool>& list);
     void RevokeAllTempPermission(AccessTokenID tokenID);
-    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& permissionStateFullList);
+    void RevokeTempPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool GetPermissionState(AccessTokenID tokenID, std::vector<PermissionStatus>& permissionStateList);
     bool GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list);
     void ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag);
     bool GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID);
+    void AddContinuousTask(AccessTokenID tokenID);
+    void DelContinuousTask(AccessTokenID tokenID);
+    bool FindContinuousTask(AccessTokenID tokenID);
 #ifdef EVENTHANDLER_ENABLE
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
-    void GetConfigValue();
-    void SetDefaultConfigValue();
+    void InitEventHandler();
+    void SetCancelTime(int32_t cancelTime);
 #endif
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
     bool CancleTaskOfPermissionRevoking(const std::string& taskName);
@@ -111,12 +116,16 @@ public:
 
 private:
 #ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
     std::shared_ptr<AccessEventHandler> eventHandler_;
-    int32_t cancleTimes_;
+    std::mutex eventHandlerLock_;
 #endif
-
+    int32_t cancleTimes_;
     std::mutex tempPermissionMutex_;
     std::map<AccessTokenID, std::vector<bool>> tempPermTokenMap_;
+
+    std::mutex continuousTaskMutex_;
+    std::map<AccessTokenID, int32_t> continuousTaskMap_;
 
     // appState
     std::mutex appStateCallbackMutex_;
@@ -130,6 +139,7 @@ private:
     std::mutex formStateCallbackMutex_;
     sptr<PermissionFormStateObserver> formVisibleCallback_ = nullptr;
     sptr<PermissionFormStateObserver> formInvisibleCallback_ = nullptr;
+
     std::mutex formTokenMutex_;
     std::map<std::string, AccessTokenID> formTokenMap_;
 

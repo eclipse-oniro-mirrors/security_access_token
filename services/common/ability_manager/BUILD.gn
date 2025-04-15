@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../../access_token.gni")
 
-config("accesstoken_service_common_abillity_manager_config") {
+config("accesstoken_abillity_manager_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
@@ -31,19 +31,40 @@ ohos_shared_library("accesstoken_ability_manager_adapter") {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = [ "include" ]
+    include_dirs = [
+      "include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    ]
 
-    sources = [ "src/ability_manager_access_loader.cpp" ]
+    sources = [
+      "src/ability_manager_access_loader.cpp",
+      "src/ability_manager_adapter.cpp",
+    ]
 
-    cflags_cc = []
-    configs = [ "${access_token_path}/config:coverage_flags" ]
-    public_configs = [ ":accesstoken_service_common_abillity_manager_config" ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-fvisibility=hidden",
+    ]
+
+    if (ability_runtime_enable) {
+      cflags_cc += [ "-DABILITY_RUNTIME_ENABLE" ]
+    }
+
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
+    public_configs = [ ":accesstoken_abillity_manager_config" ]
 
     external_deps = [
       "ability_base:want",
       "ability_runtime:ability_manager",
       "c_utils:utils",
+      "hilog:libhilog",
       "ipc:ipc_core",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
     ]
   }
 }

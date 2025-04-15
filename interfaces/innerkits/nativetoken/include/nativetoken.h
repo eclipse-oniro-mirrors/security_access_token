@@ -24,6 +24,7 @@ extern "C" {
 
 #define MAX_PROCESS_NAME_LEN 256
 #define TOKEN_ID_CFG_FILE_PATH "/data/service/el0/access_token/nativetoken.json"
+#define TOKEN_ID_CFG_FILE_LOCK_PATH "/data/service/el0/access_token/nativetoken.json.lock"
 #define TOKEN_ID_CFG_DIR_PATH "/data/service/el0/access_token"
 #define TOKEN_NATIVE_TYPE 1
 #define TOKEN_SHELL_TYPE 2
@@ -32,13 +33,15 @@ extern "C" {
 #define MAX_JSON_FILE_LEN 1024000
 #define MAX_DCAPS_NUM 32
 #define MAX_DCAP_LEN 1024
-#define MAX_PERM_NUM 64
+#define MAX_PERM_NUM 1024
 #define MAX_PERM_LEN 256
 #define MAX_PARAMTER_LEN 128
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
 #define PATH_MAX_LEN 4096
 #define MAX_RETRY_TIMES 1000
 #define TOKEN_RANDOM_MASK ((1 << 20) - 1)
+#define MAX_RETRY_LOCK_TIMES 10
+#define SLEEP_TIME (500*1000)
 
 #define ATRET_FAILED 1
 #define ATRET_SUCCESS 0
@@ -76,9 +79,9 @@ typedef struct {
 typedef struct TokenList {
     NativeAtId tokenId;
     int32_t apl;
-    char *dcaps[MAX_DCAPS_NUM];
-    char *perms[MAX_PERM_NUM];
-    char *acls[MAX_PERM_NUM];
+    char **dcaps;
+    char **perms;
+    char **acls;
     int32_t dcapsNum;
     int32_t permsNum;
     int32_t aclsNum;

@@ -16,26 +16,32 @@
 #ifndef PERMISSION_RECORD_MANAGER_H
 #define PERMISSION_RECORD_MANAGER_H
 
-#include <vector>
 #include <set>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
+#ifdef EVENTHANDLER_ENABLE
+#include "access_event_handler.h"
+#endif
 #include "access_token.h"
 #include "active_change_response_info.h"
 #include "add_perm_param_info.h"
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
-#include "audio_global_switch_change_stub.h"
-#include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
 #include "libraryloader.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
+#include "permission_record_set.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
+#include "privacy_param.h"
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+#include "privacy_window_manager_agent.h"
+#endif
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
@@ -48,8 +54,8 @@ public:
     PrivacyAppStateObserver() = default;
     ~PrivacyAppStateObserver() = default;
     void OnProcessDied(const ProcessData &processData) override;
-    void OnApplicationStateChanged(const AppStateData &appStateData) override;
-    void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    void OnAppStopped(const AppStateData &appStateData) override;
+    void OnAppStateChanged(const AppStateData &appStateData) override;
     DISALLOW_COPY_AND_MOVE(PrivacyAppStateObserver);
 };
 
@@ -69,31 +75,40 @@ public:
 
     void Init();
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
-    void RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID);
+    void RemovePermissionUsedRecords(AccessTokenID tokenId);
+    bool IsUserIdValid(int32_t userID) const;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    void RemoveHistoryPermissionUsedRecords(std::unordered_set<AccessTokenID> tokenIDList);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
-        const sptr<IRemoteObject>& callback);
-    int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    int32_t StartUsingPermission(const PermissionUsedTypeInfo &info, int32_t callerPid);
+    int32_t StartUsingPermission(const PermissionUsedTypeInfo &info, const sptr<IRemoteObject>& callback,
+        int32_t callerPid);
+    int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
+        int32_t callerPid);
+    bool HasCallerInStartList(int32_t callerPid);
     int32_t RegisterPermActiveStatusCallback(
-        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
+    void CallbackExecute(const ContinusPermissionRecord& record, const std::string& permissionName,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
-    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+    int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute,
+        AccessTokenID tokenID);
+    int32_t SetEdmMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
 
-    void NotifyMicChange(bool isMute);
-    void NotifyCameraChange(bool isMute);
-    void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
+    void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
-    int32_t GetLockScreenStatus();
-    void SetScreenOn(bool isScreenOn);
-    bool IsScreenOn();
+    int32_t GetLockScreenStatus(bool isIpc = false);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing);
@@ -102,42 +117,67 @@ public:
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
+    void RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid);
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
     void RemoveRecordFromStartListByOp(int32_t opCode);
+    void RemoveRecordFromStartListByCallerPid(int32_t callerPid);
+    void ExecuteAllCameraExecuteCallback();
+    void UpdatePermRecImmediately();
+    void ExecuteDeletePermissionRecordTask();
 
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
-    void AddRecord(const PermissionRecord& record);
+    bool IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid);
+    bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
+
+    bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
+    bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
+    void UpdatePermUsedRecToggleStatusMapFromDb();
+    bool AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
+    void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
+    int32_t MergeOrInsertRecord(const PermissionRecord& record);
+    bool UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
+    int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
-    void ExecuteDeletePermissionRecordTask();
+    int32_t GetCurDeleteTaskNum();
+    void AddDeleteTaskNum();
+    void ReduceDeleteTaskNum();
     int32_t DeletePermissionRecord(int32_t days);
+
+    void GetMergedRecordsFromCache(std::vector<PermissionRecord>& mergedRecords);
+    void InsteadMergedRecIfNecessary(GenericValues& mergedRecord, std::vector<PermissionRecord>& mergedRecords);
+    void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
+        PermissionUsedRecord& outRecord);
+    void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
+        std::vector<PermissionUsedRecord>& permissionRecords);
+    bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
+        std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
+        PermissionUsedResult& result);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    void GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
-        BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
-    void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
-    void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
-    void ExecuteAndUpdateRecordByOp(uint32_t opCode, bool switchStatus);
-    void RemoveRecordFromStartList(const PermissionRecord& record);
-    bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
-    bool AddRecordToStartList(const PermissionRecord& record);
+    void ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status);
 
-    std::string GetDeviceId(AccessTokenID tokenId);
+#ifndef APP_SECURITY_PRIVACY_SERVICE
+    void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
+    bool ShowGlobalDialog(const std::string& permissionName);
+#endif
+    int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
+        const std::string& permissionName, int32_t callerPid);
+    int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
+
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
-    bool ShowGlobalDialog(const std::string& permissionName);
+    void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);
+    bool GetMuteStatus(const std::string& permissionName, int32_t index);
 
-    void ExecuteAllCameraExecuteCallback();
-    void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
+    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t pid);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
-    void RemovePermissionUsedType(AccessTokenID tokenId);
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -145,37 +185,42 @@ private:
     void ClearWindowShowing();
 #endif
     bool IsCameraWindowShow(AccessTokenID tokenId);
+    uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
     bool RegisterWindowCallback();
-    bool UnRegisterWindowCallback();
-    int32_t GetAppStatus(AccessTokenID tokenId);
+    void InitializeMuteState(const std::string& permissionName);
+    int32_t GetAppStatus(AccessTokenID tokenId, int32_t pid = -1);
 
     bool RegisterAppStatusListener();
     bool Register();
     bool RegisterApplicationStateObserver();
     void Unregister();
+    bool GetMuteParameter(const char* key, bool& isMute);
 
     void SetDefaultConfigValue();
     void GetConfigValue();
+    bool ToRemoveRecord(const ContinusPermissionRecord& targetRecord,
+        const IsEqualFunc& isEqualFunc, bool needClearCamera = true);
 
 private:
-    OHOS::ThreadPool deleteTaskWorker_;
-    bool hasInited_;
+    bool hasInited_ = false;
     OHOS::Utils::RWLock rwLock_;
     std::mutex startRecordListMutex_;
-    std::vector<PermissionRecord> startRecordList_;
-    SafeMap<AccessTokenID, sptr<IRemoteObject>> cameraCallbackMap_;
+    std::set<ContinusPermissionRecord> startRecordList_;
+    SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
 
     // microphone
     std::mutex micMuteMutex_;
-    std::mutex micCallbackMutex_;
-    bool isMicMute_ = false;
-    sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
+    std::mutex micLoadMutex_;
+    bool isMicEdmMute_ = false;
+    bool isMicMixMute_ = false;
+    bool isMicLoad_ = false;
 
     // camera
     std::mutex camMuteMutex_;
-    std::mutex cameraCallbackMutex_;
-    bool isCameraMute_ = false;
-    sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
+    std::mutex camLoadMutex_;
+    bool isCamEdmMute_ = false;
+    bool isCamMixMute_ = false;
+    bool isCamLoad_ = false;
 
     // appState
     std::mutex appStateMutex_;
@@ -188,15 +233,18 @@ private:
     // lockScreenState
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    bool isScreenOn_ = false;
+
+    // foreground reminder
+    std::mutex foreReminderMutex_;
+    std::vector<uint32_t> foreTokenIdList_;
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    bool isAutoClose = false;
-    std::mutex windowLoaderMutex_;
+    std::mutex windowMutex_;
     bool isWmRegistered = false;
-    LibraryLoader* windowLoader_ = nullptr;
+    sptr<PrivacyWindowManagerAgent> floatWindowCallback_ = nullptr;
+    sptr<PrivacyWindowManagerAgent> pipWindowCallback_ = nullptr;
 
-    std::mutex windowStausMutex_;
+    std::mutex windowStatusMutex_;
     // camera float window
     bool camFloatWindowShowing_ = false;
     AccessTokenID floatWindowTokenId_ = 0;
@@ -209,8 +257,19 @@ private:
     // record config
     int32_t recordSizeMaximum_ = 0;
     int32_t recordAgingTime_ = 0;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     std::string globalDialogBundleName_;
     std::string globalDialogAbilityName_;
+    std::mutex abilityManagerMutex_;
+    std::shared_ptr<LibraryLoader> abilityManagerLoader_;
+#endif
+    std::atomic_int32_t deleteTaskNum_ = 0;
+
+    std::mutex permUsedRecMutex_;
+    std::vector<PermissionRecordCache> permUsedRecList_;
+
+    std::mutex permUsedRecToggleStatusMutex_;
+    std::map<int32_t, bool> permUsedRecToggleStatusMap_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -19,14 +19,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum PrivacyCameraMuteServiceInterfaceCode {
-    CAMERA_CALLBACK_MUTE_MODE = 0
-};
-
 enum PrivacyCameraServiceInterfaceCode {
-    CAMERA_SERVICE_SET_MUTE_CALLBACK = 2,
-    CAMERA_SERVICE_MUTE_CAMERA = 12,
     CAMERA_SERVICE_IS_CAMERA_MUTED = 13,
+    CAMERA_SERVICE_MUTE_CAMERA_PERSIST = 22,
 };
 } // namespace AccessToken
 } // namespace Security

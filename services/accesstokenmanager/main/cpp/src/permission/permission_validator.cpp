@@ -17,16 +17,13 @@
 #include <set>
 
 #include "access_token.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
-#include "permission_definition_cache.h"
+#include "permission_map.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionValidator"};
-}
 
 bool PermissionValidator::IsGrantModeValid(int grantMode)
 {
@@ -61,31 +58,31 @@ bool PermissionValidator::IsToggleStatusValid(const uint32_t status)
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 {
     if (!DataValidator::IsLabelValid(permDef.label)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "label invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Label invalid.");
         return false;
     }
     if (!DataValidator::IsDescValid(permDef.description)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "desc invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Desc invalid.");
         return false;
     }
     if (!DataValidator::IsBundleNameValid(permDef.bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "bundleName invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "BundleName invalid.");
         return false;
     }
     if (!DataValidator::IsPermissionNameValid(permDef.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName invalid.");
         return false;
     }
     if (!IsGrantModeValid(permDef.grantMode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "grantMode invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantMode invalid.");
         return false;
     }
     if (!DataValidator::IsAvailableTypeValid(permDef.availableType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "availableType invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AvailableType invalid.");
         return false;
     }
     if (!DataValidator::IsAplNumValid(permDef.availableLevel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "availableLevel invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AvailableLevel invalid.");
         return false;
     }
     return true;
@@ -93,10 +90,10 @@ bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 
 bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenType is %{public}d.", tokenType);
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenType is %{public}d.", tokenType);
     if (tokenType == TOKEN_HAP) {
-        if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined for hap.", permissionName.c_str());
+        if (!IsPermissionValidForHap(permissionName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is not defined for hap.", permissionName.c_str());
             return false;
         }
     }
@@ -104,26 +101,14 @@ bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const 
     return true;
 }
 
-bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& permState)
+bool PermissionValidator::IsPermissionStateValid(const PermissionStatus& permState)
 {
     if (!DataValidator::IsPermissionNameValid(permState.permissionName)) {
         return false;
     }
-    size_t resDevIdSize = permState.resDeviceID.size();
-    size_t grantStatSize = permState.grantStatus.size();
-    size_t grantFlagSize = permState.grantFlags.size();
-    if ((grantStatSize != resDevIdSize) || (grantFlagSize != resDevIdSize)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "list size is invalid, grantStatSize %{public}zu, grantFlagSize %{public}zu, resDevIdSize %{public}zu.",
-            grantStatSize, grantFlagSize, resDevIdSize);
+    if (!IsGrantStatusValid(permState.grantStatus) || !IsPermissionFlagValid(permState.grantFlag)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GrantStatus or grantFlag is invalid");
         return false;
-    }
-    for (uint32_t i = 0; i < resDevIdSize; i++) {
-        if (!IsGrantStatusValid(permState.grantStatus[i]) ||
-            !IsPermissionFlagValid(permState.grantFlags[i])) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus or grantFlags is invalid");
-            return false;
-        }
     }
     return true;
 }
@@ -142,38 +127,19 @@ void PermissionValidator::FilterInvalidPermissionDef(
     }
 }
 
-void PermissionValidator::DeduplicateResDevID(const PermissionStateFull& permState, PermissionStateFull& result)
-{
-    std::set<std::string> resDevId;
-    auto stateIter = permState.grantStatus.begin();
-    auto flagIter = permState.grantFlags.begin();
-    for (auto it = permState.resDeviceID.begin(); it != permState.resDeviceID.end(); ++it, ++stateIter, ++flagIter) {
-        if (resDevId.count(*it) != 0) {
-            continue;
-        }
-        resDevId.insert(*it);
-        result.resDeviceID.emplace_back(*it);
-        result.grantStatus.emplace_back(*stateIter);
-        result.grantFlags.emplace_back(*flagIter);
-    }
-    result.permissionName = permState.permissionName;
-    result.isGeneral = permState.isGeneral;
-}
-
 void PermissionValidator::FilterInvalidPermissionState(ATokenTypeEnum tokenType, bool doPermAvailableCheck,
-    const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result)
+    const std::vector<PermissionStatus>& permList, std::vector<PermissionStatus>& result)
 {
     std::set<std::string> permStateSet;
     for (auto it = permList.begin(); it != permList.end(); ++it) {
         std::string permName = it->permissionName;
-        PermissionStateFull res;
-        if (!IsPermissionStateValid(*it) || permStateSet.count(permName) != 0) {
+        PermissionStatus res = *it;
+        if (!IsPermissionStateValid(res) || permStateSet.count(permName) != 0) {
             continue;
         }
         if (doPermAvailableCheck && !IsPermissionAvailable(tokenType, permName)) {
             continue;
         }
-        DeduplicateResDevID(*it, res);
         permStateSet.insert(permName);
         result.emplace_back(res);
     }

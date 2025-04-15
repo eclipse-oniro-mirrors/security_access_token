@@ -18,9 +18,10 @@
 
 #include <string>
 
-#include "hap_token_info_inner.h"
-#include "native_token_info_inner.h"
 #include "generic_values.h"
+#include "permission_def.h"
+#include "permission_status.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -29,10 +30,11 @@ class DataTranslator final {
 public:
     static int TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues);
     static int TranslationIntoPermissionDef(const GenericValues& inGenericValues, PermissionDef& outPermissionDef);
-    static int TranslationIntoGenericValues(const PermissionStateFull& inPermissionState,
-        const unsigned int grantIndex, GenericValues& outGenericValues);
-    static int TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
-        PermissionStateFull& outPermissionState);
+    static int TranslationIntoGenericValues(const PermissionStatus& inPermissionState,
+        GenericValues& outGenericValues);
+    static int TranslationIntoPermissionStatus(const GenericValues& inGenericValues,
+        PermissionStatus& outPermissionState);
+    static int32_t TranslationIntoExtendedPermission(const GenericValues& inGenericValues, PermissionWithValue& perm);
 };
 } // namespace AccessToken
 } // namespace Security

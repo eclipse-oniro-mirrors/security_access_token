@@ -17,35 +17,42 @@
 #define ABILITY_MANAGER_ACCESS_LOADER_H
 
 #include <iremote_proxy.h>
-
-#include "want.h"
+#include <optional>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-    const int32_t DEFAULT_VALUE = -1;
-}
 const static std::string ABILITY_MANAGER_LIBPATH = "libaccesstoken_ability_manager_adapter.z.so";
+
+struct InnerWant {
+    std::optional<std::string> bundleName;
+    std::optional<std::string> abilityName;
+    std::optional<std::string> hapBundleName;
+    std::optional<std::string> resource;
+    std::optional<int> hapAppIndex;
+    std::optional<int> hapUserID;
+    std::optional<AccessTokenID> callerTokenId;
+};
 
 class AbilityManagerAccessLoaderInterface {
 public:
     AbilityManagerAccessLoaderInterface() {}
     virtual ~AbilityManagerAccessLoaderInterface() {}
-    virtual int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
-        int32_t requestCode = DEFAULT_VALUE, int32_t userId = DEFAULT_VALUE);
+    virtual int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken);
+    virtual int32_t KillProcessForPermissionUpdate(uint32_t accessTokenId);
 };
 
 class AbilityManagerAccessLoader final: public AbilityManagerAccessLoaderInterface {
-    int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
-        int32_t requestCode = DEFAULT_VALUE, int32_t userId = DEFAULT_VALUE) override;
+    int32_t StartAbility(const InnerWant &innerWant, const sptr<IRemoteObject> &callerToken) override;
+    int32_t KillProcessForPermissionUpdate(uint32_t accessTokenId) override;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void* Create();
-    void Destroy(void* loaderPtr);
+    __attribute__((visibility("default"))) void* Create();
+    __attribute__((visibility("default"))) void Destroy(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

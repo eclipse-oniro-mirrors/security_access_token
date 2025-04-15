@@ -15,6 +15,22 @@ declare_args() {
   access_token_feature_coverage = false
 }
 
+config("access_token_compile_flags") {
+  cflags_cc = [
+    "-Os",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+  ]
+  cflags = [
+    "-fdata-sections",
+    "-ffunction-sections",
+  ]
+  ldflags = [
+    "-Wl,--as-needed",
+    "-Wl,--gc-sections",
+  ]
+}
+
 config("coverage_flags") {
   if (access_token_feature_coverage) {
     cflags = [ "--coverage" ]

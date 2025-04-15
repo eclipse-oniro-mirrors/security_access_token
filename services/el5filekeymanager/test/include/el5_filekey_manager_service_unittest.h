@@ -19,7 +19,9 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 
+#define private public
 #include "el5_filekey_manager_service.h"
+#undef private
 
 namespace OHOS {
 namespace Security {
@@ -35,7 +37,6 @@ public:
     void TearDown();
 
     std::shared_ptr<El5FilekeyManagerService> el5FilekeyManagerService_;
-    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security

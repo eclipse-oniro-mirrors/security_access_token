@@ -43,6 +43,13 @@ static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
     ((void)HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 
+#define IF_FALSE_RETURN_VALUE_LOG(label, cond, retVal, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            ACCESSTOKEN_LOG_ERROR(label, fmt, ##__VA_ARGS__); \
+            return retVal; \
+        } \
+    } while (0)
 #else
 
 #include <stdarg.h>
@@ -57,6 +64,13 @@ static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
 #define ACCESSTOKEN_LOG_ERROR(fmt, ...) printf("[%s] error: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
 #define ACCESSTOKEN_LOG_FATAL(fmt, ...) printf("[%s] fatal: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
 
+#define IF_FALSE_RETURN_VALUE_LOG(cond, retVal, fmt, ...) \
+    do { \
+        if (!(cond)) { \
+            ACCESSTOKEN_LOG_ERROR(fmt, ##__VA_ARGS__); \
+            return retVal; \
+        } \
+    } while (0)
 #endif // HILOG_ENABLE
 
 #endif // ACCESSTOKEN_LOG_H

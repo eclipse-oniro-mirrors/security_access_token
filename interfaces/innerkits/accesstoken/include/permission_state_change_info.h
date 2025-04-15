@@ -54,12 +54,20 @@ namespace AccessToken {
 #define PERMS_LIST_SIZE_MAX 1024
 
 /**
+ * @brief Declares permission state change type
+ */
+enum PermStateChangeType {
+    STATE_CHANGE_REVOKED = 0,
+    STATE_CHANGE_GRANTED = 1,
+};
+
+/**
  * @brief Declares permission state change info struct
  */
 struct PermStateChangeInfo {
     /**
      * permission state change type, for details about the valid values,
-     * see the definition of ActiveChangeType in the active_change_response_info.h file.
+     * see the definition of PermStateChangeType.
      */
     int32_t permStateChangeType;
     AccessTokenID tokenID;

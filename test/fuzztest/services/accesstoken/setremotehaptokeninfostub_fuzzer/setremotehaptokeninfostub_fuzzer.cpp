@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,45 +20,43 @@
 #include <vector>
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "iaccess_token_manager.h"
 #include "permission_state_full.h"
 #include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+#ifdef TOKEN_SYNC_ENABLE
 const int CONSTANTS_NUMBER_TWO = 2;
+#endif
 
 namespace OHOS {
     #ifdef TOKEN_SYNC_ENABLE
-    void ConstructorParam(const std::string& testName, AccessTokenID tokenId, HapTokenInfoForSyncParcel& hapSyncParcel)
+    void ConstructorParam(
+        AccessTokenFuzzData& fuzzData, AccessTokenID tokenId, HapTokenInfoForSyncParcel& hapSyncParcel)
     {
+        std::string permissionName(fuzzData.GenerateStochasticString());
         HapTokenInfo baseInfo = {
-            .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
-            .bundleName = testName,
+            .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = testName,
-            .deviceID = testName,
             .tokenID = tokenId,
             .tokenAttr = 0
         };
-        PermissionStateFull infoManagerTestState = {
-            .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .isGeneral = true,
-            .permissionName = testName,
-            .resDeviceID = {testName}};
-        PermissionStateFull infoManagerTestState2 = {
-            .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-            .grantStatus = {PermissionState::PERMISSION_DENIED},
-            .isGeneral = true,
-            .permissionName = testName,
-            .resDeviceID = {testName}};
-        std::vector<PermissionStateFull> permStateList;
+        PermissionStatus infoManagerTestState = {
+            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .permissionName = permissionName};
+        PermissionStatus infoManagerTestState2 = {
+            .grantFlag = PermissionFlag::PERMISSION_USER_SET,
+            .grantStatus = PermissionState::PERMISSION_DENIED,
+            .permissionName = permissionName};
+        std::vector<PermissionStatus> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,
@@ -75,14 +73,14 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         HapTokenInfoForSyncParcel hapSyncParcel;
-        ConstructorParam(testName, tokenId, hapSyncParcel);
+        ConstructorParam(fuzzData, tokenId, hapSyncParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
             return false;
         }
         if (!datas.WriteParcelable(&hapSyncParcel)) {
@@ -90,7 +88,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO);
+            IAccessTokenManagerIpcCode::COMMAND_SET_REMOTE_HAP_TOKEN_INFO);
 
         MessageParcel reply;
         MessageOption option;

@@ -20,14 +20,14 @@
 #include <memory>
 #include <string>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class MyDmInitCallback final : public DistributedHardware::DmInitCallback {
+class TokenSyncDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
     {}
 };

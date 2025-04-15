@@ -71,6 +71,38 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.READ_WRITE_DESKTOP_DIRECTORY", Constant::OP_READ_WRITE_DESKTOP_DIRECTORY),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.ACCESS_NEARLINK", Constant::OP_ACCESS_NEARLINK),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.CAPTURE_SCREEN", Constant::OP_CAPTURE_SCREEN),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", Constant::SHORT_TERM_WRITE_IMAGEVIDEO),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.CAMERA_BACKGROUND", Constant::CAMERA_BACKGROUND),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.CUSTOM_SCREEN_CAPTURE", Constant::OP_CUSTOM_SCREEN_CAPTURE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ",
+        Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE",
+        Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_OTHER_READ",
+        Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_OTHER_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_OTHER_WRITE",
+        Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_OTHER_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY_MEDIA_READ",
+        Constant::OP_READ_WRITE_DOCUMENTS_DIRECTORY_MEDIA_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY_MEDIA_WRITE",
+        Constant::OP_READ_WRITE_DOCUMENTS_DIRECTORY_MEDIA_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY_OTHER_READ",
+        Constant::OP_READ_WRITE_DOCUMENTS_DIRECTORY_OTHER_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY_OTHER_WRITE",
+        Constant::OP_READ_WRITE_DOCUMENTS_DIRECTORY_OTHER_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DESKTOP_DIRECTORY_MEDIA_READ",
+        Constant::OP_READ_WRITE_DESKTOP_DIRECTORY_MEDIA_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DESKTOP_DIRECTORY_MEDIA_WRITE",
+        Constant::OP_READ_WRITE_DESKTOP_DIRECTORY_MEDIA_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DESKTOP_DIRECTORY_OTHER_READ",
+        Constant::OP_READ_WRITE_DESKTOP_DIRECTORY_OTHER_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DESKTOP_DIRECTORY_OTHER_WRITE",
+        Constant::OP_READ_WRITE_DESKTOP_DIRECTORY_OTHER_WRITE),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

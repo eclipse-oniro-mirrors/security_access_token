@@ -31,6 +31,9 @@ static const int64_t LATEST_RECORD_TIME = 7 * Constant::ONE_DAY_MILLISECONDS;
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
     GenericValues& andGenericValues)
 {
+    // add tokenId to condition, tokenId may be 0, if 0 ignore it when compare with cache and create the sql
+    andGenericValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(request.tokenId));
+
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;
 
@@ -70,22 +73,30 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     return Constant::SUCCESS;
 }
 
-int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const GenericValues& inGenericValues,
-    PermissionUsedRecord& permissionRecord)
+int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
+    const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord)
 {
     int32_t accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     int32_t rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
+
     std::string permission;
     int32_t opCode = inGenericValues.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     if (!Constant::TransferOpcodeToPermission(opCode, permission)) {
         return Constant::FAILURE;
     }
+    permissionRecord.permissionName = permission;
 
     int64_t timestamp = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
-    permissionRecord.permissionName = permission;
+    int32_t type = inGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
 
     if (accessCount != 0) {
         permissionRecord.accessCount = accessCount;
+
+        if ((type == static_cast<int32_t>(PermissionUsedType::PICKER_TYPE)) ||
+            (type == static_cast<int32_t>(PermissionUsedType::SECURITY_COMPONENT_TYPE))) {
+            permissionRecord.secAccessCount = accessCount;
+        }
+
         permissionRecord.lastAccessTime = timestamp;
         permissionRecord.lastAccessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
     }
@@ -95,7 +106,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
         permissionRecord.lastRejectTime = timestamp;
     }
 
-    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_FLAG) == 0) {
+    if (flag == FLAG_PERMISSION_USAGE_SUMMARY) {
         return Constant::SUCCESS;
     }
 
@@ -104,7 +115,6 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
     int32_t lockScreenStatus = inGenericValues.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
     detail.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
-    int32_t type = inGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
     detail.type = static_cast<PermissionUsedType>(type);
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;

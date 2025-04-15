@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -32,12 +34,11 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+
         std::vector<SecCompEnhanceData> enhanceList;
 
-        int32_t result = PrivacyKit::GetSpecialSecCompEnhance(testName, enhanceList);
-
-        return result == RET_SUCCESS;
+        return PrivacyKit::GetSpecialSecCompEnhance(fuzzData.GenerateStochasticString(), enhanceList) == 0;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,8 +21,6 @@
 
 #include "app_status_change_callback.h"
 #include "app_manager_death_callback.h"
-#include "app_manager_death_recipient.h"
-#include "app_manager_access_proxy.h"
 #include "nocopyable.h"
 
 namespace OHOS {
@@ -36,20 +34,34 @@ public:
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t GetForegroundApplications(std::vector<AppStateData>& list);
-    void RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback);
+    void RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback);
     void OnRemoteDiedHandle();
+
+    enum class Message {
+        REGISTER_APPLICATION_STATE_OBSERVER = 12,
+        UNREGISTER_APPLICATION_STATE_OBSERVER = 13,
+        GET_FOREGROUND_APPLICATIONS = 14,
+    };
 
 private:
     AppManagerAccessClient();
     DISALLOW_COPY_AND_MOVE(AppManagerAccessClient);
 
+    class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        AppMgrDeathRecipient() {}
+        virtual ~AppMgrDeathRecipient() override = default;
+        void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+    };
+
     void InitProxy();
-    sptr<IAppMgr> GetProxy();
+    sptr<IRemoteObject> GetProxy();
+    void ReleaseProxy();
 
     sptr<AppMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
     std::mutex deathCallbackMutex_;
-    sptr<IAppMgr> proxy_ = nullptr;
+    sptr<IRemoteObject> proxy_ = nullptr;
     std::vector<std::shared_ptr<AppManagerDeathCallback>> appManagerDeathCallbackList_;
 };
 } // namespace AccessToken

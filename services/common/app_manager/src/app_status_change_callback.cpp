@@ -14,65 +14,68 @@
  */
 
 #include "app_status_change_callback.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ApplicationStateObserverStub"
-};
-}
 
 ApplicationStateObserverStub::ApplicationStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub Instance create");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ApplicationStateObserverStub Instance create");
 }
 
 ApplicationStateObserverStub::~ApplicationStateObserverStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub Instance destroy");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ApplicationStateObserverStub Instance destroy");
 }
 
 int32_t ApplicationStateObserverStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub: ReadInterfaceToken failed");
+        LOGI(ATM_DOMAIN, ATM_TAG, "ApplicationStateObserverStub: ReadInterfaceToken failed");
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
-        case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED: {
-            HandleOnForegroundApplicationChanged(data, reply);
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED: {
+            HandleOnProcessStateChanged(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED: {
             HandleOnProcessDied(data, reply);
             return NO_ERROR;
         }
-        case IApplicationStateObserver::Message::TRANSACT_ON_APPLICATION_STATE_CHANGED: {
-            HandleOnApplicationStateChanged(data, reply);
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED: {
+            HandleOnAppStateChanged(data, reply);
+            return NO_ERROR;
+        }
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED: {
+            HandleOnAppStopped(data, reply);
+            return NO_ERROR;
+        }
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED: {
+            HandleOnAppCacheStateChanged(data, reply);
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "default case, need check AudioListenerStub");
+            LOGD(ATM_DOMAIN, ATM_TAG, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
     return NO_ERROR;
 }
 
-int32_t ApplicationStateObserverStub::HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply)
+int32_t ApplicationStateObserverStub::HandleOnProcessStateChanged(MessageParcel &data, MessageParcel &reply)
 {
-    std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
+    std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
     if (processData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed");
         return -1;
     }
 
-    OnForegroundApplicationChanged(*processData);
+    OnProcessStateChanged(*processData);
     return NO_ERROR;
 }
 
@@ -80,7 +83,7 @@ int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, M
 {
     std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
     if (processData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed");
         return -1;
     }
 
@@ -88,15 +91,39 @@ int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, M
     return NO_ERROR;
 }
 
-int32_t ApplicationStateObserverStub::HandleOnApplicationStateChanged(MessageParcel &data, MessageParcel &reply)
+int32_t ApplicationStateObserverStub::HandleOnAppStateChanged(MessageParcel &data, MessageParcel &reply)
 {
-    std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
-    if (appStateData == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+    std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
+    if (processData == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed");
         return -1;
     }
 
-    OnApplicationStateChanged(*appStateData);
+    OnAppStateChanged(*processData);
+    return NO_ERROR;
+}
+
+int32_t ApplicationStateObserverStub::HandleOnAppStopped(MessageParcel &data, MessageParcel &reply)
+{
+    std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
+    if (appStateData == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed");
+        return -1;
+    }
+
+    OnAppStopped(*appStateData);
+    return NO_ERROR;
+}
+
+int32_t ApplicationStateObserverStub::HandleOnAppCacheStateChanged(MessageParcel &data, MessageParcel &reply)
+{
+    std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
+    if (appStateData == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed");
+        return -1;
+    }
+
+    OnAppCacheStateChanged(*appStateData);
     return NO_ERROR;
 }
 } // namespace AccessToken

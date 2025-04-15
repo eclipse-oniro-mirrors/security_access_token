@@ -18,11 +18,9 @@ config("accesstoken_service_common_public_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "app_manager/include",
-    "config_policy/include",
     "database/include",
     "libraryloader/include",
     "random/include",
-    "utils/include",
   ]
   if (eventhandler_enable) {
     include_dirs += [ "handler/include" ]
@@ -47,12 +45,9 @@ ohos_static_library("accesstoken_service_common") {
 
   sources = [
     "app_manager/src/app_manager_access_client.cpp",
-    "app_manager/src/app_manager_access_proxy.cpp",
-    "app_manager/src/app_manager_death_recipient.cpp",
     "app_manager/src/app_state_data.cpp",
     "app_manager/src/app_status_change_callback.cpp",
     "app_manager/src/process_data.cpp",
-    "config_policy/src/accesstoken_config_policy.cpp",
     "database/src/generic_values.cpp",
     "database/src/memory_guard.cpp",
     "database/src/sqlite_helper.cpp",
@@ -60,18 +55,21 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/variant_value.cpp",
     "libraryloader/src/libraryloader.cpp",
     "random/src/random_openssl.cpp",
-    "utils/src/time_util.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-fvisibility=hidden",
+  ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "ipc:ipc_core",
-    "json:nlohmann_json_static",
+    "ipc:ipc_single",
     "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
@@ -82,25 +80,9 @@ ohos_static_library("accesstoken_service_common") {
     sources += [ "handler/src/access_event_handler.cpp" ]
     external_deps += [ "eventhandler:libeventhandler" ]
   }
-  if (customization_config_policy_enable) {
-    cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-    external_deps += [ "config_policy:configpolicy_util" ]
-  }
-
-  if (ability_base_enable == true) {
-    include_dirs += [ "ability_manager/include" ]
-
-    sources += [
-      "ability_manager/src/ability_manager_access_client.cpp",
-      "ability_manager/src/ability_manager_access_death_recipient.cpp",
-      "ability_manager/src/ability_manager_access_proxy.cpp",
-    ]
-
-    external_deps += [ "ability_base:want" ]
-  }
 
   if (use_musl) {
-    if (use_jemalloc && use_jemalloc_dfx_intf) {
+    if (musl_use_jemalloc && musl_use_jemalloc_dfx_intf) {
       cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
@@ -110,9 +92,10 @@ group("accesstoken_common") {
   if (is_standard_system) {
     deps = [
       ":accesstoken_service_common",
-      "power_manager:accesstoken_power_manager",
+      "ability_manager:accesstoken_ability_manager_adapter",
+      "json_parse:accesstoken_cjson_utils",
+      "json_parse:accesstoken_json_parse",
       "screenlock_manager:accesstoken_screenlock_manager",
-      "window_manager:accesstoken_window_manager",
     ]
   }
 }

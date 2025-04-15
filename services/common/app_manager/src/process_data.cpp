@@ -20,13 +20,15 @@ namespace Security {
 namespace AccessToken {
 bool ProcessData::Marshalling(Parcel &parcel) const
 {
-    return (parcel.WriteString(bundleName) && parcel.WriteInt32(pid) && parcel.WriteInt32(uid) &&
+    return (parcel.WriteString(bundleName) && parcel.WriteInt32(pid) &&
+        parcel.WriteInt32(uid) && parcel.WriteInt32(hostPid) && parcel.WriteInt32(gpuPid) &&
         parcel.WriteInt32(static_cast<int32_t>(state)) && parcel.WriteBool(isContinuousTask) &&
         parcel.WriteBool(isKeepAlive) && parcel.WriteBool(isFocused) && parcel.WriteInt32(requestProcCode) &&
         parcel.WriteInt32(processChangeReason) && parcel.WriteString(processName) &&
-        parcel.WriteInt32(static_cast<int32_t>(processType)) && parcel.WriteInt32(extensionType) &&
-        parcel.WriteInt32(renderUid) && parcel.WriteUint32(accessTokenId)) &&
-        parcel.WriteBool(isTestMode);
+        parcel.WriteInt32(static_cast<int32_t>(processType)) && parcel.WriteInt32(extensionType)
+        && parcel.WriteInt32(renderUid) && parcel.WriteUint32(accessTokenId) &&
+        parcel.WriteBool(isTestMode) && parcel.WriteInt32(exitReason) && parcel.WriteString(exitMsg) &&
+        parcel.WriteInt32(childUid) && parcel.WriteBool(isPreload) && parcel.WriteBool(isPreloadModule));
 }
 
 bool ProcessData::ReadFromParcel(Parcel &parcel)
@@ -34,6 +36,8 @@ bool ProcessData::ReadFromParcel(Parcel &parcel)
     bundleName = parcel.ReadString();
     pid = parcel.ReadInt32();
     uid = parcel.ReadInt32();
+    hostPid = parcel.ReadInt32();
+    gpuPid = parcel.ReadInt32();
     state = static_cast<AppProcessState>(parcel.ReadInt32());
     isContinuousTask = parcel.ReadBool();
     isKeepAlive = parcel.ReadBool();
@@ -46,6 +50,11 @@ bool ProcessData::ReadFromParcel(Parcel &parcel)
     renderUid = parcel.ReadInt32();
     accessTokenId = parcel.ReadUint32();
     isTestMode = parcel.ReadBool();
+    exitReason = parcel.ReadInt32();
+    exitMsg = parcel.ReadString();
+    childUid = parcel.ReadInt32();
+    isPreload = parcel.ReadBool();
+    isPreloadModule = parcel.ReadBool();
     return true;
 }
 

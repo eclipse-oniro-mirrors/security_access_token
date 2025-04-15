@@ -43,6 +43,8 @@
 #include "access_token.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
+#include "permission_status.h"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -70,6 +72,8 @@ public:
     bool isSystemApp;
     /* app type */
     std::string appDistributionType;
+    bool isRestore = false;
+    AccessTokenID tokenID = INVALID_TOKENID;
 };
 
 /**
@@ -91,25 +95,18 @@ public:
  */
 class HapTokenInfo final {
 public:
-    /**
-     * apl level, for details about the valid values,
-     * see the definition of ATokenAplEnum in the access_token.h file.
-     */
-    ATokenAplEnum apl;
     char ver;
-    int userID;
+    int userID = 0;
     std::string bundleName;
     /** which version of the SDK is used to develop this hap */
     int32_t apiVersion;
     /** instance index */
-    int instIndex;
+    int instIndex = 0;
     /**
      * dlp type, for details about the valid values,
      * see the definition of HapDlpType in the access_token.h file.
      */
     int dlpType;
-    std::string appID;
-    std::string deviceID;
     AccessTokenID tokenID;
     /** token attribute */
     AccessTokenAttr tokenAttr;
@@ -123,7 +120,15 @@ public:
     /** hap token info */
     HapTokenInfo baseInfo;
     /** permission state list */
-    std::vector<PermissionStateFull> permStateList;
+    std::vector<PermissionStatus> permStateList;
+};
+
+class HapTokenInfoExt final {
+public:
+    /** hap token info */
+    HapTokenInfo baseInfo;
+    /** hap app id */
+    std::string appID;
 };
 
 /**
@@ -146,6 +151,7 @@ public:
     /** Whether the pre-authorization is non-cancelable */
     bool userCancelable = false;
 };
+
 /**
  * @brief Declares hap policy params class
  */
@@ -161,8 +167,54 @@ public:
     std::vector<PermissionStateFull> permStateList;
     std::vector<std::string> aclRequestedList;
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+    HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
+    std::map<std::string, std::string> aclExtendedMap;
 };
 
+/**
+ * @brief Declares the result after failing to update or install hap
+ */
+class PermissionInfoCheckResult final {
+public:
+    std::string permissionName;
+    PermissionRulesEnum rule;
+};
+
+class HapInfoCheckResult final {
+public:
+    /**
+     * permission detail after failing to install or update hap
+     */
+    PermissionInfoCheckResult permCheckResult;
+};
+
+/**
+ * @brief Declares hap policy params class
+ */
+class HapPolicy final {
+public:
+    /**
+     * apl level, for details about the valid values,
+     * see the definition of ATokenAplEnum in the access_token.h file.
+     */
+    ATokenAplEnum apl;
+    std::string domain;
+    std::vector<PermissionDef> permList;
+    std::vector<PermissionStatus> permStateList;
+    std::vector<std::string> aclRequestedList;
+    std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+    HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
+    std::map<std::string, std::string> aclExtendedMap;
+};
+
+/**
+ * @brief Declares permission with value
+ */
+class PermissionWithValue final {
+public:
+    std::string permissionName;
+    std::string value;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

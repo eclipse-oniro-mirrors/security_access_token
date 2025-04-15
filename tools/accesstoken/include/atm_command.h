@@ -50,6 +50,15 @@ private:
         const std::string& helpMsg);
     int32_t SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status);
     int32_t GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo);
+    void RunToggleCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
+    int32_t HandleToggleCommand(const std::string& shortOption, const struct option longOption[],
+        const std::string& helpMsg);
+    int32_t RunToggleCommandByOperationType(const AtmToolsParamInfo& info);
+    int32_t HandleToggleRequest(const AtmToolsParamInfo& info, std::string& dumpInfo);
+    int32_t HandleToggleRecord(const AtmToolsParamInfo& info, std::string& dumpInfo);
+    int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
+    int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
+    bool IsNumericString(const char* string);
 
     int32_t RunAsHelpCommand();
     int32_t RunAsCommonCommand();

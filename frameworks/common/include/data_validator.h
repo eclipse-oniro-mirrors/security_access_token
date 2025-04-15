@@ -16,6 +16,7 @@
 #ifndef DATA_VALIDATOR_H
 #define DATA_VALIDATOR_H
 
+#include <map>
 #include <string>
 #include "access_token.h"
 
@@ -53,11 +54,18 @@ public:
     static bool IsDlpTypeValid(int dlpType);
     static bool IsPermissionUsedFlagValid(uint32_t flag);
     static bool IsPermissionUsedTypeValid(uint32_t type);
+    static bool IsPolicyTypeValid(uint32_t type);
+    static bool IsCallerTypeValid(uint32_t type);
+    static bool IsHapCaller(AccessTokenID id);
+    static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
+    static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
 
 private:
     const static int MAX_LENGTH = 256;
     const static int MAX_APPIDDESC_LENGTH = 10240;
     const static int MAX_DCAP_LENGTH = 1024;
+    const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
+    const static int32_t MAX_VALUE_LENGTH = 1024;
 };
 } // namespace AccessToken
 } // namespace Security

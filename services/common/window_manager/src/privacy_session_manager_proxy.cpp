@@ -15,14 +15,11 @@
 
 #include "privacy_session_manager_proxy.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySessionManagerProxy" };
-}
 
 sptr<IRemoteObject> PrivacySessionManagerProxy::GetSceneSessionManager()
 {
@@ -31,15 +28,20 @@ sptr<IRemoteObject> PrivacySessionManagerProxy::GetSceneSessionManager()
     MessageOption option(MessageOption::TF_SYNC);
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return nullptr;
     }
 
-    auto ret = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service is null.");
+        return nullptr;
+    }
+    auto ret = remote->SendRequest(
         static_cast<uint32_t>(SessionManagerServiceMessage::TRANS_ID_GET_SCENE_SESSION_MANAGER),
         data, reply, option);
     if (ret != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, errorCode %{public}d", ret);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed, errorCode %{public}d", ret);
         return nullptr;
     }
 
@@ -53,15 +55,20 @@ sptr<IRemoteObject> PrivacySessionManagerProxy::GetSceneSessionManagerLite()
     MessageOption option(MessageOption::TF_SYNC);
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "WriteInterfaceToken failed");
         return nullptr;
     }
 
-    auto ret = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote service is null.");
+        return nullptr;
+    }
+    auto ret = remote->SendRequest(
         static_cast<uint32_t>(SessionManagerServiceMessage::TRANS_ID_GET_SCENE_SESSION_MANAGER_LITE),
         data, reply, option);
     if (ret != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, errorCode %{public}d", ret);
+        LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest failed, errorCode %{public}d", ret);
         return nullptr;
     }
 

@@ -18,8 +18,11 @@
 #include "accesstoken_callback_proxys.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "access_token_error.h"
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+#include "ffrt.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "libraryloader.h"
@@ -30,7 +33,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenModifyNotifier"};
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -53,10 +55,10 @@ TokenModifyNotifier::~TokenModifyNotifier()
 void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
 {
     if (AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Observation token is not hap token");
+        LOGI(ATM_DOMAIN, ATM_TAG, "Observation token is not hap token");
         return;
     }
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
         observationSet_.insert(tokenID);
     }
@@ -64,9 +66,9 @@ void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
 
 void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "hap token is not observed");
+        LOGD(ATM_DOMAIN, ATM_TAG, "Hap token is not observed");
         return;
     }
     observationSet_.erase(tokenID);
@@ -76,9 +78,9 @@ void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 
 void TokenModifyNotifier::NotifyTokenModify(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->listLock_);
     if (observationSet_.count(tokenID) <= 0) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "hap token is not observed");
+        LOGD(ATM_DOMAIN, ATM_TAG, "Hap token is not observed");
         return;
     }
     modifiedTokenList_.emplace_back(tokenID);
@@ -91,7 +93,8 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new TokenModifyNotifier();
+            TokenModifyNotifier* tmp = new TokenModifyNotifier();
+            instance = std::move(tmp);
         }
     }
 
@@ -110,44 +113,61 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
 
 void TokenModifyNotifier::NotifyTokenSyncTask()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Called!");
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start execution!");
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libtokensync_sdk failed.");
         return;
     }
-    for (AccessTokenID deleteToken : deleteTokenList_) {
-        if (tokenSyncCallbackObject_ != nullptr) {
-            tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
-        }
-        tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
+
+    std::vector<AccessTokenID> deleteList;
+    std::vector<AccessTokenID> modifiedList;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> listGuard(this->listLock_);
+        deleteList = deleteTokenList_;
+        modifiedList = modifiedTokenList_;
+        deleteTokenList_.clear();
+        modifiedTokenList_.clear();
     }
 
-    for (AccessTokenID modifyToken : modifiedTokenList_) {
+    for (AccessTokenID deleteToken : deleteList) {
+        int ret = TOKEN_SYNC_SUCCESS;
+        if (tokenSyncCallbackObject_ != nullptr) {
+            ret = tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
+        }
+        ret = tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
+        if (ret != TOKEN_SYNC_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Fail to delete remote haptoken info, ret is %{public}d", ret);
+        }
+    }
+
+    for (AccessTokenID modifyToken : modifiedList) {
         HapTokenInfoForSync hapSync;
         int ret = AccessTokenInfoManager::GetInstance().GetHapTokenSync(modifyToken, hapSync);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "the hap token 0x%{public}x need to sync is not found!", modifyToken);
+            LOGE(ATM_DOMAIN, ATM_TAG, "The hap token 0x%{public}x need to sync is not found!", modifyToken);
             continue;
         }
         if (tokenSyncCallbackObject_ != nullptr) {
-            tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(hapSync);
+            ret = tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(hapSync);
         }
-        tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
+        ret = tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
+        if (ret != TOKEN_SYNC_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Fail to update remote haptoken info, ret is %{public}d", ret);
+        }
     }
-    deleteTokenList_.clear();
-    modifiedTokenList_.clear();
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "over!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Over!");
 }
 
 int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (tokenSyncCallbackObject_ != nullptr) {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->notifyLock_);
         int32_t ret = tokenSyncCallbackObject_->GetRemoteHapTokenInfo(deviceID, tokenID);
         if (ret != TOKEN_SYNC_OPENSOURCE_DEVICE) {
             return ret;
@@ -157,7 +177,7 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libtokensync_sdk failed.");
         return ERR_LOAD_SO_FAILED;
     }
     return tokenSyncKit->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -165,20 +185,23 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
 
 int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
-    tokenSyncCallbackObject_ = iface_cast<ITokenSyncCallback>(callback);
-    tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>(new TokenSyncCallbackDeathRecipient);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
+    tokenSyncCallbackObject_ = new TokenSyncCallbackProxy(callback);
+    tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Register token sync callback successful.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Register token sync callback successful.");
     return ERR_OK;
 }
 
 int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
+    if (tokenSyncCallbackObject_ != nullptr && tokenSyncCallbackDeathRecipient_ != nullptr) {
+        tokenSyncCallbackObject_->AsObject()->RemoveDeathRecipient(tokenSyncCallbackDeathRecipient_);
+    }
     tokenSyncCallbackObject_ = nullptr;
     tokenSyncCallbackDeathRecipient_ = nullptr;
-    ACCESSTOKEN_LOG_INFO(LABEL, "Unregister token sync callback successful.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Unregister token sync callback successful.");
     return ERR_OK;
 }
 
@@ -190,13 +213,13 @@ int32_t TokenModifyNotifier::GetCurTaskNum()
 
 void TokenModifyNotifier::AddCurTaskNum()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add task!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Add task!");
     curTaskNum_++;
 }
 
 void TokenModifyNotifier::ReduceCurTaskNum()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Reduce task!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Reduce task!");
     curTaskNum_--;
 }
 #endif
@@ -205,7 +228,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     if (GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "has notify task! taskNum is %{public}d.", GetCurTaskNum());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Has notify task! taskNum is %{public}d.", GetCurTaskNum());
         return;
     }
 
@@ -218,7 +241,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
     AddCurTaskNum();
 #else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
+        LOGI(ATM_DOMAIN, ATM_TAG, " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
         return;
     }
 

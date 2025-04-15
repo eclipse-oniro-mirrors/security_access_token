@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -32,33 +33,27 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
         HapTokenInfo baseInfo = {
-            .apl = APL_NORMAL,
             .ver = 1,
             .userID = 1,
-            .bundleName = testName,
+            .bundleName = fuzzData.GenerateStochasticString(),
             .instIndex = 1,
-            .appID = testName,
-            .deviceID = testName,
-            .tokenID = tokenId,
+            .tokenID = fuzzData.GetData<AccessTokenID>(),
             .tokenAttr = 0
         };
-        PermissionStateFull infoManagerTestState = {
-            .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .isGeneral = true,
-            .permissionName = testName,
-            .resDeviceID = {testName}};
-        std::vector<PermissionStateFull> permStateList;
+        PermissionStatus infoManagerTestState = {
+            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
+            .grantStatus = PermissionState::PERMISSION_GRANTED,
+            .permissionName = fuzzData.GenerateStochasticString()};
+        std::vector<PermissionStatus> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,
             .permStateList = permStateList
         };
 
-        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
+        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(fuzzData.GenerateStochasticString(), remoteTokenInfo);
         return result == RET_SUCCESS;
 #else
         return true;

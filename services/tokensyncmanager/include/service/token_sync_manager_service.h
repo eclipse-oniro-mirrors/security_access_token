@@ -40,6 +40,7 @@ class TokenSyncManagerService final : public SystemAbility, public TokenSyncMana
 public:
     void OnStart() override;
     void OnStop() override;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> GetSendEventHandler() const;

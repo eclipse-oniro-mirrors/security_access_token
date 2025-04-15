@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,9 +18,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "errors.h"
-#include "i_privacy_manager.h"
+#include "iprivacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
@@ -44,22 +46,20 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        std::vector<std::string> permissionList;
-        permissionList.emplace_back(testName);
-        int64_t beginTimeMillis = static_cast<int64_t>(size);
-        int64_t endTimeMillis = static_cast<int64_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+
+        std::vector<std::string> permissionList = {fuzzData.GenerateStochasticString()};
 
         PermissionUsedRequest request = {
-            .tokenId = tokenId,
-            .isRemote = false,
-            .deviceId = testName,
-            .bundleName = testName,
+            .tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
+            .isRemote = fuzzData.GenerateStochasticBool(),
+            .deviceId = fuzzData.GenerateStochasticString(),
+            .bundleName = fuzzData.GenerateStochasticString(),
             .permissionList = permissionList,
-            .beginTimeMillis = beginTimeMillis,
-            .endTimeMillis = endTimeMillis,
-            .flag = FLAG_PERMISSION_USAGE_SUMMARY
+            .beginTimeMillis = fuzzData.GetData<int64_t>(),
+            .endTimeMillis = fuzzData.GetData<int64_t>(),
+            .flag = fuzzData.GenerateStochasticEnmu<PermissionUsageFlag>(
+                FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
         PermissionUsedRequestParcel requestParcel;
         requestParcel.request = request;
@@ -75,8 +75,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(
-            PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
+        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_GET_PERMISSION_USED_RECORDS_ASYNC);
 
         MessageParcel reply;
         MessageOption option;

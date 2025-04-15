@@ -58,6 +58,18 @@ public:
      * permission grant ability name
      */
     std::string grantAbilityName;
+    /**
+     * permission grant service ability name
+     */
+    std::string grantServiceAbilityName;
+    /**
+     * permission state sheet ability name
+     */
+    std::string permStateAbilityName;
+    /**
+     * global switch sheet ability name
+     */
+    std::string globalSwitchAbilityName;
 };
 } // namespace AccessToken
 } // namespace Security

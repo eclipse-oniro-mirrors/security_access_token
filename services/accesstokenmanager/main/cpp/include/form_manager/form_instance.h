@@ -57,6 +57,9 @@ struct FormInstance : public Parcelable {
     std::string abilityName_ = "";
     std::string formName_ = "";
     FormUsageState formUsageState_ = FormUsageState::USED;
+    std::string description_;
+    int32_t appIndex_ = 0;
+    int32_t userId_ = -1;
 
     bool ReadFromParcel(Parcel &parcel);
     bool Marshalling(Parcel &parcel) const override;

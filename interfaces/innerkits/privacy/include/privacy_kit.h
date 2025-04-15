@@ -44,6 +44,7 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "perm_active_status_customized_cbk.h"
+#include "privacy_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data.h"
 #endif
@@ -75,12 +76,27 @@ public:
      */
     static int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
     /**
+     * @brief Set permission used record toggle status.
+     * @param userID the userID
+     * @param status permission used record toggle status, true means record, false means not record
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
+    /**
+     * @brief Get permission used record toggle status.
+     * @param userID the userID
+     * @param status permission used record toggle status, true means record, false means not record
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    /**
      * @brief Input tokenID start using input permission.
      * @param tokenID token id
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     /**
      * @brief Input tokenID start using input permission and return by callback,
      *        only those services which has float window such as camera or
@@ -91,21 +107,21 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-        const std::shared_ptr<StateCustomizedCbk>& callback);
+        const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid = -1,
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     /**
      * @brief Input tokenID stop using input permission.
      * @param tokenID token id
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
     /**
      * @brief Remove input tokenID sensitive permission used records.
      * @param tokenID token id
-     * @param deviceID device id
      * @return error code, see privacy_error.h
      */
-    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
+    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     /**
      * @brief Get sensitive permission used records.
      * @param request PermissionUsedRequest quote
@@ -139,7 +155,7 @@ public:
      * @param permissionName permission nanme
      * @return true means allow to user the permission, false means not allow
      */
-    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     /**
@@ -154,7 +170,7 @@ public:
      * @param seqNum sequence number
      * @return error code, see privacy_error.h
      */
-    static int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum);
+    static int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     /**
      * @brief get security component enhance data
      * @param pid process id
@@ -180,6 +196,25 @@ public:
      */
     static int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+
+    /**
+     * @brief try set mute policy.
+     * @param policyType policy type, see privacy_param.h
+     * @param caller caller type, see privacy_param.h
+     * @param isMute mute or unmute
+     * @param tokenID when policyType is EDM, this param should be first caller token id,
+     *                when policyType is not EDM, this param will be ignore.
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID);
+
+    /**
+     * @brief try set background visit policy.
+     * @param tokenId token id
+     * @param isAllowed allow or disallow
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
 };
 } // namespace AccessToken
 } // namespace Security

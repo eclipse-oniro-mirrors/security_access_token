@@ -15,33 +15,30 @@
 
 #include "access_event_handler.h"
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessEventHandler"};
-}
+
 AccessEventHandler::AccessEventHandler(
     const std::shared_ptr<AppExecFwk::EventRunner>& runner)
     : AppExecFwk::EventHandler(runner)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "enter");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Enter");
 }
 AccessEventHandler::~AccessEventHandler() = default;
 
 bool AccessEventHandler::ProxyPostTask(const Callback &callback, int64_t delayTime)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PostTask without name");
+    LOGD(ATM_DOMAIN, ATM_TAG, "PostTask without name");
     return AppExecFwk::EventHandler::PostTask(callback, delayTime);
 }
 
 bool AccessEventHandler::ProxyPostTask(
     const Callback &callback, const std::string &name, int64_t delayTime)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "PostTask with name");
+    LOGD(ATM_DOMAIN, ATM_TAG, "PostTask with name");
     return AppExecFwk::EventHandler::PostTask(callback, name, delayTime);
 }
 
