@@ -155,6 +155,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
@@ -172,6 +177,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
@@ -189,6 +199,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
@@ -206,6 +221,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
@@ -539,6 +559,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
@@ -556,6 +581,11 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
 
     MockIpc::SetCallingUid(20020025);
     uint64_t tokenId = GetTokenIdFromBundleName("com.ohos.medialibrary.medialibrarydata");
+    // if medialibrarydata not exist, try contactsdataability
+    if (tokenId == INVALID_TOKENID) {
+        tokenId = GetTokenIdFromBundleName("com.ohos.contactsdataability");
+    }
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->QueryAppKeyState(DataLockType::DEFAULT_DATA), EFM_SUCCESS);
