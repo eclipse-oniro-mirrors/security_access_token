@@ -38,7 +38,12 @@ namespace OHOS {
         
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(tokenId)) {
+
+        AtmToolsParamInfo info;
+        info.tokenId = tokenId;
+        AtmToolsParamInfoParcel infoParcel;
+        infoParcel.info = info;
+        if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }
        
