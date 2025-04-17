@@ -76,7 +76,8 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStatus& inPermi
     GenericValues& outGenericValues)
 {
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
-    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
+    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "PHONE-001");
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus);
     int32_t grantFlag = static_cast<int32_t>(inPermissionState.grantFlag);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlag);

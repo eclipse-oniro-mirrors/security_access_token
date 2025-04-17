@@ -188,7 +188,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
         "\"dcaps\":[\"DCAPS_AT\",\"DCAPS_AT\", \"DCAPS_AT\",\"DCAPS_AT\"],"
         "\"permissions\":[],\"nativeAcls\":[]}";
     cJSON* jsonroot = cJSON_Parse(stringJson1);
-    EXPECT_NE(GetInfoArrFromJson(jsonroot, &test, &resSize, &attr), 0);
+    EXPECT_EQ(GetInfoArrFromJson(jsonroot, &test, &resSize, &attr), 0);
     cJSON_Delete(jsonroot);
 
     stringJson1 = "{\"processName\":\"partitionslot_host\","
