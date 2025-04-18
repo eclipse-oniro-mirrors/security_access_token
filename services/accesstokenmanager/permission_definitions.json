@@ -1894,7 +1894,7 @@
             "name": "ohos.permission.RESTRICT_APPLICATION_ACTIVE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 10,
             "deprecated": "",
             "provisionEnable": false,
