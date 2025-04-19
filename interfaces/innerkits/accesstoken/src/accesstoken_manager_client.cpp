@@ -39,7 +39,6 @@ static const int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
 static const int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
-const size_t NUMBER_TWO = 2;
 } // namespace
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
@@ -243,7 +242,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     }
 
     size_t size = parcelList.size();
-    if (size != (len * NUMBER_TWO)) {
+    if (size != len) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
             size, len);
         return INVALID_OPER;
@@ -254,7 +253,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     }
 
     for (uint32_t i = 0; i < len; i++) {
-        PermissionListState perm = parcelList[i + len].permsState;
+        PermissionListState perm = parcelList[i].permsState;
         permList[i].state = perm.state;
         permList[i].errorReason = perm.errorReason;
     }
@@ -293,14 +292,14 @@ int32_t AccessTokenManagerClient::GetPermissionsStatus(
     }
 
     size_t size = parcelList.size();
-    if (size != (len * NUMBER_TWO)) {
+    if (size != len) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) from server is not equal inputSize(%{public}zu)!",
             size, len);
         return ERR_SIZE_NOT_EQUAL;
     }
 
     for (uint32_t i = 0; i < len; i++) {
-        PermissionListState perm = parcelList[i + len].permsState;
+        PermissionListState perm = parcelList[i].permsState;
         permList[i].state = perm.state;
     }
 
