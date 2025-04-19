@@ -2196,7 +2196,7 @@
             "name": "ohos.permission.AGENT_REQUIRE_FORM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
