@@ -32,6 +32,12 @@ export default namespace privacyManager {
         SECURITY_COMPONENT_TYPE = 2
     }
 
+    enum PermissionActiveStatus {
+        PERM_INACTIVE = 0,
+        PERM_ACTIVE_IN_FOREGROUND = 1,
+        PERM_ACTIVE_IN_BACKGROUND = 2
+    }
+
     enum STSErrorCode {
 
         STS_OK = 0,
@@ -72,6 +78,24 @@ export default namespace privacyManager {
         tokenId: number;
         permissionName: Permissions;
         usedType: PermissionUsedType;
+    }
+
+    interface ActiveChangeResponse {
+        callingTokenId?: int;
+        tokenId: int;
+        permissionName: Permissions;
+        deviceId: string;
+        activeStatus: PermissionActiveStatus;
+        usedType?: PermissionUsedType;
+    }
+
+    class ActiveChangeResponseInner implements ActiveChangeResponse {
+        callingTokenId?: int;
+        tokenId: int;
+        permissionName: Permissions;
+        deviceId: string;
+        activeStatus: PermissionActiveStatus;
+        usedType?: PermissionUsedType;
     }
 
     function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
@@ -116,4 +140,10 @@ export default namespace privacyManager {
             callback(err, undefined);
         })
     }
+
+    export native function on(type: 'activeStateChange', permissionList: Array<Permissions>,
+        callback: Callback<ActiveChangeResponse>): void;
+
+    export native function off(type: 'activeStateChange', permissionList: Array<Permissions>,
+        callback?: Callback<ActiveChangeResponse>): void;
 }

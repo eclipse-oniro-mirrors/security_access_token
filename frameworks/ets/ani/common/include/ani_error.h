@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_PRIVACY_KITS_ANI_ERROR_H
-#define INTERFACES_PRIVACY_KITS_ANI_ERROR_H
+#ifndef INTERFACES_ETS_ANI_COMMON_ANI_ERROR_H
+#define INTERFACES_ETS_ANI_COMMON_ANI_ERROR_H
 
 #include <ani.h>
 #include <string>
@@ -64,4 +64,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif /* INTERFACES_PRIVACY_KITS_ANI_ERROR_H */
+#endif /* INTERFACES_ETS_ANI_COMMON_ANI_ERROR_H */

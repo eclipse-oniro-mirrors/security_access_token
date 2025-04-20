@@ -109,7 +109,7 @@ export default namespace abilityAccessCtrl {
             permissionList.length == 0 || typeof permissionList[0] !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionList", "Array<string>");
+            err.data = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
             throw err;
         }
     }
@@ -118,7 +118,7 @@ export default namespace abilityAccessCtrl {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "string");
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
     }
