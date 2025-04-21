@@ -956,11 +956,9 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const HapPolicyParcel& policyParcel, HapInfoCheckResult& resultInfo)
+int32_t UpdateHapTokenWriteParam(MessageParcel& data, AccessTokenID tokenID, const UpdateHapInfoParams& info,
+    const HapPolicyParcel& policyParcel)
 {
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
         return ERR_WRITE_PARCEL_FAILED;
@@ -987,6 +985,21 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, cons
     }
     if (!data.WriteParcelable(&policyParcel)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Write policyParcel failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteBool(info.isAtomicService)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Write isAtomicService failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    return ERR_OK;
+}
+
+int32_t AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const HapPolicyParcel& policyParcel, HapInfoCheckResult& resultInfo)
+{
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    MessageParcel data;
+    if (UpdateHapTokenWriteParam(data, tokenID, info, policyParcel) != ERR_OK) {
         return ERR_WRITE_PARCEL_FAILED;
     }
 
