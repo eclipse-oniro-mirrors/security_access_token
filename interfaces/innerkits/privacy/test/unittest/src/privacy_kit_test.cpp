@@ -2587,10 +2587,9 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without SET_MUTE_POLICY
+    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("accesstoken_service");
+    ASSERT_NE(0, tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId)); // as a sa without SET_MUTE_POLICY
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
@@ -2608,6 +2607,22 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
     EXPECT_EQ(0, SetSelfTokenID(tokenId)); // as a system service with SET_MUTE_POLICY
 
     ASSERT_EQ(PrivacyError::ERR_FIRST_CALLER_NOT_EDM,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
+}
+
+/**
+ * @tc.name: SetMutePolicyTest004
+ * @tc.desc: Test SetMutePolicy with not permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
 
