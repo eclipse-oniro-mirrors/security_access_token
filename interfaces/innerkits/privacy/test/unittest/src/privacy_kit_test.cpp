@@ -743,6 +743,23 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: RemovePermissionUsedRecords004
+ * @tc.desc: RemovePermissionUsedRecords caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords004, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID, ""));
+    EXPECT_EQ(0, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
  * @tc.name: GetPermissionUsedRecords001
  * @tc.desc: cannot GetPermissionUsedRecords with invalid query time and flag.
  * @tc.type: FUNC
@@ -1021,6 +1038,25 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level1)
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
     OHOS::sptr<TestCallBack> callback(new TestCallBack());
     ASSERT_EQ(ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedRecords(request, callback));
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordsAsync004
+ * @tc.desc: cannot GetPermissionUsedRecordsAsync without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5P4IU
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync004, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    PermissionUsedRequest request;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
+    OHOS::sptr<TestCallBack> callback(new TestCallBack());
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
 
 class CbCustomizeTest1 : public PermActiveStatusCustomizedCbk {
@@ -1394,6 +1430,23 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
 }
+
+/**
+ * @tc.name: IsAllowedUsingPermission003
+ * @tc.desc: IsAllowedUsingPermission with no permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX3 issueI5RWX8
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission003, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+}
+
 /**
  * @tc.name: StartUsingPermission001
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
@@ -1616,6 +1669,24 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission013, TestSize.Level1)
         PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid1));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
         PrivacyKit::StopUsingPermission(g_tokenIdF, permissionName, pid1));
+}
+
+/**
+ * @tc.name: StartUsingPermission014
+ * @tc.desc: StartUsingPermission caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission014, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
 }
 
 /**
@@ -2463,10 +2534,9 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without SET_MUTE_POLICY
+    uint32_t tokenId = AccessTokenKit::GetNativeTokenId("accesstoken_service");
+    ASSERT_NE(0, tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId)); // as a sa without SET_MUTE_POLICY
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
@@ -2484,6 +2554,22 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
     EXPECT_EQ(0, SetSelfTokenID(tokenId)); // as a system service with SET_MUTE_POLICY
 
     ASSERT_EQ(PrivacyError::ERR_FIRST_CALLER_NOT_EDM,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
+}
+
+/**
+ * @tc.name: SetMutePolicyTest004
+ * @tc.desc: Test SetMutePolicy with not permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
 
@@ -2517,8 +2603,11 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
 {
     uint32_t opCode1;
     uint32_t opCode2;
-    uint32_t tokenTest = 111; /// 111 is a tokenId
     uint32_t selfUid = getuid();
+    setuid(0);
+    g_infoParmsA.isSystemApp = true;
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsA, g_policyPramsA);
+    uint32_t tokenTest = tokenIdEx.tokenIdExStruct.tokenID;
     setuid(ACCESS_TOKEN_UID);
 
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
@@ -2527,7 +2616,7 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
     ASSERT_EQ(res, 0);
     GTEST_LOG_(INFO) << "permissionSet OK ";
 
-    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
     std::string permissionName = "ohos.permission.MICROPHONE";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
     int32_t ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true);
@@ -2536,8 +2625,10 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
     ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false);
     ASSERT_EQ(ret, 0);
 
-    res = RemovePermissionFromKernel(tokenTest);
+    res = RemovePermissionFromKernel(tokenIdEx.tokenIDEx);
     ASSERT_EQ(res, 0);
+    setuid(0);
+    ASSERT_EQ(0, AccessTokenKit::DeleteToken(tokenTest));
     setuid(selfUid);
 }
 
