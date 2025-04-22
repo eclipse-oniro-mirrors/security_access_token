@@ -23,8 +23,6 @@ function PARAM_ERROR_MSG(param: string, type: string): string {
     return `Parameter Error. The type of "${param}" must be ${type}.`;
 }
 
-export const LOG_TAG = 0xC05A01;
-
 export { Permissions };
 
 export type PermissionRequestResult = _PermissionRequestResult;
@@ -189,33 +187,42 @@ export default namespace abilityAccessCtrl {
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>,
             callback:AsyncCallback<PermissionRequestResult,void>): void {
             validateRequestParams(context, permissionList);
-            let p2 = taskpool.execute((): PermissionRequestResult => {
-                return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
-            p2.then((e: NullishType) => {
-                hilog.info(LOG_TAG, 'requestPermissionsFromUser',`AsyncCallback success.`);
-                let retError = new BusinessError<void>();
-                callback(retError, e as PermissionRequestResult)
-            },(err: BusinessError): void=> {
-                hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
-                callback(err, PermissionRequestResult)
-            })
+            let fun = async() => {
+                try {
+                    let work = new EAWorker();
+                    let job = work.run<PermissionRequestResult>(() : PermissionRequestResult => {
+                        return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList);
+                    })
+                    let result = job.Await();
+                    let retError = new BusinessError<void>();
+                    callback(retError, result as PermissionRequestResult);
+                } catch (err: BusinessError) {
+                    const defaultResult: PermissionRequestResult = {};
+                    callback(err, defaultResult);
+                }
+            };
+            fun();
         }
 
-        requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>): 
+        requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>):
             Promise<PermissionRequestResult> {
             validateRequestParams(context, permissionList);
-            let p = new Promise<PermissionRequestResult>((resolve: (v: PermissionRequestResult) => 
+
+            let p = new Promise<PermissionRequestResult>((resolve: (v: PermissionRequestResult) =>
                 void, reject: (error: BusinessError) => void) => {
-                let p1 = taskpool.execute((): PermissionRequestResult =>
-                    { return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList)});
-                p1.then((e: NullishType)=> {
-                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise success.`);
-                    let r : PermissionRequestResult =  e as PermissionRequestResult;
-                    resolve(r);
-                }).catch((err: BusinessError): void => {
-                    hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
-                    reject(err);
-                });
+                let fun = async() => {
+                    try {
+                        let work = new EAWorker();
+                        let job = work.run<PermissionRequestResult>((): PermissionRequestResult => {
+                            return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList);
+                        });
+                        let result = job.Await();
+                        resolve(result as PermissionRequestResult);
+                    } catch (err: BusinessError) {
+                        reject(err);
+                    }
+                };
+                fun();
             });
             return p;
         }

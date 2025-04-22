@@ -254,7 +254,12 @@ static ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString FindClass String failed");
         return nullptr;
     }
-    if (env->Array_New_Ref(aStringcls, length, nullptr, &aArrayRef) != ANI_OK) {
+    ani_ref undefinedRef = nullptr;
+    if (ANI_OK != env->GetUndefined(&undefinedRef)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString GetUndefined failed");
+        return nullptr;
+    }
+    if (env->Array_New_Ref(aStringcls, length, undefinedRef, &aArrayRef) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString Array_New_Ref failed ");
         return nullptr;
     }
@@ -276,7 +281,7 @@ static ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArr
     ani_size length = cArray.size();
     ani_array_int aArrayInt = nullptr;
     if (env->Array_New_Int(length, &aArrayInt) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayInt Array_New_Ref failed ");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayInt Array_New_Int failed ");
         return nullptr;
     }
     for (ani_size i = 0; i < length; ++i) {
