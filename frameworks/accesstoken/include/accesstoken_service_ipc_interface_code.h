@@ -78,6 +78,7 @@ enum class AccessTokenInterfaceCode {
     GET_PERMISSION_BY_NAME,
 
     VERIFY_ACCESSTOKEN_WITH_LIST = 0x0050,
+    GET_SELF_PERMISSION_STATUS,
 };
 } // namespace AccessToken
 } // namespace Security

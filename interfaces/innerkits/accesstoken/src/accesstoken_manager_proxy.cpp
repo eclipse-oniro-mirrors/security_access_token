@@ -335,6 +335,31 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     return result;
 }
 
+int32_t AccessTokenManagerProxy::GetSelfPermissionStatus(const std::string& permissionName, int32_t& status)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInterfaceToken failed.");
+        return INVALID_OPER;
+    }
+    if (!data.WriteString(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteString failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_SELF_PERMISSION_STATUS, data, reply)) {
+        return INVALID_OPER;
+    }
+
+    int32_t result = reply.ReadInt32();
+    if (result == RET_SUCCESS) {
+        status = reply.ReadInt32();
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    return result;
+}
+
 PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
     PermissionGrantInfoParcel& infoParcel)
 {
