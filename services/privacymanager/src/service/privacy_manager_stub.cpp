@@ -124,6 +124,12 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -159,6 +165,12 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+
     if (!IsAccessTokenCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -195,6 +207,12 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
 
 void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -271,6 +289,13 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
 
 void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteBool(false);
+        return;
+    }
+
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteBool(false);
         return;
