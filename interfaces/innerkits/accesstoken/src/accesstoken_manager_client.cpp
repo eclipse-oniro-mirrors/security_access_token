@@ -210,24 +210,6 @@ int AccessTokenManagerClient::GetPermissionFlag(
     return result;
 }
 
-int32_t AccessTokenManagerClient::GetSelfPermissionStatus(const std::string& permissionName, PermissionOper& status)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        status = INVALID_OPER;
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    int32_t retStatus = INVALID_OPER;
-    int32_t result = proxy->GetSelfPermissionStatus(permissionName, retStatus);
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    status = static_cast<PermissionOper>(retStatus);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, retStatus);
-    return result;
-}
-
 PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList,
     PermissionGrantInfo& info)
 {

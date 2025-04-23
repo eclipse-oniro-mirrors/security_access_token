@@ -57,7 +57,7 @@ const int AT_PERM_OPERA_FAIL = -1;
 const int AT_PERM_OPERA_SUCC = 0;
 const int32_t PARAM_DEFAULT_VALUE = -1;
 
-struct GrantStatusCache {
+struct PermissionStatusCache {
     int32_t status;
     std::string paramValue;
 };

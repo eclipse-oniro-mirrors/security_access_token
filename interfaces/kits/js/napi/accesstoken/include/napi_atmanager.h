@@ -93,16 +93,10 @@ struct AtManagerSyncContext {
     std::string permissionName;
     int32_t result = RET_FAILED;
     int32_t errorCode = 0;
-    PermissionOper permissionsState = PermissionOper::INVALID_OPER;
-};
-
-struct GrantStatusCache {
-    int32_t status;
-    std::string paramValue;
 };
 
 struct PermissionStatusCache {
-    PermissionOper status;
+    int32_t status;
     std::string paramValue;
 };
 
@@ -130,7 +124,6 @@ private:
     static napi_value SetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
     static napi_value GetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
     static napi_value RequestAppPermOnSetting(napi_env env, napi_callback_info info);
-    static napi_value GetSelfPermissionStatusSync(napi_env env, napi_callback_info info);
 
     static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
@@ -140,8 +133,6 @@ private:
         AtManagerAsyncContext& asyncContext);
     static bool ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
-    static bool ParseInputGetPermStatus(const napi_env env, const napi_callback_info info,
-        AtManagerSyncContext& syncContext);
     static void VerifyAccessTokenExecute(napi_env env, void *data);
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
     static void CheckAccessTokenExecute(napi_env env, void* data);
@@ -181,7 +172,7 @@ private:
         std::vector<RegisterPermStateChangeInfo*>& batchPermStateChangeRegisters, const napi_env env);
     static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, const napi_env env,
         napi_ref subscriberRef);
-    static std::string GetPermParamValue(PermissionParamCache& paramCache, const char* paramKey);
+    static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerSyncContext* syncContext);
 };
 } // namespace AccessToken
