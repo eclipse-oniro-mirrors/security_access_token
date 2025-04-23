@@ -155,6 +155,57 @@ struct ResultCallback {
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
 
+struct RequestPermOnSettingAsyncContext {
+    AccessTokenID tokenId = 0;
+    int32_t result = RET_SUCCESS;
+    PermissionGrantInfo info;
+    int32_t resultCode = -1;
+
+    std::vector<std::string> permissionList;
+    napi_value requestResult = nullptr;
+    int32_t errorCode = -1;
+    std::vector<int32_t> stateList;
+
+    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+    std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
+    bool uiAbilityFlag = false;
+    std::mutex loadlock;
+
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventHandler> handler_ =
+        std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
+#endif
+};
+
+class PermissonOnSettingUICallback {
+public:
+    explicit PermissonOnSettingUICallback(ani_env* env,
+        const std::shared_ptr<RequestPermOnSettingAsyncContext>& reqContext);
+    ~PermissonOnSettingUICallback();
+    void SetSessionId(int32_t sessionId);
+    void ReleaseHandler(int32_t code);
+    void OnRelease(int32_t releaseCode);
+    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
+    void OnReceive(const OHOS::AAFwk::WantParams& request);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
+    void OnDestroy();
+
+private:
+    ani_env* env_;
+    std::shared_ptr<RequestPermOnSettingAsyncContext> reqContext_ = nullptr;
+    int32_t sessionId_ = 0;
+
+    std::mutex lockReleaseFlag;
+    bool releaseFlag = false;
+};
+
+struct PermissonOnSettingResultCallback {
+    int32_t jsCode;
+    std::vector<int32_t> stateList;
+    std::shared_ptr<RequestPermOnSettingAsyncContext> data = nullptr;
+};
+
 std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> RequestAsyncInstanceControl::instanceIdMap_;
 std::mutex RequestAsyncInstanceControl::instanceIdMutex_;
 } // namespace AccessToken

@@ -32,7 +32,6 @@ export type PermissionRequestResult = _PermissionRequestResult;
 export default namespace abilityAccessCtrl {
 
     loadLibrary("accesstoken_ani.z");
-
     export enum GrantStatus {
 
         PERMISSION_DENIED = -1,
@@ -122,7 +121,6 @@ export default namespace abilityAccessCtrl {
             throw err;
         }
     }
-
     native function createAtManager(): AtManager;
 
     interface AtManager {
@@ -141,10 +139,18 @@ export default namespace abilityAccessCtrl {
             permissionList: Array<Permissions>,
             requestCallback: AsyncCallback<PermissionRequestResult,void>
         ): void;
-        
+
         requestPermissionsFromUser(
             context: Context,
             permissionList: Array<Permissions>): Promise<PermissionRequestResult>;
+
+        requestPermissionOnSettingExecute(
+            context: Context,
+            permissionList: Array<Permissions>): Array<GrantStatus>;
+
+        requestPermissionOnSetting(
+            context: Context,
+            permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
     }
 
     class AtManagerInner implements AtManager {
@@ -216,6 +222,32 @@ export default namespace abilityAccessCtrl {
                     hilog.info(LOG_TAG, 'requestPermissionsFromUser',`Promise failed.`);
                     reject(err);
                 });
+            });
+            return p;
+        }
+
+        native requestPermissionOnSettingExecute(
+            context: Context,
+            permissionList: Array<Permissions>): Array<GrantStatus>;
+
+        requestPermissionOnSetting(context: Context, permissionList: Array<Permissions>):
+            Promise<Array<GrantStatus>> {
+            validateRequestParams(context, permissionList);
+            let p = new Promise<Array<GrantStatus>>((resolve: (v: Array<GrantStatus>) =>
+                void, reject: (error: BusinessError) => void) => {
+                let func = async() => {
+                    try {
+                        let work = new EAWorker();
+                        let job = work.run<Array<GrantStatus>>((): Array<GrantStatus> => {
+                            return new AtManagerInner().requestPermissionOnSettingExecute(context, permissionList);
+                        });
+                        let result = job.Await();
+                        resolve(result as Array<GrantStatus>);
+                    } catch (err: BusinessError) {
+                        reject(err);
+                    }
+                };
+                func();
             });
             return p;
         }
