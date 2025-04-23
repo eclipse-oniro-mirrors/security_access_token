@@ -31,16 +31,12 @@ namespace AccessToken {
 std::mutex g_lockForPermStateChangeRegisters;
 std::vector<RegisterPermStateChangeInfo*> g_permStateChangeRegisters;
 std::mutex g_lockCache;
-std::map<std::string, GrantStatusCache> g_cache;
-std::mutex g_lockStatusCache;
-std::map<std::string, PermissionStatusCache> g_statusCache;
+std::map<std::string, PermissionStatusCache> g_cache;
 static PermissionParamCache g_paramCache;
-static PermissionParamCache g_paramFlagCache;
 static std::atomic<int32_t> g_cnt = 0;
 constexpr uint32_t REPORT_CNT = 10;
 namespace {
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
-static const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
 static const char* REGISTER_PERMISSION_STATE_CHANGE_TYPE = "permissionStateChange";
 static const char* REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE = "selfPermissionStateChange";
 constexpr uint32_t THIRD_PARAM = 2;
@@ -242,7 +238,6 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("requestPermissionOnSetting", NapiRequestPermissionOnSetting::RequestPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),
         DECLARE_NAPI_FUNCTION("requestPermissionOnApplicationSetting", RequestAppPermOnSetting),
-        DECLARE_NAPI_FUNCTION("getSelfPermissionStatus", GetSelfPermissionStatusSync),
     };
 
     napi_value cons = nullptr;
@@ -538,36 +533,36 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
     return result;
 }
 
-std::string NapiAtManager::GetPermParamValue(PermissionParamCache& paramCache, const char* paramKey)
+std::string NapiAtManager::GetPermParamValue()
 {
     long long sysCommitId = GetSystemCommitId();
-    if (sysCommitId == paramCache.sysCommitIdCache) {
+    if (sysCommitId == g_paramCache.sysCommitIdCache) {
         LOGD(ATM_DOMAIN, ATM_TAG, "SysCommitId = %{public}lld", sysCommitId);
-        return paramCache.sysParamCache;
+        return g_paramCache.sysParamCache;
     }
-    paramCache.sysCommitIdCache = sysCommitId;
-    if (paramCache.handle == PARAM_DEFAULT_VALUE) {
-        int32_t handle = static_cast<int32_t>(FindParameter(paramKey));
+    g_paramCache.sysCommitIdCache = sysCommitId;
+    if (g_paramCache.handle == PARAM_DEFAULT_VALUE) {
+        int32_t handle = static_cast<int32_t>(FindParameter(PERMISSION_STATUS_CHANGE_KEY));
         if (handle == PARAM_DEFAULT_VALUE) {
             LOGE(ATM_DOMAIN, ATM_TAG, "FindParameter failed");
             return "-1";
         }
-        paramCache.handle = handle;
+        g_paramCache.handle = handle;
     }
 
-    int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(paramCache.handle));
-    if (currCommitId != paramCache.commitIdCache) {
+    int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(g_paramCache.handle));
+    if (currCommitId != g_paramCache.commitIdCache) {
         char value[NapiContextCommon::VALUE_MAX_LEN] = {0};
-        auto ret = GetParameterValue(paramCache.handle, value, NapiContextCommon::VALUE_MAX_LEN - 1);
+        auto ret = GetParameterValue(g_paramCache.handle, value, NapiContextCommon::VALUE_MAX_LEN - 1);
         if (ret < 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d", ret);
             return "-1";
         }
         std::string resStr(value);
-        paramCache.sysParamCache = resStr;
-        paramCache.commitIdCache = currCommitId;
+        g_paramCache.sysParamCache = resStr;
+        g_paramCache.commitIdCache = currCommitId;
     }
-    return paramCache.sysParamCache;
+    return g_paramCache.sysParamCache;
 }
 
 void NapiAtManager::UpdatePermissionCache(AtManagerSyncContext* syncContext)
@@ -575,7 +570,7 @@ void NapiAtManager::UpdatePermissionCache(AtManagerSyncContext* syncContext)
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_cache.find(syncContext->permissionName);
     if (iter != g_cache.end()) {
-        std::string currPara = GetPermParamValue(g_paramCache, PERMISSION_STATUS_CHANGE_KEY);
+        std::string currPara = GetPermParamValue();
         if (currPara != iter->second.paramValue) {
             syncContext->result = AccessTokenKit::VerifyAccessToken(
                 syncContext->tokenId, syncContext->permissionName);
@@ -588,7 +583,7 @@ void NapiAtManager::UpdatePermissionCache(AtManagerSyncContext* syncContext)
     } else {
         syncContext->result = AccessTokenKit::VerifyAccessToken(syncContext->tokenId, syncContext->permissionName);
         g_cache[syncContext->permissionName].status = syncContext->result;
-        g_cache[syncContext->permissionName].paramValue = GetPermParamValue(g_paramCache, PERMISSION_STATUS_CHANGE_KEY);
+        g_cache[syncContext->permissionName].paramValue = GetPermParamValue();
         LOGD(ATM_DOMAIN, ATM_TAG, "G_cacheParam set %{public}s",
             g_cache[syncContext->permissionName].paramValue.c_str());
     }
@@ -1246,85 +1241,6 @@ napi_value NapiAtManager::RequestAppPermOnSetting(napi_env env, napi_callback_in
 
     LOGD(ATM_DOMAIN, ATM_TAG, "RequestAppPermOnSetting end.");
     context.release();
-    return result;
-}
-
-bool NapiAtManager::ParseInputGetPermStatus(const napi_env env, const napi_callback_info info,
-    AtManagerSyncContext& syncContext)
-{
-    size_t argc = NapiContextCommon::MAX_PARAMS_ONE;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_ONE] = {nullptr};
-    napi_value thisVar = nullptr;
-
-    void *data = nullptr;
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_ONE) {
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
-            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
-        return false;
-    }
-
-    syncContext.env = env;
-    if (!ParseString(env, argv[0], syncContext.permissionName)) {
-        std::string errMsg = GetParamErrorMsg("permissionName", "string");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
-        return false;
-    }
-    return true;
-}
-
-napi_value NapiAtManager::GetSelfPermissionStatusSync(napi_env env, napi_callback_info info)
-{
-    auto* syncContext = new (std::nothrow) AtManagerSyncContext();
-    if (syncContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
-        return nullptr;
-    }
-
-    std::unique_ptr<AtManagerSyncContext> context {syncContext};
-    if (!ParseInputGetPermStatus(env, info, *syncContext)) {
-        return nullptr;
-    }
-
-    if ((syncContext->permissionName.empty()) ||
-        ((syncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
-        std::string errMsg = "Invalid parameter. The permissionName is empty or exceeds 256 characters.";
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
-        return nullptr;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(g_lockStatusCache);
-        auto iter = g_statusCache.find(syncContext->permissionName);
-        if (iter != g_statusCache.end()) {
-            std::string currPara = GetPermParamValue(g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
-            if (currPara != iter->second.paramValue) {
-                syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
-                    syncContext->permissionsState);
-                iter->second.status = syncContext->permissionsState;
-                iter->second.paramValue = currPara;
-            } else {
-                syncContext->result = RET_SUCCESS;
-                syncContext->permissionsState = iter->second.status;
-            }
-        } else {
-            syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
-                syncContext->permissionsState);
-            g_statusCache[syncContext->permissionName].status = syncContext->permissionsState;
-            g_statusCache[syncContext->permissionName].paramValue = GetPermParamValue(
-                g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
-        }
-    }
-
-    if (syncContext->result != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(syncContext->result);
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode))));
-        return nullptr;
-    }
-
-    napi_value result = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(syncContext->permissionsState), &result));
     return result;
 }
 

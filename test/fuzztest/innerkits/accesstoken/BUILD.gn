@@ -40,7 +40,6 @@ group("fuzztest") {
     "getrendertokenid_fuzzer:GetRenderTokenIdFuzzTest",
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
-    "getselfpermissionstatus_fuzzer:GetSelfPermissionStatusFuzzTest",
     "gettokenidbyuserid_fuzzer:GetTokenIDByUserIDFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",

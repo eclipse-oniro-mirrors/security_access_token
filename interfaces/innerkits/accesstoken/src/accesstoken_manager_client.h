@@ -60,7 +60,6 @@ public:
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t RequestAppPermOnSetting(AccessTokenID tokenID);
-    int32_t GetSelfPermissionStatus(const std::string& permissionName, PermissionOper& status);
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
         PermissionGrantInfo& info);
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
