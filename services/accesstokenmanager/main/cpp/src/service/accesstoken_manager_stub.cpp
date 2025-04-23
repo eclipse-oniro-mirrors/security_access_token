@@ -615,6 +615,7 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
             reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED), "WriteInt32 failed.");
         return;
     }
+    info.isAtomicService = data.ReadBool();
     HapInfoCheckResult resultInfo;
     int32_t result = this->UpdateHapToken(tokenIdEx, info, *policyParcel, resultInfo);
     IF_FALSE_RETURN_LOG(ATM_DOMAIN, ATM_TAG, reply.WriteInt32(result), "WriteInt32 failed.");

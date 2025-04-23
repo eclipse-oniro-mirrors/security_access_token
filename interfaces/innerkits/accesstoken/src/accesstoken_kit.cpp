@@ -14,6 +14,7 @@
  */
 
 #include "accesstoken_kit.h"
+#include <cinttypes>
 #include <string>
 #include <vector>
 #include "accesstoken_common_log.h"
@@ -34,6 +35,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static const uint64_t ATOMIC_SERVICE_MASK = (static_cast<uint64_t>(1) << 33);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
@@ -90,8 +92,9 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 {
     AccessTokenIDEx res = {0};
     LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, \
-permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d",
-        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(), policy.checkIgnore);
+permList: %{public}zu, stateList: %{public}zu, checkIgnore: %{public}d, isAtomicService: %{public}d",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(), policy.checkIgnore,
+        info.isAtomicService);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
@@ -114,9 +117,9 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
     AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d, bundleName :%{public}s, permList: %{public}zu, "
-        "stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
+        "stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d, isAtomicService: %{public}d",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(),
-        policy.aclExtendedMap.size(), policy.checkIgnore);
+        policy.aclExtendedMap.size(), policy.checkIgnore, info.isAtomicService);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType) ||
@@ -154,9 +157,10 @@ int32_t AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateH
     const HapPolicyParams& policy, HapInfoCheckResult& result)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, isSystemApp: %{public}d, \
-permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d",
+permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d, \
+isAtomicService: %{public}d",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size(),
-        policy.aclExtendedMap.size(), policy.checkIgnore);
+        policy.aclExtendedMap.size(), policy.checkIgnore, info.isAtomicService);
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl)) ||
         !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
@@ -829,6 +833,12 @@ int32_t AccessTokenKit::GetReqPermissionByName(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
+}
+
+bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Called, tokenId=%{public}" PRId64, tokenId);
+    return (tokenId & ATOMIC_SERVICE_MASK) == ATOMIC_SERVICE_MASK;
 }
 } // namespace AccessToken
 } // namespace Security

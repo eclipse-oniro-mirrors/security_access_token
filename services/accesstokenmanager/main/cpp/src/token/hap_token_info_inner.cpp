@@ -36,6 +36,7 @@ namespace AccessToken {
 namespace {
 static const std::string DEFAULT_DEVICEID = "0";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
+static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 }
 
 HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(false)
@@ -58,6 +59,9 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.tokenAttr = 0;
     if (info.isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
+    }
+    if (info.isAtomicService) {
+        tokenInfoBasic_.tokenAttr |= ATOMIC_SERVICE_FLAG;
     }
     tokenInfoBasic_.bundleName = info.bundleName;
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
@@ -96,6 +100,11 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
         tokenInfoBasic_.tokenAttr &= ~SYSTEM_APP_FLAG;
+    }
+    if (info.isAtomicService) {
+        tokenInfoBasic_.tokenAttr |= ATOMIC_SERVICE_FLAG;
+    } else {
+        tokenInfoBasic_.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
