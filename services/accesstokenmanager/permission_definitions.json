@@ -4510,7 +4510,9 @@
             "since": 19,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "hasValue": true
         },
         {
             "name": "ohos.permission.FOWNER",
