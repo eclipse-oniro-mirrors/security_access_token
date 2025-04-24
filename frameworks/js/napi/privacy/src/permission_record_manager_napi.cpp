@@ -192,7 +192,7 @@ static bool ParseAddPermissionRecord(
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[SECOND_PARAM], asyncContext.permissionName)) {
-        ParamResolveErrorThrow(env, "permissionName", "string");
+        ParamResolveErrorThrow(env, "permissionName", "Permissions");
         return false;
     }
 
@@ -295,7 +295,7 @@ static bool ParseStartAndStopUsingPermission(
 
     // 1: the second parameter of argv is permissionName
     if (!ParseString(env, argv[SECOND_PARAM], asyncContext.permissionName)) {
-        ParamResolveErrorThrow(env, "permissionName", "string");
+        ParamResolveErrorThrow(env, "permissionName", "Permissions");
         return false;
     }
 
@@ -492,7 +492,7 @@ static bool ParseRequest(const napi_env& env, const napi_value& value, Permissio
 
     if (IsNeedParseProperty(env, value, "permissionNames", property) &&
         !ParseStringArray(env, property, request.permissionList)) {
-        ParamResolveErrorThrow(env, "request:permissionNames", "Array<string>");
+        ParamResolveErrorThrow(env, "request:permissionNames", "Array<Permissions>");
         return false;
     }
 
@@ -943,7 +943,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     std::vector<std::string> permList;
     // 1: the second parameter of argv
     if (!ParseStringArray(env, argv[1], permList)) {
-        ParamResolveErrorThrow(env, "permList", "Array<string>");
+        ParamResolveErrorThrow(env, "permList", "Array<Permissions>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
@@ -979,13 +979,13 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     std::string type;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
-        ParamResolveErrorThrow(env, "permList", "Array<string>");
+        ParamResolveErrorThrow(env, "type", "string");
         return false;
     }
     // 1: the second parameter of argv
     std::vector<std::string> permList;
     if (!ParseStringArray(env, argv[1], permList)) {
-        ParamResolveErrorThrow(env, "permList", "Array<string>");
+        ParamResolveErrorThrow(env, "permList", "Array<Permissions>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
@@ -1189,7 +1189,7 @@ static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_i
         }
 
         if (!ParseString(env, argv[1], permissionName)) {
-            ParamResolveErrorThrow(env, "permissionName", "string");
+            ParamResolveErrorThrow(env, "permissionName", "Permissions");
             return false;
         }
     }
