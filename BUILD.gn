@@ -56,6 +56,7 @@ group("accesstoken_build_fuzz_test") {
     deps += [
       "test/fuzztest/innerkits/accesstoken:fuzztest",
       "test/fuzztest/innerkits/privacy:fuzztest",
+      "test/fuzztest/normalize_service/accesstoken:fuzztest",
       "test/fuzztest/services/accesstoken:fuzztest",
       "test/fuzztest/services/privacy:fuzztest",
     ]
