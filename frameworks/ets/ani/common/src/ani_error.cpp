@@ -118,7 +118,7 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg)
 {
-    std::string msg = "Parameter Error. The errMsg of \"" + param + "\" must be " + errMsg + ".";
+    std::string msg = "Parameter Error. The type of \"" + param + "\" must be " + errMsg + ".";
     return msg;
 }
 

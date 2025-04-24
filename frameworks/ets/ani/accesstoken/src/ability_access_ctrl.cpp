@@ -512,7 +512,7 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
     }
     if (!ProcessArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
         BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionList", "Array<string>"));
+            GetParamErrorMsg("permissionList", "Array<Permissions>"));
         return false;
     }
     return true;
@@ -879,7 +879,7 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
     std::string stdPermissionName = ANIUtils_ANIStringToStdString(env, static_cast<ani_string>(permissionName));
     if (stdPermissionName.empty() || stdPermissionName.length() > MAX_LENGTH) {
         BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
-            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+            GetParamErrorMsg("permissionName", "Permissions"));
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();

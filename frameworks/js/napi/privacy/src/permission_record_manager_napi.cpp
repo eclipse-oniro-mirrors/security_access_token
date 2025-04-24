@@ -949,7 +949,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     std::sort(permList.begin(), permList.end());
     // 2: the third parameter of argv
     if (!ParseCallback(env, argv[2], callback)) {
-        ParamResolveErrorThrow(env, "callback", "AsyncCallback");
+        ParamResolveErrorThrow(env, "callback", "Callback");
         return false;
     }
     registerPermActiveChangeContext.env = env;
