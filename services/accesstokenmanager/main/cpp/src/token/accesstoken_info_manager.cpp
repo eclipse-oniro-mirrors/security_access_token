@@ -111,7 +111,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     ret = policy->GetDlpPermissions(dlpPerms);
     dlpSize = dlpPerms.size();
     if (ret == RET_SUCCESS) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Load dlpPer size=%{public}zu.", dlpSize);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Load dlpPer size=%{public}u.", dlpSize);
         DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
     }
 #endif
