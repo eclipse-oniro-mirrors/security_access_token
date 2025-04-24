@@ -57,6 +57,7 @@ namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
+static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
@@ -616,6 +617,9 @@ int AccessTokenInfoManager::AllocAccessTokenIDEx(
     if (info.isSystemApp) {
         tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
     }
+    if (info.isAtomicService) {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= ATOMIC_SERVICE_FLAG;
+    }
     return RET_SUCCESS;
 }
 
@@ -710,6 +714,11 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
         tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
+    }
+    if (info.isAtomicService) {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= ATOMIC_SERVICE_FLAG;
+    } else {
+        tokenIdEx.tokenIdExStruct.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);

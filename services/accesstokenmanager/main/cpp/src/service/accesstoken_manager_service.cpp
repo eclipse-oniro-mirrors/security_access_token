@@ -864,6 +864,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     info.apiVersion = infoIdl.apiVersion;
     info.isSystemApp = infoIdl.isSystemApp;
     info.appDistributionType = infoIdl.appDistributionType;
+    info.isAtomicService = infoIdl.isAtomicService;
 
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapTokenInfo hapInfo;

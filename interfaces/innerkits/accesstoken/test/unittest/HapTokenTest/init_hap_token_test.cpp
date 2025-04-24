@@ -34,6 +34,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr uint32_t NUMBER_ONE = 1;
+static constexpr uint32_t NUMBER_TWO = 2;
+static constexpr uint32_t NUMBER_THREE = 3;
 static uint64_t g_selfTokenId = 0;
 static constexpr int32_t THIRTY_TIME_CYCLES = 30;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
@@ -384,6 +387,88 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level1)
     policyParams.checkIgnore = HapPolicyCheckIgnore::ACL_IGNORE_CHECK;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenFuncTest008
+ * @tc.desc: Install atomic app success
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest008, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest008");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.isSystemApp = false;
+    infoParams.isAtomicService = true;
+    infoParams.bundleName = "install.atomic.service.test";
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result));
+    ASSERT_TRUE(AccessTokenKit::IsAtomicServiceByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+
+    AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(
+        infoParams.userID, infoParams.bundleName, infoParams.instIndex);
+    ASSERT_TRUE(AccessTokenKit::IsAtomicServiceByFullTokenID(static_cast<uint64_t>(tokenIDEx.tokenIDEx)));
+    EXPECT_EQ(tokenIDEx.tokenIDEx, fullTokenId.tokenIDEx);
+
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    HapTokenInfo hapTokenInfoRes;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+    EXPECT_EQ(NUMBER_TWO, hapTokenInfoRes.tokenAttr);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenFuncTest009
+ * @tc.desc: Install the system service app and update it as a atomic service
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest009, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest009");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.isSystemApp = true;
+    infoParams.bundleName = "update.atomic.service.test";
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result));
+    ASSERT_TRUE(AccessTokenKit::IsSystemAppByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+    ASSERT_FALSE(AccessTokenKit::IsAtomicServiceByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = infoParams.appIDDesc;
+    info.apiVersion = infoParams.apiVersion;
+    info.isSystemApp = infoParams.isSystemApp;
+    info.appDistributionType = infoParams.appDistributionType;
+    info.isAtomicService = true;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, info, policyParams));
+    ASSERT_TRUE(AccessTokenKit::IsSystemAppByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+    ASSERT_TRUE(AccessTokenKit::IsAtomicServiceByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    HapTokenInfo hapTokenInfoRes;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+    EXPECT_EQ(NUMBER_THREE, hapTokenInfoRes.tokenAttr);
+
+    info.isAtomicService = false;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, info, policyParams));
+    ASSERT_TRUE(AccessTokenKit::IsSystemAppByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+    ASSERT_FALSE(AccessTokenKit::IsAtomicServiceByFullTokenID(static_cast<uint64_t>(fullTokenId.tokenIDEx)));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+    EXPECT_EQ(NUMBER_ONE, hapTokenInfoRes.tokenAttr);
+
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 

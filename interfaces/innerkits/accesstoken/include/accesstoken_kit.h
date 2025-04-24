@@ -513,6 +513,13 @@ public:
      */
     static int32_t GetReqPermissionByName(
         AccessTokenID tokenID, const std::string& permissionName, std::string& value);
+
+    /**
+     * Whether it is a atomic service
+     * @param tokenId token id.
+     * @return bool
+     */
+    static bool IsAtomicServiceByFullTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security

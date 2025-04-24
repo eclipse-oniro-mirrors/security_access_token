@@ -33,6 +33,7 @@ bool HapInfoParcel::Marshalling(Parcel& out) const
     if (this->hapInfoParameter.isRestore) {
         RETURN_IF_FALSE(out.WriteUint32(this->hapInfoParameter.tokenID));
     }
+    RETURN_IF_FALSE(out.WriteBool(this->hapInfoParameter.isAtomicService));
     return true;
 }
 
@@ -54,6 +55,7 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
     if (hapInfoParcel->hapInfoParameter.isRestore) {
         RELEASE_IF_FALSE(in.ReadUint32(hapInfoParcel->hapInfoParameter.tokenID), hapInfoParcel);
     }
+    RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isAtomicService), hapInfoParcel);
     return hapInfoParcel;
 }
 } // namespace AccessToken

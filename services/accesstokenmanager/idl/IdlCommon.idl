@@ -35,6 +35,8 @@ struct UpdateHapInfoParamsIdl {
     boolean isSystemApp;
     /* app type */
     String appDistributionType;
+    /** Whether hap is a atomic service */
+    boolean isAtomicService;
 };
 
 enum PermissionRulesEnumIdl {
