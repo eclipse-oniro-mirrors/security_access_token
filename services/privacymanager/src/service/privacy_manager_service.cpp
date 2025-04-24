@@ -487,6 +487,12 @@ int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, c
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute,
     AccessTokenID tokenID)
 {
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) != TOKEN_NATIVE) &&
+        (AccessTokenKit::GetTokenTypeFlag(callingTokenID) != TOKEN_SHELL)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
     if (!VerifyPermission(SET_MUTE_POLICY)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }

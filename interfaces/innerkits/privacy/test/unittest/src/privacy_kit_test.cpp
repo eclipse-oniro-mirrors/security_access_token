@@ -2676,8 +2676,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
 {
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("SetMutePolicyTest002", reqPerm, true); // as a system hap without SET_MUTE_POLICY
+    MockNativeToken mock("accesstoken_service"); // as a sa without SET_MUTE_POLICY
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
@@ -2693,6 +2692,20 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
     MockNativeToken mock("camera_service"); // as a system service with SET_MUTE_POLICY
 
     ASSERT_EQ(PrivacyError::ERR_FIRST_CALLER_NOT_EDM,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
+}
+
+/**
+ * @tc.name: SetMutePolicyTest004
+ * @tc.desc: Test SetMutePolicy with not permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetMutePolicyTest004", reqPerm, true); // as a system hap
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 }
 
