@@ -640,7 +640,7 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
     // argv[1] : permissionList
     if (!ParseStringArray(env, argv[1], asyncContext->permissionList) ||
         (asyncContext->permissionList.empty())) {
-        errMsg = GetParamErrorMsg("permissionList", "Array<string>");
+        errMsg = GetParamErrorMsg("permissionList", "Array<Permissions>");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -805,7 +805,7 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
 
     // the second parameter of argv
     if (!ParseStringArray(env, argv[1], asyncContext.permissionList)) {
-        errMsg = GetParamErrorMsg("permissions", "Array<string>");
+        errMsg = GetParamErrorMsg("permissions", "Array<Permissions>");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
