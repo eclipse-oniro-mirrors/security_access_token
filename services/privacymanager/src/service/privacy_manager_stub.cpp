@@ -506,6 +506,13 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
 
 void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& reply)
 {
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) != TOKEN_NATIVE) &&
+        (AccessTokenKit::GetTokenTypeFlag(callingTokenID) != TOKEN_SHELL)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
     if (!VerifyPermission(SET_MUTE_POLICY)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
