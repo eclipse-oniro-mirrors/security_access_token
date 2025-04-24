@@ -74,6 +74,8 @@ public:
     std::string appDistributionType;
     bool isRestore = false;
     AccessTokenID tokenID = INVALID_TOKENID;
+    /** Whether hap is a atomic-service */
+    bool isAtomicService = false;
 };
 
 /**
@@ -88,6 +90,8 @@ public:
     bool isSystemApp;
     /* app type */
     std::string appDistributionType;
+    /** Whether hap is a atomic-service */
+    bool isAtomicService = false;
 };
 
 /**
