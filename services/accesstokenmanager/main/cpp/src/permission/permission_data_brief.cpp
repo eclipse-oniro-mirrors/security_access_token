@@ -779,19 +779,22 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid %{public}u.", tokenID);
         return;
     }
-
+    std::list<BriefSecCompData>::iterator secCompDataIter;
+    for (secCompDataIter = secCompList_.begin(); secCompDataIter != secCompList_.end(); ++secCompDataIter) {
+        if (secCompDataIter->tokenId == tokenID && secCompDataIter->permCode == opCode) {
+            break;
+        }
+    }
     if (isAdded) {
-        BriefSecCompData secCompData = { 0 };
-        secCompData.permCode = opCode;
-        secCompData.tokenId = tokenID;
-        secCompList_.push_back(secCompData);
+        if (secCompDataIter == secCompList_.end()) {
+            BriefSecCompData secCompData = { 0 };
+            secCompData.permCode = opCode;
+            secCompData.tokenId = tokenID;
+            secCompList_.emplace_back(secCompData);
+        }
     } else {
-        std::list<BriefSecCompData>::iterator secCompData;
-        for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
-            if (secCompData->tokenId == tokenID && secCompData->permCode == opCode) {
-                secCompList_.erase(secCompData);
-                break;
-            }
+        if (secCompDataIter != secCompList_.end()) {
+            secCompList_.erase(secCompDataIter);
         }
     }
 
