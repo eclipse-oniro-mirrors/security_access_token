@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,26 +13,22 @@
  * limitations under the License.
  */
 
-#include "getspecialseccompenhancestub_fuzzer.h"
+#include "updateseccompenhance_fuzzer.h"
 
-#include <string>
+#include <iostream>
 #include <thread>
+#include <string>
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
 #undef private
-#include "errors.h"
-#include "iprivacy_manager.h"
-#include "on_permission_used_record_callback_stub.h"
-#include "permission_used_request.h"
-#include "permission_used_request_parcel.h"
-#include "privacy_manager_service.h"
+#include "accesstoken_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetSpecialSecCompEnhanceStubFuzzTest(const uint8_t* data, size_t size)
+    bool UpdateSecCompEnhanceFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -40,26 +36,14 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
-            return false;
-        }
-
-        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_GET_SPECIAL_SEC_COMP_ENHANCE);
-
-        MessageParcel reply;
-        MessageOption option;
-        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-
-        return true;
+        return AccessTokenKit::UpdateSecCompEnhance(fuzzData.GetData<int32_t>(), fuzzData.GetData<uint32_t>()) == 0;
     }
-} // namespace OHOS
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetSpecialSecCompEnhanceStubFuzzTest(data, size);
+    OHOS::UpdateSecCompEnhanceFuzzTest(data, size);
     return 0;
 }

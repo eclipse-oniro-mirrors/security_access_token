@@ -31,10 +31,6 @@
       "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::shared_ptr<OHOS::Security::AccessToken::StateCustomizedCbk> const&, int, OHOS::Security::AccessToken::PermissionUsedTypeValue)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecords(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::sptr<OHOS::Security::AccessToken::OnPermissionUsedRecordCallback> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
-      "OHOS::Security::AccessToken::PrivacyKit::RegisterSecCompEnhance(OHOS::Security::AccessToken::SecCompEnhanceData const&)";
-      "OHOS::Security::AccessToken::PrivacyKit::UpdateSecCompEnhance(int, unsigned int)";
-      "OHOS::Security::AccessToken::PrivacyKit::GetSecCompEnhance(int, OHOS::Security::AccessToken::SecCompEnhanceData&)";
-      "OHOS::Security::AccessToken::PrivacyKit::GetSpecialSecCompEnhance(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::SecCompEnhanceData, std::__h::allocator<OHOS::Security::AccessToken::SecCompEnhanceData>>&)";
       "OHOS::Security::AccessToken::StateCustomizedCbk::~StateCustomizedCbk()";
       "OHOS::Security::AccessToken::OnPermissionUsedRecordCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
       "OHOS::Security::AccessToken::PrivacyManagerClient::GetInstance()";

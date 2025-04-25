@@ -15,8 +15,8 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
 
-ohos_fuzztest("GetSpecialSecCompEnhanceFuzzTest") {
-  module_out_path = module_output_path_interface_privacy
+ohos_fuzztest("RegisterSecCompEnhanceFuzzTest") {
+  module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
   include_dirs = [
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
@@ -28,9 +28,11 @@ ohos_fuzztest("GetSpecialSecCompEnhanceFuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "getspecialseccompenhance_fuzzer.cpp" ]
+  sources = [ "registerseccompenhance_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 

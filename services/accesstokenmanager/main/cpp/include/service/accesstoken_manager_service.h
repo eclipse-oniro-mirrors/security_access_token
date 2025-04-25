@@ -96,6 +96,11 @@ public:
     int GetHapTokenInfoExtension(AccessTokenID tokenID,
         HapTokenInfoParcel& hapTokenInfoRes, std::string& appID) override;
     int32_t GetNativeTokenId(const std::string& processName, AccessTokenID& tokenID) override;
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) override;
+    int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
+    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
+#endif
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
@@ -150,12 +155,16 @@ private:
     bool IsNativeProcessCalling();
     bool IsSystemAppCalling() const;
     bool IsShellProcessCalling();
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    bool IsSecCompServiceCalling();
+#endif
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     static const int32_t ROOT_UID = 0;
 #endif
     static const int32_t ACCESSTOKEN_UID = 3020;
 
     AccessTokenID tokenSyncId_ = 0;
+    AccessTokenID secCompTokenId_ = 0;
 };
 } // namespace AccessToken
 } // namespace Security

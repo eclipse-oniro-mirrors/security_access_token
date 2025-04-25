@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("../../../../../access_token.gni")
 
 ohos_fuzztest("UpdateSecCompEnhanceFuzzTest") {
-  module_out_path = module_output_path_interface_privacy
+  module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
   include_dirs = [
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
@@ -30,7 +30,9 @@ ohos_fuzztest("UpdateSecCompEnhanceFuzzTest") {
   ]
   sources = [ "updateseccompenhance_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 

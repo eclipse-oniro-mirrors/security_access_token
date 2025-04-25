@@ -54,6 +54,9 @@
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data.h"
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -513,6 +516,28 @@ public:
      */
     static int32_t GetReqPermissionByName(
         AccessTokenID tokenID, const std::string& permissionName, std::string& value);
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    /**
+     * @brief Register security component enhance data when security component service did not start
+     * @param enhance enhance data
+     * @return error code, see access_token_error.h
+     */
+    static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
+    /**
+     * @brief update security component enhance data
+     * @param pid process id
+     * @param seqNum sequence number
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
+    /**
+     * @brief get security component enhance data
+     * @param pid process id
+     * @param enhance enhance data
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

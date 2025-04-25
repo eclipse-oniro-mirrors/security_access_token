@@ -21,14 +21,14 @@
 
 #include "accesstoken_callbacks.h"
 #include "accesstoken_fuzzdata.h"
+#include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
 #include "hap_token_info.h"
-#include "iprivacy_manager.h"
+#include "iaccess_token_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
-#include "privacy_manager_service.h"
 #include "securec.h"
 #include "token_sync_kit_interface.h"
 
@@ -86,16 +86,16 @@ public:
         enhance.enhanceData = secData;
 
         MessageParcel datas;
-        datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteParcelable(&enhance)) {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_REGISTER_SEC_COMP_ENHANCE);
+        uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_REGISTER_SEC_COMP_ENHANCE);
 
         MessageParcel reply;
         MessageOption option;
-        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;
     }

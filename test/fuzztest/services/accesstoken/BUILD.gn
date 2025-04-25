@@ -70,4 +70,11 @@ group("fuzztest") {
       "setfirstcallertokenid_fuzzer:SetFirstCallerTokenIDFuzzTest",
     ]
   }
+  if (security_component_enhance_enable) {
+    deps += [
+      "getseccompenhancestub_fuzzer:GetSecCompEnhanceStubFuzzTest",
+      "registerseccompenhancestub_fuzzer:RegisterSecCompEnhanceStubFuzzTest",
+      "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
+    ]
+  }
 }

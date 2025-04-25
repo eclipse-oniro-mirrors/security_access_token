@@ -72,6 +72,10 @@ ohos_source_set("access_token_manager_proxy") {
     "samgr:samgr_proxy",
   ]
 
+  if (security_component_enhance_enable) {
+    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  }
+
   subsystem_name = "security"
   part_name = "access_token"
 }
@@ -119,6 +123,10 @@ ohos_source_set("access_token_manager_stub") {
     "ipc:ipc_single",
     "samgr:samgr_proxy",
   ]
+
+  if (security_component_enhance_enable) {
+    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  }
 
   subsystem_name = "security"
   part_name = "access_token"

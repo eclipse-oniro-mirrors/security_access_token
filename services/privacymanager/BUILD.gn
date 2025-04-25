@@ -61,9 +61,6 @@ ohos_source_set("privacy_manager_proxy") {
   ]
 
   cflags_cc = []
-  if (security_component_enhance_enable) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-  }
 
   subsystem_name = "security"
   part_name = "access_token"
@@ -103,9 +100,6 @@ ohos_source_set("privacy_manager_stub") {
   ]
 
   cflags_cc = []
-  if (security_component_enhance_enable) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-  }
 
   subsystem_name = "security"
   part_name = "access_token"
@@ -243,12 +237,6 @@ if (is_standard_system && ability_base_enable == true) {
       cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
       external_deps += [ "common_event_service:cesfwk_innerkits" ]
       sources += [ "src/common/privacy_common_event_subscriber.cpp" ]
-    }
-
-    if (security_component_enhance_enable == true) {
-      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-      include_dirs += [ "include/seccomp" ]
-      sources += [ "src/seccomp/privacy_sec_comp_enhance_agent.cpp" ]
     }
 
     if (window_manager_enable && access_token_camera_float_window_enable) {

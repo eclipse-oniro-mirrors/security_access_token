@@ -27,6 +27,9 @@
 #include "parameter.h"
 #include "perm_state_change_scope_parcel.h"
 #include "permission_grant_info_parcel.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data_parcel.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -1180,6 +1183,48 @@ int32_t AccessTokenManagerClient::GetReqPermissionByName(
     }
     return errCode;
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t AccessTokenManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    SecCompEnhanceDataParcel registerParcel;
+    registerParcel.enhanceData = enhance;
+    int32_t ret = proxy->RegisterSecCompEnhance(registerParcel);
+    return ConvertResult(ret);
+}
+
+int32_t AccessTokenManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    int32_t ret = proxy->UpdateSecCompEnhance(pid, seqNum);
+    return ConvertResult(ret);
+}
+
+int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    SecCompEnhanceDataParcel parcel;
+    int32_t res = proxy->GetSecCompEnhance(pid, parcel);
+    if (res != RET_SUCCESS) {
+        return ConvertResult(res);
+    }
+    enhance = parcel.enhanceData;
+    return RET_SUCCESS;
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

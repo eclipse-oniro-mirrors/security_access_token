@@ -2153,50 +2153,6 @@ HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level1)
     PrivacyManagerClient::GetInstance().proxy_ = proxy; // recovery
 }
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-/**
- * @tc.name: RegisterSecCompEnhance001
- * @tc.desc: PrivacyKit:: function test register enhance data
- * @tc.type: FUNC
- * @tc.require: issueI7MXZ
- */
-HWTEST_F(PrivacyKitTest, RegisterSecCompEnhance001, TestSize.Level1)
-{
-    SecCompEnhanceData data;
-    data.callback = nullptr;
-    data.challenge = 0;
-    data.seqNum = 0;
-    EXPECT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, PrivacyKit::RegisterSecCompEnhance(data));
-
-    // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
-    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
-    data.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::RegisterSecCompEnhance(data));
-
-    MockNativeToken mock("security_component_service");
-    SecCompEnhanceData data1;
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::GetSecCompEnhance(getpid(), data1));
-    EXPECT_NE(RET_SUCCESS, PrivacyKit::GetSecCompEnhance(0, data1));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::UpdateSecCompEnhance(getpid(), 1));
-    EXPECT_NE(RET_SUCCESS, PrivacyKit::UpdateSecCompEnhance(0, 1));
-}
-
-/**
- * @tc.name: GetSpecialSecCompEnhance001
- * @tc.desc: PrivacyKit:: function test Get Special enhance
- * @tc.type: FUNC
- * @tc.require: issueI7MXZ
- */
-HWTEST_F(PrivacyKitTest, GetSpecialSecCompEnhance001, TestSize.Level1)
-{
-    MockNativeToken mock("security_component_service");
-
-    std::vector<SecCompEnhanceData> res;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance("", res));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance(g_infoParmsA.bundleName, res));
-}
-#endif
-
 /**
  * @tc.name: AddPermissionUsedRecord011
  * @tc.desc: Test AddPermissionUsedRecord with default normal used type
