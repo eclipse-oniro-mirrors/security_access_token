@@ -1,5 +1,5 @@
 {
-    "systemGrantPermissions": [
+    "definePermissions": [
         {
             "name": "ohos.permission.ACCESS_BIOMETRIC",
             "grantMode": "system_grant",
@@ -4555,9 +4555,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
-        }
-    ],
-    "userGrantPermissions": [
+        },
         {
             "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
             "grantMode": "user_grant",

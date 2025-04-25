@@ -176,14 +176,7 @@ def parse_json(path, platform):
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         index = 0
-        for perm in data["systemGrantPermissions"]:
-            perm_def = PermissionDef(perm, index)
-            if not perm_def.check_device_type(platform):
-                continue
-            permission_list.append(perm_def)
-            index += 1
-
-        for perm in data["userGrantPermissions"]:
+        for perm in data["definePermissions"]:
             perm_def = PermissionDef(perm, index)
             if not perm_def.check_device_type(platform):
                 continue
