@@ -6397,7 +6397,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
