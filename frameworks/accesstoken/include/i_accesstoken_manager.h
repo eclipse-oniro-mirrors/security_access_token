@@ -47,8 +47,7 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
-    virtual PermUsedTypeEnum GetPermissionUsedType(
-        AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int VerifyAccessToken(AccessTokenID tokenID,
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) = 0;

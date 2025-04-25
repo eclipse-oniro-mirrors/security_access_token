@@ -72,9 +72,9 @@ static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
+constexpr const char* EDM_PROCESS_NAME = "edm";
 static constexpr int32_t MAX_USER_ID = 10736;
 static constexpr int32_t BASE_USER_RANGE = 200000;
-constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
@@ -309,7 +309,7 @@ void PermissionRecordManager::UpdatePermRecImmediately()
 int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
 {
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", info.tokenId);
+        LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", info.tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
@@ -1296,9 +1296,8 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 {
     AccessTokenID tokenId = info.tokenId;
     const std::string &permissionName = info.permissionName;
-    LOGI(PRI_DOMAIN, PRI_TAG,
-        "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
-        tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d.",
+        tokenId, info.pid, permissionName.c_str(), info.type);
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1424,7 +1423,6 @@ int32_t PermissionRecordManager::PermissionListFilter(
 
 bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
-    // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
 
     LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, appStatus %{public}d(1-foreground 2-background).", tokenId, status);

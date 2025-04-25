@@ -272,7 +272,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
             "TargetNodeId %{public}s, uniqueId %{public}s, execute remote command error, response is empty.",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
     }
-    
+
     if (responseString.empty()) {
         if (commands_.empty()) {
             ptrChannel_->CloseConnection(); // if command send failed, also try to close session

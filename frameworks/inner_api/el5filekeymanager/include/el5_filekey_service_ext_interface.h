@@ -35,7 +35,7 @@ public:
     virtual int32_t SetFilePathPolicy(int32_t userId) = 0;
     virtual int32_t HandleUserCommonEvent(const std::string &eventName, int32_t userId) = 0;
     virtual int32_t SetPolicyScreenLocked() = 0;
-    virtual int32_t DumpData(int fd, const std::vector<std::u16string>& args) = 0;
+    virtual int32_t DumpData(int fd, const std::vector<std::u16string> &args) = 0;
     virtual int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) = 0;
     virtual int32_t GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId) = 0;
     virtual int32_t DeleteGroupIDKey(uint32_t uid, const std::string &groupID) = 0;

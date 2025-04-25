@@ -291,13 +291,10 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
 int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataType> dateTypes,
     const std::unordered_set<AccessTokenID>& tokenIDList)
 {
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     BeginTransaction();
     for (const auto& type : dateTypes) {
         std::string deleteHistorySql = CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList);
-        LOGD(PRI_DOMAIN, PRI_TAG, "DeleteHistoryRecordsInTables sql is %{public}s.", deleteHistorySql.c_str());
         auto deleteHistoryStatement = Prepare(deleteHistorySql);
         if (deleteHistoryStatement.Step() != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
@@ -308,9 +305,6 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataTyp
 
     LOGD(PRI_DOMAIN, PRI_TAG, "Commit transaction.");
     CommitTransaction();
-
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "DeleteHistoryRecordsInTables cost %{public}" PRId64 ".", endTime - beginTime);
 
     return SUCCESS;
 }

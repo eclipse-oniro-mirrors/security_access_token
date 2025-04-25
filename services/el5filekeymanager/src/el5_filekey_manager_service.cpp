@@ -385,6 +385,7 @@ int32_t El5FilekeyManagerService::CheckReqLockPermission(DataLockType type, bool
     isApp = AccessTokenKit::GetTokenType(callingTokenID) == ATokenTypeEnum::TOKEN_HAP;
     switch (type) {
         case DataLockType::DEFAULT_DATA:
+        case DataLockType::GROUP_ID_DATA:
             if (!isApp || (AccessTokenKit::VerifyAccessToken(callingTokenID, PROTECT_DATA_PERMISSION) !=
                 PermissionState::PERMISSION_GRANTED)) {
                 LOG_ERROR("Data protection is not enabled.");
@@ -467,7 +468,6 @@ int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& ar
     if (fd < 0) {
         return EFM_ERR_INVALID_PARAMETER;
     }
-
     dprintf(fd, "El5FilekeyManager Dump:\n");
     std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
