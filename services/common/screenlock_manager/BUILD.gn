@@ -45,6 +45,7 @@ ohos_shared_library("accesstoken_screenlock_manager") {
       "c_utils:utils",
       "ipc:ipc_core",
       "screenlock_mgr:screenlock_client",
+      "eventhandler:libeventhandler",
     ]
   }
 }
