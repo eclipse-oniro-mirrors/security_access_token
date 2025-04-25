@@ -44,12 +44,12 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
     virtual int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) = 0;
-    virtual int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) = 0;
-    virtual int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) = 0;
     virtual int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& anonyStub) = 0;
     virtual int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub) = 0;
+    virtual int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) = 0;
+    virtual int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) = 0;
     virtual int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) = 0;
     virtual int32_t RemovePermissionUsedRecords(AccessTokenID tokenID) = 0;
     virtual int32_t GetPermissionUsedRecords(

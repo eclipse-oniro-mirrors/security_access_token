@@ -30,12 +30,12 @@ public:
     ~PrivacyManagerProxy() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
-    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
-    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& anonyStub) override;
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub) override;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID) override;
     int32_t GetPermissionUsedRecords(

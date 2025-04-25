@@ -85,7 +85,7 @@ public:
      */
     static int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
     /**
-     * @brief Get key infos of the specified user.
+     * @brief Get all key infos of the specified user.
      * @param userId The user id
      * @param keyInfos Key infos of the specified user id, as query result
      * @return error code, see el5_filekey_manager_error.h

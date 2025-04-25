@@ -61,7 +61,6 @@ public:
     void PostDelayedUnloadTask(uint32_t delayedTime);
     void CancelDelayedUnloadTask();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
-
 private:
     ServiceRunningState serviceRunningState_ = ServiceRunningState::STATE_NOT_START;
 
