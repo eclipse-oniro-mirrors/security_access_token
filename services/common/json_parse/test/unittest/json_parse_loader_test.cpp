@@ -51,7 +51,7 @@ void JsonParseLoaderTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(JsonParseLoaderTest, IsDirExsitTest001, TestSize.Level1)
+HWTEST_F(JsonParseLoaderTest, IsDirExsitTest001, TestSize.Level4)
 {
     ConfigPolicLoader loader;
     EXPECT_FALSE(loader.IsDirExsit(""));
@@ -68,7 +68,7 @@ HWTEST_F(JsonParseLoaderTest, IsDirExsitTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(JsonParseLoaderTest, GetConfigValueFromFileTest001, TestSize.Level1)
+HWTEST_F(JsonParseLoaderTest, GetConfigValueFromFileTest001, TestSize.Level4)
 {
     ConfigPolicLoader loader;
     AccessTokenConfigValue config;
@@ -82,7 +82,7 @@ HWTEST_F(JsonParseLoaderTest, GetConfigValueFromFileTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(JsonParseLoaderTest, ParserNativeRawDataTest001, TestSize.Level1)
+HWTEST_F(JsonParseLoaderTest, ParserNativeRawDataTest001, TestSize.Level4)
 {
     ConfigPolicLoader loader;
     std::vector<NativeTokenInfoBase> tokenInfos;
@@ -95,7 +95,7 @@ HWTEST_F(JsonParseLoaderTest, ParserNativeRawDataTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(JsonParseLoaderTest, ParserDlpPermsRawDataTest001, TestSize.Level1)
+HWTEST_F(JsonParseLoaderTest, ParserDlpPermsRawDataTest001, TestSize.Level4)
 {
     ConfigPolicLoader loader;
     std::vector<PermissionDlpMode> dlpPerms;

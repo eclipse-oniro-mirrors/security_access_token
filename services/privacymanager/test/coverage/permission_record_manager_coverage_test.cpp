@@ -186,7 +186,7 @@ static PermissionUsedTypeInfo MakeInfo(AccessTokenID tokenId, int32_t pid, const
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level4)
 {
     PrivacyAppStateObserver observer;
     AppStateData appStateData;
@@ -203,7 +203,7 @@ HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
-HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx1 = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -260,7 +260,7 @@ HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, TestSize.Level4)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.CAMERA");
@@ -292,7 +292,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -318,7 +318,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -343,7 +343,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -368,7 +368,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -427,7 +427,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level4)
 {
     auto recipient = std::make_shared<PermActiveStatusCallbackDeathRecipient>();
     ASSERT_NE(nullptr, recipient);
@@ -458,7 +458,7 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -493,7 +493,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level4)
 {
     std::vector<std::string> permList;
     sptr<IRemoteObject> callback;
@@ -535,7 +535,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -583,7 +583,7 @@ HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -620,7 +620,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, PermissionListFilter001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, PermissionListFilter001, TestSize.Level4)
 {
     std::vector<std::string> listSrc;
     std::vector<std::string> listRes;
@@ -646,7 +646,7 @@ HWTEST_F(PermissionRecordManagerTest, PermissionListFilter001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -669,7 +669,7 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, TranslationIntoPermissionRecord001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, TranslationIntoPermissionRecord001, TestSize.Level4)
 {
     GenericValues values;
     values.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(10086));
@@ -718,7 +718,7 @@ void AddRecord(int32_t num, std::vector<GenericValues>& values)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level4)
 {
     std::vector<GenericValues> values;
     int32_t num = MAX_DETAIL_NUM + 1;
@@ -789,7 +789,7 @@ static void GeneratePermissionRecord(AccessTokenID tokenID)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level4)
 {
     MockNativeToken mock("privacy_service");
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
@@ -843,7 +843,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -868,7 +868,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level4)
 {
     PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
 
@@ -886,7 +886,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level4)
 {
     MockNativeToken mock("privacy_service");
 
@@ -914,7 +914,7 @@ HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level4)
 {
     bool res = true;
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res));
@@ -938,7 +938,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordsAsync001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -960,7 +960,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordsAsync001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetLockScreenStatus001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetLockScreenStatus001, TestSize.Level4)
 {
     EXPECT_NE(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().GetLockScreenStatus(true));
 }
@@ -971,7 +971,7 @@ HWTEST_F(PermissionRecordManagerTest, GetLockScreenStatus001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetHapWithFGReminder001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetHapWithFGReminder001, TestSize.Level4)
 {
     EXPECT_NE(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().SetHapWithFGReminder(123, true));
 
@@ -992,7 +992,7 @@ HWTEST_F(PermissionRecordManagerTest, SetHapWithFGReminder001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Level4)
 {
     PermissionUsedRequest request;
     request.tokenId = 0;
@@ -1008,7 +1008,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Level4)
 {
     PermissionUsedRequest request;
     request.tokenId = g_selfTokenId;
@@ -1025,7 +1025,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize.Level4)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS;
     bool ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, false);
@@ -1062,7 +1062,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.Level4)
 {
     int32_t tokenId = static_cast<int32_t>(RANDOM_TOKENID);
     int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL);
@@ -1125,7 +1125,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level4)
 {
     int32_t recordSize = PermissionRecordManager::GetInstance().recordSizeMaximum_;
     PermissionRecordManager::GetInstance().recordSizeMaximum_ = MAX_DETAIL_NUM;
@@ -1148,7 +1148,7 @@ HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize.Level4)
 {
     std::set<ContinusPermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
     PermissionRecordManager::GetInstance().startRecordList_.clear();
@@ -1175,7 +1175,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level4)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
@@ -1202,7 +1202,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize.Level4)
 {
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
 
@@ -1220,7 +1220,7 @@ HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSize.Level4)
 {
     ASSERT_EQ(Constant::SUCCESS, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
 
