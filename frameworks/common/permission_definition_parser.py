@@ -127,10 +127,10 @@ class PermissionDef(object):
             raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
 
         if "deviceTypes" in permission_def_dict:
-            if len(permission_def_dict["deviceTypes"]) > 0:
+            if type(permission_def_dict["deviceTypes"]) == list and len(permission_def_dict["deviceTypes"]) > 0:
                 self.device_types = permission_def_dict["deviceTypes"]
             else:
-                raise Exception("Must be filled with available device types")
+                raise Exception("Must be filled with available device type list, name = {}".format(self.name))
         else:
             self.device_types = ["general"]
 
@@ -209,8 +209,8 @@ def parse_args():
 
 if __name__ == "__main__":
     input_args = parse_args()
-    currPlatform = "general"
+    curr_platform = "general"
     if input_args.target_platform in CONVERT_TARGET_PLATFORM:
-        currPlatform = CONVERT_TARGET_PLATFORM[input_args.target_platform]
-    permission_list = parse_json(input_args.input_json, currPlatform)
+        curr_platform = CONVERT_TARGET_PLATFORM[input_args.target_platform]
+    permission_list = parse_json(input_args.input_json, curr_platform)
     convert_to_cpp(input_args.output_path, permission_list)
