@@ -67,7 +67,7 @@ void AccessTokenDatabaseCoverageTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level4)
 {
     std::vector<GenericValues> values;
     GenericValues value;
@@ -83,7 +83,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, TestSize.Level4)
 {
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
@@ -105,7 +105,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level4)
 {
     AccessTokenOpenCallback callback;
     uint32_t flag = 0;
@@ -155,7 +155,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level4)
 {
     AtmDataType type = static_cast<AtmDataType>(NOT_EXSIT_ATM_TYPE);
     GenericValues modifyValue;
@@ -194,7 +194,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level4)
 {
     AtmDataType type = static_cast<AtmDataType>(NOT_EXSIT_ATM_TYPE);
     GenericValues conditionValue;

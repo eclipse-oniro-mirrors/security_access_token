@@ -70,7 +70,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
 {
     AppStateData appData;
     SensitiveManagerCoverageTestCb1 callback;
@@ -91,7 +91,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level4)
 {
     AppStateData appData;
     SensitiveManagerCoverageTestCb1 callback;
@@ -146,7 +146,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level4)
 {
     AppStateData appData;
     SensitiveManagerCoverageTestCb1 callback;
@@ -169,7 +169,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level4)
 {
     SensitiveManagerCoverageTestCb1 callback;
 

@@ -94,7 +94,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI61NS6
  */
-HWTEST_F(AccessTokenCoverageTest, PermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, PermStateChangeCallback001, TestSize.Level4)
 {
     PermStateChangeInfo result = {
         .permStateChangeType = 0,
@@ -129,7 +129,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(AccessTokenCoverageTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, OnRemoteRequest001, TestSize.Level4)
 {
     PermStateChangeInfo info = {
         .permStateChangeType = 0,
@@ -164,7 +164,7 @@ HWTEST_F(AccessTokenCoverageTest, OnRemoteRequest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(AccessTokenCoverageTest, CreatePermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, CreatePermStateChangeCallback001, TestSize.Level4)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
@@ -201,7 +201,7 @@ HWTEST_F(AccessTokenCoverageTest, CreatePermStateChangeCallback001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(AccessTokenCoverageTest, InitProxy001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, InitProxy001, TestSize.Level4)
 {
     ASSERT_NE(nullptr, AccessTokenManagerClient::GetInstance().proxy_);
     OHOS::sptr<IAccessTokenManager> proxy = AccessTokenManagerClient::GetInstance().proxy_; // backup
@@ -217,7 +217,7 @@ HWTEST_F(AccessTokenCoverageTest, InitProxy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(AccessTokenCoverageTest, AllocHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, AllocHapToken001, TestSize.Level4)
 {
     HapInfoParams info;
     HapPolicyParams policy;
@@ -232,7 +232,7 @@ HWTEST_F(AccessTokenCoverageTest, AllocHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(AccessTokenCoverageTest, VerifyAccessToken005, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, VerifyAccessToken005, TestSize.Level4)
 {
     HapInfoParams info = {
         .userID = TEST_USER_ID,
@@ -285,7 +285,7 @@ HWTEST_F(AccessTokenCoverageTest, VerifyAccessToken005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI7MOA1
  */
-HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest001, TestSize.Level4)
 {
     uint64_t validTokenID = GetSelfTokenID();
     uint64_t retTokenId = validTokenID;
@@ -301,7 +301,7 @@ HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI7MOA1
  */
-HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest002, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest002, TestSize.Level4)
 {
     uint64_t invalidTokenID = 0;
     uint64_t retTokenId = 1;    /* 1, for testing purposes */
@@ -316,7 +316,7 @@ HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest003, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest003, TestSize.Level4)
 {
     uint64_t invalidTokenID = 0;
     uint64_t retTokenId = 1;    /* 1, for testing purposes */
@@ -379,7 +379,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest001, TestSize.Level4)
 {
     TokenSyncCallbackStubTest callback;
 
@@ -400,7 +400,7 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest002, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest002, TestSize.Level4)
 {
     TokenSyncCallbackStubTest callback;
     OHOS::MessageParcel data;
@@ -418,7 +418,7 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest003, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest003, TestSize.Level4)
 {
     TokenSyncCallbackStubTest callback;
     OHOS::MessageParcel data;
@@ -450,7 +450,7 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest004, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest004, TestSize.Level4)
 {
     setuid(3020); // ACCESSTOKEN_UID
 
@@ -492,7 +492,7 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackStubTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackTest001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackTest001, TestSize.Level4)
 {
     TokenSyncCallback callback(nullptr);
     EXPECT_EQ(nullptr, callback.tokenSyncCallback_); // test input
@@ -513,7 +513,7 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenCoverageTest, GetPermissionManagerInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenCoverageTest, GetPermissionManagerInfo001, TestSize.Level4)
 {
     PermissionGrantInfo info;
     AccessTokenKit::GetPermissionManagerInfo(info);

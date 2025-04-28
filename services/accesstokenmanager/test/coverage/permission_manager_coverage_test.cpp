@@ -91,7 +91,7 @@ void PermissionRecordManagerCoverageTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSize.Level4)
 {
     AccessTokenID selfTokenId = GetSelfTokenID();
     AccessTokenID nativeToken = AccessTokenInfoManager::GetInstance().GetNativeTokenId("privacy_service");
@@ -116,7 +116,7 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSi
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, FormMgrDiedHandle001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerCoverageTest, FormMgrDiedHandle001, TestSize.Level4)
 {
     FormManagerAccessClient::GetInstance().OnRemoteDiedHandle();
     ASSERT_EQ(nullptr, FormManagerAccessClient::GetInstance().proxy_);
@@ -144,7 +144,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
 {
     PermissionRecordManagerCoverTestCb1 callback;
 
@@ -184,7 +184,7 @@ HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
@@ -202,7 +202,7 @@ HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSize.Level4)
 {
     GenericValues value1;
     value1.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
