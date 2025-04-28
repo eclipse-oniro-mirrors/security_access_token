@@ -123,33 +123,6 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest002, TestSize.Level1)
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
     ASSERT_EQ("invalid tokenId", dumpInfo);
 }
-
-/**
- * @tc.name: DumpPermDef001
- * @tc.desc: Get dump permission definitions
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(DumpTokenInfoTest, DumpPermDef001, TestSize.Level1)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "DumpPermDef001");
-    SetSelfTokenID(g_selfTokenId);
-    std::string dumpInfo1;
-    AtmToolsParamInfo info;
-    info.type = DUMP_PERM;
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo1);
-    ASSERT_EQ(false, dumpInfo1.empty());
-
-    std::string dumpInfo2;
-    info.permissionName = "ohos.permission.READ_MEDIA";
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo2);
-    ASSERT_EQ(false, dumpInfo2.empty());
-
-    std::string dumpInfo3;
-    info.permissionName = "ohos.permission.INVALID";
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo3);
-    ASSERT_EQ(true, dumpInfo3.empty());
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

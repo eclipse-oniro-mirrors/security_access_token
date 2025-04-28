@@ -1811,7 +1811,7 @@ bool AccessTokenInfoManager::IsPermissionReqValid(int32_t tokenApl, const std::s
     const std::vector<std::string>& nativeAcls)
 {
     PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+    if (GetPermissionBriefDef(permissionName, briefDef)) {
         return false;
     }
 

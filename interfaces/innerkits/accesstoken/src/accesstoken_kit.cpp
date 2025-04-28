@@ -667,86 +667,10 @@ int32_t AccessTokenKit::UnRegisterTokenSyncCallback()
 }
 #endif
 
-static void FormatApl(ATokenAplEnum availableLevel, std::string& apl)
-{
-    if (availableLevel == ATokenAplEnum::APL_NORMAL) {
-        apl = "NORMAL";
-    } else if (availableLevel == ATokenAplEnum::APL_SYSTEM_BASIC) {
-        apl = "SYSTEM_BASIC";
-    } else {
-        apl = "SYSTEM_CORE";
-    }
-}
-
-static void FormatAvailableType(ATokenAvailableTypeEnum availableType, std::string& type)
-{
-    if (availableType == ATokenAvailableTypeEnum::NORMAL) {
-        type = "NORMAL";
-    } else if (availableType == ATokenAvailableTypeEnum::SYSTEM) {
-        type = "SYSTEM";
-    } else if (availableType == ATokenAvailableTypeEnum::MDM) {
-        type = "MDM";
-    } else if (availableType == ATokenAvailableTypeEnum::SYSTEM_AND_MDM) {
-        type = "SYSTEM_AND_MDM";
-    } else if (availableType == ATokenAvailableTypeEnum::SERVICE) {
-        type = "SERVICE";
-    } else {
-        type = "ENTERPRISE_NORMAL";
-    }
-}
-
-static void PermDefinitionToString(const PermissionBriefDef& briefDef, std::string& dumpInfo)
-{
-    std::string grantMode = briefDef.grantMode == GrantMode::USER_GRANT ? "USER_GRANT" : "SYSTEM_GRANT";
-    std::string apl;
-    FormatApl(briefDef.availableLevel, apl);
-    std::string availableType;
-    FormatAvailableType(briefDef.availableType, availableType);
-
-    dumpInfo.append(R"({)");
-    dumpInfo.append("\n");
-    dumpInfo.append(R"(    "permissionName": ")" + std::string(briefDef.permissionName) + R"(")" + ",\n");
-    dumpInfo.append(R"(    "grantMode": )" + grantMode + ",\n");
-    dumpInfo.append(R"(    "availableLevel": )" + apl + ",\n");
-    dumpInfo.append(R"(    "availableType": )" + availableType + ",\n");
-    dumpInfo.append(R"(    "provisionEnable": )" + std::string(briefDef.provisionEnable ? "true" : "false") + ",\n");
-    dumpInfo.append(R"(    "distributedSceneEnable": )" +
-        std::string(briefDef.distributedSceneEnable ? "true" : "false") + ",\n");
-    dumpInfo.append(R"(    "isKernelEffect": )" + std::string(briefDef.isKernelEffect ? "true" : "false") + ",\n");
-    dumpInfo.append(R"(    "hasValue": )" + std::string(briefDef.hasValue ? "true" : "false") + ",\n");
-    dumpInfo.append(R"(})");
-    dumpInfo.append("\n");
-}
-
-static void DumpPermDefinition(const AtmToolsParamInfo& info, std::string& dumpInfo)
-{
-    if (info.permissionName.empty()) {
-        size_t count = GetDefPermissionsSize();
-
-        for (size_t i = 0; i < count; ++i) {
-            PermissionBriefDef briefDef;
-            GetPermissionBriefDef(i, briefDef);
-            PermDefinitionToString(briefDef, dumpInfo);
-        }
-    } else {
-        uint32_t code = 0;
-        if (TransferPermissionToOpcode(info.permissionName, code)) {
-            PermissionBriefDef briefDef;
-            GetPermissionBriefDef(code, briefDef);
-            PermDefinitionToString(briefDef, dumpInfo);
-        }
-    }
-}
-
 void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, bundleName=%{public}s, processName=%{public}s.",
         info.tokenId, info.bundleName.c_str(), info.processName.c_str());
-    if (info.type == DUMP_PERM) {
-        DumpPermDefinition(info, dumpInfo);
-        return;
-    }
-
     AccessTokenManagerClient::GetInstance().DumpTokenInfo(info, dumpInfo);
 }
 

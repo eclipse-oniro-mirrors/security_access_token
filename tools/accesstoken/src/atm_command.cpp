@@ -31,7 +31,7 @@ static constexpr int32_t MAX_COUNTER = 1000;
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
-static const std::string SHORT_OPTIONS_DUMP = "d::h::t::r::v::i:p:b:n:";
+static const std::string SHORT_OPTIONS_DUMP = "h::t::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -46,7 +46,6 @@ static const std::string HELP_MSG =
 static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
-    "  -d, --definition [-p <permission-name>]                  list all permission definitions in system\n"
     "  -h, --help                                               list available options\n"
     "  -t, --all                                                list all name of token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
@@ -83,7 +82,6 @@ static const std::string HELP_MSG_TOGGLE =
 #endif
 
 static const struct option LONG_OPTIONS_DUMP[] = {
-    {"definition", no_argument, nullptr, 'd'},
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
     {"record-info", no_argument, nullptr, 'r'},
@@ -118,7 +116,6 @@ static const struct option LONG_OPTIONS_TOGGLE[] = {
 };
 
 std::map<char, OptType> COMMAND_TYPE = {
-    {'d', DUMP_PERM},
     {'t', DUMP_TOKEN},
     {'r', DUMP_RECORD},
     {'v', DUMP_TYPE},
@@ -247,7 +244,6 @@ int32_t AtmCommand::RunAsCommandMissingOptionArgument(void)
 void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
 {
     switch (option) {
-        case 'd':
         case 't':
         case 'r':
         case 'v':
@@ -418,9 +414,6 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
     std::string dumpInfo;
     int32_t ret = RET_SUCCESS;
     switch (info.type) {
-        case DUMP_PERM:
-            AccessTokenKit::DumpTokenInfo(info, dumpInfo);
-            break;
         case DUMP_TOKEN:
             AccessTokenKit::DumpTokenInfo(info, dumpInfo);
             break;
