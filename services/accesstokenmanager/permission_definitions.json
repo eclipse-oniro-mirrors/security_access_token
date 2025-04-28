@@ -6387,6 +6387,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.MANAGE_SCREEN_TIME_GUARD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
