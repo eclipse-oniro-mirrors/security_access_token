@@ -29,6 +29,8 @@ action("permission_definition_parse") {
         "/services/accesstokenmanager/permission_definitions.json",
     "--output-path",
     rebase_path(target_out_dir) + "/permission_map_constant.h",
+    "--target-platform",
+    target_platform,
   ]
   outputs = [ "$target_out_dir" ]
 }
