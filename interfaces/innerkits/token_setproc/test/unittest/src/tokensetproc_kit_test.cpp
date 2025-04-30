@@ -427,6 +427,8 @@ static void *ThreadTestFunc02(void *args)
 HWTEST_F(TokensetprocKitTest, Mulitpulthread001, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
+    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     pthread_t tid[2];
     (void)pthread_create(&tid[0], nullptr, &ThreadTestFunc01, nullptr);
     (void)pthread_create(&tid[1], nullptr, &ThreadTestFunc01, nullptr);
@@ -437,8 +439,11 @@ HWTEST_F(TokensetprocKitTest, Mulitpulthread001, TestSize.Level1)
     (void)pthread_create(&tid[1], nullptr, &ThreadTestFunc02, nullptr);
     (void)pthread_join(tid[0], nullptr);
     (void)pthread_join(tid[1], nullptr);
+    int64_t endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
 
     setuid(g_selfUid);
+    ASSERT_TRUE(endTime - beginTime < 1000 * 100);
 }
 
 /**

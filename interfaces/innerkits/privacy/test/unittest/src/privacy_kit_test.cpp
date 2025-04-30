@@ -1490,10 +1490,10 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission004, TestSize.Level1)
     ASSERT_EQ(0, ret);
     if (list.empty()) {
         GTEST_LOG_(INFO) << "GetForegroundApplications empty ";
-        return;
+    } else {
+        uint32_t tokenIdForeground = list[0].accessTokenId;
+        ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName));
     }
-    uint32_t tokenIdForeground = list[0].accessTokenId;
-    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName));
 }
 
 /**
@@ -1508,18 +1508,17 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission005, TestSize.Level1)
     ASSERT_EQ(0, AppManagerAccessClient::GetInstance().GetForegroundApplications(list));
     if (list.empty()) {
         GTEST_LOG_(INFO) << "GetForegroundApplications empty ";
-        return;
+    } else {
+        uint32_t tokenIdForeground = list[0].accessTokenId;
+        int32_t pidForground = list[0].pid;
+        std::string permissionName = "ohos.permission.MICROPHONE";
+        ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
+        ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
+
+        permissionName = "ohos.permission.CAMERA";
+        ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
+        ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
     }
-
-    uint32_t tokenIdForeground = list[0].accessTokenId;
-    int32_t pidForground = list[0].pid;
-    std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
-    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
-
-    permissionName = "ohos.permission.CAMERA";
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, NOT_EXSIT_PID));
-    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName, pidForground));
 }
 
 /**
