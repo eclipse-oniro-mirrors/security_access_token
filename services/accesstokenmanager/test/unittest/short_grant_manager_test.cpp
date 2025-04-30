@@ -224,20 +224,19 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission004, TestSize.Level1)
     ASSERT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
 
-    if (appStateObserver_ != nullptr) {
-        return;
+    if (appStateObserver_ == nullptr) {
+        appStateObserver_ = sptr<ShortPermAppStateObserver>::MakeSptr();
+        AppStateData appStateData;
+        appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
+        appStateData.accessTokenId = tokenID;
+        appStateObserver_->OnAppStopped(appStateData);
+
+        EXPECT_EQ(PERMISSION_DENIED,
+            AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
+
+        ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+        ASSERT_EQ(RET_SUCCESS, ret);
     }
-    appStateObserver_ = sptr<ShortPermAppStateObserver>::MakeSptr();
-    AppStateData appStateData;
-    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
-    appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnAppStopped(appStateData);
-
-    EXPECT_EQ(PERMISSION_DENIED,
-        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, SHORT_TEMP_PERMISSION));
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
 }
 } // namespace AccessToken
 } // namespace Security
