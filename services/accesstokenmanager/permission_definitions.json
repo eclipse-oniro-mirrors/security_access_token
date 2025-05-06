@@ -2343,7 +2343,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_SET_USER_RESTRICTION",
@@ -2353,7 +2354,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_MANAGE_APN",
@@ -2363,7 +2365,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_MANAGE_TELEPHONY",
@@ -2373,7 +2376,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_SET_KIOSK",
@@ -2383,7 +2387,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_SET_WALLPAPER",
@@ -2393,7 +2398,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",
