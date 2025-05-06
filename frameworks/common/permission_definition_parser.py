@@ -127,7 +127,7 @@ class PermissionDef(object):
             raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
 
         if "deviceTypes" in permission_def_dict:
-            if type(permission_def_dict["deviceTypes"]) == list and len(permission_def_dict["deviceTypes"]) > 0:
+            if isinstance(permission_def_dict["deviceTypes"], list) and len(permission_def_dict["deviceTypes"]) > 0:
                 self.device_types = permission_def_dict["deviceTypes"]
             else:
                 raise Exception("Must be filled with available device type list, name = {}".format(self.name))
