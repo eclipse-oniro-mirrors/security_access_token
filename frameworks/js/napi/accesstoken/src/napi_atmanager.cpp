@@ -345,7 +345,7 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
+        errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -382,7 +382,7 @@ bool NapiAtManager::ParseInputVerifyPermissionSync(const napi_env env, const nap
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], syncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
+        errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -607,7 +607,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
     }
     if ((syncContext->permissionName.empty()) ||
         ((syncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
-        std::string errMsg = GetParamErrorMsg("permissionName", "string");
+        std::string errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
@@ -659,7 +659,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
+        errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -987,7 +987,7 @@ bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_cal
     asyncContext.env = env;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
+        errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -1022,7 +1022,7 @@ bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_cal
     asyncContext.env = env;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
+        errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -1169,7 +1169,7 @@ bool NapiAtManager::FillPermStateChangeScope(const napi_env env, const napi_valu
         scopeInfo.tokenIDs = {GetSelfTokenID()};
     }
     if (!ParseStringArray(env, argv[index++], scopeInfo.permList)) {
-        errMsg = GetParamErrorMsg("permissionNameList", "Array<string>");
+        errMsg = GetParamErrorMsg("permissionNameList", "Array<Permissions>");
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
