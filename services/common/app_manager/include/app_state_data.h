@@ -41,6 +41,7 @@ struct AppStateData : public Parcelable {
     std::string bundleName;
     int32_t pid = -1;
     int32_t uid = 0;
+    int32_t callerUid = -1;
     int32_t state = 0;
     uint32_t accessTokenId = 0;
     bool isFocused = false;
