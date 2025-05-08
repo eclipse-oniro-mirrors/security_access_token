@@ -66,7 +66,7 @@ def check_required_param(defs, filename):
 def check_consistency(def_in_module, full_def):
     for attr, value in full_def.items():
         if not attr in def_in_module:
-                continue
+            continue
         if not value == def_in_module[attr]:
             raise Exception("{} of {} is inconsistent in module.json and permission_definition.json".format(
                 attr, def_in_module["name"]))
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     input_args = parse_args()
     module_json_path = os.path.join("base/global/system_resources/systemres/main", "module.json")
     module_json_path = os.path.join(input_args.source_root_dir, module_json_path)
-    module_map = parse_module_json(module_json_path)
-    definition_map = parse_definition_json(input_args.input_full_permissions)
-    check_maps(module_map, definition_map)
+    module_json_map = parse_module_json(module_json_path)
+    full_permissions_map = parse_definition_json(input_args.input_full_permissions)
+    check_maps(module_json_map, full_permissions_map)
     print("Check permission consistency pass!")
