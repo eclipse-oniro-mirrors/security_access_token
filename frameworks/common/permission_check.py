@@ -49,6 +49,8 @@ def parse_definition_json(path):
 
 def parse_module_json(path):
     permission_maps = {}
+    if not os.path.exists(path):
+        return {}
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         for perm in data["module"]["definePermissions"]:
@@ -107,6 +109,9 @@ if __name__ == "__main__":
     module_json_path = os.path.join("base/global/system_resources/systemres/main", "module.json")
     module_json_path = os.path.join(input_args.source_root_dir, module_json_path)
     module_json_map = parse_module_json(module_json_path)
+    if not module_json_map:
+        print("Not found {}, no need to check consistency.".format(module_json_path))
+        exit(0)
     full_permissions_map = parse_definition_json(input_args.input_full_permissions)
     check_maps(module_json_map, full_permissions_map)
     print("Check permission consistency pass!")
