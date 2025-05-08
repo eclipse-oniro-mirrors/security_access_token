@@ -60,7 +60,7 @@ struct AccessTokenDfxInfo {
     std::string aclInfo;
     std::string preauthInfo;
     std::string extendInfo;
-    uint64_t duration;
+    int64_t duration;
     int32_t errorCode;
     int32_t pid;
     uint32_t hapSize;
