@@ -19,6 +19,20 @@ config("accesstoken_common_cxx_public_config") {
   include_dirs = [ "include" ]
 }
 
+action("permission_definition_check") {
+  script = "permission_check.py"
+  args = [
+    "--source-root-dir",
+    rebase_path("//", root_build_dir),
+    "--input-full-permissions",
+    rebase_path("${access_token_path}") +
+        "/services/accesstokenmanager/permission_definitions.json",
+  ]
+  inputs = [ rebase_path("${access_token_path}") +
+             "/services/accesstokenmanager/permission_definitions.json" ]
+  outputs = [ "$target_out_dir" ]
+}
+
 action("permission_definition_parse") {
   script = "permission_definition_parser.py"
   inputs = [ rebase_path("${access_token_path}") +
@@ -29,8 +43,13 @@ action("permission_definition_parse") {
         "/services/accesstokenmanager/permission_definitions.json",
     "--output-path",
     rebase_path(target_out_dir) + "/permission_map_constant.h",
+    "--target-platform",
+    target_platform,
   ]
-  outputs = [ "$target_out_dir" ]
+  outputs = [ "$target_out_dir" + "/permission_map_constant.h" ]
+  if (!ohos_indep_compiler_enable) {
+    deps = [ ":permission_definition_check" ]
+  }
 }
 
 ohos_static_library("accesstoken_static_log") {
@@ -96,6 +115,7 @@ ohos_shared_library("accesstoken_common_cxx") {
     ":accesstoken_static_log",
     ":permission_definition_parse",
   ]
+
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",

@@ -1,5 +1,5 @@
 {
-    "systemGrantPermissions": [
+    "definePermissions": [
         {
             "name": "ohos.permission.ACCESS_BIOMETRIC",
             "grantMode": "system_grant",
@@ -708,7 +708,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
@@ -718,7 +719,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.GET_SENSITIVE_PERMISSIONS",
@@ -728,7 +730,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.SET_TELEPHONY_STATE",
@@ -1123,7 +1126,7 @@
         {
             "name": "ohos.permission.ACCESS_CERT_MANAGER_INTERNAL",
             "grantMode": "system_grant",
-            "availableLevel": "system_basic",
+            "availableLevel": "system_core",
             "availableType": "SYSTEM",
             "since": 9,
             "deprecated": "",
@@ -4551,9 +4554,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        }
-    ],
-    "userGrantPermissions": [
+        },
         {
             "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
             "grantMode": "user_grant",
