@@ -22,7 +22,7 @@ namespace Security {
 namespace AccessToken {
 using namespace testing::ext;
 namespace {
-static const int MAX_PERMISSION_SIZE = 1000;
+static const int MAX_PERMISSION_SIZE = 1024;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static const std::string LOCATION_PERMISSION = "ohos.permission.LOCATION";

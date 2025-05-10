@@ -39,7 +39,7 @@ static constexpr int32_t VALUE_MAX_LEN = 32;
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 std::recursive_mutex g_instanceMutex;
 static const int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
-static const int MAX_PERMISSION_SIZE = 1000;
+static const int MAX_PERMISSION_SIZE = 1024;
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
 static const int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 } // namespace
