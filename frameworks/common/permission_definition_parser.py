@@ -82,6 +82,15 @@ JSON_VALUE_CONVERT_TO_CPP_DICT = {
     "system_core": "APL_SYSTEM_CORE",
 }
 
+CONVERT_TARGET_PLATFORM = {
+    "phone": "phone",
+    "watch": "wearable",
+    "tablet": "tablet",
+    "pc": "2in1",
+    "tv": "tv",
+    "car": "car",
+}
+
 
 class PermissionDef(object):
     def __init__(self, permission_def_dict, code):
@@ -114,6 +123,17 @@ class PermissionDef(object):
         else:
             self.has_value = "false"
 
+        if permission_def_dict["since"] >= 20 and not "deviceTypes" in permission_def_dict:
+            raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
+
+        if "deviceTypes" in permission_def_dict:
+            if isinstance(permission_def_dict["deviceTypes"], list) and len(permission_def_dict["deviceTypes"]) > 0:
+                self.device_types = permission_def_dict["deviceTypes"]
+            else:
+                raise Exception("Must be filled with available device type list, name = {}".format(self.name))
+        else:
+            self.device_types = ["general"]
+
         self.code = code
 
     def dump_permission_name(self):
@@ -129,8 +149,15 @@ class PermissionDef(object):
         )
         return entry
 
+    def check_device_type(self, target_platform):
+        if "general" in self.device_types:
+            return True
+        if target_platform in self.device_types:
+            return True
+        return False
 
-def parse_json(path):
+
+def parse_json(path, platform):
     extend_perm = {
         'name' : 'ohos.permission.KERNEL_ATM_SELF_USE',
         'grantMode' : 'system_grant',
@@ -149,12 +176,11 @@ def parse_json(path):
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         index = 0
-        for perm in data["systemGrantPermissions"]:
-            permission_list.append(PermissionDef(perm, index))
-            index += 1
-
-        for perm in data["userGrantPermissions"]:
-            permission_list.append(PermissionDef(perm, index))
+        for perm in data["definePermissions"]:
+            perm_def = PermissionDef(perm, index)
+            if not perm_def.check_device_type(platform):
+                continue
+            permission_list.append(perm_def)
             index += 1
         permission_list.append(PermissionDef(extend_perm, index))
     return permission_list
@@ -177,10 +203,14 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output-path', help='the output cpp path', required=True)
     parser.add_argument('--input-json', help='json file for permission difinition', required=True)
+    parser.add_argument('--target-platform', help='build target platform', required=True)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     input_args = parse_args()
-    permission_list = parse_json(input_args.input_json)
+    curr_platform = "general"
+    if input_args.target_platform in CONVERT_TARGET_PLATFORM:
+        curr_platform = CONVERT_TARGET_PLATFORM[input_args.target_platform]
+    permission_list = parse_json(input_args.input_json, curr_platform)
     convert_to_cpp(input_args.output_path, permission_list)
