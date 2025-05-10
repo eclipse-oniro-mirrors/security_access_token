@@ -70,7 +70,7 @@ const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainA
 const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
-static constexpr int MAX_PERMISSION_SIZE = 1000;
+static constexpr int MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
@@ -298,7 +298,7 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
     uint32_t size = reqPermList.size();
     if (size > MAX_PERMISSION_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList size %{public}d is invalid", size);
-        return INVALID_OPER;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
