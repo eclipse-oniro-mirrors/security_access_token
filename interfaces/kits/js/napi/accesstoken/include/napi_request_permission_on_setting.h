@@ -38,6 +38,8 @@ struct RequestPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
     PermissionGrantInfo info;
     int32_t resultCode = -1;
 
+    int32_t instanceId = -1;
+    bool isDynamic = true;
     std::vector<std::string> permissionList;
     napi_value requestResult = nullptr;
     int32_t errorCode = -1;
@@ -59,6 +61,18 @@ struct RequestOnSettingAsyncContextHandle {
     }
 
     std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContextPtr;
+};
+
+class RequestOnSettingAsyncInstanceControl {
+    public:
+        static void AddCallbackByInstanceId(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext);
+        static void ExecCallback(int32_t id);
+        static void CheckDynamicRequest(
+            std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext, bool& isDynamic);
+        static void UpdateQueueData(const std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext);
+    private:
+        static std::map<int32_t, std::vector<std::shared_ptr<RequestPermOnSettingAsyncContext>>> instanceIdMap_;
+        static std::mutex instanceIdMutex_;
 };
 
 class PermissonOnSettingUICallback {

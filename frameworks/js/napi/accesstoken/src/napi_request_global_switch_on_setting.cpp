@@ -24,6 +24,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::map<int32_t, std::vector<std::shared_ptr<RequestGlobalSwitchAsyncContext>>>
+    RequestGlobalSwitchAsyncInstanceControl::instanceIdMap_;
+std::mutex RequestGlobalSwitchAsyncInstanceControl::instanceIdMutex_;
 namespace {
 const std::string GLOBAL_SWITCH_KEY = "ohos.user.setting.global_switch";
 const std::string GLOBAL_SWITCH_RESULT_KEY = "ohos.user.setting.global_switch.result";
@@ -199,6 +202,8 @@ void SwitchOnSettingUICallback::ReleaseHandler(int32_t code)
     if (code == -1) {
         this->reqContext_->errorCode = code;
     }
+    RequestGlobalSwitchAsyncInstanceControl::UpdateQueueData(this->reqContext_);
+    RequestGlobalSwitchAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
     GlobalSwitchResultsCallbackUI(
         TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->switchStatus, this->reqContext_);
 }
@@ -356,6 +361,117 @@ static int32_t StartUIExtension(std::shared_ptr<RequestGlobalSwitchAsyncContext>
     return CreateUIExtension(want, asyncContext);
 }
 
+static void GetInstanceId(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext)
+{
+    auto task = [asyncContext]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            return;
+        }
+        asyncContext->instanceId = uiContent->GetInstanceId();
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:GetInstanceId");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+    LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d", asyncContext->instanceId);
+}
+
+void RequestGlobalSwitchAsyncInstanceControl::AddCallbackByInstanceId(
+    std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d", asyncContext->instanceId);
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        auto iter = instanceIdMap_.find(asyncContext->instanceId);
+        // id is existed mean a pop window is showing, add context to waiting queue
+        if (iter != instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d has existed.", asyncContext->instanceId);
+            instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
+            return;
+        }
+        // make sure id is in map to indicate a pop-up window is showing
+        instanceIdMap_[asyncContext->instanceId] = {};
+    }
+    StartUIExtension(asyncContext);
+}
+
+void RequestGlobalSwitchAsyncInstanceControl::UpdateQueueData(
+    const std::shared_ptr<RequestGlobalSwitchAsyncContext>& reqContext)
+{
+    if ((reqContext->errorCode != RET_SUCCESS) || !(reqContext->switchStatus)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "The queue data does not need to be updated.");
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        int32_t id = reqContext->instanceId;
+        auto iter = instanceIdMap_.find(id);
+        if (iter == instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
+            return;
+        }
+        int32_t targetSwitchType = reqContext->switchType;
+        LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+        for (auto& asyncContext : iter->second) {
+            if (targetSwitchType == asyncContext->switchType) {
+                asyncContext->errorCode = reqContext->errorCode;
+                asyncContext->switchStatus = reqContext->switchStatus;
+                asyncContext->isDynamic = false;
+            }
+        }
+    }
+}
+
+void RequestGlobalSwitchAsyncInstanceControl::ExecCallback(int32_t id)
+{
+    std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext = nullptr;
+    bool isDynamic = false;
+    {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        auto iter = instanceIdMap_.find(id);
+        if (iter == instanceIdMap_.end()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
+            return;
+        }
+        while (!iter->second.empty()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+            asyncContext = iter->second[0];
+            iter->second.erase(iter->second.begin());
+            CheckDynamicRequest(asyncContext, isDynamic);
+            if (isDynamic) {
+                break;
+            }
+        }
+        if (iter->second.empty()) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map is empty", id);
+            instanceIdMap_.erase(id);
+        }
+    }
+    if (isDynamic) {
+        StartUIExtension(asyncContext);
+    }
+}
+
+void RequestGlobalSwitchAsyncInstanceControl::CheckDynamicRequest(
+    std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext, bool& isDynamic)
+{
+    isDynamic = asyncContext->isDynamic;
+    if (!isDynamic) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission exsion");
+        GlobalSwitchResultsCallbackUI(
+            TransferToJsErrorCode(asyncContext->errorCode), asyncContext->switchStatus, asyncContext);
+        return;
+    }
+}
+
 napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callback_info info)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "RequestGlobalSwitch begin.");
@@ -461,8 +577,10 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
         return;
     }
 
+    GetInstanceId(asyncContextHandle->asyncContextPtr);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
-    StartUIExtension(asyncContextHandle->asyncContextPtr);
+
+    RequestGlobalSwitchAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
     if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
