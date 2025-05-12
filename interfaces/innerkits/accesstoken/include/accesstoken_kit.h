@@ -301,6 +301,13 @@ public:
      */
     static int32_t RequestAppPermOnSetting(AccessTokenID tokenID);
     /**
+     * @brief Get self permission status
+     * @param permissionName permission name quote
+     * @param status the permission status
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetSelfPermissionStatus(const std::string& permissionName, PermissionOper& status);
+    /**
      * @brief Get requsted permission grant result
      * @param permList PermissionListState list quote, as input and query result
      * @return enum PermissionOper, see access_token.h
