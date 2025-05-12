@@ -60,6 +60,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "PermDenyTest/accesstoken_deny_test.cpp",
     "PermisionDialogTest/accesstoken_location_request_test.cpp",
     "PermisionDialogTest/get_self_permission_state_test.cpp",
+    "PermisionDialogTest/get_self_permission_status_test.cpp",
     "PermisionDialogTest/request_permission_on_setting_test.cpp",
     "PermisionDialogTest/set_perm_dialog_cap_test.cpp",
     "PermissionsTest/clear_user_granted__permission_state_test.cpp",

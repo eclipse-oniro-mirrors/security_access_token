@@ -85,6 +85,7 @@ public:
         std::vector<PermissionStatus>& permsList, int32_t apiVersion);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
+    void ParamFlagUpdate();
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     void AddNativePermToKernel(
@@ -124,6 +125,9 @@ private:
 
     OHOS::Utils::RWLock permParamSetLock_;
     uint64_t paramValue_ = 0;
+
+    OHOS::Utils::RWLock permFlagParamSetLock_;
+    uint64_t paramFlagValue_ = 0;
 
     OHOS::Utils::RWLock permToggleStateLock_;
     DISALLOW_COPY_AND_MOVE(PermissionManager);

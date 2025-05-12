@@ -87,6 +87,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 67] void GetKernelPermissions([in] unsigned int tokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 68] void GetReqPermissionByName([in] unsigned int tokenId, [in] String permissionName, [out] String value);
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
+    [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel); 
