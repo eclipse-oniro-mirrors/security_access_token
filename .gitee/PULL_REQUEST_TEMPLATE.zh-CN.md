@@ -9,6 +9,13 @@
 
 3、手工用例（自验证步骤/预期结果/实际结果）:
 
+### 权限合入自检：
+- [ ] 是否需要合入权限定义
+    - [ ] 仅向系统服务开放的权限（availableType为SERVICE的权限）不允许合入global_system_resources仓
+    - [ ] 非SERVICE的权限与global_system_resources联合构建，即两笔pr关联同一个issue
+    - [ ] 填入必要参数name/grantMode/availableLevel/since/provisionEnable/distributedSceneEnable， 且与global_system_resources中声明（如果有）一致
+    - [ ] 声明权限生效的设备平台范围deviceTypes，以列表方式声明("deviceTypes" : [ "xxx", "xxx"])，权限在所有设备通用为"general"，非全平台生效按需填写，包括但不限于"phone"、"wearable"、"tablet"、"2in1"、"tv"、"car"
+
 ### 安全编码自检：
 - [ ] 裸指针避免通过隐式转换构造为sptr
 - [ ] json对象在取值之前必须先判断类型，避免类型不匹配
