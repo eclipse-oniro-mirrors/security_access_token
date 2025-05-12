@@ -6307,10 +6307,11 @@
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
-            "since": 18,
+            "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": true,
+            "deviceTypes": ["phone", "tablet"]
         },
         {
             "name": "ohos.permission.GET_FILE_ICON",
