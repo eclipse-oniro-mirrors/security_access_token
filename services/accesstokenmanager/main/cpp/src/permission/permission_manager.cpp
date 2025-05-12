@@ -263,16 +263,18 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return ret;
 }
 
-AbilityManagerAccessLoaderInterface* PermissionManager::GetAbilityManager()
+std::shared_ptr<LibraryLoader> PermissionManager::GetAbilityManager()
 {
+#ifdef DYNAMIC_CLOSE_LIBS
+    return std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+#endif
     if (abilityManagerLoader_ == nullptr) {
         std::lock_guard<std::mutex> lock(abilityManagerMutex_);
         if (abilityManagerLoader_ == nullptr) {
             abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
         }
     }
-
-    return abilityManagerLoader_->GetObject<AbilityManagerAccessLoaderInterface>();
+    return abilityManagerLoader_;
 }
 
 int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
@@ -290,7 +292,9 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         .callerTokenId = IPCSkeleton::GetCallingTokenID()
     };
 
-    AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
+    std::shared_ptr<LibraryLoader> abilityManagerLoader = GetAbilityManager();
+    AbilityManagerAccessLoaderInterface* abilityManager =
+        abilityManagerLoader->GetObject<AbilityManagerAccessLoaderInterface>();
     if (abilityManager == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
@@ -372,7 +376,9 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
-            AbilityManagerAccessLoaderInterface* abilityManager = GetAbilityManager();
+            std::shared_ptr<LibraryLoader> abilityManagerLoader = GetAbilityManager();
+            AbilityManagerAccessLoaderInterface* abilityManager =
+                abilityManagerLoader->GetObject<AbilityManagerAccessLoaderInterface>();
             if (abilityManager == nullptr) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
             } else if ((ret = abilityManager->KillProcessForPermissionUpdate(id)) != ERR_OK) {

@@ -116,7 +116,7 @@ private:
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     bool IsPermissionStateOrFlagMatched(const PermissionStatus& stata1, const PermissionStatus& stata2);
-    AbilityManagerAccessLoaderInterface* GetAbilityManager();
+    std::shared_ptr<LibraryLoader> GetAbilityManager();
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;
