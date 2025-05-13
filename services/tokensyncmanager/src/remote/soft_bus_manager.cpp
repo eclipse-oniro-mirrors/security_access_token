@@ -525,6 +525,8 @@ int SoftBusManager::FulfillLocalDeviceInfo()
     }
     std::string networkId = std::string(deviceInfo.networkId);
 
+    LOGD(ATM_DOMAIN, ATM_TAG, "Call softbus finished, type:%{public}d", deviceInfo.deviceTypeId);
+
     std::string uuid;
     std::string udid;
 

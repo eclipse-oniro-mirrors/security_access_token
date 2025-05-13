@@ -85,6 +85,7 @@ JSON_VALUE_CONVERT_TO_CPP_DICT = {
 CONVERT_TARGET_PLATFORM = {
     "phone": "phone",
     "watch": "wearable",
+    "wearable": "wearable",
     "tablet": "tablet",
     "pc": "2in1",
     "tv": "tv",

@@ -1432,7 +1432,6 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
             std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
             NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         }
-        
         return nullptr;
     }
     int32_t result;
