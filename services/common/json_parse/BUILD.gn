@@ -98,9 +98,5 @@ ohos_shared_library("accesstoken_cjson_utils") {
       "c_utils:utils",
       "hilog:libhilog",
     ]
-    if (customization_config_policy_enable) {
-      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
-    }
   }
 }

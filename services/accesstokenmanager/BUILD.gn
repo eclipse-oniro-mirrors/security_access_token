@@ -201,5 +201,8 @@ if (is_standard_system) {
       sources +=
           [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
     }
+    if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
+      cflags_cc += [ "-DDYNAMIC_CLOSE_LIBS" ]
+    }
   }
 }
