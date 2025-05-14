@@ -21,28 +21,12 @@
 #include "app_status_change_callback.h"
 #include "nocopyable.h"
 #include "sec_comp_enhance_data.h"
+#include "sec_comp_monitor.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AppUsingSecCompStateObserver : public ApplicationStateObserverStub {
-public:
-    AppUsingSecCompStateObserver() = default;
-    ~AppUsingSecCompStateObserver() = default;
-
-    void OnProcessDied(const ProcessData &processData) override;
-    DISALLOW_COPY_AND_MOVE(AppUsingSecCompStateObserver);
-};
-
-class SecCompAppManagerDeathCallback : public AppManagerDeathCallback {
-public:
-    SecCompAppManagerDeathCallback() = default;
-    ~SecCompAppManagerDeathCallback() = default;
-
-    void NotifyAppManagerDeath() override;
-    DISALLOW_COPY_AND_MOVE(SecCompAppManagerDeathCallback);
-};
-
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 class SecCompEnhanceAgent final {
 public:
     static SecCompEnhanceAgent& GetInstance();
@@ -60,11 +44,12 @@ private:
     DISALLOW_COPY_AND_MOVE(SecCompEnhanceAgent);
 
 private:
-    sptr<AppUsingSecCompStateObserver> observer_ = nullptr;
+    sptr<SecCompUsageObserver> observer_ = nullptr;
     std::shared_ptr<SecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
 };
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

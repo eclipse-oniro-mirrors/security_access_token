@@ -29,19 +29,6 @@ namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
 }
-void AppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "OnProcessDied pid %{public}d", processData.pid);
-    SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
-}
-
-void SecCompAppManagerDeathCallback::NotifyAppManagerDeath()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "AppManagerDeath called");
-
-    SecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
-}
-
 SecCompEnhanceAgent& SecCompEnhanceAgent::GetInstance()
 {
     static SecCompEnhanceAgent* instance = nullptr;
@@ -60,7 +47,7 @@ void SecCompEnhanceAgent::InitAppObserver()
     if (observer_ != nullptr) {
         return;
     }
-    observer_ = new (std::nothrow) AppUsingSecCompStateObserver();
+    observer_ = new (std::nothrow) SecCompUsageObserver();
     if (observer_ == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "New observer failed.");
         return;

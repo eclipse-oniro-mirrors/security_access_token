@@ -568,6 +568,20 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
 }
 
+/**
+ * @tc.name: IsToastShownNeededTest001
+ * @tc.desc: test whether the security component need to show the toast.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, IsToastShownNeededTest001, TestSize.Level0)
+{
+    int32_t pid = 10;
+    MockNativeToken mock("security_component_service");
+    EXPECT_EQ(true, AccessTokenKit::IsToastShownNeeded(pid));
+    EXPECT_EQ(false, AccessTokenKit::IsToastShownNeeded(pid));
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 /**
  * @tc.name: RegisterSecCompEnhance001
