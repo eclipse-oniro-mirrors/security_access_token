@@ -1179,6 +1179,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
+    bool isMuteCamera = CameraManagerAdapter::GetInstance().IsCameraMuted();
     // true means close
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, true, RANDOM_TOKENID);
 
@@ -1194,6 +1195,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     sleep(3); // wait for dialog disappear
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, isMuteCamera,
+        RANDOM_TOKENID);
 }
 
 /*

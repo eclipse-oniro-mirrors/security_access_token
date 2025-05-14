@@ -169,7 +169,7 @@ bool GetAtCfgFromJson(const CJson* j, AccessTokenServiceConfig& a)
         return false;
     }
 
-    if (!GetStringFromJson(j, GRANT_SERVICE_ABILITY_NAME_KEY, a.grantAbilityName)) {
+    if (!GetStringFromJson(j, GRANT_SERVICE_ABILITY_NAME_KEY, a.grantServiceAbilityName)) {
         return false;
     }
 

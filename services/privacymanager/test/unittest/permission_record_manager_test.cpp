@@ -61,6 +61,7 @@ static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
+static bool g_isMicMute = false;
 static constexpr int32_t TEST_USER_ID_10 = 10;
 static constexpr int32_t TEST_INVALID_USER_ID = -1;
 static constexpr int32_t TEST_INVALID_USER_ID_20000 = 20000;
@@ -152,6 +153,7 @@ void PermissionRecordManagerTest::SetUpTestCase()
     g_isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
     PermissionRecordManager::GetInstance().isMicEdmMute_ = false;
     PermissionRecordManager::GetInstance().isMicMixMute_ = false;
+    g_isMicMute = AudioManagerAdapter::GetInstance().GetPersistentMicMuteState();
 }
 
 void PermissionRecordManagerTest::TearDownTestCase()
@@ -184,6 +186,8 @@ void PermissionRecordManagerTest::SetUp()
 
 void PermissionRecordManagerTest::TearDown()
 {
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, g_isMicMute,
+        RANDOM_TOKENID);
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
