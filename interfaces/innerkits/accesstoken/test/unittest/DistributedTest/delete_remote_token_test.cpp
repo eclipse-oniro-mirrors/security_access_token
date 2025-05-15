@@ -137,7 +137,7 @@ void DeleteRemoteTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest001, TestSize.Level1)
+HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteTokenAbnormalTest001 start.");
     MockNativeToken mock("token_sync_service");
@@ -160,7 +160,7 @@ HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest002, TestSize.Level1)
+HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteTokenAbnormalTest002 start.");
     std::string device = "device";
@@ -174,7 +174,7 @@ HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenAbnormalTest002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest001, TestSize.Level1)
+HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest001, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteTokenFuncTest001 start.");
@@ -215,7 +215,7 @@ HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest002, TestSize.Level1)
+HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest002, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteTokenFuncTest002 start.");
@@ -259,7 +259,7 @@ HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest003, TestSize.Level1)
+HWTEST_F(DeleteRemoteTokenTest, DeleteRemoteTokenFuncTest003, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteTokenFuncTest003 start.");

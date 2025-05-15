@@ -105,7 +105,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest001, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest001");
     PermStateChangeScope scopeInfo;
@@ -163,7 +163,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest002, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest002");
     PermStateChangeScope scopeInfo;
@@ -220,7 +220,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest003, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest003");
     PermStateChangeScope scopeInfo;
@@ -260,7 +260,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest004, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFuncTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackFuncTest004");
 
@@ -347,7 +347,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackFun
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest001");
     PermStateChangeScope scopeInfo;
@@ -393,7 +393,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest002, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest002");
     PermStateChangeScope scopeInfo;
@@ -442,7 +442,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest003, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackAbnormalTest003");
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(nullptr);
@@ -455,7 +455,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackAbn
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest001, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest001");
     PermStateChangeScope scopeInfo;
@@ -481,7 +481,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest002, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest002");
     PermStateChangeScope scopeInfo;
@@ -523,7 +523,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest003, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest003");
     PermStateChangeScope scopeInfo;
@@ -555,7 +555,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest004, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest004");
     PermStateChangeScope scopeInfo;
@@ -612,7 +612,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest005, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpecTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest005");
     PermStateChangeScope scopeInfo;
@@ -671,7 +671,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback001, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -724,7 +724,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback002, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback002, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -772,7 +772,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback003, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback003, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -825,7 +825,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback004, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback004, TestSize.Level0)
 {
     PermissionStateFull infoManagerTestStateB = {
         .permissionName = "ohos.permission.MICROPHONE",
@@ -885,7 +885,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback005, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback005, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -949,7 +949,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback006, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback006, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
@@ -995,7 +995,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback007, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback007, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -1027,7 +1027,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback008, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback008, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -1082,7 +1082,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback009, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback009, TestSize.Level0)
 {
     static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
@@ -1129,7 +1129,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback010, TestSize.Level1)
+HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallback010, TestSize.Level0)
 {
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(nullptr);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);

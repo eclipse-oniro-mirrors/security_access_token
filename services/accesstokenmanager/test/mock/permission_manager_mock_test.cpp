@@ -43,7 +43,7 @@ void PermissionManagerMockTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue
  */
-HWTEST_F(PermissionManagerMockTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+HWTEST_F(PermissionManagerMockTest, RequestAppPermOnSettingTest001, TestSize.Level4)
 {
     HapTokenInfo hapInfo;
     hapInfo.bundleName = "aaa";

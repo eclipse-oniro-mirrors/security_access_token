@@ -64,7 +64,7 @@ void GetNativeTokenIdTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest001");
     std::string processName = "";
@@ -80,7 +80,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest002");
     std::string processName = "hdcd";
@@ -102,7 +102,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
+HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest003");
     int32_t gSelfUid = getuid();
@@ -122,7 +122,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
+HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest001");
     MockNativeToken mock("accesstoken_service");
@@ -142,7 +142,7 @@ HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest002, TestSize.Level1)
+HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdFuncTest002");
     std::string processName = "hdcd";

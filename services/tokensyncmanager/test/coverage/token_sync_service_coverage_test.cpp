@@ -158,7 +158,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, CheckAndCopyStr001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, CheckAndCopyStr001, TestSize.Level4)
 {
     std::string test_src = "testSrc";
     ASSERT_FALSE(SoftBusManager::GetInstance().CheckAndCopyStr(nullptr, test_src.length(), test_src));
@@ -170,7 +170,7 @@ HWTEST_F(TokenSyncServiceTest, CheckAndCopyStr001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, CloseSocket001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, CloseSocket001, TestSize.Level4)
 {
     ASSERT_EQ(Constant::FAILURE, SoftBusManager::GetInstance().CloseSocket(-1));
     ASSERT_EQ(Constant::SUCCESS, SoftBusManager::GetInstance().CloseSocket(OUT_OF_MAP_SOCKET));
@@ -184,7 +184,7 @@ HWTEST_F(TokenSyncServiceTest, CloseSocket001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level4)
 {
     SoftBusManager::GetInstance().Initialize();
     SoftBusManager::GetInstance().SetDefaultConfigValue();
@@ -198,7 +198,7 @@ HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level4)
 {
     SoftBusDeviceConnectionListener listener;
     listener.OnDeviceOffline(g_devInfo);

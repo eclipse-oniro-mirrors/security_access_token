@@ -129,7 +129,7 @@ void GetSelfPermissionStatusTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus001, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -168,7 +168,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus002, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -221,7 +221,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus003, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus003, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -269,7 +269,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus003, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus004, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus004, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -317,7 +317,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus004, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus005, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus005, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -366,7 +366,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus005, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus006, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus006, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -400,7 +400,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus006, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus007, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus007, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -457,7 +457,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus007, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus008, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus008, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -519,7 +519,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus008, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus009, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus009, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

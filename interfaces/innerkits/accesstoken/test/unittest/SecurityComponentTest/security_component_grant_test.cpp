@@ -105,7 +105,7 @@ AccessTokenID SecurityComponentGrantTest::AllocTestToken() const
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -138,7 +138,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -175,7 +175,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -212,7 +212,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -249,7 +249,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -286,7 +286,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -326,7 +326,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Level0)
 {
     uint64_t selfToken = GetSelfTokenID();
     MockNativeToken mock("foundation");
@@ -377,7 +377,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest008, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest008, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
@@ -428,7 +428,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Level0)
 {
     PermStateChangeScope scopeInfo9;
     scopeInfo9.permList = {TEST_PERMISSION};
@@ -481,7 +481,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Level0)
 {
     PermStateChangeScope scopeInfo10;
     scopeInfo10.permList = {TEST_PERMISSION};
@@ -528,7 +528,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Level0)
 {
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {TEST_PERMISSION_NOT_REQUESTED};
@@ -575,7 +575,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(SecurityComponentGrantTest, RegisterSecCompEnhance001, TestSize.Level1)
+HWTEST_F(SecurityComponentGrantTest, RegisterSecCompEnhance001, TestSize.Level0)
 {
     SecCompEnhanceData data;
     data.callback = nullptr;

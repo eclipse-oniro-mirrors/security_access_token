@@ -148,7 +148,7 @@ void AppInstallationOptimizedTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken001, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, fullTokenId);
@@ -163,7 +163,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken002, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken002, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams = {
         .apl = APL_SYSTEM_BASIC,
@@ -192,7 +192,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams = {
         .apl = APL_NORMAL,
@@ -217,7 +217,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level0)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = CALENDAR_PERMISSION,
@@ -251,7 +251,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level0)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = CALENDAR_PERMISSION,
@@ -285,7 +285,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken006, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken006, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -305,7 +305,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -324,7 +324,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -343,7 +343,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -362,7 +362,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -382,7 +382,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams = {
         .apl = APL_SYSTEM_BASIC,
@@ -438,7 +438,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -496,7 +496,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -549,7 +549,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -600,7 +600,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -645,7 +645,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken005, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken005, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -678,7 +678,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -711,7 +711,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken007, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken007, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -744,7 +744,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -776,7 +776,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -808,7 +808,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -853,7 +853,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -898,7 +898,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -957,7 +957,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level0)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = APP_TRACKING_PERMISSION,
@@ -1011,7 +1011,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level0)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = APP_TRACKING_PERMISSION,
@@ -1061,7 +1061,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal001, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal001, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -1088,7 +1088,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal002, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal002, TestSize.Level0)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -1119,7 +1119,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level0)
 {
     HapInfoParams testHapInfoParams = g_testHapInfoParams;
     HapPolicyParams testPolicyParam = {
@@ -1164,7 +1164,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal004, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal004, TestSize.Level0)
 {
     HapInfoParams testHapInfoParams = g_testHapInfoParams;
     HapPolicyParams testPolicyParam = g_testPolicyParams;

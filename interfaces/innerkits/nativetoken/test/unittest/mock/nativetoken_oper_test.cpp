@@ -122,7 +122,7 @@ static void CopyNativeTokenJson(const std::string& sourceFileName, const std::st
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -149,7 +149,7 @@ HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateItemcontent001, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateItemcontent001, TestSize.Level0)
 {
     SetTimes();
     g_createNumberTime = DEFAULT_TIME;
@@ -178,7 +178,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -216,7 +216,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -267,7 +267,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -325,7 +325,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
+HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -394,7 +394,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
+HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level0)
 {
     SetTimes();
     NativeTokenList tokenNode;
@@ -434,7 +434,7 @@ HWTEST_F(TokenOperTest, CreateNativeTokenJsonObject002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level0)
 {
     SetTimes();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
@@ -511,7 +511,7 @@ static int32_t Start(const char *processName)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
 {
     SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
@@ -547,7 +547,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level1)
+HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level0)
 {
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     AtlibInit();

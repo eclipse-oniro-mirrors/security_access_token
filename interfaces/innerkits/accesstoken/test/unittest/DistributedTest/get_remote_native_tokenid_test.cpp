@@ -102,7 +102,7 @@ void GetRemoteNativeTokenIDTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetRemoteNativeTokenIDTest, GetRemoteNativeTokenIDAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetRemoteNativeTokenIDTest, GetRemoteNativeTokenIDAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteNativeTokenIDAbnormalTest001 start.");
     std::string device = "device";

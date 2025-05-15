@@ -44,7 +44,7 @@ void CJsonUtilsTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, CreateJsonFromStringTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, CreateJsonFromStringTest001, TestSize.Level3)
 {
     std::string test;
     EXPECT_EQ(nullptr, CreateJsonFromString(test));
@@ -56,7 +56,7 @@ HWTEST_F(CJsonUtilsTest, CreateJsonFromStringTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, PackJsonToStringTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, PackJsonToStringTest001, TestSize.Level3)
 {
     std::string res = PackJsonToString(nullptr);
     EXPECT_EQ(res.size(), 0);
@@ -70,7 +70,7 @@ HWTEST_F(CJsonUtilsTest, PackJsonToStringTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetObjFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetObjFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     EXPECT_EQ(nullptr, GetObjFromJson(nullptr, test));
@@ -90,7 +90,7 @@ HWTEST_F(CJsonUtilsTest, GetObjFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetArrayFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetArrayFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     EXPECT_EQ(nullptr, GetArrayFromJson(nullptr, test));
@@ -110,7 +110,7 @@ HWTEST_F(CJsonUtilsTest, GetArrayFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetStringFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetStringFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     std::string res;
@@ -134,7 +134,7 @@ HWTEST_F(CJsonUtilsTest, GetStringFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetIntFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetIntFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     int32_t res;
@@ -155,7 +155,7 @@ HWTEST_F(CJsonUtilsTest, GetIntFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     uint32_t res;
@@ -176,7 +176,7 @@ HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     bool res;
@@ -197,7 +197,7 @@ HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest002, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest002, TestSize.Level3)
 {
     std::string test = "test1";
     bool res;
@@ -214,7 +214,7 @@ HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest002, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddObjToJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddObjToJsonTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddObjToJson(nullptr, "", nullptr));
     std::string test = "test1";
@@ -235,7 +235,7 @@ HWTEST_F(CJsonUtilsTest, AddObjToJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddObjToArrayTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddObjToArrayTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddObjToArray(nullptr, nullptr));
 
@@ -249,7 +249,7 @@ HWTEST_F(CJsonUtilsTest, AddObjToArrayTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddStringToJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddStringToJsonTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddStringToJson(nullptr, "", ""));
     ASSERT_EQ(false, AddStringToJson(nullptr, "test0", "test0"));
@@ -266,7 +266,7 @@ HWTEST_F(CJsonUtilsTest, AddStringToJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddBoolToJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddBoolToJsonTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddBoolToJson(nullptr, "", true));
     ASSERT_EQ(false, AddBoolToJson(nullptr, "test0", true));
@@ -283,7 +283,7 @@ HWTEST_F(CJsonUtilsTest, AddBoolToJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddIntToJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddIntToJsonTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddIntToJson(nullptr, "", 0));
     ASSERT_EQ(false, AddIntToJson(nullptr, "test0", 0));
@@ -300,7 +300,7 @@ HWTEST_F(CJsonUtilsTest, AddIntToJsonTest001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
-HWTEST_F(CJsonUtilsTest, AddUnsignedIntToJsonTest001, TestSize.Level4)
+HWTEST_F(CJsonUtilsTest, AddUnsignedIntToJsonTest001, TestSize.Level3)
 {
     ASSERT_EQ(false, AddUnsignedIntToJson(nullptr, "", 0));
     ASSERT_EQ(false, AddUnsignedIntToJson(nullptr, "test0", 0));

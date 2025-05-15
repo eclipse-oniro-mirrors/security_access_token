@@ -65,7 +65,7 @@ void PermissionRecordDBTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
@@ -77,7 +77,7 @@ HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd002, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
@@ -89,7 +89,7 @@ HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateDeletePrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateDeletePrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     std::vector<std::string> columnNames;
@@ -102,7 +102,7 @@ HWTEST_F(PermissionRecordDBTest, CreateDeletePrepareSqlCmd001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
@@ -117,7 +117,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd002, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     std::vector<std::string> modifyColumns;
@@ -133,7 +133,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd003, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd003, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
@@ -150,7 +150,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd004, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd004, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
@@ -167,7 +167,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd005, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd005, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
@@ -185,7 +185,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     std::set<int32_t> opCodeList;
@@ -200,7 +200,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSi
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::set<int32_t> opCodeList;
@@ -219,7 +219,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSi
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateCountPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateCountPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateCountPrepareSqlCmd(type));
@@ -231,7 +231,7 @@ HWTEST_F(PermissionRecordDBTest, CreateCountPrepareSqlCmd001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateDeleteExpireRecordsPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateDeleteExpireRecordsPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100); // type not found
     std::vector<std::string> andColumns;
@@ -249,7 +249,7 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteExpireRecordsPrepareSqlCmd001, Test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, DeleteHistoryRecordsInTables001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, DeleteHistoryRecordsInTables001, TestSize.Level0)
 {
     std::vector<PermissionUsedRecordDb::DataType> dataTypes;
     dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
@@ -265,7 +265,7 @@ HWTEST_F(PermissionRecordDBTest, DeleteHistoryRecordsInTables001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, CreateDeleteHistoryRecordsPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateDeleteHistoryRecordsPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100); // type not found
     std::unordered_set<AccessTokenID> tokenIDList;
@@ -282,7 +282,7 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteHistoryRecordsPrepareSqlCmd001, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     uint32_t excessiveSize = 10;
@@ -295,7 +295,7 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd001, T
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd002, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     uint32_t excessiveSize = 10;
@@ -308,7 +308,7 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd002, T
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, CreatePermissionRecordTable001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreatePermissionRecordTable001, TestSize.Level0)
 {
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
 
@@ -326,7 +326,7 @@ HWTEST_F(PermissionRecordDBTest, CreatePermissionRecordTable001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, InsertLockScreenStatusColumn001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, InsertLockScreenStatusColumn001, TestSize.Level0)
 {
     ASSERT_EQ(Constant::SUCCESS, PermissionUsedRecordDb::GetInstance().InsertLockScreenStatusColumn());
 
@@ -344,7 +344,7 @@ HWTEST_F(PermissionRecordDBTest, InsertLockScreenStatusColumn001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level0)
 {
     PermissionUsedRequest request;
     GenericValues andGenericValues;
@@ -385,7 +385,7 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecord001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecord001, TestSize.Level0)
 {
     GenericValues inGenericValues;
     PermissionUsedRecord permissionRecord;
@@ -413,7 +413,7 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level0)
 {
     GenericValues value1;
     value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
@@ -446,7 +446,7 @@ HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level0)
 {
     GenericValues value1;
     value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
@@ -485,7 +485,7 @@ HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level0)
 {
     std::vector<GenericValues> values;
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
@@ -498,7 +498,7 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level0)
 {
     GenericValues value1;
     value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
@@ -539,7 +539,7 @@ HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level0)
 {
     GenericValues value;
     std::set<int32_t> opCodeList;
@@ -590,7 +590,7 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level0)
 {
     GenericValues value1;
     value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
@@ -651,7 +651,7 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, DeleteExpireRecords001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, DeleteExpireRecords001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     GenericValues andConditions;
@@ -664,7 +664,7 @@ HWTEST_F(PermissionRecordDBTest, DeleteExpireRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
-HWTEST_F(PermissionRecordDBTest, DeleteExcessiveRecords001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, DeleteExcessiveRecords001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     uint32_t excessiveSize = 10;
@@ -677,7 +677,7 @@ HWTEST_F(PermissionRecordDBTest, DeleteExcessiveRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, CreateQueryPrepareSqlCmd001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreateQueryPrepareSqlCmd001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
     std::vector<std::string> conditionColumns;
@@ -695,7 +695,7 @@ HWTEST_F(PermissionRecordDBTest, CreateQueryPrepareSqlCmd001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, Query001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Query001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
     GenericValues conditionValue;
@@ -743,7 +743,7 @@ HWTEST_F(PermissionRecordDBTest, Query001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
     GenericValues conditionValue;

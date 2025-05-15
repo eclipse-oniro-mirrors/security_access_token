@@ -100,7 +100,7 @@ void AccessTokenDenyTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level0)
 {
     UserState user = {.userId = 100, .isActive = true}; // 100 is userId
     const std::vector<UserState> userList = { user };
@@ -116,7 +116,7 @@ HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level0)
 {
     UserState user = {.userId = 100, .isActive = true}; // 100 is userId
     const std::vector<UserState> userList = { user };
@@ -131,7 +131,7 @@ HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
@@ -144,7 +144,7 @@ HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenKit::InitHapToken(g_InfoParms, g_PolicyPrams, tokenIdEx);
@@ -157,7 +157,7 @@ HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
 {
     std::string remoteDevice = "remote device";
     AccessTokenID tokenId = 123;
@@ -171,7 +171,7 @@ HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = 123;
@@ -189,7 +189,7 @@ HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToken(tokenId));
@@ -201,7 +201,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level0)
 {
     int32_t userID = 0;
     std::string bundleName = "test";
@@ -216,7 +216,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfo tokenInfo;
@@ -229,7 +229,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level0)
 {
     AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
@@ -242,7 +242,7 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permStatList;
     AccessTokenID tokenID = 123; // 123: tokenid
@@ -258,7 +258,7 @@ HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -272,7 +272,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = 123;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -288,7 +288,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = 123;
     uint32_t status;
@@ -304,7 +304,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123: tokenid
     std::string permission = "ohos.permission.CAMERA";
@@ -318,7 +318,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -332,7 +332,7 @@ HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
@@ -357,7 +357,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level0)
 {
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -372,7 +372,7 @@ HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Level0)
 {
     setuid(g_selfUid);
 
@@ -417,7 +417,7 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level0)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
@@ -430,7 +430,7 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -446,7 +446,7 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfoForSync hapSync;
@@ -459,7 +459,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level0)
 {
     std::string device = "device";
     HapTokenInfoForSync hapSync;
@@ -472,7 +472,7 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level0)
 {
     std::string device = "device";
     AccessTokenID tokenId = 123;
@@ -485,7 +485,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level0)
 {
     std::string device = "device";
     AccessTokenID tokenId = 123;
@@ -498,13 +498,13 @@ HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level0)
 {
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }
 
-HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level0)
 {
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
@@ -518,7 +518,7 @@ HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level0)
 {
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
@@ -530,7 +530,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "permission";
@@ -545,7 +545,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionWithValue> kernelPermList;

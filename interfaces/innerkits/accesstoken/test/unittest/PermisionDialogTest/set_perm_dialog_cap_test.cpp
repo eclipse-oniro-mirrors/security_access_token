@@ -83,7 +83,7 @@ void SetPermDialogCapTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level1)
+HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
@@ -106,7 +106,7 @@ HWTEST_F(SetPermDialogCapTest, SetPermDialogCapAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level1)
+HWTEST_F(SetPermDialogCapTest, SetPermDialogCapFuncTest001, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");

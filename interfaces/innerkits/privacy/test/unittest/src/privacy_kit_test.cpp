@@ -369,7 +369,7 @@ static void SleepUtilMinuteEnd()
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = 0;
@@ -400,7 +400,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -436,7 +436,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_nativeToken;
@@ -460,7 +460,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -494,7 +494,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -551,7 +551,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
 {
     SleepUtilMinuteEnd();
     AddPermParamInfo info;
@@ -587,7 +587,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -608,7 +608,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
 {
     int32_t permRecordSize = 0;
 
@@ -665,7 +665,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -694,7 +694,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(0));
 }
@@ -705,7 +705,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -729,7 +729,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -744,7 +744,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -774,7 +774,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -819,7 +819,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -866,7 +866,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -902,7 +902,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -923,7 +923,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -961,7 +961,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -984,7 +984,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -1005,7 +1005,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("GetPermissionUsedRecordsAsync003", reqPerm, true);
@@ -1024,7 +1024,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync004, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("GetPermissionUsedRecordsAsync004", reqPerm, false);
@@ -1091,7 +1091,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
 
@@ -1152,7 +1152,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level0)
 {
     std::vector<std::string> permList1 = {"ohos.permission.READ_CONTACTS"};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest1>(permList1);
@@ -1205,7 +1205,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level0)
 {
     std::vector<std::string> permList;
     for (int32_t i = 0; i < 1024; i++) { // 1024 is the limitation
@@ -1226,7 +1226,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     std::vector<std::shared_ptr<CbCustomizeTest3>> callbackList;
@@ -1255,7 +1255,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.INVALD"};
 
@@ -1274,7 +1274,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
@@ -1287,7 +1287,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
@@ -1303,7 +1303,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level0)
 {
     std::vector<std::string> permList = {
         "ohos.permission.CAMERA",
@@ -1335,7 +1335,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level0)
 {
     std::shared_ptr<PermActiveStatusCustomizedCbk> callback = nullptr;
     ASSERT_EQ(nullptr, callback);
@@ -1348,7 +1348,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback010, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback010, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("RegisterPermActiveStatusCallback010", reqPerm, false);
@@ -1364,7 +1364,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback011, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback011, TestSize.Level0)
 {
     std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest3>(permList1);
@@ -1404,7 +1404,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.READ_CALL_LOG"};
     auto callbackPtr = std::make_shared<CbCustomizeTest5>(permList);
@@ -1438,7 +1438,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
@@ -1452,7 +1452,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("IsAllowedUsingPermission002", reqPerm, true);
@@ -1466,7 +1466,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("IsAllowedUsingPermission003", reqPerm, true);
@@ -1482,7 +1482,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission004, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.MICROPHONE";
     std::vector<AppStateData> list;
@@ -1502,7 +1502,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission005, TestSize.Level0)
 {
     std::vector<AppStateData> list;
     ASSERT_EQ(0, AppManagerAccessClient::GetInstance().GetForegroundApplications(list));
@@ -1527,7 +1527,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.MICROPHONE";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
@@ -1600,7 +1600,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "permissionName"));
@@ -1614,7 +1614,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1629,7 +1629,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.READ_CONTACTS";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1656,7 +1656,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1669,7 +1669,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.UtTestInvalidPermission";
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1684,7 +1684,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level0)
 {
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
@@ -1705,7 +1705,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission007, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission007, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
@@ -1721,7 +1721,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level0)
 {
     AccessTokenID tokenId = 0;
     std::string permissionName;
@@ -1737,7 +1737,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
@@ -1753,7 +1753,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -1769,7 +1769,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission011, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission011, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     int32_t pid1 = 1001;
@@ -1787,7 +1787,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission012, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission012, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     int32_t pid1 = 1001;
@@ -1805,7 +1805,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission013, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission013, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     int32_t pid1 = 1001;
@@ -1826,7 +1826,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission014, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission014, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -1844,7 +1844,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(0, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(0, "permissionName"));
@@ -1856,7 +1856,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(
@@ -1869,7 +1869,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1885,7 +1885,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1900,7 +1900,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level0)
 {
     ASSERT_EQ(
         PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, "ohos.permission.CAMERA"));
@@ -1912,7 +1912,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI66BH3
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
@@ -1928,7 +1928,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.READ_CONTACTS";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
@@ -1967,7 +1967,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, OnRemoteRequest001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123 is random input
     bool isShowing = false;
@@ -2014,7 +2014,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, OnRemoteRequest002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, OnRemoteRequest002, TestSize.Level0)
 {
     g_permissionUsedRecord.accessRecords.emplace_back(g_usedRecordDetail);
     g_bundleUsedRecord.permissionRecords.emplace_back(g_permissionUsedRecord);
@@ -2069,7 +2069,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level0)
 {
     ActiveChangeResponse response = {
         .tokenID = 123,
@@ -2104,7 +2104,7 @@ HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, ActiveStatusChangeCallback001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, ActiveStatusChangeCallback001, TestSize.Level0)
 {
     ActiveChangeResponse response = {
         .tokenID = 123,
@@ -2126,7 +2126,7 @@ HWTEST_F(PrivacyKitTest, ActiveStatusChangeCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, StateChangeNotify001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StateChangeNotify001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123 is random input
     bool isShowing = false;
@@ -2142,7 +2142,7 @@ HWTEST_F(PrivacyKitTest, StateChangeNotify001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level0)
 {
     ASSERT_NE(nullptr, PrivacyManagerClient::GetInstance().proxy_);
     OHOS::sptr<IPrivacyManager> proxy = PrivacyManagerClient::GetInstance().proxy_; // backup
@@ -2158,7 +2158,7 @@ HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord011, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord011, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2187,7 +2187,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord012, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord012, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2217,7 +2217,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord013, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord013, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2247,7 +2247,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord014, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord014, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2273,7 +2273,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord015, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord015, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2299,7 +2299,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord015, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord016, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord016, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2326,7 +2326,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord016, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord017, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord017, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2356,7 +2356,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord017, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord018, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord018, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2373,7 +2373,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord018, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2415,7 +2415,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos002, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2470,7 +2470,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2516,7 +2516,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos004, TestSize.Level0)
 {
     std::vector<PermissionUsedTypeInfo> results;
     // tokenId invalid
@@ -2540,7 +2540,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     std::string permissionName;
@@ -2566,7 +2566,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level0)
 {
     uint32_t count = MAX_PERMISSION_USED_TYPE_SIZE + 1;
 
@@ -2609,7 +2609,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::SetMutePolicy(PolicyType::EDM - 1, CallerType::MICROPHONE, true, RANDOM_TOKENID));
@@ -2629,7 +2629,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level0)
 {
     MockNativeToken mock("accesstoken_service"); // as a sa without SET_MUTE_POLICY
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
@@ -2642,7 +2642,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level0)
 {
     MockNativeToken mock("camera_service"); // as a system service with SET_MUTE_POLICY
 
@@ -2656,7 +2656,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("SetMutePolicyTest004", reqPerm, true); // as a system hap
@@ -2670,7 +2670,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetMutePolicyTest005, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest005, TestSize.Level0)
 {
     MockNativeToken mock("hdcd");
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
@@ -2683,7 +2683,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level0)
 {
     uint32_t opCode1;
     uint32_t opCode2;
@@ -2721,7 +2721,7 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level0)
 {
     uint32_t opCode1;
     uint32_t opCode2;
@@ -2754,7 +2754,7 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level0)
 {
     uint32_t opCode1;
     uint32_t opCode2;
@@ -2788,7 +2788,7 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
 {
     bool status = true;
     int32_t resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(INVALID_USER_ID, status);
@@ -2803,7 +2803,7 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
@@ -2859,7 +2859,7 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");

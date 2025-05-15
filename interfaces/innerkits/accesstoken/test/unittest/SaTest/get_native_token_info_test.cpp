@@ -93,7 +93,7 @@ void GetNativeTokenInfoTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenInfoTest, GeTokenInfoAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GeTokenInfoAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GeTokenInfoAbnormalTest001");
     AccessTokenID tokenID = 0;
@@ -110,7 +110,7 @@ HWTEST_F(GetNativeTokenInfoTest, GeTokenInfoAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest002");
     MockNativeToken mock("accesstoken_service");
@@ -137,7 +137,7 @@ HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest003, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoAbnormalTest002");
     g_selfUid = getuid();
@@ -159,7 +159,7 @@ HWTEST_F(GetNativeTokenInfoTest, GetTokenInfoAbnormalTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoFuncTest001, TestSize.Level1)
+HWTEST_F(GetNativeTokenInfoTest, GetNativeTokenInfoFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenInfoFuncTest001");
     MockNativeToken mock("accesstoken_service");

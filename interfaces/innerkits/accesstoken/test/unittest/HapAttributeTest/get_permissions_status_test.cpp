@@ -148,7 +148,7 @@ void GetPermissionsStatusTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -195,7 +195,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest002, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -250,7 +250,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest002, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -274,7 +274,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest002, TestSize.Level0)
 {
     std::vector<PermissionListState> permsList;
     PermissionListState tmpA = {
@@ -293,7 +293,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest002, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest003, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("GetPermissionsStatusAbnormalTest003", reqPerm, true);
@@ -323,7 +323,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest003, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest001, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest001, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
@@ -351,7 +351,7 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest002, TestSize.Level1)
+HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

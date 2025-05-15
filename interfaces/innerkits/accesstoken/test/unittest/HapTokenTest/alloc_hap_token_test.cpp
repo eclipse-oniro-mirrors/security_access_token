@@ -194,7 +194,7 @@ void AllocHapTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken001, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -210,7 +210,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken002, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken002, TestSize.Level0)
 {
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
@@ -229,7 +229,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken003, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken003, TestSize.Level0)
 {
     std::string invalidBundleName (INVALID_BUNDLENAME_LEN, 'x');
     std::string bundle = g_infoManagerTestInfoParms.bundleName;
@@ -258,7 +258,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken004, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken004, TestSize.Level0)
 {
     ATokenAplEnum typeBackUp = g_infoManagerTestPolicyPrams.apl;
     DeleteTestToken();
@@ -284,7 +284,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken005, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken005, TestSize.Level0)
 {
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName;
     std::string bundleNameBackUp = g_infoManagerTestPolicyPrams.permList[INDEX_ONE].bundleName;
@@ -318,7 +318,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken006, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken006, TestSize.Level0)
 {
     std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     DeleteTestToken();
@@ -345,7 +345,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken007, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken007, TestSize.Level0)
 {
     std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName;
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
@@ -377,7 +377,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken008, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken008, TestSize.Level0)
 {
     std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
@@ -408,7 +408,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken009, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken009, TestSize.Level0)
 {
     std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description;
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
@@ -451,7 +451,7 @@ static bool ExistInVector(vector<unsigned int> array, unsigned int value)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken010, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken010, TestSize.Level0)
 {
     int ret;
     bool exist = false;
@@ -484,7 +484,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken011, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken011, TestSize.Level0)
 {
     std::string invalidAppIDDesc (INVALID_APPIDDESC_LEN, 'x');
     std::string backup = g_infoManagerTestInfoParms.appIDDesc;
@@ -503,7 +503,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken012, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken012, TestSize.Level0)
 {
     std::string backup = g_infoManagerTestInfoParms.bundleName;
 
@@ -519,7 +519,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken013, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken013, TestSize.Level0)
 {
     std::string backup = g_infoManagerTestInfoParms.appIDDesc;
 
@@ -535,7 +535,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken014, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken014, TestSize.Level0)
 {
     std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
 
@@ -554,7 +554,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken015, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken015, TestSize.Level0)
 {
     std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName;
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
@@ -582,7 +582,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken015, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken016, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken016, TestSize.Level0)
 {
     std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
@@ -607,7 +607,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken016, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken017, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken017, TestSize.Level0)
 {
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     std::string backupDec = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description;
@@ -632,7 +632,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken017, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken018, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken018, TestSize.Level0)
 {
     HapPolicyParams infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
@@ -675,7 +675,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken018, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AllocHapTokenTest, AllocHapToken019, TestSize.Level1)
+HWTEST_F(AllocHapTokenTest, AllocHapToken019, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     HapPolicyParams infoManagerTestPolicyPrams = {

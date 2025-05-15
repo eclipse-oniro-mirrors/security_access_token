@@ -125,7 +125,7 @@ void PermissionRecordSetTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -143,7 +143,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -161,7 +161,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -179,7 +179,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0004, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -197,7 +197,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0005, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0005, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -215,7 +215,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0006, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0006, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -233,7 +233,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0007, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0007, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -251,7 +251,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0008, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0008, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] }, // 0-3
@@ -288,7 +288,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0009, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0009, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] }, // 0-0
@@ -321,7 +321,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0010, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0010, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] }, // 0-4
@@ -354,7 +354,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveRecord0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveRecord0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -386,7 +386,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveRecord0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveRecord0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -418,7 +418,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveRecord0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveRecord0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -450,7 +450,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveRecord0005, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveRecord0005, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -482,7 +482,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenId0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenId0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -514,7 +514,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenId0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenId0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -546,7 +546,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenId0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenId0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -578,7 +578,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -610,7 +610,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -642,7 +642,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -674,7 +674,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0004, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -706,7 +706,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0005, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0005, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -738,7 +738,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemovePermCode0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemovePermCode0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -770,7 +770,7 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemovePermCode0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemovePermCode0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -802,7 +802,7 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemovePermCode0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemovePermCode0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -834,7 +834,7 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemovePermCode0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemovePermCode0004, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    INACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -866,7 +866,7 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0001, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -898,7 +898,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0002, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -930,7 +930,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0003, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -962,7 +962,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0004, TestSize.Level0)
 {
     int32_t recordList[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[1] },
@@ -994,7 +994,7 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0001, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1021,7 +1021,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0002, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1048,7 +1048,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0003, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1075,7 +1075,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0004, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1102,7 +1102,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0005, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0005, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -1127,7 +1127,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0006, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0006, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -1153,7 +1153,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0007, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0007, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -1179,7 +1179,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0008, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0008, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1205,7 +1205,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0009, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0009, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   -1, CALLER_PID[0] },
@@ -1231,7 +1231,7 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0001, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0001, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],    INACTIVE,   HAP_PID[0], CALLER_PID[0] },
@@ -1258,7 +1258,7 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0002, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0002, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1284,7 +1284,7 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0003, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0003, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1310,7 +1310,7 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0004, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0004, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],   INACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1335,7 +1335,7 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0005, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0005, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],   ACTIVE,   HAP_PID[1], CALLER_PID[0] },
@@ -1360,7 +1360,7 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0006, TestSize.Level1)
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0006, TestSize.Level0)
 {
     int32_t recordArray1[][RECORD_ITEM_SIZE] = {
         { HAP_TOKEN_ID[0],   OPCODE[1],   INACTIVE,   HAP_PID[1], CALLER_PID[0] },

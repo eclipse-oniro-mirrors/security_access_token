@@ -68,7 +68,7 @@ void NativeTokenReceptorTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData001!");
     std::string testStr = R"([)"\
@@ -95,7 +95,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData002!");
     std::string testStr = R"([{"processName":""}])";
@@ -150,7 +150,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData002!");
     std::string testStr = R"([)"\
@@ -171,7 +171,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, GetnNativeTokenInfoFromJson002, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, GetnNativeTokenInfoFromJson002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test GetnNativeTokenInfoFromJson002!");
     // version wrong
@@ -236,7 +236,7 @@ HWTEST_F(NativeTokenReceptorTest, GetnNativeTokenInfoFromJson002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test init001!");
 

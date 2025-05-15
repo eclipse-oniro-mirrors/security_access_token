@@ -106,7 +106,7 @@ void GetPermissionTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
     std::string permisson = "ohos.permission.CAMERA";
@@ -123,7 +123,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest002");
 
@@ -161,7 +161,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeFuncTest001");
 
@@ -211,7 +211,7 @@ HWTEST_F(GetPermissionTest, GetPermissionUsedTypeFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetDefPermissionFuncTest001");
 
@@ -245,7 +245,7 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest001");
     std::vector<std::string> reqPerm;
@@ -271,7 +271,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest002");
     std::vector<std::string> reqPerm;
@@ -297,7 +297,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest003");
     std::vector<std::string> reqPerm;
@@ -368,7 +368,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest004, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetReqPermissionsAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsAbnormalTest001");
     std::vector<std::string> reqPerm;
@@ -421,7 +421,7 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsSpecTest001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionManagerInfoFuncTest001");
 
@@ -436,7 +436,7 @@ HWTEST_F(GetPermissionTest, GetPermissionManagerInfoFuncTest001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, GetTokenIDByUserID001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetTokenIDByUserID001, TestSize.Level0)
 {
     MockNativeToken mock("accesstoken_service");
     int32_t userID = -1;
@@ -456,7 +456,7 @@ HWTEST_F(GetPermissionTest, GetTokenIDByUserID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo001, TestSize.Level0)
 {
     int32_t ret = AccessTokenKit::ReloadNativeTokenInfo();
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -468,7 +468,7 @@ HWTEST_F(GetPermissionTest, ReloadNativeTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level0)
 {
     std::vector<PermissionWithValue> kernelPermList;
     {
@@ -494,7 +494,7 @@ HWTEST_F(GetPermissionTest, GetKernelPermissionTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetPermissionTest, GetReqPermissionByNameTest001, TestSize.Level1)
+HWTEST_F(GetPermissionTest, GetReqPermissionByNameTest001, TestSize.Level0)
 {
     std::string value;
     std::vector<PermissionWithValue> kernelPermList;

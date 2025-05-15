@@ -125,7 +125,7 @@ void DeleteTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level1)
+HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenFuncTest001");
 
@@ -149,7 +149,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest002, TestSize.Level1)
+HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenFuncTest002");
 
@@ -173,7 +173,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenFuncTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
+HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenAbnormalTest001");
 
@@ -187,7 +187,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest002, TestSize.Level1)
+HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenAbnormalTest002");
     AccessTokenID tokenID = GetSelfTokenID(); // native token
@@ -201,7 +201,7 @@ HWTEST_F(DeleteTokenTest, DeleteTokenAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DeleteTokenTest, DeleteTokenSpecTest001, TestSize.Level1)
+HWTEST_F(DeleteTokenTest, DeleteTokenSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenSpecTest001");
 

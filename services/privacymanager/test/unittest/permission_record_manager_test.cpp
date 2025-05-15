@@ -237,7 +237,7 @@ static PermissionUsedTypeInfo MakeInfo(AccessTokenID tokenId, int32_t pid, const
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -271,7 +271,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     std::vector<sptr<PermActiveStatusChangeCallback>> callbacks;
@@ -302,7 +302,7 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestS
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -315,7 +315,7 @@ HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, Tes
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
@@ -332,7 +332,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Level0)
 {
     auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
@@ -365,7 +365,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -392,7 +392,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -433,7 +433,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -474,7 +474,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -515,7 +515,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest007, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest007, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -543,7 +543,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest007, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -586,7 +586,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Level0)
 {
     auto callbackPtr1 = std::make_shared<PermissionRecordManagerTestCb1>();
     auto callbackWrap1 = new (std::nothrow) StateChangeCallback(callbackPtr1);
@@ -636,7 +636,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -675,7 +675,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
@@ -712,7 +712,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level0)
 {
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.CAMERA"));
     sleep(3); // wait for dialog disappear
@@ -728,7 +728,7 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -762,7 +762,7 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, TransferOpcodeToPermission001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, TransferOpcodeToPermission001, TestSize.Level0)
 {
     int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
     std::string permissionName;
@@ -775,7 +775,7 @@ HWTEST_F(PermissionRecordManagerTest, TransferOpcodeToPermission001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level0)
 {
     MockNativeToken mock("camera_service"); // native process with have add permission
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -807,7 +807,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level0)
 {
     MockNativeToken mock("camera_service"); // native process with have permission
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -829,7 +829,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
 {
     int32_t ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
         TEST_INVALID_USER_ID, true);
@@ -846,7 +846,7 @@ HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level0)
 {
     bool status = true;
     int32_t ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
@@ -864,7 +864,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, UpdatePermUsedRecToggleStatusMap001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, UpdatePermUsedRecToggleStatusMap001, TestSize.Level0)
 {
     bool checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
     EXPECT_TRUE(checkStatus);
@@ -889,7 +889,7 @@ HWTEST_F(PermissionRecordManagerTest, UpdatePermUsedRecToggleStatusMap001, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -916,7 +916,7 @@ HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestSize.Level0)
 {
     std::vector<std::string> permList;
 
@@ -932,7 +932,7 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level0)
 {
     uint32_t tokenId = RANDOM_TOKENID;
     std::string permissionName = "ohos.permission.PERMISSION_RECORD_MANAGER_TEST";
@@ -956,7 +956,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level0)
 {
     LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
     EXPECT_EQ(nullptr, loader1.handle_);
@@ -972,7 +972,7 @@ HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level0)
 {
     GenericValues value;
     value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
@@ -989,7 +989,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level0)
 {
     GenericValues value;
     value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
@@ -1006,7 +1006,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level0)
 {
     GenericValues value;
     value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
@@ -1024,7 +1024,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
@@ -1046,7 +1046,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1068,7 +1068,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1090,7 +1090,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
@@ -1113,7 +1113,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1135,7 +1135,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1157,7 +1157,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenID);
@@ -1180,7 +1180,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1203,7 +1203,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest009, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest009, TestSize.Level0)
 {
     uint32_t tokenID = PrivacyTestCommon::GetNativeTokenIdFromProcess("edm");
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false, tokenID);
@@ -1253,7 +1253,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest001, TestSize.Level0)
 {
     DiedProxyMaker init;
     init.AddRecipient(CALLER_PID);
@@ -1290,7 +1290,7 @@ HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest002, TestSize.Level0)
 {
     DiedProxyMaker init;
     init.AddRecipient(CALLER_PID);
@@ -1328,7 +1328,7 @@ HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, HasCallerInStartList001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, HasCallerInStartList001, TestSize.Level0)
 {
     DiedProxyMaker init;
     init.AddRecipient(CALLER_PID);

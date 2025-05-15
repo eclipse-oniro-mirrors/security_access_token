@@ -58,7 +58,7 @@ void DatabaseTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
+HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level0)
 {
     GenericValues genericValues;
     std::string key = "databasetest";
@@ -77,7 +77,7 @@ HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DatabaseTest, PutVariant001, TestSize.Level1)
+HWTEST_F(DatabaseTest, PutVariant001, TestSize.Level0)
 {
     GenericValues genericValues;
     std::string key = "databasetest";
@@ -98,7 +98,7 @@ HWTEST_F(DatabaseTest, PutVariant001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DatabaseTest, VariantValue64001, TestSize.Level1)
+HWTEST_F(DatabaseTest, VariantValue64001, TestSize.Level0)
 {
     int64_t testValue = 1;
     VariantValue Test(testValue);
@@ -111,7 +111,7 @@ HWTEST_F(DatabaseTest, VariantValue64001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level1)
+HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level0)
 {
     int32_t ntestValue = 1;
     VariantValue Ntest(ntestValue);
@@ -127,7 +127,7 @@ HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level1)
+HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level0)
 {
     VariantValue Test;
     Test.GetString();
@@ -154,7 +154,7 @@ static void RemoveTestTokenHapInfo()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
+HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SqliteStorageModifyTest001 begin");
 
@@ -217,7 +217,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DataTranslatorTranslationIntoPermissionDefTest001 begin");
 
@@ -238,7 +238,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus001, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DataTranslatorTranslationIntoPermissionStatus001 begin");
 
@@ -259,7 +259,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus001, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus002, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DataTranslatorTranslationIntoPermissionStatus002 begin");
 
@@ -281,7 +281,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus002, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus003, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DataTranslatorTranslationIntoPermissionStatus003 begin");
 
@@ -304,7 +304,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus003, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus004, TestSize.Level1)
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStatus004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DataTranslatorTranslationIntoPermissionStatus004 begin");
 

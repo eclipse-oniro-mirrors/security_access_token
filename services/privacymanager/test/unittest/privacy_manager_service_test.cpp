@@ -121,7 +121,7 @@ void PrivacyManagerServiceTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level0)
 {
     int32_t fd = -1;
     std::vector<std::u16string> args;
@@ -167,7 +167,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level0)
 {
     int32_t fd = 1; // 1: std output
     std::vector<std::u16string> args;
@@ -202,7 +202,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5UPRK
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level0)
 {
     MockNativeToken mock("privacy_service");
 
@@ -238,7 +238,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueI5UPRK
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level0)
 {
     AccessTokenID tokenId = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     // invalid tokenId
@@ -265,7 +265,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueI5UPRK
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -283,7 +283,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -309,7 +309,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -337,7 +337,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -365,7 +365,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -391,7 +391,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner001, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -419,7 +419,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner002, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -447,7 +447,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner003, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner001, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -462,7 +462,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner001,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -480,7 +480,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -498,7 +498,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner001, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -513,7 +513,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner001,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -531,7 +531,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -549,7 +549,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003,
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -572,7 +572,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -594,7 +594,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -616,7 +616,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -640,7 +640,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -663,7 +663,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -687,7 +687,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner003, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -705,7 +705,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -725,7 +725,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -745,7 +745,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
 
@@ -759,7 +759,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
 
@@ -777,7 +777,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
 
@@ -794,7 +794,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner003, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner004, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner004, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
 
@@ -809,7 +809,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner004, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -825,7 +825,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -845,7 +845,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -865,7 +865,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner001, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -882,7 +882,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner001, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner002, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -901,7 +901,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner002, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner003, TestSize.Level0)
 {
     PermissionUsedRequestParcel request;
     request.request.isRemote = true;
@@ -920,7 +920,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsAsyncInner003, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, TestSize.Level0)
 {
     std::vector<std::string> permList(PERM_LIST_SIZE_MAX + 1);
 
@@ -935,7 +935,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, TestSize.Level0)
 {
     std::vector<std::string> permList = {};
 
@@ -953,7 +953,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, TestSize.Level0)
 {
     std::vector<std::string> permList = {};
 
@@ -971,7 +971,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner004, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner004, TestSize.Level0)
 {
     std::vector<std::string> permList;
 
@@ -987,7 +987,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner004, Te
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, TestSize.Level0)
 {
     // systemapp with need permission
     int32_t ret = privacyManagerService_->UnRegisterPermActiveStatusCallback(nullptr);
@@ -1001,7 +1001,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, 
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("UnRegisterPermActiveStatusCallbackInner002", reqPerm, false); // set self tokenID to normal app
@@ -1017,7 +1017,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, 
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     MockHapToken mock("UnRegisterPermActiveStatusCallbackInner003", reqPerm, true); // set self tokenID to system app
@@ -1033,7 +1033,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, 
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1052,7 +1052,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1073,7 +1073,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner002, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1094,7 +1094,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner003, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1112,7 +1112,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1131,7 +1131,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner002, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
@@ -1150,7 +1150,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedTypeInfosInner003, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     uint32_t policyType = 0;
@@ -1170,7 +1170,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     uint32_t policyType = 0;
@@ -1189,7 +1189,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner003, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner003, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     uint32_t policyType = 0;
@@ -1208,7 +1208,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner004, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner004, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     uint32_t policyType = 0;
@@ -1227,7 +1227,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, SetHapWithFGReminderInner001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, SetHapWithFGReminderInner001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     bool isAllowed = true;
@@ -1246,7 +1246,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetHapWithFGReminderInner001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level0)
 {
     auto handler1 = privacyManagerService_->GetProxyDeathHandler();
     ASSERT_NE(nullptr, handler1);

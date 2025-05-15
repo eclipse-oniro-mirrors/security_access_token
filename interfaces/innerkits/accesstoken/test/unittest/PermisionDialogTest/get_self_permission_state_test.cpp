@@ -158,7 +158,7 @@ void GetPermsList2(std::vector<PermissionListState> &permsList2)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState001, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -215,7 +215,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState002, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState002, TestSize.Level0)
 {
     std::vector<PermissionListState> permsList;
     PermissionGrantInfo info;
@@ -237,7 +237,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState003, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState003, TestSize.Level0)
 {
     MockNativeToken mock("hdcd");
     std::vector<PermissionListState> permsList3;
@@ -256,7 +256,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState003, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState004, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState004, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
@@ -277,7 +277,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState004, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState005, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState005, TestSize.Level0)
 {
     std::vector<PermissionListState> permsList4;
     PermissionListState tmp = {
@@ -295,7 +295,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState005, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState006, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState006, TestSize.Level0)
 {
     std::vector<PermissionListState> permsList;
     PermissionListState tmp = {
@@ -379,7 +379,7 @@ HapPolicyParams GetPolicyParam()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState007, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState007, TestSize.Level0)
 {
     HapPolicyParams policyParam = GetPolicyParam();
     AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_infoManager, policyParam);
@@ -425,7 +425,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState007, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState008, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState008, TestSize.Level0)
 {
     HapPolicyParams policyParam = GetPolicyParam();
     AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_infoManager, policyParam);
@@ -494,7 +494,7 @@ HapPolicyParams getHapPolicyLocationParams(const std::vector<std::string>& permi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState009, TestSize.Level1)
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState009, TestSize.Level0)
 {
     std::vector<std::string> permissions = {LOCATION_PERMISSION, APPROXIMATELY_LOCATION_PERMISSION};
     HapPolicyParams policyParam = getHapPolicyLocationParams(permissions);

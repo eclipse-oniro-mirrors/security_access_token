@@ -182,7 +182,7 @@ static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest001, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest001, TestSize.Level0)
 {
     int ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -230,7 +230,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest002, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest002, TestSize.Level0)
 {
     int ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -278,7 +278,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest001, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest001, TestSize.Level0)
 {
     int ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -319,7 +319,7 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest002, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest002, TestSize.Level0)
 {
     int ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -372,7 +372,7 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest002, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level0)
 {
     uint64_t tokenId = GetSelfTokenID();
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -420,7 +420,7 @@ static void SetPermList(std::vector<PermissionListState> &permsList)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level0)
 {
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
     AccessTokenID tokenFullControl = AllocHapTokenId(g_infoParmsFullControl, g_policyParams);
@@ -484,7 +484,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level0)
 {
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
     AccessTokenID tokenFullControl = AllocHapTokenId(g_infoParmsFullControl, g_policyParams);
@@ -547,7 +547,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest006, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest006, TestSize.Level0)
 {
     int ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
@@ -596,7 +596,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest007, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest007, TestSize.Level0)
 {
     int ret;
     uint32_t flag;

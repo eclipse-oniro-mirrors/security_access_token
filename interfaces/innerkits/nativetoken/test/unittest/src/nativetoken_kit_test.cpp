@@ -189,7 +189,7 @@ int32_t Start(const char *processName)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[2];
     ASSERT_NE(dcaps, nullptr);
@@ -246,7 +246,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[32];
     ASSERT_NE(dcaps, nullptr);
@@ -301,7 +301,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[2];
     ASSERT_NE(dcaps, nullptr);
@@ -367,7 +367,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[2];
     ASSERT_NE(dcaps, nullptr);
@@ -401,7 +401,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level0)
 {
     uint64_t tokenId01 = Start("GetAccessTokenId005");
     ASSERT_NE(tokenId01, 0);
@@ -418,7 +418,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level0)
 {
     uint64_t tokenID;
     tokenID = Start("GetAccessTokenId006");
@@ -439,7 +439,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level0)
 {
     const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM];
     ASSERT_NE(perms, nullptr);
@@ -493,7 +493,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[2];
     ASSERT_NE(dcaps, nullptr);
@@ -534,7 +534,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level0)
 {
     const char **perms = new (std::nothrow) const char *[2];
     ASSERT_NE(perms, nullptr);
@@ -599,7 +599,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level0)
 {
     char processName[200][MAX_PROCESS_NAME_LEN];
     /* enable 200 process before fondation is prepared */
@@ -629,7 +629,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6TD
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level0)
 {
     Start("process1");
     Start("process2");
@@ -661,7 +661,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H09K6
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level0)
 {
     const char **dcaps = new (std::nothrow) const char *[2];
     ASSERT_NE(dcaps, nullptr);
@@ -699,7 +699,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H09K6
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level0)
 {
     const char **acls = new (std::nothrow) const char *[2];
     ASSERT_NE(acls, nullptr);
@@ -806,7 +806,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:AR000H09K6
  */
-HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
+HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level0)
 {
     const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM + 1];
     ASSERT_NE(perms, nullptr);

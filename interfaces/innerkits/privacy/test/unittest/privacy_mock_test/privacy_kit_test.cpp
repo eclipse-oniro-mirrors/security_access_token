@@ -53,7 +53,7 @@ void PrivacyKitTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
@@ -69,7 +69,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
@@ -95,7 +95,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
-HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
 {
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     AccessTokenID g_TokenId_A = 0xff;
@@ -110,7 +110,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
@@ -124,7 +124,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0xff;
     int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId);
@@ -137,7 +137,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level0)
 {
     PermissionUsedRequest request;
     PermissionUsedResult result;
@@ -162,7 +162,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level0)
 {
     PermissionUsedRequest request;
     OHOS::sptr<TestCallBack> callback(new TestCallBack());
@@ -192,7 +192,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<PermActiveStatusCallbackTest>(permList);
@@ -209,7 +209,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermissionTest001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermissionTest001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
@@ -223,7 +223,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermissionTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;
@@ -237,7 +237,7 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level0)
 {
     int32_t userID = 1;
     bool status = true;

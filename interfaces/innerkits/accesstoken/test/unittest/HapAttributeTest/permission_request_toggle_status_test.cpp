@@ -111,7 +111,7 @@ void PermissionRequestToggleStatusTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level1)
+HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatusAbnormalTest001");
 
@@ -211,7 +211,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpec
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level1)
+HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusAbnormalTest001");
 

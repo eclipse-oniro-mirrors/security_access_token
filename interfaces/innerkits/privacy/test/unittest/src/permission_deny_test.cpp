@@ -81,7 +81,7 @@ void PermDenyTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: issueI5SRUO
  */
-HWTEST_F(PermDenyTest, AddPermissionUsedRecord001, TestSize.Level1)
+HWTEST_F(PermDenyTest, AddPermissionUsedRecord001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::AddPermissionUsedRecord(g_testTokenId, "ohos.permission.CAMERA", 1, 0));
@@ -93,7 +93,7 @@ HWTEST_F(PermDenyTest, AddPermissionUsedRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SRUO
  */
-HWTEST_F(PermDenyTest, RemovePermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PermDenyTest, RemovePermissionUsedRecords001, TestSize.Level0)
 {
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RemovePermissionUsedRecords(g_testTokenId));
 }
@@ -116,7 +116,7 @@ public:
 * @tc.type: FUNC
 * @tc.require: issueI5SRUO
 */
-HWTEST_F(PermDenyTest, StarAndStoptUsingPermission001, TestSize.Level1)
+HWTEST_F(PermDenyTest, StarAndStoptUsingPermission001, TestSize.Level0)
 {
     auto callbackPtr = std::make_shared<CbPermDenyTest>();
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
@@ -144,7 +144,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5SRUO
  */
-HWTEST_F(PermDenyTest, GetPermissionUsedRecords001, TestSize.Level1)
+HWTEST_F(PermDenyTest, GetPermissionUsedRecords001, TestSize.Level0)
 {
     PermissionUsedRequest request;
     request.tokenId = g_testTokenId;
@@ -179,7 +179,7 @@ public:
 * @tc.type: FUNC
 * @tc.require: issueI5SRUO
 */
-HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
+HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(permList);
@@ -206,7 +206,7 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
 * @tc.type: FUNC
 * @tc.require: issueI5SRUO
 */
-HWTEST_F(PermDenyTest, IsAllowedUsingPermission001, TestSize.Level1)
+HWTEST_F(PermDenyTest, IsAllowedUsingPermission001, TestSize.Level0)
 {
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(123, "ohos.permission.CAMERA"));
 }

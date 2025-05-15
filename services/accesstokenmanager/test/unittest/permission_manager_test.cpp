@@ -276,7 +276,7 @@ static AccessTokenID CreateTempHapTokenInfo()
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(PermissionManagerTest, ScopeFilter001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, ScopeFilter001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -337,7 +337,7 @@ HWTEST_F(PermissionManagerTest, ScopeFilter001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(PermissionManagerTest, AddPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, AddPermStateChangeCallback001, TestSize.Level0)
 {
     PermStateChangeScope inScopeInfo;
     inScopeInfo.tokenIDs = {123};
@@ -376,7 +376,7 @@ bool PermChangeCallback::AddDeathRecipient(const sptr<IRemoteObject::DeathRecipi
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(PermissionManagerTest, AddPermStateChangeCallback002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, AddPermStateChangeCallback002, TestSize.Level0)
 {
     PermStateChangeScope inScopeInfo;
     inScopeInfo.tokenIDs = {};
@@ -408,7 +408,7 @@ HWTEST_F(PermissionManagerTest, AddPermStateChangeCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SSXG
  */
-HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level0)
 {
     int32_t ret;
     AccessTokenID tokenID = 0;
@@ -427,7 +427,7 @@ HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5SSXG
  */
-HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level0)
 {
     int32_t ret;
     AccessTokenID tokenID = 0;
@@ -446,7 +446,7 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level0)
 {
     std::vector<PermissionStatus> result;
 
@@ -461,7 +461,7 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -483,7 +483,7 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level0)
 {
     std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState1);
@@ -511,7 +511,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
 {
     std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState6);
@@ -557,7 +557,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level0)
 {
     std::vector<PermissionStatus> permsList1;
     permsList1.emplace_back(g_permState2);
@@ -580,7 +580,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetPermissionFlag001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetPermissionFlag001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName;
@@ -607,7 +607,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level0)
 {
     HapInfoParams infoParms = {
         .userID = 1,
@@ -647,7 +647,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // random input
     std::string permissionName = "ohos.permission.DUMP";
@@ -692,7 +692,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.DUMP";
     uint32_t flag = 0;
@@ -739,7 +739,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, IsAllowGrantTempPermission001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, IsAllowGrantTempPermission001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // random input
     std::string permissionName = "";
@@ -753,7 +753,7 @@ HWTEST_F(PermissionManagerTest, IsAllowGrantTempPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level0)
 {
     std::string permissionName;
     // permissionName invalid
@@ -773,7 +773,7 @@ HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // random input
     std::vector<PermissionStatus> permissionStateList;
@@ -810,7 +810,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level0)
 {
     AccessTokenID tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     int32_t apiVersion = 0;
@@ -829,7 +829,7 @@ HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123 is random input
     std::string permissionName;
@@ -850,7 +850,7 @@ HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -887,7 +887,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -921,7 +921,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -961,7 +961,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1001,7 +1001,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1048,7 +1048,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1085,7 +1085,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1122,7 +1122,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1161,7 +1161,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1207,7 +1207,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1258,7 +1258,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1306,7 +1306,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1362,7 +1362,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1415,7 +1415,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1464,7 +1464,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1491,7 +1491,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1516,7 +1516,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1536,7 +1536,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1580,7 +1580,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1618,7 +1618,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -1638,7 +1638,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level0)
 {
     PermStateChangeScope scope;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, CallbackManager::GetInstance().AddCallback(scope, nullptr));
@@ -1651,7 +1651,7 @@ HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Level0)
 {
     ContinuousTaskCallbackInfo info;
     Parcel parcel;

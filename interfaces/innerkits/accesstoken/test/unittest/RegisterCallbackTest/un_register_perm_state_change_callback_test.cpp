@@ -95,7 +95,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UnRegisterPermStateChangeCallbackAbnormalTest001");
     PermStateChangeScope scopeInfo;
@@ -114,7 +114,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackSpecTest001, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbackSpecTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UnRegisterPermStateChangeCallbackSpecTest001");
     PermStateChangeScope scopeInfo;
@@ -170,7 +170,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterPermStateChangeCallbac
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback001, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -210,7 +210,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback002, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback002, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -256,7 +256,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback003, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback003, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -313,7 +313,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback004, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback004, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -377,7 +377,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback005, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback005, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -436,7 +436,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback006, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback006, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -502,7 +502,7 @@ HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCal
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback007, TestSize.Level1)
+HWTEST_F(UnRegisterPermStateChangeCallbackTest, UnRegisterSelfPermStateChangeCallback007, TestSize.Level0)
 {
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",

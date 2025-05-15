@@ -43,7 +43,7 @@ void TokenOperTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, FreeStrArray001, TestSize.Level1)
+HWTEST_F(TokenOperTest, FreeStrArray001, TestSize.Level0)
 {
     const int32_t testSize = 2; // 2 means test size
     char **test = reinterpret_cast<char **>(malloc(sizeof(char *) * testSize));
@@ -71,7 +71,7 @@ HWTEST_F(TokenOperTest, FreeStrArray001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetProcessNameFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetProcessNameFromJson001, TestSize.Level0)
 {
     NativeTokenList tokenNode;
     std::string stringJson1 = R"()"\
@@ -109,7 +109,7 @@ HWTEST_F(TokenOperTest, GetProcessNameFromJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetTokenIdFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetTokenIdFromJson001, TestSize.Level0)
 {
     NativeTokenList tokenNode;
     const char *stringJson1 = "{\"processName\":\"partitionslot_host\","
@@ -140,7 +140,7 @@ HWTEST_F(TokenOperTest, GetTokenIdFromJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetAplFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetAplFromJson001, TestSize.Level0)
 {
     NativeTokenList tokenNode;
     const char *stringJson1 = "{\"APL\":2}";
@@ -175,7 +175,7 @@ HWTEST_F(TokenOperTest, GetAplFromJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
+HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
 {
     const int32_t testSize = 2;
     int32_t resSize;
@@ -214,7 +214,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level1)
+HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level0)
 {
     NativeTokenList tokenNode;
 
