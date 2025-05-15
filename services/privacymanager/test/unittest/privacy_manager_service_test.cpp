@@ -1184,6 +1184,44 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetMutePolicyInner003
+ * @tc.desc: SetMutePolicyInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner003, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is invalid tokenID
+    uint32_t policyType = 0;
+    uint32_t callerType = 0;
+    bool isMute = false;
+
+    MockNativeToken mock("accesstoken_service");
+
+    int32_t ret = privacyManagerService_->SetMutePolicy(policyType, callerType, isMute, tokenID);
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: SetMutePolicyInner004
+ * @tc.desc: SetMutePolicyInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner004, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is invalid tokenID
+    uint32_t policyType = 0;
+    uint32_t callerType = 0;
+    bool isMute = false;
+
+    MockNativeToken mock("hdcd");
+
+    int32_t ret = privacyManagerService_->SetMutePolicy(policyType, callerType, isMute, tokenID);
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
  * @tc.name: SetHapWithFGReminderInner001
  * @tc.desc: SetHapWithFGReminderInner test.
  * @tc.type: FUNC
