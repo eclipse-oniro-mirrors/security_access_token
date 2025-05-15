@@ -165,13 +165,13 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         return RET_SUCCESS;
     }
 
-    uint32_t maxRemainedTime = maxTime_ - (GetCurrentTime() - iter->firstGrantTimes);
-    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? (iter->revokeTimes - GetCurrentTime()) : 0;
+    uint32_t maxRemainedTime = maxTime_ > (GetCurrentTime() - iter->firstGrantTimes) ?
+        (maxTime_ - (GetCurrentTime() - iter->firstGrantTimes)) : 0;
+    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ?
+        (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
-    LOGI(ATM_DOMAIN, ATM_TAG, "currRemainedTime %{public}d", currRemainedTime);
     if (cancelTimes > currRemainedTime) {
         iter->revokeTimes = GetCurrentTime() + cancelTimes;
-        LOGI(ATM_DOMAIN, ATM_TAG, "iter->revokeTimes %{public}d", iter->revokeTimes);
         ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {

@@ -38,7 +38,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/innerkits/tokensync/include",
+      "include",
       "src",
     ]
 
