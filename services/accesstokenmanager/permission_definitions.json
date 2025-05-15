@@ -2333,6 +2333,72 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENTERPRISE_GET_ALL_BUNDLE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_SET_USER_RESTRICTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_APN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_TELEPHONY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_SET_KIOSK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_SET_WALLPAPER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.PUBLISH_ENTERPRISE_POLICY_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
