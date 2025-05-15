@@ -2665,6 +2665,19 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetMutePolicyTest005
+ * @tc.desc: hdcd without SET_MUTE_POLICY permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest005, TestSize.Level1)
+{
+    MockNativeToken mock("hdcd");
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));
+}
+
+/**
  * @tc.name: SetHapWithFGReminder01
  * @tc.desc: SetHapWithFGReminder with valid tokenId.
  * @tc.type: FUNC
