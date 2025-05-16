@@ -79,7 +79,7 @@ export default namespace abilityAccessCtrl {
             err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
-        if (typeof permissionList !== "object" || !Array.isArray(permissionList) || 
+        if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
             permissionList.length == 0 || typeof permissionList[0] !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -153,8 +153,8 @@ export default namespace abilityAccessCtrl {
                 });
                 p1.then((e: NullishType) => {
                     resolve(e as GrantStatus);
-                }).catch((err: BusinessError): void => {
-                    reject(err);
+                }).catch((err: Error): void => {
+                    reject(err as BusinessError);
                 });
             });
             return p;
@@ -168,7 +168,7 @@ export default namespace abilityAccessCtrl {
                 });
                 p1.then((e: NullishType) => {
                     resolve(e as GrantStatus);
-                }).catch((err: BusinessError): void => {
+                }).catch((err: Error): void => {
                     resolve(GrantStatus.PERMISSION_DENIED);
                 });
             });
@@ -253,8 +253,8 @@ export default namespace abilityAccessCtrl {
                 });
                 p.then((e: NullishType): void => {
                     resolve(undefined);
-                }).catch((err: BusinessError): void => {
-                    reject(err);
+                }).catch((err: Error): void => {
+                    reject(err as BusinessError);
                 })
             });
         }
@@ -267,8 +267,8 @@ export default namespace abilityAccessCtrl {
             job.then(()=>{
                 let err = new BusinessError<void>();
                 callback(err, undefined);
-            }, (err: BusinessError): void=> {
-                callback(err, undefined);
+            }, (err: Error): void=> {
+                callback(err as BusinessError, undefined);
             })
         }
 
@@ -280,8 +280,8 @@ export default namespace abilityAccessCtrl {
                     });
                     p1.then((e: NullishType) => {
                         resolve(e as int);
-                    }).catch((err: BusinessError): void => {
-                        reject(err);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
                     });
                 });
             return p;
@@ -297,8 +297,8 @@ export default namespace abilityAccessCtrl {
                 });
                 p1.then((e: NullishType) => {
                     resolve(e as Array<PermissionStatus>);
-                }).catch((err: BusinessError): void => {
-                    reject(err);
+                }).catch((err: Error): void => {
+                    reject(err as BusinessError);
                 });
             });
             return p;

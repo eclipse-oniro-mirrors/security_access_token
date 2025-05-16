@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { AsyncCallback, Callback, BusinessError} from '@ohos.base'; 
+import { AsyncCallback, Callback, BusinessError} from '@ohos.base';
 import { Permissions } from 'permissions';
 
 function PARAM_ERROR_MSG(param: string, type: string): string {
@@ -107,8 +107,8 @@ export default namespace privacyManager {
                 tokenID, permissionName, successCount, failCount, optionsLocal) });
             p1.then(() => {
                 resolve(undefined);
-            }).catch((err: BusinessError): void => {
-                reject(err);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
             });
         });
         return p;
@@ -129,8 +129,8 @@ export default namespace privacyManager {
         p2.then(() => {
             let err = new BusinessError<void>();
             callback(err, undefined);
-        },(err: BusinessError): void=> {
-            callback(err, undefined);
+        },(err: Error): void=> {
+            callback(err as BusinessError, undefined);
         })
     }
 
