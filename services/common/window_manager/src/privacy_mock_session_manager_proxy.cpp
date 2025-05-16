@@ -37,7 +37,7 @@ sptr<IRemoteObject> PrivacyMockSessionManagerProxy::GetSessionManagerService()
         return nullptr;
     }
     if (reply.ReadInt32() != ERR_NONE) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Read reslt failed");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Read result failed");
     }
     sptr<IRemoteObject> remoteObject = reply.ReadRemoteObject();
     return remoteObject;
