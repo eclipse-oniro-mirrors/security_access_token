@@ -16,6 +16,10 @@ group("fuzztest") {
 
   deps = [
     "allochaptokenservice_fuzzer:AllocHapTokenServiceFuzzTest",
+    "gethaptokenidservice_fuzzer:GetHapTokenIDServiceFuzzTest",
+    "gethaptokeninfoservice_fuzzer:GetHapTokenInfoServiceFuzzTest",
+    "getnativetokenidservice_fuzzer:GetNativeTokenIdServiceFuzzTest",
+    "getnativetokeninfoservice_fuzzer:GetNativeTokenInfoServiceFuzzTest",
     "getpermissionflagservice_fuzzer:GetPermissionFlagServiceFuzzTest",
     "grantpermissionservice_fuzzer:GrantPermissionServiceFuzzTest",
     "inithaptokenservice_fuzzer:InitHapTokenServiceFuzzTest",
