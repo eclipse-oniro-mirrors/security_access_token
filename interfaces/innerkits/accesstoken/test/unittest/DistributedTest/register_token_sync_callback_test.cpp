@@ -131,7 +131,7 @@ void RegisterTokenSyncCallbackTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001, TestSize.Level1)
+HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackAbnormalTest001 start.");
     int32_t ret = AccessTokenKit::RegisterTokenSyncCallback(nullptr);
@@ -144,7 +144,7 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest001
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002, TestSize.Level1)
+HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackAbnormalTest002 start.");
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
@@ -158,7 +158,7 @@ HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackAbnormalTest002
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackFuncTest001, TestSize.Level1)
+HWTEST_F(RegisterTokenSyncCallbackTest, RegisterTokenSyncCallbackFuncTest001, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterTokenSyncCallbackFuncTest001 start.");

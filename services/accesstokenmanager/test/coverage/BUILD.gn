@@ -43,8 +43,7 @@ accesstoken_manager_service_source = [
 
 ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   subsystem_name = "accesscontrol"
-  part_name = "access_token"
-  module_out_path = part_name + "/" + part_name
+  module_out_path = module_output_path_unittest_accesstoken
   sanitize = {
     cfi = true
     cfi_cross_dso = true

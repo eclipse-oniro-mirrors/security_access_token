@@ -104,7 +104,7 @@ void GetHapTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDFuncTest001");
 
@@ -126,7 +126,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest001");
 
@@ -140,7 +140,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest002");
 
@@ -157,7 +157,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest003");
 
@@ -171,7 +171,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExFuncTest001");
 
@@ -195,7 +195,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest001");
 
@@ -209,7 +209,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest002");
 
@@ -223,7 +223,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest003");
 
@@ -281,7 +281,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoAbnormalTest001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: IAZTZD
  */
-HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoExtensionFuncTest001");
     setuid(0);
@@ -303,7 +303,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     AccessTokenIDEx tokenIdEx = {0};
@@ -331,7 +331,7 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
@@ -357,7 +357,7 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level1)
+HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);

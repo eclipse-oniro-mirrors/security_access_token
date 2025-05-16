@@ -127,7 +127,7 @@ void EdmPolicySetTest::SetUpTestCase()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy001, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy001, TestSize.Level0)
 {
     const int32_t invalidSize = 1025; // 1025 is invalid size.
     std::vector<UserState> userList(invalidSize);
@@ -142,7 +142,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level0)
 {
     std::vector<UserState> userListEmtpy;
     std::vector<std::string> permList = { "ohos.permission.INTERNET" };
@@ -156,7 +156,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy003, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy003, TestSize.Level0)
 {
     UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
     const int32_t invalidSize = 1025; // 1025 is invalid size.
@@ -172,7 +172,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level0)
 {
     UserState user = {.userId = DEFAULT_ACCOUNT_ID, .isActive = true};
     std::vector<UserState> userList = { user };
@@ -188,7 +188,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "permissionSet OK ";
     MockNativeToken mock("foundation");
@@ -241,7 +241,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, InitUserPolicy006, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, InitUserPolicy006, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "permissionSet OK ";
     MockNativeToken mock("foundation");
@@ -287,7 +287,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UpdateUserPolicy001, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UpdateUserPolicy001, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "permissionSet OK ";
     MockNativeToken mock("foundation");
@@ -307,7 +307,7 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UpdateUserPolicy003, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UpdateUserPolicy003, TestSize.Level0)
 {
     const int32_t invalidSize = 1025; // 1025 is invalid size.
     std::vector<UserState> userList(invalidSize);
@@ -325,7 +325,7 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level0)
 {
     g_testHapInfoParams.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
@@ -376,7 +376,7 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level0)
 {
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = true};
     UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = true};
@@ -431,7 +431,7 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForNewHap, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
 {
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = true};
     UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = false};
@@ -486,7 +486,7 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level0)
 {
     g_testHapInfoParams.userID = MOCK_USER_ID_10002;
     AccessTokenIDEx fullIdUser2;
@@ -526,7 +526,7 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyForUpdateHapTokenTest, TestSize.Level1)
+HWTEST_F(EdmPolicySetTest, UserPolicyForUpdateHapTokenTest, TestSize.Level0)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_SYSTEM_CORE,

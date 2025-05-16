@@ -186,7 +186,7 @@ static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, OriginApp01, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, OriginApp01, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -228,7 +228,7 @@ HWTEST_F(CloneAppPermissionTest, OriginApp01, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, OriginApp02, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, OriginApp02, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -290,7 +290,7 @@ HWTEST_F(CloneAppPermissionTest, OriginApp02, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, OriginApp03, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, OriginApp03, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -358,7 +358,7 @@ HWTEST_F(CloneAppPermissionTest, OriginApp03, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, ReadDlp01, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, ReadDlp01, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -400,7 +400,7 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp01, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, ReadDlp02, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, ReadDlp02, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -463,7 +463,7 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp02, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, ReadDlp03, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, ReadDlp03, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -530,7 +530,7 @@ HWTEST_F(CloneAppPermissionTest, ReadDlp03, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, CloneApp01, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, CloneApp01, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -572,7 +572,7 @@ HWTEST_F(CloneAppPermissionTest, CloneApp01, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, CloneApp02, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, CloneApp02, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -624,7 +624,7 @@ HWTEST_F(CloneAppPermissionTest, CloneApp02, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, CloneApp03, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, CloneApp03, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;
@@ -691,7 +691,7 @@ HWTEST_F(CloneAppPermissionTest, CloneApp03, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, CloneApp04, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, CloneApp04, TestSize.Level0)
 {
     int ret;
     uint32_t flag;
@@ -741,7 +741,7 @@ HWTEST_F(CloneAppPermissionTest, CloneApp04, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(CloneAppPermissionTest, CloneApp05, TestSize.Level1)
+HWTEST_F(CloneAppPermissionTest, CloneApp05, TestSize.Level0)
 {
     int ret;
     auto policyParams = g_policyParams;

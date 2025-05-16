@@ -78,7 +78,7 @@ void AccessTokenMockTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, InitHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, InitHapToken001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenKit::InitHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
@@ -91,7 +91,7 @@ HWTEST_F(AccessTokenMockTest, InitHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, AllocHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, AllocHapToken001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
@@ -104,7 +104,7 @@ HWTEST_F(AccessTokenMockTest, AllocHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, AllocLocalTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, AllocLocalTokenID001, TestSize.Level4)
 {
     std::string remoteDevice = "remote device";
     AccessTokenID tokenId = 123;
@@ -118,7 +118,7 @@ HWTEST_F(AccessTokenMockTest, AllocLocalTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, UpdateHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, UpdateHapToken001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = 123;
@@ -136,7 +136,7 @@ HWTEST_F(AccessTokenMockTest, UpdateHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, DeleteToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, DeleteToken001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteToken(tokenId));
@@ -148,7 +148,7 @@ HWTEST_F(AccessTokenMockTest, DeleteToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(tokenId));
@@ -160,7 +160,7 @@ HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetHapTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetHapTokenID001, TestSize.Level4)
 {
     int32_t userID = 0;
     std::string bundleName = "test";
@@ -175,7 +175,7 @@ HWTEST_F(AccessTokenMockTest, GetHapTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetHapTokenIDEx001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetHapTokenIDEx001, TestSize.Level4)
 {
     int32_t userID = 0;
     std::string bundleName = "test";
@@ -190,7 +190,7 @@ HWTEST_F(AccessTokenMockTest, GetHapTokenIDEx001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetHapTokenInfo001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfo tokenInfo;
@@ -203,7 +203,7 @@ HWTEST_F(AccessTokenMockTest, GetHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetNativeTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfo001, TestSize.Level4)
 {
     AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
@@ -216,7 +216,7 @@ HWTEST_F(AccessTokenMockTest, GetNativeTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, VerifyAccessToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, VerifyAccessToken001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -230,7 +230,7 @@ HWTEST_F(AccessTokenMockTest, VerifyAccessToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, VerifyAccessToken002, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, VerifyAccessToken002, TestSize.Level4)
 {
     AccessTokenID callerTokenID = 123;
     AccessTokenID firstTokenID = 456;
@@ -245,7 +245,7 @@ HWTEST_F(AccessTokenMockTest, VerifyAccessToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, VerifyAccessTokenWithList001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, VerifyAccessTokenWithList001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::vector<std::string> permissionList = {"ohos.permission.CAMERA"};
@@ -264,7 +264,7 @@ HWTEST_F(AccessTokenMockTest, VerifyAccessTokenWithList001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetDefPermission001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetDefPermission001, TestSize.Level4)
 {
     std::string permission = "ohos.permission.CAMERA";
     PermissionDef def;
@@ -277,7 +277,7 @@ HWTEST_F(AccessTokenMockTest, GetDefPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetReqPermissions001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetReqPermissions001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionStateFull> permList;
@@ -290,7 +290,7 @@ HWTEST_F(AccessTokenMockTest, GetReqPermissions001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetTokenIDByUserID001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetTokenIDByUserID001, TestSize.Level4)
 {
     int32_t userID = 1;
     std::unordered_set<AccessTokenID> tokenIdList;
@@ -303,7 +303,7 @@ HWTEST_F(AccessTokenMockTest, GetTokenIDByUserID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetPermissionFlag001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetPermissionFlag001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -317,7 +317,7 @@ HWTEST_F(AccessTokenMockTest, GetPermissionFlag001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, SetPermissionRequestToggleStatus001, TestSize.Level4)
 {
     int32_t userID = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -332,7 +332,7 @@ HWTEST_F(AccessTokenMockTest, SetPermissionRequestToggleStatus001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetPermissionRequestToggleStatus001, TestSize.Level4)
 {
     int32_t userID = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -347,7 +347,7 @@ HWTEST_F(AccessTokenMockTest, GetPermissionRequestToggleStatus001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetSelfPermissionStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetSelfPermissionStatus001, TestSize.Level4)
 {
     std::string permission = "ohos.permission.CAMERA";
     PermissionOper status;
@@ -360,7 +360,7 @@ HWTEST_F(AccessTokenMockTest, GetSelfPermissionStatus001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetSelfPermissionsState001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetSelfPermissionsState001, TestSize.Level4)
 {
     std::vector<PermissionListState> permList;
     PermissionGrantInfo info;
@@ -373,7 +373,7 @@ HWTEST_F(AccessTokenMockTest, GetSelfPermissionsState001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetPermissionsStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetPermissionsStatus001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionListState> permsList;
@@ -392,7 +392,7 @@ HWTEST_F(AccessTokenMockTest, GetPermissionsStatus001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GrantPermission001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GrantPermission001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -406,7 +406,7 @@ HWTEST_F(AccessTokenMockTest, GrantPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, RevokePermission001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, RevokePermission001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
@@ -420,7 +420,7 @@ HWTEST_F(AccessTokenMockTest, RevokePermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, ClearUserGrantedPermissionState001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
@@ -445,7 +445,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback001, TestSize.Level4)
 {
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -461,7 +461,7 @@ HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, ReloadNativeTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, ReloadNativeTokenInfo001, TestSize.Level4)
 {
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ReloadNativeTokenInfo());
 }
@@ -472,7 +472,7 @@ HWTEST_F(AccessTokenMockTest, ReloadNativeTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AccessTokenMockTest, GetNativeTokenId001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetNativeTokenId001, TestSize.Level4)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
@@ -486,7 +486,7 @@ HWTEST_F(AccessTokenMockTest, GetNativeTokenId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetHapTokenInfoFromRemote001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfoForSync hapSync;
@@ -499,7 +499,7 @@ HWTEST_F(AccessTokenMockTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, SetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, SetRemoteHapTokenInfo001, TestSize.Level4)
 {
     std::string device = "device";
     HapTokenInfoForSync hapSync;
@@ -512,7 +512,7 @@ HWTEST_F(AccessTokenMockTest, SetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, DeleteRemoteToken001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, DeleteRemoteToken001, TestSize.Level4)
 {
     std::string device = "device";
     AccessTokenID tokenId = 123;
@@ -525,7 +525,7 @@ HWTEST_F(AccessTokenMockTest, DeleteRemoteToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetRemoteNativeTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetRemoteNativeTokenID001, TestSize.Level4)
 {
     std::string device = "device";
     AccessTokenID tokenId = 123;
@@ -538,7 +538,7 @@ HWTEST_F(AccessTokenMockTest, GetRemoteNativeTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, DeleteRemoteDeviceTokens001, TestSize.Level4)
 {
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteRemoteDeviceTokens(device));
@@ -550,7 +550,7 @@ HWTEST_F(AccessTokenMockTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, RegisterTokenSyncCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, RegisterTokenSyncCallback001, TestSize.Level4)
 {
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterTokenSyncCallback(callback));
@@ -564,7 +564,7 @@ HWTEST_F(AccessTokenMockTest, RegisterTokenSyncCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, DumpTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, DumpTokenInfo001, TestSize.Level4)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -579,7 +579,7 @@ HWTEST_F(AccessTokenMockTest, DumpTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, SetPermDialogCap001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, SetPermDialogCap001, TestSize.Level4)
 {
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
@@ -591,7 +591,7 @@ HWTEST_F(AccessTokenMockTest, SetPermDialogCap001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetPermissionManagerInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetPermissionManagerInfo001, TestSize.Level4)
 {
     PermissionGrantInfo info;
     AccessTokenKit::GetPermissionManagerInfo(info);
@@ -604,7 +604,7 @@ HWTEST_F(AccessTokenMockTest, GetPermissionManagerInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GrantPermissionForSpecifiedTime001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "permission";
@@ -619,7 +619,7 @@ HWTEST_F(AccessTokenMockTest, GrantPermissionForSpecifiedTime001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, RequestAppPermOnSettingTest001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, RequestAppPermOnSettingTest001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RequestAppPermOnSetting(tokenId));
@@ -631,7 +631,7 @@ HWTEST_F(AccessTokenMockTest, RequestAppPermOnSettingTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenMockTest, GetKernelPermissions001, TestSize.Level1)
+HWTEST_F(AccessTokenMockTest, GetKernelPermissions001, TestSize.Level4)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionWithValue> kernelPermList;

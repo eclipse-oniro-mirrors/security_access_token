@@ -132,7 +132,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeAbnormalTest001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeFlagAbnormalTest001");
 
@@ -147,7 +147,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level1)
+HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeFlagFuncTest001");
 

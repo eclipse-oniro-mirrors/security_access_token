@@ -127,7 +127,7 @@ void GetPermissionFlagTest::TearDown()
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionFlagTest, GetPermissionFlagFuncTest001, TestSize.Level1)
+HWTEST_F(GetPermissionFlagTest, GetPermissionFlagFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagFuncTest001");
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
@@ -149,7 +149,7 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagAbnormalTest001");
 

@@ -156,7 +156,7 @@ void AccessTokenInfoManagerTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
 {
     AccessTokenID id = 0x20240112;
     HapTokenInfo info = {
@@ -187,7 +187,7 @@ HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -216,7 +216,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -250,7 +250,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = -1
@@ -267,7 +267,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -285,7 +285,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -304,7 +304,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -325,7 +325,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -347,7 +347,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level0)
 {
     static PermissionDef permDef = {
         .permissionName = "ohos.permission.test",
@@ -381,7 +381,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level0)
 {
     HapInfoParcel hapinfoParcel;
     hapinfoParcel.hapInfoParameter = {
@@ -408,7 +408,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level0)
 {
     HapInfoParcel hapinfoParcel;
     hapinfoParcel.hapInfoParameter = {
@@ -435,7 +435,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level0)
 {
     HapInfoParcel info;
     info.hapInfoParameter = {
@@ -529,7 +529,7 @@ void TestPrepareKernelPermissionStatus(HapPolicy& policyParams)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level0)
 {
     HapInfoParcel info;
     HapPolicyParcel policy;
@@ -568,7 +568,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level0)
 {
     HapInfoParcel info;
     HapPolicyParcel policy;
@@ -607,7 +607,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level0)
 {
     HapInfoParcel info;
     HapPolicyParcel policy;
@@ -643,7 +643,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level0)
 {
     HapInfoParcel info;
     HapPolicyParcel policy;
@@ -674,7 +674,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, IsTokenIdExist001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, IsTokenIdExist001, TestSize.Level0)
 {
     AccessTokenID testId = 1;
     ASSERT_EQ(AccessTokenInfoManager::GetInstance().IsTokenIdExist(testId), false);
@@ -686,7 +686,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsTokenIdExist001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int result;
@@ -711,7 +711,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     // type != TOKEN_HAP
@@ -753,7 +753,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -783,7 +783,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -820,7 +820,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     HapPolicy policy = g_infoManagerTestPolicyPrams1;
@@ -845,7 +845,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level0)
 {
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     AccessTokenIDEx tokenIdEx = {0};
@@ -869,7 +869,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level0)
 {
     HapInfoParcel info;
     HapPolicyParcel policy;
@@ -915,7 +915,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int result;
@@ -942,7 +942,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level0)
 {
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
@@ -958,7 +958,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
@@ -981,7 +981,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: issueI5RJBB
  */
-HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
@@ -1015,7 +1015,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5RJBB
  */
-HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
@@ -1061,7 +1061,7 @@ static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapToke
  * @tc.type: FUNC
  * @tc.require: issue5RJBB
  */
-HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level0)
 {
     std::string deviceID = "deviceId";
     HapTokenInfo rightBaseInfo = {
@@ -1108,7 +1108,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123 is random input
 
@@ -1127,7 +1127,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSiz
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level0)
 {
     std::vector<AccessTokenID> modifiedTokenList = TokenModifyNotifier::GetInstance().modifiedTokenList_; // backup
     TokenModifyNotifier::GetInstance().modifiedTokenList_.clear();
@@ -1156,7 +1156,7 @@ void setPermission()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level0)
 {
     setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
@@ -1191,7 +1191,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level0)
 {
     setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
@@ -1247,7 +1247,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level0)
 {
     setPermission();
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
@@ -1275,7 +1275,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenID mapID = 0;
     HapTokenInfoForSync hapSync;
@@ -1300,7 +1300,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenID mapID = 123; // 123 is random input
     HapTokenInfoForSync hapSync;
@@ -1321,7 +1321,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
 {
     std::string deviceID = "dev-001";
     AccessTokenID tokenID = 123; // 123 is random input
@@ -1358,7 +1358,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
 {
     std::string remoteDeviceID;
     AccessTokenID remoteTokenID = 0;
@@ -1394,7 +1394,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level0)
 {
     int fd = -1;
     std::vector<std::u16string> args;
@@ -1440,7 +1440,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -1460,7 +1460,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -1488,7 +1488,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -1503,7 +1503,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -1518,7 +1518,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -1533,7 +1533,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
@@ -1561,7 +1561,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
 {
     AccessTokenInfoManager::GetInstance().hasInited_ = true;
     uint32_t hapSize = 0;
@@ -1579,7 +1579,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level0)
 {
     std::shared_ptr<HapTokenInfoInner> info = nullptr;
     ASSERT_EQ("", AccessTokenInfoManager::GetInstance().GetHapUniqueStr(info));
@@ -1591,7 +1591,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level0)
 {
     std::shared_ptr<HapTokenInfoInner> info = nullptr;
     AccessTokenID oriTokenId = 0;
@@ -1604,7 +1604,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -1634,7 +1634,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI60F1M
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
         USER_ID, "com.ohos.test", INST_INDEX);
@@ -1647,7 +1647,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level0)
 {
     PermissionDef permDef = {
         .permissionName = "ohos.permission.TEST",
@@ -1676,7 +1676,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level0)
 {
     std::string permissionName;
     std::string deviceID = "dev-001";
@@ -1708,7 +1708,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Level0)
 {
     PermissionDef permDef = {
         .permissionName = "ohos.permission.TEST",
@@ -1740,7 +1740,7 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level0)
 {
     PermissionStatus perm = {
         .permissionName = "ohos.permission.TEST",
@@ -1766,7 +1766,7 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
 {
     PermissionStatus perm = {
         .permissionName = "ohos.permission.CAMERA",
@@ -1817,7 +1817,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Level0)
 {
     std::map<std::string, AccessTokenRemoteDevice> remoteDeviceMap;
     remoteDeviceMap = AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_; // backup
@@ -1859,7 +1859,7 @@ HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Level0)
 {
     std::string deviceID;
     std::vector<AccessTokenID> remoteIDs;
@@ -1875,7 +1875,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Level0)
 {
     std::map<std::string, AccessTokenRemoteDevice> remoteDeviceMap;
     remoteDeviceMap = AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_; // backup
@@ -1904,7 +1904,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level0)
 {
     std::set<AccessTokenID> observationSet = TokenModifyNotifier::GetInstance().observationSet_; // backup
     TokenModifyNotifier::GetInstance().observationSet_.clear();
@@ -1928,7 +1928,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level0)
 {
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
     ASSERT_NE(nullptr, hap);
@@ -1974,7 +1974,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level0)
 {
     // 1477443583 is max abnormal butt tokenId which version is 2: 010 11 0 000000 11111111111111111111
     AccessTokenID tokenId = 1477443583;
@@ -1999,7 +1999,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
@@ -2028,7 +2028,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap001, TestSize.Level0)
 {
     AccessTokenID tokenId = 123; // 123: invalid tokenid
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenId, true));
@@ -2040,7 +2040,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
@@ -2078,7 +2078,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level0)
 {
     // invalid token
     ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(INVALID_TOKENID));
@@ -2111,7 +2111,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level0)
 {
     HapInfoParcel hapinfoParcel;
     hapinfoParcel.hapInfoParameter = {
@@ -2137,7 +2137,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, OnStart001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, OnStart001, TestSize.Level0)
 {
     ServiceRunningState state = atManagerService_->state_;
     atManagerService_->state_ = ServiceRunningState::STATE_RUNNING;
@@ -2152,7 +2152,7 @@ HWTEST_F(AccessTokenInfoManagerTest, OnStart001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level0)
 {
     LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
     EXPECT_EQ(nullptr, loader1.handle_);
@@ -2169,7 +2169,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level0)
 {
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
@@ -2184,7 +2184,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
     std::string permissionName = "ohos.permission.INVALID_AA";
@@ -2213,7 +2213,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level0)
 {
     AccessTokenID tokenId = 0;
     std::string permissionName;
@@ -2235,7 +2235,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level0)
 {
     HapInfoParams info = {
         .userID = USER_ID,
@@ -2264,7 +2264,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetAppId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = -1;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -2302,7 +2302,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
 {
     int32_t userID = 123;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -2323,7 +2323,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = -1;
     uint32_t status;
@@ -2355,7 +2355,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
 {
     int32_t userID = 123;
     uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;

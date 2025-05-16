@@ -159,7 +159,7 @@ void UpdateHapTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest001");
 
@@ -203,7 +203,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest002");
 
@@ -247,7 +247,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest003, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest003");
 
@@ -311,7 +311,7 @@ void GetPermissions(string permissionName, PermissionStateFull& stateFull, PreAu
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest004");
 
@@ -363,7 +363,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest005, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest005");
 
@@ -418,7 +418,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest006, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest006, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenFuncTest006");
 
@@ -482,7 +482,7 @@ static bool ExistInVector(vector<unsigned int> array, unsigned int value)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest007, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest007, TestSize.Level0)
 {
     int allocFlag = 0;
     int updateFlag = 0;
@@ -544,7 +544,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest008, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest008, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, g_testPolicyParams, tokenIdEx));
@@ -581,7 +581,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest009, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest009, TestSize.Level0)
 {
     const std::string appIDDesc = g_testHapInfoParams.appIDDesc;
     int backupMode = g_testPolicyParams.permList[INDEX_ZERO].grantMode;
@@ -624,7 +624,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest010, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest010, TestSize.Level0)
 {
     const std::string appIDDesc = g_testHapInfoParams.appIDDesc;
     std::string permission = g_infoManagerCameraState.permissionName;
@@ -661,7 +661,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest011, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest011, TestSize.Level0)
 {
     const std::string appIDDesc = g_testHapInfoParams.appIDDesc;
     AccessTokenIDEx tokenIdEx = {0};
@@ -696,7 +696,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI61A6M
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest012, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest012, TestSize.Level0)
 {
     AccessTokenIDEx tokenID = {0};
     HapPolicyParams policy;
@@ -745,7 +745,7 @@ static void *ThreadTestFunc02(void *args)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, Mulitpulthread001, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, Mulitpulthread001, TestSize.Level0)
 {
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -781,7 +781,7 @@ void ConcurrencyTask(unsigned int tokenID)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, ConcurrencyTest001, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, ConcurrencyTest001, TestSize.Level0)
 {
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -802,7 +802,7 @@ HWTEST_F(UpdateHapTokenTest, ConcurrencyTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest001, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest001");
 
@@ -857,7 +857,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest002, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest002");
 
@@ -911,7 +911,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest003, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest003");
 
@@ -964,7 +964,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest004, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest004");
 
@@ -1010,7 +1010,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest005");
 
@@ -1068,7 +1068,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest006");
 
@@ -1115,7 +1115,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest007");
 
@@ -1177,7 +1177,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest008");
 
@@ -1235,7 +1235,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest009");
 
@@ -1289,7 +1289,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenSpecsTest010");
 
@@ -1342,7 +1342,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -1386,7 +1386,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest001");
 
@@ -1417,7 +1417,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest002");
 
@@ -1452,7 +1452,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest003, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest003");
     std::string backUpPermission = g_testPolicyParams.permList[INDEX_ZERO].permissionName;
@@ -1515,7 +1515,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest004, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest004");
 
@@ -1579,7 +1579,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest005, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenAbnormalTest005");
 
@@ -1629,7 +1629,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest006, TestSize.Level1)
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest006, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {
         .tokenIdExStruct.tokenID = INVALID_TOKENID,

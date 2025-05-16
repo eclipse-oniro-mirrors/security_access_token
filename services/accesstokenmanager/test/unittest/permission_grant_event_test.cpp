@@ -42,7 +42,7 @@ void PermissionGrantEventTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:issueI5OOPG
  */
-HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level1)
+HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "NotifyPermGrantStoreResult001!");
     AccessTokenID tokenID = 0x100000;
@@ -64,7 +64,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:issueI5OOPG
  */
-HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level1)
+HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "NotifyPermGrantStoreResult002!");
     AccessTokenID tokenID = 0x100000;
@@ -86,7 +86,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:issueI5OOPG
  */
-HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult003, TestSize.Level1)
+HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "NotifyPermGrantStoreResult003!");
     AccessTokenID tokenID = 0x100000;

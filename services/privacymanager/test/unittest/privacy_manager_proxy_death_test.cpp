@@ -58,7 +58,7 @@ void PrivacyManagerProxyDeathTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest001, TestSize.Level1)
+HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest001, TestSize.Level0)
 {
     auto handler = std::make_shared<ProxyDeathHandler>();
     auto anonyStub = new (std::nothrow) ProxyDeathCallBackStub();
@@ -81,7 +81,7 @@ HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest001, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest002, TestSize.Level1)
+HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest002, TestSize.Level0)
 {
     auto handler = std::make_shared<ProxyDeathHandler>();
     auto anonyStub = new (std::nothrow) ProxyDeathCallBackStub();
@@ -118,7 +118,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest003, TestSize.Level1)
+HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest003, TestSize.Level0)
 {
     auto handler = std::make_shared<ProxyDeathHandler>();
     auto anonyStub = new (std::nothrow) ProxyDeathCallBackStub();
@@ -137,7 +137,7 @@ HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest003, TestSize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest004, TestSize.Level1)
+HWTEST_F(PrivacyManagerProxyDeathTest, PrivacyManagerProxyDeathTest004, TestSize.Level0)
 {
     auto handler = std::make_shared<ProxyDeathHandler>();
     auto anonyStub = new (std::nothrow) ProxyDeathCallBackStub();

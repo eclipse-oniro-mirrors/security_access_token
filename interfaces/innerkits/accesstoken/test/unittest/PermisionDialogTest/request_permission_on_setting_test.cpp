@@ -63,7 +63,6 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest001, TestSiz
     uint64_t tokenID = 0;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::RequestAppPermOnSetting(tokenID));
 
-        GTEST_LOG_(INFO) << "------------2,  tokenID is " << GetSelfTokenID();
     tokenID = 123; // 123: invalid token
     ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::RequestAppPermOnSetting(tokenID));
 }

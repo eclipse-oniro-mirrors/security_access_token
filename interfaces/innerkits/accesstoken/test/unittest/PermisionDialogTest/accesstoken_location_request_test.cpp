@@ -202,7 +202,7 @@ AccessTokenIDEx AllocHapToken(std::vector<PermissionStateFull>& permissionStateF
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0} {grantStatus, grantFlags}
@@ -234,7 +234,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -268,7 +268,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -302,7 +302,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -336,7 +336,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -371,7 +371,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateBack10); // {-1,0}
@@ -405,7 +405,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateBack10); // {-1,0}
@@ -440,7 +440,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -481,7 +481,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -521,7 +521,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -562,7 +562,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -603,7 +603,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -654,7 +654,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -704,7 +704,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -754,7 +754,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -804,7 +804,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -855,7 +855,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -907,7 +907,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -967,7 +967,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1027,7 +1027,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1087,7 +1087,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1145,7 +1145,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1203,7 +1203,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -1262,7 +1262,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -1328,7 +1328,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -1394,7 +1394,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -1460,7 +1460,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1522,7 +1522,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1556,7 +1556,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -1590,7 +1590,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateBack10); // {-1,0}
@@ -1624,7 +1624,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1665,7 +1665,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1706,7 +1706,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -1746,7 +1746,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1794,7 +1794,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -1845,7 +1845,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState036, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState036, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1886,7 +1886,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState036, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState037, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState037, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -1927,7 +1927,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState037, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState038, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState038, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -1968,7 +1968,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState038, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
@@ -2009,7 +2009,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -2051,7 +2051,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState041, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState041, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
@@ -2099,7 +2099,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState041, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState042, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState042, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -2147,7 +2147,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState042, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState043, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState043, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -2195,7 +2195,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState043, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState044, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState044, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -2243,7 +2243,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState044, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState045, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState045, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
@@ -2291,7 +2291,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState045, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState046, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState046, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -2339,7 +2339,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState046, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState047, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState047, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -2387,7 +2387,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState047, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState048, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState048, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -2435,7 +2435,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState048, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState049, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState049, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
@@ -2483,7 +2483,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState049, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
-HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState050, TestSize.Level1)
+HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState050, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permissionStateFulls;
     permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}

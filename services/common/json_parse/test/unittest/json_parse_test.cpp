@@ -63,7 +63,7 @@ void PrivacyParcelTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: issueI6024A
  */
-HWTEST_F(JsonParseTest, IsDirExsit001, TestSize.Level1)
+HWTEST_F(JsonParseTest, IsDirExsit001, TestSize.Level0)
 {
     ConfigPolicLoader loader;
     EXPECT_FALSE(loader.IsDirExsit(""));
@@ -79,7 +79,7 @@ HWTEST_F(JsonParseTest, IsDirExsit001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(JsonParseTest, ParserNativeRawData001, TestSize.Level1)
+HWTEST_F(JsonParseTest, ParserNativeRawData001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData001!");
     std::string testStr = R"([)"\
@@ -106,7 +106,7 @@ HWTEST_F(JsonParseTest, ParserNativeRawData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(JsonParseTest, ParserNativeRawData002, TestSize.Level1)
+HWTEST_F(JsonParseTest, ParserNativeRawData002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData002!");
     std::string testStr = R"([{"processName":""}])";
@@ -160,7 +160,7 @@ HWTEST_F(JsonParseTest, ParserNativeRawData002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(JsonParseTest, ParserNativeRawData003, TestSize.Level1)
+HWTEST_F(JsonParseTest, ParserNativeRawData003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData003!");
     std::string testStr = R"([)"\
@@ -182,7 +182,7 @@ HWTEST_F(JsonParseTest, ParserNativeRawData003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(JsonParseTest, ParserNativeRawData004, TestSize.Level1)
+HWTEST_F(JsonParseTest, ParserNativeRawData004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test ParserNativeRawData004!");
     // version wrong
@@ -243,7 +243,7 @@ HWTEST_F(JsonParseTest, ParserNativeRawData004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(JsonParseTest, init001, TestSize.Level1)
+HWTEST_F(JsonParseTest, init001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "test init001!");
 
@@ -300,7 +300,7 @@ static void PrepareJsonData1()
  * @tc.type: FUNC
  * @tc.require: SR000GVIGR
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level0)
 {
     PrepareJsonData1();
 
@@ -354,7 +354,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGR
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level0)
 {
     PrepareJsonData1();
 
@@ -408,7 +408,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGR
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level0)
 {
     PrepareJsonData1();
 
@@ -488,7 +488,7 @@ static void PrepareJsonData2()
  * @tc.type: FUNC
  * @tc.require: SR000GVIGR
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level0)
 {
     PrepareJsonData2();
     PrepareUserPermState();
@@ -546,7 +546,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGR
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level0)
 {
     PrepareJsonData2();
     PrepareUserPermState();
@@ -603,7 +603,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level0)
 {
     PrepareJsonData2();
     PrepareUserPermState();

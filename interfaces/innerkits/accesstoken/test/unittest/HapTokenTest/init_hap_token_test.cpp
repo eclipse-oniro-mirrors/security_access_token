@@ -135,7 +135,7 @@ void InitHapTokenTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest001");
     MockNativeToken mock("foundation");
@@ -172,7 +172,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest002");
     MockNativeToken mock("foundation");
@@ -209,7 +209,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest003");
     MockNativeToken mock("foundation");
@@ -254,7 +254,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest004");
     MockNativeToken mock("foundation");
@@ -271,7 +271,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest005");
     MockNativeToken mock("foundation");
@@ -335,7 +335,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest006");
     MockNativeToken mock("foundation");
@@ -363,7 +363,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest007");
     MockNativeToken mock("foundation");
@@ -396,7 +396,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest008, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest008, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest008");
     MockNativeToken mock("foundation");
@@ -431,7 +431,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest009, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest009, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenFuncTest009");
     MockNativeToken mock("foundation");
@@ -478,7 +478,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest001");
     MockNativeToken mock("foundation");
@@ -524,7 +524,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest002");
     MockNativeToken mock("foundation");
@@ -564,7 +564,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest003");
     MockNativeToken mock("foundation");
@@ -618,7 +618,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest004");
     MockNativeToken mock("foundation");
@@ -682,7 +682,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest005");
     MockNativeToken mock("foundation");
@@ -711,7 +711,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest006");
     MockNativeToken mock("foundation");
@@ -751,7 +751,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest007");
     MockNativeToken mock("foundation");
@@ -790,7 +790,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenSpecsTest008");
     MockNativeToken mock("foundation");
@@ -830,7 +830,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest009, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest009, TestSize.Level0)
 {
     MockNativeToken mock("foundation");
     HapInfoParams infoParams;
@@ -882,7 +882,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest010, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest010, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -919,7 +919,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -957,7 +957,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest012, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest012, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -992,7 +992,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest013, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest013, TestSize.Level0)
 {
     MockNativeToken mock("foundation");
     HapInfoParams infoParams;
@@ -1020,7 +1020,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest014, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest014, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;
@@ -1053,7 +1053,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest014, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest001");
 
@@ -1089,7 +1089,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest002");
 
@@ -1123,7 +1123,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest003");
 
@@ -1165,7 +1165,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest004");
 
@@ -1230,7 +1230,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest005, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenAbnormalTest005");
 
@@ -1274,7 +1274,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest006, TestSize.Level1)
+HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest006, TestSize.Level0)
 {
     HapInfoParams infoParams;
     HapPolicyParams policyParams;

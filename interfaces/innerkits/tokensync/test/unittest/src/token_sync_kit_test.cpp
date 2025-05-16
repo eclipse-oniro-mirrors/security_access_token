@@ -91,7 +91,7 @@ static void StartOrStopTokenSyncService(bool start)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
 {
     HapTokenInfoForSync tokenInfo;
     uint64_t selfTokenId = GetSelfTokenID();
@@ -123,7 +123,7 @@ HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level0)
 {
     uint64_t selfTokenId = GetSelfTokenID();
 
@@ -155,7 +155,7 @@ HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
 {
     uint64_t selfTokenId = GetSelfTokenID();
 

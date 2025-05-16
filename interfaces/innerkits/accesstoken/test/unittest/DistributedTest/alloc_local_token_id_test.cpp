@@ -130,7 +130,7 @@ void AllocLocalTokenIDTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
+HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest001 start.");
     HapInfoParams infoParms = {
@@ -164,7 +164,7 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest002, TestSize.Level1)
+HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest002 start.");
     MockNativeToken mock("token_sync_service");

@@ -21,6 +21,9 @@ module_output_path_interface_access_token =
 module_output_path_service_privacy = "access_token/access_token/service_privacy"
 module_output_path_service_access_token =
     "access_token/access_token/service_access_token"
+module_output_path_unittest_accesstoken = "access_token/access_token"
+module_output_path_unittest_privacy = "access_token/privacy"
+
 VENDOR_CONFIG_PATH = rebase_path(
         "//vendor/${product_company}/${product_name}/base/security/access_token/access_token_impl.gni")
 CMD = "if [ -f ${VENDOR_CONFIG_PATH} ]; then echo true; else echo false; fi"

@@ -103,7 +103,7 @@ void GrantPermissionForSpecifiedTimeTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest001, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest001");
     AccessTokenID tokenId = INVALID_TOKENID;
@@ -141,7 +141,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest002, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest002");
     HapPolicyParams policyPrams = g_policyPrams;
@@ -166,7 +166,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest003, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest003");
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
@@ -186,7 +186,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest004, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest004");
     uint64_t selfTokenId = GetSelfTokenID();
@@ -208,7 +208,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest001, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest001");
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
@@ -235,7 +235,7 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpe
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest002, TestSize.Level1)
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeSpecsTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeSpecsTest002");
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(

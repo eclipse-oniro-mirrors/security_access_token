@@ -142,7 +142,7 @@ void GetHapTokenInfoFromRemoteTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest001 start.");
 
@@ -178,7 +178,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, TestSize.Level1)
+HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteFuncTest002 start.");
@@ -215,7 +215,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, Te
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest001, TestSize.Level1)
+HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteAbnormalTest001 start.");
     HapTokenInfoForSync infoSync;
@@ -229,7 +229,7 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest001
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest002, TestSize.Level1)
+HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteAbnormalTest002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoFromRemoteAbnormalTest002 start.");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));

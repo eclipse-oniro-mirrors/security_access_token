@@ -274,7 +274,7 @@ static void DeleteAndAllocToken(AccessTokenID& tokenId)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessOneCommand001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand001, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -287,7 +287,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessOneCommand001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessOneCommand002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand002, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -302,7 +302,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessOneCommand002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessOneCommand003, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand003, TestSize.Level0)
 {
     std::string nodeId = ConstantCommon::GetLocalDeviceId();
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -317,7 +317,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessOneCommand003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, AddCommand001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, AddCommand001, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -330,7 +330,7 @@ HWTEST_F(TokenSyncServiceTest, AddCommand001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, AddCommand002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, AddCommand002, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -344,7 +344,7 @@ HWTEST_F(TokenSyncServiceTest, AddCommand002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands001, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -358,7 +358,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands002, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -373,7 +373,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands003, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands003, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -389,7 +389,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands004, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands004, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -405,7 +405,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ClientProcessResult001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ClientProcessResult001, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -420,7 +420,7 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level0)
 {
     std::string nodeId = ConstantCommon::GetLocalDeviceId();
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
@@ -437,7 +437,7 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level0)
 {
     NativeTokenInfoBase native1 = {
         .ver = 1,
@@ -457,7 +457,7 @@ HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level0)
 {
     HapTokenInfo baseInfo = {
         .ver = 1,
@@ -509,7 +509,7 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level0)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
@@ -544,7 +544,7 @@ HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level0)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
@@ -583,7 +583,7 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo002 start.");
 
@@ -638,7 +638,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo003 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
@@ -670,7 +670,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo004 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
@@ -702,7 +702,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo005 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
@@ -735,7 +735,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo006 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
@@ -769,7 +769,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo007 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
@@ -802,7 +802,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5 AR000GK6T9
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetRemoteHapTokenInfo008 start.");
     // create local token
@@ -851,7 +851,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level0)
 {
     std::string srcDeviceId = "001";
     std::string dstDeviceId = "002";
@@ -880,7 +880,7 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(TokenSyncServiceTest, NewUpdateRemoteHapTokenCommand001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, NewUpdateRemoteHapTokenCommand001, TestSize.Level0)
 {
     std::string srcDeviceId = "001";
     std::string dstDeviceId = "002";
@@ -900,7 +900,7 @@ HWTEST_F(TokenSyncServiceTest, NewUpdateRemoteHapTokenCommand001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level0)
 {
     std::string networkId;
     std::string universallyUniqueId;
@@ -939,7 +939,7 @@ HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level0)
 {
     DeviceInfoManager::GetInstance().RemoveAllRemoteDeviceInfo(); // FindDeviceInfo false
 
@@ -966,7 +966,7 @@ HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level0)
 {
     std::string nodeId;
     DeviceIdType deviceIdType = DeviceIdType::UNKNOWN;
@@ -1013,7 +1013,7 @@ HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
     ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId)); // nodeId invalid
@@ -1050,7 +1050,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
     ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId)); // nodeId invalid
@@ -1087,7 +1087,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level0)
 {
     std::string nodeId;
     ASSERT_EQ(false, DeviceInfoManager::GetInstance().IsDeviceUniversallyUniqueId(nodeId)); // nodeId invalid
@@ -1116,7 +1116,7 @@ HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level0)
 {
     std::string networkId = "123";
     std::string universallyUniqueId = "123";
@@ -1163,7 +1163,7 @@ HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level0)
 {
     std::string deviceID = "dev-001";
     AccessTokenID tokenID = 123; // 123 is random input
@@ -1179,7 +1179,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
 {
     AccessTokenID tokenId;
 
@@ -1216,7 +1216,7 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ExistDeviceInfo001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ExistDeviceInfo001, TestSize.Level0)
 {
     std::string nodeId = "111";
     DeviceIdType type = DeviceIdType::NETWORK_ID;
@@ -1250,7 +1250,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level0)
 {
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -1283,7 +1283,7 @@ HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, OnRemoteRequest002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, OnRemoteRequest002, TestSize.Level0)
 {
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -1319,7 +1319,7 @@ HWTEST_F(TokenSyncServiceTest, OnRemoteRequest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, OnStart001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, OnStart001, TestSize.Level0)
 {
     tokenSyncManagerService_->OnStop();
     ASSERT_EQ(ServiceRunningState::STATE_NOT_START, tokenSyncManagerService_->state_);
@@ -1334,7 +1334,7 @@ HWTEST_F(TokenSyncServiceTest, OnStart001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level0)
 {
     RemoteCommandManager::GetInstance().Init();
     std::string udid = "test_udId";
@@ -1365,7 +1365,7 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, RemoteCommandManager002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager002, TestSize.Level0)
 {
     RemoteCommandManager::GetInstance().Init();
     std::string udid = "test_udId_1";
@@ -1382,7 +1382,7 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level0)
 {
     RemoteCommandManager::GetInstance().Init();
     std::string nodeId = "test_udId";
@@ -1399,7 +1399,7 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessDeviceCommandImmediately001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessDeviceCommandImmediately001, TestSize.Level0)
 {
     std::string udid = "test_udId_1";
     RemoteCommandManager::GetInstance().executors_[udid] = nullptr;
@@ -1414,7 +1414,7 @@ HWTEST_F(TokenSyncServiceTest, ProcessDeviceCommandImmediately001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommandsWithThread001, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommandsWithThread001, TestSize.Level0)
 {
     std::string nodeId = "test_nodeId";
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);

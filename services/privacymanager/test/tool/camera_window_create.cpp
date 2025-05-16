@@ -83,7 +83,7 @@ static inline Rosen::Rect GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint3
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(CreateCameraWindowTest, CreateCameraFloatWindowTest, TestSize.Level1)
+HWTEST_F(CreateCameraWindowTest, CreateCameraFloatWindowTest, TestSize.Level0)
 {
     uint32_t tokenId = GetSelfTokenID();
     GTEST_LOG_(INFO) << "CreateCameraFloatWindowTest begin, tokenId: " << tokenId << std::endl;

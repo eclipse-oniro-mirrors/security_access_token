@@ -78,7 +78,7 @@ void ShortGrantManagerTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(ShortGrantManagerTest, RefreshPermission001, TestSize.Level1)
+HWTEST_F(ShortGrantManagerTest, RefreshPermission001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
@@ -109,7 +109,7 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(ShortGrantManagerTest, RefreshPermission002, TestSize.Level1)
+HWTEST_F(ShortGrantManagerTest, RefreshPermission002, TestSize.Level0)
 {
     const uint32_t maxTime = 10; // 10s
     ShortGrantManager::GetInstance().maxTime_ = maxTime;
@@ -150,7 +150,7 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level1)
+HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level0)
 {
     const uint32_t maxTime = 10; // 10s
     ShortGrantManager::GetInstance().maxTime_ = maxTime;
@@ -208,7 +208,7 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(ShortGrantManagerTest, RefreshPermission004, TestSize.Level1)
+HWTEST_F(ShortGrantManagerTest, RefreshPermission004, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);

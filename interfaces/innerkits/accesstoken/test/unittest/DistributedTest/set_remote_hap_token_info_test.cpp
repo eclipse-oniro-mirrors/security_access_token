@@ -132,7 +132,7 @@ void SetRemoteHapTokenInfoTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest001 start.");
@@ -199,7 +199,7 @@ void SetRemoteHapTokenInfoWithWrongInfo1(HapTokenInfo &wrongBaseInfo, const HapT
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest002 start.");
@@ -241,7 +241,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest002, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest003 start.");
@@ -281,7 +281,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoFuncTest004 start.");
@@ -326,7 +326,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest001 start.");
@@ -375,7 +375,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest002 start.");
@@ -429,7 +429,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest003 start.");
@@ -467,7 +467,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest004 start.");
@@ -514,7 +514,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest005 start.");
@@ -560,7 +560,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoSpecTest006 start.");
@@ -596,7 +596,7 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest006, TestSize.L
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoAbnormalTest001, TestSize.Level1)
+HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "SetRemoteHapTokenInfoAbnormalTest001 start.");
     std::string device = "device";

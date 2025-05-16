@@ -48,7 +48,7 @@ void AccessTokenDatabaseTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDatabaseTest, DatabaseConverage002, TestSize.Level1)
+HWTEST_F(AccessTokenDatabaseTest, DatabaseConverage002, TestSize.Level4)
 {
     DataTranslator trans;
     GenericValues inGenericValues;

@@ -131,7 +131,7 @@ void DeleteRemoteDeviceTokensTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, TestSize.Level1)
+HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensFuncTest001 start.");
@@ -180,7 +180,7 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, Test
  * @tc.type: FUNC
  * @tc.require:issue I5R4UF
  */
-HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, TestSize.Level1)
+HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, TestSize.Level0)
 {
     MockNativeToken mock("token_sync_service");
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensFuncTest002 start.");
@@ -226,7 +226,7 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, Test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensAbnormalTest001, TestSize.Level1)
+HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteRemoteDeviceTokensAbnormalTest001 start.");
     SetSelfTokenID(g_selfTokenId);
