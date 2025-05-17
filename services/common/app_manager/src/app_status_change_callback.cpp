@@ -59,6 +59,21 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
             HandleOnAppCacheStateChanged(data, reply);
             return NO_ERROR;
         }
+        case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_ABILITY_STATE_CHANGED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_EXTENSION_STATE_CHANGED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_CREATED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_APPLICATION_STATE_CHANGED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_REUSED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STARTED:
+        case IApplicationStateObserver::Message::TRANSACT_ON_PAGE_SHOW:
+        case IApplicationStateObserver::Message::TRANSACT_ON_PAGE_HIDE:
+        case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_SHOW:
+        case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_HIDDEN:
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_BINDINGRELATION_CHANGED:
+        {
+            return NO_ERROR;
+        }
         default: {
             LOGD(ATM_DOMAIN, ATM_TAG, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
