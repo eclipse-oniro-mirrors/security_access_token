@@ -6637,7 +6637,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["2in1"]
         }
     ]
 }
