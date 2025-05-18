@@ -857,6 +857,11 @@ bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
     LOGI(ATM_DOMAIN, ATM_TAG, "Called, tokenId=%{public}" PRId64, tokenId);
     return (tokenId & ATOMIC_SERVICE_MASK) == ATOMIC_SERVICE_MASK;
 }
+
+bool AccessTokenKit::IsToastShownNeeded(int32_t pid)
+{
+    return AccessTokenManagerClient::GetInstance().IsToastShownNeeded(pid);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

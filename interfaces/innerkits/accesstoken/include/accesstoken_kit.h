@@ -552,6 +552,13 @@ public:
      * @return bool
      */
     static bool IsAtomicServiceByFullTokenID(uint64_t tokenId);
+
+    /**
+     * @brief whether the process need to show the toast
+     * @param pid process id
+     * @return bool
+     */
+    static bool IsToastShownNeeded(int32_t pid);
 };
 } // namespace AccessToken
 } // namespace Security

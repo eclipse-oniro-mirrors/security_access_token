@@ -61,6 +61,7 @@ if (is_standard_system) {
       "main/cpp/include/callback",
       "main/cpp/include/database",
       "main/cpp/include/dfx",
+      "main/cpp/include/seccomp",
       "main/cpp/include/service",
       "main/cpp/include/form_manager",
       "main/cpp/include/token",
@@ -90,6 +91,7 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_validator.cpp",
       "main/cpp/src/permission/short_grant_manager.cpp",
       "main/cpp/src/permission/temp_permission_observer.cpp",
+      "main/cpp/src/seccomp/sec_comp_monitor.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
       "main/cpp/src/token/accesstoken_info_manager.cpp",
@@ -196,7 +198,6 @@ if (is_standard_system) {
 
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-      include_dirs += [ "main/cpp/include/seccomp" ]
       sources +=
           [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
     }

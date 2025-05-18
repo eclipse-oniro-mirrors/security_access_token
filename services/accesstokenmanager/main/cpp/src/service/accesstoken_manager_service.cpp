@@ -45,6 +45,7 @@
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
 #endif
+#include "sec_comp_monitor.h"
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
@@ -1449,7 +1450,6 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
     return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 bool AccessTokenManagerService::IsSecCompServiceCalling()
 {
     uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
@@ -1458,7 +1458,6 @@ bool AccessTokenManagerService::IsSecCompServiceCalling()
     }
     return tokenCaller == secCompTokenId_;
 }
-#endif
 
 int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)
 {
@@ -1513,6 +1512,16 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     return RET_SUCCESS;
 }
 #endif
+
+int32_t AccessTokenManagerService::IsToastShownNeeded(int32_t pid, bool& needToShow)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    needToShow = SecCompMonitor::GetInstance().IsToastShownNeeded(pid);
+    return RET_SUCCESS;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
