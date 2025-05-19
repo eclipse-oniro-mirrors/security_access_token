@@ -1287,7 +1287,7 @@
             "name": "ohos.permission.DISTRIBUTED_SOFTBUS_CENTER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 9,
             "deprecated": "",
             "provisionEnable": false,
