@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +26,7 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "constant_common.h"
+#include "data_usage_dfx.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
@@ -1408,6 +1409,7 @@ bool AccessTokenManagerService::Initialize()
     GetConfigValue(dfxInfo.parseConfigFlag);
 
     ReportSysEventServiceStart(dfxInfo);
+    ReportAccessTokenUserData();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success");
     return true;
 }

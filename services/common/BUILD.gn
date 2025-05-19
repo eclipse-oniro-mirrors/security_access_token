@@ -18,6 +18,7 @@ config("accesstoken_service_common_public_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "app_manager/include",
+    "dfx/include",
     "database/include",
     "libraryloader/include",
     "random/include",
@@ -53,6 +54,7 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/sqlite_helper.cpp",
     "database/src/statement.cpp",
     "database/src/variant_value.cpp",
+    "dfx/src/data_usage_dfx.cpp",
     "libraryloader/src/libraryloader.cpp",
     "random/src/random_openssl.cpp",
   ]
@@ -69,6 +71,7 @@ ohos_static_library("accesstoken_service_common") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "ipc:ipc_single",
     "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
