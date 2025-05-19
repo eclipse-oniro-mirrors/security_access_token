@@ -1070,7 +1070,7 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
         .pid = pid,
         .callerPid = callerPid,
     };
-    if (!ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualRecord, false)) {
+    if (!ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualRecord, true)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, " \
             "opCode=%{public}d, callerPid=%{public}d", tokenId, pid, opCode, callerPid);
         return PrivacyError::ERR_PERMISSION_NOT_START_USING;
