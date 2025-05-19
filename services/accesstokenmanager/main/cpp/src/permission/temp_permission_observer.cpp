@@ -37,7 +37,9 @@ namespace {
 static const std::string TASK_NAME_TEMP_PERMISSION = "atm_permission_manager_temp_permission";
 static const std::string FORM_INVISIBLE_NAME = "#0";
 static const std::string FORM_VISIBLE_NAME = "#1";
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static constexpr int32_t ROOT_UID = 0;
+#endif
 static constexpr int32_t FOREGROUND_FLAG = 0;
 static constexpr int32_t FORMS_FLAG = 1;
 static constexpr int32_t CONTINUOUS_TASK_FLAG = 2;

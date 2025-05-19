@@ -24,9 +24,7 @@
 #include "i_token_sync_callback.h"
 #include "nocopyable.h"
 #include "rwlock.h"
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
 #include "thread_pool.h"
-#endif
 #include "callback_death_recipients.h"
 
 namespace OHOS {
@@ -44,11 +42,6 @@ public:
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID);
     int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback);
     int32_t UnRegisterTokenSyncCallback();
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    int32_t GetCurTaskNum();
-    void AddCurTaskNum();
-    void ReduceCurTaskNum();
-#endif
 
 private:
     TokenModifyNotifier();
@@ -58,11 +51,7 @@ private:
     OHOS::Utils::RWLock initLock_;
     OHOS::Utils::RWLock listLock_;
     OHOS::Utils::RWLock notifyLock_;
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::atomic_int32_t curTaskNum_;
-#else
     OHOS::ThreadPool notifyTokenWorker_;
-#endif
     std::set<AccessTokenID> observationSet_;
     std::vector<AccessTokenID> deleteTokenList_;
     std::vector<AccessTokenID> modifiedTokenList_;

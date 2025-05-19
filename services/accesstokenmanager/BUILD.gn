@@ -177,11 +177,6 @@ if (is_standard_system) {
       external_deps += [ "hitrace:hitrace_meter" ]
     }
 
-    if (resourceschedule_ffrt_enable) {
-      external_deps += [ "ffrt:libffrt" ]
-      cflags_cc += [ "-DRESOURCESCHEDULE_FFRT_ENABLE" ]
-    }
-
     if (access_token_background_task_mgr_continuous_task_enable == true) {
       cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
       include_dirs += [
