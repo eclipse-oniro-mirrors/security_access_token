@@ -41,6 +41,7 @@
         "device_manager",
         "dsoftbus",
         "eventhandler",
+        "ffrt",
         "hicollie",
         "hisysevent",
         "hitrace",
