@@ -602,7 +602,7 @@ int32_t PermissionManager::AddPermStateChangeCallback(
     if (result != RET_SUCCESS) {
         return result;
     }
-    return CallbackManager::GetInstance().AddCallback(scope, callback);
+    return CallbackManager::GetInstance().AddCallback(scopeRes, callback);
 }
 
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)

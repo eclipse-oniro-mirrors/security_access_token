@@ -30,9 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
-#endif
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -66,11 +64,7 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::lock_guard<ffrt::mutex> lock(mutex_);
-#else
     std::lock_guard<std::mutex> lock(mutex_);
-#endif
     if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Callback size has reached limitation");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
@@ -96,11 +90,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::lock_guard<ffrt::mutex> lock(mutex_);
-#else
     std::lock_guard<std::mutex> lock(mutex_);
-#endif
 
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
@@ -140,23 +130,6 @@ void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list,
     const std::string& permName, int32_t changeType)
 {
     for (auto it = list.begin(); it != list.end(); ++it) {
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-        auto callbackSingle = [it, tokenID, permName, changeType]() {
-            sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
-            if (callback != nullptr) {
-                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute, id=%{public}u perm=%{public}s changeType=%{public}d",
-                    tokenID, permName.c_str(), changeType);
-                PermStateChangeInfo resInfo;
-                resInfo.permStateChangeType = changeType;
-                resInfo.permissionName = permName;
-                resInfo.tokenID = tokenID;
-                callback->PermStateChangeCallback(resInfo);
-                LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute end, "
-                    "id=%{public}u perm=%{public}s changeType=%{public}d", tokenID, permName.c_str(), changeType);
-            }
-        };
-        ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
-#else
         sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
         if (callback != nullptr) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute");
@@ -166,21 +139,13 @@ void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list,
             resInfo.tokenID = tokenID;
             callback->PermStateChangeCallback(resInfo);
         }
-#endif
     }
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    ffrt::wait();
-#endif
 }
 
 void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::string& permName,
     std::vector<sptr<IRemoteObject>>& list)
 {
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::lock_guard<ffrt::mutex> lock(mutex_);
-#else
     std::lock_guard<std::mutex> lock(mutex_);
-#endif
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         std::shared_ptr<PermStateChangeScope> scopePtr = (*it).scopePtr_;
         if (scopePtr == nullptr) {
@@ -204,23 +169,15 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
     auto callbackStart = [this, tokenID, permName, changeType]() {
         LOGI(ATM_DOMAIN, ATM_TAG, "CallbackStart, id=%{public}u perm=%{public}s changeType=%{public}d",
             tokenID, permName.c_str(), changeType);
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
         std::string name = "AtmCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
-#endif
         std::vector<sptr<IRemoteObject>> list;
         this->GetCallbackObjectList(tokenID, permName, list);
         this->ExecuteAllCallback(list, tokenID, permName, changeType);
     };
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    std::string taskName = "AtmCallback";
-    ffrt::submit_h(callbackStart, {}, {},
-        ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
-#else
     std::packaged_task<void()> callbackTask(callbackStart);
     std::make_unique<std::thread>(std::move(callbackTask))->detach();
-#endif
     LOGD(ATM_DOMAIN, ATM_TAG, "The callback execution is complete");
 }
 } // namespace AccessToken

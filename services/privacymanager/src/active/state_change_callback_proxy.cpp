@@ -44,7 +44,7 @@ void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isS
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
+    MessageOption option(MessageOption::TF_ASYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Remote service null.");

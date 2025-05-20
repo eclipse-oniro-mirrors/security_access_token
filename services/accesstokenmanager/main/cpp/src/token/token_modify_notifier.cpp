@@ -20,9 +20,6 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-#include "ffrt.h"
-#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "libraryloader.h"
@@ -35,20 +32,14 @@ namespace {
 std::recursive_mutex g_instanceMutex;
 }
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false), curTaskNum_(0) {}
-#else
 TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false), notifyTokenWorker_("TokenModify") {}
-#endif
 
 TokenModifyNotifier::~TokenModifyNotifier()
 {
     if (!hasInited_) {
         return;
     }
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
     this->notifyTokenWorker_.Stop();
-#endif
     this->hasInited_ = false;
 }
 
@@ -101,9 +92,7 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
     if (!instance->hasInited_) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance->initLock_);
         if (!instance->hasInited_) {
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
             instance->notifyTokenWorker_.Start(1);
-#endif
             instance->hasInited_ = true;
         }
     }
@@ -205,41 +194,8 @@ int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
     return ERR_OK;
 }
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-int32_t TokenModifyNotifier::GetCurTaskNum()
-{
-    return curTaskNum_.load();
-}
-
-void TokenModifyNotifier::AddCurTaskNum()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Add task!");
-    curTaskNum_++;
-}
-
-void TokenModifyNotifier::ReduceCurTaskNum()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Reduce task!");
-    curTaskNum_--;
-}
-#endif
-
 void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    if (GetCurTaskNum() > 1) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Has notify task! taskNum is %{public}d.", GetCurTaskNum());
-        return;
-    }
-
-    std::string taskName = "TokenModify";
-    auto tokenModify = []() {
-        TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
-        TokenModifyNotifier::GetInstance().ReduceCurTaskNum();
-    };
-    ffrt::submit(tokenModify, {}, {}, ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
-    AddCurTaskNum();
-#else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
         LOGI(ATM_DOMAIN, ATM_TAG, " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
         return;
@@ -248,7 +204,6 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
     notifyTokenWorker_.AddTask([]() {
         TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
     });
-#endif
 }
 } // namespace AccessToken
 } // namespace Security

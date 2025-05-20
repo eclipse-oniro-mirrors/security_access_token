@@ -72,9 +72,6 @@ private:
     void ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub, int32_t callerPid);
     void ReleaseDeathStub(int32_t callerPid);
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    bool IsSecCompServiceCalling();
-#endif
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling() const;
     bool IsSystemAppCalling() const;

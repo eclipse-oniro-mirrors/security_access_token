@@ -1287,7 +1287,7 @@
             "name": "ohos.permission.DISTRIBUTED_SOFTBUS_CENTER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 9,
             "deprecated": "",
             "provisionEnable": false,
@@ -6466,10 +6466,22 @@
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
-            "since": 18,
+            "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": true,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.GET_FILE_ICON",
@@ -6574,6 +6586,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.RESTORE_APP",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.READ_PARENT_CONTROL_DATA",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -6629,15 +6652,26 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.SUPPORT_APP_SERVICE_EXTENSION",
+            "name": "ohos.permission.kernel.ALLOW_APP_CODE_DECRYPT",
             "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.SUPPORT_APP_SERVICE_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",           
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
