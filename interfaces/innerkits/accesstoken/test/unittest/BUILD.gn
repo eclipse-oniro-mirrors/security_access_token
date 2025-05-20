@@ -114,6 +114,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
       "DlpTest/share_permission_with_sandbox_test.cpp",
     ]
   }
+  if (security_component_enhance_enable == true) {
+    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  }
 }
 
 ohos_unittest("accesstoken_mock_test") {
