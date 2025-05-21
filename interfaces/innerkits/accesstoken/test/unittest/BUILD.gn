@@ -114,9 +114,6 @@ ohos_unittest("libaccesstoken_sdk_test") {
       "DlpTest/share_permission_with_sandbox_test.cpp",
     ]
   }
-  if (build_variant == "user") {
-    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-  }
 }
 
 ohos_unittest("accesstoken_mock_test") {
@@ -181,8 +178,5 @@ ohos_unittest("accesstoken_mock_test") {
   }
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-  if (build_variant == "user") {
-    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
   }
 }

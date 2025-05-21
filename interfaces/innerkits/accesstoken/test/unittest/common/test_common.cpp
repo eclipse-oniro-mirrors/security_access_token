@@ -336,25 +336,6 @@ int32_t TestCommon::RevokePermissionByTest(AccessTokenID tokenID, const std::str
     return AccessTokenKit::RevokePermission(tokenID, permission, flag);
 }
 
-uint64_t TestCommon::GetNativeToken(const char *processName, const char **perms, int32_t permNum)
-{
-    uint64_t tokenId;
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = permNum,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .aplStr = "system_core",
-        .processName = processName,
-    };
-
-    tokenId = GetAccessTokenId(&infoInstance);
-    AccessTokenKit::ReloadNativeTokenInfo();
-    return tokenId;
-}
-
 AccessTokenID TestCommon::GetNativeTokenIdFromProcess(const std::string &process)
 {
     uint64_t selfTokenId = GetSelfTokenID();

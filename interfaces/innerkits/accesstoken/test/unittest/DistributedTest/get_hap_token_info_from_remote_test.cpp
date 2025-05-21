@@ -155,19 +155,19 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest001, Te
 
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
+    EXPECT_EQ(ret, RET_SUCCESS);
+    EXPECT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
 
-    ASSERT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
+    EXPECT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
 
-    ASSERT_EQ(infoSync.permStateList[1].permissionName, g_infoManagerTestPolicyPrams.permStateList[1].permissionName);
+    EXPECT_EQ(infoSync.permStateList[1].permissionName, g_infoManagerTestPolicyPrams.permStateList[1].permissionName);
 
-    ASSERT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
-    ASSERT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
-    ASSERT_EQ(infoSync.baseInfo.instIndex, g_infoManagerTestInfoParms.instIndex);
-    ASSERT_EQ(infoSync.baseInfo.ver, 1);
-    ASSERT_EQ(infoSync.baseInfo.tokenID, localTokenID);
-    ASSERT_EQ(infoSync.baseInfo.tokenAttr, 0);
+    EXPECT_EQ(infoSync.baseInfo.bundleName, g_infoManagerTestInfoParms.bundleName);
+    EXPECT_EQ(infoSync.baseInfo.userID, g_infoManagerTestInfoParms.userID);
+    EXPECT_EQ(infoSync.baseInfo.instIndex, g_infoManagerTestInfoParms.instIndex);
+    EXPECT_EQ(infoSync.baseInfo.ver, 1);
+    EXPECT_EQ(infoSync.baseInfo.tokenID, localTokenID);
+    EXPECT_EQ(infoSync.baseInfo.tokenAttr, 0);
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(localTokenID));
 }

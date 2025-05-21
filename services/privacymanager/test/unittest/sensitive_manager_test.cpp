@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,7 @@
 #endif
 #include "camera_manager_adapter.h"
 #include "permission_record_manager.h"
+#include "privacy_test_common.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -41,6 +42,7 @@ public:
     void SetUp();
     void TearDown();
 };
+static MockHapToken* g_mock = nullptr;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.RUNNING_STATE_OBSERVER",
@@ -106,28 +108,32 @@ static HapInfoParams g_infoManagerTestSystemInfoParms = {
 void SensitiveManagerServiceTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
+
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.RUNNING_STATE_OBSERVER");
+    reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
+    reqPerm.emplace_back("ohos.permission.GET_RUNNING_INFO");
+    reqPerm.emplace_back("ohos.permission.MANAGE_AUDIO_CONFIG");
+    reqPerm.emplace_back("ohos.permission.MICROPHONE_CONTROL");
+    g_mock = new (std::nothrow) MockHapToken("SensitiveManagerServiceTest", reqPerm);
 }
 
 void SensitiveManagerServiceTest::TearDownTestCase()
 {
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    PrivacyTestCommon::ResetTestEvironment();
 }
 
 void SensitiveManagerServiceTest::SetUp()
 {
-    AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID,
-                                                          g_InfoParms1.bundleName,
-                                                          g_InfoParms1.instIndex);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
 
 void SensitiveManagerServiceTest::TearDown()
 {
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID,
-                                                          g_InfoParms1.bundleName,
-                                                          g_InfoParms1.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 /*
@@ -150,8 +156,8 @@ HWTEST_F(SensitiveManagerServiceTest, RegisterAppObserverTest001, TestSize.Level
  */
 HWTEST_F(SensitiveManagerServiceTest, RegisterAppObserverTest002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    MockNativeToken("privacy_service");
+    AccessTokenID tokenId = GetSelfTokenID();
 
     sptr<ApplicationStateObserverStub> listener = new(std::nothrow) ApplicationStateObserverStub();
     ASSERT_NE(listener, nullptr);

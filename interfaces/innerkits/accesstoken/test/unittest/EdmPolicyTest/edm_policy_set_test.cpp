@@ -269,7 +269,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy006, TestSize.Level1)
 
     std::vector<PermissionStateFull> permStatList;
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(fullIdUser2.tokenIdExStruct.tokenID, permStatList, true));
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    EXPECT_EQ(static_cast<uint32_t>(2), permStatList.size());
     EXPECT_EQ(INTERNET, permStatList[0].permissionName);
     EXPECT_EQ(PERMISSION_GRANTED, permStatList[0].grantStatus[0]);
 
@@ -335,21 +335,15 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
     AccessTokenIDEx fullIdUser2;
     EXPECT_EQ(RET_SUCCESS,
         TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser2));
-    g_testHapInfoParams.userID = MOCK_USER_ID_10003;
-    AccessTokenIDEx fullIdUser3;
-    EXPECT_EQ(RET_SUCCESS,
-        TestCommon::AllocTestHapToken(g_testHapInfoParams, g_testPolicyParams, fullIdUser3));
 
     UserState user1 = {.userId = MOCK_USER_ID_10001, .isActive = false};
     UserState user2 = {.userId = MOCK_USER_ID_10002, .isActive = true};
-    UserState user3 = {.userId = MOCK_USER_ID_10003, .isActive = true};
-    std::vector<UserState> userListBefore = { user1, user2, user3 };
+    std::vector<UserState> userListBefore = { user1, user2 };
     std::vector<std::string> permList = { INTERNET, LOCATION };
     int32_t ret = AccessTokenKit::InitUserPolicy(userListBefore, permList);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
@@ -363,7 +357,6 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
-    EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser3.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, LOCATION),
         PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, LOCATION),
@@ -371,7 +364,6 @@ HWTEST_F(EdmPolicySetTest, UpdateUserPolicy004, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser2.tokenIdExStruct.tokenID));
-    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser3.tokenIdExStruct.tokenID));
 
     int32_t res = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(res, 0);

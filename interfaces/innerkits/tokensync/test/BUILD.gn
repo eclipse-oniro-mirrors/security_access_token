@@ -30,6 +30,8 @@ ohos_unittest("libtokensync_sdk_test") {
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/tokensync/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
     "../src",
   ]
 
@@ -39,7 +41,12 @@ ohos_unittest("libtokensync_sdk_test") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [ "../:libtokensync_sdk" ]
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk",
+  ]
   external_deps = [ "c_utils:utils" ]
 }
 
