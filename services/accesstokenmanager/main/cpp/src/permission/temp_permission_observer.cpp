@@ -163,9 +163,10 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStart(
     const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
 {
     AccessTokenID tokenID = static_cast<AccessTokenID>(continuousTaskCallbackInfo->GetFullTokenId());
-    uint32_t typeId = continuousTaskCallbackInfo->GetTypeId();
-    if (static_cast<BackgroundMode>(typeId) != BackgroundMode::LOCATION) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "TypeId:%{public}d can not use temp permission", typeId);
+    std::vector<uint32_t> typeIds = continuousTaskCallbackInfo->GetTypeIds();
+    auto it = std::find(typeIds.begin(), typeIds.end(), static_cast<uint32_t>(BackgroundMode::LOCATION));
+    if (it == typeIds.end()) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "TypeId can not use temp permission");
         return;
     }
     std::vector<bool> list;
@@ -184,9 +185,10 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
     const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
 {
     AccessTokenID tokenID = static_cast<AccessTokenID>(continuousTaskCallbackInfo->GetFullTokenId());
-    uint32_t typeId = continuousTaskCallbackInfo->GetTypeId();
-    if (static_cast<BackgroundMode>(typeId) != BackgroundMode::LOCATION) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "TypeId:%{public}d can not use temp permission", typeId);
+    std::vector<uint32_t> typeIds = continuousTaskCallbackInfo->GetTypeIds();
+    auto it = std::find(typeIds.begin(), typeIds.end(), static_cast<uint32_t>(BackgroundMode::LOCATION));
+    if (it == typeIds.end()) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "TypeId can not use temp permission");
         return;
     }
     std::vector<bool> list;
