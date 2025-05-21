@@ -30,6 +30,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+static constexpr const char* PERM_DEF_VERSION = "permission_definition_version";
+
 class AccessTokenDb final {
 public:
     static AccessTokenDb& GetInstance();

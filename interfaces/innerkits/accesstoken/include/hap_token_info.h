@@ -92,6 +92,8 @@ public:
     std::string appDistributionType;
     /** Whether hap is a atomic-service */
     bool isAtomicService = false;
+    /** ota refresh app */
+    bool dataRefresh = false;
 };
 
 /**
@@ -209,6 +211,17 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+};
+
+/**
+ * @brief Declares hap Init info class
+ */
+class HapInitInfo final {
+public:
+    HapInfoParams installInfo;
+    UpdateHapInfoParams updateInfo;
+    HapPolicy policy;
+    bool isUpdate = false;
 };
 
 /**

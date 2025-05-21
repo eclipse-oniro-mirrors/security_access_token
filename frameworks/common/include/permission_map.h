@@ -46,6 +46,7 @@ void GetPermissionBriefDef(uint32_t code, PermissionBriefDef &permissionBriefDef
 void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef &def);
 bool IsPermissionValidForHap(const std::string& permissionName);
 size_t GetDefPermissionsSize();
+const char* GetPermDefVersion();
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -49,6 +49,9 @@ const std::string TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS = "status";
 const std::string TokenFiledConst::FIELD_KERNEL_EFFECT = "kernel_effect";
 const std::string TokenFiledConst::FIELD_HAS_VALUE = "has_value";
 const std::string TokenFiledConst::FIELD_VALUE = "value";
+const std::string TokenFiledConst::FIELD_ACL = "acl";
+const std::string TokenFiledConst::FIELD_NAME = "name";
+const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distribution_type";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

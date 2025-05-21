@@ -22,6 +22,7 @@
 
 #include "ability_manager_access_loader.h"
 #include "access_token.h"
+#include "generic_values.h"
 #include "hap_token_info_inner.h"
 #include "iremote_broker.h"
 #include "libraryloader.h"
@@ -29,6 +30,7 @@
 #include "permission_grant_event.h"
 #include "permission_list_state.h"
 #include "permission_list_state_parcel.h"
+#include "permission_map.h"
 #include "permission_state_change_info.h"
 #include "permission_status.h"
 #include "temp_permission_observer.h"
@@ -93,14 +95,15 @@ public:
     void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
-    bool InitPermissionList(const std::string& appDistributionType, const HapPolicy& policy,
-        std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result);
+    bool InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
+        HapInfoCheckResult& result, std::vector<GenericValues>& undefValues);
     bool InitDlpPermissionList(const std::string& bundleName, int32_t userId,
-        std::vector<PermissionStatus>& initializedList);
+        std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
     void GetStateOrFlagChangedList(std::vector<PermissionStatus>& stateListBefore,
         std::vector<PermissionStatus>& stateListAfter, std::vector<PermissionStatus>& stateChangeList);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
+    bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType);
 
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
@@ -117,6 +120,11 @@ private:
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     bool IsPermissionStateOrFlagMatched(const PermissionStatus& stata1, const PermissionStatus& stata2);
+    void FillUndefinedPermVector(const std::string& permissionName, const std::string& appDistributionType,
+        const HapPolicy& policy, std::vector<GenericValues>& undefValues);
+    bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy, const std::string& permissionName,
+        const std::string appDistributionType, HapInfoCheckResult& result);
+    void GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     std::shared_ptr<LibraryLoader> GetAbilityManager();
 
     PermissionGrantEvent grantEvent_;

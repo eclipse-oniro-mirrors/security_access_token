@@ -137,6 +137,11 @@ size_t GetDefPermissionsSize()
 {
     return MAX_PERM_SIZE;
 }
+
+const char* GetPermDefVersion()
+{
+    return PERMISSION_DEFINITION_VERSION;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

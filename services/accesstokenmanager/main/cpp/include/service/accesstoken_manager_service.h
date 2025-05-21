@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_MANAGER_SERVICE_H
 #define ACCESSTOKEN_MANAGER_SERVICE_H
 
+#include <set>
 #include <string>
 #include <vector>
 #include <unordered_set>
@@ -25,10 +26,12 @@
 #include "access_event_handler.h"
 #endif
 #include "access_token.h"
+#include "generic_values.h"
 #include "hap_token_info.h"
 #include "iremote_object.h"
 #include "json_parse_loader.h"
 #include "nocopyable.h"
+#include "permission_map.h"
 #include "singleton.h"
 #include "system_ability.h"
 #include "thread_pool.h"
@@ -143,6 +146,13 @@ private:
     void ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy);
     void ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info, int64_t beginTime,
         int32_t errorCode);
+    int32_t UpdatePermDefVersion(const std::string& permDefVersion);
+    bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
+    int32_t UpdateUndefinedToDb(const std::vector<GenericValues>& stateValues,
+        const std::vector<GenericValues>& extendValues, const std::vector<GenericValues>& validValueList);
+    int32_t UpdateUndefinedInfo(const std::vector<GenericValues>& validValueList);
+    void HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenId2apl);
+    void HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenId2apl);
 
     ServiceRunningState state_;
     std::string grantBundleName_;

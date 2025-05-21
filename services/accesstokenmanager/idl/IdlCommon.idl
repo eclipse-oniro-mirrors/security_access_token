@@ -37,6 +37,8 @@ struct UpdateHapInfoParamsIdl {
     String appDistributionType;
     /** Whether hap is a atomic service */
     boolean isAtomicService;
+    /** Whether ota update */
+    boolean dataRefresh;
 };
 
 enum PermissionRulesEnumIdl {

@@ -31,6 +31,7 @@ static constexpr const int32_t DATABASE_VERSION_2 = 2;
 static constexpr const int32_t DATABASE_VERSION_3 = 3;
 static constexpr const int32_t DATABASE_VERSION_4 = 4;
 static constexpr const int32_t DATABASE_VERSION_5 = 5;
+static constexpr const int32_t DATABASE_VERSION_6 = 6;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -56,8 +57,14 @@ private:
     int32_t CreateNativeTokenInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionStateTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionOneTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionThreeTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionExtendValueTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionFiveTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateHapUndefineInfoTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateSystemConfigTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionSixTable(NativeRdb::RdbStore& rdbStore);
 
     // OnUpgrade
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);

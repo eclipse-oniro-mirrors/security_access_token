@@ -22,8 +22,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const std::vector<std::string> g_StringTypeColumns = {
-    "description", "permission_name", "device_id", "bundle_name",
-    "app_id", "process_name", "dcap", "native_acls", "label", "value",
+    "description", "permission_name", "device_id", "bundle_name", "app_id",
+    "process_name", "dcap", "native_acls", "label", "value", "name", "app_distribution_type"
 };
 
 static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
@@ -33,6 +33,8 @@ static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
     {AtmDataType::ACCESSTOKEN_PERMISSION_STATE, "permission_state_table"},
     {AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, "permission_request_toggle_status_table"},
     {AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, "permission_extend_value_table"},
+    {AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, "hap_undefine_info_table"},
+    {AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, "system_config_table"},
 };
 }
 

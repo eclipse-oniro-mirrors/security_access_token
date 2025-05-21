@@ -888,6 +888,35 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
     }
     return RET_SUCCESS;
 }
+
+int32_t PermissionDataBrief::AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName,
+    PermissionState grantStatus, PermissionFlag grantFlag, const std::string& value)
+{
+    PermissionStatus status;
+    status.permissionName = permissionName;
+    status.grantStatus = static_cast<int32_t>(grantStatus);
+    status.grantFlag = static_cast<uint32_t>(grantFlag);
+
+    std::map<std::string, std::string> aclExtendedMap;
+    aclExtendedMap[permissionName] = value;
+
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    BriefPermData data;
+    if (!GetPermissionBriefData(tokenID, status, aclExtendedMap, data)) {
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    std::vector<BriefPermData> list;
+    int32_t res = GetBriefPermDataByTokenIdInner(tokenID, list);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+
+    MergePermBriefData(list, data);
+    AddBriefPermDataByTokenId(tokenID, list);
+
+    return RET_SUCCESS;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

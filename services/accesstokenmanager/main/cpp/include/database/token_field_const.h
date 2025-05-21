@@ -55,6 +55,9 @@ public:
     const static std::string FIELD_KERNEL_EFFECT;
     const static std::string FIELD_HAS_VALUE;
     const static std::string FIELD_VALUE;
+    const static std::string FIELD_ACL;
+    const static std::string FIELD_NAME;
+    const static std::string FIELD_APP_DISTRIBUTION_TYPE;
 };
 } // namespace AccessToken
 } // namespace Security

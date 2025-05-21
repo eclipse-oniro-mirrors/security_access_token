@@ -886,7 +886,8 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
     return true;
 }
 
-bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType)
+bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef,
+    const std::string& appDistributionType)
 {
     if (briefDef.availableType == ATokenAvailableTypeEnum::MDM) {
         if (appDistributionType == "none") {
@@ -918,8 +919,29 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
     return true;
 }
 
+void PermissionManager::GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> results;
+    int32_t res = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results); // get master app hap undefined data
+    if (res != 0) {
+        return;
+    }
+
+    if (results.empty()) {
+        return;
+    }
+
+    for (auto& value : results) {
+        value.Remove(TokenFiledConst::FIELD_TOKEN_ID);
+        undefValues.emplace_back(value);
+    }
+}
+
 bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int32_t userId,
-    std::vector<PermissionStatus>& initializedList)
+    std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues)
 {
     // get dlp original app
     AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(userId, bundleName, 0);
@@ -930,38 +952,90 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
         return false;
     }
     (void)infoPtr->GetPermissionStateList(initializedList);
+    GetMasterAppUndValues(tokenId.tokenIdExStruct.tokenID, undefValues);
     return true;
 }
 
-bool PermissionManager::InitPermissionList(const std::string& appDistributionType, const HapPolicy& policy,
-    std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result)
+void PermissionManager::FillUndefinedPermVector(const std::string& permissionName,
+    const std::string& appDistributionType, const HapPolicy& policy, std::vector<GenericValues>& undefValues)
+{
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    value.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, appDistributionType);
+
+    auto it = std::find_if(
+        policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [permissionName](const std::string& perm) {
+        return permissionName == perm;
+    });
+    if (it != policy.aclRequestedList.end()) {
+        value.Put(TokenFiledConst::FIELD_ACL, 1);
+    } else {
+        value.Put(TokenFiledConst::FIELD_ACL, 0);
+    }
+
+    auto iter = std::find_if(policy.aclExtendedMap.begin(), policy.aclExtendedMap.end(),
+        [permissionName](const std::map<std::string, std::string>::value_type item) {
+            return permissionName == item.first;
+        });
+    if (iter != policy.aclExtendedMap.end()) {
+        value.Put(TokenFiledConst::FIELD_VALUE, iter->second);
+    }
+
+    undefValues.emplace_back(value);
+
+    return;
+}
+
+bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy,
+    const std::string& permissionName, const std::string appDistributionType, HapInfoCheckResult& result)
+{
+    // acl check
+    if (!IsAclSatisfied(briefDef, policy)) {
+        result.permCheckResult.permissionName = permissionName;
+        result.permCheckResult.rule = PERMISSION_ACL_RULE;
+        LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
+        return false;
+    }
+
+    // edm check
+    if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
+        result.permCheckResult.permissionName = permissionName;
+        result.permCheckResult.rule = PERMISSION_EDM_RULE;
+        LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
+
+        return false;
+    }
+
+    return true;
+}
+
+bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
+    HapInfoCheckResult& result, std::vector<GenericValues>& undefValues)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
-        "ACLRequestedList size %{public}zu.",
-        policy.permStateList.size(), policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
+        "ACLRequestedList size %{public}zu.", initInfo.policy.permStateList.size(),
+        initInfo.policy.preAuthorizationInfo.size(), initInfo.policy.aclRequestedList.size());
+    std::string appDistributionType = (initInfo.isUpdate) ?
+        initInfo.updateInfo.appDistributionType : initInfo.installInfo.appDistributionType;
 
-    for (auto state : policy.permStateList) {
+    for (auto state : initInfo.policy.permStateList) {
         PermissionBriefDef briefDef;
         if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
                 state.permissionName.c_str());
+            FillUndefinedPermVector(state.permissionName, appDistributionType, initInfo.policy, undefValues);
             continue;
         }
 
-        if (!IsAclSatisfied(briefDef, policy)) {
-            result.permCheckResult.permissionName = state.permissionName;
-            result.permCheckResult.rule = PERMISSION_ACL_RULE;
-            LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
-            return false;
+        if (!AclAndEdmCheck(briefDef, initInfo.policy, state.permissionName, appDistributionType, result)) {
+            if (initInfo.updateInfo.dataRefresh) {
+                FillUndefinedPermVector(state.permissionName, appDistributionType, initInfo.policy, undefValues);
+                continue;
+            } else {
+                return false;
+            }
         }
 
-        // edm check
-        if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
-            result.permCheckResult.permissionName = state.permissionName;
-            result.permCheckResult.rule = PERMISSION_EDM_RULE;
-            LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
-            return false;
-        }
         state.grantFlag = PERMISSION_DEFAULT_FLAG;
         state.grantStatus = PERMISSION_DENIED;
 
@@ -971,12 +1045,12 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
             initializedList.emplace_back(state);
             continue;
         }
-        if (policy.preAuthorizationInfo.size() == 0) {
+        if (initInfo.policy.preAuthorizationInfo.size() == 0) {
             initializedList.emplace_back(state);
             continue;
         }
         bool userCancelable = true;
-        if (IsUserGrantPermPreAuthorized(policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
+        if (IsUserGrantPermPreAuthorized(initInfo.policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
             state.grantFlag = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
             state.grantStatus = PERMISSION_GRANTED;
         }
