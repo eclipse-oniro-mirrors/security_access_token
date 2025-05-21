@@ -29,7 +29,8 @@ group("accesstoken_build_module_test") {
       "interfaces/innerkits/token_setproc/test:unittest",
       "services/accesstokenmanager/test:unittest",
       "services/common/database/test:unittest",
-      "services/common/json_parse/test:unittest"
+      "services/common/dfx/test:unittest",
+      "services/common/json_parse/test:unittest",
     ]
     if (ability_base_enable == true) {
       deps += [

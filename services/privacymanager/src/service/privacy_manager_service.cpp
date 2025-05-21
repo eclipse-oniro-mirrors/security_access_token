@@ -28,6 +28,7 @@
 #endif //COMMON_EVENT_SERVICE_ENABLE
 #include "constant_common.h"
 #include "constant.h"
+#include "data_usage_dfx.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #include "privacy_error.h"
@@ -519,6 +520,7 @@ bool PrivacyManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
 #endif
+    ReportPrivacyUserData();
     return true;
 }
 

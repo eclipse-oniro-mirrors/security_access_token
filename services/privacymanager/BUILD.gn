@@ -155,6 +155,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/database/include",
+      "${access_token_path}/services/common/dfx/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/screenlock_manager/include",

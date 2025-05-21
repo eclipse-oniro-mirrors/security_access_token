@@ -55,6 +55,7 @@ if (is_standard_system) {
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/database/include",
+      "${access_token_path}/services/common/dfx/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/utils/include",
@@ -193,8 +194,7 @@ if (is_standard_system) {
 
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-      sources +=
-          [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
+      sources += [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
     }
     if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
       cflags_cc += [ "-DDYNAMIC_CLOSE_LIBS" ]
