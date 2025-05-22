@@ -21,6 +21,7 @@ import json
 import argparse
 import os
 import stat
+import hashlib
 
 PERMISSION_DEFINITION_PREFIX = '''
 /*
@@ -48,9 +49,11 @@ namespace Security {
 namespace AccessToken {
 '''
 
-PERMISSION_DEFINITION_SUFFIX = '''
+PERMISSION_DEFINITION_SUFFIX_1 = '''
 };
+'''
 
+PERMISSION_DEFINITION_SUFFIX_2 = '''
 const uint32_t MAX_PERM_SIZE = sizeof(g_permList) / sizeof(PermissionBriefDef);
 } // namespace AccessToken
 } // namespace Security
@@ -61,6 +64,8 @@ const uint32_t MAX_PERM_SIZE = sizeof(g_permList) / sizeof(PermissionBriefDef);
 PERMISSION_NAME_STRING = "char PERMISSION_NAME_%i[] = \"%s\";\n"
 
 PERMISSION_LIST_DECLEARE = "const static PermissionBriefDef g_permList[] = {"
+
+VERSION_STRING = "\nconst char* PERMISSION_DEFINITION_VERSION = \"%s\";"
 
 PERMISSION_BRIEF_DEFINE_PATTERN = '''
 {
@@ -158,7 +163,7 @@ class PermissionDef(object):
         return False
 
 
-def parse_json(path, platform):
+def parse_json(path, platform, permission_list):
     extend_perm = {
         'name' : 'ohos.permission.KERNEL_ATM_SELF_USE',
         'grantMode' : 'system_grant',
@@ -171,8 +176,6 @@ def parse_json(path, platform):
         'isKernelEffect' : True,
         'hasValue' : True
     }
-
-    permission_list = []
 
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -187,7 +190,7 @@ def parse_json(path, platform):
     return permission_list
 
 
-def convert_to_cpp(path, permission_list):
+def convert_to_cpp(path, permission_list, hash_str):
     flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     mode = stat.S_IWUSR | stat.S_IRUSR
     with os.fdopen(os.open(path, flags, mode), "w") as f:
@@ -197,7 +200,9 @@ def convert_to_cpp(path, permission_list):
         f.write(PERMISSION_LIST_DECLEARE)
         for perm in permission_list:
             f.write(perm.dump_struct())
-        f.write(PERMISSION_DEFINITION_SUFFIX)
+        f.write(PERMISSION_DEFINITION_SUFFIX_1)
+        f.write(VERSION_STRING % (hash_str))
+        f.write(PERMISSION_DEFINITION_SUFFIX_2)
 
 
 def parse_args():
@@ -208,10 +213,19 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_file_hash(path):
+    hash_object = hashlib.sha256()
+    with open(path, 'rb') as f:
+        while line := f.read(4096):
+            hash_object.update(line)
+    return hash_object.hexdigest()
+
 if __name__ == "__main__":
     input_args = parse_args()
     curr_platform = "general"
     if input_args.target_platform in CONVERT_TARGET_PLATFORM:
         curr_platform = CONVERT_TARGET_PLATFORM[input_args.target_platform]
-    permission_list = parse_json(input_args.input_json, curr_platform)
-    convert_to_cpp(input_args.output_path, permission_list)
+    permission_list = []
+    parse_json(input_args.input_json, curr_platform, permission_list)
+    hash_str = get_file_hash(input_args.input_json)
+    convert_to_cpp(input_args.output_path, permission_list, hash_str)

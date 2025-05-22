@@ -86,7 +86,8 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     this->hasInited_ = false;
 }
 
-void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize)
+void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
+    std::map<int32_t, int32_t>& tokenId2apl)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
     if (hasInited_) {
@@ -117,7 +118,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 #endif
 
-    InitHapTokenInfos(hapSize);
+    InitHapTokenInfos(hapSize, tokenId2apl);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
     pefDefSize = GetDefPermissionsSize();
@@ -206,7 +207,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
     return RET_SUCCESS;
 }
 
-void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
+void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenId2apl)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
@@ -226,11 +227,14 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize)
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
     }
     for (const GenericValues& tokenValue : hapTokenRes) {
+        int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        int32_t apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
         ret = AddHapInfoToCache(tokenValue, permStateRes, extendedPermRes);
         if (ret != RET_SUCCESS) {
             continue;
         }
         hapSize++;
+        tokenId2apl[tokenId] = apl;
     }
 }
 
@@ -562,8 +566,15 @@ int32_t AccessTokenInfoManager::RegisterTokenId(const HapInfoParams& info, Acces
     return res;
 }
 
-int AccessTokenInfoManager::CreateHapTokenInfo(
-    const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx)
+void AccessTokenInfoManager::AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues)
+{
+    for (auto& value : undefValues) {
+        value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    }
+}
+
+int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy,
+    AccessTokenIDEx& tokenIdEx, std::vector<GenericValues>& undefValues)
 {
     if (CheckHapInfoParam(info, policy) != ERR_OK) {
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -573,6 +584,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     if (ret != RET_SUCCESS) {
         return ret;
     }
+    AddTokenIdToUndefValues(tokenId, undefValues);
 #ifdef SUPPORT_SANDBOX_APP
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     HapPolicy policyNew = policy;
@@ -583,7 +595,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
-    ret = AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false);
+    ret = AddHapTokenInfoToDb(tokenInfo, info.appIDDesc, policy, false, undefValues);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "AddHapTokenInfoToDb failed, errCode is %{public}d.", ret);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
@@ -693,7 +705,8 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
 }
 
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy)
+    const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
+    std::vector<GenericValues>& undefValues)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
@@ -725,7 +738,8 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
         infoPtr->Update(info, permStateList, hapPolicy);
     }
 
-    int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, hapPolicy, true);
+    AddTokenIdToUndefValues(tokenID, undefValues);
+    int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, hapPolicy, true, undefValues);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Add hap info %{public}u to db failed!", tokenID);
         return ret;
@@ -1035,8 +1049,31 @@ static void GetUserGrantPermFromDef(const std::vector<PermissionDef>& permList, 
     }
 }
 
+void AccessTokenInfoManager::FillDelValues(AccessTokenID tokenID, bool isSystemRes,
+    const std::vector<GenericValues>& permExtendValues, const std::vector<GenericValues>& undefValues,
+    std::vector<GenericValues>& deleteValues)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    deleteValues.emplace_back(conditionValue); // hap_token_info_table
+    deleteValues.emplace_back(conditionValue); // permission_state_table
+
+    if (isSystemRes) {
+        deleteValues.emplace_back(conditionValue); // permission_definition_table
+    }
+
+    if (!permExtendValues.empty()) {
+        deleteValues.emplace_back(conditionValue); // permission_extend_value_table
+    }
+
+    if (!undefValues.empty()) {
+        deleteValues.emplace_back(conditionValue); // hap_undefine_info_table
+    }
+    return;
+}
+
 int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
-    const std::string& appId, const HapPolicy& policy, bool isUpdate)
+    const std::string& appId, const HapPolicy& policy, bool isUpdate, const std::vector<GenericValues>& undefValues)
 {
     if (hapInfo == nullptr) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Token info is null!");
@@ -1064,12 +1101,10 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     std::vector<AtmDataType> addDataTypes;
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
 
     std::vector<std::vector<GenericValues>> addValues;
     addValues.emplace_back(hapInfoValues);
     addValues.emplace_back(permStateValues);
-    addValues.emplace_back(permExtendValues);
 
     if (isSystemRes) {
         std::vector<GenericValues> permDefValues;
@@ -1078,19 +1113,22 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
         addValues.emplace_back(permDefValues);
     }
 
+    if (!permExtendValues.empty()) {
+        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
+        addValues.emplace_back(permExtendValues);
+    }
+
+    if (!undefValues.empty()) {
+        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
+        addValues.emplace_back(undefValues);
+    }
+
     std::vector<AtmDataType> delDataTypes;
     std::vector<GenericValues> deleteValues;
 
     if (isUpdate) { // udapte: delete and add; otherwise add only
         delDataTypes.assign(addDataTypes.begin(), addDataTypes.end());
-        GenericValues conditionValue;
-        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        deleteValues.emplace_back(conditionValue);
-        deleteValues.emplace_back(conditionValue);
-        deleteValues.emplace_back(conditionValue);
-        if (isSystemRes) {
-            deleteValues.emplace_back(conditionValue);
-        }
+        FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues, deleteValues);
     }
 
     return AccessTokenDb::GetInstance().DeleteAndInsertValues(delDataTypes, deleteValues, addDataTypes, addValues);
@@ -1106,8 +1144,10 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTo
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
     deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
 
     std::vector<GenericValues> deleteValues;
+    deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);
     deleteValues.emplace_back(condition);

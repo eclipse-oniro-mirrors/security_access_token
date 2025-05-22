@@ -33,6 +33,7 @@ constexpr const uint32_t FLAG_HANDLE_FROM_ONE_TO_TWO = 1;
 constexpr const uint32_t FLAG_HANDLE_FROM_TWO_TO_THREE = 1 << 1;
 constexpr const uint32_t FLAG_HANDLE_FROM_THREE_TO_FOUR = 1 << 2;
 constexpr const uint32_t FLAG_HANDLE_FROM_FOUR_TO_FIVE = 1 << 3;
+constexpr const uint32_t FLAG_HANDLE_FROM_FIVE_TO_SIX = 1 << 4;
 }
 
 int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore)
@@ -174,6 +175,35 @@ int32_t AccessTokenOpenCallback::CreatePermissionStateTable(NativeRdb::RdbStore&
     return rdbStore.ExecuteSql(sql);
 }
 
+int32_t AccessTokenOpenCallback::CreateVersionOneTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateHapTokenInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table hap_token_info_table.");
+        return res;
+    }
+
+    res = CreateNativeTokenInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table native_token_info_table.");
+        return res;
+    }
+
+    res = CreatePermissionDefinitionTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_definition_table.");
+        return res;
+    }
+    
+    res = CreatePermissionStateTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_state_table.");
+        return res;
+    }
+    
+    return 0;
+}
+
 int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -194,6 +224,17 @@ int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(Native
         .append("))");
 
     return rdbStore.ExecuteSql(sql);
+}
+
+int32_t AccessTokenOpenCallback::CreateVersionThreeTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreatePermissionRequestToggleStatusTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
+        return res;
+    }
+
+    return 0;
 }
 
 int32_t AccessTokenOpenCallback::CreatePermissionExtendValueTable(NativeRdb::RdbStore& rdbStore)
@@ -220,43 +261,99 @@ int32_t AccessTokenOpenCallback::CreatePermissionExtendValueTable(NativeRdb::Rdb
     return rdbStore.ExecuteSql(sql);
 }
 
+int32_t AccessTokenOpenCallback::CreateVersionFiveTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreatePermissionExtendValueTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_extend_value_table.");
+        return res;
+    }
+
+    return 0;
+}
+
+int32_t AccessTokenOpenCallback::CreateHapUndefineInfoTable(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, tableName);
+
+    std::string sql = "create table if not exists " + tableName;
+    sql.append(" (")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_ACL)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE)
+        .append(" text, ")
+        .append(TokenFiledConst::FIELD_VALUE)
+        .append(" text, ")
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append("))");
+
+    return rdbStore.ExecuteSql(sql);
+}
+
+int32_t AccessTokenOpenCallback::CreateSystemConfigTable(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, tableName);
+
+    std::string sql = "create table if not exists " + tableName;
+    sql.append(" (")
+        .append(TokenFiledConst::FIELD_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_VALUE)
+        .append(TEXT_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_NAME)
+        .append("))");
+
+    return rdbStore.ExecuteSql(sql);
+}
+
+int32_t AccessTokenOpenCallback::CreateVersionSixTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateHapUndefineInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table hap_undefine_info_table.");
+        return res;
+    }
+
+    res = CreateSystemConfigTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table system_config_table.");
+        return res;
+    }
+
+    return 0;
+}
+
 int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnCreate.");
 
-    int32_t res = CreateHapTokenInfoTable(rdbStore);
+    int32_t res = CreateVersionOneTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table hap_token_info_table.");
         return res;
     }
 
-    res = CreateNativeTokenInfoTable(rdbStore);
+    res = CreateVersionThreeTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table native_token_info_table.");
         return res;
     }
 
-    res = CreatePermissionDefinitionTable(rdbStore);
+    res = CreateVersionFiveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_definition_table.");
-        return res;
-    }
-    
-    res = CreatePermissionStateTable(rdbStore);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_state_table.");
-        return res;
-    }
-    
-    res = CreatePermissionRequestToggleStatusTable(rdbStore);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
         return res;
     }
 
-    res = CreatePermissionExtendValueTable(rdbStore);
+    res = CreateVersionSixTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_extend_value_table.");
         return res;
     }
 
@@ -442,13 +539,20 @@ int32_t AccessTokenOpenCallback::HandleUpgradeWithFlag(NativeRdb::RdbStore& rdbS
     }
 
     if ((flag & FLAG_HANDLE_FROM_FOUR_TO_FIVE) == FLAG_HANDLE_FROM_FOUR_TO_FIVE) {
-        res = CreatePermissionExtendValueTable(rdbStore);
+        res = CreateVersionFiveTable(rdbStore);
         if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_extend_bool_table.");
             return res;
         }
 
-        return AddKernelEffectAndHasValueColumn(rdbStore);
+        res = AddKernelEffectAndHasValueColumn(rdbStore);
+        if (res != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column kernel_effect or has_value.");
+            return res;
+        }
+    }
+
+    if ((flag & FLAG_HANDLE_FROM_FIVE_TO_SIX) == FLAG_HANDLE_FROM_FIVE_TO_SIX) {
+        return CreateVersionSixTable(rdbStore);
     }
 
     return res;
@@ -470,6 +574,10 @@ void AccessTokenOpenCallback::GetUpgradeFlag(int32_t currentVersion, int32_t tar
 
     if ((targetVersion >= DATABASE_VERSION_5) && (currentVersion < DATABASE_VERSION_5)) {
         flag += FLAG_HANDLE_FROM_FOUR_TO_FIVE;
+    }
+
+    if ((targetVersion >= DATABASE_VERSION_6) && (currentVersion < DATABASE_VERSION_6)) {
+        flag += FLAG_HANDLE_FROM_FIVE_TO_SIX;
     }
 }
 

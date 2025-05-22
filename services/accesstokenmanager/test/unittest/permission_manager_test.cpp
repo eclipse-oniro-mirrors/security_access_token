@@ -263,8 +263,9 @@ static AccessTokenID CreateTempHapTokenInfo()
     };
     // install hap
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     GTEST_LOG_(INFO) << "add a hap token";
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     return tokenID;
@@ -279,8 +280,9 @@ static AccessTokenID CreateTempHapTokenInfo()
 HWTEST_F(PermissionManagerTest, ScopeFilter001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams1, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
 
     tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
@@ -464,8 +466,9 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level0)
 HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams1, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStatus> result;
@@ -627,7 +630,9 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level0)
         .permStateList = {permStat}
     };
     AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoParms, policyPrams, tokenIdEx);
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoParms, policyPrams, tokenIdEx,
+        undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     uint32_t flag;
@@ -668,7 +673,9 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level0)
         .domain = "domain"
     };
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
     tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -714,7 +721,9 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level0)
         .permStateList = {permStat}
     };
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -791,7 +800,9 @@ HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level0)
         .domain = "domain"
     };
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
     tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 

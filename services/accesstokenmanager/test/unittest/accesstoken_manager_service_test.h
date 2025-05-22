@@ -16,6 +16,9 @@
 #ifndef ACCESSTOKEN_MANAGER_SERVICE_TEST_H
 #define ACCESSTOKEN_MANAGER_SERVICE_TEST_H
 #include <gtest/gtest.h>
+#define private public
+#include "accesstoken_manager_service.h"
+#undef private
 
 namespace OHOS {
 namespace Security {
@@ -29,6 +32,10 @@ public:
     void SetUp();
 
     void TearDown();
+    void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
+        std::map<int32_t, int32_t>& tokenId2apl, bool hasInit = false);
+
+    std::shared_ptr<AccessTokenManagerService> atManagerService_;
 };
 } // namespace AccessToken
 } // namespace Security

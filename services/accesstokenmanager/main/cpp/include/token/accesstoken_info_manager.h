@@ -46,7 +46,8 @@ class AccessTokenInfoManager final {
 public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
-    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
+    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
+        std::map<int32_t, int32_t>& tokenId2apl);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
@@ -56,11 +57,13 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
-    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx);
+    int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
+        std::vector<GenericValues>& undefValues);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-        const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy);
+        const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
+        std::vector<GenericValues>& undefValues);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
@@ -106,14 +109,17 @@ private:
 
     int32_t AddHapInfoToCache(const GenericValues& tokenValue, const std::vector<GenericValues>& permStateRes,
         const std::vector<GenericValues>& extendedPermRes);
-    void InitHapTokenInfos(uint32_t& hapSize);
+    void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenId2apl);
     void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     int32_t RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId);
-    int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
-        const std::string& appId, const HapPolicy& policy, bool isUpdate);
+    void FillDelValues(AccessTokenID tokenID, bool isSystemRes, const std::vector<GenericValues>& permExtendValues,
+        const std::vector<GenericValues>& undefValues, std::vector<GenericValues>& deleteValues);
+    void AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
+    int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo, const std::string& appId,
+        const HapPolicy& policy, bool isUpdate, const std::vector<GenericValues>& undefValues);
     int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);

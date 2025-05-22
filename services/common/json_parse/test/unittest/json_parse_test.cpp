@@ -324,8 +324,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig001"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -378,8 +379,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig002"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -432,8 +434,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig003"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -509,8 +512,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig004"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -567,8 +571,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig005"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -624,8 +629,9 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level0)
         .appIDDesc = "DlpPermissionConfig006"
     };
     AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
-        infoManagerTestPolicyPrams, tokenIdEx);
+        infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 

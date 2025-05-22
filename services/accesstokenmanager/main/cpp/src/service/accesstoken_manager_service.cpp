@@ -41,7 +41,6 @@
 #include "parameters.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
-#include "permission_map.h"
 #include "permission_validator.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -610,8 +609,9 @@ int32_t AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, cons
         return ERR_OK;
     }
 
+    std::vector<GenericValues> undefValues;
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policy.hapPolicy, tokenIdEx);
+        info.hapInfoParameter, policy.hapPolicy, tokenIdEx, undefValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Hap token info create failed");
     }
@@ -710,10 +710,14 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
 
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
+    std::vector<GenericValues> undefValues;
     if (info.hapInfoParameter.dlpType == DLP_COMMON) {
         HapInfoCheckResult permCheckResult;
-        if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
-            policyCopy.hapPolicy, initializedList, permCheckResult)) {
+        HapInitInfo initInfo;
+        initInfo.installInfo = info.hapInfoParameter;
+        initInfo.policy = policyCopy.hapPolicy;
+        if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult,
+            undefValues)) {
             resultInfoIdl.realResult = ERROR;
             resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
             int32_t rule = permCheckResult.permCheckResult.rule;
@@ -723,7 +727,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         }
     } else {
         if (!PermissionManager::GetInstance().InitDlpPermissionList(
-            info.hapInfoParameter.bundleName, info.hapInfoParameter.userID, initializedList)) {
+            info.hapInfoParameter.bundleName, info.hapInfoParameter.userID, initializedList, undefValues)) {
             ReportAddHapFinish({0}, info, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
@@ -732,7 +736,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
 
     AccessTokenIDEx tokenIdEx;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policyCopy.hapPolicy, tokenIdEx);
+        info.hapInfoParameter, policyCopy.hapPolicy, tokenIdEx, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportAddHapFinish(tokenIdEx, info, beginTime, ret);
 
@@ -823,8 +827,12 @@ int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx
     std::vector<PermissionStatus> InitializedList;
     resultInfoIdl.realResult = ERR_OK;
     HapInfoCheckResult permCheckResult;
-    if (!PermissionManager::GetInstance().InitPermissionList(
-        info.appDistributionType, policyParcel.hapPolicy, InitializedList, permCheckResult)) {
+    std::vector<GenericValues> undefValues;
+    HapInitInfo initInfo;
+    initInfo.updateInfo = info;
+    initInfo.policy = policyParcel.hapPolicy;
+    initInfo.isUpdate = true;
+    if (!PermissionManager::GetInstance().InitPermissionList(initInfo, InitializedList, permCheckResult, undefValues)) {
         resultInfoIdl.realResult = ERROR;
         resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
         int32_t rule = permCheckResult.permCheckResult.rule;
@@ -836,7 +844,7 @@ int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx
     }
 
     int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
-        InitializedList, policyParcel.hapPolicy);
+        InitializedList, policyParcel.hapPolicy, undefValues);
     return ret;
 }
 
@@ -885,6 +893,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     info.isSystemApp = infoIdl.isSystemApp;
     info.appDistributionType = infoIdl.appDistributionType;
     info.isAtomicService = infoIdl.isAtomicService;
+    info.dataRefresh = infoIdl.dataRefresh;
 
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapTokenInfo hapInfo;
@@ -1385,6 +1394,211 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
+int32_t AccessTokenManagerService::UpdatePermDefVersion(const std::string& permDefVersion)
+{
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    addValue.Put(TokenFiledConst::FIELD_VALUE, permDefVersion);
+    std::vector<GenericValues> values;
+    values.emplace_back(addValue);
+
+    std::vector<AtmDataType> deleteDataTypes;
+    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
+    std::vector<GenericValues> deleteValues;
+    deleteValues.emplace_back(delValue);
+    std::vector<AtmDataType> addDataTypes;
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
+    std::vector<std::vector<GenericValues>> addValues;
+    addValues.emplace_back(values);
+
+    return AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
+}
+
+int32_t AccessTokenManagerService::UpdateUndefinedToDb(const std::vector<GenericValues>& stateValues,
+    const std::vector<GenericValues>& extendValues, const std::vector<GenericValues>& validValueList)
+{
+    std::vector<AtmDataType> deleteDataTypes;
+    std::vector<GenericValues> deleteValues;
+
+    for (const auto& value : validValueList) {
+        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
+        deleteValues.emplace_back(value);
+    }
+
+    std::vector<AtmDataType> addDataTypes;
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
+    std::vector<std::vector<GenericValues>> addValues;
+    addValues.emplace_back(stateValues);
+    addValues.emplace_back(extendValues);
+
+    return AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
+}
+
+int32_t AccessTokenManagerService::UpdateUndefinedInfo(const std::vector<GenericValues>& validValueList)
+{
+    std::string permissionName;
+    PermissionState grantStatus;
+    PermissionFlag grantFlag;
+    AccessTokenID tokenId = 0;
+    std::string value;
+    std::vector<GenericValues> stateValues;
+    std::vector<GenericValues> extendValues;
+
+    for (const auto& validValue : validValueList) {
+        permissionName = validValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        PermissionBriefDef data;
+        if (!GetPermissionBriefDef(permissionName, data)) {
+            continue;
+        }
+
+        if (data.grantMode == GrantMode::USER_GRANT) {
+            grantStatus = PermissionState::PERMISSION_DENIED;
+            grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+        } else {
+            grantStatus = PermissionState::PERMISSION_GRANTED;
+            grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
+        }
+
+        tokenId = static_cast<AccessTokenID>(validValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+        value = validValue.GetString(TokenFiledConst::FIELD_VALUE);
+
+        int32_t res = PermissionDataBrief::GetInstance().AddBriefPermData(tokenId, permissionName, grantStatus,
+            grantFlag, value);
+        if (res != RET_SUCCESS) {
+            continue;
+        }
+
+        PermissionManager::GetInstance().SetPermToKernel(tokenId, permissionName,
+            (grantStatus == PermissionState::PERMISSION_GRANTED));
+
+        GenericValues stateValue;
+        stateValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+        stateValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+        stateValue.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
+        stateValue.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+        stateValue.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<int32_t>(grantStatus));
+        stateValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(grantFlag));
+        stateValues.emplace_back(stateValue);
+
+        if ((data.hasValue) && !value.empty()) {
+            GenericValues extendValue;
+            extendValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+            extendValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+            extendValue.Put(TokenFiledConst::FIELD_VALUE, value);
+            extendValues.emplace_back(extendValue);
+        }
+    }
+
+    return UpdateUndefinedToDb(stateValues, extendValues, validValueList);
+}
+
+bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
+    const std::string& value, bool isAcl)
+{
+    if (hapApl >= static_cast<int32_t>(data.availableLevel)) {
+        return true; // not cross apl, this is valid
+    }
+
+    if (isAcl) {
+        return true; // cross apl but request by acl, this is valid
+    } else {
+        if (data.hasValue) {
+            return !value.empty(); // permission hasValue is true and request with value, this is valid
+        }
+        return false;
+    }
+
+    return false;
+}
+
+void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenId2apl)
+{
+    GenericValues conditionValue;
+    std::vector<GenericValues> results;
+    int32_t res = AccessTokenDb::GetInstance().Find(
+        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results); // get all hap undefined data
+    if (res != 0) {
+        return;
+    }
+
+    if (results.empty()) {
+        return;
+    }
+
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+    std::string appDistributionType;
+    int32_t apl = 0;
+    std::string value;
+    PermissionBriefDef data;
+    std::vector<GenericValues> validValueList;
+
+    // filter invalid data
+    for (const auto& result : results) {
+        tokenId = result.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        if (tokenId2apl.count(tokenId) == 0) {
+            continue;
+        }
+
+        permissionName = result.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        if (!GetPermissionBriefDef(permissionName, data)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
+            continue;
+        }
+
+        appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
+        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(data, appDistributionType)) {
+            continue;
+        }
+
+        apl = result.GetInt(TokenFiledConst::FIELD_ACL);
+        value = result.GetString(TokenFiledConst::FIELD_VALUE);
+        if (!IsPermissionValid(tokenId2apl[tokenId], data, value, (apl == 1))) {
+            // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
+            continue;
+        }
+
+        validValueList.emplace_back(result);
+    }
+
+    UpdateUndefinedInfo(validValueList);
+}
+
+void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenId2apl)
+{
+    std::string dbPermDefVersion;
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    std::vector<GenericValues> results;
+    int32_t res = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results);
+    if (res != 0) {
+        return;
+    }
+
+    if (!results.empty()) {
+        dbPermDefVersion = results[0].GetString(TokenFiledConst::FIELD_VALUE);
+    }
+
+    const char* curPermDefVersion = GetPermDefVersion();
+    bool isUpdate = dbPermDefVersion != curPermDefVersion;
+    if (isUpdate) {
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "Permission definition version from db %{public}s is not same with current version %{public}s.",
+            dbPermDefVersion.c_str(), curPermDefVersion);
+        int32_t res = UpdatePermDefVersion(std::string(curPermDefVersion));
+        if (res != 0) {
+            return;
+        }
+        if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
+            HandleHapUndefinedInfo(tokenId2apl);
+        }
+    }
+}
+
 bool AccessTokenManagerService::Initialize()
 {
     MemoryGuard guard;
@@ -1394,7 +1608,9 @@ bool AccessTokenManagerService::Initialize()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    std::map<int32_t, int32_t> tokenId2apl;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
+    HandlePermDefUpdate(tokenId2apl);
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();

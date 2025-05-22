@@ -81,7 +81,9 @@ void ShortGrantManagerTest::TearDown()
 HWTEST_F(ShortGrantManagerTest, RefreshPermission001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx,
+        undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -114,7 +116,9 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission002, TestSize.Level0)
     const uint32_t maxTime = 10; // 10s
     ShortGrantManager::GetInstance().maxTime_ = maxTime;
     AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx,
+        undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -155,7 +159,9 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level0)
     const uint32_t maxTime = 10; // 10s
     ShortGrantManager::GetInstance().maxTime_ = maxTime;
     AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx,
+        undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
@@ -211,7 +217,9 @@ HWTEST_F(ShortGrantManagerTest, RefreshPermission003, TestSize.Level0)
 HWTEST_F(ShortGrantManagerTest, RefreshPermission004, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx);
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoParms, g_policyParams, tokenIdEx,
+        undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

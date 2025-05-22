@@ -22,6 +22,7 @@
 #define private public
 #include "accesstoken_info_manager.h"
 #include "form_manager_access_client.h"
+#include "permission_manager.h"
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
@@ -38,6 +39,7 @@ namespace {
 static const std::string FORM_VISIBLE_NAME = "#1";
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int INVALID_IPC_CODE = 0;
 
 static PermissionStatus g_permState = {
@@ -59,7 +61,7 @@ static HapPolicy g_policy = {
     .permStateList = {g_permState}
 };
 }
-class PermissionRecordManagerCoverageTest : public testing::Test {
+class PermissionManagerCoverageTest : public testing::Test {
 public:
     static void SetUpTestCase();
 
@@ -70,20 +72,21 @@ public:
     void TearDown();
 };
 
-void PermissionRecordManagerCoverageTest::SetUpTestCase()
+void PermissionManagerCoverageTest::SetUpTestCase()
 {
     uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    std::map<int32_t, int32_t> tokenId2apl;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
 }
 
-void PermissionRecordManagerCoverageTest::TearDownTestCase() {}
+void PermissionManagerCoverageTest::TearDownTestCase() {}
 
-void PermissionRecordManagerCoverageTest::SetUp() {}
+void PermissionManagerCoverageTest::SetUp() {}
 
-void PermissionRecordManagerCoverageTest::TearDown() {}
+void PermissionManagerCoverageTest::TearDown() {}
 
 /*
  * @tc.name: RegisterAddObserverTest001
@@ -91,7 +94,7 @@ void PermissionRecordManagerCoverageTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSize.Level4)
+HWTEST_F(PermissionManagerCoverageTest, RegisterAddObserverTest001, TestSize.Level4)
 {
     AccessTokenID selfTokenId = GetSelfTokenID();
     AccessTokenID nativeToken = AccessTokenInfoManager::GetInstance().GetNativeTokenId("privacy_service");
@@ -116,7 +119,7 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSi
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, FormMgrDiedHandle001, TestSize.Level4)
+HWTEST_F(PermissionManagerCoverageTest, FormMgrDiedHandle001, TestSize.Level4)
 {
     FormManagerAccessClient::GetInstance().OnRemoteDiedHandle();
     ASSERT_EQ(nullptr, FormManagerAccessClient::GetInstance().proxy_);
@@ -144,7 +147,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
+HWTEST_F(PermissionManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
 {
     PermissionRecordManagerCoverTestCb1 callback;
 
@@ -184,10 +187,12 @@ HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Level4)
+HWTEST_F(PermissionManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Level4)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx,
+        undefValues));
 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -202,15 +207,15 @@ HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSize.Level4)
+HWTEST_F(PermissionManagerCoverageTest, RestorePermissionPolicy001, TestSize.Level4)
 {
     GenericValues value1;
-    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
     value1.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<PermissionState>(3));
     value1.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
 
-    AccessTokenID tokenId = 123; // 123 is random input
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::vector<GenericValues> permStateRes1;
     permStateRes1.emplace_back(value1);
     std::vector<GenericValues> extendedPermRes1;
@@ -221,12 +226,12 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
 
 
     GenericValues value2;
-    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
     value2.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
     value2.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
     GenericValues value3;
-    value3.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value3.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     value3.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.MICROPHONE");
     value3.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
     value3.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
@@ -239,6 +244,79 @@ HWTEST_F(PermissionRecordManagerCoverageTest, RestorePermissionPolicy001, TestSi
         permStateRes2, extendedPermRes1); // state.permissionName == iter->permissionName
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
     ASSERT_EQ(static_cast<uint32_t>(2), briefPermDataList.size());
+}
+
+/**
+ * @tc.name: AddBriefPermData001
+ * @tc.desc: PermissionDataBrief::AddBriefPermData function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, AddBriefPermData001, TestSize.Level4)
+{
+    PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(RANDOM_TOKENID);
+    std::string permissionName = "ohos.permission.INVALID";
+    PermissionState grantStatus = PermissionState::PERMISSION_DENIED;
+    PermissionFlag grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    std::string value = "test";
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, PermissionDataBrief::GetInstance().AddBriefPermData(
+        RANDOM_TOKENID, permissionName, grantStatus, grantFlag, value));
+
+    permissionName = "ohos.permission.READ_MEDIA";
+    ASSERT_EQ(AccessTokenError::ERR_TOKEN_INVALID, PermissionDataBrief::GetInstance().AddBriefPermData(
+        RANDOM_TOKENID, permissionName, grantStatus, grantFlag, value));
+}
+
+/**
+ * @tc.name: GetMasterAppUndValues001
+ * @tc.desc: PermissionManager::GetMasterAppUndValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, GetMasterAppUndValues001, TestSize.Level4)
+{
+    AccessTokenID tokenID = RANDOM_TOKENID;
+    std::vector<GenericValues> undefValues;
+    PermissionManager::GetInstance().GetMasterAppUndValues(tokenID, undefValues);
+    ASSERT_EQ(true, undefValues.empty());
+}
+
+/**
+ * @tc.name: FillDelValues001
+ * @tc.desc: AccessTokenInfoManager::FillDelValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, FillDelValues001, TestSize.Level4)
+{
+    AccessTokenID tokenID = RANDOM_TOKENID;
+    bool isSystemRes = false;
+    std::vector<GenericValues> permExtendValues;
+    std::vector<GenericValues> undefValues;
+    std::vector<GenericValues> deleteValues;
+    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
+        deleteValues);
+    ASSERT_EQ(2, deleteValues.size());
+
+    isSystemRes = true;
+    std::vector<GenericValues> deleteValues2;
+    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
+        deleteValues2);
+    ASSERT_EQ(3, deleteValues2.size());
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    permExtendValues.emplace_back(conditionValue);
+    std::vector<GenericValues> deleteValues3;
+    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
+        deleteValues3);
+    ASSERT_EQ(4, deleteValues3.size());
+
+    undefValues.emplace_back(conditionValue);
+    std::vector<GenericValues> deleteValues4;
+    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
+        deleteValues4);
+    ASSERT_EQ(5, deleteValues4.size());
 }
 } // namespace AccessToken
 } // namespace Security

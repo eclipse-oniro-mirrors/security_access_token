@@ -53,7 +53,8 @@ public:
     virtual ~PermissionDataBrief() = default;
 
     int32_t DeleteBriefPermDataByTokenId(AccessTokenID tokenID);
-    int32_t SetBriefPermData(AccessTokenID tokenID, int32_t opCode, bool status, uint32_t flag);
+    int32_t AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName, PermissionState grantStatus,
+        PermissionFlag grantFlag, const std::string& value);
     int32_t GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& data);
     void ToString(std::string& info);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
