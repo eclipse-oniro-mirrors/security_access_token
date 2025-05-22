@@ -837,7 +837,7 @@
             "name": "ohos.permission.GET_WIFI_LOCAL_MAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
