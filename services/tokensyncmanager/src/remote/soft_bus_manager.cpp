@@ -161,9 +161,8 @@ bool SoftBusManager::CheckAndCopyStr(char* dest, uint32_t destLen, const std::st
 
 int32_t SoftBusManager::ServiceSocketInit()
 {
-    std::string serviceName = TOKEN_SYNC_SOCKET_NAME + "service";
     char name[SOCKET_NAME_MAX_LEN + 1];
-    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, serviceName)) {
+    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME)) {
         return ERROR_TRANSFORM_STRING_TO_CHAR;
     }
 
@@ -324,15 +323,13 @@ void SoftBusManager::Destroy()
 
 int32_t SoftBusManager::InitSocketAndListener(const std::string& networkId, ISocketListener& listener)
 {
-    std::string clientName = TOKEN_SYNC_SOCKET_NAME + networkId;
     char name[SOCKET_NAME_MAX_LEN + 1];
-    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, clientName)) {
+    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME)) {
         return ERROR_TRANSFORM_STRING_TO_CHAR;
     }
 
-    std::string serviceName = TOKEN_SYNC_SOCKET_NAME + "service";
     char peerName[SOCKET_NAME_MAX_LEN + 1];
-    if (!CheckAndCopyStr(peerName, SOCKET_NAME_MAX_LEN, serviceName)) {
+    if (!CheckAndCopyStr(peerName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME)) {
         return ERROR_TRANSFORM_STRING_TO_CHAR;
     }
 
