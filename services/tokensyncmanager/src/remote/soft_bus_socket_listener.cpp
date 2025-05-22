@@ -29,6 +29,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 }
 namespace {
 static const int32_t MAX_ONBYTES_RECEIVED_DATA_LEN = 1024 * 1024 * 10;
+static const std::string TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
+static const std::string TOKEN_SYNC_SOCKET_NAME = "ohos.security.atm_channel.";
 } // namespace
 
 std::mutex SoftBusSocketListener::socketMutex_;
@@ -40,6 +42,16 @@ void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
+        return;
+    }
+    std::string peerSessionName(info.name);
+    if (peerSessionName.find(TOKEN_SYNC_SOCKET_NAME) != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Peer session name(%{public}s) is invalid.", info.name);
+        return;
+    }
+    std::string packageName(info.pkgName);
+    if (packageName != TOKEN_SYNC_PACKAGE_NAME) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Peer pkgname(%{public}s) is invalid.", info.pkgName);
         return;
     }
 
