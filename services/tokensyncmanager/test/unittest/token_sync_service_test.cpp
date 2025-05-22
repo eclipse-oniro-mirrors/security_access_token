@@ -62,6 +62,9 @@ static std::string g_udid = "deviceid-1:udid-001";
 static int32_t g_selfUid;
 static AccessTokenID g_selfTokenId = 0;
 static const int32_t OUT_OF_MAP_SOCKET = 2;
+static const std::string TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
+static const std::string TOKEN_SYNC_SOCKET_NAME = "ohos.security.atm_channel.";
+static const uint32_t SOCKET_NAME_MAX_LEN = 256;
 
 class TokenSyncServiceTest : public testing::Test {
 public:
@@ -609,10 +612,15 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo); // create channel
 
     char networkId[DEVICEID_MAX_LEN + 1];
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    char peerName[SOCKET_NAME_MAX_LEN + 1];
     strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
-
+    strcpy_s(pkgName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_PACKAGE_NAME.c_str());
+    strcpy_s(peerName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME.c_str());
     PeerSocketInfo info = {
+        .name = peerName,
         .networkId = networkId,
+        .pkgName = pkgName
     };
     SoftBusSocketListener::OnBind(1, info);
     SoftBusSocketListener::OnClientBytes(1, recvBuffer, recvLen);
@@ -1336,11 +1344,17 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level1)
     std::string udid = "test_udId";
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
     char networkId[DEVICEID_MAX_LEN + 1];
-    int recvLen = 0x1000;
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    char peerName[SOCKET_NAME_MAX_LEN + 1];
     strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
+    strcpy_s(pkgName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_PACKAGE_NAME.c_str());
+    strcpy_s(peerName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME.c_str());
     PeerSocketInfo info = {
+        .name = peerName,
         .networkId = networkId,
+        .pkgName = pkgName
     };
+    int recvLen = 0x1000;
     SoftBusSocketListener::OnBind(0, info);
     int32_t ret = RemoteCommandManager::GetInstance().AddCommand(udid, cmd);
     ASSERT_EQ(Constant::SUCCESS, ret);
@@ -1387,6 +1401,60 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
     ret = RemoteCommandManager::GetInstance().NotifyDeviceOnline(nodeId);
     ASSERT_EQ(Constant::SUCCESS, ret);
     SoftBusSocketListener::OnShutdown(OUT_OF_MAP_SOCKET, SHUTDOWN_REASON_UNKNOWN);
+}
+
+/**
+ * @tc.name: RemoteCommandManager004
+ * @tc.desc: RemoteCommandManager004 function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager004, TestSize.Level0)
+{
+    RemoteCommandManager::GetInstance().Init();
+    std::string udid = "test_udId";
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    char networkId[DEVICEID_MAX_LEN + 1];
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    char peerName[SOCKET_NAME_MAX_LEN + 1];
+    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
+    strcpy_s(pkgName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_PACKAGE_NAME.c_str());
+    strcpy_s(peerName, SOCKET_NAME_MAX_LEN, "invalid");
+    PeerSocketInfo info = {
+        .name = peerName,
+        .networkId = networkId,
+        .pkgName = pkgName
+    };
+    SoftBusSocketListener::OnBind(1, info);
+    int32_t ret = RemoteCommandManager::GetInstance().AddCommand(udid, cmd);
+    ASSERT_EQ(Constant::SUCCESS, ret);
+}
+
+/**
+ * @tc.name: RemoteCommandManager005
+ * @tc.desc: RemoteCommandManager005 function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager005, TestSize.Level0)
+{
+    RemoteCommandManager::GetInstance().Init();
+    std::string udid = "test_udId";
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    char networkId[DEVICEID_MAX_LEN + 1];
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    char peerName[SOCKET_NAME_MAX_LEN + 1];
+    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
+    strcpy_s(pkgName, SOCKET_NAME_MAX_LEN, "invalid");
+    strcpy_s(peerName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_SOCKET_NAME.c_str());
+    PeerSocketInfo info = {
+        .name = peerName,
+        .networkId = networkId,
+        .pkgName = pkgName
+    };
+    SoftBusSocketListener::OnBind(1, info);
+    int32_t ret = RemoteCommandManager::GetInstance().AddCommand(udid, cmd);
+    ASSERT_EQ(Constant::SUCCESS, ret);
 }
 
 /**
