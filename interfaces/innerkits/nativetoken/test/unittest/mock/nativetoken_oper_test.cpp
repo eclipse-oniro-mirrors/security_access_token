@@ -468,7 +468,7 @@ HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level0)
     std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
 }
 
-static int32_t Start(const char *processName)
+static int32_t Start(const char *processName, bool isChange = false)
 {
     const char **dcapList = new (std::nothrow) const char *[2];
     if (dcapList == nullptr) {
@@ -483,6 +483,9 @@ static int32_t Start(const char *processName)
     }
     permList[0] = "ohos.permission.test1";
     permList[1] = "ohos.permission.test2";
+    if (isChange) {
+        permList[1] = "ohos.permission.test3";
+    }
     const char **acls = new (std::nothrow) const char *[1];
     if (acls == nullptr) {
         return 0;
@@ -543,12 +546,13 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
 
 /**
  * @tc.name: RemoveNodeFromList001
- * @tc.desc: GetInfoArrFromJson successfully.
+ * @tc.desc: remove foundation node of token list.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level0)
 {
+    SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     AtlibInit();
     EXPECT_NE(g_tokenListHead, nullptr);
@@ -559,6 +563,39 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level0)
     NativeTokenList *node = g_tokenListHead->next;
     while (node != nullptr) {
         if (strcmp(node->processName, "foundation") == 0) {
+            break;
+        }
+        node = node->next;
+    }
+    EXPECT_EQ(node, nullptr);
+
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
+    std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
+}
+
+/**
+ * @tc.name: RemoveNodeFromList002
+ * @tc.desc: rmeove the second node of token list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, RemoveNodeFromList002, TestSize.Level0)
+{
+    SetTimes();
+    CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
+    AtlibInit();
+    EXPECT_NE(g_tokenListHead, nullptr);
+    // add the node
+    EXPECT_NE(Start("process3"), 0);
+    g_strcpyTime = 0;
+
+    // remove the node
+    EXPECT_EQ(Start("process3", true), 0);
+
+    // check the node whether exsits in the list
+    NativeTokenList *node = g_tokenListHead->next;
+    while (node != nullptr) {
+        if (strcmp(node->processName, "process3") == 0) {
             break;
         }
         node = node->next;
