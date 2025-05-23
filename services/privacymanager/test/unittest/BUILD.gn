@@ -70,6 +70,7 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "../../src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "../../src/service/privacy_manager_service.cpp",
+      "active_status_callback_manager_test.cpp",
       "permission_record_db_test.cpp",
       "permission_record_manager_test.cpp",
       "permission_record_set_test.cpp",

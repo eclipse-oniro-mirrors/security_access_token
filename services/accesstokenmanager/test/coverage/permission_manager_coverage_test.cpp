@@ -100,15 +100,15 @@ HWTEST_F(PermissionManagerCoverageTest, RegisterAddObserverTest001, TestSize.Lev
     AccessTokenID nativeToken = AccessTokenInfoManager::GetInstance().GetNativeTokenId("privacy_service");
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(nativeToken));
     sptr<FormStateObserverStub> formStateObserver = new (std::nothrow) FormStateObserverStub();
-    ASSERT_NE(formStateObserver, nullptr);
-    ASSERT_EQ(RET_SUCCESS,
+    EXPECT_NE(formStateObserver, nullptr);
+    EXPECT_EQ(RET_SUCCESS,
         FormManagerAccessClient::GetInstance().RegisterAddObserver(FORM_VISIBLE_NAME, formStateObserver));
-    ASSERT_EQ(RET_FAILED,
+    EXPECT_EQ(RET_FAILED,
         FormManagerAccessClient::GetInstance().RegisterAddObserver(FORM_VISIBLE_NAME, nullptr));
 
-    ASSERT_EQ(RET_FAILED,
+    EXPECT_EQ(RET_FAILED,
         FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_VISIBLE_NAME, nullptr));
-    ASSERT_EQ(RET_SUCCESS,
+    EXPECT_EQ(RET_SUCCESS,
         FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_VISIBLE_NAME, formStateObserver));
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
 }

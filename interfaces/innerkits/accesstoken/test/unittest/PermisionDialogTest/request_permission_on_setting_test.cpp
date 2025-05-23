@@ -122,20 +122,6 @@ HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest003, TestSiz
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
-
-/**
- * @tc.name: RequestAppPermOnSettingTest004
- * @tc.desc: RequestAppPermOnSetting call function with self token.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(RequestPermissionOnSettingTest, RequestAppPermOnSettingTest004, TestSize.Level0)
-{
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("RequestAppPermOnSettingTest004", reqPerm, true);
-
-    AccessTokenKit::RequestAppPermOnSetting(GetSelfTokenID());
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -1539,12 +1539,12 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level0)
 }
 
 /**
- * @tc.name: DumpTokenInfo006
+ * @tc.name: DumpTokenInfo005
  * @tc.desc: Test DumpTokenInfo with native processName.
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level0)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo005, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -1554,12 +1554,12 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level0)
 }
 
 /**
- * @tc.name: DumpTokenInfo007
+ * @tc.name: DumpTokenInfo006
  * @tc.desc: Test DumpTokenInfo with hap bundleName.
  * @tc.type: FUNC
  * @tc.require: issueI4V02P
  */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level0)
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<GenericValues> undefValues;
