@@ -48,9 +48,9 @@ public:
     virtual int32_t GetContinuousTaskApps(std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> &list) = 0;
 
     enum class Message {
-        SUBSCRIBE_BACKGROUND_TASK = 7,
-        UNSUBSCRIBE_BACKGROUND_TASK = 8,
-        GET_CONTINUOUS_TASK_APPS = 10,
+        SUBSCRIBE_BACKGROUND_TASK = 9,
+        UNSUBSCRIBE_BACKGROUND_TASK = 10,
+        GET_CONTINUOUS_TASK_APPS = 12,
     };
 };
 

@@ -29,6 +29,7 @@
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+#include "background_task_manager_access_client.h"
 #include "continuous_task_callback_info.h"
 #endif
 
@@ -1072,6 +1073,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // change to background
@@ -1114,6 +1116,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -1146,6 +1149,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // change to background
@@ -1185,6 +1189,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
@@ -1231,6 +1236,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
@@ -1282,6 +1288,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
@@ -1330,6 +1337,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
@@ -1386,6 +1394,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
 
@@ -1393,6 +1402,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo1
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo1->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo1->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo1->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo1);
 
@@ -1443,6 +1453,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
 
@@ -1463,6 +1474,61 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level0)
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     EXPECT_EQ(PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_PASTEBOARD"));
+    // remove hap
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission021
+ * @tc.desc: Test grant temp permission switching to background and have a background task with 2 typeId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission021, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    // create background task
+    std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
+        = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER));
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
+    continuousTaskCallbackInfo->tokenId_ = tokenID;
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
+    // change to background
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.accessTokenId = tokenID;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    sleep(11);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    // change to foreground
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    appStateObserver_->OnAppStateChanged(appStateData);
+    sleep(1);
+    // stop background task
+    backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
+    // change to background
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateObserver_->OnAppStateChanged(appStateData);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    sleep(11);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+
     // remove hap
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1604,6 +1670,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level0)
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->typeIds_.emplace_back(static_cast<uint32_t>(BackgroundMode::LOCATION));
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -1679,6 +1746,24 @@ HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Le
     EXPECT_EQ(info.typeIds_, p->typeIds_);
     EXPECT_EQ(info.abilityId_, p->abilityId_);
     EXPECT_EQ(info.tokenId_, p->tokenId_);
+}
+
+/*
+ * @tc.name: ContinuousTaskCallbackCall001
+ * @tc.desc: test call interface code success
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackCall001, TestSize.Level1)
+{
+    sptr<PermissionBackgroundTaskObserver> backgroundTaskObserver =
+        new (std::nothrow) PermissionBackgroundTaskObserver();
+    ASSERT_EQ(RET_SUCCESS,
+        BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskObserver));
+    ASSERT_EQ(RET_SUCCESS,
+        BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(backgroundTaskObserver));
+    std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> list;
+    ASSERT_EQ(RET_SUCCESS, BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(list));
 }
 #endif
 } // namespace AccessToken
