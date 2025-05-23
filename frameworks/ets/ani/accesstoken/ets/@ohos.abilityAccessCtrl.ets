@@ -149,6 +149,35 @@ export default namespace abilityAccessCtrl {
         requestPermissionOnSetting(
             context: Context,
             permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
+        
+        revokeUserGrantedPermissionExecute(
+            tokenID: int,
+            permissionName: Permissions,
+            permissionFlags: int,
+        ): void;
+
+        revokeUserGrantedPermission(
+            tokenID: int,
+            permissionName: Permissions,
+            permissionFlags: int,
+        ): Promise<void>;
+
+        revokeUserGrantedPermission(
+            tokenID: int,
+            permissionName: Permissions,
+            permissionFlags: int,
+            callback: AsyncCallback<void>
+        ): void;
+
+        getVersionExecute(): int;
+
+        getVersion(): Promise<int>;
+
+        getPermissionsStatusExecute(
+            tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
+            
+        getPermissionsStatus(
+            tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>>;
     }
 
     class AtManagerInner implements AtManager {
@@ -258,5 +287,68 @@ export default namespace abilityAccessCtrl {
             });
             return p;
         }
-    }
+        
+        native revokeUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions,
+            permissionFlags: int): void;
+
+        revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
+            return new Promise<void>(
+                (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+                let p = taskpool.execute((): void => {
+                    new AtManagerInner().revokeUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
+                });
+                p.then((e: NullishType): void => {
+                    resolve(undefined);
+                }).catch((err: BusinessError): void => {
+                    reject(err);
+                })
+            });
+        }
+
+        revokeUserGrantedPermission(tokenID: int, permissionName: Permissions,
+            permissionFlags: int, callback: AsyncCallback<void>): void {
+            let job = taskpool.execute((): void => {
+                new AtManagerInner().revokeUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
+            });
+            job.then(()=>{
+                let err = new BusinessError<void>();
+                callback(err, undefined);
+            }, (err: BusinessError): void=> {
+                callback(err, undefined);
+            })       
+        }
+
+        native getVersionExecute(): int;
+
+        getVersion(): Promise<int>{
+            let p = new Promise<int>((resolve: (v: int)=> void, reject: (error: BusinessError)
+                => void) =>{
+                    let p1 = taskpool.execute((): int => { return new AtManagerInner().getVersionExecute() as int;});
+                    p1.then((e: NullishType) => {
+                        resolve(e as int);
+                    }).catch((err: BusinessError): void => {
+                        reject(err);
+                    });
+                });
+            return p;
+        }
+
+        native getPermissionsStatusExecute(
+            tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
+
+        getPermissionsStatus(
+            tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>> {
+            let p = new Promise<Array<PermissionStatus>>((resolve: (v: Array<PermissionStatus>)
+                    => void, reject: (error: BusinessError) => void) => {
+                let p1 = taskpool.execute((): Array<PermissionStatus> => { return new AtManagerInner().getPermissionsStatusExecute(tokenID,
+                    permissionList) as Array<PermissionStatus>;});
+                p1.then((e: NullishType) => {
+                    resolve(e as Array<PermissionStatus>);
+                }).catch((err: BusinessError): void => {
+                    reject(err);
+                });
+            });
+            return p;
+        }
+    }   
 }

@@ -24,9 +24,11 @@
 #include "accesstoken_log.h"
 #include "ani_base_context.h"
 #include "ani_error.h"
+#include "ani_utils.h"
 #include "hisysevent.h"
 #include "parameter.h"
 #include "permission_list_state.h"
+#include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -1309,6 +1311,113 @@ static ani_ref RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     return result;
 }
 
+static bool IsPermissionFlagValid(uint32_t flag)
+{
+    return (flag == PermissionFlag::PERMISSION_USER_SET) || (flag == PermissionFlag::PERMISSION_USER_FIXED) ||
+        (flag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME);
+};
+
+static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int tokenID, ani_string permissionName, ani_int permissionFlags)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "RevokeUserGrantedPermission begin.");
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "env null.");
+        return;
+    }
+
+    std::string permissionNameString;
+    if (!AniParseString(env, permissionName, permissionNameString)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return;
+    }
+    
+    if (!IsPermissionFlagValid(static_cast<uint32_t> (permissionFlags))) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        return;
+    }
+
+    if (permissionNameString.size() > MAX_LENGTH || permissionNameString.empty()) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        return;
+    }
+    PermissionBriefDef def;
+    if (!GetPermissionBriefDef(permissionNameString, def) || def.grantMode != USER_GRANT) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
+        return;
+    }
+
+    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionNameString, permissionFlags);
+    if (ret != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(ret);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    }
+}
+
+static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "getVersionExecute begin.");
+    uint32_t version = -1;
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
+        return version;
+    }
+
+    int32_t result = AccessTokenKit::GetVersion(version);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return version;
+    }
+    return version;
+}
+
+static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int tokenID, ani_array_ref permissionList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionsStatusExecute begin.");
+    if ((env == nullptr) || (permissionList == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionList or env null.");
+        return nullptr;
+    }
+    std::vector<std::string> aniPermissionList;
+    if (!AniParseStringArray(env, permissionList, aniPermissionList)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionList", "Array<Permissions>"));
+        return nullptr;
+    }
+    
+    if (aniPermissionList.empty()) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER));
+        return nullptr;
+    }
+
+    std::vector<PermissionListState> permList;
+    for (const auto& permission : aniPermissionList) {
+        PermissionListState permState;
+        permState.permissionName = permission;
+        permState.state = INVALID_OPER;
+        permList.emplace_back(permState);
+    }
+
+    int32_t result = RET_SUCCESS;
+    std::vector<int32_t> permissionQueryResults;
+    result = AccessTokenKit::GetPermissionsStatus(tokenID, permList);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+    for (const auto& permState : permList) {
+        permissionQueryResults.emplace_back(permState.state);
+    }
+
+    return ConvertAniArrayInt(env, permissionQueryResults);
+}
+
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
@@ -1353,6 +1462,15 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         ani_native_function { "requestPermissionOnSettingExecute",
             "Lapplication/Context/Context;Lescompat/Array;:Lescompat/Array;",
             reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
+        ani_native_function { "revokeUserGrantedPermissionExecute",
+            nullptr,
+            reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
+        ani_native_function { "getVersionExecute",
+            nullptr,
+            reinterpret_cast<void*>(GetVersionExecute) },
+        ani_native_function { "getPermissionsStatusExecute", 
+            nullptr,
+            reinterpret_cast<void*>(GetPermissionsStatusExecute) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
