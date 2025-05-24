@@ -737,6 +737,7 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level0
     bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
     SetParameter(EDM_MIC_MUTE_KEY, std::to_string(false).c_str());
 
+    bool isMuteMic = AudioManagerAdapter::GetInstance().GetPersistentMicMuteState();
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, true,
         RANDOM_TOKENID);
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -752,6 +753,8 @@ HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level0
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID,
         "ohos.permission.MICROPHONE", CALLER_PID));
+    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, isMuteMic,
+        RANDOM_TOKENID);
     std::string str = isMute ? "true" : "false";
     SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
