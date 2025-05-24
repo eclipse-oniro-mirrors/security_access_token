@@ -1515,7 +1515,7 @@ bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const Permissi
     return false;
 }
 
-void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenId2apl)
+void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> results;
@@ -1540,7 +1540,7 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t
     // filter invalid data
     for (const auto& result : results) {
         tokenId = result.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        if (tokenId2apl.count(tokenId) == 0) {
+        if (tokenIdAplMap.count(tokenId) == 0) {
             continue;
         }
 
@@ -1557,7 +1557,7 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t
 
         apl = result.GetInt(TokenFiledConst::FIELD_ACL);
         value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(tokenId2apl[tokenId], data, value, (apl == 1))) {
+        if (!IsPermissionValid(tokenIdAplMap[tokenId], data, value, (apl == 1))) {
             // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
             continue;
         }
@@ -1568,7 +1568,7 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t
     UpdateUndefinedInfo(validValueList);
 }
 
-void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenId2apl)
+void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     std::string dbPermDefVersion;
     GenericValues conditionValue;
@@ -1594,7 +1594,7 @@ void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& 
             return;
         }
         if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
-            HandleHapUndefinedInfo(tokenId2apl);
+            HandleHapUndefinedInfo(tokenIdAplMap);
         }
     }
 }
@@ -1608,9 +1608,9 @@ bool AccessTokenManagerService::Initialize()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenId2apl;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
-    HandlePermDefUpdate(tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    HandlePermDefUpdate(tokenIdAplMap);
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();

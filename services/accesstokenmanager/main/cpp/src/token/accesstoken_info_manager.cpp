@@ -87,7 +87,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 }
 
 void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-    std::map<int32_t, int32_t>& tokenId2apl)
+    std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
     if (hasInited_) {
@@ -118,7 +118,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 #endif
 
-    InitHapTokenInfos(hapSize, tokenId2apl);
+    InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
     pefDefSize = GetDefPermissionsSize();
@@ -207,7 +207,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
     return RET_SUCCESS;
 }
 
-void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenId2apl)
+void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
@@ -234,7 +234,7 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
             continue;
         }
         hapSize++;
-        tokenId2apl[tokenId] = apl;
+        tokenIdAplMap[tokenId] = apl;
     }
 }
 

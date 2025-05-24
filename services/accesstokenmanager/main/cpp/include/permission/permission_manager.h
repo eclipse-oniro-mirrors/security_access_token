@@ -123,7 +123,7 @@ private:
     void FillUndefinedPermVector(const std::string& permissionName, const std::string& appDistributionType,
         const HapPolicy& policy, std::vector<GenericValues>& undefValues);
     bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy, const std::string& permissionName,
-        const std::string appDistributionType, HapInfoCheckResult& result);
+        const std::string& appDistributionType, HapInfoCheckResult& result);
     void GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     std::shared_ptr<LibraryLoader> GetAbilityManager();
 

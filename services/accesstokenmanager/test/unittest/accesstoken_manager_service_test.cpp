@@ -140,7 +140,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level
 }
 
 void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,
-    AccessTokenID& tokenId, std::map<int32_t, int32_t>& tokenId2apl, bool hasInit)
+    AccessTokenID& tokenId, std::map<int32_t, int32_t>& tokenIdAplMap, bool hasInit)
 {
     if (!hasInit) {
         atManagerService_->Initialize();
@@ -155,7 +155,7 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
     tokenIDEx.tokenIDEx = fullTokenId;
     tokenId = tokenIDEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    tokenId2apl[static_cast<int32_t>(tokenId)] = g_policy.apl;
+    tokenIdAplMap[static_cast<int32_t>(tokenId)] = g_policy.apl;
 }
 
 /**
@@ -164,7 +164,7 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, SystemConfigTest001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, SystemConfigTest001, TestSize.Level0)
 {
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
@@ -183,15 +183,15 @@ HWTEST_F(AccessTokenManagerServiceTest, SystemConfigTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE(hasValue is true) + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
     GenericValues conditionValue;
@@ -220,15 +220,15 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl); // create master app
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // create master app
 
     HapInfoParcel infoParCel2;
     infoParCel2.hapInfoParameter = g_info;
@@ -238,7 +238,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level1)
     policyParcel2.hapPolicy = g_policy;  // KERNEL_ATM_SELF_USE + INVALIDB, INVALIDB diff from INVALIDA in master app
     policyParcel2.hapPolicy.permStateList = {g_state1, g_state3};
     AccessTokenID tokenId2;
-    CreateHapToken(infoParCel2, policyParcel2, tokenId2, tokenId2apl, true); // create dlp app
+    CreateHapToken(infoParCel2, policyParcel2, tokenId2, tokenIdAplMap, true); // create dlp app
 
     // query undefine table for dlp app
     GenericValues conditionValue;
@@ -261,15 +261,15 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
     GenericValues conditionValue;
@@ -307,20 +307,56 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level1)
 }
 
 /**
- * @tc.name: UpdateHapTokenTest002
- * @tc.desc: test ota update acl check fail return success and permission store in undefine table
+ * @tc.name: InitHapTokenTest002
+ * @tc.desc: test ota update acl check fail return false
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+
+    // update hap
+    uint64_t fullTokenId;
+    AccessTokenIDEx tokenIDEx;
+    tokenIDEx.tokenIdExStruct.tokenID = tokenId;
+    fullTokenId = tokenIDEx.tokenIDEx;
+    policyParcel.hapPolicy.aclExtendedMap = {};
+    UpdateHapInfoParamsIdl infoIdl;
+    infoIdl.appIDDesc = g_info.appIDDesc;
+    infoIdl.apiVersion = g_info.apiVersion;
+    infoIdl.isSystemApp = g_info.isSystemApp;
+    infoIdl.appDistributionType = g_info.appDistributionType;
+    infoIdl.isAtomicService = g_info.isAtomicService;
+    infoIdl.dataRefresh = false;
+    HapInfoCheckResultIdl resultInfoIdl;
+    ASSERT_EQ(0, atManagerService_->UpdateHapToken(fullTokenId, infoIdl, policyParcel, resultInfoIdl));
+    ASSERT_EQ(PermissionRulesEnumIdl::PERMISSION_ACL_RULE, resultInfoIdl.rule);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: UpdateHapTokenTest003
+ * @tc.desc: test ota update acl check fail return success and permission store in undefine table
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
+{
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = g_info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
+    AccessTokenID tokenId;
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
     GenericValues conditionValue;
@@ -365,7 +401,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -374,8 +410,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level1)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
@@ -392,7 +428,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
@@ -420,7 +456,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -429,8 +465,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level1)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -447,7 +483,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -477,7 +513,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -485,8 +521,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level1)
     policyParcel.hapPolicy = g_policy;
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value1; // user grant
     value1.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -508,7 +544,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -541,7 +577,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -549,8 +585,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level1)
     policyParcel.hapPolicy = g_policy;
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -567,7 +603,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -592,7 +628,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -601,8 +637,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level1)
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName };
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -619,7 +655,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -649,7 +685,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -659,8 +695,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level1)
     policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName }; // POWER_MANAGER, hasValue is false
     policyParcel.hapPolicy.aclExtendedMap = { std::make_pair(g_state6.permissionName, "test") };
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -678,7 +714,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -713,7 +749,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -722,8 +758,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level1)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl); // KERNEL_ATM_SELF_USE, hasValue is true
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // KERNEL_ATM_SELF_USE, hasValue is true
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -741,7 +777,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -777,7 +813,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
 {
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = g_info;
@@ -786,8 +822,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level1)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenId2apl;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -804,7 +840,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level1)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenId2apl);
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));

@@ -163,7 +163,7 @@ class PermissionDef(object):
         return False
 
 
-def parse_json(path, platform, permission_list):
+def parse_json(path, platform):
     extend_perm = {
         'name' : 'ohos.permission.KERNEL_ATM_SELF_USE',
         'grantMode' : 'system_grant',
@@ -177,6 +177,7 @@ def parse_json(path, platform, permission_list):
         'hasValue' : True
     }
 
+    def_list = []
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         index = 0
@@ -184,10 +185,10 @@ def parse_json(path, platform, permission_list):
             perm_def = PermissionDef(perm, index)
             if not perm_def.check_device_type(platform):
                 continue
-            permission_list.append(perm_def)
+            def_list.append(perm_def)
             index += 1
-        permission_list.append(PermissionDef(extend_perm, index))
-    return permission_list
+        def_list.append(PermissionDef(extend_perm, index))
+    return def_list
 
 
 def convert_to_cpp(path, permission_list, hash_str):
@@ -225,7 +226,6 @@ if __name__ == "__main__":
     curr_platform = "general"
     if input_args.target_platform in CONVERT_TARGET_PLATFORM:
         curr_platform = CONVERT_TARGET_PLATFORM[input_args.target_platform]
-    permission_list = []
-    parse_json(input_args.input_json, curr_platform, permission_list)
+    permission_list = parse_json(input_args.input_json, curr_platform)
     hash_str = get_file_hash(input_args.input_json)
     convert_to_cpp(input_args.output_path, permission_list, hash_str)
