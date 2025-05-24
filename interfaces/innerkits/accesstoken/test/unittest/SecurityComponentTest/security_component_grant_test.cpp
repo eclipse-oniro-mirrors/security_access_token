@@ -16,6 +16,7 @@
 #include "security_component_grant_test.h"
 #include <thread>
 
+#include "accesstoken_callbacks.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #include "permission_grant_info.h"
@@ -595,11 +596,15 @@ HWTEST_F(SecurityComponentGrantTest, RegisterSecCompEnhance001, TestSize.Level0)
     data.callback = nullptr;
     data.challenge = 0;
     data.seqNum = 0;
-    EXPECT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, AccessTokenKit::RegisterSecCompEnhance(data));
+    EXPECT_EQ(ERR_WRITE_PARCEL_FAILED, AccessTokenKit::RegisterSecCompEnhance(data));
 
-    // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
-    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
-    data.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
+    // PermissionStateChangeCallback is not the real callback of SecCompEnhance,
+    // but it does not effect the final result.
+    PermStateChangeScope scopeInfo9;
+    scopeInfo9.permList = {TEST_PERMISSION};
+    scopeInfo9.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo9);
+    data.callback = new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSecCompEnhance(data));
 
     MockNativeToken mock("security_component_service");
