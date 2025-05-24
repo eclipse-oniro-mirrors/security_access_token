@@ -130,8 +130,8 @@ void AccessTokenInfoManagerTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenId2apl;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
 }
 
 void AccessTokenInfoManagerTest::TearDownTestCase()
@@ -1595,8 +1595,8 @@ HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenId2apl;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
+    std::map<int32_t, int32_t> tokenIdAplMap;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }

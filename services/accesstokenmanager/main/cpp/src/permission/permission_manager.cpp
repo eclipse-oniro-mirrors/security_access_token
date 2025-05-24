@@ -974,7 +974,7 @@ void PermissionManager::FillUndefinedPermVector(const std::string& permissionNam
     }
 
     auto iter = std::find_if(policy.aclExtendedMap.begin(), policy.aclExtendedMap.end(),
-        [permissionName](const std::map<std::string, std::string>::value_type item) {
+        [permissionName](const auto& item) {
             return permissionName == item.first;
         });
     if (iter != policy.aclExtendedMap.end()) {
@@ -987,7 +987,7 @@ void PermissionManager::FillUndefinedPermVector(const std::string& permissionNam
 }
 
 bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy,
-    const std::string& permissionName, const std::string appDistributionType, HapInfoCheckResult& result)
+    const std::string& permissionName, const std::string& appDistributionType, HapInfoCheckResult& result)
 {
     // acl check
     if (!IsAclSatisfied(briefDef, policy)) {
@@ -1018,7 +1018,9 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
     std::string appDistributionType = (initInfo.isUpdate) ?
         initInfo.updateInfo.appDistributionType : initInfo.installInfo.appDistributionType;
 
-    for (auto state : initInfo.policy.permStateList) {
+    PermissionStatus state;
+    for (const auto& status : initInfo.policy.permStateList) {
+        state = status;
         PermissionBriefDef briefDef;
         if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",

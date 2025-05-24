@@ -151,8 +151,8 @@ private:
     int32_t UpdateUndefinedToDb(const std::vector<GenericValues>& stateValues,
         const std::vector<GenericValues>& extendValues, const std::vector<GenericValues>& validValueList);
     int32_t UpdateUndefinedInfo(const std::vector<GenericValues>& validValueList);
-    void HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenId2apl);
-    void HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenId2apl);
+    void HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenIdAplMap);
+    void HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenIdAplMap);
 
     ServiceRunningState state_;
     std::string grantBundleName_;

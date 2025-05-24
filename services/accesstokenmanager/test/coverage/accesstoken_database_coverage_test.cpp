@@ -90,6 +90,19 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, Te
 }
 
 /*
+ * @tc.name: OnCreate001
+ * @tc.desc: AccessTokenOpenCallback::OnCreate
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnCreate001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance().GetRdb();
+    AccessTokenOpenCallback callback;
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnCreate(*(db.get())));
+}
+
+/*
  * @tc.name: OnUpgrade001
  * @tc.desc: AccessTokenOpenCallback::OnUpgrade
  * @tc.type: FUNC

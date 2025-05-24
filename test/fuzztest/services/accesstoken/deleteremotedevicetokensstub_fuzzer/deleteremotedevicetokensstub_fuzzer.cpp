@@ -62,8 +62,8 @@ namespace OHOS {
             uint32_t nativeSize = 0;
             uint32_t pefDefSize = 0;
             uint32_t dlpSize = 0;
-            std::map<int32_t, int32_t> tokenId2apl;
-            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenId2apl);
+            std::map<int32_t, int32_t> tokenIdAplMap;
+            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
         }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
