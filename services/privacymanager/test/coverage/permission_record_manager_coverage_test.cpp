@@ -37,9 +37,7 @@
 #include "token_setproc.h"
 #include "on_permission_used_record_callback_stub.h"
 
-using namespace testing;
 using namespace testing::ext;
-using namespace OHOS;
 
 namespace OHOS {
 namespace Security {
@@ -1181,7 +1179,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
 
     bool isMuteCamera = CameraManagerAdapter::GetInstance().IsCameraMuted();
     // true means close
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, true, RANDOM_TOKENID);
+    PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::CAMERA, true, RANDOM_TOKENID);
 
     auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
