@@ -153,7 +153,7 @@ static void RemoveNodeFromList(NativeTokenList **node)
     if (node == NULL || *node == NULL || g_tokenListHead == NULL) {
         return;
     }
-    NativeTokenList *tmp = g_tokenListHead->next;
+    NativeTokenList *tmp = g_tokenListHead;
     while (tmp != NULL) {
         if (tmp->next == *node) {
             tmp->next = (*node)->next;
