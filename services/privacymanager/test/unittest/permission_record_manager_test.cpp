@@ -580,6 +580,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
 }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 /*
  * @tc.name: StartUsingPermissionTest009
  * @tc.desc: Test multiple process start using permission
@@ -629,6 +630,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Leve
     usleep(500000); // 500000us = 0.5s
     ASSERT_FALSE(callbackPtr2->isShow_);
 }
+#endif
 
 /*
  * @tc.name: StartUsingPermissionTest010

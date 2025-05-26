@@ -211,24 +211,23 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level0
 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    bool isAllowed = false;
-    privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME, -1, isAllowed);
-    ASSERT_EQ(false, isAllowed);
-    privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME, -1, isAllowed);
-    ASSERT_EQ(false, isAllowed);
-    privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1, isAllowed);
-    ASSERT_EQ(false, isAllowed);
+    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, MICROPHONE_PERMISSION_NAME, -1));
+    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, LOCATION_PERMISSION_NAME, -1));
+    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, CAMERA_PERMISSION_NAME, -1));
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // not pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1, isAllowed);
-    ASSERT_EQ(false, isAllowed);
+    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, CAMERA_PERMISSION_NAME, -1));
 
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     // pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-    privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1, isAllowed);
-    ASSERT_EQ(false, isAllowed);
+    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, CAMERA_PERMISSION_NAME, -1));
 #endif
 }
 
@@ -242,7 +241,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level0
 {
     AccessTokenID tokenId = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     // invalid tokenId
-    bool isAllowed = false;
+    bool isAllowed = true;
     privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME, -1, isAllowed);
     ASSERT_EQ(false, isAllowed);
 
@@ -272,7 +271,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level0
 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    bool isAllowed = false;
+    bool isAllowed = true;
     privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, -1, isAllowed);
     ASSERT_EQ(false, isAllowed);
 }
@@ -1038,7 +1037,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.L
     AccessTokenID tokenID = 123; // 123 is invalid tokenID
     std::string permissionName = "ohos.permission.test"; // is invalid permission
     int32_t pid = 11;
-    bool isAllowed = false;
+    bool isAllowed = true;
 
     // callingTokenID is native token hdcd with need permission, but tokenID is invalid
     int32_t result = privacyManagerService_->IsAllowedUsingPermission(tokenID, permissionName, pid, isAllowed);

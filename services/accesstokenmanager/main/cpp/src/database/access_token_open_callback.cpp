@@ -28,12 +28,6 @@ constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
-
-constexpr const uint32_t FLAG_HANDLE_FROM_ONE_TO_TWO = 1;
-constexpr const uint32_t FLAG_HANDLE_FROM_TWO_TO_THREE = 1 << 1;
-constexpr const uint32_t FLAG_HANDLE_FROM_THREE_TO_FOUR = 1 << 2;
-constexpr const uint32_t FLAG_HANDLE_FROM_FOUR_TO_FIVE = 1 << 3;
-constexpr const uint32_t FLAG_HANDLE_FROM_FIVE_TO_SIX = 1 << 4;
 }
 
 int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore)
@@ -504,92 +498,61 @@ int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::Rdb
     return NativeRdb::E_OK;
 }
 
-int32_t AccessTokenOpenCallback::HandleUpgradeWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag)
-{
-    int32_t res = NativeRdb::E_OK;
-
-    if ((flag & FLAG_HANDLE_FROM_ONE_TO_TWO) == FLAG_HANDLE_FROM_ONE_TO_TWO) {
-        res = AddAvailableTypeColumn(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column available_type.");
-            return res;
-        }
-
-        res = AddPermDialogCapColumn(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column perm_dialog_cap_state.");
-            return res;
-        }
-    }
-
-    if ((flag & FLAG_HANDLE_FROM_TWO_TO_THREE) == FLAG_HANDLE_FROM_TWO_TO_THREE) {
-        res = CreatePermissionRequestToggleStatusTable(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
-            return res;
-        }
-    }
-
-    if ((flag & FLAG_HANDLE_FROM_THREE_TO_FOUR) == FLAG_HANDLE_FROM_THREE_TO_FOUR) {
-        res = AddRequestToggleStatusColumn(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column status.");
-            return res;
-        }
-    }
-
-    if ((flag & FLAG_HANDLE_FROM_FOUR_TO_FIVE) == FLAG_HANDLE_FROM_FOUR_TO_FIVE) {
-        res = CreateVersionFiveTable(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            return res;
-        }
-
-        res = AddKernelEffectAndHasValueColumn(rdbStore);
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column kernel_effect or has_value.");
-            return res;
-        }
-    }
-
-    if ((flag & FLAG_HANDLE_FROM_FIVE_TO_SIX) == FLAG_HANDLE_FROM_FIVE_TO_SIX) {
-        return CreateVersionSixTable(rdbStore);
-    }
-
-    return res;
-}
-
-void AccessTokenOpenCallback::GetUpgradeFlag(int32_t currentVersion, int32_t targetVersion, uint32_t& flag)
-{
-    if ((targetVersion >= DATABASE_VERSION_2) && (currentVersion < DATABASE_VERSION_2)) {
-        flag += FLAG_HANDLE_FROM_ONE_TO_TWO;
-    }
-
-    if ((targetVersion >= DATABASE_VERSION_3) && (currentVersion < DATABASE_VERSION_3)) {
-        flag += FLAG_HANDLE_FROM_TWO_TO_THREE;
-    }
-
-    if ((targetVersion >= DATABASE_VERSION_4) && (currentVersion < DATABASE_VERSION_4)) {
-        flag += FLAG_HANDLE_FROM_THREE_TO_FOUR;
-    }
-
-    if ((targetVersion >= DATABASE_VERSION_5) && (currentVersion < DATABASE_VERSION_5)) {
-        flag += FLAG_HANDLE_FROM_FOUR_TO_FIVE;
-    }
-
-    if ((targetVersion >= DATABASE_VERSION_6) && (currentVersion < DATABASE_VERSION_6)) {
-        flag += FLAG_HANDLE_FROM_FIVE_TO_SIX;
-    }
-}
-
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from currentVersion %{public}d to targetVersion %{public}d.",
         currentVersion, targetVersion);
 
-    uint32_t flag = 0;
-    GetUpgradeFlag(currentVersion, targetVersion, flag);
+    int32_t res = 0;
+    switch (currentVersion) { // upgrade to the latest db version in rom, no mather how much the version is
+        case DATABASE_VERSION_1: // 1->2
+            res = AddAvailableTypeColumn(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column available_type, res is %{public}d.", res);
+                return res;
+            }
+            res = AddPermDialogCapColumn(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column perm_dialog_cap_state, res is %{public}d.", res);
+                return res;
+            }
 
-    return HandleUpgradeWithFlag(rdbStore, flag);
+        case DATABASE_VERSION_2: // 2->3
+            res = CreatePermissionRequestToggleStatusTable(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
+                return res;
+            }
+
+        case DATABASE_VERSION_3: // 3->4
+            res = AddRequestToggleStatusColumn(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column status.");
+                return res;
+            }
+
+        case DATABASE_VERSION_4: // 4->5
+            res = CreateVersionFiveTable(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            res = AddKernelEffectAndHasValueColumn(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column kernel_effect or has_value.");
+                return res;
+            }
+
+        case DATABASE_VERSION_5: // 5->6
+            res = CreateVersionSixTable(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+
+        default:
+            return NativeRdb::E_OK;
+    }
+
+    return NativeRdb::E_OK;
 }
 } // namespace AccessToken
 } // namespace Security

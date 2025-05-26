@@ -178,23 +178,6 @@ static PermissionUsedTypeInfo MakeInfo(AccessTokenID tokenId, int32_t pid, const
     return info;
 }
 
-/**
- * @tc.name: OnAppStateChanged001
- * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX8
- */
-HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level4)
-{
-    PrivacyAppStateObserver observer;
-    AppStateData appStateData;
-    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    observer.OnAppStateChanged(appStateData);
-    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
-    observer.OnAppStateChanged(appStateData);
-    ASSERT_EQ(static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND), appStateData.state);
-}
-
 /*
  * @tc.name: AppStatusListener001
  * @tc.desc: register and startusing permissions then use NotifyAppStateChange

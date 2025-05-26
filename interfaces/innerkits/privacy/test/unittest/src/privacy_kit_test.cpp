@@ -1096,28 +1096,31 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
 
     auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    callbackPtr->type_ = PERM_INACTIVE;
+    callbackPtr->type_ = PERM_TEMPORARY_CALL;
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
-
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
-
-    usleep(1000000); // 1000000us = 1s
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
-
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
 
     usleep(1000000); // 1000000us = 1s
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
-    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    callbackPtr->type_ = PERM_TEMPORARY_CALL;
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_NE(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_NE(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
+    EXPECT_NE(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
-    ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    ASSERT_NE(PERM_INACTIVE, callbackPtr->type_);
+    ASSERT_NE(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
+    ASSERT_NE(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 }
 
 class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
@@ -1156,15 +1159,15 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level0)
 {
     std::vector<std::string> permList1 = {"ohos.permission.READ_CONTACTS"};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest1>(permList1);
-    callbackPtr1->type_ = PERM_INACTIVE;
+    callbackPtr1->type_ = PERM_TEMPORARY_CALL;
 
     std::vector<std::string> permList2 = {"ohos.permission.READ_MEDIA"};
     auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(permList2);
-    callbackPtr2->type_ = PERM_INACTIVE;
+    callbackPtr2->type_ = PERM_TEMPORARY_CALL;
 
     std::vector<std::string> permList3 = {};
     auto callbackPtr3 = std::make_shared<CbCustomizeTest2>(permList3);
-    callbackPtr3->type_ = PERM_INACTIVE;
+    callbackPtr3->type_ = PERM_TEMPORARY_CALL;
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2));
@@ -1174,7 +1177,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level0)
 
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr1->type_);
-    EXPECT_EQ(PERM_INACTIVE, callbackPtr2->type_);
     EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr3->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_CONTACTS"));
@@ -1186,13 +1188,14 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level0)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
     usleep(1000000); // 1000000us = 1s
-    EXPECT_EQ(PERM_INACTIVE, callbackPtr1->type_);
     EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr2->type_);
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr3->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(PERM_INACTIVE, callbackPtr2->type_);
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr3->type_);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr2));
