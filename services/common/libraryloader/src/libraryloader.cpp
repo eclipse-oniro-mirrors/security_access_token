@@ -51,21 +51,19 @@ LibraryLoader::~LibraryLoader()
 #endif // FUZZ_ENABLE
 }
 
-bool LibraryLoader::PrintErrorLog(const std::string& targetName)
+void LibraryLoader::PrintErrorLog(const std::string& targetName)
 {
     char* error;
     if ((error = dlerror()) != nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get %{public}s failed, errMsg=%{public}s.",
-            targetName.c_str(), error);
-        return false;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get %{public}s failed, errMsg=%{public}s.", targetName.c_str(), error);
     }
-    return true;
 }
 
 void LibraryLoader::Create()
 {
     void* (*create)(void) = reinterpret_cast<FUNC_CREATE>(dlsym(handle_, "Create"));
-    if (!PrintErrorLog("Create")) {
+    if (create == nullptr) {
+        PrintErrorLog("Create");
         return;
     }
     instance_ = create();
@@ -74,7 +72,8 @@ void LibraryLoader::Create()
 void LibraryLoader::Destroy()
 {
     void (*destroy)(void*) = reinterpret_cast<FUNC_DESTROY>(dlsym(handle_, "Destroy"));
-    if (!PrintErrorLog("Destroy")) {
+    if (destroy == nullptr) {
+        PrintErrorLog("Destroy");
         return;
     }
     destroy(instance_);
