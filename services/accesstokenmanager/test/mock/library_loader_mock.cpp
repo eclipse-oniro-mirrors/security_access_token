@@ -53,10 +53,8 @@ LibraryLoader::LibraryLoader(const std::string& path)
 LibraryLoader::~LibraryLoader()
 {}
 
-bool LibraryLoader::PrintErrorLog(const std::string& targetName)
-{
-    return true;
-}
+void LibraryLoader::PrintErrorLog(const std::string& targetName)
+{}
 
 void LibraryLoader::Create()
 {}

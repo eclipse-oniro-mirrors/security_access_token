@@ -36,7 +36,7 @@ private:
     void* instance_ = nullptr;
     void Create();
     void Destroy();
-    bool PrintErrorLog(const std::string& targetName);
+    void PrintErrorLog(const std::string& targetName);
 };
 } // AccessToken
 } // Security
