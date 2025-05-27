@@ -33,5 +33,8 @@ ohos_fuzztest("SetPermissionUsedRecordToggleStatusFuzzTest") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+  ]
 }
