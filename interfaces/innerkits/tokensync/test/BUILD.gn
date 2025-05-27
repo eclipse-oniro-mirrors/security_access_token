@@ -47,7 +47,11 @@ ohos_unittest("libtokensync_sdk_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk",
   ]
-  external_deps = [ "c_utils:utils" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+  ]
 }
 
 group("unittest") {
