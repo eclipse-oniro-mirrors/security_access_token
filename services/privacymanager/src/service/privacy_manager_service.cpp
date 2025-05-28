@@ -128,10 +128,6 @@ int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userI
     if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_RECORD_TOGGLE)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
-    if (userID != 0 && !IsPrivilegedCalling()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
@@ -144,10 +140,6 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userI
         return PrivacyError::ERR_NOT_SYSTEM_APP;
     }
     if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-    if (userID != 0 && !IsPrivilegedCalling()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "User version only get calling userID.");
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
