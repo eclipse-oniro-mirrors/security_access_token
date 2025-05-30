@@ -192,7 +192,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest001, TestSize.Level0)
     AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
     EXPECT_EQ("HapTokenTestAppID_1", hapInfoExt.appID);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -235,7 +235,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest002, TestSize.Level0)
     AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapInfoExt);
     EXPECT_EQ("AccessTokenTestAppID", hapInfoExt.appID);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -285,7 +285,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest003, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo));
     EXPECT_EQ(1, hapInfo.tokenAttr);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 void GetPermissions(string permissionName, PermissionStateFull& stateFull, PreAuthorizationInfo& info)
@@ -344,15 +344,15 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest004, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams));
     std::vector<PermissionStateFull> permStatList;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatList, false));
-    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
-    ASSERT_EQ("ohos.permission.RECEIVE_SMS", permStatList[0].permissionName);
+    EXPECT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    EXPECT_EQ("ohos.permission.RECEIVE_SMS", permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ("ohos.permission.RECEIVE_MMS", permStatList[1].permissionName);
+    EXPECT_EQ("ohos.permission.RECEIVE_MMS", permStatList[1].permissionName);
     EXPECT_EQ(permStatList[1].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(permStatList[1].grantFlags[0], PERMISSION_SYSTEM_FIXED);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -533,9 +533,9 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest007, TestSize.Level0)
             deleteFlag = 1;
         }
     }
-    ASSERT_EQ(allocFlag, 0);
-    ASSERT_EQ(updateFlag, 0);
-    ASSERT_EQ(deleteFlag, 0);
+    EXPECT_EQ(allocFlag, 0);
+    EXPECT_EQ(updateFlag, 0);
+    EXPECT_EQ(deleteFlag, 0);
 }
 
 /**
@@ -571,9 +571,9 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest008, TestSize.Level0)
 
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-    ASSERT_NE("ohos.permission.test3", permDefResult.permissionName);
+    EXPECT_NE("ohos.permission.test3", permDefResult.permissionName);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 /**
  * @tc.name: UpdateHapTokenFuncTest009
@@ -685,9 +685,9 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest011, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyParams));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
-    ASSERT_EQ(info.apiVersion, hapTokenInfoRes.apiVersion);
+    EXPECT_EQ(info.apiVersion, hapTokenInfoRes.apiVersion);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -704,7 +704,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenFuncTest012, TestSize.Level0)
     info.appIDDesc = std::string("updateFailed");
     info.apiVersion = 0;
     info.isSystemApp = false;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenKit::UpdateHapToken(tokenID, info, policy));
 }
 
@@ -1055,9 +1055,9 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest005, TestSize.Level0)
     HapInfoCheckResult result;
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
         AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result));
-    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
-    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
+    EXPECT_EQ(result.permCheckResult.rule, PERMISSION_EDM_RULE);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1097,12 +1097,12 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest006, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2));
     std::vector<PermissionStateFull> state;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false));
-    ASSERT_EQ(static_cast<uint32_t>(1), state.size());
-    ASSERT_EQ("ohos.permission.CAMERA", state[0].permissionName);
+    EXPECT_EQ(static_cast<uint32_t>(1), state.size());
+    EXPECT_EQ("ohos.permission.CAMERA", state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1157,15 +1157,15 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest007, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
     AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
-    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
-    ASSERT_EQ("ohos.permission.CAMERA", state[0].permissionName);
+    EXPECT_EQ(static_cast<uint32_t>(2), state.size());
+    EXPECT_EQ("ohos.permission.CAMERA", state[0].permissionName);
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_USER_FIXED);
-    ASSERT_EQ("ohos.permission.MICROPHONE", state[1].permissionName);
+    EXPECT_EQ("ohos.permission.MICROPHONE", state[1].permissionName);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1217,13 +1217,13 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
     AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
-    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
+    EXPECT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_DEFAULT_FLAG);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1272,13 +1272,13 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
     std::vector<PermissionStateFull> state;
     AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
-    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
+    EXPECT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_GRANTED_BY_POLICY);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1323,17 +1323,17 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest010, TestSize.Level0)
     HapInfoCheckResult result;
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result);
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
-    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.ACCESS_DDK_USB");
-    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
+    EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.ACCESS_DDK_USB");
+    EXPECT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
 
     result.permCheckResult.permissionName = "test"; // invalid Name
     result.permCheckResult.rule = static_cast<PermissionRulesEnum>(-1); // invalid reasan
     policyParams.aclRequestedList = { "ohos.permission.ACCESS_DDK_USB" };
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(result.permCheckResult.permissionName, "test");
-    ASSERT_EQ(result.permCheckResult.rule, -1);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(result.permCheckResult.permissionName, "test");
+    EXPECT_EQ(result.permCheckResult.rule, -1);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1377,7 +1377,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest011, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, AccessTokenKit::GetReqPermissionByName(
         tokenID, "ohos.permission.CAMERA", value));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1408,7 +1408,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest001, TestSize.Level0)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1443,7 +1443,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest002, TestSize.Level0)
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -1620,7 +1620,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest005, TestSize.Level0)
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.AGENT_REQUIRE_FORM");
     EXPECT_EQ(PERMISSION_DENIED, ret);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1641,7 +1641,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest006, TestSize.Level0)
     info.isSystemApp = false;
     int ret = AccessTokenKit::UpdateHapToken(
         tokenIdEx, info, g_testPolicyParams);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 } // namespace AccessToken
 } // namespace Security

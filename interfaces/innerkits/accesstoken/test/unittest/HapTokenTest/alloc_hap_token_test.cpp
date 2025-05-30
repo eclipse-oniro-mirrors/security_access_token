@@ -217,8 +217,8 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     AccessTokenID tokenID1 = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenID1);
-    ASSERT_NE(tokenID, tokenID1);
+    EXPECT_NE(INVALID_TOKENID, tokenID1);
+    EXPECT_NE(tokenID, tokenID1);
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID1));
 }
@@ -474,8 +474,8 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken010, TestSize.Level0)
             deleteFlag = 1;
         }
     }
-    ASSERT_EQ(allocFlag, 0);
-    ASSERT_EQ(deleteFlag, 0);
+    EXPECT_EQ(allocFlag, 0);
+    EXPECT_EQ(deleteFlag, 0);
 }
 
 /**
@@ -493,7 +493,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken011, TestSize.Level0)
 
     g_infoManagerTestInfoParms.appIDDesc = invalidAppIDDesc;
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -509,7 +509,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken012, TestSize.Level0)
 
     g_infoManagerTestInfoParms.bundleName = "";
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.bundleName = backup;
 }
 
@@ -525,7 +525,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken013, TestSize.Level0)
 
     g_infoManagerTestInfoParms.appIDDesc = "";
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -542,7 +542,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken014, TestSize.Level0)
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "";
     AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     PermissionDef permDefResultBeta;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetDefPermission("", permDefResultBeta));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetDefPermission("", permDefResultBeta));
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backup;
 
     DeleteTestToken();
@@ -594,7 +594,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken016, TestSize.Level0)
     PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
-    ASSERT_EQ(ret, AccessTokenError::ERR_PERMISSION_NOT_EXIST);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_NOT_EXIST);
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = backup;
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
@@ -619,7 +619,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken017, TestSize.Level0)
     PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
-    ASSERT_EQ(ret, AccessTokenError::ERR_PERMISSION_NOT_EXIST);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_NOT_EXIST);
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = backupDec;
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
@@ -694,7 +694,7 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken019, TestSize.Level0)
     };
 
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 } // namespace AccessToken
 } // namespace Security
