@@ -130,7 +130,7 @@ void GetPermissionsStatusTest::SetUp()
     PreparePermStateList1(policy);
     AccessTokenIDEx tokenIdEx = {0};
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 void GetPermissionsStatusTest::TearDown()
@@ -182,11 +182,11 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest001, TestSize.Lev
     permsList.emplace_back(tmpD);
     permsList.emplace_back(tmpE);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
-    ASSERT_EQ(INVALID_OPER, permsList[2].state);
-    ASSERT_EQ(INVALID_OPER, permsList[3].state);
-    ASSERT_EQ(INVALID_OPER, permsList[4].state);
+    EXPECT_EQ(DYNAMIC_OPER, permsList[0].state);
+    EXPECT_EQ(DYNAMIC_OPER, permsList[1].state);
+    EXPECT_EQ(INVALID_OPER, permsList[2].state);
+    EXPECT_EQ(INVALID_OPER, permsList[3].state);
+    EXPECT_EQ(INVALID_OPER, permsList[4].state);
 }
 
 /**
@@ -236,12 +236,12 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusFuncTest002, TestSize.Lev
     };
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
-    ASSERT_EQ(FORBIDDEN_OPER, permsList[0].state);
-    ASSERT_EQ(FORBIDDEN_OPER, permsList[1].state);
-    ASSERT_EQ(INVALID_OPER, permsList[2].state);
-    ASSERT_EQ(INVALID_OPER, permsList[3].state);
-    ASSERT_EQ(INVALID_OPER, permsList[4].state);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
+    EXPECT_EQ(FORBIDDEN_OPER, permsList[0].state);
+    EXPECT_EQ(FORBIDDEN_OPER, permsList[1].state);
+    EXPECT_EQ(INVALID_OPER, permsList[2].state);
+    EXPECT_EQ(INVALID_OPER, permsList[3].state);
+    EXPECT_EQ(INVALID_OPER, permsList[4].state);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
 }
 
 /**
@@ -257,15 +257,15 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest001, TestSize
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionListState> permsList;
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
     PermissionListState tmpA = {
         .permissionName = "ohos.permission.testPermDef1",
         .state = SETTING_OPER
     };
     permsList.emplace_back(tmpA);
 
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionsStatus(0, permsList));
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionsStatus(0, permsList));
+    EXPECT_EQ(SETTING_OPER, permsList[0].state);
 }
 
 /**
@@ -283,8 +283,8 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest002, TestSize
     };
     permsList.emplace_back(tmpA);
 
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetPermissionsStatus(TOKENID_NOT_EXIST, permsList));
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetPermissionsStatus(TOKENID_NOT_EXIST, permsList));
+    EXPECT_EQ(SETTING_OPER, permsList[0].state);
 }
 
 /**
@@ -312,8 +312,8 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusAbnormalTest003, TestSize
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
 
-    ASSERT_EQ(ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
+    EXPECT_EQ(ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
+    EXPECT_EQ(SETTING_OPER, permsList[0].state);
     setuid(selfUid);
 }
 
@@ -341,8 +341,8 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest001, TestSize.Lev
 
     permsList.emplace_back(tmpA);
 
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
+    EXPECT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
+    EXPECT_EQ(SETTING_OPER, permsList[0].state);
 }
 
 /**
@@ -365,8 +365,8 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest002, TestSize.Lev
 
     permsList.emplace_back(tmpA);
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
+    EXPECT_EQ(DYNAMIC_OPER, permsList[0].state);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -89,7 +89,7 @@ void GetHapTokenTest::SetUp()
 
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void GetHapTokenTest::TearDown()
@@ -114,7 +114,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDFuncTest001, TestSize.Level0)
 
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
+    EXPECT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
 
     ret = TestCommon::DeleteTestHapToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -131,7 +131,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest001, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest001");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
@@ -145,10 +145,10 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest002, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest002");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "", 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
 
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "invalid bundlename", 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
@@ -162,7 +162,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDAbnormalTest003, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDAbnormalTest003");
 
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
-    ASSERT_EQ(INVALID_TOKENID, tokenID);
+    EXPECT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
@@ -181,7 +181,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level0)
                                                                  g_infoManagerTestSystemInfoParms.bundleName,
                                                                  g_infoManagerTestSystemInfoParms.instIndex);
 
-    ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
+    EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
@@ -200,7 +200,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest001, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest001");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 /**
@@ -214,7 +214,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest002, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest002");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, "invalid bundlename", 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 /**
@@ -228,10 +228,10 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExAbnormalTest003, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExAbnormalTest003");
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, "", 0);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 
     tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0xffff);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 /**
@@ -250,14 +250,12 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoFuncTest001, TestSize.Level0)
 
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
-
-    ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
-    ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
-    ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
-    ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
-
-    ASSERT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+    EXPECT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
+    EXPECT_EQ(hapTokenInfoRes.tokenID, tokenID);
+    EXPECT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
+    EXPECT_EQ(hapTokenInfoRes.instIndex, 0);
+    EXPECT_EQ(hapTokenInfoRes.bundleName, TEST_BUNDLE_NAME);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 /**
@@ -272,7 +270,7 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoAbnormalTest001, TestSize.Level0)
 
     HapTokenInfo hapTokenInfoRes;
     int ret = AccessTokenKit::GetHapTokenInfo(TEST_TOKENID_INVALID, hapTokenInfoRes);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -290,11 +288,11 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level0)
     HapTokenInfoExt hapTokenInfoExt;
     int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapTokenInfoExt);
     ASSERT_EQ(ret, 0);
-    ASSERT_EQ(TEST_BUNDLE_NAME, hapTokenInfoExt.baseInfo.bundleName);
-    ASSERT_EQ("appIDDesc", hapTokenInfoExt.appID);
+    EXPECT_EQ(TEST_BUNDLE_NAME, hapTokenInfoExt.baseInfo.bundleName);
+    EXPECT_EQ("appIDDesc", hapTokenInfoExt.appID);
 
     ret = AccessTokenKit::GetHapTokenInfoExtension(INVALID_TOKENID, hapTokenInfoExt);
-    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 }
 
 /**

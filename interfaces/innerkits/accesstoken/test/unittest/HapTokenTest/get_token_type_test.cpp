@@ -101,15 +101,15 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFuncTest001, TestSize.Level0)
     // type = TOKEN_SHELL
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("hdcd");
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(TOKEN_SHELL, AccessTokenKit::GetTokenType(tokenID));
+    EXPECT_EQ(TOKEN_SHELL, AccessTokenKit::GetTokenType(tokenID));
 
     // type = TOKEN_NATIVE
     tokenID = AccessTokenKit::GetNativeTokenId("foundation");
-    ASSERT_EQ(TOKEN_NATIVE, AccessTokenKit::GetTokenType(tokenID));
+    EXPECT_EQ(TOKEN_NATIVE, AccessTokenKit::GetTokenType(tokenID));
 
     // type = TOKEN_HAP
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_EQ(TOKEN_HAP, AccessTokenKit::GetTokenType(tokenID));
+    EXPECT_EQ(TOKEN_HAP, AccessTokenKit::GetTokenType(tokenID));
 }
 
 /**
@@ -123,7 +123,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeAbnormalTest001, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetTokenTypeAbnormalTest001");
 
     AccessTokenID tokenID = 0;
-    ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(tokenID));
+    EXPECT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(tokenID));
 }
 
 /**
@@ -138,7 +138,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagAbnormalTest001, TestSize.Level0)
 
     AccessTokenID tokenID = 0;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
-    ASSERT_EQ(ret, TOKEN_INVALID);
+    EXPECT_EQ(ret, TOKEN_INVALID);
 }
 
 /**
@@ -165,7 +165,7 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level0)
 
     AccessTokenID tokenID = tokenId01 & 0xffffffff;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
-    ASSERT_EQ(ret, TOKEN_NATIVE);
+    EXPECT_EQ(ret, TOKEN_NATIVE);
 }
 } // namespace AccessToken
 } // namespace Security

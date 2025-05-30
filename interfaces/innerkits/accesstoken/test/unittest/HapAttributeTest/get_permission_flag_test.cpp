@@ -108,7 +108,7 @@ void GetPermissionFlagTest::SetUp()
 
     AccessTokenIDEx tokenIdEx = {0};
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
 }
 
 void GetPermissionFlagTest::TearDown()
@@ -159,22 +159,22 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level
 
     uint32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.GAMMA", flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "", flag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
     ret = AccessTokenKit::GetPermissionFlag(tokenID, invalidPerm, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(TEST_TOKENID_INVALID, PERMISSION_MICROPHONE, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.ALPHA", flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 }
 
 /**
@@ -219,7 +219,7 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagSpecTest002, TestSize.Level0)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     uint32_t flag;
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
+    EXPECT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
 }
 
 /**

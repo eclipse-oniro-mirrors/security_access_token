@@ -94,8 +94,8 @@ void PermissionRequestToggleStatusTest::SetUp()
     TestCommon::TestPreparePermStateList(policy);
 
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 void PermissionRequestToggleStatusTest::TearDown()
@@ -120,18 +120,18 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbno
 
     // Permission name is invalid.
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("", status, userID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     // Status is invalid.
     status = 2;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status, userID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     // UserID is invalid.
     userID = -1;
     status = PermissionRequestToggleStatus::CLOSED;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status, userID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -150,7 +150,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001,
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestNormalInfoParms.userID);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_EQ(ERR_NOT_SYSTEM_APP, ret);
 }
 
 /**
@@ -170,12 +170,12 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002,
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     // restore environment
     setuid(selfUid);
@@ -197,12 +197,12 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpec
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, ret);
 
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, ret);
 }
 
 /**
@@ -220,12 +220,12 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbno
 
     // Permission name is invalid.
     int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("", status, userID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     // UserId is invalid.
     userID = -1;
     ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status, userID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -244,7 +244,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     uint32_t status;
     int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestNormalInfoParms.userID);
-    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_EQ(ERR_NOT_SYSTEM_APP, ret);
 }
 
 /**
@@ -265,7 +265,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     uint32_t getStatus;
     int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     // restore environment
     setuid(selfUid);
@@ -289,26 +289,26 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, ret);
 
     // Get a closed status value.
     uint32_t getStatus;
     ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
 
     // Set a open status value.
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, ret);
 
     // Get a open status value.
     ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
         g_infoManagerTestSystemInfoParms.userID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -64,7 +64,7 @@ HWTEST_F(GetHapDlpFlagTest, GetHapDlpFlagFuncTest001, TestSize.Level0)
 
     AccessTokenID tokenID = 0;
     int32_t ret = AccessTokenKit::GetHapDlpFlag(tokenID);
-    ASSERT_EQ(INVALID_DLP_TOKEN_FLAG, ret);
+    EXPECT_EQ(INVALID_DLP_TOKEN_FLAG, ret);
 }
 } // namespace AccessToken
 } // namespace Security
