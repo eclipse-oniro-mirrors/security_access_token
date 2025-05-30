@@ -2698,18 +2698,18 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level0)
 
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
-    ASSERT_EQ(RET_SUCCESS, AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1}));
+    EXPECT_EQ(RET_SUCCESS, AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1}));
 
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
-    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
+    EXPECT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
+    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
 
-    ASSERT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenIdEx.tokenIDEx));
-    ASSERT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenTest));
+    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenIdEx.tokenIDEx));
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenTest));
 
     setuid(selfUid);
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
@@ -2733,16 +2733,16 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level0)
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
     int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
-    ASSERT_EQ(res, 0);
+    EXPECT_EQ(res, 0);
 
     EXPECT_EQ(0, SetSelfTokenID(tokenTest));
 
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
-    ASSERT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true), PrivacyError::ERR_PARAM_INVALID);
-    ASSERT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), 0);
-    ASSERT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), PrivacyError::ERR_PARAM_INVALID);
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
+    EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true), PrivacyError::ERR_PARAM_INVALID);
+    EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), 0);
+    EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), PrivacyError::ERR_PARAM_INVALID);
 
-    ASSERT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
+    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
 
     setuid(selfUid);
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));

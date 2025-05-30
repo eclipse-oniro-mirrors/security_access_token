@@ -123,20 +123,24 @@ HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level
     AtmToolsParamInfoParcel infoParcel;
     infoParcel.info.processName = "hdcd";
 
+    bool state = system::GetBoolParameter(DEVELOPER_MODE_STATE, false);
+
     system::SetBoolParameter(DEVELOPER_MODE_STATE, false);
     bool ret = system::GetBoolParameter(DEVELOPER_MODE_STATE, false);
-    ASSERT_FALSE(ret);
+    EXPECT_FALSE(ret);
 
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     atManagerService_->DumpTokenInfo(infoParcel, dumpInfo);
-    ASSERT_EQ("Developer mode not support.", dumpInfo);
+    EXPECT_EQ("Developer mode not support.", dumpInfo);
 
     system::SetBoolParameter(DEVELOPER_MODE_STATE, true);
     ret = system::GetBoolParameter(DEVELOPER_MODE_STATE, false);
-    ASSERT_TRUE(ret);
+    EXPECT_TRUE(ret);
     atManagerService_->DumpTokenInfo(infoParcel, dumpInfo);
-    ASSERT_NE("", dumpInfo);
+    EXPECT_NE("", dumpInfo);
+
+    system::SetBoolParameter(DEVELOPER_MODE_STATE, state);
 }
 
 void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,

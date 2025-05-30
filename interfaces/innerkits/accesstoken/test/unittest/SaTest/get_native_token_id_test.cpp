@@ -67,11 +67,12 @@ void GetNativeTokenIdTest::TearDown()
 HWTEST_F(GetNativeTokenIdTest, GetNativeTokenIdAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetNativeTokenIdAbnormalTest001");
+    MockNativeToken mock("accesstoken_service");
     std::string processName = "";
-    ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetNativeTokenId(processName));
+    EXPECT_EQ(INVALID_TOKENID, AccessTokenKit::GetNativeTokenId(processName));
 
     processName = "invalid processName";
-    ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetNativeTokenId(processName));
+    EXPECT_EQ(INVALID_TOKENID, AccessTokenKit::GetNativeTokenId(processName));
 }
 
 /**
