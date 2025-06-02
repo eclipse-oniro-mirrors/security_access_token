@@ -27,19 +27,14 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 } // namespace
 constexpr const int32_t RET_SUCCESS = 0;
 constexpr const char* BUSINESS_ERROR_CLASS = "L@ohos/base/BusinessError;";
-constexpr const char* ERR_MSG_PARAM_NUMBER_ERROR =
-    "BusinessError 401: Parameter error. The number of parameters is incorrect.";
-constexpr const char* ERR_MSG_ENUM_EROOR = "Parameter error. The value of $ is not a valid enum $.";
-constexpr const char* ERR_MSG_BUSINESS_ERROR = "BusinessError $: ";
-constexpr const char* ERR_MSG_PARAM_TYPE_ERROR = "Parameter error. The errMsg of $ must be $.";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
     { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability." },
     { STS_ERROR_START_ABILITY_FAIL, "Start grant ability failed." },
-    { STS_ERROR_BACKGROUND_FAIL, "Ui extension turn background failed." },
+    { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
     { STS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed." },
-    { STS_ERROR_PARAM_INVALID, "Invalid parameter $." },
+    { STS_ERROR_PARAM_INVALID, "Invalid parameter." },
     { STS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist." },
     { STS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist." },
     { STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others." },
@@ -53,7 +48,6 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERM_REVOKE_BY_USER,
         "The permission list contains the permission that has not been revoked by the user." },
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
-    { STS_ERROR_PARAM_ILLEGAL, ERR_MSG_PARAM_TYPE_ERROR },
 };
 
 void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
@@ -122,13 +116,13 @@ std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg
     return msg;
 }
 
-std::string GetErrorMessage(uint32_t errCode)
+std::string GetErrorMessage(uint32_t errCode, const std::string& extendMsg)
 {
     auto iter = g_errorStringMap.find(errCode);
     if (iter != g_errorStringMap.end()) {
-        return iter->second;
+        return iter->second + (extendMsg.empty() ? "" : ("" + extendMsg));
     }
-    std::string errMsg = "Unknown error, errCode + " + std::to_string(errCode) + ".";
+    std::string errMsg = "Unknown error, errCode " + std::to_string(errCode) + ".";
     return errMsg;
 }
 
@@ -137,71 +131,8 @@ void BusinessErrorAni::ThrowParameterTypeError(ani_env* env, int32_t err, const 
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateCommonError(env, err, errMsg);
+    ani_object error = CreateError(env, err, errMsg);
     ThrowError(env, error);
-}
-
-void BusinessErrorAni::ThrowTooFewParametersError(ani_env* env, int32_t err)
-{
-    if (env == nullptr) {
-        return;
-    }
-    ThrowError(env, err, ERR_MSG_PARAM_NUMBER_ERROR);
-}
-
-ani_object BusinessErrorAni::CreateCommonError(ani_env* env, int32_t err, const std::string& errMsg)
-{
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
-    std::string errMessage = ERR_MSG_BUSINESS_ERROR;
-    auto iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, std::to_string(err));
-    }
-    if (g_errorStringMap.find(err) != g_errorStringMap.end()) {
-        errMessage += g_errorStringMap.at(err);
-    }
-    iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        iter = errMessage.find("$");
-        if (iter != std::string::npos) {
-            errMessage = errMessage.replace(iter, 1, errMsg);
-        }
-    }
-    return CreateError(env, err, errMessage);
-}
-
-void BusinessErrorAni::ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& errMsg)
-{
-    if (env == nullptr) {
-        return;
-    }
-    ani_object error = CreateEnumError(env, parameter, errMsg);
-    ThrowError(env, error);
-}
-
-ani_object BusinessErrorAni::CreateEnumError(ani_env* env, const std::string& parameter, const std::string& enumClass)
-{
-    if (env == nullptr) {
-        return nullptr;
-    }
-    std::string errMessage = ERR_MSG_BUSINESS_ERROR;
-    auto iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, std::to_string(STS_ERROR_PARAM_ILLEGAL));
-    }
-    errMessage += ERR_MSG_ENUM_EROOR;
-    iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, parameter);
-        iter = errMessage.find("$");
-        if (iter != std::string::npos) {
-            errMessage = errMessage.replace(iter, 1, enumClass);
-        }
-    }
-    return CreateError(env, STS_ERROR_PARAM_ILLEGAL, errMessage);
 }
 
 void BusinessErrorAni::ThrowError(ani_env* env, ani_object err)
