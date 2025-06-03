@@ -23,7 +23,6 @@ function PARAM_ERROR_MSG(param: string, type: string): string {
 export { Permissions }
 
 export default namespace privacyManager {
-
     loadLibrary("privacy_ani.z");
 
     enum PermissionUsedType {
@@ -39,17 +38,11 @@ export default namespace privacyManager {
     }
 
     enum STSErrorCode {
-
         STS_OK = 0,
-
         STS_ERROR_PERMISSION_DENIED = 201,
-
         STS_ERROR_NOT_SYSTEM_APP = 202,
-
         STS_ERROR_PARAM_ILLEGAL = 401,
-
         STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
-
     } ;
 
     interface AddPermissionUsedRecordOptions {
@@ -103,7 +96,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "string");
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
 
@@ -126,7 +119,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "string");
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: PermissionUsedType.NORMAL_TYPE };

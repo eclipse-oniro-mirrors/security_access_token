@@ -45,6 +45,10 @@ const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
 const int32_t PERM_REVOKE_BY_USER = 5;
+std::condition_variable g_loadedCond;
+std::mutex g_lockCache;
+
+static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 
 const std::string PERMISSION_KEY = "ohos.user.grant.permission";
 const std::string PERMISSION_SETTING_KEY = "ohos.user.setting.permission";
@@ -72,7 +76,7 @@ static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& perm
     for (size_t i = 0; i < size; i++) {
         int result = static_cast<int>(data->permissionsState[i]);
         if (data->permissionsState[i] == AccessToken::DYNAMIC_OPER) {
-            result = data->result == AccessToken::RET_SUCCESS ? grantResults[i] : AccessToken::INVALID_OPER;
+            result = data->result.errorCode == AccessToken::RET_SUCCESS ? grantResults[i] : AccessToken::INVALID_OPER;
         }
         newGrantResults.emplace_back(result);
     }
@@ -146,7 +150,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-            asyncContext->result = AccessToken::RET_FAILED;
+            asyncContext->result.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             asyncContext->loadlock.unlock();
             return;
@@ -157,7 +161,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
         if (sessionId == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Create component failed, sessionId is 0");
-            asyncContext->result = AccessToken::RET_FAILED;
+            asyncContext->result.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             asyncContext->loadlock.unlock();
             return;
@@ -180,14 +184,14 @@ static bool CreateServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncCo
     if (!asyncContext->uiAbilityFlag) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         return false;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Create window failed!");
         asyncContext->needDynamicRequest = false;
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         return false;
     }
     OHOS::AAFwk::Want want;
@@ -426,14 +430,14 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
     ani_ref intPermissionQueryResults = ConvertAniArrayInt(env, asyncContext->permissionQueryResults);
     if (strPermissions == nullptr || intAuthResults == nullptr || boolDialogShownResults == nullptr ||
         intPermissionQueryResults == nullptr) {
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         return nullptr;
     }
     if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), strPermissions) ||
         !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), intAuthResults) ||
         !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), boolDialogShownResults) ||
         !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), intPermissionQueryResults)) {
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         return nullptr;
     }
     return aObject;
@@ -442,12 +446,12 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
 static ani_object DealWithResult(ani_env* env, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     ani_object resultObj = nullptr;
-    if (asyncContext->result == RET_SUCCESS) {
+    if (asyncContext->result.errorCode == RET_SUCCESS) {
         resultObj = WrapResult(env, asyncContext);
     }
-    if (asyncContext->result != RET_SUCCESS) {
-        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(asyncContext->result);
-        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    if (asyncContext->result.errorCode != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(asyncContext->result.errorCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode, asyncContext->result.errorMsg));
         return nullptr;
     }
     return resultObj;
@@ -456,16 +460,15 @@ static ani_object DealWithResult(ani_env* env, std::shared_ptr<RequestAsyncConte
 static void RequestResultsHandler(const std::vector<std::string>& permissionList,
     const std::vector<int32_t>& permissionStates, std::shared_ptr<RequestAsyncContext>& data)
 {
-    int32_t result;
-    if (data->result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Result is: %{public}d", data->result);
-        result = RET_FAILED;
+    if (data->result.errorCode != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Result is: %{public}d", data->result.errorCode);
+        data->result.errorCode = RET_FAILED;
     }
     std::vector<int> newGrantResults;
     UpdateGrantPermissionResultOnly(permissionList, permissionStates, data, newGrantResults);
     if (newGrantResults.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GrantResults empty");
-        result = RET_FAILED;
+        data->result.errorCode = RET_FAILED;
     }
     data->grantResults.assign(newGrantResults.begin(), newGrantResults.end());
     data->loadlock.unlock();
@@ -513,12 +516,12 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
     std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     if (ConvertContext(env, aniContext, asyncContext) != ANI_OK) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
     if (!ProcessArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("permissionList", "Array<Permissions>"));
         return false;
     }
@@ -531,9 +534,9 @@ static bool RequestPermissionsFromUserProcess([[maybe_unused]] ani_env* env,
     if (!IsDynamicRequest(asyncContext)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "It does not need to request permission");
         asyncContext->needDynamicRequest = false;
-        if ((asyncContext->permissionsState.empty()) && (asyncContext->result == STSErrorCode::STS_OK)) {
+        if ((asyncContext->permissionsState.empty()) && (asyncContext->result.errorCode == RET_SUCCESS)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "GrantResults empty");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
         }
         return false;
     }
@@ -586,15 +589,16 @@ static ani_object RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* en
 #ifdef EVENTHANDLER_ENABLE
     asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
 #endif
-    bool errTokenID = true;
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
-        asyncContext->result = RET_FAILED;
-        errTokenID = false;
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_INNER, "The specified context does not belong to the current application.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, errMsg);
+        return nullptr;
     }
-    if (!RequestPermissionsFromUserProcess(env, asyncContext) || !errTokenID) {
+    if (!RequestPermissionsFromUserProcess(env, asyncContext)) {
         return DealWithResult(env, asyncContext);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "uiExtensionFlag: %{public}d, uiContentFlag: %{public}d, uiAbilityFlag: %{public}d ",
@@ -612,7 +616,7 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
@@ -719,7 +723,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
         this->reqContext_->releaseFlag = true;
     }
     CloseModalUIExtensionMainThread(this->reqContext_, this->sessionId_);
-    this->reqContext_->result = code;
+    this->reqContext_->result.errorCode = code;
     RequestAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
     RequestResultsHandler(this->reqContext_->permissionList, this->reqContext_->permissionsState, this->reqContext_);
 }
@@ -853,18 +857,18 @@ static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
     if (iter != g_cache.end()) {
         std::string currPara = GetPermParamValue();
         if (currPara != iter->second.paramValue) {
-            asyncContext->result =
+            asyncContext->grantStatus =
                 AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
-            iter->second.status = asyncContext->result;
+            iter->second.status = asyncContext->grantStatus;
             iter->second.paramValue = currPara;
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Param changed currPara %{public}s", currPara.c_str());
         } else {
-            asyncContext->result = iter->second.status;
+            asyncContext->grantStatus = iter->second.status;
         }
     } else {
-        asyncContext->result =
+        asyncContext->grantStatus =
             AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
-        g_cache[asyncContext->permissionName].status = asyncContext->result;
+        g_cache[asyncContext->permissionName].status = asyncContext->grantStatus;
         g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
         ACCESSTOKEN_LOG_DEBUG(
             LABEL, "G_cacheParam set %{public}s", g_cache[asyncContext->permissionName].paramValue.c_str());
@@ -879,14 +883,15 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     if (tokenID == 0) {
-        BusinessErrorAni::ThrowError(
-            env, STSErrorCode::STS_ERROR_PARAM_INVALID, GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The tokenID is 0.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     std::string stdPermissionName = ANIUtils_ANIStringToStdString(env, static_cast<ani_string>(permissionName));
     if (stdPermissionName.empty() || stdPermissionName.length() > MAX_LENGTH) {
-        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
-            GetParamErrorMsg("permissionName", "Permissions"));
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();
@@ -899,12 +904,12 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
     asyncContext->permissionName = stdPermissionName;
     static uint64_t selfTokenId = GetSelfTokenID();
     if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
-        asyncContext->result = AccessToken::AccessTokenKit::VerifyAccessToken(tokenID, stdPermissionName);
-        return static_cast<ani_int>(asyncContext->result);
+        asyncContext->grantStatus = AccessToken::AccessTokenKit::VerifyAccessToken(tokenID, stdPermissionName);
+        return static_cast<ani_int>(asyncContext->grantStatus);
     }
     UpdatePermissionCache(asyncContext);
-    ACCESSTOKEN_LOG_INFO(LABEL, "CheckAccessTokenSync result : %{public}d", asyncContext->result);
-    return static_cast<ani_int>(asyncContext->result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "CheckAccessTokenSync result : %{public}d", asyncContext->grantStatus);
+    return static_cast<ani_int>(asyncContext->grantStatus);
 }
 
 static ani_status GetContext(
@@ -946,24 +951,17 @@ static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext
     std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     if (GetContext(env, aniContext, asyncContext) != ANI_OK) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
     if (!ProcessArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("permissionList", "Array<string>"));
         return false;
     }
     return true;
 }
-
-static void ThrowError(ani_env* env, int32_t errCode)
-{
-    int32_t stsCode = BusinessErrorAni::GetStsErrorCode(errCode);
-    BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
-}
-
 
 static void StateToEnumIndex(int32_t state, ani_size& enumIndex)
 {
@@ -1021,48 +1019,48 @@ static ani_ref ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettingAs
     return arrayObj;
 }
 
-static int32_t TransferToStsErrorCode(int32_t errCode)
+static int32_t TransferToStsErrorCode(int32_t errorCode)
 {
-    int32_t stsCode = STSErrorCode::STS_OK;
-    switch (errCode) {
+    int32_t stsCode = STS_OK;
+    switch (errorCode) {
         case RET_SUCCESS:
-            stsCode = STSErrorCode::STS_OK;
+            stsCode = STS_OK;
             break;
         case REQUEST_REALDY_EXIST:
-            stsCode = STSErrorCode::STS_ERROR_REQUEST_IS_ALREADY_EXIST;
+            stsCode = STS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:
-            stsCode = STSErrorCode::STS_ERROR_PARAM_INVALID;
+            stsCode = STS_ERROR_PARAM_INVALID;
             break;
         case PERM_IS_NOT_DECLARE:
-            stsCode = STSErrorCode::STS_ERROR_PARAM_INVALID;
+            stsCode = STS_ERROR_PARAM_INVALID;
             break;
         case ALL_PERM_GRANTED:
-            stsCode = STSErrorCode::STS_ERROR_ALL_PERM_GRANTED;
+            stsCode = STS_ERROR_ALL_PERM_GRANTED;
             break;
         case PERM_REVOKE_BY_USER:
-            stsCode = STSErrorCode::STS_ERROR_PERM_REVOKE_BY_USER;
+            stsCode = STS_ERROR_PERM_REVOKE_BY_USER;
             break;
         default:
-            stsCode = STSErrorCode::STS_ERROR_INNER;
+            stsCode = STS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "dialog error(%{public}d) stsCode(%{public}d).", errCode, stsCode);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Dialog error(%{public}d) stsCode(%{public}d).", errorCode, stsCode);
     return stsCode;
 }
 
 static ani_ref RequestPermissionOnSettingComplete(
     ani_env* env, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
-    if (asyncContext->result == RET_SUCCESS) {
+    if (asyncContext->result.errorCode == RET_SUCCESS) {
         ani_ref result = ReturnResult(env, asyncContext);
         if (result != nullptr) {
             return result;
         }
-        asyncContext->errorCode = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
     }
 
-    int32_t stsCode = TransferToStsErrorCode(asyncContext->errorCode);
+    int32_t stsCode = TransferToStsErrorCode(asyncContext->result.errorCode);
     BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     return nullptr;
 }
@@ -1090,7 +1088,7 @@ static void CloseSettingModalUIExtensionMainThread(std::shared_ptr<RequestPermOn
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
@@ -1119,11 +1117,7 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     }
     CloseSettingModalUIExtensionMainThread(this->reqContext_, this->sessionId_);
     if (code == -1) {
-        this->reqContext_->errorCode = code;
-    }
-    int32_t stsCode = TransferToStsErrorCode(this->reqContext_->errorCode);
-    if (stsCode != STSErrorCode::STS_OK) {
-        this->reqContext_->result = RET_FAILED;
+        this->reqContext_->result.errorCode = code;
     }
     this->reqContext_->loadlock.unlock();
     std::lock_guard<std::mutex> lock(g_lockWindowFlag);
@@ -1135,10 +1129,10 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
  */
 void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
-    this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
+    this->reqContext_->result.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->reqContext_->stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
-    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d, listSize=%{public}zu.",
-        resultCode, this->reqContext_->errorCode, this->reqContext_->stateList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, listSize=%{public}zu.",
+        resultCode, this->reqContext_->stateList.size());
     ReleaseHandler(0);
 }
 
@@ -1199,7 +1193,7 @@ static void CreateSettingUIExtensionMainThread(std::shared_ptr<RequestPermOnSett
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
 
@@ -1210,7 +1204,7 @@ static void CreateSettingUIExtensionMainThread(std::shared_ptr<RequestPermOnSett
             sessionId, asyncContext->tokenId);
         if (sessionId == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -1261,14 +1255,14 @@ static bool StartUIExtension(ani_env* env, std::shared_ptr<RequestPermOnSettingA
         std::lock_guard<std::mutex> lock(g_lockWindowFlag);
         if (g_windowFlag) {
             ACCESSTOKEN_LOG_WARN(LABEL, "The request already exists.");
-            asyncContext->result = RET_FAILED;
-            asyncContext->errorCode = REQUEST_REALDY_EXIST;
+            asyncContext->result.errorCode = REQUEST_REALDY_EXIST;
+            asyncContext->result.errorMsg = "The specified context does not belong to the current application.";
             return false;
         }
         g_windowFlag = true;
     }
     CreateSettingUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
-    if (asyncContext->result == RET_FAILED) {
+    if (asyncContext->result.errorCode == RET_FAILED) {
         {
             std::lock_guard<std::mutex> lock(g_lockWindowFlag);
             g_windowFlag = false;
@@ -1288,7 +1282,6 @@ static ani_ref RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
 
     std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext =
         std::make_shared<RequestPermOnSettingAsyncContext>();
-
     if (!ParseRequestPermissionOnSetting(env, aniContext, permissionList, asyncContext)) {
         return nullptr;
     }
@@ -1297,7 +1290,9 @@ static ani_ref RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     if (selfTokenID != asyncContext->tokenId) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",
             asyncContext->tokenId, selfTokenID);
-        ThrowError(env, RET_FAILED);
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_INNER, "The specified context does not belong to the current application.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, errMsg);
         return nullptr;
     }
     asyncContext->loadlock.lock();
@@ -1334,19 +1329,23 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     }
     
     if (!IsPermissionFlagValid(static_cast<uint32_t> (permissionFlags))) {
-        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
-            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The permissionFlags is invalid.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return;
     }
 
-    if (permissionNameString.size() > MAX_LENGTH || permissionNameString.empty()) {
-        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
-            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+    if (permissionNameString.empty() || permissionNameString.size() > MAX_LENGTH) {
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return;
     }
     PermissionBriefDef def;
     if (!GetPermissionBriefDef(permissionNameString, def) || def.grantMode != USER_GRANT) {
-        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
+            "The specified permission does not exist or is not a user_grant permission.");
+        BusinessErrorAni::ThrowError(
+            env, STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST));
         return;
     }
 
@@ -1385,13 +1384,14 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
     }
     std::vector<std::string> aniPermissionList;
     if (!AniParseStringArray(env, permissionList, aniPermissionList)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionList", "Array<Permissions>"));
+        BusinessErrorAni::ThrowParameterTypeError(
+            env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("permissionList", "Array<Permissions>"));
         return nullptr;
     }
-    
+
     if (aniPermissionList.empty()) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER));
+        std::string errMsg = GetErrorMessage(STS_ERROR_INNER, "The permissionList is empty.");
+            BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER));
         return nullptr;
     }
 
@@ -1455,7 +1455,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
     }
     std::array claMethods = {
         ani_native_function {
-            "checkAccessTokenANI", "ILstd/core/String;:I", reinterpret_cast<void*>(CheckAccessTokenSync) },
+            "checkAccessTokenExecute", "ILstd/core/String;:I", reinterpret_cast<void*>(CheckAccessTokenSync) },
         ani_native_function { "requestPermissionsFromUserExecute",
             "Lapplication/Context/Context;Lescompat/Array;:Lsecurity/PermissionRequestResult/PermissionRequestResult;",
             reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
@@ -1463,14 +1463,10 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
             "Lapplication/Context/Context;Lescompat/Array;:Lescompat/Array;",
             reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
         ani_native_function { "revokeUserGrantedPermissionExecute",
-            nullptr,
-            reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
-        ani_native_function { "getVersionExecute",
-            nullptr,
-            reinterpret_cast<void*>(GetVersionExecute) },
-        ani_native_function { "getPermissionsStatusExecute", 
-            nullptr,
-            reinterpret_cast<void*>(GetPermissionsStatusExecute) },
+            nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
+        ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
+        ani_native_function { "getPermissionsStatusExecute",
+            nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
