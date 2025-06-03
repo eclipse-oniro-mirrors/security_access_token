@@ -1529,7 +1529,7 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t
         return;
     }
 
-    AccessTokenID tokenId = 0;
+    int32_t tokenId = 0;
     std::string permissionName;
     std::string appDistributionType;
     int32_t apl = 0;

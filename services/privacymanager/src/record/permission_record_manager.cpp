@@ -974,7 +974,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     std::set<ContinusPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
+        if ((it->tokenId == tokenId) && (it->pid == pid) && (it->status != PERM_INACTIVE) && (it->status != status)) {
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
@@ -1001,7 +1001,8 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
             record.status = status;
             updateList.emplace(record);
             it = startRecordList_.erase(it);
-            LOGD(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
+            LOGD(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d pid %{public}d get permission %{public}s.", tokenId, pid,
+                perm.c_str());
             continue;
         }
         ++it;

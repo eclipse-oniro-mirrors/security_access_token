@@ -164,8 +164,8 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
     std::function<void()> task = ([info]() mutable {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info);
         LOGI(PRI_DOMAIN, PRI_TAG,
-            "Token: %{public}u, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
-            info.tokenID, info.permissionName.c_str(), info.type);
+            "Token: %{public}u, pid: %{public}d, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
+            info.tokenID, info.pid, info.permissionName.c_str(), info.type);
     });
     eventHandler_->ProxyPostTask(task, taskName);
     LOGI(PRI_DOMAIN, PRI_TAG, "The callback execution is complete");

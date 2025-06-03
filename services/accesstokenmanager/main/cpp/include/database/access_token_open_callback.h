@@ -71,8 +71,6 @@ private:
     int32_t AddRequestToggleStatusColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
-    void GetUpgradeFlag(int32_t currentVersion, int32_t targetVersion, uint32_t& flag);
-    int32_t HandleUpgradeWithFlag(NativeRdb::RdbStore& rdbStore, uint32_t flag);
 };
 } // namespace AccessToken
 } // namespace Security
