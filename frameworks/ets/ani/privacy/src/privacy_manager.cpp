@@ -666,6 +666,59 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     return;
 }
 
+static void StopUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_int tokenID, ani_string permissionName, ani_int pid)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "StopUsingPermissionExecute begin.");
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
+        return;
+    }
+
+    std::string permissionNameString;
+    if (!AniParseString(env, permissionName, permissionNameString)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
+        permissionNameString.c_str(), tokenID, pid);
+
+    auto retCode = PrivacyKit::StopUsingPermission(tokenID, permissionNameString, pid);
+    if (retCode != RET_SUCCESS) {
+        int32_t stsCode = GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    }
+}
+
+static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_int tokenID, ani_string permissionName, ani_int pid, PermissionUsedType usedType)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "StartUsingPermissionExecute begin.");
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env null");
+        return;
+    }
+
+    std::string permissionNameString;
+    if (!AniParseString(env, permissionName, permissionNameString)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d, UsedType : %{public}d",
+        permissionNameString.c_str(), tokenID, pid, usedType);
+
+    auto retCode = PrivacyKit::StartUsingPermission(tokenID, permissionNameString, pid, usedType);
+    if (retCode != RET_SUCCESS) {
+        int32_t stsCode = GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    }
+}
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
@@ -695,6 +748,12 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         ani_native_function { "addPermissionUsedRecordSync",
             "ILstd/core/String;IIL@ohos/privacyManager/privacyManager/AddPermissionUsedRecordOptionsInner;:V",
             reinterpret_cast<void*>(AddPermissionUsedRecord) },
+        ani_native_function { "stopUsingPermissionExecute",
+            nullptr,
+            reinterpret_cast<void*>(StopUsingPermissionExecute) },
+        ani_native_function { "startUsingPermissionExecute",
+            nullptr,
+            reinterpret_cast<void*>(StartUsingPermissionExecute) },
     };
 
     if (ANI_OK != env->Class_BindNativeMethods(cls, methods.data(), methods.size())) {

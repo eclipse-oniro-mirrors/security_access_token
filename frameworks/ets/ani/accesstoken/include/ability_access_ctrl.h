@@ -25,6 +25,7 @@
 #include "ability_manager_client.h"
 #include "access_token.h"
 #include "ani.h"
+#include "ani_error.h"
 #include "permission_grant_info.h"
 #include "token_callback_stub.h"
 #include "ui_content.h"
@@ -33,16 +34,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-std::condition_variable g_loadedCond;
-std::mutex g_lockCache;
-typedef unsigned int AccessTokenID;
-static std::atomic<int32_t> g_cnt = 0;
-constexpr uint32_t REPORT_CNT = 10;
-constexpr uint32_t VERIFY_TOKENID_INCONSISTENCY = 0;
 const int32_t PARAM_DEFAULT_VALUE = -1;
-
-static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
-
 struct AtManagerAsyncContext {
     AccessTokenID tokenId = 0;
     std::string permissionName;
@@ -50,8 +42,8 @@ struct AtManagerAsyncContext {
         uint32_t flag = 0;
         uint32_t status;
     };
-    int32_t result = RET_FAILED;
-    int32_t errorCode = 0;
+    int32_t grantStatus = PERMISSION_DENIED;
+    AtmResult result;
 };
 
 class AniContextCommon {
@@ -84,7 +76,7 @@ struct RequestAsyncContext {
     AccessTokenID tokenId = 0;
     std::string bundleName;
     bool needDynamicRequest = true;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     int32_t instanceId = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> grantResults;
@@ -157,13 +149,11 @@ struct ResultCallback {
 
 struct RequestPermOnSettingAsyncContext {
     AccessTokenID tokenId = 0;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     PermissionGrantInfo info;
-    int32_t resultCode = -1;
 
     std::vector<std::string> permissionList;
     napi_value requestResult = nullptr;
-    int32_t errorCode = -1;
     std::vector<int32_t> stateList;
 
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
