@@ -40,13 +40,37 @@ const int32_t GLOBAL_TYPE_IS_NOT_SUPPORT = 2;
 const int32_t SWITCH_IS_ALREADY_OPEN = 3;
 std::mutex g_lockFlag;
 } // namespace
-static void ReturnPromiseResult(napi_env env, int32_t jsCode, napi_deferred deferred, napi_value result)
+static int32_t TransferToJsErrorCode(int32_t errCode)
 {
-    if (jsCode != JS_OK) {
-        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
-        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, businessError));
+    int32_t jsCode = JS_ERROR_INNER;
+    switch (errCode) {
+        case RET_SUCCESS:
+            jsCode = JS_OK;
+            break;
+        case REQUEST_REALDY_EXIST:
+            jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
+            break;
+        case GLOBAL_TYPE_IS_NOT_SUPPORT:
+            jsCode = JS_ERROR_PARAM_INVALID;
+            break;
+        case SWITCH_IS_ALREADY_OPEN:
+            jsCode = JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN;
+            break;
+        default:
+            break;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    return jsCode;
+}
+
+static void ReturnPromiseResult(napi_env env, const RequestGlobalSwitchAsyncContext& context, napi_value result)
+{
+    if (context.result.errorCode != RET_SUCCESS) {
+        int32_t jsCode = TransferToJsErrorCode(context.result.errorCode);
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
 }
 
@@ -102,32 +126,7 @@ static napi_value GetContext(
     }
 }
 
-
-static int32_t TransferToJsErrorCode(int32_t errCode)
-{
-    int32_t jsCode = JS_OK;
-    switch (errCode) {
-        case RET_SUCCESS:
-            jsCode = JS_OK;
-            break;
-        case REQUEST_REALDY_EXIST:
-            jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
-            break;
-        case GLOBAL_TYPE_IS_NOT_SUPPORT:
-            jsCode = JS_ERROR_PARAM_INVALID;
-            break;
-        case SWITCH_IS_ALREADY_OPEN:
-            jsCode = JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN;
-            break;
-        default:
-            jsCode = JS_ERROR_INNER;
-            break;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
-    return jsCode;
-}
-
-static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
+static void GlobalSwitchResultsCallbackUI(int32_t errorCode,
     bool switchStatus, std::shared_ptr<RequestGlobalSwitchAsyncContext>& data)
 {
     auto* retCB = new (std::nothrow) SwitchOnSettingResultCallback();
@@ -136,7 +135,7 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
         return;
     }
     std::unique_ptr<SwitchOnSettingResultCallback> callbackPtr {retCB};
-    retCB->jsCode = jsCode;
+    retCB->errorCode = errorCode;
     retCB->switchStatus = switchStatus;
     retCB->data = data;
     auto task = [retCB]() {
@@ -145,6 +144,7 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
         if (asyncContext == nullptr) {
             return;
         }
+        asyncContext->result.errorCode = retCB->errorCode;
         napi_handle_scope scope = nullptr;
         napi_open_handle_scope(asyncContext->env, &scope);
         if (scope == nullptr) {
@@ -155,7 +155,7 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
         NAPI_CALL_RETURN_VOID(asyncContext->env,
             napi_get_boolean(asyncContext->env, retCB->switchStatus, &requestResult));
 
-        ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
+        ReturnPromiseResult(asyncContext->env, *asyncContext, requestResult);
         napi_close_handle_scope(asyncContext->env, scope);
     };
     if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
@@ -204,8 +204,7 @@ void SwitchOnSettingUICallback::ReleaseHandler(int32_t code)
     }
     RequestGlobalSwitchAsyncInstanceControl::UpdateQueueData(this->reqContext_);
     RequestGlobalSwitchAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
-    GlobalSwitchResultsCallbackUI(
-        TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->switchStatus, this->reqContext_);
+    GlobalSwitchResultsCallbackUI(this->reqContext_->errorCode, this->reqContext_->switchStatus, this->reqContext_);
 }
 
 SwitchOnSettingUICallback::SwitchOnSettingUICallback(
@@ -290,7 +289,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestGlobalSwitchAsync
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
 
@@ -301,7 +300,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestGlobalSwitchAsync
             sessionId, asyncContext->tokenId, asyncContext->switchType);
         if (sessionId == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create component, sessionId is 0.");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -342,10 +341,10 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestGlobal
     };
 
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
-    if (asyncContext->result == RET_FAILED) {
+    if (asyncContext->result.errorCode == RET_FAILED) {
         return RET_FAILED;
     }
-    return JS_OK;
+    return RET_SUCCESS;
 }
 
 static int32_t StartUIExtension(std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext)
@@ -466,8 +465,7 @@ void RequestGlobalSwitchAsyncInstanceControl::CheckDynamicRequest(
     isDynamic = asyncContext->isDynamic;
     if (!isDynamic) {
         LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission exsion");
-        GlobalSwitchResultsCallbackUI(
-            TransferToJsErrorCode(asyncContext->errorCode), asyncContext->switchStatus, asyncContext);
+        GlobalSwitchResultsCallbackUI(asyncContext->errorCode, asyncContext->switchStatus, asyncContext);
         return;
     }
 }
@@ -573,7 +571,9 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
         LOGE(ATM_DOMAIN, ATM_TAG,
             "The context(token=%{public}d) is not belong to the current application(currToken=%{public}d).",
             asyncContextHandle->asyncContextPtr->tokenId, currToken);
-        asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result.errorCode = ERR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result.errorMsg =
+            "The specified context does not belong to the current application.";
         return;
     }
 
@@ -581,7 +581,7 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
 
     RequestGlobalSwitchAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
-    if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
+    if (asyncContextHandle->asyncContextPtr->result.errorCode != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
 }
@@ -597,12 +597,12 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_sta
     std::unique_ptr<RequestGlobalSwitchAsyncContextHandle> callbackPtr {asyncContextHandle};
 
     // need pop dialog
-    if (asyncContextHandle->asyncContextPtr->result == RET_SUCCESS) {
+    if (asyncContextHandle->asyncContextPtr->result.errorCode == RET_SUCCESS) {
         return;
     }
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result);
+        int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));

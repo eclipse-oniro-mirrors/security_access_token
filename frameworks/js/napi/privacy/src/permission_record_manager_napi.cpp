@@ -289,7 +289,7 @@ static bool ParseStartAndStopUsingPermission(
     asyncContext.env = env;
     // 0: the first parameter of argv is tokenId
     if (!ParseUint32(env, argv[FIRST_PARAM], asyncContext.tokenId)) {
-        ParamResolveErrorThrow(env, "tokenId", "number");
+        ParamResolveErrorThrow(env, "tokenID", "number");
         return false;
     }
 
@@ -943,7 +943,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     std::vector<std::string> permList;
     // 1: the second parameter of argv
     if (!ParseStringArray(env, argv[1], permList)) {
-        ParamResolveErrorThrow(env, "permList", "Array<Permissions>");
+        ParamResolveErrorThrow(env, "permissionList", "Array<Permissions>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
@@ -985,7 +985,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     // 1: the second parameter of argv
     std::vector<std::string> permList;
     if (!ParseStringArray(env, argv[1], permList)) {
-        ParamResolveErrorThrow(env, "permList", "Array<Permissions>");
+        ParamResolveErrorThrow(env, "permissionList", "Array<Permissions>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
@@ -1175,7 +1175,7 @@ static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_i
     if (argc == GET_PERMISSION_USED_TYPE_ONE_PARAMS) {
         // one param: only tokenId
         if (!ParseUint32(env, argv[0], tokenId)) {
-            ParamResolveErrorThrow(env, "tokenId", "number");
+            ParamResolveErrorThrow(env, "tokenID", "number");
             return false;
         }
     } else if (argc == GET_PERMISSION_USED_TYPE_MAX_PARAMS) {
@@ -1183,7 +1183,7 @@ static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_i
         if (!IsUndefinedOrNull(env, argv[0])) {
             // if first param is null, ignore it, otherwise that is tokenId: number
             if (!ParseUint32(env, argv[0], tokenId)) {
-                ParamResolveErrorThrow(env, "tokenId", "number");
+                ParamResolveErrorThrow(env, "tokenID", "number");
                 return false;
             }
         }

@@ -40,7 +40,7 @@ struct RequestGlobalSwitchAsyncContext : public AtManagerAsyncWorkData {
     }
 
     AccessTokenID tokenId = 0;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     PermissionGrantInfo info;
     int32_t resultCode = -1;
     int32_t switchType = -1;
@@ -99,7 +99,7 @@ private:
 };
 
 struct SwitchOnSettingResultCallback {
-    int32_t jsCode;
+    int32_t errorCode;
     bool switchStatus;
     std::shared_ptr<RequestGlobalSwitchAsyncContext> data = nullptr;
 };

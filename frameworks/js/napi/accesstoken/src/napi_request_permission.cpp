@@ -47,23 +47,23 @@ const std::string WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.hei
 const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
 const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
 
-static void ReturnPromiseResult(napi_env env, int32_t contextResult, napi_deferred deferred, napi_value result)
+static void ReturnPromiseResult(napi_env env, const RequestAsyncContext& context, napi_value result)
 {
-    if (contextResult != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(contextResult);
-        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
-        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, businessError));
+    if (context.result.errorCode != RET_SUCCESS) {
+        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.result.errorCode);
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
 }
 
-static void ReturnCallbackResult(napi_env env, int32_t contextResult, napi_ref &callbackRef, napi_value result)
+static void ReturnCallbackResult(napi_env env, const RequestAsyncContext& context, napi_value result)
 {
     napi_value businessError = GetNapiNull(env);
-    if (contextResult != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(contextResult);
-        businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
+    if (context.result.errorCode != RET_SUCCESS) {
+        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.result.errorCode);
+        businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
 
@@ -72,7 +72,7 @@ static void ReturnCallbackResult(napi_env env, int32_t contextResult, napi_ref &
     napi_value thatValue = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
-    NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, callbackRef, &callback));
+    NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, context.callbackRef, &callback));
     NAPI_CALL_RETURN_VOID(env,
         napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
 }
@@ -133,7 +133,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -146,7 +146,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             sessionId, asyncContext->tokenId, asyncContext->permissionList.size());
         if (sessionId == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is 0");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", CREATE_MODAL_UI_FAILED);
@@ -172,7 +172,7 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
@@ -281,7 +281,7 @@ static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& perm
     for (uint32_t i = 0; i < size; i++) {
         int result = data->permissionsState[i];
         if (data->permissionsState[i] == DYNAMIC_OPER) {
-            result = data->result == RET_SUCCESS ? grantResults[i] : INVALID_OPER;
+            result = data->result.errorCode == RET_SUCCESS ? grantResults[i] : INVALID_OPER;
         }
         newGrantResults.emplace_back(result);
     }
@@ -305,10 +305,9 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
     retCB->errorReasons = data->errorReasons;
     retCB->data = data;
     auto task = [retCB]() {
-        int32_t result = JsErrorCode::JS_OK;
-        if ((retCB->data->result != RET_SUCCESS) || (retCB->grantResults.empty())) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Result is: %{public}d", retCB->data->result);
-            result = RET_FAILED;
+        if ((retCB->data->result.errorCode != RET_SUCCESS) || retCB->grantResults.empty()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Result is: %{public}d", retCB->data->result.errorCode);
+            retCB->data->result.errorCode = RET_FAILED;
         }
         napi_handle_scope scope = nullptr;
         napi_open_handle_scope(retCB->data->env, &scope);
@@ -321,13 +320,13 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
             retCB->data->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults, retCB->errorReasons);
         if (requestResult == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
-            result = RET_FAILED;
+            retCB->data->result.errorCode = RET_FAILED;
         }
 
         if (retCB->data->deferred != nullptr) {
-            ReturnPromiseResult(retCB->data->env, result, retCB->data->deferred, requestResult);
+            ReturnPromiseResult(retCB->data->env, *retCB->data, requestResult);
         } else {
-            ReturnCallbackResult(retCB->data->env, result, retCB->data->callbackRef, requestResult);
+            ReturnCallbackResult(retCB->data->env, *retCB->data, requestResult);
         }
         napi_close_handle_scope(retCB->data->env, scope);
         delete retCB;
@@ -377,7 +376,7 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     if (!asyncContext->uiAbilityFlag) {
         LOGE(ATM_DOMAIN, ATM_TAG, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
@@ -386,7 +385,7 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     if (remoteObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
         asyncContext->needDynamicRequest = false;
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
         return;
     }
     AAFwk::Want want;
@@ -460,7 +459,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
         this->reqContext_->releaseFlag = true;
     }
     CloseModalUIExtensionMainThread(this->reqContext_, this->sessionId_);
-    this->reqContext_->result = code;
+    this->reqContext_->result.errorCode = code;
     RequestAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
     RequestResultsHandler(this->reqContext_->permissionList, this->reqContext_->permissionsState, this->reqContext_);
 }
@@ -668,7 +667,9 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID: %{public}d, selfTokenID: %{public}d.",
             asyncContextHandle->asyncContextPtr->tokenId, selfTokenID);
-        asyncContextHandle->asyncContextPtr->result = RET_FAILED;
+        asyncContextHandle->asyncContextPtr->result.errorCode = RET_FAILED;
+        asyncContextHandle->asyncContextPtr->result.errorMsg =
+            "The specified context does not belong to the current application.";
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
             "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContextHandle->asyncContextPtr->tokenId);
@@ -721,27 +722,27 @@ void NapiRequestPermission::RequestPermissionsFromUserComplete(napi_env env, nap
         return;
     }
     if ((asyncContextHandle->asyncContextPtr->permissionsState.empty()) &&
-        (asyncContextHandle->asyncContextPtr->result == JsErrorCode::JS_OK)) {
+        (asyncContextHandle->asyncContextPtr->result.errorCode == RET_SUCCESS)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantResults empty");
-        asyncContextHandle->asyncContextPtr->result = RET_FAILED;
+        asyncContextHandle->asyncContextPtr->result.errorCode = RET_FAILED;
     }
     napi_value requestResult = WrapRequestResult(env, asyncContextHandle->asyncContextPtr->permissionList,
         asyncContextHandle->asyncContextPtr->permissionsState, asyncContextHandle->asyncContextPtr->dialogShownResults,
         asyncContextHandle->asyncContextPtr->errorReasons);
     if (requestResult == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
-        if (asyncContextHandle->asyncContextPtr->result == JsErrorCode::JS_OK) {
-            asyncContextHandle->asyncContextPtr->result = RET_FAILED;
+        if (asyncContextHandle->asyncContextPtr->result.errorCode == RET_SUCCESS) {
+            asyncContextHandle->asyncContextPtr->result.errorCode = RET_FAILED;
         }
     } else {
         asyncContextHandle->asyncContextPtr->requestResult = requestResult;
     }
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
-        ReturnPromiseResult(env, asyncContextHandle->asyncContextPtr->result,
-            asyncContextHandle->asyncContextPtr->deferred, asyncContextHandle->asyncContextPtr->requestResult);
+        ReturnPromiseResult(
+            env, *asyncContextHandle->asyncContextPtr, asyncContextHandle->asyncContextPtr->requestResult);
     } else {
-        ReturnCallbackResult(env, asyncContextHandle->asyncContextPtr->result,
-            asyncContextHandle->asyncContextPtr->callbackRef, asyncContextHandle->asyncContextPtr->requestResult);
+        ReturnCallbackResult(
+            env, *asyncContextHandle->asyncContextPtr, asyncContextHandle->asyncContextPtr->requestResult);
     }
 }
 
@@ -797,7 +798,7 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
     asyncContext.env = env;
     // the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
-        errMsg = GetParamErrorMsg("tokenId", "number");
+        errMsg = GetParamErrorMsg("tokenID", "number");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -805,7 +806,7 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
 
     // the second parameter of argv
     if (!ParseStringArray(env, argv[1], asyncContext.permissionList)) {
-        errMsg = GetParamErrorMsg("permissions", "Array<Permissions>");
+        errMsg = GetParamErrorMsg("permissionList", "Array<Permissions>");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -830,7 +831,7 @@ void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void *data
     LOGD(ATM_DOMAIN, ATM_TAG, "PermList size: %{public}zu, asyncContext->permissionList size: %{public}zu.",
         permList.size(), asyncContext->permissionList.size());
 
-    asyncContext->result = AccessTokenKit::GetPermissionsStatus(asyncContext->tokenId, permList);
+    asyncContext->result.errorCode = AccessTokenKit::GetPermissionsStatus(asyncContext->tokenId, permList);
     for (const auto& permState : permList) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Permission: %{public}s", permState.permissionName.c_str());
         asyncContext->permissionQueryResults.emplace_back(permState.state);
@@ -842,9 +843,10 @@ void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_stat
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
     std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
 
-    if ((asyncContext->permissionQueryResults.empty()) && asyncContext->result == JsErrorCode::JS_OK) {
+    if ((asyncContext->permissionQueryResults.empty()) && asyncContext->result.errorCode == RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionQueryResults empty");
-        asyncContext->result = RET_FAILED;
+        asyncContext->result.errorCode = RET_FAILED;
+        asyncContext->result.errorMsg = "The permissionList is empty.";
     }
     napi_value result;
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
@@ -855,7 +857,7 @@ void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_stat
             asyncContext->permissionQueryResults[i], &nPermissionQueryResult));
         NAPI_CALL_RETURN_VOID(env, napi_set_element(env, result, i, nPermissionQueryResult));
     }
-    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+    ReturnPromiseResult(env, *asyncContext, result);
 }
 
 void RequestAsyncInstanceControl::CheckDynamicRequest(

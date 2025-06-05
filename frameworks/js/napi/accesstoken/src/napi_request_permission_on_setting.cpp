@@ -42,13 +42,45 @@ const int32_t ALL_PERM_GRANTED = 4;
 const int32_t PERM_REVOKE_BY_USER = 5;
 std::mutex g_lockFlag;
 } // namespace
-static void ReturnPromiseResult(napi_env env, int32_t jsCode, napi_deferred deferred, napi_value result)
+
+static int32_t TransferToJsErrorCode(int32_t errCode)
 {
-    if (jsCode != JS_OK) {
-        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
-        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, businessError));
+    int32_t jsCode = JS_OK;
+    switch (errCode) {
+        case RET_SUCCESS:
+            jsCode = JS_OK;
+            break;
+        case REQUEST_REALDY_EXIST:
+            jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
+            break;
+        case PERM_NOT_BELONG_TO_SAME_GROUP:
+            jsCode = JS_ERROR_PARAM_INVALID;
+            break;
+        case PERM_IS_NOT_DECLARE:
+            jsCode = JS_ERROR_PARAM_INVALID;
+            break;
+        case ALL_PERM_GRANTED:
+            jsCode = JS_ERROR_ALL_PERM_GRANTED;
+            break;
+        case PERM_REVOKE_BY_USER:
+            jsCode = JS_ERROR_PERM_REVOKE_BY_USER;
+            break;
+        default:
+            jsCode = JS_ERROR_INNER;
+            break;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    return jsCode;
+}
+
+static void ReturnPromiseResult(napi_env env, const RequestPermOnSettingAsyncContext& context, napi_value result)
+{
+    if (context.result.errorCode != RET_SUCCESS) {
+        int32_t jsCode = TransferToJsErrorCode(context.result.errorCode);
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
 }
 
@@ -117,37 +149,7 @@ static napi_value WrapRequestResult(const napi_env& env, const std::vector<int32
     return result;
 }
 
-static int32_t TransferToJsErrorCode(int32_t errCode)
-{
-    int32_t jsCode = JS_OK;
-    switch (errCode) {
-        case RET_SUCCESS:
-            jsCode = JS_OK;
-            break;
-        case REQUEST_REALDY_EXIST:
-            jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
-            break;
-        case PERM_NOT_BELONG_TO_SAME_GROUP:
-            jsCode = JS_ERROR_PARAM_INVALID;
-            break;
-        case PERM_IS_NOT_DECLARE:
-            jsCode = JS_ERROR_PARAM_INVALID;
-            break;
-        case ALL_PERM_GRANTED:
-            jsCode = JS_ERROR_ALL_PERM_GRANTED;
-            break;
-        case PERM_REVOKE_BY_USER:
-            jsCode = JS_ERROR_PERM_REVOKE_BY_USER;
-            break;
-        default:
-            jsCode = JS_ERROR_INNER;
-            break;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "dialog error(%{public}d) jsCode(%{public}d).", errCode, jsCode);
-    return jsCode;
-}
-
-static void PermissionResultsCallbackUI(int32_t jsCode,
+static void PermissionResultsCallbackUI(int32_t errorCode,
     const std::vector<int32_t> stateList, std::shared_ptr<RequestPermOnSettingAsyncContext>& data)
 {
     auto* retCB = new (std::nothrow) PermissonOnSettingResultCallback();
@@ -157,7 +159,7 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
     }
 
     std::unique_ptr<PermissonOnSettingResultCallback> callbackPtr {retCB};
-    retCB->jsCode = jsCode;
+    retCB->errorCode = errorCode;
     retCB->stateList = stateList;
     retCB->data = data;
     auto task = [retCB]() {
@@ -167,7 +169,7 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
             return;
         }
 
-        int32_t result = retCB->jsCode;
+        int32_t result = retCB->errorCode;
         napi_handle_scope scope = nullptr;
         napi_open_handle_scope(asyncContext->env, &scope);
         if (scope == nullptr) {
@@ -176,12 +178,12 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
             return;
         }
         napi_value requestResult = WrapRequestResult(asyncContext->env, retCB->stateList);
-        if ((result == JS_OK) && (requestResult == nullptr)) {
+        if ((result == RET_SUCCESS) && (requestResult == nullptr)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
-            result = JS_ERROR_INNER;
+            asyncContext->result.errorCode = RET_FAILED;
         }
 
-        ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
+        ReturnPromiseResult(asyncContext->env, *asyncContext, requestResult);
         napi_close_handle_scope(asyncContext->env, scope);
         delete retCB;
     };
@@ -231,8 +233,7 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     }
     RequestOnSettingAsyncInstanceControl::UpdateQueueData(this->reqContext_);
     RequestOnSettingAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
-    PermissionResultsCallbackUI(
-        TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->stateList, this->reqContext_);
+    PermissionResultsCallbackUI(this->reqContext_->errorCode, this->reqContext_->stateList, this->reqContext_);
 }
 
 PermissonOnSettingUICallback::PermissonOnSettingUICallback(
@@ -317,7 +318,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyn
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
 
@@ -328,7 +329,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestPermOnSettingAsyn
             sessionId, asyncContext->tokenId);
         if (sessionId == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create component, sessionId is 0.");
-            asyncContext->result = RET_FAILED;
+            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -369,10 +370,10 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOn
     };
 
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
-    if (asyncContext->result == RET_FAILED) {
+    if (asyncContext->result.errorCode == RET_FAILED) {
         return RET_FAILED;
     }
-    return JS_OK;
+    return RET_SUCCESS;
 }
 
 static int32_t StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
@@ -519,8 +520,7 @@ void RequestOnSettingAsyncInstanceControl::CheckDynamicRequest(
     isDynamic = asyncContext->isDynamic;
     if (!isDynamic) {
         LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission exsion");
-        PermissionResultsCallbackUI(
-            TransferToJsErrorCode(asyncContext->errorCode), asyncContext->stateList, asyncContext);
+        PermissionResultsCallbackUI(asyncContext->errorCode, asyncContext->stateList, asyncContext);
         return;
     }
 }
@@ -627,7 +627,9 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env 
         LOGE(ATM_DOMAIN, ATM_TAG,
             "The context(token=%{public}d) is not belong to the current application(currToken=%{public}d).",
             asyncContextHandle->asyncContextPtr->tokenId, currToken);
-        asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result.errorCode = ERR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result.errorMsg =
+            "The specified context does not belong to the current application.";
         return;
     }
 
@@ -635,7 +637,7 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env 
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
 
     RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
-    if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
+    if (asyncContextHandle->asyncContextPtr->result.errorCode != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
 }
@@ -651,12 +653,12 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
     std::unique_ptr<RequestOnSettingAsyncContextHandle> callbackPtr {asyncContextHandle};
 
     // need pop dialog
-    if (asyncContextHandle->asyncContextPtr->result == RET_SUCCESS) {
+    if (asyncContextHandle->asyncContextPtr->result.errorCode == RET_SUCCESS) {
         return;
     }
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result);
+        int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));

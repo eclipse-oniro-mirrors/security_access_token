@@ -34,7 +34,7 @@ struct RequestPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
     }
 
     AccessTokenID tokenId = 0;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     PermissionGrantInfo info;
     int32_t resultCode = -1;
 
@@ -94,7 +94,7 @@ private:
 };
 
 struct PermissonOnSettingResultCallback {
-    int32_t jsCode;
+    int32_t errorCode;
     std::vector<int32_t> stateList;
     std::shared_ptr<RequestPermOnSettingAsyncContext> data = nullptr;
 };
