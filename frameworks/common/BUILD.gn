@@ -30,7 +30,7 @@ action("permission_definition_check") {
   ]
   inputs = [ rebase_path("${access_token_path}") +
              "/services/accesstokenmanager/permission_definitions.json" ]
-  outputs = [ "$target_out_dir" ]
+  outputs = [ "$target_out_dir/permission_definition_check.stamp" ]
 }
 
 action("permission_definition_parse") {

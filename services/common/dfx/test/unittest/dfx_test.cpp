@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 #include "data_usage_dfx.h"
 #include <cstdio>
-#include <fcntl.h>  
+#include <fcntl.h>
 
 using namespace testing::ext;
 
