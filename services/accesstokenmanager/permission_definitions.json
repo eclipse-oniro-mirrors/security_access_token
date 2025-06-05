@@ -6720,11 +6720,11 @@
         {
             "name": "ohos.permission.ACCESS_FIDO2_ONLINEAUTH",
             "grantMode": "system_grant",
-            "availableLevel": "normal",
+            "availableLevel": "system_basic",
             "availableType": "NORMAL",
             "since": 20,
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
