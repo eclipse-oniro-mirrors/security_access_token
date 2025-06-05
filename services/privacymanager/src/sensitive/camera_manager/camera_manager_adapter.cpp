@@ -59,14 +59,22 @@ bool CameraManagerAdapter::IsCameraMuted()
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
         return false;
     }
-    int32_t error = proxy->SendRequest(
-        static_cast<uint32_t>(CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
-        data, reply, option);
+    if (!data.WriteInt32(0)) {
+        return false;
+    }
+    int32_t ipcCode = CameraStandard::GetIsCameraMutedIpcCode();
+    int32_t error = proxy->SendRequest(ipcCode, data, reply, option);
     if (error != NO_ERROR) {
         LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
         return false;
     }
-    return reply.ReadBool();
+    error = reply.ReadInt32();
+    if (error != NO_ERROR) {
+        return false;
+    }
+
+    bool isMuteMode = reply.ReadInt32() == 1 ? true : false;
+    return isMuteMode;
 #endif
 }
 
