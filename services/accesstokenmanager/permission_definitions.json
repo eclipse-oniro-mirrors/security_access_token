@@ -6597,6 +6597,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.BACKGROUND_MANAGER_POWER_SAVE_MODE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.ACCESSIBILITY_EXTENSION_ABILITY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
