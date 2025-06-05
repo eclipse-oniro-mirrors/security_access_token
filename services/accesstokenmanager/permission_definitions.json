@@ -6707,6 +6707,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.GRANT_URI_PERMISSION_AS_CALLER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_FIDO2_ONLINEAUTH",
             "grantMode": "system_grant",
             "availableLevel": "normal",
