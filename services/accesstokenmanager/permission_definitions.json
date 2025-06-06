@@ -6287,7 +6287,7 @@
             "name": "ohos.permission.DLP_GET_HIDE_STATUS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
