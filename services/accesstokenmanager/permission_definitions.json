@@ -6735,7 +6735,7 @@
             "availableType": "NORMAL",
             "since": 20,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet", "general"]
         }
