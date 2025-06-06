@@ -6737,7 +6737,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet", "general"]
+            "deviceTypes": ["general"]
         }
     ]
 }
