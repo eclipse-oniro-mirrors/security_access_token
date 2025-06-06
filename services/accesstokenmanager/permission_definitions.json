@@ -6738,6 +6738,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+        },
+        {
+            "name": "ohos.permission.DETECT_GESTURE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         }
     ]
 }
