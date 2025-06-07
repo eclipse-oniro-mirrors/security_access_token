@@ -6740,6 +6740,61 @@
             "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
+            "name": "ohos.permission.VIRUS_PROTECTION_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.UPLOAD_SAMPLE_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.DOWNLOAD_POLICY_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.NOTIFY_VIRUS_PROTECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_VIRUS_PROTECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.DETECT_GESTURE",
             "grantMode": "system_grant",
             "availableLevel": "normal",
