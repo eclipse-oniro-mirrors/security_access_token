@@ -68,6 +68,7 @@ const std::string RESULT_ERROR_KEY = "ohos.user.setting.error_code";
 const std::string PERMISSION_RESULT_KEY = "ohos.user.setting.permission.result";
 
 #define SETTER_METHOD_NAME(property) "" #property
+#define ANI_AUTO_SIZE SIZE_MAX
 
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
     const std::vector<int>& grantResults, std::shared_ptr<RequestAsyncContext>& data, std::vector<int>& newGrantResults)
@@ -1418,6 +1419,77 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
     return ConvertAniArrayInt(env, permissionQueryResults);
 }
 
+static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int tokenID, ani_string aniPermissionName)
+{
+    uint32_t flag = PERMISSION_DEFAULT_FLAG;
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        return flag;
+    }
+    std::string permissionName;
+    if (!AniParseString(env, aniPermissionName, permissionName)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return flag;
+    }
+    int32_t result = AccessTokenKit::GetPermissionFlag(tokenID, permissionName, flag);
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "result =  %{public}d  errcode = %{public}d",
+            result, BusinessErrorAni::GetStsErrorCode(result));
+        BusinessErrorAni::ThrowError(env, BusinessErrorAni::GetStsErrorCode(result),
+            GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
+    }
+    return flag;
+}
+
+static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_string aniPermissionName, ani_int status)
+{
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        return;
+    }
+    std::string permissionName;
+    if (!AniParseString(env, aniPermissionName, permissionName)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return;
+    }
+    int32_t result = AccessTokenKit::SetPermissionRequestToggleStatus(permissionName, status, 0);
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "result =  %{public}d  errcode = %{public}d",
+            result, BusinessErrorAni::GetStsErrorCode(result));
+        BusinessErrorAni::ThrowError(env, BusinessErrorAni::GetStsErrorCode(result),
+            GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
+    }
+    return;
+}
+
+static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_string aniPermissionName)
+{
+    uint32_t flag = CLOSED;
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        return flag;
+    }
+    std::string permissionName;
+    if (!AniParseString(env, aniPermissionName, permissionName)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return flag;
+    }
+    int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(permissionName, flag, 0);
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "result =  %{public}d  errcode = %{public}d",
+            result, BusinessErrorAni::GetStsErrorCode(result));
+        BusinessErrorAni::ThrowError(env, BusinessErrorAni::GetStsErrorCode(result),
+            GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
+    }
+    return flag;
+}
+
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
@@ -1467,6 +1539,12 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
         ani_native_function { "getPermissionsStatusExecute",
             nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
+        ani_native_function{ "getPermissionFlagsExecute",
+            nullptr, reinterpret_cast<void *>(GetPermissionFlagsExecute) },
+        ani_native_function{ "setPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
+        ani_native_function{ "getPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
