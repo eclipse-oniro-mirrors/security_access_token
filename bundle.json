@@ -59,7 +59,8 @@
         "selinux_adapter",
         "sqlite",
         "window_manager",
-        "zlib"
+        "zlib",
+        "runtime_core"
       ],
       "third_party": []
     },
@@ -71,7 +72,8 @@
         "fwk_group": [
           "//base/security/access_token/interfaces/kits/capi:capi_packages",
           "//base/security/access_token/interfaces/kits/cj:cj_packages",
-          "//base/security/access_token/frameworks/js/napi:napi_packages"
+          "//base/security/access_token/frameworks/js/napi:napi_packages",
+          "//base/security/access_token/frameworks/ets/ani:arkts_package"
         ],
         "service_group": [
           "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
