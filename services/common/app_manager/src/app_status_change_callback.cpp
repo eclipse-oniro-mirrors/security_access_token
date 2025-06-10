@@ -39,26 +39,21 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
-        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED: {
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED:
             HandleOnProcessStateChanged(data, reply);
             return NO_ERROR;
-        }
-        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED: {
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED:
             HandleOnProcessDied(data, reply);
             return NO_ERROR;
-        }
-        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED: {
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED:
             HandleOnAppStateChanged(data, reply);
             return NO_ERROR;
-        }
-        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED: {
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED:
             HandleOnAppStopped(data, reply);
             return NO_ERROR;
-        }
-        case IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED: {
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED:
             HandleOnAppCacheStateChanged(data, reply);
             return NO_ERROR;
-        }
         case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED:
         case IApplicationStateObserver::Message::TRANSACT_ON_ABILITY_STATE_CHANGED:
         case IApplicationStateObserver::Message::TRANSACT_ON_EXTENSION_STATE_CHANGED:
@@ -71,13 +66,10 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
         case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_SHOW:
         case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_HIDDEN:
         case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_BINDINGRELATION_CHANGED:
-        {
             return NO_ERROR;
-        }
-        default: {
+        default:
             LOGD(ATM_DOMAIN, ATM_TAG, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-        }
     }
     return NO_ERROR;
 }
