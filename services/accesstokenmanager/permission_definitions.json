@@ -6751,6 +6751,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.ACCESS_FIDO2_ONLINEAUTH_PRIVILEGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.PUBLISH_FORM_CROSS_BUNDLE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
