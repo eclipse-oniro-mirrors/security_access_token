@@ -97,7 +97,9 @@ export default namespace abilityAccessCtrl {
         revokeUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         getVersionExecute(): int;
-
+        getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
+        setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
+        getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
         checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
         checkAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus>;
@@ -122,6 +124,13 @@ export default namespace abilityAccessCtrl {
         getVersion(): Promise<int>;
 
         getPermissionsStatus(tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>>;
+
+        getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int>;
+
+        setPermissionRequestToggleStatus(
+            permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void>;
+
+        getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus>;
     }
 
     class AtManagerInner implements AtManager {
@@ -134,6 +143,9 @@ export default namespace abilityAccessCtrl {
             tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         native getVersionExecute(): int;
+        native getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
+        native setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
+        native getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -303,5 +315,51 @@ export default namespace abilityAccessCtrl {
             });
             return p;
         }
-    }
+        
+        getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int> {
+            let p = new Promise<int>(
+                (resolve: (v: int) => void, reject: (err: BusinessError) => void): int => {
+                let p1 = taskpool.execute((): int => {
+                    return new AtManagerInner().getPermissionFlagsExecute(tokenID, permissionName);
+                });
+                p1.then((e: NullishType): void => {
+                    resolve(e as int);
+                }).catch((err: Error): void => {
+                    reject(err as BusinessError);
+                });
+            })
+            return p;
+        }
+
+        setPermissionRequestToggleStatus(permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void> {
+            let p = new Promise<void>(
+                (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+                let p = taskpool.execute((): void => {
+                    new AtManagerInner().setPermissionRequestToggleStatusExecute(permissionName, status);
+                });
+                p.then((e: NullishType): void => {
+                    resolve(undefined);
+                }).catch((err: Error): void => {
+                    reject(err as BusinessError);
+                })
+            });
+            return p;
+        }
+
+        getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus> {
+            let p =  new Promise<PermissionRequestToggleStatus>(
+                (resolve: (v: PermissionRequestToggleStatus) => void,
+                    reject: (err: BusinessError) => void): PermissionRequestToggleStatus => {
+                    let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
+                        return new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName) as PermissionRequestToggleStatus;
+                    });
+                    p1.then((e: NullishType): void => {
+                        resolve(e as PermissionRequestToggleStatus);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    })
+                });
+            return p;
+        }
+    }   
 }
