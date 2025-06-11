@@ -174,3 +174,8 @@ if (eventhandler_enable == true) {
   access_token_cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
   access_token_external_deps += [ "eventhandler:libeventhandler" ]
 }
+
+if (memory_manager_enable == true) {
+  access_token_cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
+  access_token_external_deps += [ "memmgr:memmgrclient" ]
+}

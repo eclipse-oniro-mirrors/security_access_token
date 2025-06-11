@@ -202,6 +202,9 @@ HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level4)
 {
     SoftBusDeviceConnectionListener listener;
     listener.OnDeviceOffline(g_devInfo);
+    DeviceInfoRepository::GetInstance().SaveDeviceInfo(g_devInfo.networkId, "123", g_devInfo.deviceId,
+        g_devInfo.deviceName, std::to_string(g_devInfo.deviceTypeId));
+    listener.OnDeviceOffline(g_devInfo);
     SoftBusChannel channel("test");
     std::string test("test");
     channel.InsertCallback(0, test);

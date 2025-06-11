@@ -24,10 +24,20 @@
 #include "remote_command_manager.h"
 #include "soft_bus_manager.h"
 #include "system_ability_definition.h"
+#ifdef MEMORY_MANAGER_ENABLE
+#include "mem_mgr_client.h"
+#endif
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifdef MEMORY_MANAGER_ENABLE
+namespace {
+static constexpr int32_t SA_TYPE = 1;
+static constexpr int32_t SA_START = 1;
+static constexpr int32_t SA_STOP = 0;
+}
+#endif
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<TokenSyncManagerService>::GetInstance().get());
@@ -61,6 +71,11 @@ void TokenSyncManagerService::OnStart()
         return;
     }
     (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+#ifdef MEMORY_MANAGER_ENABLE
+    int32_t pid = getpid();
+    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, SA_TYPE, SA_START, SA_ID_TOKENSYNC_MANAGER_SERVICE);
+    Memory::MemMgrClient::GetInstance().SetCritical(pid, true, SA_ID_TOKENSYNC_MANAGER_SERVICE);
+#endif
     LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, TokenSyncManagerService start successfully!");
 }
 
@@ -69,6 +84,10 @@ void TokenSyncManagerService::OnStop()
     LOGI(ATM_DOMAIN, ATM_TAG, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
     SoftBusManager::GetInstance().Destroy();
+#ifdef MEMORY_MANAGER_ENABLE
+    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(
+        getpid(), SA_TYPE, SA_STOP, SA_ID_TOKENSYNC_MANAGER_SERVICE);
+#endif
 }
 
 void TokenSyncManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
