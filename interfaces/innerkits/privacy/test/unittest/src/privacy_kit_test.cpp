@@ -1529,8 +1529,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission005, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
 {
-    std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
 
     HapInfoParams info = {
         .userID = 1,
@@ -1557,7 +1556,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(info, policy);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(0, tokenId); // hap MICROPHONE_BACKGROUND permission
-    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName)); // background hap
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, "ohos.permission.MICROPHONE")); // background hap
 
     info.isSystemApp = true;
     info.bundleName = "ohos.privacy_test.microphone.sys_app";
@@ -1575,13 +1574,11 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
     ASSERT_EQ(0, AddPermissionToKernel(sysApptokenId, {opCode1, opCode2}, {1, 1}));
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    // callkit set hap to foreground with MICROPHONE_BACKGROUND
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, true));
-    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, true)); // tokenId with MICROPHONE_BACKGROUND
+    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, "ohos.permission.MICROPHONE"));
 
-    // callkit set g_tokenIdE to foreground without MICROPHONE_BACKGROUND
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
-    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true)); // g_tokenIdE without MICROPHONE_BACKGROUND
+    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
     
     EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, false));
     EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
