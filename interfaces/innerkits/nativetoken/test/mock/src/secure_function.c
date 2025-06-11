@@ -26,11 +26,7 @@ static void GetHandle(void)
     if (g_handle != NULL) {
         return;
     }
-#if defined(__LP64__)
-    g_handle = dlopen("/system/lib64/chipset-pub-sdk/libsec_shared.z.so", RTLD_LAZY);
-#else
-    g_handle = dlopen("/system/lib/chipset-pub-sdk/libsec_shared.z.so", RTLD_LAZY);
-#endif
+    g_handle = dlopen("libsec_shared.z.so", RTLD_LAZY);
 }
 
 int strcpy_s(char *strDest, size_t destMax, const char *strSrc)
