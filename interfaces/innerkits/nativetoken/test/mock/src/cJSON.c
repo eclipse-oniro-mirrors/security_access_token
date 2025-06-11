@@ -48,11 +48,7 @@ void GetHandle(void)
     if (g_handle != NULL) {
         return;
     }
-#if defined(__LP64__)
-    g_handle = dlopen("/system/lib64/chipset-pub-sdk/libcjson.z.so", RTLD_LAZY);
-#else
-    g_handle = dlopen("/system/lib/chipset-pub-sdk/libcjson.z.so", RTLD_LAZY);
-#endif
+    g_handle = dlopen("libcjson.z.so", RTLD_LAZY);
 }
 
 cJSON* cJSON_GetObjectItem(const cJSON* const object, const char* const string)
