@@ -48,8 +48,8 @@ namespace AccessToken {
 typedef unsigned int AccessTokenID;
 typedef uint64_t FullTokenID;
 typedef unsigned int AccessTokenAttr;
-static const int DEFAULT_TOKEN_VERSION = 1;
-static const AccessTokenID INVALID_TOKENID = 0;
+constexpr const int DEFAULT_TOKEN_VERSION = 1;
+constexpr const AccessTokenID INVALID_TOKENID = 0;
 
 /**
  * @brief visit type

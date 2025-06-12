@@ -46,9 +46,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr uint32_t INVALID_ATM_SET_STATUS = 2;
-}
+constexpr const uint32_t INVALID_ATM_SET_STATUS = 2;
 /**
  * @brief Declares atm tools param class
  */
