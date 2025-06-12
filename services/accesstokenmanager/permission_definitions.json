@@ -6506,6 +6506,17 @@
             "deviceTypes": ["phone", "tablet"]
         },
         {
+            "name": "ohos.permission.SET_NET_EXT_ATTRIBUTE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -6850,15 +6861,37 @@
             "deviceTypes": ["general"]
         },
         {
-            "name": "ohos.permission.SET_NET_EXT_ATTRIBUTE",
+            "name": "ohos.permission.READ_ALL_PHOTO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.WRITE_ALL_PHOTO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.THEME_SKIN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["phone", "2in1", "tablet"]
         }
     ]
 }

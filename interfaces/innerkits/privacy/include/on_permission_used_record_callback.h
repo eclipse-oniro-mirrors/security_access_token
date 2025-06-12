@@ -35,7 +35,6 @@
 #ifndef ON_PERMISSION_USED_RECORD_CALLBACK_H
 #define ON_PERMISSION_USED_RECORD_CALLBACK_H
 
-#include "errors.h"
 #include "iremote_broker.h"
 #include "permission_used_result.h"
 #include "privacy_permission_record_ipc_interface_code.h"
