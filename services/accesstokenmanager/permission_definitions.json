@@ -6848,6 +6848,17 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_EAP",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
