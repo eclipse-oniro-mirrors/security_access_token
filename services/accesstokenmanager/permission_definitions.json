@@ -6850,6 +6850,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.USE_FLOAT_BALL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
             "name": "ohos.permission.READ_ALL_PHOTO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
