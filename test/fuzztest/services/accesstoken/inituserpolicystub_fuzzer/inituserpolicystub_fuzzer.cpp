@@ -40,7 +40,11 @@ namespace OHOS {
             SetSelfTokenID(g_mockTokenId);
             return;
         }
-        const char **perms = new const char *[1];
+        const char** perms = new (std::nothrow) const char *[1];
+        if (perms == nullptr) {
+            return;
+        }
+
         perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 
         NativeTokenInfoParams infoInstance = {

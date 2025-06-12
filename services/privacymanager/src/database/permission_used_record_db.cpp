@@ -44,7 +44,7 @@ PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            PermissionUsedRecordDb* tmp = new PermissionUsedRecordDb();
+            PermissionUsedRecordDb* tmp = new (std::nothrow) PermissionUsedRecordDb();
             instance = std::move(tmp);
         }
     }

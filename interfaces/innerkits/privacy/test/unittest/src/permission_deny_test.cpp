@@ -151,7 +151,7 @@ HWTEST_F(PermDenyTest, GetPermissionUsedRecords001, TestSize.Level0)
     PermissionUsedResult result;
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    OHOS::sptr<TestCallBack> callback(new TestCallBack());
+    OHOS::sptr<TestCallBack> callback(new (std::nothrow) TestCallBack());
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
 

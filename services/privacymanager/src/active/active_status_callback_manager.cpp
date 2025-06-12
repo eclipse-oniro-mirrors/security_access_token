@@ -39,7 +39,7 @@ ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            ActiveStatusCallbackManager* tmp = new ActiveStatusCallbackManager();
+            ActiveStatusCallbackManager* tmp = new (std::nothrow) ActiveStatusCallbackManager();
             instance = std::move(tmp);
         }
     }
@@ -64,7 +64,7 @@ void ActiveStatusCallbackManager::InitEventHandler(const std::shared_ptr<AccessE
 #endif
 
 int32_t ActiveStatusCallbackManager::AddCallback(
-    AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    AccessTokenID registerTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Input is nullptr");
@@ -82,7 +82,7 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     }
 
     CallbackData recordInstance;
-    recordInstance.registerTokenId = regiterTokenId;
+    recordInstance.registerTokenId = registerTokenId;
     recordInstance.callbackObject_ = callback;
     recordInstance.permList_ = permList;
 
@@ -142,11 +142,11 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
         }
     }
     for (auto it = list.begin(); it != list.end(); ++it) {
-        sptr<IPermActiveStatusCallback> callback = new PermActiveStatusChangeCallbackProxy(*it);
+        sptr<IPermActiveStatusCallback> callback = new (std::nothrow) PermActiveStatusChangeCallbackProxy(*it);
         if (callback != nullptr) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "callback execute callingTokenId %{public}u, tokenId %{public}u, "
-                "permision %{public}s, changeType %{public}d, usedType %{public}d, pid %{public}d", info.callingTokenID,
-                info.tokenID, info.permissionName.c_str(), info.type, info.usedType, info.pid);
+            LOGI(PRI_DOMAIN, PRI_TAG, "Callback execute callingTokenId %{public}u, tokenId %{public}u, "
+                "permission %{public}s, changeType %{public}d, usedType %{public}d, pid %{public}d",
+                info.callingTokenID, info.tokenID, info.permissionName.c_str(), info.type, info.usedType, info.pid);
             callback->ActiveStatusChangeCallback(info);
         }
     }

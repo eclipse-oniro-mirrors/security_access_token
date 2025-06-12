@@ -28,7 +28,7 @@ DeviceInfoManager &DeviceInfoManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            DeviceInfoManager* tmp = new DeviceInfoManager();
+            DeviceInfoManager* tmp = new (std::nothrow) DeviceInfoManager();
             instance = std::move(tmp);
         }
     }

@@ -75,7 +75,7 @@ SoftBusManager &SoftBusManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            SoftBusManager* tmp = new SoftBusManager();
+            SoftBusManager* tmp = new (std::nothrow) SoftBusManager();
             instance = std::move(tmp);
         }
     }

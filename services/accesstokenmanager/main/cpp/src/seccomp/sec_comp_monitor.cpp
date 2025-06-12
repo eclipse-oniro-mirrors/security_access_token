@@ -102,7 +102,7 @@ SecCompMonitor& SecCompMonitor::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            SecCompMonitor* tmp = new SecCompMonitor();
+            SecCompMonitor* tmp = new (std::nothrow) SecCompMonitor();
             instance = std::move(tmp);
         }
     }

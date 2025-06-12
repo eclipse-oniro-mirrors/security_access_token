@@ -40,7 +40,7 @@ void SwitchForeOrBackGround(uint32_t tokenId, int32_t flag)
 
 SystemAbilityManagerClient& SystemAbilityManagerClient::GetInstance()
 {
-    static auto instance = new SystemAbilityManagerClient();
+    static auto instance = new (std::nothrow) SystemAbilityManagerClient();
     return *instance;
 }
 
@@ -55,7 +55,7 @@ sptr<ISystemAbilityManager> SystemAbilityManagerClient::GetSystemAbilityManager(
         return systemAbilityManager_;
     }
 
-    systemAbilityManager_ = new SystemAbilityManagerProxy(nullptr);
+    systemAbilityManager_ = new (std::nothrow) SystemAbilityManagerProxy(nullptr);
     return systemAbilityManager_;
 }
 
@@ -70,7 +70,7 @@ sptr<IRemoteObject> SystemAbilityManagerProxy::GetSystemAbility(int32_t systemAb
         case APP_MGR_SERVICE_ID:
             if (!g_appMgrService) {
                 GTEST_LOG_(INFO) << "GetSystemAbility(" << systemAbilityId << "): return MockAppMgrService";
-                g_appMgrService = new AppExecFwk::MockAppMgrService();
+                g_appMgrService = new (std::nothrow) AppExecFwk::MockAppMgrService();
             }
             remote = g_appMgrService;
             break;

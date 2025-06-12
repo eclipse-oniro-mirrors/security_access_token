@@ -84,7 +84,7 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            TokenModifyNotifier* tmp = new TokenModifyNotifier();
+            TokenModifyNotifier* tmp = new (std::nothrow) TokenModifyNotifier();
             instance = std::move(tmp);
         }
     }
@@ -175,14 +175,17 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
 int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
-    tokenSyncCallbackObject_ = new TokenSyncCallbackProxy(callback);
+    tokenSyncCallbackObject_ = new (std::nothrow) TokenSyncCallbackProxy(callback);
     tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
+    if (tokenSyncCallbackDeathRecipient_ == nullptr) {
+        return RET_FAILED;
+    }
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
     LOGI(ATM_DOMAIN, ATM_TAG, "Register token sync callback successful.");
     return ERR_OK;
 }
 
-int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
+void TokenModifyNotifier::UnRegisterTokenSyncCallback()
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
     if (tokenSyncCallbackObject_ != nullptr && tokenSyncCallbackDeathRecipient_ != nullptr) {
@@ -191,7 +194,6 @@ int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
     tokenSyncCallbackObject_ = nullptr;
     tokenSyncCallbackDeathRecipient_ = nullptr;
     LOGI(ATM_DOMAIN, ATM_TAG, "Unregister token sync callback successful.");
-    return ERR_OK;
 }
 
 void TokenModifyNotifier::NotifyTokenChangedIfNeed()

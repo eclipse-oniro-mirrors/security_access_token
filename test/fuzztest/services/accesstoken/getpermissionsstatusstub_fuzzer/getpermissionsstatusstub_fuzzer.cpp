@@ -42,7 +42,11 @@ size_t g_baseFuzzPos = 0;
     void GetNativeToken()
     {
         uint64_t tokenId;
-        const char **perms = new const char *[1];
+        const char** perms = new (std::nothrow) const char *[1];
+        if (perms == nullptr) {
+            return;
+        }
+
         perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
 
         NativeTokenInfoParams infoInstance = {

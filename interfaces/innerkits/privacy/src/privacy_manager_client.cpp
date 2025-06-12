@@ -37,7 +37,7 @@ PrivacyManagerClient& PrivacyManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            PrivacyManagerClient* tmp = new PrivacyManagerClient();
+            PrivacyManagerClient* tmp = new (std::nothrow) PrivacyManagerClient();
             instance = std::move(tmp);
         }
     }
@@ -416,7 +416,7 @@ void PrivacyManagerClient::InitProxy()
         if (serviceDeathObserver_ != nullptr) {
             privacySa->AddDeathRecipient(serviceDeathObserver_);
         }
-        proxy_ = new PrivacyManagerProxy(privacySa);
+        proxy_ = new (std::nothrow) PrivacyManagerProxy(privacySa);
         if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
         }

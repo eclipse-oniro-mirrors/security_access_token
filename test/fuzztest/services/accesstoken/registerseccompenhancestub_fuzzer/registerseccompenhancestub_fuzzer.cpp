@@ -64,7 +64,7 @@ public:
         }
 
         sptr<TokenSyncCallback> callback =
-            sptr<TokenSyncCallback>(new TokenSyncCallback(std::make_shared<TokenSyncCallbackImpl>()));
+            sptr<TokenSyncCallback>(new (std::nothrow) TokenSyncCallback(std::make_shared<TokenSyncCallbackImpl>()));
 
         AccessTokenFuzzData fuzzData(data, size);
 

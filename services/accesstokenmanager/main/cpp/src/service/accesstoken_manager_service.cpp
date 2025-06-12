@@ -1125,7 +1125,8 @@ int32_t AccessTokenManagerService::UnRegisterTokenSyncCallback()
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied, tokenID=%{public}d", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
+    TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
+    return ERR_OK;
 }
 #endif
 

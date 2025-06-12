@@ -35,7 +35,7 @@ SecCompEnhanceAgent& SecCompEnhanceAgent::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            SecCompEnhanceAgent* tmp = new SecCompEnhanceAgent();
+            SecCompEnhanceAgent* tmp = new (std::nothrow) SecCompEnhanceAgent();
             instance = std::move(tmp);
         }
     }

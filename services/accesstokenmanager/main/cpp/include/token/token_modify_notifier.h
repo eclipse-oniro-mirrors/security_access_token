@@ -41,7 +41,7 @@ public:
     void NotifyTokenSyncTask();
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID);
     int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback);
-    int32_t UnRegisterTokenSyncCallback();
+    void UnRegisterTokenSyncCallback();
 
 private:
     TokenModifyNotifier();

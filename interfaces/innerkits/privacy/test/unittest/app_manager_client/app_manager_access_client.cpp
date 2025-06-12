@@ -32,7 +32,7 @@ AppManagerAccessClient& AppManagerAccessClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            AppManagerAccessClient* tmp = new AppManagerAccessClient();
+            AppManagerAccessClient* tmp = new (std::nothrow) AppManagerAccessClient();
             instance = std::move(tmp);
         }
     }
@@ -72,7 +72,7 @@ void AppManagerAccessClient::InitProxy()
         return;
     }
 
-    proxy_ = new AppManagerAccessProxy(appManagerSa);
+    proxy_ = new (std::nothrow) AppManagerAccessProxy(appManagerSa);
     if (proxy_ == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Iface_cast get null");
     }

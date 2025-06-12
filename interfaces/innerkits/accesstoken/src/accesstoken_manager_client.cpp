@@ -51,7 +51,7 @@ AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            AccessTokenManagerClient* tmp = new AccessTokenManagerClient();
+            AccessTokenManagerClient* tmp = new (std::nothrow) AccessTokenManagerClient();
             instance = std::move(tmp);
         }
     }
@@ -917,7 +917,7 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     
-    sptr<TokenSyncCallback> callback = sptr<TokenSyncCallback>(new TokenSyncCallback(syncCallback));
+    sptr<TokenSyncCallback> callback = sptr<TokenSyncCallback>(new (std::nothrow) TokenSyncCallback(syncCallback));
 
     std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
     int32_t res = proxy->RegisterTokenSyncCallback(callback->AsObject());
@@ -1006,7 +1006,7 @@ void AccessTokenManagerClient::InitProxy()
         if (serviceDeathObserver_ != nullptr) {
             accesstokenSa->AddDeathRecipient(serviceDeathObserver_);
         }
-        proxy_ = new AccessTokenManagerProxy(accesstokenSa);
+        proxy_ = new (std::nothrow) AccessTokenManagerProxy(accesstokenSa);
         if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Iface_cast get null");
         }

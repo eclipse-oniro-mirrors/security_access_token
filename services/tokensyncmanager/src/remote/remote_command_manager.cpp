@@ -46,7 +46,7 @@ RemoteCommandManager &RemoteCommandManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            RemoteCommandManager* tmp = new RemoteCommandManager();
+            RemoteCommandManager* tmp = new (std::nothrow) RemoteCommandManager();
             instance = std::move(tmp);
         }
     }
