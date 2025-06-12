@@ -1313,6 +1313,51 @@ static bool IsPermissionFlagValid(uint32_t flag)
         (flag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME);
 };
 
+static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
+    ani_int tokenID, ani_string aniPermissionName, ani_int permissionFlags)
+{
+    if (env == nullptr) {
+        return;
+    }
+    std::string permissionName;
+    if (!AniParseString(env, aniPermissionName, permissionName)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "Permissions"));
+        return;
+    }
+
+    if (permissionName.empty() || permissionName.size() > MAX_LENGTH) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        return;
+    }
+    if (!IsPermissionFlagValid(static_cast<uint32_t>(permissionFlags))) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PARAM_INVALID,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        return;
+    }
+    PermissionBriefDef def;
+    if (!GetPermissionBriefDef(permissionName, def)) {
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
+        return;
+    }
+    
+    if (def.grantMode != USER_GRANT || !GetPermissionBriefDef(permissionName, def)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
+            "The specified permission does not exist or is not a user_grant permission.");
+        BusinessErrorAni::ThrowError(
+            env, STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST));
+        return;
+    }
+
+    int32_t res = AccessTokenKit::GrantPermission(tokenID, permissionName, permissionFlags);
+    if (res != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(res);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    }
+}
+
 static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int tokenID, ani_string permissionName, ani_int permissionFlags)
 {
@@ -1345,8 +1390,7 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     if (!GetPermissionBriefDef(permissionNameString, def) || def.grantMode != USER_GRANT) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
             "The specified permission does not exist or is not a user_grant permission.");
-        BusinessErrorAni::ThrowError(
-            env, STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST));
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
         return;
     }
 
@@ -1534,6 +1578,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         ani_native_function { "requestPermissionOnSettingExecute",
             "Lapplication/Context/Context;Lescompat/Array;:Lescompat/Array;",
             reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
+        ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
+            reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
         ani_native_function { "revokeUserGrantedPermissionExecute",
             nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
         ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },

@@ -115,6 +115,17 @@ export default namespace abilityAccessCtrl {
         requestPermissionOnSetting(
             context: Context,
             permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
+        
+        grantUserGrantedPermission(
+            tokenID: int,
+            permissionName: Permissions,
+            permissionFlags: int,
+            callback: AsyncCallback<void>): void;
+
+        grantUserGrantedPermission(
+            tokenID: int, 
+            permissionName: Permissions, 
+            permissionFlags: int): Promise<void>;
 
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
 
@@ -139,6 +150,7 @@ export default namespace abilityAccessCtrl {
             context: Context, permissionList: Array<Permissions>): PermissionRequestResult;
         native requestPermissionOnSettingExecute(
             context: Context, permissionList: Array<Permissions>): Array<GrantStatus>;
+        native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native revokeUserGrantedPermissionExecute(
             tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
@@ -257,6 +269,32 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
+        grantUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int,
+            callback: AsyncCallback<void>): void {
+            let p1 = taskpool.execute((): void => {
+                new AtManagerInner().grantUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);});
+            p1.then(() => {
+                let err = new BusinessError<void>();
+                callback(err, undefined);
+            }, (err: Error): void => {
+                callback(err as BusinessError, undefined);
+            })
+        }
+        
+        grantUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
+            return new Promise<void>(
+                (resolve: (v: undefined) => void, reject: (error: BusinessError) => void) : void => {
+                let p = taskpool.execute(() : void => {
+                    new AtManagerInner().grantUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
+                });
+                p.then((e: NullishType) : void => {
+                    resolve(undefined);
+                }).catch((err: Error) : void => {
+                    reject(err as BusinessError);
+                })
+            });
+        }
+        
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
             return new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
@@ -315,7 +353,7 @@ export default namespace abilityAccessCtrl {
             });
             return p;
         }
-        
+
         getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int> {
             let p = new Promise<int>(
                 (resolve: (v: int) => void, reject: (err: BusinessError) => void): int => {
@@ -361,5 +399,5 @@ export default namespace abilityAccessCtrl {
                 });
             return p;
         }
-    }   
+    }
 }
