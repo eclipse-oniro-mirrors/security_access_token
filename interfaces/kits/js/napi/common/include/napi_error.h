@@ -47,9 +47,14 @@ typedef enum {
     JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
 } JsErrorCode;
 
+struct AtmResult {
+    int32_t errorCode = 0;
+    std::string errorMsg = "";
+};
+
 std::string GetParamErrorMsg(const std::string& param, const std::string& type);
 napi_value GenerateBusinessError(napi_env env, int32_t errCode, const std::string& errMsg);
-std::string GetErrorMessage(uint32_t errCode);
+std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg = "");
 napi_value GetNapiNull(napi_env env);
 }  // namespace AccessToken
 }  // namespace Security

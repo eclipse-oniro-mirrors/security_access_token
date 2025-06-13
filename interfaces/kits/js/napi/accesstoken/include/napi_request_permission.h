@@ -38,7 +38,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     AccessTokenID tokenId = 0;
     std::string bundleName = "";
     bool needDynamicRequest = true;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     int32_t instanceId = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;

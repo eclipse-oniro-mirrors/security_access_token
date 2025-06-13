@@ -47,11 +47,11 @@ std::string GetParamErrorMsg(const std::string& param, const std::string& type)
     return msg;
 }
 
-std::string GetErrorMessage(uint32_t errCode)
+std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg)
 {
     auto iter = g_errorStringMap.find(errCode);
     if (iter != g_errorStringMap.end()) {
-        return iter->second;
+        return iter->second + (extendMsg.empty() ? "" : (" " + extendMsg));
     }
     std::string errMsg = "Unknown error, errCode + " + std::to_string(errCode) + ".";
     return errMsg;

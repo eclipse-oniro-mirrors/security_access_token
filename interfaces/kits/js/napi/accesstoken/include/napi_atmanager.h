@@ -83,6 +83,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     };
     int32_t result = RET_FAILED;
     int32_t errorCode = 0;
+    std::string extErrorMsg = "";
 };
 
 struct AtManagerSyncContext {
