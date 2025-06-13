@@ -24,7 +24,7 @@ namespace AccessToken {
 void BackgroundTaskMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s called", __func__);
-    BackgourndTaskManagerAccessClient::GetInstance().OnRemoteDiedHandle();
+    BackgroundTaskManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken
 }  // namespace Security

@@ -1759,11 +1759,11 @@ HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackCall001, TestSize.Level1)
     sptr<PermissionBackgroundTaskObserver> backgroundTaskObserver =
         new (std::nothrow) PermissionBackgroundTaskObserver();
     ASSERT_EQ(RET_SUCCESS,
-        BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskObserver));
+        BackgroundTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskObserver));
     ASSERT_EQ(RET_SUCCESS,
-        BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(backgroundTaskObserver));
+        BackgroundTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(backgroundTaskObserver));
     std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> list;
-    ASSERT_EQ(RET_SUCCESS, BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(list));
+    ASSERT_EQ(RET_SUCCESS, BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(list));
 }
 #endif
 } // namespace AccessToken

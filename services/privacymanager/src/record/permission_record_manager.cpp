@@ -596,14 +596,10 @@ void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_
     {
         // remove from record cache
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
-        auto it = permUsedRecList_.begin();
-        while (it != permUsedRecList_.end()) {
-            if (tokenIDList.find(it->record.tokenId) != tokenIDList.end()) {
-                it = permUsedRecList_.erase(it);
-            } else {
-                ++it;
-            }
-        }
+        permUsedRecList_.erase(std::remove_if(permUsedRecList_.begin(), permUsedRecList_.end(),
+            [&tokenIDList](const PermissionRecordCache& recordCache) {
+                return tokenIDList.find(recordCache.record.tokenId) != tokenIDList.end();
+            }), permUsedRecList_.end());
     }
 }
 
@@ -612,14 +608,10 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
     {
         // remove from record cache
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
-        auto it = permUsedRecList_.begin();
-        while (it != permUsedRecList_.end()) {
-            if (tokenId == it->record.tokenId) {
-                it = permUsedRecList_.erase(it);
-            } else {
-                ++it;
-            }
-        }
+        permUsedRecList_.erase(std::remove_if(permUsedRecList_.begin(), permUsedRecList_.end(),
+            [tokenId](const PermissionRecordCache& recordCache) {
+                return recordCache.record.tokenId == tokenId;
+            }), permUsedRecList_.end());
     }
 
     GenericValues conditions;

@@ -27,10 +27,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class BackgourndTaskManagerAccessClient final {
+class BackgroundTaskManagerAccessClient final {
 public:
-    static BackgourndTaskManagerAccessClient& GetInstance();
-    virtual ~BackgourndTaskManagerAccessClient();
+    static BackgroundTaskManagerAccessClient& GetInstance();
+    virtual ~BackgroundTaskManagerAccessClient();
 
     int32_t SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber);
     int32_t UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber);
@@ -38,8 +38,8 @@ public:
     void OnRemoteDiedHandle();
 
 private:
-    BackgourndTaskManagerAccessClient();
-    DISALLOW_COPY_AND_MOVE(BackgourndTaskManagerAccessClient);
+    BackgroundTaskManagerAccessClient();
+    DISALLOW_COPY_AND_MOVE(BackgroundTaskManagerAccessClient);
 
     void InitProxy();
     sptr<IBackgroundTaskMgr> GetProxy();
