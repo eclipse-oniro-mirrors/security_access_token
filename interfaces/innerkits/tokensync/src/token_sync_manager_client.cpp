@@ -33,7 +33,7 @@ TokenSyncManagerClient& TokenSyncManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            TokenSyncManagerClient* tmp = new TokenSyncManagerClient();
+            TokenSyncManagerClient* tmp = new (std::nothrow) TokenSyncManagerClient();
             instance = std::move(tmp);
         }
     }
@@ -96,7 +96,7 @@ sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy() const
         return nullptr;
     }
 
-    auto proxy = new TokenSyncManagerProxy(tokensyncSa);
+    auto proxy = new (std::nothrow) TokenSyncManagerProxy(tokensyncSa);
     if (proxy == nullptr) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Iface_cast get null");
         return nullptr;

@@ -28,7 +28,7 @@ using namespace OHOS::Security::AccessToken;
 static void NativeTokenGet()
 {
     uint64_t tokenID;
-    const char **perms = new const char *[1]; // size of array
+    const char **perms = new (std::nothrow) const char *[1]; // size of array
     perms[0] = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO"; // 0: index
 
     NativeTokenInfoParams infoInstance = {

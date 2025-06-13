@@ -30,7 +30,7 @@ RemoteCommandFactory &RemoteCommandFactory::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            RemoteCommandFactory* tmp = new RemoteCommandFactory();
+            RemoteCommandFactory* tmp = new (std::nothrow) RemoteCommandFactory();
             instance = std::move(tmp);
         }
     }

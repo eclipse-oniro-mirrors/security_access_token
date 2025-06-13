@@ -32,7 +32,7 @@ BackgourndTaskManagerAccessClient& BackgourndTaskManagerAccessClient::GetInstanc
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            BackgourndTaskManagerAccessClient* tmp = new BackgourndTaskManagerAccessClient();
+            BackgourndTaskManagerAccessClient* tmp = new (std::nothrow) BackgourndTaskManagerAccessClient();
             instance = std::move(tmp);
         }
     }
@@ -106,7 +106,7 @@ void BackgourndTaskManagerAccessClient::InitProxy()
         backgroundTaskManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = new BackgroundTaskManagerAccessProxy(backgroundTaskManagerSa);
+    proxy_ = new (std::nothrow) BackgroundTaskManagerAccessProxy(backgroundTaskManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Iface_cast get null");
     }

@@ -33,13 +33,17 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-const uint8_t *g_baseFuzzData = nullptr;
+const uint8_t* g_baseFuzzData = nullptr;
 size_t g_baseFuzzSize = 0;
 size_t g_baseFuzzPos = 0;
     void GetNativeToken()
     {
         uint64_t tokenId;
-        const char **perms = new const char *[1];
+        const char** perms = new (std::nothrow) const char *[1];
+        if (perms == nullptr) {
+            return;
+        }
+
         perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
 
         NativeTokenInfoParams infoInstance = {

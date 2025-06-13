@@ -41,7 +41,7 @@ PrivacyWindowManagerClient& PrivacyWindowManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            PrivacyWindowManagerClient* tmp = new PrivacyWindowManagerClient();
+            PrivacyWindowManagerClient* tmp = new (std::nothrow) PrivacyWindowManagerClient();
             instance = std::move(tmp);
         }
     }
@@ -134,7 +134,7 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         LOGE(PRI_DOMAIN, PRI_TAG, "Remote object is nullptr");
         return;
     }
-    mockSessionManagerServiceProxy_ = new PrivacyMockSessionManagerProxy(remoteObject);
+    mockSessionManagerServiceProxy_ = new (std::nothrow) PrivacyMockSessionManagerProxy(remoteObject);
     if (!mockSessionManagerServiceProxy_  || mockSessionManagerServiceProxy_->AsObject() == nullptr ||
         mockSessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
         LOGW(PRI_DOMAIN, PRI_TAG, "Get mock session manager service proxy failed, nullptr");
@@ -145,7 +145,7 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
         LOGE(PRI_DOMAIN, PRI_TAG, "Remote object2 is nullptr");
         return;
     }
-    sessionManagerServiceProxy_ = new PrivacySessionManagerProxy(remoteObject2);
+    sessionManagerServiceProxy_ = new (std::nothrow) PrivacySessionManagerProxy(remoteObject2);
     if (!sessionManagerServiceProxy_ || sessionManagerServiceProxy_->AsObject() == nullptr ||
         sessionManagerServiceProxy_->AsObject()->IsObjectDead()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "SessionManagerServiceProxy_ is nullptr");
@@ -169,7 +169,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         LOGW(PRI_DOMAIN, PRI_TAG, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
-    sceneSessionManagerProxy_ = new PrivacySceneSessionManagerProxy(remoteObject);
+    sceneSessionManagerProxy_ = new (std::nothrow) PrivacySceneSessionManagerProxy(remoteObject);
     if (sceneSessionManagerProxy_ == nullptr || sceneSessionManagerProxy_->AsObject() == nullptr ||
         sceneSessionManagerProxy_->AsObject()->IsObjectDead()) {
         LOGW(PRI_DOMAIN, PRI_TAG, "SceneSessionManagerProxy_ is null.");
@@ -202,7 +202,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         LOGW(PRI_DOMAIN, PRI_TAG, "Get scene session manager proxy failed, scene session manager service is null");
         return;
     }
-    sceneSessionManagerLiteProxy_ = new PrivacySceneSessionManagerLiteProxy(remoteObject);
+    sceneSessionManagerLiteProxy_ = new (std::nothrow) PrivacySceneSessionManagerLiteProxy(remoteObject);
     if (sceneSessionManagerLiteProxy_ == nullptr || sceneSessionManagerLiteProxy_->AsObject() == nullptr ||
         sceneSessionManagerLiteProxy_->AsObject()->IsObjectDead()) {
         LOGW(PRI_DOMAIN, PRI_TAG, "SceneSessionManagerLiteProxy_ is null.");
@@ -256,7 +256,7 @@ void PrivacyWindowManagerClient::InitWMSProxy()
         windowManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    wmsProxy_ = new PrivacyWindowManagerProxy(windowManagerSa);
+    wmsProxy_ = new (std::nothrow) PrivacyWindowManagerProxy(windowManagerSa);
     if (wmsProxy_ == nullptr  || wmsProxy_->AsObject() == nullptr || wmsProxy_->AsObject()->IsObjectDead()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "WmsProxy_ is null.");
         return;

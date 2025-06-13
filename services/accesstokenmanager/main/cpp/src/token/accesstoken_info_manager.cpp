@@ -1019,7 +1019,7 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            AccessTokenInfoManager* tmp = new AccessTokenInfoManager();
+            AccessTokenInfoManager* tmp = new (std::nothrow) AccessTokenInfoManager();
             instance = std::move(tmp);
         }
     }

@@ -83,7 +83,7 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            PermissionRecordManager* tmp = new PermissionRecordManager();
+            PermissionRecordManager* tmp = new (std::nothrow) PermissionRecordManager();
             instance = std::move(tmp);
         }
     }

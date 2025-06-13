@@ -35,7 +35,11 @@ namespace OHOS {
     void GetNativeToken()
     {
         uint64_t tokenId;
-        const char **perms = new const char *[1];
+        const char** perms = new (std::nothrow) const char *[1];
+        if (perms == nullptr) {
+            return;
+        }
+
         perms[0] = "ohos.permission.DISABLE_PERMISSION_DIALOG"; // 3 means the third permission
 
         NativeTokenInfoParams infoInstance = {

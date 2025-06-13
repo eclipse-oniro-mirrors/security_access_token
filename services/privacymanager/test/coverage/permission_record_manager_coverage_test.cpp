@@ -931,7 +931,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordsAsync001, TestSize
     request.isRemote = false;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
 
-    OHOS::sptr<TestUsedRecordCallback> cb(new TestUsedRecordCallback());
+    OHOS::sptr<TestUsedRecordCallback> cb(new (std::nothrow) TestUsedRecordCallback());
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request, cb));
 }
 

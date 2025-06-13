@@ -18,7 +18,7 @@
 namespace OHOS {
 SystemAbilityManagerClient& SystemAbilityManagerClient::GetInstance()
 {
-    static auto instance = new SystemAbilityManagerClient();
+    static auto instance = new (std::nothrow) SystemAbilityManagerClient();
     return *instance;
 }
 

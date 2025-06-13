@@ -32,7 +32,7 @@ FormManagerAccessClient& FormManagerAccessClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            FormManagerAccessClient* tmp = new FormManagerAccessClient();
+            FormManagerAccessClient* tmp = new (std::nothrow) FormManagerAccessClient();
             instance = std::move(tmp);
         }
     }
@@ -107,7 +107,7 @@ void FormManagerAccessClient::InitProxy()
         formManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = new FormManagerAccessProxy(formManagerSa);
+    proxy_ = new (std::nothrow) FormManagerAccessProxy(formManagerSa);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Iface_cast get null.");
     }

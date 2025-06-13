@@ -40,7 +40,7 @@ CallbackManager& CallbackManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            CallbackManager* tmp = new CallbackManager();
+            CallbackManager* tmp = new (std::nothrow) CallbackManager();
             instance = std::move(tmp);
         }
     }
@@ -130,7 +130,7 @@ void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list,
     const std::string& permName, int32_t changeType)
 {
     for (auto it = list.begin(); it != list.end(); ++it) {
-        sptr<IPermissionStateCallback> callback = new PermissionStateChangeCallbackProxy(*it);
+        sptr<IPermissionStateCallback> callback = new (std::nothrow) PermissionStateChangeCallbackProxy(*it);
         if (callback != nullptr) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback execute");
             PermStateChangeInfo resInfo;

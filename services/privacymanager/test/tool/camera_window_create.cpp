@@ -54,14 +54,14 @@ static sptr<Rosen::WindowScene> CreateWindowScene()
     sptr<Rosen::IWindowLifeCycle> listener = nullptr;
     g_abilityContext_ = std::make_shared<AbilityRuntime::AbilityContextImpl>();
 
-    sptr<Rosen::WindowScene> scene = new Rosen::WindowScene();
+    sptr<Rosen::WindowScene> scene = new (std::nothrow) Rosen::WindowScene();
     scene->Init(0, g_abilityContext_, listener);
     return scene;
 }
 
 static sptr<Rosen::Window> CreateAppFloatingWindow(Rosen::WindowType type, Rosen::Rect rect, std::string name = "")
 {
-    sptr<Rosen::WindowOption> option = new Rosen::WindowOption();
+    sptr<Rosen::WindowOption> option = new (std::nothrow) Rosen::WindowOption();
     option->SetWindowType(type);
     option->SetWindowRect(rect);
 

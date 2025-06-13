@@ -27,7 +27,7 @@ DeviceInfoRepository &DeviceInfoRepository::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            DeviceInfoRepository* tmp = new DeviceInfoRepository();
+            DeviceInfoRepository* tmp = new (std::nothrow) DeviceInfoRepository();
             instance = std::move(tmp);
         }
     }

@@ -59,7 +59,7 @@ TempPermissionObserver& TempPermissionObserver::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            TempPermissionObserver* tmp = new TempPermissionObserver();
+            TempPermissionObserver* tmp = new (std::nothrow) TempPermissionObserver();
             instance = std::move(tmp);
         }
     }

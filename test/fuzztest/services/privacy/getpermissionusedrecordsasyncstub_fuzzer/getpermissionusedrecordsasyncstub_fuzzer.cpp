@@ -70,7 +70,7 @@ namespace OHOS {
             return false;
         }
 
-        sptr<TestCallBack> callback(new TestCallBack());
+        sptr<TestCallBack> callback(new (std::nothrow) TestCallBack());
         if (!datas.WriteRemoteObject(callback->AsObject())) {
             return false;
         }

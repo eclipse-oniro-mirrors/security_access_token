@@ -39,7 +39,7 @@ AccessTokenRemoteTokenManager& AccessTokenRemoteTokenManager::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            AccessTokenRemoteTokenManager* tmp = new AccessTokenRemoteTokenManager();
+            AccessTokenRemoteTokenManager* tmp = new (std::nothrow) AccessTokenRemoteTokenManager();
             instance = std::move(tmp);
         }
     }

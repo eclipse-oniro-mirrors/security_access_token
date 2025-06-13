@@ -42,7 +42,7 @@ AccessTokenDb& AccessTokenDb::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            AccessTokenDb* tmp = new AccessTokenDb();
+            AccessTokenDb* tmp = new (std::nothrow) AccessTokenDb();
             instance = std::move(tmp);
         }
     }

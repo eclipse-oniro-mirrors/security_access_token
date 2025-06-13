@@ -1241,7 +1241,7 @@ public:
     void TestDie(int32_t callerPid)
     {
         auto map = handler_->proxyStubAndRecipientMap_;
-        auto param = reinterpret_cast<ProxyDeathParam*>(new PrivacyManagerProxyDeathParam(callerPid));
+        auto param = reinterpret_cast<ProxyDeathParam*>(new (std::nothrow) PrivacyManagerProxyDeathParam(callerPid));
         for (auto iter = map.begin(); iter != map.end(); ++iter) {
             if (iter->second.second->IsEqual(param)) {
                 iter->second.first->OnRemoteDied(iter->first);
