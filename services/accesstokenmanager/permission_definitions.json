@@ -6872,6 +6872,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ACCESS_TVCOOPERATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
             "name": "ohos.permission.THEME_SKIN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
