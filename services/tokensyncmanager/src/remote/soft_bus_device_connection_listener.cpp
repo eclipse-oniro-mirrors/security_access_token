@@ -24,6 +24,9 @@
 #include "system_ability_definition.h"
 #include "constant_common.h"
 #include "dm_device_info.h"
+#ifdef MEMORY_MANAGER_ENABLE
+#include "mem_mgr_client.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -42,6 +45,10 @@ SoftBusDeviceConnectionListener::~SoftBusDeviceConnectionListener()
 
 void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::DmDeviceInfo &info)
 {
+#ifdef MEMORY_MANAGER_ENABLE
+    int32_t pid = getpid();
+    Memory::MemMgrClient::GetInstance().SetCritical(pid, true, TOKEN_SYNC_MANAGER_SERVICE_ID);
+#endif
     std::string networkId = std::string(info.networkId);
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
@@ -109,6 +116,10 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware:
         LOGI(ATM_DOMAIN, ATM_TAG, "There is no remote decice online, exit tokensync process");
 
         UnloadTokensyncService();
+#ifdef MEMORY_MANAGER_ENABLE
+        int32_t pid = getpid();
+        Memory::MemMgrClient::GetInstance().SetCritical(pid, false, TOKEN_SYNC_MANAGER_SERVICE_ID);
+#endif
     }
 }
 

@@ -97,4 +97,9 @@ ohos_unittest("libtoken_sync_service_standard_test") {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]
   }
+
+  if (memory_manager_enable == true) {
+    cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
+    external_deps += [ "memmgr:memmgrclient" ]
+  }
 }

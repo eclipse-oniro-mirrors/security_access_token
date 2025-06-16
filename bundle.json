@@ -49,6 +49,7 @@
         "init",
         "ipc",
         "json",
+        "memmgr",
         "napi",
         "openssl",
         "power_manager",

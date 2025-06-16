@@ -131,5 +131,10 @@ if (token_sync_enable == true) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
       external_deps += [ "device_manager:devicemanagersdk" ]
     }
+
+    if (memory_manager_enable == true) {
+      cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
+      external_deps += [ "memmgr:memmgrclient" ]
+    }
   }
 }
