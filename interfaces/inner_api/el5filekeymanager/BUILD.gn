@@ -44,7 +44,10 @@ ohos_source_set("el5_filekey_manager_proxy") {
   sources += filter_include(output_values, [ "*manager_interface_proxy.cpp" ])
   public_configs = [ ":efm_innerkits" ]
   deps = [ ":el5_filekey_manager_interface" ]
-  external_deps = [ "ipc:ipc_core" ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+  ]
   subsystem_name = "security"
   part_name = "access_token"
 }
@@ -61,7 +64,10 @@ ohos_source_set("el5_filekey_manager_stub") {
   sources += filter_include(output_values, [ "*manager_interface_stub.cpp" ])
   public_configs = [ ":efm_innerkits" ]
   deps = [ ":el5_filekey_manager_interface" ]
-  external_deps = [ "ipc:ipc_core" ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+  ]
   subsystem_name = "security"
   part_name = "access_token"
 }
