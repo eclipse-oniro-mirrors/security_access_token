@@ -6894,6 +6894,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.FILE_ACCESS_FOR_PRIVATE_SPACE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
             "name": "ohos.permission.ACCESS_DFX_LOG_DIR",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -6903,17 +6914,6 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
-        },
-        {
-            "name": "ohos.permission.FILE_ACCESS_FOR_PRIVAET_SPACE",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": 20,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tablet"]
         }
     ]
 }
