@@ -26,29 +26,29 @@ static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
-BackgourndTaskManagerAccessClient& BackgourndTaskManagerAccessClient::GetInstance()
+BackgroundTaskManagerAccessClient& BackgroundTaskManagerAccessClient::GetInstance()
 {
-    static BackgourndTaskManagerAccessClient* instance = nullptr;
+    static BackgroundTaskManagerAccessClient* instance = nullptr;
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            BackgourndTaskManagerAccessClient* tmp = new (std::nothrow) BackgourndTaskManagerAccessClient();
+            BackgroundTaskManagerAccessClient* tmp = new (std::nothrow) BackgroundTaskManagerAccessClient();
             instance = std::move(tmp);
         }
     }
     return *instance;
 }
 
-BackgourndTaskManagerAccessClient::BackgourndTaskManagerAccessClient()
+BackgroundTaskManagerAccessClient::BackgroundTaskManagerAccessClient()
 {}
 
-BackgourndTaskManagerAccessClient::~BackgourndTaskManagerAccessClient()
+BackgroundTaskManagerAccessClient::~BackgroundTaskManagerAccessClient()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
 }
 
-int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
+int32_t BackgroundTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
     if (subscriber == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Callback is nullptr.");
@@ -62,7 +62,7 @@ int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IB
     return proxy->SubscribeBackgroundTask(subscriber);
 }
 
-int32_t BackgourndTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
+int32_t BackgroundTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
     if (subscriber == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Callback is nullptr.");
@@ -76,7 +76,7 @@ int32_t BackgourndTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<
     return proxy->UnsubscribeBackgroundTask(subscriber);
 }
 
-int32_t BackgourndTaskManagerAccessClient::GetContinuousTaskApps(
+int32_t BackgroundTaskManagerAccessClient::GetContinuousTaskApps(
     std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> &list)
 {
     auto proxy = GetProxy();
@@ -87,7 +87,7 @@ int32_t BackgourndTaskManagerAccessClient::GetContinuousTaskApps(
     return proxy->GetContinuousTaskApps(list);
 }
 
-void BackgourndTaskManagerAccessClient::InitProxy()
+void BackgroundTaskManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
@@ -112,13 +112,13 @@ void BackgourndTaskManagerAccessClient::InitProxy()
     }
 }
 
-void BackgourndTaskManagerAccessClient::OnRemoteDiedHandle()
+void BackgroundTaskManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
 }
 
-sptr<IBackgroundTaskMgr> BackgourndTaskManagerAccessClient::GetProxy()
+sptr<IBackgroundTaskMgr> BackgroundTaskManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {
@@ -127,7 +127,7 @@ sptr<IBackgroundTaskMgr> BackgourndTaskManagerAccessClient::GetProxy()
     return proxy_;
 }
 
-void BackgourndTaskManagerAccessClient::ReleaseProxy()
+void BackgroundTaskManagerAccessClient::ReleaseProxy()
 {
     if ((proxy_ != nullptr) && (proxy_->AsObject() != nullptr) && (serviceDeathObserver_ != nullptr)) {
         proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);

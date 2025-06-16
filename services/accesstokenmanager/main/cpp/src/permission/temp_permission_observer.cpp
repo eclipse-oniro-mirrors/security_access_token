@@ -237,7 +237,7 @@ void TempPermissionObserver::RegisterCallback()
                 LOGE(ATM_DOMAIN, ATM_TAG, "Register backgroundTaskCallback failed.");
                 return;
             }
-            int ret = BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskCallback_);
+            int ret = BackgroundTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskCallback_);
             LOGI(ATM_DOMAIN, ATM_TAG, "Register backgroundTaskCallback %{public}d.", ret);
         }
     }
@@ -319,7 +319,7 @@ void TempPermissionObserver::UnRegisterCallback()
     {
         std::lock_guard<std::mutex> lock(backgroundTaskCallbackMutex_);
         if (backgroundTaskCallback_ != nullptr) {
-            int32_t ret = BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(
+            int32_t ret = BackgroundTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(
                 backgroundTaskCallback_);
             if (ret != ERR_NONE) {
                 LOGI(ATM_DOMAIN, ATM_TAG, "Unregister appStateCallback %{public}d.", ret);
@@ -453,7 +453,7 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
     bool isContinuousTaskExist = false;
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
-    BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
+    BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
     for (auto iter = continuousTaskList.begin(); iter != continuousTaskList.end(); iter++) {
         if (static_cast<AccessTokenID>((*iter)->tokenId_) == tokenID) {
             if (std::any_of((*iter)->typeIds_.begin(), (*iter)->typeIds_.end(),
