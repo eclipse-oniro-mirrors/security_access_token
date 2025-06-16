@@ -780,8 +780,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level0)
 
     tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    AccessTokenID getTokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_EQ(tokenIdEx.tokenIdExStruct.tokenID, getTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "find hap info";
 
     std::shared_ptr<HapTokenInfoInner> tokenInfo;

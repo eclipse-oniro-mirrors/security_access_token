@@ -222,8 +222,8 @@ HWTEST_F(AccessTokenCoverageTest, AllocHapToken001, TestSize.Level4)
     HapInfoParams info;
     HapPolicyParams policy;
     info.userID = -1;
-    AccessTokenKit::AllocHapToken(info, policy);
-    ASSERT_EQ(-1, info.userID);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 /**
