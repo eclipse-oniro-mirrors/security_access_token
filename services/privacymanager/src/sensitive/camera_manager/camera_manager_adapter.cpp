@@ -15,9 +15,6 @@
 
 #include "camera_manager_adapter.h"
 #include "accesstoken_common_log.h"
-#ifdef CAMERA_FRAMEWORK_ENABLE
-#include "camera_service_ipc_interface_code.h"
-#endif
 #include <iremote_proxy.h>
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -25,6 +22,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+#ifdef CAMERA_FRAMEWORK_ENABLE
+static constexpr int32_t CAMERA_IS_CAMERA_MUTED_IPC_CODE = 13;
+#endif
 
 CameraManagerAdapter& CameraManagerAdapter::GetInstance()
 {
@@ -54,7 +55,7 @@ bool CameraManagerAdapter::IsCameraMuted()
     MessageParcel reply;
     MessageOption option;
 
-    std::u16string CAMERA_MGR_DESCRIPTOR = u"ICameraService";
+    std::u16string CAMERA_MGR_DESCRIPTOR = u"OHOS.CameraStandard.ICameraService";
     if (!data.WriteInterfaceToken(CAMERA_MGR_DESCRIPTOR)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
         return false;
@@ -62,8 +63,7 @@ bool CameraManagerAdapter::IsCameraMuted()
     if (!data.WriteInt32(0)) {
         return false;
     }
-    int32_t ipcCode = CameraStandard::GetIsCameraMutedIpcCode();
-    int32_t error = proxy->SendRequest(ipcCode, data, reply, option);
+    int32_t error = proxy->SendRequest(CAMERA_IS_CAMERA_MUTED_IPC_CODE, data, reply, option);
     if (error != NO_ERROR) {
         LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
         return false;
