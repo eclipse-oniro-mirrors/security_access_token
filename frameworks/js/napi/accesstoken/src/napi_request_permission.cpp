@@ -661,7 +661,7 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
 
 void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void* data)
 {
-    // asyncContext release in complete
+    // asyncContext release in complete.
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
