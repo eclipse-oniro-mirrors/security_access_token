@@ -55,6 +55,7 @@ if (is_standard_system && ability_base_enable == true) {
     sources = [
       "src/el5_filekey_manager_service.cpp",
       "src/el5_filekey_manager_service_ability.cpp",
+      "src/el5_memory_manager.cpp",
     ]
 
     configs = []

@@ -60,6 +60,8 @@ public:
     void PostDelayedUnloadTask(uint32_t delayedTime);
     void CancelDelayedUnloadTask();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
+    int32_t CallbackEnter(uint32_t code) override;
+    int32_t CallbackExit(uint32_t code, int32_t result) override;
 
 private:
     ServiceRunningState serviceRunningState_ = ServiceRunningState::STATE_NOT_START;

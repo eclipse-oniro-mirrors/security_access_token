@@ -20,6 +20,12 @@
                         "name": "usual.event.USER_STOPPED"
                     }
                 ]
+            },
+            "stop-on-demand": {
+                "param": [{
+                    "name": "resourceschedule.memmgr.low.memory.prepare",
+                    "value": "true"
+                }]
             }
         }
     ]

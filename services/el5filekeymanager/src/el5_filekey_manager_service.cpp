@@ -22,9 +22,10 @@
 #include "common_event_support.h"
 #endif
 #include "el5_filekey_manager_error.h"
+#include "el5_filekey_manager_log.h"
+#include "el5_memory_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
-#include "el5_filekey_manager_log.h"
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
 #include "screenlock_manager.h"
 #endif
@@ -105,6 +106,20 @@ void El5FilekeyManagerService::UnInit()
     }
 }
 
+// CallbackEnter, if "option_stub_hooks on", is called per IPC call at entrance of OnRemoteRequest
+int32_t El5FilekeyManagerService::CallbackEnter(uint32_t code)
+{
+    El5MemoryManager::GetInstance().AddFunctionRuningNum();
+    return ERR_OK;
+}
+
+// CallbackExit, if "option_stub_hooks on", is called per IPC call at exit of OnRemoteRequest
+int32_t El5FilekeyManagerService::CallbackExit(uint32_t code, int32_t result)
+{
+    El5MemoryManager::GetInstance().DecreaseFunctionRuningNum();
+    return ERR_OK;
+}
+
 void El5FilekeyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     LOG_INFO("SaId %{public}d added", systemAbilityId);
@@ -150,6 +165,8 @@ void El5FilekeyManagerService::PostDelayedUnloadTask(uint32_t delayedTime)
             LOG_ERROR("GetSystemAbilityManager is null.");
             return;
         }
+
+        El5MemoryManager::GetInstance().SetIsDelayedToUnload(true);
         int32_t ret = systemAbilityManager->UnloadSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID);
         if (ret != ERR_OK) {
             LOG_ERROR("Unload el5_filekey_manager failed.");
