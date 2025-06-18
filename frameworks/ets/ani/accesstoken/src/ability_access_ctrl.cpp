@@ -1346,7 +1346,8 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     }
     PermissionBriefDef def;
     if (!GetPermissionBriefDef(permissionNameString, def) || def.grantMode != USER_GRANT) {
-        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST, GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
+        BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST,
+            GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
         return;
     }
 
@@ -1363,16 +1364,16 @@ static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]]
     uint32_t version = -1;
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
-        return version;
+        return static_cast<ani_int>(version);
     }
 
     int32_t result = AccessTokenKit::GetVersion(version);
     if (result != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
-        return version;
+        return static_cast<ani_int>(version);
     }
-    return version;
+    return static_cast<ani_int>(version);
 }
 
 static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
