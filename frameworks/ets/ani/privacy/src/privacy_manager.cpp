@@ -94,6 +94,86 @@ static int32_t GetStsErrorCode(int32_t errCode)
     return stsCode;
 }
 
+bool GetStdString(ani_env *env, ani_string str, std::string &res)
+{
+    ani_size sz {};
+    ani_status status = ANI_ERROR;
+    if ((status = env->String_GetUTF8Size(str, &sz)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
+        return false;
+    }
+    res.resize(sz + 1);
+    if ((status = env->String_GetUTF8SubString(str, 0, sz, res.data(), res.size(), &sz)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
+        return false;
+    }
+    res.resize(sz);
+    return true;
+}
+
+template <class T>
+static bool EnumConvertStsToNative(ani_env *env, ani_enum_item enumItem, T &result)
+{
+    ani_status status = ANI_ERROR;
+    if constexpr (std::is_enum<T>::value || std::is_integral<T>::value) {
+        ani_int intValue{};
+        status = env->EnumItem_GetValue_Int(enumItem, &intValue);
+        if (ANI_OK != status) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "EnumConvert_StsToNative failed, status : %{public}d", status);
+            return false;
+        }
+        result = static_cast<T>(intValue);
+        return true;
+    } else if constexpr (std::is_same<T, std::string>::value) {
+        ani_string strValue{};
+        status = env->EnumItem_GetValue_String(enumItem, &strValue);
+        if (ANI_OK != status) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "EnumItem_GetValue_String failed, status : %{public}d", status);
+            return false;
+        }
+        return GetStdString(env, strValue, result);
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Enum convert failed: type not supported");
+        return false;
+    }
+}
+
+template<class T>
+static bool EnumConvertStsToNative(ani_env *env, ani_object enumItem, T &result)
+{
+    return EnumConvertStsToNative<T>(env, static_cast<ani_enum_item>(enumItem), result);
+}
+
+template <class T>
+static bool EnumConvertNativeToSts(ani_env *env, const char *enumName, const T enumValue, ani_enum_item &result)
+{
+    ani_enum aniEnum{};
+    ani_status status = env->FindEnum(enumName, &aniEnum);
+    if (ANI_OK != status) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Enum convert FindEnum failed: %{public}s status: %{public}d", enumName, status);
+        return false;
+    }
+    constexpr int32_t loopMaxNum = 1000;
+    for (int32_t index = 0U; index < loopMaxNum; index++) {
+        ani_enum_item enumItem{};
+        status = env->Enum_GetEnumItemByIndex(aniEnum, index, &enumItem);
+        if (ANI_OK != status) {
+            ACCESSTOKEN_LOG_INFO(LABEL, 
+                "Enum convert Enum_GetEnumItemByIndex failed: enumName:%{public}s index:%{public}d status:%{public}d",
+                enumName, index, status);
+            return false;
+        }
+        // compare value
+        T tmpValue{};
+        if (EnumConvertStsToNative<T>(env, enumItem, tmpValue) && tmpValue == enumValue) {
+            result = enumItem;
+            return true;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "EnumConvertNativeToSts failed enumName: %{public}s", enumName);
+    return false;
+}
+
 static void AddPermissionUsedRecordSync(ani_env* env, const AddPermParamInfo& info)
 {
     auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
@@ -105,11 +185,10 @@ static void AddPermissionUsedRecordSync(ani_env* env, const AddPermParamInfo& in
     ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord retCode : %{public}d", retCode);
 }
 
-static void AddPermissionUsedRecord([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+static void AddPermissionUsedRecordSExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_int tokenID, ani_string permissionName, ani_int successCount, ani_int failCount, ani_object options)
 {
-    if (env == nullptr) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+    if (env == nullptr || object == nullptr || options == object) {
         return;
     }
     ani_size strSize;
@@ -719,9 +798,119 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_u
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
+
+static ani_object GetPermissionUsedRecordExecute(
+    [[maybe_unused]] ani_env* env,  [[maybe_unused]] ani_object object, ani_object request)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordExecute Call");
+    if(env == nullptr || request == nullptr){
+        return nullptr;
+    }
+
+    return nullptr;
+}
+
+static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int tokenId, ani_string aniPermissionName)
+{
+    if(env == nullptr){
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");  
+    }
+    /*std::string permissionName;
+    if (!AniParseStringAndNull(env, aniPermissionName, permissionName)) {
+        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("permissionName", "string"));
+        return nullptr;
+    }
+
+    int32_t retCode = ANI_ERROR;
+    std::vector<PermissionUsedTypeInfo> retVec;
+    retCode = PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, retVec);
+    if(retCode != ANI_OK) { 
+        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode),
+            GetErrorMessage(GetStsErrorCode(retCode)));
+        return nullptr;
+    }*/
+    return nullptr;//ProcessPermissionUsedTypeInfoResult(env,retVec);
+}
+
+static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_boolean status)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionUsedRecordToggleStatusExecute Call");
+    int32_t retCode = ANI_ERROR;
+    int32_t userID = 0;
+    retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status);
+    if (retCode != RET_SUCCESS) {
+        int32_t stscode = BusinessErrorAni::GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stscode, GetErrorMessage(stscode));
+    }
+}
+
+static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, 
+    [[maybe_unused]] ani_object object){
+    int32_t retCode = ANI_ERROR;
+    int32_t userID = 0;
+    bool ret;
+    retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID,ret);
+    if (retCode != RET_SUCCESS) {
+        std::string errMsg = GetErrorMessage(GetStsErrorCode(retCode), "PrivacyKit::GetPermissionUsedRecordToggleStatus Error");
+        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode), errMsg);
+        return false;
+    }
+    return ret;
+}
+
+void InitPrivacyFunction(ani_env *env)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitPrivacyFunction call");
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        return;
+    }
+    if (env->ResetError() != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ResetError failed.");
+    }
+
+    ani_namespace ns;
+    if (ANI_OK != env->FindNamespace("L@ohos/privacyManager/privacyManager;", &ns)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace privacyManager failed.");
+        return;
+    }
+
+    // namespace method input param without ani_object
+    std::array nsMethods = {
+        ani_native_function {"addPermissionUsedRecordSExecute", nullptr,
+            reinterpret_cast<void *>(AddPermissionUsedRecordSExecute)},
+        ani_native_function {"startUsingPermissionExecute", nullptr,
+            reinterpret_cast<void *>(StartUsingPermissionExecute)},
+        ani_native_function {"stopUsingPermissionExecute", nullptr,
+            reinterpret_cast<void *>(StopUsingPermissionExecute)},
+        ani_native_function {"getPermissionUsedRecordExecute", nullptr,
+            reinterpret_cast<void *>(GetPermissionUsedRecordExecute)},
+        ani_native_function {"getPermissionUsedTypeInfosExecute", nullptr,
+            reinterpret_cast<void *>(GetPermissionUsedTypeInfosExecute)},
+        ani_native_function {"setPermissionUsedRecordToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(SetPermissionUsedRecordToggleStatusExecute)},
+        ani_native_function {"getPermissionUsedRecordToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(GetPermissionUsedRecordToggleStatusExecute)},
+        ani_native_function {"onExecute", nullptr, reinterpret_cast<void *>(RegisterPermActiveStatusCallback)},
+        ani_native_function {"offExecute", nullptr, reinterpret_cast<void *>(UnRegisterPermActiveStatusCallback)},
+    };
+    ani_status status = env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size());
+    if (status != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Namespace_BindNativeFunctions failed status : %{public}d.", status);
+    }
+    if (env->ResetError() != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ResetError failed.");
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitPrivacyFunction end");
+}
+
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "ANI_Constructor begin");
     if (vm == nullptr || result == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm or result");
         return ANI_INVALID_ARGS;
@@ -731,55 +920,9 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
         return ANI_OUT_OF_MEMORY;
     }
-
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
-        return ANI_NOT_FOUND;
-    }
-
-    const char* className = "L@ohos/privacyManager/privacyManager/PrivacyManagerInner;";
-    ani_class cls;
-    if (ANI_OK != env->FindClass(className, &cls)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
-        return ANI_NOT_FOUND;
-    }
-
-    std::array methods = {
-        ani_native_function { "addPermissionUsedRecordSync",
-            "ILstd/core/String;IIL@ohos/privacyManager/privacyManager/AddPermissionUsedRecordOptionsInner;:V",
-            reinterpret_cast<void*>(AddPermissionUsedRecord) },
-        ani_native_function { "stopUsingPermissionExecute",
-            nullptr,
-            reinterpret_cast<void*>(StopUsingPermissionExecute) },
-        ani_native_function { "startUsingPermissionExecute",
-            nullptr,
-            reinterpret_cast<void*>(StartUsingPermissionExecute) },
-    };
-
-    if (ANI_OK != env->Class_BindNativeMethods(cls, methods.data(), methods.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
-        return ANI_ERROR;
-    };
-
-    static const char *name = "L@ohos/privacyManager/privacyManager;";
-    ani_namespace ns;
-    if (ANI_OK != env->FindNamespace(name, &ns)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace %{public}s failed.", name);
-        return ANI_ERROR;
-    }
-
-    // namespace method input param without ani_object
-    std::array nsMethods = {
-        ani_native_function { "on", nullptr, reinterpret_cast<void *>(RegisterPermActiveStatusCallback) },
-        ani_native_function { "off", nullptr, reinterpret_cast<void *>(UnRegisterPermActiveStatusCallback) },
-    };
-
-    if (ANI_OK != env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Namespace_BindNativeFunctions %{public}s failed.", name);
-        return ANI_ERROR;
-    };
-
+    InitPrivacyFunction(env);
     *result = ANI_VERSION_1;
+    ACCESSTOKEN_LOG_INFO(LABEL, "ANI_Constructor end");
     return ANI_OK;
 }
 }
