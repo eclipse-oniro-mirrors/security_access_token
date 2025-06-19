@@ -6707,6 +6707,18 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.kernel.AUTH_AUDIT_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.kernel.ALLOW_APP_CODE_DECRYPT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
