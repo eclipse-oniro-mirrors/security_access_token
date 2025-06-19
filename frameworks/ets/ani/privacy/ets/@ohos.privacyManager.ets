@@ -25,17 +25,264 @@ export { Permissions }
 export default namespace privacyManager {
     loadLibrary("privacy_ani.z");
 
-    enum PermissionUsedType {
+    native function addPermissionUsedRecordExecute(
+        tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
+        options: AddPermissionUsedRecordOptions): void;
+
+    native function startUsingPermissionExecute(
+        tokenID: int, permissionName: Permissions, pid: int, usedType: int): void;
+    native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
+    native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
+    native function getPermissionUsedTypeInfosExecute(
+        tokenId: int, permissionName: Permissions): Array<PermissionUsedTypeInfo>;
+    native function setPermissionUsedRecordToggleStatusExecute(status: boolean): void;
+    native function getPermissionUsedRecordToggleStatusExecute(): boolean;
+    native function onExecute(
+        type: string, permissionList: Array<Permissions>, callback: Callback<ActiveChangeResponse>): void;
+    native function offExecute(
+        type: string, permissionList: Array<Permissions>, callback?: Callback<ActiveChangeResponse>): void;
+
+    export function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
+        failCount: int, options?: AddPermissionUsedRecordOptions): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
+        let optionsLocal: AddPermissionUsedRecordOptions = { usedType: usedTypeTemp };
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                addPermissionUsedRecordExecute(
+                    tokenID, permissionName, successCount, failCount, optionsLocal);
+            });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
+        failCount: int, callback: AsyncCallback<void>): void {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let options: AddPermissionUsedRecordOptions = { usedType: PermissionUsedType.NORMAL_TYPE };
+        let p = taskpool.execute((): void => {
+            addPermissionUsedRecordExecute(tokenID, permissionName,
+                successCount, failCount, options);
+        });
+        p.then(() => {
+            let err = new BusinessError<void>();
+            callback(err, undefined);
+        },(err: Error): void=> {
+            callback(err as BusinessError, undefined);
+        });
+    }
+
+    export function stopUsingPermission(tokenID: int, permissionName: Permissions): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return stopUsingPermissionExecute(tokenID, permissionName, -1) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function stopUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let p = taskpool.execute((): void => {
+            return stopUsingPermissionExecute(tokenID, permissionName, -1) });
+        p.then(() => {
+            let err = new BusinessError<void>();
+            callback(err, undefined);
+        },(err: Error): void=> {
+            callback(err as BusinessError, undefined);
+        });
+    }
+
+    export function stopUsingPermission(tokenID: int, permissionName: Permissions, pid?: int): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let optionalPid: int = pid ?? -1;
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function startUsingPermission(tokenID: int, permissionName: Permissions): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return startUsingPermissionExecute(tokenID, permissionName,
+                    -1, PermissionUsedType.NORMAL_TYPE) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function startUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let p = taskpool.execute((): void => {
+            return startUsingPermissionExecute(tokenID, permissionName,
+                -1, PermissionUsedType.NORMAL_TYPE) });
+        p.then(() => {
+            let err = new BusinessError<void>();
+            callback(err, undefined);
+        },(err: Error): void => {
+            callback(err as BusinessError, undefined);
+        })
+    }
+
+    export function startUsingPermission(tokenID: int, permissionName: Permissions, pid?: int,
+        usedType?: PermissionUsedType): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let optionalPid: int = pid ?? -1;
+        let optionalUsedType = usedType ?? PermissionUsedType.NORMAL_TYPE;
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return startUsingPermissionExecute(tokenID, permissionName,
+                    optionalPid, optionalUsedType) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function getPermissionUsedRecord(request: PermissionUsedRequest): Promise<PermissionUsedResponse> {
+        return new Promise<PermissionUsedResponse>(
+            (resolve: (data: PermissionUsedResponse) => void, reject: (error: BusinessError) => void): PermissionUsedResponse => {
+            let p1 = taskpool.execute((): PermissionUsedResponse => {
+                return getPermissionUsedRecordExecute(request);
+            });
+            p1.then((e: NullishType):void => {
+                resolve(e as PermissionUsedResponse);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+    }
+
+    export function getPermissionUsedTypeInfos(tokenId?: int, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>>{
+        let tokenIdIn = tokenId ? tokenId : 0;
+        let permissionNameIn = permissionName ?? "";
+        return new Promise<Array<PermissionUsedTypeInfo>>(
+            (resolve: (v: Array<PermissionUsedTypeInfo>) => void, reject: (err:BusinessError) => void): Array<PermissionUsedTypeInfo> => {
+            let p1 = taskpool.execute((): Array<PermissionUsedTypeInfo> => {
+                return getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
+            });
+            p1.then((e: NullishType): void => {
+                resolve(e as Array<PermissionUsedTypeInfo>);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            })
+        });
+    }
+
+    export function setPermissionUsedRecordToggleStatus(status: boolean): Promise<void>{
+        return new Promise<void>(
+            (resolve: (v: undefined) => void, reject: (err: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                setPermissionUsedRecordToggleStatusExecute(status);
+            });
+            p1.then((e: NullishType): void => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            })
+        });
+    }
+
+    export function getPermissionUsedRecordToggleStatus(): Promise<boolean>{
+        return new Promise<boolean>(
+            (resolve: (v: boolean) => void, reject: (err:BusinessError) => void): void => {
+            let p1 = taskpool.execute((): boolean => {
+                return getPermissionUsedRecordToggleStatusExecute();
+            });
+            p1.then((e: NullishType): void => {
+                resolve(e as boolean);
+            }).catch((err: Error): void =>{
+                reject(err as BusinessError);
+            })
+        });
+    }
+
+    export function on(
+        type: string, permissionList: Array<Permissions>, callback: Callback<ActiveChangeResponse>): void {
+        onExecute(type, permissionList, callback);
+    }
+
+    export function off(
+        type: string, permissionList: Array<Permissions>, callback?: Callback<ActiveChangeResponse>): void {
+        offExecute(type, permissionList, callback);
+    }
+
+    export enum PermissionUsedType {
         NORMAL_TYPE = 0,
         PICKER_TYPE = 1,
         SECURITY_COMPONENT_TYPE = 2
-    }
+    };
 
-    enum PermissionActiveStatus {
+    export enum PermissionActiveStatus {
         PERM_INACTIVE = 0,
         PERM_ACTIVE_IN_FOREGROUND = 1,
         PERM_ACTIVE_IN_BACKGROUND = 2
-    }
+    };
 
     enum STSErrorCode {
         STS_OK = 0,
@@ -43,43 +290,30 @@ export default namespace privacyManager {
         STS_ERROR_NOT_SYSTEM_APP = 202,
         STS_ERROR_PARAM_ILLEGAL = 401,
         STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
-    } ;
+    };
 
-    interface AddPermissionUsedRecordOptions {
+    export enum PermissionUsageFlag {
+        FLAG_PERMISSION_USAGE_SUMMARY = 0,
+        FLAG_PERMISSION_USAGE_DETAIL = 1
+    };
+
+    export interface AddPermissionUsedRecordOptions {
         usedType?: PermissionUsedType;
     }
 
-    class AddPermissionUsedRecordOptionsInner implements AddPermissionUsedRecordOptions {
-        usedType: PermissionUsedType|undefined;
-    }
-
-    class PrivacyManagerInner {
-        native addPermissionUsedRecordSync(tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
-            options: AddPermissionUsedRecordOptionsInner): void;
-        
-        native stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
-
-        native startUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int,
-            usedType: int): void;
-        
-    }
-
-    interface UsedRecordDetail {
-        status: number;
-        lockScreenStatus?: number;
-        timestamp: number;
-        count?: number;
-        accessDuration: number;
-        usedType?: PermissionUsedType;
-    }
-
-    interface PermissionUsedTypeInfo {
-        tokenId: number;
+    export interface PermissionUsedTypeInfo {
+        tokenId: int;
         permissionName: Permissions;
         usedType: PermissionUsedType;
     }
 
-    interface ActiveChangeResponse {
+    class PermissionUsedTypeInfoInner implements PermissionUsedTypeInfo {
+        tokenId: int;
+        permissionName: Permissions;
+        usedType: PermissionUsedType;
+    }
+
+    export interface ActiveChangeResponse {
         callingTokenId?: int;
         tokenId: int;
         permissionName: Permissions;
@@ -97,175 +331,84 @@ export default namespace privacyManager {
         usedType?: PermissionUsedType;
     }
 
-    function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
-        failCount: int, options?: AddPermissionUsedRecordOptions): Promise<void> {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-
-        let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
-        let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: usedTypeTemp };
-        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => { return new PrivacyManagerInner().addPermissionUsedRecordSync(
-                tokenID, permissionName, successCount, failCount, optionsLocal) });
-            p1.then(() => {
-                resolve(undefined);
-            }).catch((err: Error): void => {
-                reject(err as BusinessError);
-            });
-        });
-        return p;
+    export interface PermissionUsedRequest {
+        tokenId?: int;
+        isRemote?: boolean;
+        deviceId?: string;
+        bundleName?: string;
+        permissionNames?: Array<Permissions>;
+        beginTime?: long;
+        endTime?: long;
+        flag: PermissionUsageFlag;
     }
 
-    function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
-        failCount: int, callback: AsyncCallback<void>): void {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionsLocal: AddPermissionUsedRecordOptionsInner = { usedType: PermissionUsedType.NORMAL_TYPE };
-        let p2 = taskpool.execute((): void => {
-            return new PrivacyManagerInner().addPermissionUsedRecordSync(tokenID, permissionName,
-                successCount, failCount, optionsLocal)});
-        p2.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
-        },(err: Error): void=> {
-            callback(err as BusinessError, undefined);
-        })
+    export interface UsedRecordDetail {
+        status: int;
+        lockScreenStatus?: int;
+        timestamp: long;
+        count?: int;
+        accessDuration: int;
+        usedType?: PermissionUsedType;
     }
 
-    function stopUsingPermission(tokenID: int, permissionName: Permissions): Promise<void> {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid = -1;
-        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => {
-                return new PrivacyManagerInner().stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
-            p1.then(() => {
-                resolve(undefined);
-            }).catch((err: Error): void => {
-                reject(err as BusinessError);
-            });
-        });
-        return p;
+    class UsedRecordDetailInner implements UsedRecordDetail {
+        status: int;
+        lockScreenStatus?: int;
+        timestamp: long;
+        count?: int;
+        accessDuration: int;
+        usedType?: PermissionUsedType;
     }
 
-    function stopUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid = -1;
-        let p2 = taskpool.execute((): void => {
-            return new PrivacyManagerInner().stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
-        p2.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
-        },(err: Error): void=> {
-            callback(err as BusinessError, undefined);
-        })
+    interface PermissionUsedRecord {
+        permissionName: Permissions;
+        accessCount: int;
+        secAccessCount: int;
+        rejectCount: int;
+        lastAccessTime: long;
+        lastRejectTime: long;
+        lastAccessDuration: long;
+        accessRecords: Array<UsedRecordDetail>;
+        rejectRecords: Array<UsedRecordDetail>;
     }
 
-    function stopUsingPermission(tokenID: int, permissionName: Permissions, pid?: int): Promise<void> {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid: int = pid ?? -1;
-        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => { 
-                return new PrivacyManagerInner().stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
-            p1.then(() => {
-                resolve(undefined);
-            }).catch((err: Error): void => {
-                reject(err as BusinessError);
-            });
-        });
-        return p;
+    class PermissionUsedRecordInner implements PermissionUsedRecord {
+        permissionName: Permissions;
+        accessCount: int;
+        secAccessCount: int;
+        rejectCount: int;
+        lastAccessTime: long;
+        lastRejectTime: long;
+        lastAccessDuration: long;
+        accessRecords: Array<UsedRecordDetail>;
+        rejectRecords: Array<UsedRecordDetail>;
     }
 
-    function startUsingPermission(tokenID: int, permissionName: Permissions): Promise<void> {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid = -1;
-        let optionalUsedType = PermissionUsedType.NORMAL_TYPE;
-        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => {
-                return new PrivacyManagerInner().startUsingPermissionExecute(tokenID, permissionName,
-                    optionalPid, optionalUsedType) });
-            p1.then(() => {
-                resolve(undefined);
-            }).catch((err: Error): void => {
-                reject(err as BusinessError);
-            });
-        });
-        return p;
+    export interface BundleUsedRecord{
+        tokenId: int;
+        isRemote: boolean;
+        deviceId: string;
+        bundleName: string;
+        permissionNames: Array<PermissionUsedRecord>;
     }
 
-    function startUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid = -1;
-        let optionalUsedType = PermissionUsedType.NORMAL_TYPE;
-        let p2 = taskpool.execute((): void => {
-            return new PrivacyManagerInner().startUsingPermissionExecute(tokenID, permissionName,
-                optionalPid, optionalUsedType) });
-        p2.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
-        },(err: Error): void => {
-            callback(err as BusinessError, undefined);
-        })
+    class BundleUsedRecordInner implements BundleUsedRecord {
+        tokenId: int;
+        isRemote: boolean;
+        deviceId: string;
+        bundleName: string;
+        permissionNames: Array<PermissionUsedRecord>;
     }
 
-    function startUsingPermission(tokenID: int, permissionName: Permissions, pid?: int,
-        usedType?: PermissionUsedType): Promise<void> {
-        if (typeof permissionName !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
-            throw err;
-        }
-        let optionalPid: int = pid ?? -1;
-        let optionalUsedType = usedType ?? PermissionUsedType.NORMAL_TYPE;
-        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => {
-                return new PrivacyManagerInner().startUsingPermissionExecute(tokenID, permissionName,
-                    optionalPid, optionalUsedType) });
-            p1.then(() => {
-                resolve(undefined);
-            }).catch((err: Error): void => {
-                reject(err as BusinessError);
-            });
-        });
-        return p;
+    export interface PermissionUsedResponse {
+        beginTime: long;
+        endTime: long;
+        bundleRecords: Array<BundleUsedRecord>;
     }
 
-    export native function on(type: 'activeStateChange', permissionList: Array<Permissions>,
-        callback: Callback<ActiveChangeResponse>): void;
-
-    export native function off(type: 'activeStateChange', permissionList: Array<Permissions>,
-        callback?: Callback<ActiveChangeResponse>): void;
+    class PermissionUsedResponseInner implements PermissionUsedResponse {
+        beginTime: long;
+        endTime: long;
+        bundleRecords: Array<BundleUsedRecord>;
+    }
 }

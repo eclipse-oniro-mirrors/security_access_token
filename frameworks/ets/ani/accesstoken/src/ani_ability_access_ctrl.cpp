@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "ability_access_ctrl.h"
+#include "ani_ability_access_ctrl.h"
 
 #include <iostream>
 #include <uv.h>
@@ -357,26 +357,6 @@ static inline bool CallSetter(ani_env* env, ani_class cls, ani_object object, co
     return true;
 }
 
-std::string ANIUtils_ANIStringToStdString(ani_env* env, ani_string ani_str)
-{
-    ani_size strSize;
-    if (env->String_GetUTF8Size(ani_str, &strSize) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size error");
-        return "";
-    }
-    std::vector<char> buffer(strSize + 1);
-    char* utf8_buffer = buffer.data();
-
-    ani_size bytes_written = 0;
-    if (env->String_GetUTF8(ani_str, utf8_buffer, strSize + 1, &bytes_written) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8 error");
-        return "";
-    }
-    utf8_buffer[bytes_written] = '\0';
-    std::string content = std::string(utf8_buffer);
-    return content;
-}
-
 static bool ProcessArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_array_ref arrayObj, std::vector<std::string>& permissionList)
 {
@@ -392,7 +372,7 @@ static bool ProcessArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] a
             ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Ref _get Failed");
             return false;
         }
-        auto strEntryRef = ANIUtils_ANIStringToStdString(env, static_cast<ani_string>(stringEntryRef));
+        auto strEntryRef = ANIStringToStdString(env, static_cast<ani_string>(stringEntryRef));
         if (strEntryRef.empty()) {
             return false;
         } else {
@@ -888,7 +868,7 @@ static ani_int CheckAccessTokenSync([[maybe_unused]] ani_env* env, [[maybe_unuse
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
-    std::string stdPermissionName = ANIUtils_ANIStringToStdString(env, static_cast<ani_string>(permissionName));
+    std::string stdPermissionName = ANIStringToStdString(env, static_cast<ani_string>(permissionName));
     if (stdPermissionName.empty() || stdPermissionName.length() > MAX_LENGTH) {
         std::string errMsg = GetErrorMessage(
             STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
@@ -1342,7 +1322,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
             GetErrorMessage(STSErrorCode::STS_ERROR_PERMISSION_NOT_EXIST));
         return;
     }
-    
+
     if (def.grantMode != USER_GRANT || !GetPermissionBriefDef(permissionName, def)) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
             "The specified permission does not exist or is not a user_grant permission.");
@@ -1373,7 +1353,7 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
             GetParamErrorMsg("permissionName", "Permissions"));
         return;
     }
-    
+
     if (!IsPermissionFlagValid(static_cast<uint32_t> (permissionFlags))) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The permissionFlags is invalid.");
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
@@ -1534,40 +1514,30 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
     return flag;
 }
 
-extern "C" {
-ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
+void InitAbilityCtrlFunction(ani_env *env)
 {
-    if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
-        return ANI_INVALID_ARGS;
-    }
-    ani_env* env;
-    if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
-        return ANI_OUT_OF_MEMORY;
-    }
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
-        return ANI_NOT_FOUND;
+        return;
     }
     const char* spaceName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
     ani_namespace spc;
     if (ANI_OK != env->FindNamespace(spaceName, &spc)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", spaceName);
-        return ANI_NOT_FOUND;
+        return;
     }
     std::array methods = {
         ani_native_function { "createAtManager", nullptr, reinterpret_cast<void*>(CreateAtManager) },
     };
     if (ANI_OK != env->Namespace_BindNativeFunctions(spc, methods.data(), methods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", spaceName);
-        return ANI_ERROR;
+        return;
     };
     const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
-        return ANI_ERROR;
+        return;
     }
     std::array claMethods = {
         ani_native_function {
@@ -1594,8 +1564,22 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
-        return ANI_ERROR;
+        return;
     };
+}
+extern "C" {
+ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
+{
+    if (vm == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
+        return ANI_INVALID_ARGS;
+    }
+    ani_env* env;
+    if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
+        return ANI_OUT_OF_MEMORY;
+    }
+    InitAbilityCtrlFunction(env);
     *result = ANI_VERSION_1;
     return ANI_OK;
 }

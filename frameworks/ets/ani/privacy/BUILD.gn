@@ -34,6 +34,7 @@ ohos_shared_library("privacy_ani") {
   sources = [ "src/privacy_manager.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/ets/ani/common:libani_common",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]

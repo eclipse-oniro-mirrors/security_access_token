@@ -18,6 +18,7 @@
 
 #include "access_token_error.h"
 #include "accesstoken_log.h"
+#include "data_validator.h"
 
 namespace OHOS {
 namespace Security {
@@ -25,7 +26,6 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonAni" };
 } // namespace
-constexpr const int32_t RET_SUCCESS = 0;
 constexpr const char* BUSINESS_ERROR_CLASS = "L@ohos/base/BusinessError;";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
@@ -191,6 +191,27 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
     return stsCode;
+}
+
+bool BusinessErrorAni::ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The tokenID is 0.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
+}
+
+bool BusinessErrorAni::ValidatePermissionWithThrowError(ani_env* env, const std::string& permission)
+{
+    if (!DataValidator::IsPermissionNameValid(permission)) {
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security
