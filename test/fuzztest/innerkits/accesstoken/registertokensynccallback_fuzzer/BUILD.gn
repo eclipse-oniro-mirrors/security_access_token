@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,24 +15,21 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
 
-ohos_fuzztest("RegisterPermStateChangeCallbackFuzzTest") {
+ohos_fuzztest("RegisterTokenSyncCallbackFuzzTest") {
   module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/src",
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/test/fuzztest/common",
-  ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/accesstoken/include" ]
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "registerpermstatechangecallback_fuzzer.cpp" ]
+  sources = [ "registertokensynccallback_fuzzer.cpp" ]
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
@@ -41,4 +38,8 @@ ohos_fuzztest("RegisterPermStateChangeCallbackFuzzTest") {
     "c_utils:utils",
     "hilog:libhilog",
   ]
+
+  if (token_sync_enable == true) {
+    cflags_cc = [ "-DTOKEN_SYNC_ENABLE" ]
+  }
 }

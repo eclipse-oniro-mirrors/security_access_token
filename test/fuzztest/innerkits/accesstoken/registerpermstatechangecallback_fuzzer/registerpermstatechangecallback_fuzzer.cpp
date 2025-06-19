@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,8 +18,12 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_callbacks.h"
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#define private public
+#include "accesstoken_manager_client.h"
+#undef private
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -54,9 +58,18 @@ namespace OHOS {
         scopeInfo.permList = { fuzzData.GenerateStochasticString() };
         scopeInfo.tokenIDs = { fuzzData.GetData<AccessTokenID>() };
         auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
-        int32_t result = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        auto callback = new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+        if (callback == nullptr) {
+            return true;
+        }
+        AccessTokenManagerClient::GetInstance().callbackMap_[callbackPtr] = callback;
+        AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(scopeInfo);
+        AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr2);
+        AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr);
 
-        return result == RET_SUCCESS;
+        return true;
     }
 }
 
