@@ -99,8 +99,6 @@ public:
         HapInfoCheckResult& result, std::vector<GenericValues>& undefValues);
     bool InitDlpPermissionList(const std::string& bundleName, int32_t userId,
         std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
-    void GetStateOrFlagChangedList(std::vector<PermissionStatus>& stateListBefore,
-        std::vector<PermissionStatus>& stateListAfter, std::vector<PermissionStatus>& stateChangeList);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
     bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType);
@@ -119,7 +117,6 @@ private:
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);
     bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
-    bool IsPermissionStateOrFlagMatched(const PermissionStatus& stata1, const PermissionStatus& stata2);
     void FillUndefinedPermVector(const std::string& permissionName, const std::string& appDistributionType,
         const HapPolicy& policy, std::vector<GenericValues>& undefValues);
     bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy, const std::string& permissionName,

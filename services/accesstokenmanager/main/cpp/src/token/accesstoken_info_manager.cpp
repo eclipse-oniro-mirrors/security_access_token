@@ -1402,7 +1402,7 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", id);
-        return ERR_PARAM_INVALID;
+        return true;
     }
     int32_t userId = infoPtr->GetUserID();
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);

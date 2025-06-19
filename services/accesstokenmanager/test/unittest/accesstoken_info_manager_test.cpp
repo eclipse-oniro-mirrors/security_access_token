@@ -2418,6 +2418,19 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSi
 
     ASSERT_EQ(setStatusOpen, getStatus);
 }
+
+/**
+ * @tc.name: IsPermissionRestrictedByUserPolicy001
+ * @tc.desc: IsPermissionRestrictedByUserPolicy function test with invalid tokenid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, TestSize.Level0)
+{
+    AccessTokenID tokenID = 123; // invalid tokenid
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
+        "ohos.permission.CAMERA"));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
