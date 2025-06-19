@@ -26,6 +26,9 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static bool g_realTokenFlag = true;
+// hap tokenID 536907816
+static constexpr AccessTokenID g_realTokenId = static_cast<AccessTokenID>(536907816);
 
 class CbCustomizeTest : public StateCustomizedCbk {
 public:
@@ -54,9 +57,17 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
 
         auto callback = std::make_shared<CbCustomizeTest>();
+        if (callback == nullptr) {
+            return false;
+        }
+        AccessTokenID tokenID = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        if (g_realTokenFlag) {
+            tokenID = g_realTokenId;
+            g_realTokenFlag = false;
+        }
 
-        return PrivacyKit::StartUsingPermission(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateStochasticString(), fuzzData.GetData<int32_t>()) == 0;
+        return PrivacyKit::StartUsingPermission(tokenID,
+            fuzzData.GenerateStochasticString(), callback, fuzzData.GetData<int32_t>()) == 0;
     }
 }
 
