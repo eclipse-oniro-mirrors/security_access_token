@@ -6850,6 +6850,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_EAP",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.DETECT_GESTURE",
             "grantMode": "system_grant",
             "availableLevel": "normal",
