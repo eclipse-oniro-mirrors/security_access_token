@@ -94,123 +94,24 @@ static int32_t GetStsErrorCode(int32_t errCode)
     return stsCode;
 }
 
-bool GetStdString(ani_env *env, ani_string str, std::string &res)
+static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
+    ani_int aniTokenID, ani_string aniPermission, ani_int successCount, ani_int failCount, ani_object options)
 {
-    ani_size sz {};
+    if (env == nullptr) {
+        return;
+    }
+    AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
+    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+            tokenID, permission.c_str());
+        return;
+    }
+
     ani_status status = ANI_ERROR;
-    if ((status = env->String_GetUTF8Size(str, &sz)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
-        return false;
-    }
-    res.resize(sz + 1);
-    if ((status = env->String_GetUTF8SubString(str, 0, sz, res.data(), res.size(), &sz)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
-        return false;
-    }
-    res.resize(sz);
-    return true;
-}
-
-template <class T>
-static bool EnumConvertStsToNative(ani_env *env, ani_enum_item enumItem, T &result)
-{
-    ani_status status = ANI_ERROR;
-    if constexpr (std::is_enum<T>::value || std::is_integral<T>::value) {
-        ani_int intValue{};
-        status = env->EnumItem_GetValue_Int(enumItem, &intValue);
-        if (ANI_OK != status) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "EnumConvert_StsToNative failed, status : %{public}d", status);
-            return false;
-        }
-        result = static_cast<T>(intValue);
-        return true;
-    } else if constexpr (std::is_same<T, std::string>::value) {
-        ani_string strValue{};
-        status = env->EnumItem_GetValue_String(enumItem, &strValue);
-        if (ANI_OK != status) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "EnumItem_GetValue_String failed, status : %{public}d", status);
-            return false;
-        }
-        return GetStdString(env, strValue, result);
-    } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Enum convert failed: type not supported");
-        return false;
-    }
-}
-
-template<class T>
-static bool EnumConvertStsToNative(ani_env *env, ani_object enumItem, T &result)
-{
-    return EnumConvertStsToNative<T>(env, static_cast<ani_enum_item>(enumItem), result);
-}
-
-template <class T>
-static bool EnumConvertNativeToSts(ani_env *env, const char *enumName, const T enumValue, ani_enum_item &result)
-{
-    ani_enum aniEnum{};
-    ani_status status = env->FindEnum(enumName, &aniEnum);
-    if (ANI_OK != status) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Enum convert FindEnum failed: %{public}s status: %{public}d", enumName, status);
-        return false;
-    }
-    constexpr int32_t loopMaxNum = 1000;
-    for (int32_t index = 0U; index < loopMaxNum; index++) {
-        ani_enum_item enumItem{};
-        status = env->Enum_GetEnumItemByIndex(aniEnum, index, &enumItem);
-        if (ANI_OK != status) {
-            ACCESSTOKEN_LOG_INFO(LABEL, 
-                "Enum convert Enum_GetEnumItemByIndex failed: enumName:%{public}s index:%{public}d status:%{public}d",
-                enumName, index, status);
-            return false;
-        }
-        // compare value
-        T tmpValue{};
-        if (EnumConvertStsToNative<T>(env, enumItem, tmpValue) && tmpValue == enumValue) {
-            result = enumItem;
-            return true;
-        }
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "EnumConvertNativeToSts failed enumName: %{public}s", enumName);
-    return false;
-}
-
-static void AddPermissionUsedRecordSync(ani_env* env, const AddPermParamInfo& info)
-{
-    auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
-    if (retCode != RET_SUCCESS) {
-        int32_t stsCode = GetStsErrorCode(retCode);
-        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "call addPermissionUsedRecord retCode : %{public}d", retCode);
-}
-
-static void AddPermissionUsedRecordSExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_int tokenID, ani_string permissionName, ani_int successCount, ani_int failCount, ani_object options)
-{
-    if (env == nullptr || object == nullptr || options == object) {
-        return;
-    }
-    ani_size strSize;
-    ani_status status = ANI_ERROR;
-    if (ANI_OK != (status = env->String_GetUTF8Size(permissionName, &strSize))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size_Faild status : %{public}d", status);
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
-        return;
-    }
-    std::vector<char> buffer(strSize + 1);
-    char* utf8Buffer = buffer.data();
-    ani_size bytesWritten = 0;
-    if (ANI_OK != (status = env->String_GetUTF8(permissionName, utf8Buffer, strSize + 1, &bytesWritten))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get String_GetUTF8 Faild status : %{public}d", status);
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
-        return;
-    }
-    utf8Buffer[bytesWritten] = '\0';
-    std::string outputPermissionName = std::string(utf8Buffer);
     ani_ref usedTypeRef;
     if (ANI_OK != (status = env->Object_GetPropertyByName_Ref(options, "usedType", &usedTypeRef))) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild status : %{public}d", status);
         return;
     }
@@ -218,23 +119,26 @@ static void AddPermissionUsedRecordSExecute([[maybe_unused]] ani_env* env, [[may
     ani_boolean isUndefined = true;
     if (ANI_OK != (status = env->Reference_IsUndefined(usedTypeRef, &isUndefined))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         return;
     }
     if (!isUndefined) {
         ani_enum_item usedTypeEnum = static_cast<ani_enum_item>(usedTypeRef);
         if (ANI_OK != env->EnumItem_GetValue_Int(usedTypeEnum, &usedType)) {
-            BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
             return;
         }
     }
     AddPermParamInfo info;
     info.tokenId = static_cast<AccessTokenID>(tokenID);
-    info.permissionName = outputPermissionName;
+    info.permissionName = permission;
     info.successCount = successCount;
     info.failCount = failCount;
     info.type = static_cast<PermissionUsedType>(usedType);
-    AddPermissionUsedRecordSync(env, info);
+    auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
+    if (retCode != RET_SUCCESS) {
+        int32_t stsCode = GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return;
+    }
 }
 
 PermActiveStatusPtr::PermActiveStatusPtr(const std::vector<std::string>& permList)
@@ -253,7 +157,7 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
     if (isSameThread) {
         env = env_;
     } else {
-        ani_option interopEnabled {"--interop=disable", nullptr};
+        ani_option interopEnabled {"--interop=enable", nullptr};
         ani_options aniArgs {1, &interopEnabled};
         vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env);
     }
@@ -483,34 +387,29 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref&
 {
     std::string type; // type: the first parameter is string
     if (!AniParseString(context->env, aniType, type)) {
-        BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("type", "string"));
+        BusinessErrorAni::ThrowParameterTypeError(
+            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("type", "string"));
         return false;
     }
 
     std::vector<std::string> permList; // permissionList: the second parameter is Array<string>
     if (!AniParseStringArray(context->env, aniArray, permList)) {
-        BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
-            "permissionList", "Array<Permissions>"));
+        BusinessErrorAni::ThrowParameterTypeError(
+            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("permissionList", "Array<Permissions>"));
         return false;
     }
     std::sort(permList.begin(), permList.end());
 
     bool hasCallback = true;
     if (!isReg) {
-        bool isUndefined = true;
-        if (!AniIsRefUndefined(context->env, aniCallback, isUndefined)) {
-            BusinessErrorAni::ThrowError(
-                context->env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
-            return false;
-        }
-        hasCallback = !isUndefined;
+        hasCallback = !AniIsRefUndefined(context->env, aniCallback);
     }
 
     ani_ref callback = nullptr; // callback: the third parameter is function
     if (hasCallback) {
         if (!AniParseCallback(context->env, aniCallback, callback)) {
-            BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
-                "callback", "Callback"));
+            BusinessErrorAni::ThrowParameterTypeError(
+                context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("callback", "Callback"));
             return false;
         }
     }
@@ -574,15 +473,12 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     ani_string aniType, ani_array_ref aniArray, ani_ref callback)
 {
     if (env == nullptr) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         return;
     }
 
     RegisterPermActiveChangeContext* context = new (std::nothrow) RegisterPermActiveChangeContext();
     if (context == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for RegisterPermActiveChangeContext!");
-        BusinessErrorAni::ThrowError(env, STS_ERROR_OUT_OF_MEMORY, GetErrorMessage(
-            STSErrorCode::STS_ERROR_OUT_OF_MEMORY));
         return;
     }
     context->env = env;
@@ -593,10 +489,10 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     }
 
     if (IsExistRegister(context)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Subscribe failed. The current subscriber has existed or Reference_StrictEquals failed!");
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_NOT_USE_TOGETHER, "The API reuses the same input. The subscriber already exists.");
         BusinessErrorAni::ThrowError(
-            env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER, GetErrorMessage(STSErrorCode::STS_ERROR_NOT_USE_TOGETHER));
+            env, STS_ERROR_NOT_USE_TOGETHER, GetErrorMessage(STS_ERROR_NOT_USE_TOGETHER, errMsg));
         return;
     }
 
@@ -624,15 +520,6 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     return;
 }
 
-static bool IsRefUndefined(ani_env* env, const ani_ref& ref)
-{
-    bool isUndef = false;
-    if (!AniIsRefUndefined(env, ref, isUndef)) {
-        return false;
-    }
-    return isUndef;
-}
-
 static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
     std::vector<RegisterPermActiveChangeContext*>& batchPermActiveChangeSubscribers)
 {
@@ -640,7 +527,7 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
     std::lock_guard<std::mutex> lock(g_mutex);
     bool callbackEqual;
     ani_ref callbackRef = context->callbackRef;
-    bool isUndef = IsRefUndefined(context->env, context->callbackRef);
+    bool isUndef = AniIsRefUndefined(context->env, context->callbackRef);
     for (const auto& item : g_subScribers) {
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
@@ -664,10 +551,7 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
             }
         }
     }
-    if (!batchPermActiveChangeSubscribers.empty()) {
-        return true;
-    }
-    return false;
+    return !batchPermActiveChangeSubscribers.empty();
 }
 
 static void DeleteRegisterInVector(const RegisterPermActiveChangeContext* context)
@@ -703,50 +587,44 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     ani_string aniType, ani_array_ref aniArray, ani_ref callback)
 {
     if (env == nullptr) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         return;
     }
 
     RegisterPermActiveChangeContext* context = new (std::nothrow) RegisterPermActiveChangeContext();
     if (context == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for RegisterPermActiveChangeContext!");
-        BusinessErrorAni::ThrowError(env, STS_ERROR_OUT_OF_MEMORY, GetErrorMessage(
-            STSErrorCode::STS_ERROR_OUT_OF_MEMORY));
         return;
     }
     context->env = env;
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {context};
-
     if (!ParseInputToRegister(aniType, aniArray, callback, context, false)) {
         return;
     }
 
     std::vector<RegisterPermActiveChangeContext*> batchPermActiveChangeSubscribers;
     if (!FindAndGetSubscriber(context, batchPermActiveChangeSubscribers)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Unsubscribe failed. The current subscriber does not exist or Reference_StrictEquals failed!");
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with 'on'. The subscriber does not exist.");
         BusinessErrorAni::ThrowError(
-            env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER, GetErrorMessage(STSErrorCode::STS_ERROR_NOT_USE_TOGETHER));
+            env, STS_ERROR_NOT_USE_TOGETHER, GetErrorMessage(STS_ERROR_NOT_USE_TOGETHER, errMsg));
         return;
     }
 
     for (const auto& item : batchPermActiveChangeSubscribers) {
         int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(item->subscriber);
-        if (result != RET_SUCCESS) {
+        if (result == RET_SUCCESS) {
+            DeleteRegisterInVector(item);
+        } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
             int32_t stsCode = GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
-            return;
         }
-
-        DeleteRegisterInVector(item);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "UnRegisterPermActiveStatusCallback success!");
     return;
 }
 
-static void StopUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_int tokenID, ani_string permissionName, ani_int pid)
+static void StopUsingPermissionExecute(
+    [[maybe_unused]] ani_env* env, ani_int aniTokenID, ani_string aniPermission, ani_int pid)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "StopUsingPermissionExecute begin.");
     if (env == nullptr) {
@@ -754,56 +632,56 @@ static void StopUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_un
         return;
     }
 
-    std::string permissionNameString;
-    if (!AniParseString(env, permissionName, permissionNameString)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionName", "Permissions"));
+    AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
+    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+            tokenID, permission.c_str());
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
-        permissionNameString.c_str(), tokenID, pid);
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
+        permission.c_str(), tokenID, pid);
 
-    auto retCode = PrivacyKit::StopUsingPermission(tokenID, permissionNameString, pid);
+    auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
-static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_int tokenID, ani_string permissionName, ani_int pid, PermissionUsedType usedType)
+static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
+    ani_int aniTokenID, ani_string aniPermission, ani_int pid, PermissionUsedType usedType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "StartUsingPermissionExecute begin.");
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Env null");
         return;
     }
-
-    std::string permissionNameString;
-    if (!AniParseString(env, permissionName, permissionNameString)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionName", "Permissions"));
+    AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
+    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+            tokenID, permission.c_str());
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d, UsedType : %{public}d",
-        permissionNameString.c_str(), tokenID, pid, usedType);
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
+        permission.c_str(), tokenID, pid);
 
-    auto retCode = PrivacyKit::StartUsingPermission(tokenID, permissionNameString, pid, usedType);
+    auto retCode = PrivacyKit::StartUsingPermission(tokenID, permission, pid, usedType);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
-static ani_object GetPermissionUsedRecordExecute(
-    [[maybe_unused]] ani_env* env,  [[maybe_unused]] ani_object object, ani_object request)
+static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, ani_object request)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordExecute Call");
-    if(env == nullptr || request == nullptr){
+    if (env == nullptr || request == nullptr) {
         return nullptr;
     }
 
@@ -811,54 +689,30 @@ static ani_object GetPermissionUsedRecordExecute(
 }
 
 static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int tokenId, ani_string aniPermissionName)
+    ani_int aniTokenID, ani_string aniPermission)
 {
-    if(env == nullptr){
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");  
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
     }
-    /*std::string permissionName;
-    if (!AniParseStringAndNull(env, aniPermissionName, permissionName)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STSErrorCode::STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionName", "string"));
-        return nullptr;
-    }
-
-    int32_t retCode = ANI_ERROR;
-    std::vector<PermissionUsedTypeInfo> retVec;
-    retCode = PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, retVec);
-    if(retCode != ANI_OK) { 
-        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode),
-            GetErrorMessage(GetStsErrorCode(retCode)));
-        return nullptr;
-    }*/
-    return nullptr;//ProcessPermissionUsedTypeInfoResult(env,retVec);
+    return nullptr;
 }
 
-static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_boolean status)
+static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, ani_boolean status)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionUsedRecordToggleStatusExecute Call");
-    int32_t retCode = ANI_ERROR;
-    int32_t userID = 0;
-    retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status);
-    if (retCode != RET_SUCCESS) {
-        int32_t stscode = BusinessErrorAni::GetStsErrorCode(retCode);
-        BusinessErrorAni::ThrowError(env, stscode, GetErrorMessage(stscode));
+    if (env == nullptr) {
+        return;
     }
 }
 
-static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, 
-    [[maybe_unused]] ani_object object){
-    int32_t retCode = ANI_ERROR;
-    int32_t userID = 0;
-    bool ret;
-    retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID,ret);
-    if (retCode != RET_SUCCESS) {
-        std::string errMsg = GetErrorMessage(GetStsErrorCode(retCode), "PrivacyKit::GetPermissionUsedRecordToggleStatus Error");
-        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode), errMsg);
+static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordToggleStatusExecute Call");
+    if (env == nullptr) {
         return false;
     }
-    return ret;
+    bool isToggleStaus = false;
+    return isToggleStaus;
 }
 
 void InitPrivacyFunction(ani_env *env)
@@ -880,8 +734,8 @@ void InitPrivacyFunction(ani_env *env)
 
     // namespace method input param without ani_object
     std::array nsMethods = {
-        ani_native_function {"addPermissionUsedRecordSExecute", nullptr,
-            reinterpret_cast<void *>(AddPermissionUsedRecordSExecute)},
+        ani_native_function {"addPermissionUsedRecordExecute", nullptr,
+            reinterpret_cast<void *>(AddPermissionUsedRecordExecute)},
         ani_native_function {"startUsingPermissionExecute", nullptr,
             reinterpret_cast<void *>(StartUsingPermissionExecute)},
         ani_native_function {"stopUsingPermissionExecute", nullptr,

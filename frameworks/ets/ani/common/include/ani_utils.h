@@ -36,7 +36,7 @@ bool AniGetEnumItemByIndex(ani_env* env, const ani_enum& aniEnum, ani_size index
 bool AniParseString(ani_env* env, const ani_string& ani_str, std::string& out);
 bool AniParseStringArray(ani_env* env, const ani_array_ref& ani_str_arr, std::vector<std::string>& out);
 bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out);
-bool AniIsRefUndefined(ani_env* env, const ani_ref& ref, bool& isUndefined);
+bool AniIsRefUndefined(ani_env* env, const ani_ref& ref);
 
 bool AniNewString(ani_env* env, const std::string in, ani_string& out);
 bool AniNewEnumIteam(ani_env* env, const char* enumDescriptor, ani_size index, ani_enum_item& out);
@@ -54,6 +54,7 @@ bool IsCurrentThread(std::thread::id threadId);
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual);
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
+std::string ANIStringToStdString(ani_env* env, ani_string aniStr);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

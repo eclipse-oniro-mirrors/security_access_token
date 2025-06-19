@@ -15,7 +15,6 @@
 
 import { AsyncCallback, Callback, BusinessError} from '@ohos.base';
 import { Permissions } from 'permissions';
-import hilog from '@ohos.hilog';
 
 function PARAM_ERROR_MSG(param: string, type: string): string {
     return `Parameter Error. The type of "${param}" must be ${type}.`;
@@ -24,28 +23,23 @@ function PARAM_ERROR_MSG(param: string, type: string): string {
 export { Permissions }
 
 export default namespace privacyManager {
-    hilog.info(0x0000, 'testTAG', '11111111111111111111111 privacyManager start');
     loadLibrary("privacy_ani.z");
 
-    export interface AddPermissionUsedRecordOptions {
-        usedType?: PermissionUsedType;
-    }
-
-    export native function addPermissionUsedRecordSExecute(
+    native function addPermissionUsedRecordExecute(
         tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
         options: AddPermissionUsedRecordOptions): void;
 
-    export native function startUsingPermissionExecute(
+    native function startUsingPermissionExecute(
         tokenID: int, permissionName: Permissions, pid: int, usedType: int): void;
-    export native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
-    export native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
-    export native function getPermissionUsedTypeInfosExecute(
+    native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
+    native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
+    native function getPermissionUsedTypeInfosExecute(
         tokenId: int, permissionName: Permissions): Array<PermissionUsedTypeInfo>;
-    export native function setPermissionUsedRecordToggleStatusExecute(status: boolean): void;
-    export native function getPermissionUsedRecordToggleStatusExecute(): boolean;
-    export native function onExecute(
+    native function setPermissionUsedRecordToggleStatusExecute(status: boolean): void;
+    native function getPermissionUsedRecordToggleStatusExecute(): boolean;
+    native function onExecute(
         type: string, permissionList: Array<Permissions>, callback: Callback<ActiveChangeResponse>): void;
-    export native function offExecute(
+    native function offExecute(
         type: string, permissionList: Array<Permissions>, callback?: Callback<ActiveChangeResponse>): void;
 
     export function addPermissionUsedRecord(tokenID: int, permissionName: Permissions, successCount: int,
@@ -56,12 +50,11 @@ export default namespace privacyManager {
             err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
-        hilog.info(0x0000, 'testTAG', '11111111111111111111111 addPermissionUsedRecord start');
         let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
         let optionsLocal: AddPermissionUsedRecordOptions = { usedType: usedTypeTemp };
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                privacyManager.addPermissionUsedRecordSExecute(
+                addPermissionUsedRecordExecute(
                     tokenID, permissionName, successCount, failCount, optionsLocal);
             });
             p1.then(() => {
@@ -83,7 +76,7 @@ export default namespace privacyManager {
         }
         let options: AddPermissionUsedRecordOptions = { usedType: PermissionUsedType.NORMAL_TYPE };
         let p = taskpool.execute((): void => {
-            privacyManager.addPermissionUsedRecordSExecute(tokenID, permissionName,
+            addPermissionUsedRecordExecute(tokenID, permissionName,
                 successCount, failCount, options);
         });
         p.then(() => {
@@ -103,7 +96,7 @@ export default namespace privacyManager {
         }
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                return privacyManager.stopUsingPermissionExecute(tokenID, permissionName, -1) });
+                return stopUsingPermissionExecute(tokenID, permissionName, -1) });
             p1.then(() => {
                 resolve(undefined);
             }).catch((err: Error): void => {
@@ -121,7 +114,7 @@ export default namespace privacyManager {
             throw err;
         }
         let p = taskpool.execute((): void => {
-            return privacyManager.stopUsingPermissionExecute(tokenID, permissionName, -1) });
+            return stopUsingPermissionExecute(tokenID, permissionName, -1) });
         p.then(() => {
             let err = new BusinessError<void>();
             callback(err, undefined);
@@ -139,8 +132,8 @@ export default namespace privacyManager {
         }
         let optionalPid: int = pid ?? -1;
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-            let p1 = taskpool.execute((): void => { 
-                return privacyManager.stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
+            let p1 = taskpool.execute((): void => {
+                return stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
             p1.then(() => {
                 resolve(undefined);
             }).catch((err: Error): void => {
@@ -159,7 +152,7 @@ export default namespace privacyManager {
         }
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                return privacyManager.startUsingPermissionExecute(tokenID, permissionName,
+                return startUsingPermissionExecute(tokenID, permissionName,
                     -1, PermissionUsedType.NORMAL_TYPE) });
             p1.then(() => {
                 resolve(undefined);
@@ -178,7 +171,7 @@ export default namespace privacyManager {
             throw err;
         }
         let p = taskpool.execute((): void => {
-            return privacyManager.startUsingPermissionExecute(tokenID, permissionName,
+            return startUsingPermissionExecute(tokenID, permissionName,
                 -1, PermissionUsedType.NORMAL_TYPE) });
         p.then(() => {
             let err = new BusinessError<void>();
@@ -200,7 +193,7 @@ export default namespace privacyManager {
         let optionalUsedType = usedType ?? PermissionUsedType.NORMAL_TYPE;
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                return privacyManager.startUsingPermissionExecute(tokenID, permissionName,
+                return startUsingPermissionExecute(tokenID, permissionName,
                     optionalPid, optionalUsedType) });
             p1.then(() => {
                 resolve(undefined);
@@ -215,7 +208,7 @@ export default namespace privacyManager {
         return new Promise<PermissionUsedResponse>(
             (resolve: (data: PermissionUsedResponse) => void, reject: (error: BusinessError) => void): PermissionUsedResponse => {
             let p1 = taskpool.execute((): PermissionUsedResponse => {
-                return privacyManager.getPermissionUsedRecordExecute(request);
+                return getPermissionUsedRecordExecute(request);
             });
             p1.then((e: NullishType):void => {
                 resolve(e as PermissionUsedResponse);
@@ -231,7 +224,7 @@ export default namespace privacyManager {
         return new Promise<Array<PermissionUsedTypeInfo>>(
             (resolve: (v: Array<PermissionUsedTypeInfo>) => void, reject: (err:BusinessError) => void): Array<PermissionUsedTypeInfo> => {
             let p1 = taskpool.execute((): Array<PermissionUsedTypeInfo> => {
-                return privacyManager.getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
+                return getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
             });
             p1.then((e: NullishType): void => {
                 resolve(e as Array<PermissionUsedTypeInfo>);
@@ -245,7 +238,7 @@ export default namespace privacyManager {
         return new Promise<void>(
             (resolve: (v: undefined) => void, reject: (err: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                privacyManager.setPermissionUsedRecordToggleStatusExecute(status);
+                setPermissionUsedRecordToggleStatusExecute(status);
             });
             p1.then((e: NullishType): void => {
                 resolve(undefined);
@@ -259,32 +252,33 @@ export default namespace privacyManager {
         return new Promise<boolean>(
             (resolve: (v: boolean) => void, reject: (err:BusinessError) => void): void => {
             let p1 = taskpool.execute((): boolean => {
-                return privacyManager.getPermissionUsedRecordToggleStatusExecute();
+                return getPermissionUsedRecordToggleStatusExecute();
             });
             p1.then((e: NullishType): void => {
                 resolve(e as boolean);
             }).catch((err: Error): void =>{
                 reject(err as BusinessError);
             })
-        });     
+        });
     }
 
     export function on(
         type: string, permissionList: Array<Permissions>, callback: Callback<ActiveChangeResponse>): void {
-        privacyManager.onExecute(type, permissionList, callback);
+        onExecute(type, permissionList, callback);
     }
 
-    export function off(type: string, permissionList: Array<Permissions>, callback?: Callback<ActiveChangeResponse>): void {
-        privacyManager.offExecute(type, permissionList, callback);
+    export function off(
+        type: string, permissionList: Array<Permissions>, callback?: Callback<ActiveChangeResponse>): void {
+        offExecute(type, permissionList, callback);
     }
 
-        enum PermissionUsedType {
+    export enum PermissionUsedType {
         NORMAL_TYPE = 0,
         PICKER_TYPE = 1,
         SECURITY_COMPONENT_TYPE = 2
     };
 
-    enum PermissionActiveStatus {
+    export enum PermissionActiveStatus {
         PERM_INACTIVE = 0,
         PERM_ACTIVE_IN_FOREGROUND = 1,
         PERM_ACTIVE_IN_BACKGROUND = 2
@@ -298,12 +292,16 @@ export default namespace privacyManager {
         STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
     };
 
-    enum PermissionUsageFlag {
+    export enum PermissionUsageFlag {
         FLAG_PERMISSION_USAGE_SUMMARY = 0,
         FLAG_PERMISSION_USAGE_DETAIL = 1
     };
 
-    interface PermissionUsedTypeInfo {
+    export interface AddPermissionUsedRecordOptions {
+        usedType?: PermissionUsedType;
+    }
+
+    export interface PermissionUsedTypeInfo {
         tokenId: int;
         permissionName: Permissions;
         usedType: PermissionUsedType;
@@ -315,7 +313,7 @@ export default namespace privacyManager {
         usedType: PermissionUsedType;
     }
 
-    interface ActiveChangeResponse {
+    export interface ActiveChangeResponse {
         callingTokenId?: int;
         tokenId: int;
         permissionName: Permissions;
@@ -333,19 +331,18 @@ export default namespace privacyManager {
         usedType?: PermissionUsedType;
     }
 
-    interface PermissionUsedRequest {
-        tokenId: int;
-        isRemote: boolean;
-        deviceId: string;
-        bundleName: string;
-        permissionNames: Array<Permissions>;
-        beginTime: long;
-        endTime: long;
+    export interface PermissionUsedRequest {
+        tokenId?: int;
+        isRemote?: boolean;
+        deviceId?: string;
+        bundleName?: string;
+        permissionNames?: Array<Permissions>;
+        beginTime?: long;
+        endTime?: long;
         flag: PermissionUsageFlag;
     }
 
-
-    interface UsedRecordDetail {
+    export interface UsedRecordDetail {
         status: int;
         lockScreenStatus?: int;
         timestamp: long;
@@ -375,7 +372,7 @@ export default namespace privacyManager {
         rejectRecords: Array<UsedRecordDetail>;
     }
 
-    class PermissionUsedRecordInner implements PermissionUsedRecord{
+    class PermissionUsedRecordInner implements PermissionUsedRecord {
         permissionName: Permissions;
         accessCount: int;
         secAccessCount: int;
@@ -387,7 +384,7 @@ export default namespace privacyManager {
         rejectRecords: Array<UsedRecordDetail>;
     }
 
-    interface BundleUsedRecord{
+    export interface BundleUsedRecord{
         tokenId: int;
         isRemote: boolean;
         deviceId: string;
@@ -395,7 +392,7 @@ export default namespace privacyManager {
         permissionNames: Array<PermissionUsedRecord>;
     }
 
-    class BundleUsedRecordInner implements BundleUsedRecord{
+    class BundleUsedRecordInner implements BundleUsedRecord {
         tokenId: int;
         isRemote: boolean;
         deviceId: string;
@@ -403,13 +400,13 @@ export default namespace privacyManager {
         permissionNames: Array<PermissionUsedRecord>;
     }
 
-    interface PermissionUsedResponse {
+    export interface PermissionUsedResponse {
         beginTime: long;
         endTime: long;
         bundleRecords: Array<BundleUsedRecord>;
     }
 
-    class PermissionUsedResponseInner implements PermissionUsedResponse{
+    class PermissionUsedResponseInner implements PermissionUsedResponse {
         beginTime: long;
         endTime: long;
         bundleRecords: Array<BundleUsedRecord>;

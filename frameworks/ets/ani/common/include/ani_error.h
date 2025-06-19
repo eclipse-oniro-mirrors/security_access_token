@@ -18,6 +18,7 @@
 
 #include <ani.h>
 #include <string>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -59,6 +60,8 @@ public:
     static void ThrowParameterTypeError(ani_env* env, int32_t err, const std::string& errMsg);
     static void ThrowError(ani_env* env, int32_t err, const std::string& errMsg = "");
     static int32_t GetStsErrorCode(int32_t errCode);
+    static bool ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID);
+    static bool ValidatePermissionWithThrowError(ani_env* env, const std::string& permission);
 
 private:
     static void ThrowError(ani_env* env, ani_object err);

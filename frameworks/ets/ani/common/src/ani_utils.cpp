@@ -138,15 +138,14 @@ bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out)
     return true;
 }
 
-bool AniIsRefUndefined(ani_env* env, const ani_ref& ref, bool& isUndefined)
+bool AniIsRefUndefined(ani_env* env, const ani_ref& ref)
 {
     ani_boolean isUnd;
     if (env->Reference_IsUndefined(ref, &isUnd) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Reference_IsUndefined failed!");
         return false;
     }
-    isUndefined = isUnd ? true : false;
-    return true;
+    return isUnd ? true : false;
 }
 
 bool AniNewString(ani_env* env, const std::string in, ani_string& out)
@@ -263,6 +262,26 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
         return false;
     }
     return true;
+}
+
+std::string ANIStringToStdString(ani_env* env, ani_string aniStr)
+{
+    ani_size strSize;
+    if (env->String_GetUTF8Size(aniStr, &strSize) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size error.");
+        return "";
+    }
+    std::vector<char> buffer(strSize + 1);
+    char* utf8Buffer = buffer.data();
+    ani_size bytesWritten = 0;
+    if (env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8 error.");
+        return "";
+    }
+
+    utf8Buffer[bytesWritten] = '\0';
+    std::string content = std::string(utf8Buffer);
+    return content;
 }
 } // namespace AccessToken
 } // namespace Security

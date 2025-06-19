@@ -115,7 +115,7 @@ export default namespace abilityAccessCtrl {
         requestPermissionOnSetting(
             context: Context,
             permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
-        
+
         grantUserGrantedPermission(
             tokenID: int,
             permissionName: Permissions,
@@ -123,8 +123,8 @@ export default namespace abilityAccessCtrl {
             callback: AsyncCallback<void>): void;
 
         grantUserGrantedPermission(
-            tokenID: int, 
-            permissionName: Permissions, 
+            tokenID: int,
+            permissionName: Permissions,
             permissionFlags: int): Promise<void>;
 
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
@@ -280,7 +280,7 @@ export default namespace abilityAccessCtrl {
                 callback(err as BusinessError, undefined);
             })
         }
-        
+
         grantUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
             return new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void) : void => {
@@ -294,7 +294,7 @@ export default namespace abilityAccessCtrl {
                 })
             });
         }
-        
+
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
             return new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
