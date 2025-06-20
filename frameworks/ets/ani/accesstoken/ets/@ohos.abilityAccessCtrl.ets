@@ -28,8 +28,8 @@ export type PermissionRequestResult = _PermissionRequestResult;
 class AsyncCallbackWrapper<T> {
   private wrapperCallback_: AsyncCallback<T, void> = (err: BusinessError<void>, data: T) => {}
 
-  constructor(myFun: AsyncCallback<T, void>) {
-    this.wrapperCallback_ = myFun;
+  constructor(callback: AsyncCallback<T, void>) {
+    this.wrapperCallback_ = callback;
   }
 
   invoke(err: BusinessError<void>, data: T) : void {
@@ -136,17 +136,6 @@ export default namespace abilityAccessCtrl {
             permissionName: Permissions, 
             permissionFlags: int): Promise<void>;
 
-        grantUserGrantedPermission(
-            tokenID: int,
-            permissionName: Permissions,
-            permissionFlags: int,
-            callback: AsyncCallback<void>): void;
-
-        grantUserGrantedPermission(
-            tokenID: int,
-            permissionName: Permissions,
-            permissionFlags: int): Promise<void>;
-
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
         revokeUserGrantedPermission(
             tokenID: int, permissionName: Permissions, permissionFlags: int, callback: AsyncCallback<void>): void;
@@ -221,7 +210,7 @@ export default namespace abilityAccessCtrl {
             let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>(requestCallback);
             taskpool.execute((): void => {
                 new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList, callbackWrap);
-            })
+            });
         }
 
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>):
@@ -239,7 +228,7 @@ export default namespace abilityAccessCtrl {
                 });
                 taskpool.execute((): void => {
                     new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList, callbackWrap);
-                })
+                });
             });
             return p;
         }
@@ -258,7 +247,7 @@ export default namespace abilityAccessCtrl {
                 });
                 taskpool.execute((): void => {
                     new AtManagerInner().requestPermissionOnSettingExecute(context, permissionList, callbackWrap);
-                })
+                });
             });
             return p;
         }
@@ -309,7 +298,7 @@ export default namespace abilityAccessCtrl {
                     resolve(undefined);
                 }).catch((err: Error) : void => {
                     reject(err as BusinessError);
-                })
+                });
             });
         }
 
@@ -323,7 +312,7 @@ export default namespace abilityAccessCtrl {
                     resolve(undefined);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
-                })
+                });
             });
         }
 
@@ -337,7 +326,7 @@ export default namespace abilityAccessCtrl {
                 callback(err, undefined);
             }, (err: Error): void=> {
                 callback(err as BusinessError, undefined);
-            })
+            });
         }
 
         getVersion(): Promise<int> {
@@ -396,7 +385,7 @@ export default namespace abilityAccessCtrl {
                     resolve(undefined);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
-                })
+                });
             });
             return p;
         }
@@ -412,7 +401,7 @@ export default namespace abilityAccessCtrl {
                         resolve(e as PermissionRequestToggleStatus);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
-                    })
+                    });
                 });
             return p;
         }

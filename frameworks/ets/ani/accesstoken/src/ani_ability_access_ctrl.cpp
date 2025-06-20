@@ -231,19 +231,19 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "getVersionExecute begin.");
-    uint32_t version = 0;
+    uint32_t version = -1;
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
-        return version;
+        return static_cast<ani_int>(version);
     }
 
     int32_t result = AccessTokenKit::GetVersion(version);
     if (result != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
-        return version;
+        return static_cast<ani_int>(version);
     }
-    return version;
+    return static_cast<ani_int>(version);
 }
 
 static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
@@ -362,40 +362,30 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
     return flag;
 }
 
-extern "C" {
-ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
+void InitAbilityCtrlFunction(ani_env *env)
 {
-    if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
-        return ANI_INVALID_ARGS;
-    }
-    ani_env* env;
-    if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
-        return ANI_OUT_OF_MEMORY;
-    }
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
-        return ANI_NOT_FOUND;
+        return;
     }
     const char* spaceName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
     ani_namespace spc;
     if (ANI_OK != env->FindNamespace(spaceName, &spc)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", spaceName);
-        return ANI_NOT_FOUND;
+        return;
     }
     std::array methods = {
         ani_native_function { "createAtManager", nullptr, reinterpret_cast<void*>(CreateAtManager) },
     };
     if (ANI_OK != env->Namespace_BindNativeFunctions(spc, methods.data(), methods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", spaceName);
-        return ANI_ERROR;
+        return;
     };
     const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
-        return ANI_ERROR;
+        return;
     }
     std::array claMethods = {
         ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
@@ -403,8 +393,6 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
         ani_native_function { "requestPermissionOnSettingExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
-        ani_native_function {
-            "requestGlobalSwitchExecute", nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
         ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
             reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
         ani_native_function { "revokeUserGrantedPermissionExecute",
@@ -421,8 +409,22 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
-        return ANI_ERROR;
+        return;
     };
+}
+extern "C" {
+ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
+{
+    if (vm == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
+        return ANI_INVALID_ARGS;
+    }
+    ani_env* env;
+    if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
+        return ANI_OUT_OF_MEMORY;
+    }
+    InitAbilityCtrlFunction(env);
     *result = ANI_VERSION_1;
     return ANI_OK;
 }

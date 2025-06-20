@@ -49,8 +49,8 @@ struct RequestGlobalSwitchAsyncContext {
     std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
     std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> uiExtensionContext = nullptr;
     bool uiAbilityFlag = false;
-    std::mutex lockReleaseFlag;
     bool releaseFlag = false;
+    std::mutex lockReleaseFlag;
 
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ =

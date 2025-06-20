@@ -61,7 +61,8 @@ ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
 ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
 ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
 
-ani_object CreateBoolean(ani_env *env, ani_boolean value);} // namespace AccessToken
+ani_object CreateBoolean(ani_env *env, ani_boolean value);
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif /* INTERFACES_ETS_ANI_COMMON_ANI_UTILS_H */
