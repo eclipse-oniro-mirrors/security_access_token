@@ -16,19 +16,28 @@
 import { AsyncCallback, Callback, BusinessError } from '@ohos.base';
 import { Permissions } from 'permissions';
 import type _PermissionRequestResult from 'security.PermissionRequestResult';
-import Context from 'application.Context'
-import hilog from '@ohos.hilog';
+import Context from 'application.Context';
 
 function PARAM_ERROR_MSG(param: string, type: string): string {
     return `Parameter Error. The type of "${param}" must be ${type}.`;
 }
 
 export { Permissions };
-
 export type PermissionRequestResult = _PermissionRequestResult;
 
-export default namespace abilityAccessCtrl {
+class AsyncCallbackWrapper<T> {
+  private wrapperCallback_: AsyncCallback<T, void> = (err: BusinessError<void>, data: T) => {}
 
+  constructor(myFun: AsyncCallback<T, void>) {
+    this.wrapperCallback_ = myFun;
+  }
+
+  invoke(err: BusinessError<void>, data: T) : void {
+    this.wrapperCallback_(err, data);
+  }
+}
+
+export default namespace abilityAccessCtrl {
     loadLibrary("accesstoken_ani.z");
     export enum GrantStatus {
         PERMISSION_DENIED = -1,
@@ -71,9 +80,9 @@ export default namespace abilityAccessCtrl {
         STS_ERROR_NOT_SYSTEM_APP = 202,
         STS_ERROR_PARAM_ILLEGAL = 401,
         STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
-    } ;
+    };
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
-        if (typeof context === "undefined" || context == null) {
+        if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
             err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
@@ -91,30 +100,41 @@ export default namespace abilityAccessCtrl {
     native function createAtManager(): AtManager;
     interface AtManager {
         checkAccessTokenExecute(tokenID: int, permissionName: Permissions): int;
-        requestPermissionsFromUserExecute(
-            context: Context, permissionList: Array<Permissions>): PermissionRequestResult;
-        requestPermissionOnSettingExecute(context: Context, permissionList: Array<Permissions>): Array<GrantStatus>;
+        requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
+            callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
+        requestPermissionOnSettingExecute(context: Context,
+            permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
+        requestGlobalSwitchExecute(
+            context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         revokeUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         getVersionExecute(): int;
         getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
         setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
         getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
+
         checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
         checkAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus>;
         verifyAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus>;
-
         requestPermissionsFromUser(
             context: Context, permissionList: Array<Permissions>,
             requestCallback: AsyncCallback<PermissionRequestResult, void>): void;
-
         requestPermissionsFromUser(
             context: Context, permissionList: Array<Permissions>): Promise<PermissionRequestResult>;
-
         requestPermissionOnSetting(
-            context: Context,
-            permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
+            context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
+        requestGlobalSwitch(context: Context, type: SwitchType): Promise<boolean>;
+        grantUserGrantedPermission(
+            tokenID: int,
+            permissionName: Permissions,
+            permissionFlags: int,
+            callback: AsyncCallback<void>): void;
+
+        grantUserGrantedPermission(
+            tokenID: int, 
+            permissionName: Permissions, 
+            permissionFlags: int): Promise<void>;
 
         grantUserGrantedPermission(
             tokenID: int,
@@ -128,28 +148,24 @@ export default namespace abilityAccessCtrl {
             permissionFlags: int): Promise<void>;
 
         revokeUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
-
         revokeUserGrantedPermission(
             tokenID: int, permissionName: Permissions, permissionFlags: int, callback: AsyncCallback<void>): void;
-
         getVersion(): Promise<int>;
-
         getPermissionsStatus(tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>>;
-
         getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int>;
-
         setPermissionRequestToggleStatus(
             permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void>;
-
         getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus>;
     }
 
     class AtManagerInner implements AtManager {
         native checkAccessTokenExecute(tokenID: int, permissionName: Permissions): int;
-        native requestPermissionsFromUserExecute(
-            context: Context, permissionList: Array<Permissions>): PermissionRequestResult;
-        native requestPermissionOnSettingExecute(
-            context: Context, permissionList: Array<Permissions>): Array<GrantStatus>;
+        native requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
+            callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
+        native requestPermissionOnSettingExecute(context: Context,
+            permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
+        native requestGlobalSwitchExecute(
+            context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native revokeUserGrantedPermissionExecute(
             tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -200,71 +216,73 @@ export default namespace abilityAccessCtrl {
         }
 
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>,
-            callback:AsyncCallback<PermissionRequestResult,void>): void {
+            requestCallback: AsyncCallback<PermissionRequestResult, void>): void {
             validateRequestParams(context, permissionList);
-            let fun = async() => {
-                let work = new EAWorker();
-                try {
-                    let job = work.run<PermissionRequestResult>(() : PermissionRequestResult => {
-                        return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList);
-                    })
-                    let result = job.Await();
-                    work.join();
-                    let retError = new BusinessError<void>();
-                    callback(retError, result as PermissionRequestResult);
-                } catch (err: BusinessError) {
-                    work.join();
-                    const defaultResult: PermissionRequestResult = {};
-                    callback(err, defaultResult);
-                }
-            };
-            fun();
+            let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>(requestCallback);
+            taskpool.execute((): void => {
+                new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList, callbackWrap);
+            })
         }
 
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>):
             Promise<PermissionRequestResult> {
             validateRequestParams(context, permissionList);
-
-            let p = new Promise<PermissionRequestResult>((
+            let p: Promise<PermissionRequestResult> = new Promise<PermissionRequestResult>((
                 resolve: (v: PermissionRequestResult) => void, reject: (error: BusinessError) => void) => {
-                let fun = async() => {
-                    let work = new EAWorker();
-                    try {
-                        let job = work.run<PermissionRequestResult>((): PermissionRequestResult => {
-                            return new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList);
-                        });
-                        let result = job.Await();
-                        work.join();
-                        resolve(result as PermissionRequestResult);
-                    } catch (err: BusinessError) {
-                        work.join();
+                let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>((
+                    err: BusinessError<void>, data: PermissionRequestResult) => {
+                    if (err.code == 0) {
+                        resolve(data);
+                    } else {
                         reject(err);
                     }
-                };
-                fun();
+                });
+                taskpool.execute((): void => {
+                    new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList, callbackWrap);
+                })
             });
             return p;
         }
 
         requestPermissionOnSetting(context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>> {
             validateRequestParams(context, permissionList);
-            let p = new Promise<Array<GrantStatus>>((
+            let p: Promise<Array<GrantStatus>> = new Promise<Array<GrantStatus>>((
                 resolve: (v: Array<GrantStatus>) => void, reject: (error: BusinessError) => void) => {
-                let func = async() => {
-                    let work = new EAWorker();
-                    try {
-                        let job = work.run<Array<GrantStatus>>((): Array<GrantStatus> => {
-                            return new AtManagerInner().requestPermissionOnSettingExecute(context, permissionList);
-                        });
-                        let result = job.Await();
-                        work.join();
-                        resolve(result as Array<GrantStatus>);
-                    } catch (err: BusinessError) {
-                        work.join();
+                let callbackWrap = new AsyncCallbackWrapper<Array<GrantStatus>>((
+                    err: BusinessError<void>, data: Array<GrantStatus>) => {
+                    if (err.code == 0) {
+                        resolve(data);
+                    } else {
                         reject(err);
                     }
-                };
-                func();
+                });
+                taskpool.execute((): void => {
+                    new AtManagerInner().requestPermissionOnSettingExecute(context, permissionList, callbackWrap);
+                })
+            });
+            return p;
+        }
+
+        requestGlobalSwitch(context: Context, type: SwitchType): Promise<boolean> {
+            if ((typeof context === "undefined") || (context == null)) {
+                let err = new BusinessError<string>();
+                err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+                err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+                throw err;
+            }
+            let p: Promise<boolean> = new Promise<boolean>((
+                resolve: (v: boolean) => void, reject: (error: BusinessError) => void) => {
+                let callbackWrap = new AsyncCallbackWrapper<boolean>((
+                    err: BusinessError<void>, data: boolean) => {
+                    if (err.code == 0) {
+                        resolve(data);
+                    } else {
+                        reject(err);
+                    }
+                });
+                taskpool.execute((): void => {
+                    new AtManagerInner().requestGlobalSwitchExecute(context, type, callbackWrap);
+                });
             });
             return p;
         }
@@ -278,7 +296,7 @@ export default namespace abilityAccessCtrl {
                 callback(err, undefined);
             }, (err: Error): void => {
                 callback(err as BusinessError, undefined);
-            })
+            });
         }
 
         grantUserGrantedPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
@@ -314,7 +332,7 @@ export default namespace abilityAccessCtrl {
             let job = taskpool.execute((): void => {
                 new AtManagerInner().revokeUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
             });
-            job.then(()=>{
+            job.then(() => {
                 let err = new BusinessError<void>();
                 callback(err, undefined);
             }, (err: Error): void=> {
@@ -324,7 +342,7 @@ export default namespace abilityAccessCtrl {
 
         getVersion(): Promise<int> {
             let p = new Promise<int>((
-                resolve: (v: int) => void, reject: (error: BusinessError) => void) =>{
+                resolve: (v: int) => void, reject: (error: BusinessError) => void) => {
                     let p1 = taskpool.execute((): int => {
                         return new AtManagerInner().getVersionExecute() as int;
                     });
@@ -337,8 +355,7 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
-        getPermissionsStatus(
-            tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>> {
+        getPermissionsStatus(tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>> {
             let p = new Promise<Array<PermissionStatus>>((
                 resolve: (v: Array<PermissionStatus>) => void, reject: (error: BusinessError) => void) => {
                 let p1 = taskpool.execute((): Array<PermissionStatus> => {

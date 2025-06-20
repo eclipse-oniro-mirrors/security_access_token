@@ -55,7 +55,13 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
     bool& isEqual);
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
 std::string ANIStringToStdString(ani_env* env, ani_string aniStr);
-} // namespace AccessToken
+bool AniParaseArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_array_ref arrayObj, std::vector<std::string>& permissionList);
+ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
+ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
+ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
+
+ani_object CreateBoolean(ani_env *env, ani_boolean value);} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif /* INTERFACES_ETS_ANI_COMMON_ANI_UTILS_H */

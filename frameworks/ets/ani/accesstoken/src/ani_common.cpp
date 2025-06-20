@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "ani_common.h"
+#include "accesstoken_log.h"
+#include <sstream>
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniAccessTokenCommon" };
+constexpr const char* WRAPPER_CLASS_NAME = "L@ohos/abilityAccessCtrl/AsyncCallbackWrapper;";
+constexpr const char* INVOKE_METHOD_NAME = "invoke";
+} // namespace
+ani_env* GetCurrentEnv(ani_vm* vm)
+{
+    if (vm == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Vm is nullptr.");
+        return nullptr;
+    }
+    ani_env* env = nullptr;
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    if (vm->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
+        if (vm->GetEnv(ANI_VERSION_1, &env) != ANI_OK) {
+            return nullptr;
+        }
+    }
+    return env;
+}
+
+bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result)
+{
+    if (env == nullptr || callback == nullptr || error == nullptr || result == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid paramter.");
+        return false;
+    }
+    ani_status status = ANI_ERROR;
+    ani_class clsCall {};
+
+    if ((status = env->FindClass(WRAPPER_CLASS_NAME, &clsCall)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass failed, error=%{public}d.", static_cast<int32_t>(status));
+        return false;
+    }
+    ani_method method = {};
+    if ((status = env->Class_FindMethod(
+        clsCall, INVOKE_METHOD_NAME, "L@ohos/base/BusinessError;Lstd/core/Object;:V", &method)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed, error=%{public}d.", static_cast<int32_t>(status));
+        return false;
+    }
+
+    status = env->Object_CallMethod_Void(static_cast<ani_object>(callback), method, error, result);
+    if (status != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethod_Void failed, error=%{public}d.", static_cast<int32_t>(status));
+        return false;
+    }
+    return true;
+}
+
+OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext,
+    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext>& uiExtensionContext, bool uiAbilityFlag)
+{
+    OHOS::Ace::UIContent* uiContent = nullptr;
+    if (uiAbilityFlag) {
+        if (abilityContext == nullptr) {
+            return nullptr;
+        }
+        uiContent = abilityContext->GetUIContent();
+    } else {
+        if (uiExtensionContext == nullptr) {
+            return nullptr;
+        }
+        uiContent = uiExtensionContext->GetUIContent();
+    }
+    return uiContent;
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

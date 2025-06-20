@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,7 +33,7 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability." },
     { STS_ERROR_START_ABILITY_FAIL, "Start grant ability failed." },
     { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
-    { STS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed." },
+    { STS_ERROR_TERMINATE_FAIL, "UI extension terminate failed." },
     { STS_ERROR_PARAM_INVALID, "Invalid parameter." },
     { STS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist." },
     { STS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist." },
@@ -45,7 +45,7 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_INNER, "Common inner error." },
     { STS_ERROR_REQUEST_IS_ALREADY_EXIST, "The request already exists." },
     { STS_ERROR_ALL_PERM_GRANTED, "All permissions in the permission list have been granted." },
-    { STS_ERROR_PERM_REVOKE_BY_USER,
+    { STS_ERROR_PERM_NOT_REVOKE_BY_USER,
         "The permission list contains the permission that has not been revoked by the user." },
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
 };
@@ -116,7 +116,7 @@ std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg
     return msg;
 }
 
-std::string GetErrorMessage(uint32_t errCode, const std::string& extendMsg)
+std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg)
 {
     auto iter = g_errorStringMap.find(errCode);
     if (iter != g_errorStringMap.end()) {
@@ -208,6 +208,16 @@ bool BusinessErrorAni::ValidatePermissionWithThrowError(ani_env* env, const std:
     if (!DataValidator::IsPermissionNameValid(permission)) {
         std::string errMsg = GetErrorMessage(
             STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
+}
+
+bool BusinessErrorAni::ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag)
+{
+    if (!DataValidator::IsPermissionFlagValid(flag)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The permissionFlags is invalid.");
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return false;
     }
