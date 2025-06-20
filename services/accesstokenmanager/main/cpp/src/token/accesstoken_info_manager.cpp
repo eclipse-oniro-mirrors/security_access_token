@@ -733,16 +733,16 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     } else {
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
-    {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(info, permStateList, hapPolicy);
-    }
 
     AddTokenIdToUndefValues(tokenID, undefValues);
     int32_t ret = AddHapTokenInfoToDb(infoPtr, info.appIDDesc, hapPolicy, true, undefValues);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Add hap info %{public}u to db failed!", tokenID);
         return ret;
+    }
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        infoPtr->Update(info, permStateList, hapPolicy);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u bundle name %{public}s user %{public}d \
         inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
