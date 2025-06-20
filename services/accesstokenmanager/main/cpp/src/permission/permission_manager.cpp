@@ -776,27 +776,6 @@ void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& gr
     }
 }
 
-bool PermissionManager::IsPermissionStateOrFlagMatched(const PermissionStatus& state1,
-    const PermissionStatus& state2)
-{
-    return ((state1.grantStatus == state2.grantStatus) && (state1.grantFlag == state2.grantFlag));
-}
-
-void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStatus>& stateListBefore,
-    std::vector<PermissionStatus>& stateListAfter, std::vector<PermissionStatus>& stateChangeList)
-{
-    uint32_t size = stateListBefore.size();
-
-    for (uint32_t i = 0; i < size; ++i) {
-        PermissionStatus state1 = stateListBefore[i];
-        PermissionStatus state2 = stateListAfter[i];
-
-        if (!IsPermissionStateOrFlagMatched(state1, state2)) {
-            stateChangeList.emplace_back(state2);
-        }
-    }
-}
-
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
 {
     grantEvent_.NotifyPermGrantStoreResult(result, timestamp);

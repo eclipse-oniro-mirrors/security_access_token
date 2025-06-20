@@ -391,7 +391,8 @@ int32_t PermissionDataBrief::StorePermissionBriefData(AccessTokenID tokenId,
         GenericValues genericValues;
         PermissionStatus permState;
         if (!GetPermissionStatus(data, permState)) {
-            return ERR_PERMISSION_NOT_EXIST;
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission not exist, code=%{public}d", static_cast<int32_t>(data.permCode));
+            continue;
         }
         genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         DataTranslator::TranslationIntoGenericValues(permState, genericValues);
