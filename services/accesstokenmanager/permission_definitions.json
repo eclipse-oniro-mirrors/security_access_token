@@ -6873,7 +6873,7 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
-            "name": "ohos.permission.MANAGE_PERINSTALLED_ANTIVIRUS",
+            "name": "ohos.permission.MANAGE_PREINSTALLED_ANTIVIRUS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType":"MDM",
