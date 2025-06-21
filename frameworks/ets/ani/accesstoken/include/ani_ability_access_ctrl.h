@@ -34,7 +34,7 @@ struct AtManagerAsyncContext {
 };
 
 struct PermissionParamCache {
-    int64_t sysCommitIdCache = PARAM_DEFAULT_VALUE;
+    long long sysCommitIdCache = PARAM_DEFAULT_VALUE;
     int32_t commitIdCache = PARAM_DEFAULT_VALUE;
     int32_t handle = PARAM_DEFAULT_VALUE;
     std::string sysParamCache;

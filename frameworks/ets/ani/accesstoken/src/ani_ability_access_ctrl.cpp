@@ -73,7 +73,7 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
 
 static std::string GetPermParamValue()
 {
-    int64_t sysCommitId = GetSystemCommitId();
+    long long sysCommitId = GetSystemCommitId();
     if (sysCommitId == g_paramCache.sysCommitIdCache) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "SysCommitId = %{public}lld", sysCommitId);
         return g_paramCache.sysParamCache;
@@ -362,6 +362,23 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
     return flag;
 }
 
+static void RequestAppPermOnSettingExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int tokenID)
+{
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        return;
+    }
+
+    int32_t result = AccessTokenKit::RequestAppPermOnSetting(static_cast<AccessTokenID>(tokenID));
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Result = %{public}d, errcode = %{public}d.",
+            result, BusinessErrorAni::GetStsErrorCode(result));
+        BusinessErrorAni::ThrowError(env, BusinessErrorAni::GetStsErrorCode(result),
+            GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
+    }
+}
+
 void InitAbilityCtrlFunction(ani_env *env)
 {
     if (env == nullptr) {
@@ -406,6 +423,8 @@ void InitAbilityCtrlFunction(ani_env *env)
             nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "getPermissionRequestToggleStatusExecute",
             nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
+        ani_native_function{ "RequestAppPermOnSettingExecute",
+            nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
