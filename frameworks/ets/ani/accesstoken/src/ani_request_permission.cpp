@@ -110,20 +110,18 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
         return nullptr;
     }
     auto state = asyncContext->needDynamicRequest ? asyncContext->grantResults : asyncContext->permissionsState;
-    ani_ref strPermissions = ConvertAniArrayString(env, asyncContext->permissionList);
-    ani_ref intAuthResults = ConvertAniArrayInt(env, state);
-    ani_ref boolDialogShownResults = ConvertAniArrayBool(env, asyncContext->dialogShownResults);
-    ani_ref intPermissionQueryResults = ConvertAniArrayInt(env, asyncContext->permissionQueryResults);
-    if (strPermissions == nullptr || intAuthResults == nullptr || boolDialogShownResults == nullptr ||
-        intPermissionQueryResults == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "1111111111111111");
+    ani_ref aniPermissions = CreateAniArrayString(env, asyncContext->permissionList);
+    ani_ref aniAuthResults = CreateAniArrayInt(env, state);
+    ani_ref aniDialogShownResults = CreateAniArrayBool(env, asyncContext->dialogShownResults);
+    ani_ref aniPermissionQueryResults = CreateAniArrayInt(env, asyncContext->permissionQueryResults);
+    if (aniPermissions == nullptr || aniAuthResults == nullptr || aniDialogShownResults == nullptr ||
+        aniPermissionQueryResults == nullptr) {
             return nullptr;
     }
-    if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), strPermissions) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), intAuthResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), boolDialogShownResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), intPermissionQueryResults)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "333333333333");
+    if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), aniPermissions) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), aniAuthResults) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), aniDialogShownResults) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), aniPermissionQueryResults)) {
         return nullptr;
     }
     return aObject;
@@ -413,7 +411,7 @@ static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContex
     }
 }
 
-static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, ani_array_ref permissionList,
+static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, ani_array_ref aniPermissionList,
     ani_object callback, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     ani_vm* vm;
@@ -434,11 +432,7 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-    if (!AniParaseArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionList", "Array<Permissions>"));
-        return false;
-    }
+    asyncContext->permissionList = ParseAniStringVector(env, aniPermissionList);
     if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef)) {
         return false;
     }
@@ -449,14 +443,14 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
 }
 
 void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_object aniContext, ani_array_ref permissionList, ani_object callback)
+    ani_object aniContext, ani_array_ref aniPermissionList, ani_object callback)
 {
-    if (env == nullptr || permissionList == nullptr || callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Parenv or permissionList or callback is null.");
+    if (env == nullptr || aniPermissionList == nullptr || callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parenv or aniPermissionList or callback is null.");
         return;
     }
     std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>();
-    if (!ParseRequestPermissionFromUser(env, aniContext, permissionList, callback, asyncContext)) {
+    if (!ParseRequestPermissionFromUser(env, aniContext, aniPermissionList, callback, asyncContext)) {
         return;
     }
 

@@ -171,7 +171,7 @@ static void GlobalSwitchResultsCallbackUI(bool switchStatus, std::shared_ptr<Req
     int32_t stsCode = TransferToStsErrorCode(data->result.errorCode);
     ani_object error = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, data->result.errorMsg));
     ExecuteAsyncCallback(
-        env, reinterpret_cast<ani_object>(data->callbackRef), error, CreateBoolean(env, data->switchStatus));
+        env, reinterpret_cast<ani_object>(data->callbackRef), error, CreateBooleanObject(env, data->switchStatus));
 
     if (!isSameThread && data->vm->DetachCurrentThread() != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "DetachCurrentThread failed!");
@@ -483,7 +483,7 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
         return;
     }
 
-    ani_object result = CreateBoolean(env, false);
+    ani_object result = CreateBooleanObject(env, false);
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",

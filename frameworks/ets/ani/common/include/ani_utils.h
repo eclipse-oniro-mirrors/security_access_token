@@ -25,43 +25,53 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-bool AniFindNameSpace(ani_env* env, const char* namespaceDescriptor, ani_namespace& out);
-bool AniFindClass(ani_env* env, const char* classDescriptor, ani_class& out);
-bool AniClassFindMethod(ani_env* env, const ani_class& aniClass, const char* methodDescriptor, const char* signature,
-    ani_method& out);
-bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fieldName, ani_field& out);
-bool AniFindEnum(ani_env* env, const char *enumDescriptor, ani_enum& out);
-bool AniGetEnumItemByIndex(ani_env* env, const ani_enum& aniEnum, ani_size index, ani_enum_item& out);
+bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_namespace& out);
+bool AniFindClass(ani_env* env, const std::string&  classDescriptor, ani_class& out);
+bool AniClassFindMethod(
+    ani_env* env, const ani_class& aniClass, const std::string& methodDescriptor,
+    const std::string& signature, ani_method& out);
+bool AniClassFindField(ani_env* env, const ani_class& aniClass, const std::string& fieldName, ani_field& out);
 
-bool AniParseString(ani_env* env, const ani_string& ani_str, std::string& out);
-bool AniParseStringArray(ani_env* env, const ani_array_ref& ani_str_arr, std::vector<std::string>& out);
 bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out);
 bool AniIsRefUndefined(ani_env* env, const ani_ref& ref);
 
-bool AniNewString(ani_env* env, const std::string in, ani_string& out);
-bool AniNewEnumIteam(ani_env* env, const char* enumDescriptor, ani_size index, ani_enum_item& out);
-bool AniNewClassObject(ani_env* env, const ani_class aniClass, const char* methodDescriptor, const char* signature,
-    ani_object& out);
+bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value);
+bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
+bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value);
+bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value);
+bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
+bool GetStringVecProperty(
+    ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value);
 
-bool AniObjectSetFieldInt(ani_env* env, const ani_class& aniClass, ani_object& aniObject, const char* fieldName,
-    ani_int in);
-bool AniObjectSetFieldRef(ani_env* env, const ani_class& aniClass, ani_object& aniObject, const char* fieldName,
-    const ani_ref& in);
-bool AniObjectSetPropertyByNameInt(ani_env* env, ani_object& object, const char *propertyName, int32_t in);
-bool AniObjectSetPropertyByNameRef(ani_env* env, ani_object& object, const char *propertyName, ani_ref in);
+bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& property, bool in);
+bool SetIntProperty(ani_env* env, ani_object& object, const std::string& property, int32_t in);
+bool SetLongProperty(ani_env* env, ani_object& object, const std::string& property, int64_t in);
+bool SetRefProperty(ani_env* env, ani_object& object, const std::string& property, const ani_ref& in);
+bool SetStringProperty(ani_env* env, ani_object& aniObject, const std::string& property, const std::string& in);
+bool SetEnumProperty(
+    ani_env* env, ani_object& aniObject, const std::string& enumDescription,
+    const std::string& property, ani_size value);
+bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::string& property, int32_t in);
 
 bool IsCurrentThread(std::thread::id threadId);
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual);
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
-std::string ANIStringToStdString(ani_env* env, ani_string aniStr);
-bool AniParaseArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_array_ref arrayObj, std::vector<std::string>& permissionList);
-ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
-ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
-ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
 
-ani_object CreateBoolean(ani_env *env, ani_boolean value);
+// ani to naitive
+std::string ParseAniString(ani_env* env, ani_string aniStr);
+std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref& aniStrArr);
+
+// native to ani
+ani_string CreateAniString(ani_env *env, const std::string& str);
+ani_object CreateIntObject(ani_env *env, int32_t value);
+ani_object CreateBooleanObject(ani_env *env, bool value);
+ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor);
+ani_object CreateArrayObject(ani_env* env, uint32_t length);
+
+ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
+ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
+ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

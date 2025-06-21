@@ -91,7 +91,7 @@ static ani_status GetContext(
     return ANI_OK;
 }
 
-static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array_ref& permissionList,
+static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array_ref& aniPermissionList,
     ani_object callback, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     ani_vm* vm;
@@ -110,11 +110,7 @@ static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-    if (!AniParaseArrayString(env, nullptr, permissionList, asyncContext->permissionList)) {
-        BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("permissionList", "Array<string>"));
-        return false;
-    }
+    asyncContext->permissionList = ParseAniStringVector(env, aniPermissionList);
     if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef)) {
         return false;
     }
