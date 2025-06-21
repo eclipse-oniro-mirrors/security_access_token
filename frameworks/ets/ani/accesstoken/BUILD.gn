@@ -31,7 +31,13 @@ ohos_shared_library("accesstoken_ani") {
     "${access_token_path}/interfaces/innerkits/token_callback/include",
     "${access_token_path}/frameworks/ets/ani/common/include",
   ]
-  sources = [ "src/ani_ability_access_ctrl.cpp" ]
+  sources = [
+    "src/ani_ability_access_ctrl.cpp",
+    "src/ani_common.cpp",
+    "src/ani_request_global_switch_on_setting.cpp",
+    "src/ani_request_permission.cpp",
+    "src/ani_request_permission_on_setting.cpp",
+  ]
 
   deps = [
     "${access_token_path}/frameworks/ets/ani/common:libani_common",

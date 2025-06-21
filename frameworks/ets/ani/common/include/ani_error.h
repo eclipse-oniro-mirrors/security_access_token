@@ -43,7 +43,7 @@ typedef enum {
     STS_ERROR_INNER,
     STS_ERROR_REQUEST_IS_ALREADY_EXIST = 12100010,
     STS_ERROR_ALL_PERM_GRANTED = 12100011,
-    STS_ERROR_PERM_REVOKE_BY_USER = 12100012,
+    STS_ERROR_PERM_NOT_REVOKE_BY_USER = 12100012,
     STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
 } STSErrorCode;
 
@@ -53,7 +53,7 @@ struct AtmResult {
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg);
-std::string GetErrorMessage(uint32_t errCode, const std::string& extendMsg = "");
+std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg = "");
 class BusinessErrorAni {
 public:
     static ani_object CreateError(ani_env* env, ani_int code, const std::string& msg);
@@ -62,6 +62,7 @@ public:
     static int32_t GetStsErrorCode(int32_t errCode);
     static bool ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID);
     static bool ValidatePermissionWithThrowError(ani_env* env, const std::string& permission);
+    static bool ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag);
 
 private:
     static void ThrowError(ani_env* env, ani_object err);

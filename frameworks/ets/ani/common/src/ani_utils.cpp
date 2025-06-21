@@ -21,6 +21,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAniUtils" };
+constexpr const char* CLASSNAME_BOOLEAN = "Lstd/core/Boolean;";
 } // namespace
 
 bool AniFindNameSpace(ani_env* env, const char* namespaceDescriptor, ani_namespace& out)
@@ -79,10 +80,10 @@ bool AniGetEnumItemByIndex(ani_env* env, const ani_enum& aniEnum, ani_size index
 }
 
 
-bool AniParseString(ani_env* env, const ani_string& ani_str, std::string& out)
+bool AniParseString(ani_env* env, const ani_string& anistr, std::string& out)
 {
     ani_size strSize;
-    if (env->String_GetUTF8Size(ani_str, &strSize) != ANI_OK) {
+    if (env->String_GetUTF8Size(anistr, &strSize) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size failed!");
         return false;
     }
@@ -90,7 +91,7 @@ bool AniParseString(ani_env* env, const ani_string& ani_str, std::string& out)
     std::vector<char> buffer(strSize + 1); // +1 for null terminator
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
-    if (env->String_GetUTF8(ani_str, utf8Buffer, strSize + 1, &bytesWritten) != ANI_OK) {
+    if (env->String_GetUTF8(anistr, utf8Buffer, strSize + 1, &bytesWritten) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8 failed!");
         return false;
     }
@@ -104,34 +105,30 @@ bool AniParseString(ani_env* env, const ani_string& ani_str, std::string& out)
     return true;
 }
 
-bool AniParseStringArray(ani_env* env, const ani_array_ref& ani_str_arr, std::vector<std::string>& out)
+bool AniParseStringArray(ani_env* env, const ani_array_ref& aniStrArr, std::vector<std::string>& out)
 {
     ani_size size = 0;
-    if (env->Array_GetLength(ani_str_arr, &size) != ANI_OK) {
+    if (env->Array_GetLength(aniStrArr, &size) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
         return false;
     }
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref aniRef;
-        if (env->Array_Get_Ref(ani_str_arr, i, &aniRef) != ANI_OK) {
+        if (env->Array_Get_Ref(aniStrArr, i, &aniRef) != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Array_Get_Ref failed!");
             return false;
         }
 
-        std::string stdStr;
-        if (!AniParseString(env, static_cast<ani_string>(aniRef), stdStr)) {
-            return false;
-        }
-
+        std::string stdStr = ANIStringToStdString(env, static_cast<ani_string>(aniRef));
         out.emplace_back(stdStr);
     }
     return true;
 }
 
-bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out)
+bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
 {
-    if (env->GlobalReference_Create(ani_callback, &out) != ANI_OK) {
+    if (env->GlobalReference_Create(aniCallback, &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed!");
         return false;
     }
@@ -231,12 +228,7 @@ bool AniObjectSetPropertyByNameRef(ani_env* env, ani_object& object, const char 
 
 bool IsCurrentThread(std::thread::id threadId)
 {
-    std::thread::id currentThread = std::this_thread::get_id();
-    if (threadId != currentThread) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Ani_ref can not be compared, different threadId.");
-        return false;
-    }
-    return true;
+    return threadId == std::this_thread::get_id();
 }
 
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
@@ -282,6 +274,125 @@ std::string ANIStringToStdString(ani_env* env, ani_string aniStr)
     utf8Buffer[bytesWritten] = '\0';
     std::string content = std::string(utf8Buffer);
     return content;
+}
+
+ani_ref ConvertAniArrayString(ani_env* env, const std::vector<std::string>& cArray)
+{
+    ani_size length = cArray.size();
+    ani_array_ref aArrayRef = nullptr;
+    ani_class aStringcls = nullptr;
+    if (env->FindClass("Lstd/core/String;", &aStringcls) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString FindClass String failed");
+        return nullptr;
+    }
+    ani_ref undefinedRef = nullptr;
+    if (ANI_OK != env->GetUndefined(&undefinedRef)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString GetUndefined failed");
+        return nullptr;
+    }
+    if (env->Array_New_Ref(aStringcls, length, undefinedRef, &aArrayRef) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString Array_New_Ref failed ");
+        return nullptr;
+    }
+    ani_string aString = nullptr;
+    for (ani_size i = 0; i < length; ++i) {
+        env->String_NewUTF8(cArray[i].c_str(), cArray[i].size(), &aString);
+        env->Array_Set_Ref(aArrayRef, i, aString);
+    }
+    ani_ref aRef = nullptr;
+    if (env->GlobalReference_Create(aArrayRef, &aRef) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayString GlobalReference_Create failed ");
+        return nullptr;
+    }
+    return aRef;
+}
+
+ani_ref ConvertAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
+{
+    ani_size length = cArray.size();
+    ani_array_int aArrayInt = nullptr;
+    if (env->Array_New_Int(length, &aArrayInt) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayInt Array_New_Int failed ");
+        return nullptr;
+    }
+    for (ani_size i = 0; i < length; ++i) {
+        env->Array_SetRegion_Int(aArrayInt, i, length, &cArray[i]);
+    }
+    ani_ref aRef = nullptr;
+    if (env->GlobalReference_Create(aArrayInt, &aRef) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayInt GlobalReference_Create failed ");
+        return nullptr;
+    }
+    return aRef;
+}
+
+ani_ref ConvertAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
+{
+    ani_size length = cArray.size();
+    ani_array_boolean aArrayBool = nullptr;
+    if (env->Array_New_Boolean(length, &aArrayBool) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayBool Array_New_Boolean failed ");
+        return nullptr;
+    }
+    std::vector<ani_boolean> boolArray(length);
+    for (ani_size i = 0; i < length; ++i) {
+        boolArray[i] = cArray[i];
+    }
+    for (ani_size i = 0; i < length; ++i) {
+        env->Array_SetRegion_Boolean(aArrayBool, i, length, &boolArray[i]);
+    }
+    ani_ref aRef = nullptr;
+    if (env->GlobalReference_Create(aArrayBool, &aRef) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertAniArrayBool GlobalReference_Create failed ");
+        return nullptr;
+    }
+    return aRef;
+}
+
+bool AniParaseArrayString([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_array_ref arrayObj, std::vector<std::string>& permissionList)
+{
+    ani_size length;
+    if (ANI_OK != env->Array_GetLength(arrayObj, &length)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength FAILED");
+        return false;
+    }
+    for (ani_size i = 0; i < length; i++) {
+        ani_ref stringEntryRef;
+        if (ANI_OK != env->Object_CallMethodByName_Ref(
+            arrayObj, "$_get", "I:Lstd/core/Object;", &stringEntryRef, static_cast<ani_int>(i))) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Ref _get Failed");
+            return false;
+        }
+        auto strEntryRef = ANIStringToStdString(env, static_cast<ani_string>(stringEntryRef));
+        if (strEntryRef.empty()) {
+            return false;
+        } else {
+            permissionList.emplace_back(strEntryRef);
+        }
+    }
+    return true;
+}
+
+ani_object CreateBoolean(ani_env *env, ani_boolean value)
+{
+    ani_class persionCls;
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass(CLASSNAME_BOOLEAN, &persionCls)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", static_cast<int32_t>(status));
+        return nullptr;
+    }
+    ani_method personInfoCtor;
+    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "Z:V", &personInfoCtor)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", static_cast<int32_t>(status));
+        return nullptr;
+    }
+    ani_object personInfoObj;
+    if ((status = env->Object_New(persionCls, personInfoCtor, &personInfoObj, value)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", static_cast<int32_t>(status));
+        return nullptr;
+    }
+    return personInfoObj;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -385,13 +385,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
 static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniArray,
     const ani_ref& aniCallback, RegisterPermActiveChangeContext* context, bool isReg)
 {
-    std::string type; // type: the first parameter is string
-    if (!AniParseString(context->env, aniType, type)) {
-        BusinessErrorAni::ThrowParameterTypeError(
-            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("type", "string"));
-        return false;
-    }
-
+    std::string type = ANIStringToStdString(context->env, static_cast<ani_string>(aniType));
     std::vector<std::string> permList; // permissionList: the second parameter is Array<string>
     if (!AniParseStringArray(context->env, aniArray, permList)) {
         BusinessErrorAni::ThrowParameterTypeError(
@@ -646,8 +640,7 @@ static void StopUsingPermissionExecute(
 
     auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid);
     if (retCode != RET_SUCCESS) {
-        int32_t stsCode = GetStsErrorCode(retCode);
-        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        BusinessErrorAni::ThrowError(env, retCode, GetErrorMessage(GetStsErrorCode(retCode)));
     }
 }
 

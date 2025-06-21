@@ -13,39 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef ABILITY_ACCESS_CTRL_H
-#define ABILITY_ACCESS_CTRL_H
+#ifndef INTERFACES_ETS_ANI_COMMON_H
+#define INTERFACES_ETS_ANI_COMMON_H
 
-#include "access_token.h"
-#include "ani_error.h"
+#include "ability_context.h"
+#include "ani.h"
+#include "ani_base_context.h"
+#include "ui_content.h"
+#include "ui_extension_context.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const int32_t PARAM_DEFAULT_VALUE = -1;
-struct AtManagerAsyncContext {
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    union {
-        uint32_t flag = 0;
-        uint32_t status;
-    };
-    int32_t grantStatus = PERMISSION_DENIED;
-    AtmResult result;
-};
-
-struct PermissionParamCache {
-    int64_t sysCommitIdCache = PARAM_DEFAULT_VALUE;
-    int32_t commitIdCache = PARAM_DEFAULT_VALUE;
-    int32_t handle = PARAM_DEFAULT_VALUE;
-    std::string sysParamCache;
-};
-
-struct PermissionStatusCache {
-    int32_t status;
-    std::string paramValue;
-};
+ani_env* GetCurrentEnv(ani_vm* vm);
+bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result);
+OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext,
+    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext>& uiExtensionContext, bool uiAbilityFlag);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // ABILITY_ACCESS_CTRL_H
+#endif /* INTERFACES_ETS_ANI_COMMON_H */
