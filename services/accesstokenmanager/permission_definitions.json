@@ -7036,6 +7036,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["wearable"]
+        },
+        {
+            "name": "ohos.permission.CONNECT_SELECTION_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         }
     ]
 }
