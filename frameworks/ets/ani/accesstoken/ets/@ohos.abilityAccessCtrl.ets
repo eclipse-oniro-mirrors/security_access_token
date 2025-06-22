@@ -26,7 +26,7 @@ export { Permissions };
 export type PermissionRequestResult = _PermissionRequestResult;
 
 class AsyncCallbackWrapper<T> {
-  private wrapperCallback_: AsyncCallback<T, void> = (err: BusinessError<void>, data: T) => {}
+  private wrapperCallback_: AsyncCallback<T, void> = (err: BusinessError<void> | null, data: T | undefined) => {}
 
   constructor(callback: AsyncCallback<T, void>) {
     this.wrapperCallback_ = callback;
@@ -219,11 +219,13 @@ export default namespace abilityAccessCtrl {
             let p: Promise<PermissionRequestResult> = new Promise<PermissionRequestResult>((
                 resolve: (v: PermissionRequestResult) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>((
-                    err: BusinessError<void>, data: PermissionRequestResult) => {
-                    if (err.code == 0) {
-                        resolve(data);
+                    err: BusinessError<void> | null, data: PermissionRequestResult | undefined) => {
+                    if (err?.code == 0) {
+                        if (data !== undefined) {
+                            resolve(data);
+                        }
                     } else {
-                        reject(err);
+                        reject(err as BusinessError);
                     }
                 });
                 taskpool.execute((): void => {
@@ -238,11 +240,13 @@ export default namespace abilityAccessCtrl {
             let p: Promise<Array<GrantStatus>> = new Promise<Array<GrantStatus>>((
                 resolve: (v: Array<GrantStatus>) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<Array<GrantStatus>>((
-                    err: BusinessError<void>, data: Array<GrantStatus>) => {
-                    if (err.code == 0) {
-                        resolve(data);
+                    err: BusinessError<void> | null, data: Array<GrantStatus> | undefined) => {
+                    if (err?.code == 0) {
+                        if (data !== undefined) {
+                            resolve(data);
+                        }
                     } else {
-                        reject(err);
+                        reject(err as BusinessError);
                     }
                 });
                 taskpool.execute((): void => {
@@ -262,11 +266,13 @@ export default namespace abilityAccessCtrl {
             let p: Promise<boolean> = new Promise<boolean>((
                 resolve: (v: boolean) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<boolean>((
-                    err: BusinessError<void>, data: boolean) => {
-                    if (err.code == 0) {
-                        resolve(data);
+                    err: BusinessError<void> | null, data: boolean | undefined) => {
+                    if (err?.code == 0) {
+                        if (data !== undefined) {
+                            resolve(data);
+                        }
                     } else {
-                        reject(err);
+                        reject(err as BusinessError);
                     }
                 });
                 taskpool.execute((): void => {
