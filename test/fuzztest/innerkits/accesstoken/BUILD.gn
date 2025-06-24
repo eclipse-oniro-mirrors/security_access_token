@@ -18,6 +18,7 @@ group("fuzztest") {
 
   deps += [
     # deps file
+    "accesstokenkitcoverage_fuzzer:AccessTokenKitCoverageFuzzTest",
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
@@ -29,7 +30,6 @@ group("fuzztest") {
     "gethapdlpflag_fuzzer:GetHapDlpFlagFuzzTest",
     "gethaptokenid_fuzzer:GetHapTokenIDFuzzTest",
     "gethaptokeninfo_fuzzer:GetHapTokenInfoFuzzTest",
-    "accesstokenkitcoverage_fuzzer:AccessTokenKitCoverageFuzzTest",
     "gethaptokeninfofromremote_fuzzer:GetHapTokenInfoFromRemoteFuzzTest",
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
