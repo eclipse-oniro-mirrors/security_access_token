@@ -18,9 +18,10 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -31,15 +32,14 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
+
+        FuzzedDataProvider provider(data, size);
         HapBaseInfo baseInfo;
-        baseInfo.userID = fuzzData.GetData<int32_t>();
-        baseInfo.bundleName = fuzzData.GenerateStochasticString();
-        baseInfo.instIndex = fuzzData.GetData<int32_t>();
+        baseInfo.userID = provider.ConsumeIntegral<int32_t>();
+        baseInfo.bundleName = provider.ConsumeRandomLengthString();
+        baseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
 
-        int32_t result = AccessTokenKit::SetPermDialogCap(baseInfo, false);
-
-        return result == RET_SUCCESS;
+        return AccessTokenKit::SetPermDialogCap(baseInfo, provider.ConsumeBool()) == RET_SUCCESS;
     }
 }
 

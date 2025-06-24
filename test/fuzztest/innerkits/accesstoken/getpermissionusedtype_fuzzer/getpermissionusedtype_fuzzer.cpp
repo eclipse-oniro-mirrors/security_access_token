@@ -19,9 +19,10 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -32,11 +33,10 @@ bool GetPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
-    AccessTokenFuzzData fuzzData(data, size);
-    PermUsedTypeEnum type = AccessTokenKit::GetPermissionUsedType(
-        fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateStochasticString());
 
-    return type != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
+    FuzzedDataProvider provider(data, size);
+    return AccessTokenKit::GetPermissionUsedType(provider.ConsumeIntegral<AccessTokenID>(),
+        provider.ConsumeRandomLengthString()) != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
 }
 }
 

@@ -18,12 +18,13 @@
 #include <string>
 #include <vector>
 #include <thread>
+
 #include "accesstoken_callbacks.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #define private public
 #include "accesstoken_manager_client.h"
 #undef private
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -53,10 +54,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
         PermStateChangeScope scopeInfo;
-        scopeInfo.permList = { fuzzData.GenerateStochasticString() };
-        scopeInfo.tokenIDs = { fuzzData.GetData<AccessTokenID>() };
+        scopeInfo.permList = { provider.ConsumeRandomLengthString() };
+        scopeInfo.tokenIDs = { provider.ConsumeIntegral<AccessTokenID>() };
         auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
         AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
         auto callback = new (std::nothrow) PermissionStateChangeCallback(callbackPtr);

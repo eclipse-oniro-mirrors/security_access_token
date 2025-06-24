@@ -17,23 +17,22 @@
 
 #include <cstddef>
 #include <cstdint>
-#include "accesstoken_fuzzdata.h"
+
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
     bool GetTokenTypeFuzzTest(const uint8_t* data, size_t size)
     {
-        ATokenTypeEnum ATokenType;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        ATokenType = AccessTokenKit::GetTokenType(fuzzData.GetData<AccessTokenID>());
-
-        return true;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::GetTokenType(
+            provider.ConsumeIntegral<AccessTokenID>()) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
     }
 }
 

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,22 +34,20 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        std::vector<std::string> permissionList = {fuzzData.GenerateStochasticString()};
+        FuzzedDataProvider provider(data, size);
         PermissionUsedRequest request = {
-            .tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            .isRemote = fuzzData.GenerateStochasticBool(),
-            .deviceId = fuzzData.GenerateStochasticString(),
-            .bundleName = fuzzData.GenerateStochasticString(),
-            .permissionList = permissionList,
-            .beginTimeMillis = fuzzData.GetData<int64_t>(),
-            .endTimeMillis = fuzzData.GetData<int64_t>(),
-            .flag = fuzzData.GenerateStochasticEnmu<PermissionUsageFlag>(
-                FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
+            .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+            .isRemote = provider.ConsumeBool(),
+            .deviceId = provider.ConsumeRandomLengthString(),
+            .bundleName = provider.ConsumeRandomLengthString(),
+            .permissionList = {provider.ConsumeRandomLengthString()},
+            .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
+            .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
+            .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED)))
         };
 
         PermissionUsedResult res;
-
         return PrivacyKit::GetPermissionUsedRecords(request, res) == 0;
     }
 }

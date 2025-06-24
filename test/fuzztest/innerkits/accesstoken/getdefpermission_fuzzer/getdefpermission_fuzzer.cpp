@@ -18,7 +18,8 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "accesstoken_kit.h"
 #include "permission_def.h"
@@ -34,11 +35,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        PermissionDef PERMISSIONDEF;
-        int32_t result = AccessTokenKit::GetDefPermission(fuzzData.GenerateStochasticString(), PERMISSIONDEF);
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        PermissionDef def;
+        return AccessTokenKit::GetDefPermission(provider.ConsumeRandomLengthString(), def) == RET_SUCCESS;
     }
 }
 

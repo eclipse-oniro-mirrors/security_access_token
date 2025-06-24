@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -34,9 +34,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-
-        return AccessTokenKit::UpdateSecCompEnhance(fuzzData.GetData<int32_t>(), fuzzData.GetData<uint32_t>()) == 0;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::UpdateSecCompEnhance(provider.ConsumeIntegral<int32_t>(),
+            provider.ConsumeIntegral<uint32_t>()) == 0;
     }
 }
 

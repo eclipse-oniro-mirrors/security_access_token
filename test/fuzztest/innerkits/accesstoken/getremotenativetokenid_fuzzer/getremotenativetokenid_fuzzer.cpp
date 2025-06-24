@@ -19,9 +19,10 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -29,17 +30,16 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetRemoteNativeTokenIDFuzzTest(const uint8_t* data, size_t size)
     {
-        AccessTokenID tokenId = 0;
-#ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        tokenId = AccessTokenKit::GetRemoteNativeTokenID(
-            fuzzData.GenerateStochasticString(), fuzzData.GetData<AccessTokenID>());
+#ifdef TOKEN_SYNC_ENABLE
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::GetRemoteNativeTokenID(provider.ConsumeRandomLengthString(),
+            provider.ConsumeIntegral<AccessTokenID>()) != INVALID_TOKENID;
 #endif
-        return tokenId != 0;
+        return true;
     }
 }
 

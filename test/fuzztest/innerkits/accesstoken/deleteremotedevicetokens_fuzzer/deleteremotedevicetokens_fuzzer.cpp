@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -29,14 +30,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool DeleteRemoteDeviceTokensFuzzTest(const uint8_t* data, size_t size)
     {
-#ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int32_t result = AccessTokenKit::DeleteRemoteDeviceTokens(fuzzData.GenerateStochasticString());
-        return result == RET_SUCCESS;
+#ifdef TOKEN_SYNC_ENABLE
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::DeleteRemoteDeviceTokens(provider.ConsumeRandomLengthString()) == RET_SUCCESS;
 #else
         return true;
 #endif
@@ -47,7 +47,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-
     OHOS::DeleteRemoteDeviceTokensFuzzTest(data, size);
     return 0;
 }

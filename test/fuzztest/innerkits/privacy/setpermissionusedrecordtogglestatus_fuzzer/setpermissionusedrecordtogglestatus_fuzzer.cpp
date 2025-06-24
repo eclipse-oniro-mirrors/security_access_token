@@ -15,7 +15,7 @@
 
 #include "setpermissionusedrecordtogglestatus_fuzzer.h"
 
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -29,11 +29,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int32_t userID = fuzzData.GetData<int32_t>();
-        bool status = fuzzData.GenerateStochasticBool();
-
-        return PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status) == 0;
+        FuzzedDataProvider provider(data, size);
+        return PrivacyKit::SetPermissionUsedRecordToggleStatus(provider.ConsumeIntegral<int32_t>(),
+            provider.ConsumeBool()) == 0;
     }
 }
 

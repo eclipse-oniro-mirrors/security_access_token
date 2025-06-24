@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -33,19 +34,16 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-
-        int permSize = fuzzData.GetData<int>() % MAX_PERMISSION_SIZE;
+        FuzzedDataProvider provider(data, size);
+        int32_t permSize = provider.ConsumeIntegral<int32_t>() % MAX_PERMISSION_SIZE;
         std::vector<std::string> permissionList;
-        std::vector<int32_t> permStateList;
-        for (int i = 0; i < permSize; i++) {
-            permissionList.emplace_back(fuzzData.GenerateStochasticString());
+        for (int32_t i = 0; i < permSize; ++i) {
+            permissionList.emplace_back(provider.ConsumeRandomLengthString());
         }
 
-        int32_t result = AccessTokenKit::VerifyAccessToken(
-            fuzzData.GetData<AccessTokenID>(), permissionList, permStateList, false);
-
-        return result == RET_SUCCESS;
+        std::vector<int32_t> permStateList;
+        return AccessTokenKit::VerifyAccessToken(provider.ConsumeIntegral<AccessTokenID>(), permissionList,
+            permStateList, provider.ConsumeBool()) == RET_SUCCESS;
     }
 }
 

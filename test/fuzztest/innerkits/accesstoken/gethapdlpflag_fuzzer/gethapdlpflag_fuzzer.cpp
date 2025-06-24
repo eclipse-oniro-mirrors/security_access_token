@@ -19,9 +19,10 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -33,10 +34,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int32_t result = AccessTokenKit::GetHapDlpFlag(fuzzData.GetData<AccessTokenID>());
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::GetHapDlpFlag(provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
     }
 }
 
