@@ -19,25 +19,24 @@
 #include <thread>
 #include <string>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool AllocHapTokenFuzzTest(const uint8_t* data, size_t size)
+    bool GrantPermissionForSpecifiedTimeFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        std::string permissionName(fuzzData.GenerateStochasticString());
-        int32_t result = AccessTokenKit::GrantPermissionForSpecifiedTime(
-            fuzzData.GetData<AccessTokenID>(), permissionName, fuzzData.GetData<uint32_t>());
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::GrantPermissionForSpecifiedTime(provider.ConsumeIntegral<AccessTokenID>(),
+            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<uint32_t>()) == RET_SUCCESS;
     }
 }
 
@@ -45,6 +44,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AllocHapTokenFuzzTest(data, size);
+    OHOS::GrantPermissionForSpecifiedTimeFuzzTest(data, size);
     return 0;
 }

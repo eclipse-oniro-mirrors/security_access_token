@@ -16,60 +16,104 @@
 #include "allochaptoken_fuzzer.h"
 
 #include <iostream>
-#include <thread>
 #include <string>
+#include <thread>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+    void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams &param)
+    {
+        param.userID = provider.ConsumeIntegral<int32_t>();
+        param.bundleName = bundleName;
+        param.instIndex = provider.ConsumeIntegral<int32_t>();
+        param.dlpType = static_cast<int32_t>(
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE)));
+        param.appIDDesc = provider.ConsumeRandomLengthString();
+        param.apiVersion = provider.ConsumeIntegral<int32_t>();
+        param.isSystemApp = provider.ConsumeBool();
+        param.appDistributionType = provider.ConsumeRandomLengthString();
+        param.isRestore = provider.ConsumeBool();
+        param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+        param.isAtomicService = provider.ConsumeBool();
+    }
+
+    void InitHapPolicy(const std::string& bundleName, const std::string& permissionName, FuzzedDataProvider& provider,
+        HapPolicyParams& policy)
+    {
+        PermissionDef def = {
+            .permissionName = permissionName,
+            .bundleName = bundleName,
+            .grantMode = static_cast<int32_t>(
+                provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(GrantMode::SYSTEM_GRANT))),
+            .availableLevel = static_cast<ATokenAplEnum>(
+                provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(ATokenAplEnum::APL_ENUM_BUTT))),
+            .provisionEnable = provider.ConsumeBool(),
+            .distributedSceneEnable = provider.ConsumeBool(),
+            .label = provider.ConsumeRandomLengthString(),
+            .labelId = provider.ConsumeIntegral<int32_t>(),
+            .description = provider.ConsumeRandomLengthString(),
+            .descriptionId = provider.ConsumeIntegral<int32_t>(),
+            .availableType = static_cast<ATokenAvailableTypeEnum>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(ATokenAvailableTypeEnum::AVAILABLE_TYPE_BUTT))),
+            .isKernelEffect = provider.ConsumeBool(),
+            .hasValue = provider.ConsumeBool(),
+        };
+
+        PermissionStateFull state = {
+            .permissionName = permissionName,
+            .isGeneral = provider.ConsumeBool(),
+            .resDeviceID = {provider.ConsumeRandomLengthString()},
+            .grantStatus = {static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED)))},
+            .grantFlags = {provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME))},
+        };
+
+        PreAuthorizationInfo info = {
+            .permissionName = permissionName,
+            .userCancelable = provider.ConsumeBool(),
+        };
+
+        policy.apl = static_cast<ATokenAplEnum>(
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(ATokenAplEnum::APL_ENUM_BUTT)));
+        policy.domain = provider.ConsumeRandomLengthString();
+        policy.permList = {def};
+        policy.permStateList = {state};
+        policy.aclRequestedList = {provider.ConsumeRandomLengthString()};
+        policy.preAuthorizationInfo = {info};
+        policy.checkIgnore = static_cast<HapPolicyCheckIgnore>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(HapPolicyCheckIgnore::ACL_IGNORE_CHECK)));
+        policy.aclExtendedMap = {std::make_pair<std::string, std::string>(provider.ConsumeRandomLengthString(),
+            provider.ConsumeRandomLengthString())};
+    }
+
     bool AllocHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
-        AccessTokenIDEx tokenIdEx = {0};
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
+        std::string bundleName = provider.ConsumeRandomLengthString();
+        std::string permissionName = provider.ConsumeRandomLengthString();
 
-        std::string permissionName(fuzzData.GenerateStochasticString());
-        std::string bundleName(fuzzData.GenerateStochasticString());
-        PermissionDef testPermDef;
-        testPermDef.permissionName = permissionName;
-        testPermDef.bundleName = bundleName;
-        testPermDef.grantMode = 1;
-        testPermDef.availableLevel = APL_NORMAL;
-        testPermDef.label = fuzzData.GenerateStochasticString();
-        testPermDef.labelId = 1;
-        testPermDef.description = fuzzData.GenerateStochasticString();
-        testPermDef.descriptionId = 1;
+        HapInfoParams param;
+        InitHapInfoParams(bundleName, provider, param);
 
-        PermissionStateFull testState;
-        testState.permissionName = permissionName;
-        testState.isGeneral = true;
-        testState.resDeviceID = {fuzzData.GenerateStochasticString()};
-        testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
-        testState.grantFlags = {1};
-        HapInfoParams TestInfoParms = {
-            .userID = 1,
-            .bundleName = bundleName,
-            .instIndex = 0,
-            .appIDDesc = fuzzData.GenerateStochasticString()
-        };
-        HapPolicyParams TestPolicyPrams = {
-            .apl = APL_NORMAL,
-            .domain = fuzzData.GenerateStochasticString(),
-            .permList = {testPermDef},
-            .permStateList = {testState}
-        };
+        HapPolicyParams policy;
+        InitHapPolicy(bundleName, permissionName, provider, policy);
 
-        tokenIdEx = AccessTokenKit::AllocHapToken(TestInfoParms, TestPolicyPrams);
+        AccessTokenIDEx tokenIdEx = {0};
+        tokenIdEx = AccessTokenKit::AllocHapToken(param, policy);
 
-        return tokenIdEx.tokenIdExStruct.tokenID != 0;
+        return tokenIdEx.tokenIdExStruct.tokenID != INVALID_TOKENID;
     }
 }
 

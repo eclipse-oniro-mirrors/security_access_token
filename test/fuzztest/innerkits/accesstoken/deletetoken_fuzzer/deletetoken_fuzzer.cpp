@@ -18,7 +18,8 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -32,10 +33,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int32_t result = AccessTokenKit::DeleteToken(fuzzData.GetData<AccessTokenID>());
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::DeleteToken(provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
     }
 }
 

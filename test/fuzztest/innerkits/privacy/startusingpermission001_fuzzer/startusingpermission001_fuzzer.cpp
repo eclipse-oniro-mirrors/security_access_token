@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -54,20 +54,21 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-
+        FuzzedDataProvider provider(data, size);
         auto callback = std::make_shared<CbCustomizeTest>();
         if (callback == nullptr) {
             return false;
         }
-        AccessTokenID tokenID = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        AccessTokenID tokenID = provider.ConsumeIntegral<AccessTokenID>();
         if (g_realTokenFlag) {
             tokenID = g_realTokenId;
             g_realTokenFlag = false;
         }
 
-        return PrivacyKit::StartUsingPermission(tokenID,
-            fuzzData.GenerateStochasticString(), callback, fuzzData.GetData<int32_t>()) == 0;
+        PermissionUsedType type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        return PrivacyKit::StartUsingPermission(tokenID, provider.ConsumeRandomLengthString(), callback,
+            provider.ConsumeIntegral<int32_t>(), type) == 0;
     }
 }
 

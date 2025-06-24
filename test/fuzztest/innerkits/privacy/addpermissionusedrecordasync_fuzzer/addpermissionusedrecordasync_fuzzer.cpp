@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,16 +34,17 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-
+        FuzzedDataProvider provider(data, size);
         AddPermParamInfo info;
-        info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
-        info.permissionName = fuzzData.GenerateStochasticString();
-        info.successCount = fuzzData.GetData<int32_t>();
-        info.failCount = fuzzData.GetData<int32_t>();
-        info.type = fuzzData.GenerateStochasticEnmu<PermissionUsedType>(PERM_USED_TYPE_BUTT);
+        PermissionUsedType type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        info.tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        info.permissionName = provider.ConsumeRandomLengthString();
+        info.successCount = provider.ConsumeIntegral<int32_t>();
+        info.failCount = provider.ConsumeIntegral<int32_t>();
+        info.type = type;
 
-        return PrivacyKit::AddPermissionUsedRecord(info, true) == 0;
+        return PrivacyKit::AddPermissionUsedRecord(info, provider.ConsumeBool()) == 0;
     }
 }
 

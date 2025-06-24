@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,11 +34,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
         std::vector<PermissionUsedTypeInfo> results;
-
-        return PrivacyKit::GetPermissionUsedTypeInfos(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateStochasticString(), results) == 0;
+        return PrivacyKit::GetPermissionUsedTypeInfos(provider.ConsumeIntegral<AccessTokenID>(),
+            provider.ConsumeRandomLengthString(), results) == 0;
     }
 }
 

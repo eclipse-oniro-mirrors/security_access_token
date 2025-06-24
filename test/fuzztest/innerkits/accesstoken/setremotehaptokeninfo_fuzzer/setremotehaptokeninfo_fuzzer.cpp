@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -28,33 +29,40 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool SetRemoteHapTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
-#ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+#ifdef TOKEN_SYNC_ENABLE
+        FuzzedDataProvider provider(data, size);
         HapTokenInfo baseInfo = {
-            .ver = 1,
-            .userID = 1,
-            .bundleName = fuzzData.GenerateStochasticString(),
-            .instIndex = 1,
-            .tokenID = fuzzData.GetData<AccessTokenID>(),
-            .tokenAttr = 0
+            .ver = '1',
+            .userID = provider.ConsumeIntegral<AccessTokenID>(),
+            .bundleName = provider.ConsumeRandomLengthString(),
+            .apiVersion = provider.ConsumeIntegral<int32_t>(),
+            .instIndex = provider.ConsumeIntegral<int32_t>(),
+            .dlpType = static_cast<int32_t>(
+                provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE))),
+            .tokenID = provider.ConsumeIntegral<AccessTokenID>(),
+            .tokenAttr = provider.ConsumeIntegral<uint32_t>(),
         };
-        PermissionStatus infoManagerTestState = {
-            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
-            .grantStatus = PermissionState::PERMISSION_GRANTED,
-            .permissionName = fuzzData.GenerateStochasticString()};
-        std::vector<PermissionStatus> permStateList;
-        permStateList.emplace_back(infoManagerTestState);
+
+        PermissionStatus state = {
+            .permissionName = provider.ConsumeRandomLengthString(),
+            .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
+            .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME))
+        };
+        std::vector<PermissionStatus> permStateList = {state};
+
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,
             .permStateList = permStateList
         };
 
-        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(fuzzData.GenerateStochasticString(), remoteTokenInfo);
-        return result == RET_SUCCESS;
+        return AccessTokenKit::SetRemoteHapTokenInfo(
+            provider.ConsumeRandomLengthString(), remoteTokenInfo) == RET_SUCCESS;
 #else
         return true;
 #endif

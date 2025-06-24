@@ -19,10 +19,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "access_token.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -34,13 +35,13 @@ bool InitUserPolicyFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    AccessTokenFuzzData fuzzData(data, size);
+    FuzzedDataProvider provider(data, size);
 
-    std::string permissionName(fuzzData.GenerateStochasticString());
+    std::string permissionName = provider.ConsumeRandomLengthString();
     const std::vector<std::string> permList = {permissionName};
     UserState state;
-    state.userId = fuzzData.GetData<int32_t>();
-    state.isActive = fuzzData.GenerateStochasticBool();
+    state.userId = provider.ConsumeIntegral<int32_t>();
+    state.isActive = provider.ConsumeBool();
     std::vector<UserState> userList = {state};
     AccessTokenKit::InitUserPolicy(userList, permList);
     AccessTokenKit::UpdateUserPolicy(userList);

@@ -17,8 +17,9 @@
 
 #include <cstddef>
 #include <cstdint>
-#include "accesstoken_fuzzdata.h"
+
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace OHOS::Security::AccessToken;
 
@@ -29,10 +30,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int32_t result = AccessTokenKit::GetTokenTypeFlag(fuzzData.GetData<AccessTokenID>());
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        return AccessTokenKit::GetTokenTypeFlag(
+            provider.ConsumeIntegral<AccessTokenID>()) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
     }
 }
 

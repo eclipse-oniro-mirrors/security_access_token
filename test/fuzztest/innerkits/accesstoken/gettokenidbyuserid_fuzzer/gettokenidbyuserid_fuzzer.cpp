@@ -16,9 +16,10 @@
 #include "gettokenidbyuserid_fuzzer.h"
 
 #include <unordered_set>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -30,11 +31,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
         std::unordered_set<AccessTokenID> tokenIdList;
-        int32_t result = AccessTokenKit::GetTokenIDByUserID(fuzzData.GetData<int32_t>(), tokenIdList);
-
-        return result == RET_SUCCESS;
+        return AccessTokenKit::GetTokenIDByUserID(provider.ConsumeIntegral<int32_t>(), tokenIdList) == RET_SUCCESS;
     }
 }
 

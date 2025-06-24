@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -32,12 +33,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        uint32_t status;
-        int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(
-            fuzzData.GenerateStochasticString(), status, fuzzData.GetData<int32_t>());
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        uint32_t status = 0;
+        return AccessTokenKit::GetPermissionRequestToggleStatus(provider.ConsumeRandomLengthString(), status,
+            provider.ConsumeIntegral<int32_t>()) == RET_SUCCESS;
     }
 }
 

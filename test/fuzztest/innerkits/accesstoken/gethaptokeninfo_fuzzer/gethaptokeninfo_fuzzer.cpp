@@ -17,8 +17,9 @@
 
 #include <cstddef>
 #include <cstdint>
-#include "accesstoken_fuzzdata.h"
+
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "hap_token_info.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -30,11 +31,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        HapTokenInfo HapTokenInfotest;
-        int32_t result = AccessTokenKit::GetHapTokenInfo(fuzzData.GetData<AccessTokenID>(), HapTokenInfotest);
-
-        return result == RET_SUCCESS;
+        FuzzedDataProvider provider(data, size);
+        HapTokenInfo info;
+        return AccessTokenKit::GetHapTokenInfo(provider.ConsumeIntegral<AccessTokenID>(), info) == RET_SUCCESS;
     }
 }
 

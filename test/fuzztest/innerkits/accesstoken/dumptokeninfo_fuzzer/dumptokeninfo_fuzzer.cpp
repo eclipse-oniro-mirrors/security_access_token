@@ -19,9 +19,10 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -29,17 +30,16 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
-        AccessTokenID tokenId = 0;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        tokenId = fuzzData.GetData<AccessTokenID>();
-        std::string dumpInfo;
-        AtmToolsParamInfo info;
-        info.tokenId = tokenId;
+        FuzzedDataProvider provider(data, size);
+        AtmToolsParamInfo info = {
+            .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+        };
 
+        std::string dumpInfo;
         AccessTokenKit::DumpTokenInfo(info, dumpInfo);
  
         return true;
