@@ -714,7 +714,7 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 
     int32_t result = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
     if (result != RET_SUCCESS) {
-        asyncContext->result = result;
+        asyncContext->errorCode = result;
         return;
     }
 
@@ -722,18 +722,18 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->result = ERR_PARAM_INVALID;
+        asyncContext->errorCode = ERR_PARAM_INVALID;
     }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
-        asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
+        asyncContext->errorCode = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
     } else {
-        asyncContext->result = ERR_PERMISSION_NOT_EXIST;
+        asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
     }
     LOGD(ATM_DOMAIN, ATM_TAG,
         "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
-        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
@@ -857,7 +857,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
 
     int32_t result = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
     if (result != RET_SUCCESS) {
-        asyncContext->result = result;
+        asyncContext->errorCode = result;
         return;
     }
 
@@ -865,18 +865,18 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->result = ERR_PARAM_INVALID;
+        asyncContext->errorCode = ERR_PARAM_INVALID;
     }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
-        asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
+        asyncContext->errorCode = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
     } else {
-        asyncContext->result = ERR_PERMISSION_NOT_EXIST;
+        asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
     }
     LOGD(ATM_DOMAIN, ATM_TAG,
-        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
-        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
+        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke errorCode = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
@@ -932,7 +932,7 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
-    asyncContext->result = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
+    asyncContext->errorCode = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
         asyncContext->permissionName, asyncContext->flag);
 }
 
@@ -1045,7 +1045,7 @@ void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
-    asyncContext->result = AccessTokenKit::SetPermissionRequestToggleStatus(asyncContext->permissionName,
+    asyncContext->errorCode = AccessTokenKit::SetPermissionRequestToggleStatus(asyncContext->permissionName,
         asyncContext->status, 0);
 }
 
@@ -1064,7 +1064,7 @@ void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
-    asyncContext->result = AccessTokenKit::GetPermissionRequestToggleStatus(asyncContext->permissionName,
+    asyncContext->errorCode = AccessTokenKit::GetPermissionRequestToggleStatus(asyncContext->permissionName,
         asyncContext->status, 0);
 }
 
@@ -1192,7 +1192,7 @@ void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
-    asyncContext->result = AccessTokenKit::RequestAppPermOnSetting(asyncContext->tokenId);
+    asyncContext->errorCode = AccessTokenKit::RequestAppPermOnSetting(asyncContext->tokenId);
 }
 
 void NapiAtManager::RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data)
