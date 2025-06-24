@@ -122,6 +122,12 @@ namespace OHOS {
         }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
+        code = static_cast<uint32_t>(
+            IAccessTokenManagerIpcCode::COMMAND_UN_REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK);
+        MessageParcel datas2;
+        datas2.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas2, reply, option);
+
         return true;
     }
 } // namespace OHOS

@@ -32,85 +32,129 @@ using namespace OHOS::Security::AccessToken;
 static AccessTokenID g_selfTokenId = 0;
 static uint64_t g_mockTokenId = 0;
 const int32_t CONSTANTS_NUMBER_TWO = 2;
+static bool g_reload = true;
 
 namespace OHOS {
-    void GetNativeToken()
-    {
-        if (g_mockTokenId != 0) {
-            SetSelfTokenID(g_mockTokenId);
-            return;
-        }
-        const char** perms = new (std::nothrow) const char *[1];
-        if (perms == nullptr) {
-            return;
-        }
+void ReloadNativeTokenInfo()
+{
+    if (!g_reload) {
+        return;
+    }
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    MessageParcel reply;
+    MessageOption option;
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return;
+    }
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_RELOAD_NATIVE_TOKEN_INFO), datas, reply, option);
+#endif
+    g_reload = false;
+}
+void GetNativeToken()
+{
+    ReloadNativeTokenInfo();
+    if (g_mockTokenId != 0) {
+        (void)SetSelfTokenID(g_mockTokenId);
+        return;
+    }
+    g_selfTokenId = GetSelfTokenID();
+    g_mockTokenId = AccessTokenKit::GetNativeTokenId("foundation");
+    if (g_mockTokenId == 0) {
+        return;
+    }
+    (void)SetSelfTokenID(g_mockTokenId);
+}
 
-        perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+void ClearUserPolicy()
+{
+    MessageParcel reply;
+    MessageOption option;
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return;
+    }
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CLEAR_USER_POLICY), datas, reply, option);
+}
 
-        NativeTokenInfoParams infoInstance = {
-            .dcapsNum = 0,
-            .permsNum = 1,
-            .aclsNum = 0,
-            .dcaps = nullptr,
-            .perms = perms,
-            .acls = nullptr,
-            .processName = "inituserpolicystub_fuzzer_test",
-            .aplStr = "system_core",
-        };
+void UpdateUserPolicy(AccessTokenFuzzData &fuzzData)
+{
+    UserState userList;
+    userList.userId = fuzzData.GetData<int32_t>();
+    userList.isActive = fuzzData.GenerateStochasticBool();
 
-        g_mockTokenId = GetAccessTokenId(&infoInstance);
-        g_selfTokenId = GetSelfTokenID();
-        SetSelfTokenID(g_mockTokenId);
-        AccessTokenKit::ReloadNativeTokenInfo();
-        delete[] perms;
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return;
+    }
+    if (!datas.WriteUint32(1)) {
+        return;
+    }
+    if (!datas.WriteInt32(userList.userId)) {
+        return;
+    }
+    if (!datas.WriteBool(userList.isActive)) {
+        return;
     }
 
-    bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
+    MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_USER_POLICY), datas, reply, option);
+}
 
-        AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(fuzzData.GenerateStochasticString());
-
-        UserState userList;
-        userList.userId = fuzzData.GetData<int32_t>();
-        userList.isActive = fuzzData.GenerateStochasticBool();
-
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(1)) {
-            return false;
-        }
-        if (!datas.WriteUint32(1)) {
-            return false;
-        }
-        if (!datas.WriteInt32(userList.userId)) {
-            return false;
-        }
-        if (!datas.WriteBool(userList.isActive)) {
-            return false;
-        }
-        if (!datas.WriteString(testName)) {
-            return false;
-        }
-
-        uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManagerIpcCode::COMMAND_INIT_USER_POLICY);
-
-        MessageParcel reply;
-        MessageOption option;
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
-        if (enable) {
-            GetNativeToken();
-        } else {
-            SetSelfTokenID(g_selfTokenId);
-        }
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-
-        return true;
+bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    AccessTokenFuzzData fuzzData(data, size);
+    std::string testName(fuzzData.GenerateStochasticString());
+
+    UserState userList;
+    userList.userId = fuzzData.GetData<int32_t>();
+    userList.isActive = fuzzData.GenerateStochasticBool();
+
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return false;
+    }
+    if (!datas.WriteUint32(1)) {
+        return false;
+    }
+    if (!datas.WriteUint32(1)) {
+        return false;
+    }
+    if (!datas.WriteInt32(userList.userId)) {
+        return false;
+    }
+    if (!datas.WriteBool(userList.isActive)) {
+        return false;
+    }
+    if (!datas.WriteString(testName)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(
+        IAccessTokenManagerIpcCode::COMMAND_INIT_USER_POLICY);
+
+    MessageParcel reply;
+    MessageOption option;
+    bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+    if (enable) {
+        GetNativeToken();
+    } else {
+        (void)SetSelfTokenID(g_selfTokenId);
+    }
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    UpdateUserPolicy(fuzzData);
+    ClearUserPolicy();
+
+    return true;
+}
 } // namespace OHOS
 
 /* Fuzzer entry point */

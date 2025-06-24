@@ -57,8 +57,9 @@ namespace OHOS {
         std::vector<std::string> permList = {fuzzData.GenerateStochasticString()};
         auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
-
-        return PrivacyKit::RegisterPermActiveStatusCallback(callback) == 0;
+        (void)PrivacyKit::RegisterPermActiveStatusCallback(callback);
+        (void)PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
+        return true;
     }
 }
 
