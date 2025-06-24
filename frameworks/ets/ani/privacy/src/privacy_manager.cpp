@@ -31,10 +31,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 std::mutex g_mutex;
 std::vector<RegisterPermActiveChangeContext*> g_subScribers;
 static constexpr size_t MAX_CALLBACK_SIZE = 200;
-static constexpr ani_size ACTIVE_CHANGE_TYPE_INDEX_ONE = 1;
-static constexpr ani_size ACTIVE_CHANGE_TYPE_INDEX_TWO = 2;
-static constexpr ani_size PERMMISSION_USED_TYPE_INDEX_ONE = 1;
-static constexpr ani_size PERMMISSION_USED_TYPE_INDEX_TWO = 2;
 constexpr const char* ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID = "callingTokenId";
 constexpr const char* ACTIVE_CHANGE_FIELD_TOKEN_ID = "tokenId";
 constexpr const char* ACTIVE_CHANGE_FIELD_PERMISSION_NAME = "permissionName";
@@ -101,7 +97,7 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -109,23 +105,9 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
         return;
     }
 
-    ani_status status = ANI_ERROR;
-    ani_ref usedTypeRef;
-    if (ANI_OK != (status = env->Object_GetPropertyByName_Ref(options, "usedType", &usedTypeRef))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_GetFieldByName_Ref Faild status : %{public}d", status);
+    int32_t usedType = 0;
+    if (!GetEnumProperty(env, options, "usedType", usedType)) {
         return;
-    }
-    ani_int usedType = 0;
-    ani_boolean isUndefined = true;
-    if (ANI_OK != (status = env->Reference_IsUndefined(usedTypeRef, &isUndefined))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
-        return;
-    }
-    if (!isUndefined) {
-        ani_enum_item usedTypeEnum = static_cast<ani_enum_item>(usedTypeRef);
-        if (ANI_OK != env->EnumItem_GetValue_Int(usedTypeEnum, &usedType)) {
-            return;
-        }
     }
     AddPermParamInfo info;
     info.tokenId = static_cast<AccessTokenID>(tokenID);
@@ -192,157 +174,35 @@ void PermActiveStatusPtr::SetThreadId(const std::thread::id threadId)
     threadId_ = threadId;
 }
 
-static bool GenerateAniClassAndObject(ani_env* env, ani_class& aniClass, ani_object& aniObject)
+static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeResponse& result)
 {
-    const char* classDescriptor = "L@ohos/privacyManager/privacyManager/ActiveChangeResponseInner;";
-    if (!AniFindClass(env, classDescriptor, aniClass)) {
-        return false;
-    }
-
-    const char* methodDescriptor = "<ctor>";
-    const char* signature = nullptr;
-    if (!AniNewClassObject(env, aniClass, methodDescriptor, signature, aniObject)) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const char* propertyName, const ani_int in)
-{
-    ani_class aniClass;
-    const char* classDescriptor = "Lstd/core/Int;";
-    if (!AniFindClass(env, classDescriptor, aniClass)) {
-        return false;
-    }
-
-    const char* methodDescriptor = "<ctor>"; // <ctor> means constructor
-    const char* signature = "I:V"; // I:V means input is int, return is void
-    ani_method aniMethod;
-    if (!AniClassFindMethod(env, aniClass, methodDescriptor, signature, aniMethod)) {
-        return false;
-    }
-
-    ani_object intObject;
-    if (env->Object_New(aniClass, aniMethod, &intObject, in) != ANI_OK) {
-        return false;
-    }
-
-    if (!AniObjectSetPropertyByNameRef(env, aniObject, propertyName, intObject)) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool SetStringProperty(ani_env* env, ani_object& aniObject, const char* propertyName, const std::string in)
-{
-    ani_string aniString;
-    if (!AniNewString(env, in, aniString)) {
-        return false;
-    }
-
-    if (!AniObjectSetPropertyByNameRef(env, aniObject, propertyName, aniString)) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool SetEnumProperty(ani_env* env, ani_object& aniObject, const char* enumDescription, const char* propertyName,
-    ani_size index)
-{
-    ani_enum_item aniEnumItem;
-    if (!AniNewEnumIteam(env, enumDescription, index, aniEnumItem)) {
-        return false;
-    }
-
-    if (!AniObjectSetPropertyByNameRef(env, aniObject, propertyName, aniEnumItem)) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool TransFormActiveChangeTypeToIndex(ActiveChangeType type, ani_size& index)
-{
-    if (type == ActiveChangeType::PERM_INACTIVE) {
-        index = 0;
-    } else if (type == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
-        index = ACTIVE_CHANGE_TYPE_INDEX_ONE;
-    } else if (type == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) {
-        index = ACTIVE_CHANGE_TYPE_INDEX_TWO;
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid ActiveChangeType value!");
-        return false;
-    }
-    return true;
-}
-
-static bool TransFormPermissionUsedTypeToIndex(PermissionUsedType type, ani_size& index)
-{
-    if (type == PermissionUsedType::NORMAL_TYPE) {
-        index = 0;
-    } else if (type == PermissionUsedType::PICKER_TYPE) {
-        index = PERMMISSION_USED_TYPE_INDEX_ONE;
-    } else if (type == PermissionUsedType::SECURITY_COMPONENT_TYPE) {
-        index = PERMMISSION_USED_TYPE_INDEX_TWO;
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid PermissionUsedType value!");
-        return false;
-    }
-    return true;
-}
-
-static void ConvertActiveChangeResponse(ani_env* env, const ActiveChangeResponse& result, ani_object& aniObject)
-{
-    // class implements from interface should use property, independent class use field
-    ani_class aniClass;
-    if (!GenerateAniClassAndObject(env, aniClass, aniObject)) {
-        return;
+    ani_object aniObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/ActiveChangeResponseInner;");
+    if (aniObject == nullptr) {
+        return nullptr;
     }
 
     // set callingTokenID?: int  optional parameter callingTokenID need box as a object
-    if (!SetOptionalIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID,
-        static_cast<ani_int>(result.callingTokenID))) {
-        return;
-    }
+    SetIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID, static_cast<ani_int>(result.callingTokenID));
 
     // set tokenID: int
-    if (!AniObjectSetPropertyByNameInt(env, aniObject, ACTIVE_CHANGE_FIELD_TOKEN_ID,
-        static_cast<ani_int>(result.tokenID))) {
-        return;
-    }
+    SetIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_TOKEN_ID, static_cast<int32_t>(result.tokenID));
 
     // set permissionName: string
-    if (!SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_PERMISSION_NAME, result.permissionName)) {
-        return;
-    }
+    SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_PERMISSION_NAME, result.permissionName);
 
     // set deviceId: string
-    if (!SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_DEVICE_ID, result.deviceId)) {
-        return;
-    }
+    SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_DEVICE_ID, result.deviceId);
 
     // set activeStatus: PermissionActiveStatus
-    ani_size index = 0;
-    if (!TransFormActiveChangeTypeToIndex(result.type, index)) {
-        return;
-    }
     const char* activeStatusDes = "L@ohos/privacyManager/privacyManager/PermissionActiveStatus;";
-    if (!SetEnumProperty(env, aniObject, activeStatusDes, ACTIVE_CHANGE_FIELD_ACTIVE_STATUS, index)) {
-        return;
-    }
+    SetEnumProperty(
+        env, aniObject, activeStatusDes, ACTIVE_CHANGE_FIELD_ACTIVE_STATUS, static_cast<int32_t>(result.type));
 
     // set usedType?: PermissionUsedType
-    index = 0;
-    if (!TransFormPermissionUsedTypeToIndex(result.usedType, index)) {
-        return;
-    }
     const char* permUsedTypeDes = "L@ohos/privacyManager/privacyManager/PermissionUsedType;";
-    if (!SetEnumProperty(env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, index)) {
-        return;
-    }
+    SetEnumProperty(
+        env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, static_cast<int32_t>(result.usedType));
+    return aniObject;
 }
 
 void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activeChangeResponse)
@@ -366,9 +226,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
         return;
     }
 
-    ani_object aniObject;
-    ConvertActiveChangeResponse(env, activeChangeResponse, aniObject);
-
+    ani_object aniObject = ConvertActiveChangeResponse(env, activeChangeResponse);
     std::vector<ani_ref> args;
     args.emplace_back(aniObject);
     ani_ref result;
@@ -385,13 +243,8 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
 static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniArray,
     const ani_ref& aniCallback, RegisterPermActiveChangeContext* context, bool isReg)
 {
-    std::string type = ANIStringToStdString(context->env, static_cast<ani_string>(aniType));
-    std::vector<std::string> permList; // permissionList: the second parameter is Array<string>
-    if (!AniParseStringArray(context->env, aniArray, permList)) {
-        BusinessErrorAni::ThrowParameterTypeError(
-            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("permissionList", "Array<Permissions>"));
-        return false;
-    }
+    std::string type = ParseAniString(context->env, static_cast<ani_string>(aniType));
+    std::vector<std::string> permList = ParseAniStringVector(context->env, aniArray);
     std::sort(permList.begin(), permList.end());
 
     bool hasCallback = true;
@@ -627,7 +480,7 @@ static void StopUsingPermissionExecute(
     }
 
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -640,7 +493,8 @@ static void StopUsingPermissionExecute(
 
     auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid);
     if (retCode != RET_SUCCESS) {
-        BusinessErrorAni::ThrowError(env, retCode, GetErrorMessage(GetStsErrorCode(retCode)));
+        int32_t stsCode = GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
@@ -653,7 +507,7 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -671,14 +525,258 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
     }
 }
 
-static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, ani_object request)
+static ani_object ConvertSingelUsedRecordDetail(ani_env* env, const UsedRecordDetail& record)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordExecute Call");
-    if (env == nullptr || request == nullptr) {
+    ani_object arrayObj = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/UsedRecordDetailInner;");
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    if (!SetIntProperty(env, arrayObj, "status", record.status)) {
+        return nullptr;
+    }
+    if (!SetOptionalIntProperty(env, arrayObj, "lockScreenStatus", record.lockScreenStatus)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, arrayObj, "timestamp", record.timestamp)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, arrayObj, "accessDuration", record.accessDuration)) {
+        return nullptr;
+    }
+    if (!SetOptionalIntProperty(env, arrayObj, "count", record.count)) {
+        return nullptr;
+    }
+    if (!SetEnumProperty(env, arrayObj, "L@ohos/privacyManager/privacyManager/PermissionUsedType;", "usedType",
+        static_cast<int32_t>(record.type))) {
+        return nullptr;
+    }
+    return arrayObj;
+}
+
+static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedRecordDetail>& details)
+{
+    ani_object arrayObj = CreateArrayObject(env, details.size());
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    ani_size index = 0;
+    for (const auto& record: details) {
+        ani_ref aniRecord = ConvertSingelUsedRecordDetail(env, record);
+        if (aniRecord == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Null aniRecord.");
+            break;
+        }
+        ani_status status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+        if (status != ANI_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
+            break;
+        }
+        ++index;
+    }
+    return arrayObj;
+}
+
+static ani_object ConvertSinglePermissionRecord(ani_env* env, const PermissionUsedRecord& record)
+{
+    ani_object arrayObj = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedRecordInner;");
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    if (!SetStringProperty(env, arrayObj, "permissionName", record.permissionName)) {
+        return nullptr;
+    }
+    if (!SetIntProperty(env, arrayObj, "accessCount", record.accessCount)) {
+        return nullptr;
+    }
+    if (!SetIntProperty(env, arrayObj, "rejectCount", record.rejectCount)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, arrayObj, "lastAccessTime", record.lastAccessTime)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, arrayObj, "lastRejectTime", record.lastRejectTime)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, arrayObj, "lastAccessDuration", record.lastAccessDuration)) {
+        return nullptr;
+    }
+    if (!SetRefProperty(env, arrayObj, "accessRecords", ConvertUsedRecordDetails(env, record.accessRecords))) {
+        return nullptr;
+    }
+    if (!SetRefProperty(env, arrayObj, "rejectRecords", ConvertUsedRecordDetails(env, record.rejectRecords))) {
+        return nullptr;
+    }
+    return arrayObj;
+}
+
+static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<PermissionUsedRecord>& permRecords)
+{
+    ani_object arrayObj = CreateArrayObject(env, permRecords.size());
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    ani_size index = 0;
+    for (const auto& record: permRecords) {
+        ani_ref aniRecord = ConvertSinglePermissionRecord(env, record);
+        if (aniRecord == nullptr) {
+            break;
+        }
+        ani_status status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+        if (status != ANI_OK) {
+            ACCESSTOKEN_LOG_ERROR(
+                LABEL, "Set permission record fail, status: %{public}d.", static_cast<int32_t>(status));
+            break;
+        }
+        ++index;
+    }
+    return arrayObj;
+}
+
+static ani_object ConvertBundleUsedRecord(ani_env* env, const BundleUsedRecord& record)
+{
+    ani_object aniRecord = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/BundleUsedRecordInner;");
+    if (aniRecord == nullptr) {
+        return nullptr;
+    }
+    if (!SetIntProperty(env, aniRecord, "tokenId", static_cast<int32_t>(record.tokenId))) {
+        return nullptr;
+    }
+    if (!SetBoolProperty(env, aniRecord, "isRemote", record.isRemote)) {
         return nullptr;
     }
 
-    return nullptr;
+    if (!SetStringProperty(env, aniRecord, "deviceId", record.deviceId)) {
+        return nullptr;
+    }
+
+    if (!SetStringProperty(env, aniRecord, "bundleName", record.bundleName)) {
+        return nullptr;
+    }
+
+    if (!SetRefProperty(env, aniRecord, "permissionRecords", ConvertPermissionRecords(env, record.permissionRecords))) {
+        return nullptr;
+    }
+    return aniRecord;
+}
+
+static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<BundleUsedRecord>& bundleRecord)
+{
+    ani_object arrayObj = CreateArrayObject(env, bundleRecord.size());
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    ani_size index = 0;
+    for (const auto& record : bundleRecord) {
+        ani_ref aniRecord = ConvertBundleUsedRecord(env, record);
+        if (aniRecord == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "aniRecord is null.");
+            continue;
+        }
+        ani_status status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+        if (status != ANI_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
+            continue;
+        }
+        ++index;
+    }
+    return arrayObj;
+}
+
+static ani_object ProcessRecordResult(ani_env* env, const PermissionUsedResult& result)
+{
+    ani_object aObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedResponseInner;");
+    if (aObject == nullptr) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, aObject, "beginTime", result.beginTimeMillis)) {
+        return nullptr;
+    }
+    if (!SetLongProperty(env, aObject, "endTime", result.endTimeMillis)) {
+        return nullptr;
+    }
+
+    if (!SetRefProperty(env, aObject, "bundleRecords", ConvertBundleUsedRecords(env, result.bundleRecords))) {
+        return nullptr;
+    }
+    return aObject;
+}
+
+static bool ParseRequest(ani_env* env, const ani_object& aniRequest, PermissionUsedRequest& request)
+{
+    ani_class requestClass;
+    if (ANI_OK != env->FindClass("L@ohos/privacyManager/privacyManager/PermissionUsedRequest;", &requestClass)) {
+        return false;
+    }
+    ani_boolean isRequestObject = false;
+    if (ANI_OK != env->Object_InstanceOf(static_cast<ani_object>(aniRequest), requestClass, &isRequestObject)) {
+        return false;
+    }
+    if (!isRequestObject) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is not request type.");
+        return false;
+    }
+
+    int32_t value;
+    if (!GetIntProperty(env, aniRequest, "tokenId", value)) {
+        return false;
+    }
+    request.tokenId = static_cast<AccessTokenID>(value);
+
+    if (!GetBoolProperty(env, aniRequest, "isRemote", request.isRemote)) {
+        return false;
+    }
+
+    if (!GetStringProperty(env, aniRequest, "deviceId", request.deviceId)) {
+        return false;
+    }
+
+    if (!GetStringProperty(env, aniRequest, "bundleName", request.bundleName)) {
+        return false;
+    }
+
+    if (!GetLongProperty(env, aniRequest, "beginTime", request.beginTimeMillis)) {
+        return false;
+    }
+
+    if (!GetLongProperty(env, aniRequest, "endTime", request.endTimeMillis)) {
+        return false;
+    }
+
+    if (!GetStringVecProperty(env, aniRequest, "permissionNames", request.permissionList)) {
+        return false;
+    }
+
+    int32_t flag;
+    if (!GetEnumProperty(env, aniRequest, "flag", flag)) {
+        return false;
+    }
+    request.flag = static_cast<PermissionUsageFlag>(flag);
+    return true;
+}
+
+static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, ani_object aniRequest)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordExecute Call");
+    if (env == nullptr || aniRequest == nullptr) {
+        return nullptr;
+    }
+
+    PermissionUsedRequest request;
+    if (!ParseRequest(env, aniRequest, request)) {
+        return nullptr;
+    }
+
+    PermissionUsedResult retResult;
+    int32_t errcode = PrivacyKit::GetPermissionUsedRecords(request, retResult);
+    if (errcode != ANI_OK) {
+        int32_t stsCode = GetStsErrorCode(errcode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+    return ProcessRecordResult(env, retResult);
 }
 
 static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,

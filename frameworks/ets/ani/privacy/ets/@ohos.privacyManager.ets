@@ -205,8 +205,9 @@ export default namespace privacyManager {
     }
 
     export function getPermissionUsedRecord(request: PermissionUsedRequest): Promise<PermissionUsedResponse> {
-        return new Promise<PermissionUsedResponse>(
-            (resolve: (data: PermissionUsedResponse) => void, reject: (error: BusinessError) => void): PermissionUsedResponse => {
+        return new Promise<PermissionUsedResponse>((
+            resolve: (data: PermissionUsedResponse) => void,
+            reject: (error: BusinessError) => void): PermissionUsedResponse => {
             let p1 = taskpool.execute((): PermissionUsedResponse => {
                 return getPermissionUsedRecordExecute(request);
             });
@@ -230,7 +231,7 @@ export default namespace privacyManager {
                 resolve(e as Array<PermissionUsedTypeInfo>);
             }).catch((err: Error): void => {
                 reject(err as BusinessError);
-            })
+            });
         });
     }
 
@@ -244,7 +245,7 @@ export default namespace privacyManager {
                 resolve(undefined);
             }).catch((err: Error): void => {
                 reject(err as BusinessError);
-            })
+            });
         });
     }
 
@@ -258,7 +259,7 @@ export default namespace privacyManager {
                 resolve(e as boolean);
             }).catch((err: Error): void =>{
                 reject(err as BusinessError);
-            })
+            });
         });
     }
 
@@ -347,7 +348,7 @@ export default namespace privacyManager {
         lockScreenStatus?: int;
         timestamp: long;
         count?: int;
-        accessDuration: int;
+        accessDuration: long;
         usedType?: PermissionUsedType;
     }
 
@@ -356,14 +357,13 @@ export default namespace privacyManager {
         lockScreenStatus?: int;
         timestamp: long;
         count?: int;
-        accessDuration: int;
+        accessDuration: long;
         usedType?: PermissionUsedType;
     }
 
     interface PermissionUsedRecord {
         permissionName: Permissions;
         accessCount: int;
-        secAccessCount: int;
         rejectCount: int;
         lastAccessTime: long;
         lastRejectTime: long;
@@ -375,7 +375,6 @@ export default namespace privacyManager {
     class PermissionUsedRecordInner implements PermissionUsedRecord {
         permissionName: Permissions;
         accessCount: int;
-        secAccessCount: int;
         rejectCount: int;
         lastAccessTime: long;
         lastRejectTime: long;
@@ -389,7 +388,7 @@ export default namespace privacyManager {
         isRemote: boolean;
         deviceId: string;
         bundleName: string;
-        permissionNames: Array<PermissionUsedRecord>;
+        permissionRecords: Array<PermissionUsedRecord>;
     }
 
     class BundleUsedRecordInner implements BundleUsedRecord {
@@ -397,7 +396,7 @@ export default namespace privacyManager {
         isRemote: boolean;
         deviceId: string;
         bundleName: string;
-        permissionNames: Array<PermissionUsedRecord>;
+        permissionRecords: Array<PermissionUsedRecord>;
     }
 
     export interface PermissionUsedResponse {

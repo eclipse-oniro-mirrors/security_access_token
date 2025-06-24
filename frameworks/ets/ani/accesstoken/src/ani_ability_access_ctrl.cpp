@@ -136,7 +136,7 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -169,7 +169,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
@@ -203,7 +203,7 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
@@ -259,11 +259,7 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) is invalid.", tokenID);
         return nullptr;
     }
-    std::vector<std::string> permissionList;
-    if (!AniParseStringArray(env, aniPermissionList, permissionList)) {
-        return nullptr;
-    }
-
+    std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
     if (permissionList.empty()) {
         BusinessErrorAni::ThrowError(
             env, STS_ERROR_INNER,  GetErrorMessage(STS_ERROR_INNER, "The permissionList is empty."));
@@ -290,7 +286,7 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         permissionQueryResults.emplace_back(permState.state);
     }
 
-    return ConvertAniArrayInt(env, permissionQueryResults);
+    return CreateAniArrayInt(env, permissionQueryResults);
 }
 
 static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
@@ -302,7 +298,7 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
         return flag;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -327,7 +323,7 @@ static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* en
         ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
         return;
     }
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission(%{public}s) is invalid.", permissionName.c_str());
         return;
@@ -348,7 +344,7 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
         ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
         return flag;
     }
-    std::string permissionName = ANIStringToStdString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission(%{public}s) is invalid.", permissionName.c_str());
         return flag;
