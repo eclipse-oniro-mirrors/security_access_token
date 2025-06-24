@@ -30,10 +30,10 @@ ohos_unittest("libjsonparse_test") {
   branch_protector_ret = "pac_ret"
 
   include_dirs = [
-      "${access_token_path}/frameworks/common/include",
-      "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
-      "${access_token_path}/services/common/json_parse/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/common/json_parse/include",
   ]
 
   sources = [
@@ -50,9 +50,7 @@ ohos_unittest("libjsonparse_test") {
   ]
   public_configs = [ ":accesstoken_json_parse_config" ]
 
-  deps = [
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-  ]
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
   external_deps = [
     "cJSON:cjson",

@@ -43,9 +43,9 @@ ohos_shared_library("accesstoken_screenlock_manager") {
 
     external_deps = [
       "c_utils:utils",
+      "eventhandler:libeventhandler",
       "ipc:ipc_core",
       "screenlock_mgr:screenlock_client",
-      "eventhandler:libeventhandler",
     ]
   }
 }
