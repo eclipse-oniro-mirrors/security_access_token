@@ -25,7 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-ani_env* GetCurrentEnv(ani_vm* vm);
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result);
 OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext,
     std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext>& uiExtensionContext, bool uiAbilityFlag);

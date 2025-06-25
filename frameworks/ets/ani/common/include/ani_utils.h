@@ -34,6 +34,8 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const std::strin
 
 bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out);
 bool AniIsRefUndefined(ani_env* env, const ani_ref& ref);
+bool AniParseUint32(ani_env* env, const ani_int& aniInt, uint32_t& out);
+bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out);
 
 bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value);
 bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
@@ -72,6 +74,7 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length);
 ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
 ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
+ani_env* GetCurrentEnv(ani_vm* vm);
 
 // delete ref of GlobalReference_Create
 void DeleteReference(ani_env* env, ani_ref& ref);
