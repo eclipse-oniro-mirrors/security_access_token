@@ -419,7 +419,7 @@ void InitAbilityCtrlFunction(ani_env *env)
             nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "getPermissionRequestToggleStatusExecute",
             nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
-        ani_native_function{ "RequestAppPermOnSettingExecute",
+        ani_native_function{ "requestAppPermOnSettingExecute",
             nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
