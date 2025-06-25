@@ -50,7 +50,7 @@ bool SetRefProperty(ani_env* env, ani_object& object, const std::string& propert
 bool SetStringProperty(ani_env* env, ani_object& aniObject, const std::string& property, const std::string& in);
 bool SetEnumProperty(
     ani_env* env, ani_object& aniObject, const std::string& enumDescription,
-    const std::string& property, ani_size value);
+    const std::string& property, uint32_t value);
 bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::string& property, int32_t in);
 
 bool IsCurrentThread(std::thread::id threadId);
@@ -72,6 +72,9 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length);
 ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
 ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
+
+// delete ref of GlobalReference_Create
+void DeleteReference(ani_env* env, ani_ref& ref);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

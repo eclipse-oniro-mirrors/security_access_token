@@ -106,7 +106,8 @@ export default namespace privacyManager {
         return p;
     }
 
-    export function stopUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
+    export function stopUsingPermission(
+        tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -163,7 +164,8 @@ export default namespace privacyManager {
         return p;
     }
 
-    export function startUsingPermission(tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
+    export function startUsingPermission(
+        tokenID: int, permissionName: Permissions, callback: AsyncCallback<void>): void {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -219,11 +221,13 @@ export default namespace privacyManager {
         });
     }
 
-    export function getPermissionUsedTypeInfos(tokenId?: int, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>>{
-        let tokenIdIn = tokenId ? tokenId : 0;
+    export function getPermissionUsedTypeInfos(
+        tokenId?: int, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>> {
+        let tokenIdIn = tokenId ?? 0;
         let permissionNameIn = permissionName ?? "";
-        return new Promise<Array<PermissionUsedTypeInfo>>(
-            (resolve: (v: Array<PermissionUsedTypeInfo>) => void, reject: (err:BusinessError) => void): Array<PermissionUsedTypeInfo> => {
+        return new Promise<Array<PermissionUsedTypeInfo>> ((
+            resolve: (v: Array<PermissionUsedTypeInfo>) => void,
+            reject: (err: BusinessError) => void): Array<PermissionUsedTypeInfo> => {
             let p1 = taskpool.execute((): Array<PermissionUsedTypeInfo> => {
                 return getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
             });
@@ -235,8 +239,8 @@ export default namespace privacyManager {
         });
     }
 
-    export function setPermissionUsedRecordToggleStatus(status: boolean): Promise<void>{
-        return new Promise<void>(
+    export function setPermissionUsedRecordToggleStatus(status: boolean): Promise<void> {
+        return new Promise<void> (
             (resolve: (v: undefined) => void, reject: (err: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
                 setPermissionUsedRecordToggleStatusExecute(status);
@@ -250,8 +254,8 @@ export default namespace privacyManager {
     }
 
     export function getPermissionUsedRecordToggleStatus(): Promise<boolean>{
-        return new Promise<boolean>(
-            (resolve: (v: boolean) => void, reject: (err:BusinessError) => void): void => {
+        return new Promise<boolean> (
+            (resolve: (v: boolean) => void, reject: (err: BusinessError) => void): void => {
             let p1 = taskpool.execute((): boolean => {
                 return getPermissionUsedRecordToggleStatusExecute();
             });
