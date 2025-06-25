@@ -79,7 +79,9 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref&
         }
 
         std::string stdStr = ParseAniString(env, static_cast<ani_string>(aniRef));
-        out.emplace_back(stdStr);
+        if (!stdStr.empty()) {
+            out.emplace_back(stdStr);
+        }
     }
     return out;
 }
@@ -234,6 +236,14 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
         return nullptr;
     }
     return aRef;
+}
+
+void DeleteReference(ani_env* env, ani_ref& ref)
+{
+    if (ref != nullptr) {
+        env->GlobalReference_Delete(ref);
+        ref = nullptr;
+    }
 }
 
 ani_object CreateBooleanObject(ani_env *env, bool value)
@@ -539,7 +549,7 @@ bool SetStringProperty(ani_env* env, ani_object& aniObject, const std::string& p
 }
 
 bool SetEnumProperty(ani_env* env, ani_object& aniObject,
-    const std::string& enumDescription, const std::string& property, ani_size value)
+    const std::string& enumDescription, const std::string& property, uint32_t value)
 {
     if ((env == nullptr) || (aniObject == nullptr)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
@@ -551,7 +561,7 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
         return false;
     }
     ani_enum_item aniEnumItem;
-    if (env->Enum_GetEnumItemByIndex(aniEnum, value, &aniEnumItem) != ANI_OK) {
+    if (env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(value), &aniEnumItem) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Enum_GetEnumItemByIndex failed!");
         return false;
     }

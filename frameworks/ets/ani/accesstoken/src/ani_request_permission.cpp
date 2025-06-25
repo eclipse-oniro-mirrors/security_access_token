@@ -110,20 +110,21 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
         return nullptr;
     }
     auto state = asyncContext->needDynamicRequest ? asyncContext->grantResults : asyncContext->permissionsState;
-    ani_ref aniPermissions = CreateAniArrayString(env, asyncContext->permissionList);
-    ani_ref aniAuthResults = CreateAniArrayInt(env, state);
-    ani_ref aniDialogShownResults = CreateAniArrayBool(env, asyncContext->dialogShownResults);
-    ani_ref aniPermissionQueryResults = CreateAniArrayInt(env, asyncContext->permissionQueryResults);
-    if (aniPermissions == nullptr || aniAuthResults == nullptr || aniDialogShownResults == nullptr ||
-        aniPermissionQueryResults == nullptr) {
-            return nullptr;
+    ani_ref aniPerms = CreateAniArrayString(env, asyncContext->permissionList);
+    ani_ref aniAuthRes = CreateAniArrayInt(env, state);
+    ani_ref aniDiasShownRes = CreateAniArrayBool(env, asyncContext->dialogShownResults);
+    ani_ref aniPermRes = CreateAniArrayInt(env, asyncContext->permissionQueryResults);
+    if (aniPerms == nullptr || aniAuthRes == nullptr || aniDiasShownRes == nullptr || aniPermRes == nullptr ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), aniPerms) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), aniAuthRes) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), aniDiasShownRes) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), aniPermRes)) {
+        aObject = nullptr;
     }
-    if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), aniPermissions) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), aniAuthResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), aniDialogShownResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), aniPermissionQueryResults)) {
-        return nullptr;
-    }
+    DeleteReference(env, aniPerms);
+    DeleteReference(env, aniAuthRes);
+    DeleteReference(env, aniDiasShownRes);
+    DeleteReference(env, aniPermRes);
     return aObject;
 }
 

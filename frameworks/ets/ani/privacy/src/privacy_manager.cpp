@@ -182,7 +182,7 @@ static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeRe
     }
 
     // set callingTokenID?: int  optional parameter callingTokenID need box as a object
-    SetIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID, static_cast<ani_int>(result.callingTokenID));
+    SetIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID, static_cast<int32_t>(result.callingTokenID));
 
     // set tokenID: int
     SetIntProperty(env, aniObject, ACTIVE_CHANGE_FIELD_TOKEN_ID, static_cast<int32_t>(result.tokenID));
@@ -196,12 +196,12 @@ static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeRe
     // set activeStatus: PermissionActiveStatus
     const char* activeStatusDes = "L@ohos/privacyManager/privacyManager/PermissionActiveStatus;";
     SetEnumProperty(
-        env, aniObject, activeStatusDes, ACTIVE_CHANGE_FIELD_ACTIVE_STATUS, static_cast<int32_t>(result.type));
+        env, aniObject, activeStatusDes, ACTIVE_CHANGE_FIELD_ACTIVE_STATUS, static_cast<uint32_t>(result.type));
 
     // set usedType?: PermissionUsedType
     const char* permUsedTypeDes = "L@ohos/privacyManager/privacyManager/PermissionUsedType;";
     SetEnumProperty(
-        env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, static_cast<int32_t>(result.usedType));
+        env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, static_cast<uint32_t>(result.usedType));
     return aniObject;
 }
 
@@ -227,6 +227,10 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     }
 
     ani_object aniObject = ConvertActiveChangeResponse(env, activeChangeResponse);
+    if (aniObject == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Convert object is null.");
+        return;
+    }
     std::vector<ani_ref> args;
     args.emplace_back(aniObject);
     ani_ref result;
@@ -525,7 +529,7 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
     }
 }
 
-static ani_object ConvertSingelUsedRecordDetail(ani_env* env, const UsedRecordDetail& record)
+static ani_object ConvertSingleUsedRecordDetail(ani_env* env, const UsedRecordDetail& record)
 {
     ani_object arrayObj = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/UsedRecordDetailInner;");
     if (arrayObj == nullptr) {
@@ -547,7 +551,7 @@ static ani_object ConvertSingelUsedRecordDetail(ani_env* env, const UsedRecordDe
         return nullptr;
     }
     if (!SetEnumProperty(env, arrayObj, "L@ohos/privacyManager/privacyManager/PermissionUsedType;", "usedType",
-        static_cast<int32_t>(record.type))) {
+        static_cast<uint32_t>(record.type))) {
         return nullptr;
     }
     return arrayObj;
@@ -561,7 +565,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
     }
     ani_size index = 0;
     for (const auto& record: details) {
-        ani_ref aniRecord = ConvertSingelUsedRecordDetail(env, record);
+        ani_ref aniRecord = ConvertSingleUsedRecordDetail(env, record);
         if (aniRecord == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Null aniRecord.");
             break;
@@ -779,31 +783,98 @@ static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, 
     return ProcessRecordResult(env, retResult);
 }
 
+static ani_object ConvertPermissionUsedTypeInfo(ani_env *env, const PermissionUsedTypeInfo& info)
+{
+    ani_object aObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedTypeInfoInner;");
+    if (aObject == nullptr) {
+        return nullptr;
+    }
+    if (!SetIntProperty(env, aObject, "tokenId", info.tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId set fail.");
+        return nullptr;
+    }
+    if (!SetStringProperty(env, aObject, "permissionName", info.permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName set fail.");
+        return nullptr;
+    }
+    const char* permUsedTypeDes = "L@ohos/privacyManager/privacyManager/PermissionUsedType;";
+    if (!SetEnumProperty(env, aObject, permUsedTypeDes, "usedType", static_cast<uint32_t>(info.type))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UsedType set fail.");
+        return nullptr;
+    }
+    return aObject;
+}
+
+static ani_ref ConvertPermissionUsedTypeInfos(ani_env* env, const std::vector<PermissionUsedTypeInfo>& infos)
+{
+    ani_object arrayObj = CreateArrayObject(env, infos.size());
+    if (arrayObj == nullptr) {
+        return nullptr;
+    }
+    ani_size index = 0;
+    for (const auto& type : infos) {
+        ani_ref aniType = ConvertPermissionUsedTypeInfo(env, type);
+        if (aniType == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "aniType is null.");
+            continue;
+        }
+        ani_status status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniType);
+        if (status != ANI_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Set type fail, status: %{public}d.", static_cast<int32_t>(status));
+            continue;
+        }
+        ++index;
+    }
+    return arrayObj;
+}
+
 static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
     ani_int aniTokenID, ani_string aniPermission)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
     }
-    return nullptr;
+    AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
+    std::string permission = ParseAniString(env, static_cast<ani_string>(aniPermission));
+    std::vector<PermissionUsedTypeInfo> typeInfos;
+    int32_t retCode = PrivacyKit::GetPermissionUsedTypeInfos(tokenID, permission, typeInfos);
+    if (retCode != RET_SUCCESS) {
+        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode),
+            GetErrorMessage(GetStsErrorCode(retCode)));
+        return nullptr;
+    }
+    return ConvertPermissionUsedTypeInfos(env, typeInfos);
 }
 
 static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, ani_boolean status)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetPermissionUsedRecordToggleStatusExecute Call");
     if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
         return;
+    }
+    int32_t userID = 0;
+    int32_t retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status);
+    if (retCode != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
 static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordToggleStatusExecute Call");
     if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
         return false;
     }
-    bool isToggleStaus = false;
-    return isToggleStaus;
+    int32_t userID = 0;
+    bool isToggleStatus = false;
+    int32_t retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID, isToggleStatus);
+    if (retCode != RET_SUCCESS) {
+        BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode), GetErrorMessage(GetStsErrorCode(retCode)));
+        return false;
+    }
+    return isToggleStatus;
 }
 
 void InitPrivacyFunction(ani_env *env)
