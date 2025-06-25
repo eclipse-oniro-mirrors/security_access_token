@@ -112,7 +112,7 @@ export default namespace abilityAccessCtrl {
         getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
         setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
         getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
-        RequestAppPermOnSettingExecute(tokenID: int): undefined;
+        requestAppPermOnSettingExecute(tokenID: int): void;
 
         checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
@@ -165,7 +165,7 @@ export default namespace abilityAccessCtrl {
         native getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
         native setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
         native getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
-        native RequestAppPermOnSettingExecute(tokenID: int): undefined;
+        native requestAppPermOnSettingExecute(tokenID: int): void;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -418,8 +418,8 @@ export default namespace abilityAccessCtrl {
         requestPermissionOnApplicationSetting(tokenID: int): Promise<void> {
             let p = new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-                let p = taskpool.execute((): undefined => {
-                    new AtManagerInner().RequestAppPermOnSettingExecute(tokenID);
+                let p = taskpool.execute((): void => {
+                    new AtManagerInner().requestAppPermOnSettingExecute(tokenID);
                 });
                 p.then((e: NullishType): void => {
                     resolve(undefined);
