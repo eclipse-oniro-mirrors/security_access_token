@@ -23,22 +23,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 constexpr const char* WRAPPER_CLASS_NAME = "L@ohos/abilityAccessCtrl/AsyncCallbackWrapper;";
 constexpr const char* INVOKE_METHOD_NAME = "invoke";
 } // namespace
-ani_env* GetCurrentEnv(ani_vm* vm)
-{
-    if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Vm is nullptr.");
-        return nullptr;
-    }
-    ani_env* env = nullptr;
-    ani_option interopEnabled {"--interop=enable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
-    if (vm->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
-        if (vm->GetEnv(ANI_VERSION_1, &env) != ANI_OK) {
-            return nullptr;
-        }
-    }
-    return env;
-}
 
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result)
 {

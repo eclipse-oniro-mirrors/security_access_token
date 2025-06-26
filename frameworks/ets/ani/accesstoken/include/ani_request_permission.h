@@ -15,6 +15,7 @@
 #ifndef ANI_REQUEST_PERMISSION_H
 #define ANI_REQUEST_PERMISSION_H
 
+#include <mutex>
 #include <thread>
 #include "access_token.h"
 #include "ani.h"
@@ -26,6 +27,7 @@
 #include "event_queue.h"
 #endif
 #include "permission_grant_info.h"
+#include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
 
 namespace OHOS {
@@ -113,6 +115,38 @@ struct ResultCallback {
 
 void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_object aniContext, ani_array_ref permissionList, ani_object callback);
+
+class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
+    public PermStateChangeCallbackCustomize {
+public:
+    explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
+    ~RegisterPermStateChangeScopePtr() override;
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    void SetCallbackRef(const ani_ref& ref);
+    void SetValid(bool valid);
+    void SetEnv(ani_env* env);
+
+    void SetVm(ani_vm* vm);
+    void SetThreadId(const std::thread::id threadId);
+private:
+    bool valid_ = true;
+    std::mutex validMutex_;
+    ani_env* env_ = nullptr;
+
+    ani_vm* vm_ = nullptr;
+    std::thread::id threadId_;
+    ani_ref ref_ = nullptr;
+};
+
+struct RegisterPermStateChangeInf {
+    ani_env* env = nullptr;
+    ani_ref callbackRef = nullptr;
+    int32_t errCode = RET_SUCCESS;
+    std::string permStateChangeType;
+    std::thread::id threadId;
+    std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
+    PermStateChangeScope scopeInfo;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

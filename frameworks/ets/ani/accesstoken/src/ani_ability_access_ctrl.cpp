@@ -42,6 +42,136 @@ static PermissionParamCache g_paramCache;
 std::map<std::string, PermissionStatusCache> g_cache;
 static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 }
+constexpr const char* PERM_STATE_CHANGE_FIELD_TOKEN_ID = "tokenID";
+constexpr const char* PERM_STATE_CHANGE_FIELD_PERMISSION_NAME = "permissionName";
+constexpr const char* PERM_STATE_CHANGE_FIELD_CHANGE = "change";
+std::mutex g_lockForPermStateChangeRegisters;
+std::vector<RegisterPermStateChangeInf*> g_permStateChangeRegisters;
+static const char* REGISTER_PERMISSION_STATE_CHANGE_TYPE = "permissionStateChange";
+static const char* REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE = "selfPermissionStateChange";
+
+RegisterPermStateChangeScopePtr::RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo)
+    : PermStateChangeCallbackCustomize(subscribeInfo)
+{}
+
+RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
+{
+    if (vm_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        return;
+    }
+    bool isSameThread = (threadId_ == std::this_thread::get_id());
+    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
+
+    if (ref_ != nullptr) {
+        env->GlobalReference_Delete(ref_);
+        ref_ = nullptr;
+    }
+
+    if (!isSameThread) {
+        vm_->DetachCurrentThread();
+    }
+}
+
+void RegisterPermStateChangeScopePtr::SetEnv(ani_env* env)
+{
+    env_ = env;
+}
+
+void RegisterPermStateChangeScopePtr::SetCallbackRef(const ani_ref& ref)
+{
+    ref_ = ref;
+}
+
+void RegisterPermStateChangeScopePtr::SetValid(bool valid)
+{
+    std::lock_guard<std::mutex> lock(validMutex_);
+    valid_ = valid;
+}
+
+void RegisterPermStateChangeScopePtr::SetVm(ani_vm* vm)
+{
+    vm_ = vm;
+}
+
+void RegisterPermStateChangeScopePtr::SetThreadId(const std::thread::id threadId)
+{
+    threadId_ = threadId;
+}
+
+static bool SetStringProperty(ani_env* env, ani_object& aniObject, const char* propertyName, const std::string in)
+{
+    ani_string aniString = CreateAniString(env, in);
+    if (env->Object_SetPropertyByName_Ref(aniObject, propertyName, aniString) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetPropertyByName_Ref failed!");
+        return false;
+    }
+
+    return true;
+}
+
+static void transPermStateChangeTypeToAniInt(const int32_t permStateChangeType, ani_size& index)
+{
+    index = static_cast<ani_size>(permStateChangeType);
+    return;
+}
+
+static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& result, ani_object& aniObject)
+{
+    // class implements from interface should use property, independent class use field
+    aniObject = CreateClassObject(env, "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeInfoInner;");
+    if (aniObject == nullptr) {
+        return;
+    }
+
+    // set tokenId: int32_t
+    SetIntProperty(env, aniObject, PERM_STATE_CHANGE_FIELD_TOKEN_ID, static_cast<int32_t>(result.tokenID));
+
+    // set permissionName: Permissions
+    SetStringProperty(env, aniObject, PERM_STATE_CHANGE_FIELD_PERMISSION_NAME, result.permissionName);
+
+    // set permStateChangeType: int32_t
+    ani_size index;
+    transPermStateChangeTypeToAniInt(result.permStateChangeType, index);
+    const char* activeStatusDes = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeType;";
+    SetEnumProperty(
+        env, aniObject, activeStatusDes, PERM_STATE_CHANGE_FIELD_CHANGE, static_cast<int32_t>(index));
+}
+
+void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInfo& PermStateChangeInfo)
+{
+    if (vm_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        return;
+    }
+
+    ani_option interopEnabled {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* env;
+    if (vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AttachCurrentThread failed!");
+        return;
+    }
+    ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
+    if (fnObj == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Reinterpret_cast failed!");
+        return;
+    }
+
+    ani_object aniObject;
+    ConvertPermStateChangeInfo(env, PermStateChangeInfo, aniObject);
+
+    std::vector<ani_ref> args;
+    args.emplace_back(aniObject);
+    ani_ref result;
+    if (!AniFunctionalObjectCall(env, fnObj, args.size(), args.data(), result)) {
+        return;
+    }
+    if (vm_->DetachCurrentThread() != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "DetachCurrentThread failed!");
+        return;
+    }
+}
 
 static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
 {
@@ -375,6 +505,311 @@ static void RequestAppPermOnSettingExecute([[maybe_unused]] ani_env* env,
     }
 }
 
+static bool SetupPermissionSubscriber(
+    RegisterPermStateChangeInf* context, const PermStateChangeScope& scopeInfo, const ani_ref& callback)
+{
+    ani_vm* vm;
+    if (context->env->GetVM(&vm) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetVM failed!");
+        return false;
+    }
+
+    auto sortedTokenIDs = scopeInfo.tokenIDs;
+    auto sortedPermList = scopeInfo.permList;
+    std::sort(sortedTokenIDs.begin(), sortedTokenIDs.end());
+    std::sort(sortedPermList.begin(), sortedPermList.end());
+
+    context->callbackRef = callback;
+    context->scopeInfo.tokenIDs = sortedTokenIDs;
+    context->scopeInfo.permList = sortedPermList;
+    context->subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
+    context->subscriber->SetVm(vm);
+    context->subscriber->SetEnv(context->env);
+    context->subscriber->SetCallbackRef(callback);
+
+    return true;
+}
+
+static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniId, const ani_array_ref& aniArray,
+    const ani_ref& aniCallback, RegisterPermStateChangeInf* context, bool isReg)
+{
+    std::string type = ParseAniString(context->env, aniType);
+    if (type.empty()) {
+        BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
+            "type", "permissionStateChange or selfPermissionStateChange"));
+        return false;
+    }
+    if ((type != REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (type != REGISTER_PERMISSION_STATE_CHANGE_TYPE)) {
+        BusinessErrorAni::ThrowError(
+            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("type", "type is invalid"));
+        return false;
+    }
+
+    context->permStateChangeType = type;
+    context->threadId = std::this_thread::get_id();
+
+    PermStateChangeScope scopeInfo;
+    std::string errMsg;
+    if (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+        if (!AniParseAccessTokenIDArray(context->env, aniId, scopeInfo.tokenIDs)) {
+            BusinessErrorAni::ThrowError(
+                context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("tokenIDList", "Array<int>"));
+            return false;
+        }
+    } else if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+        scopeInfo.tokenIDs = {GetSelfTokenID()};
+    }
+    scopeInfo.permList = ParseAniStringVector(context->env, aniArray);
+    bool hasCallback = true;
+    if (!isReg) {
+        hasCallback = !(AniIsRefUndefined(context->env, aniCallback));
+    }
+
+    ani_ref callback = nullptr;
+    if (hasCallback) {
+        if (!AniParseCallback(context->env, aniCallback, callback)) {
+            BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg(
+                "callback", "Callback<PermissionStateChangeInfo>"));
+            return false;
+        }
+    }
+
+    return SetupPermissionSubscriber(context, scopeInfo, callback);
+}
+
+static bool IsExistRegister(const RegisterPermStateChangeInf* context)
+{
+    PermStateChangeScope targetScopeInfo;
+    context->subscriber->GetScope(targetScopeInfo);
+    std::vector<AccessTokenID> targetTokenIDs = targetScopeInfo.tokenIDs;
+    std::vector<std::string> targetPermList = targetScopeInfo.permList;
+    std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+
+    for (const auto& item : g_permStateChangeRegisters) {
+        PermStateChangeScope scopeInfo;
+        item->subscriber->GetScope(scopeInfo);
+
+        bool hasPermIntersection = false;
+        // Special cases:
+        // 1.Have registered full, and then register some
+        // 2.Have registered some, then register full
+        if (scopeInfo.permList.empty() || targetPermList.empty()) {
+            hasPermIntersection = true;
+        }
+        for (const auto& PermItem : targetPermList) {
+            if (hasPermIntersection) {
+                break;
+            }
+            auto iter = std::find(scopeInfo.permList.begin(), scopeInfo.permList.end(), PermItem);
+            if (iter != scopeInfo.permList.end()) {
+                hasPermIntersection = true;
+            }
+        }
+
+        bool hasTokenIdIntersection = false;
+
+        if (scopeInfo.tokenIDs.empty() || targetTokenIDs.empty()) {
+            hasTokenIdIntersection = true;
+        }
+        for (const auto& tokenItem : targetTokenIDs) {
+            if (hasTokenIdIntersection) {
+                break;
+            }
+            auto iter = std::find(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end(), tokenItem);
+            if (iter != scopeInfo.tokenIDs.end()) {
+                hasTokenIdIntersection = true;
+            }
+        }
+        bool isEqual = true;
+        if (!AniIsCallbackRefEqual(context->env, item->callbackRef, context->callbackRef, item->threadId, isEqual)) {
+            return true;
+        }
+        if (hasPermIntersection && hasTokenIdIntersection && isEqual) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+{
+    if (env == nullptr) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
+    }
+
+    RegisterPermStateChangeInf* registerPermStateChangeInf = new (std::nothrow) RegisterPermStateChangeInf();
+    if (registerPermStateChangeInf == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for RegisterPermStateChangeInf!");
+        return;
+    }
+    registerPermStateChangeInf->env = env;
+    std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {registerPermStateChangeInf};
+    if (!ParseInputToRegister(aniType, aniId, aniArray, callback, registerPermStateChangeInf, true)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseInputToRegister false.");
+        return;
+    }
+
+    if (IsExistRegister(registerPermStateChangeInf)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Subscribe failed. The current subscriber has existed or Reference_StrictEquals failed!");
+        if (registerPermStateChangeInf->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+            BusinessErrorAni::ThrowError(
+                env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
+                GetErrorMessage(STSErrorCode::STS_ERROR_NOT_USE_TOGETHER));
+        } else {
+            BusinessErrorAni::ThrowError(
+                env, STSErrorCode::STS_ERROR_PARAM_INVALID, GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        }
+        return;
+    }
+
+    int32_t result;
+    if (registerPermStateChangeInf->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+        result = AccessTokenKit::RegisterPermStateChangeCallback(registerPermStateChangeInf->subscriber);
+    } else {
+        result = AccessTokenKit::RegisterSelfPermStateChangeCallback(registerPermStateChangeInf->subscriber);
+    }
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermStateChangeCallback failed");
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+        g_permStateChangeRegisters.emplace_back(registerPermStateChangeInf);
+        ACCESSTOKEN_LOG_INFO(
+            LABEL, "Add g_PermStateChangeRegisters.size = %{public}zu", g_permStateChangeRegisters.size());
+    }
+    callbackPtr.release();
+    return;
+}
+
+static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterPermStateChangeInf,
+    std::vector<RegisterPermStateChangeInf*>& batchPermStateChangeRegisters)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "FindAndGetSubscriberInVector In.");
+    std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+    std::vector<AccessTokenID> targetTokenIDs = unregisterPermStateChangeInf->scopeInfo.tokenIDs;
+    std::vector<std::string> targetPermList = unregisterPermStateChangeInf->scopeInfo.permList;
+    bool callbackEqual;
+    ani_ref callbackRef = unregisterPermStateChangeInf->callbackRef;
+    bool isUndef = AniIsRefUndefined(unregisterPermStateChangeInf->env, unregisterPermStateChangeInf->callbackRef);
+
+    for (const auto& item : g_permStateChangeRegisters) {
+        if (isUndef) {
+            // batch delete currentThread callback
+            ACCESSTOKEN_LOG_INFO(LABEL, "Callback is nullptr.");
+            callbackEqual = IsCurrentThread(item->threadId);
+        } else {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Compare callback.");
+            if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
+                unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
+                continue;
+            }
+        }
+
+        PermStateChangeScope scopeInfo;
+        item->subscriber->GetScope(scopeInfo);
+        if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
+            unregisterPermStateChangeInf->subscriber = item->subscriber;
+            batchPermStateChangeRegisters.emplace_back(item);
+        }
+    }
+    if (!batchPermStateChangeRegisters.empty()) {
+        return true;
+    }
+    return false;
+}
+
+static void DeleteRegisterFromVector(const RegisterPermStateChangeInf* context)
+{
+    std::vector<AccessTokenID> targetTokenIDs = context->scopeInfo.tokenIDs;
+    std::vector<std::string> targetPermList = context->scopeInfo.permList;
+    std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+    auto item = g_permStateChangeRegisters.begin();
+    while (item != g_permStateChangeRegisters.end()) {
+        PermStateChangeScope stateChangeScope;
+        (*item)->subscriber->GetScope(stateChangeScope);
+        bool callbackEqual = true;
+        if (!AniIsCallbackRefEqual(
+            context->env, (*item)->callbackRef, context->callbackRef, (*item)->threadId, callbackEqual)) {
+            continue;
+        }
+        if (!callbackEqual) {
+            continue;
+        }
+
+        if ((stateChangeScope.tokenIDs == targetTokenIDs) && (stateChangeScope.permList == targetPermList)) {
+            delete *item;
+            *item = nullptr;
+            g_permStateChangeRegisters.erase(item);
+            break;
+        } else {
+            ++item;
+        }
+    }
+}
+
+static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UnregisterPermStateChangeCallback In.");
+    if (env == nullptr) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
+        return;
+    }
+
+    RegisterPermStateChangeInf* context = new (std::nothrow) RegisterPermStateChangeInf();
+    if (context == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for UnRegisterPermStateChangeInf!");
+        return;
+    }
+    context->env = env;
+    std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {context};
+
+    if (!ParseInputToRegister(aniType, aniId, aniArray, callback, context, false)) {
+        return;
+    }
+
+    std::vector<RegisterPermStateChangeInf*> batchPermStateChangeRegisters;
+    if (!FindAndGetSubscriberInVector(context, batchPermStateChangeRegisters)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Unsubscribe failed. The current subscriber does not exist or Reference_StrictEquals failed!");
+        if (context->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
+            BusinessErrorAni::ThrowError(
+                env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
+                GetErrorMessage(STSErrorCode::STS_ERROR_NOT_USE_TOGETHER));
+        } else {
+            BusinessErrorAni::ThrowError(
+                env, STSErrorCode::STS_ERROR_PARAM_INVALID, GetErrorMessage(STSErrorCode::STS_ERROR_PARAM_INVALID));
+        }
+        return;
+    }
+    for (const auto& item : batchPermStateChangeRegisters) {
+        PermStateChangeScope scopeInfo;
+        item->subscriber->GetScope(scopeInfo);
+        int32_t result;
+        if (context->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
+            result = AccessTokenKit::UnRegisterPermStateChangeCallback(item->subscriber);
+        } else {
+            result = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(item->subscriber);
+        }
+        if (result == RET_SUCCESS) {
+            DeleteRegisterFromVector(item);
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermStateChangeCallback failed");
+            int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+            BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+            return;
+        }
+    }
+    return;
+}
+
 void InitAbilityCtrlFunction(ani_env *env)
 {
     if (env == nullptr) {
@@ -421,6 +856,8 @@ void InitAbilityCtrlFunction(ani_env *env)
             nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "requestAppPermOnSettingExecute",
             nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
+        ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
+        ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);

@@ -133,16 +133,8 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
         ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
         return;
     }
-
     bool isSameThread = (threadId_ == std::this_thread::get_id());
-    ani_env* env;
-    if (isSameThread) {
-        env = env_;
-    } else {
-        ani_option interopEnabled {"--interop=enable", nullptr};
-        ani_options aniArgs {1, &interopEnabled};
-        vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env);
-    }
+    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
 
     if (ref_ != nullptr) {
         env->GlobalReference_Delete(ref_);

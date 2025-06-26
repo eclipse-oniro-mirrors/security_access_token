@@ -61,6 +61,45 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fiel
     return true;
 }
 
+bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
+{
+    ani_int tmp;
+    ani_status status;
+    if ((status = env->Object_CallMethodByName_Int(
+        static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Int failed! %{public}d", status);
+        return false;
+    }
+
+    out = static_cast<uint32_t>(tmp);
+    return true;
+}
+
+bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out)
+{
+    ani_size size;
+    if (env->Array_GetLength(array, &size) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
+        return false;
+    }
+
+    for (ani_size i = 0; i < size; ++i) {
+        ani_ref elementRef;
+        if (env->Array_Get_Ref(array, i, &elementRef) != ANI_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Array_Get_Ref failed at index %{public}zu!", i);
+            return false;
+        }
+        uint32_t value;
+        if (!AniParseUint32(env, elementRef, value)) {
+            return false;
+        }
+        if (value == 0) {
+            return false;
+        }
+        out.emplace_back(value);
+    }
+    return true;
+}
 
 std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref& aniStrArr)
 {
@@ -569,6 +608,23 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
         return false;
     }
     return true;
+}
+
+ani_env* GetCurrentEnv(ani_vm* vm)
+{
+    if (vm == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Vm is nullptr.");
+        return nullptr;
+    }
+    ani_env* env = nullptr;
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    if (vm->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
+        if (vm->GetEnv(ANI_VERSION_1, &env) != ANI_OK) {
+            return nullptr;
+        }
+    }
+    return env;
 }
 } // namespace AccessToken
 } // namespace Security
