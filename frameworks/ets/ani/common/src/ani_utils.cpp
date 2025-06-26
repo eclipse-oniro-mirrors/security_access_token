@@ -209,7 +209,7 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     ani_size length = cArray.size();
     ani_array_ref aArrayRef = nullptr;
     ani_class aStringcls = nullptr;
-    if (env->FindClass("Lstd/core/String;", &aStringcls) != ANI_OK) {
+    if (env->FindClass("std.core.String", &aStringcls) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass String failed.");
         return nullptr;
     }
@@ -289,12 +289,12 @@ ani_object CreateBooleanObject(ani_env *env, bool value)
 {
     ani_class persionCls;
     ani_status status = ANI_ERROR;
-    if ((status = env->FindClass("Lstd/core/Boolean;", &persionCls)) != ANI_OK) {
+    if ((status = env->FindClass("std.core.Boolean", &persionCls)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass fail, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_method personInfoCtor;
-    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "Z:V", &personInfoCtor)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "z:", &personInfoCtor)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod fail, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
@@ -310,12 +310,12 @@ ani_object CreateIntObject(ani_env *env, int32_t value)
 {
     ani_class persionCls;
     ani_status status = ANI_ERROR;
-    if ((status = env->FindClass("Lstd/core/Int;", &persionCls)) != ANI_OK) {
+    if ((status = env->FindClass("std.core.Int", &persionCls)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass fail, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_method aniMethod;
-    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "I:V", &aniMethod)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "i:", &aniMethod)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod fail, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
@@ -336,7 +336,7 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
         return nullptr;
     }
     ani_method aniMethod;
-    status = env->Class_FindMethod(aniClass, "<ctor>", ":V", &aniMethod);
+    status = env->Class_FindMethod(aniClass, "<ctor>", ":", &aniMethod);
     if (status != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed, status: %{public}d!", status);
         return nullptr;
@@ -353,11 +353,11 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 ani_object CreateArrayObject(ani_env* env, uint32_t length)
 {
     ani_class aniClass;
-    if (!AniFindClass(env, "Lescompat/Array;", aniClass)) {
+    if (!AniFindClass(env, "escompat.Array", aniClass)) {
         return nullptr;
     }
     ani_method aniMethod;
-    ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "I:V", &aniMethod);
+    ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "i:", &aniMethod);
     if (status != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod failed, status: %{public}d!", status);
         return nullptr;

@@ -91,7 +91,7 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
 {
     ani_status status = ANI_ERROR;
     ani_class cls = nullptr;
-    if ((status = env->FindClass("Lsecurity/PermissionRequestResult/PermissionRequestResult;", &cls)) != ANI_OK) {
+    if ((status = env->FindClass("security.PermissionRequestResult.PermissionRequestResult", &cls)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass status %{public}d ", static_cast<int32_t>(status));
         return nullptr;
     }
@@ -100,7 +100,7 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
         return nullptr;
     }
     ani_method method = nullptr;
-    if ((status = env->Class_FindMethod(cls, "<ctor>", ":V", &method)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(cls, "<ctor>", ":", &method)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod status %{public}d ", static_cast<int32_t>(status));
         return nullptr;
     }

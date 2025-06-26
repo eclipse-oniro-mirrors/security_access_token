@@ -119,7 +119,7 @@ static void transPermStateChangeTypeToAniInt(const int32_t permStateChangeType, 
 static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& result, ani_object& aniObject)
 {
     // class implements from interface should use property, independent class use field
-    aniObject = CreateClassObject(env, "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeInfoInner;");
+    aniObject = CreateClassObject(env, "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStateChangeInfoInner");
     if (aniObject == nullptr) {
         return;
     }
@@ -133,7 +133,7 @@ static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& 
     // set permStateChangeType: int32_t
     ani_size index;
     transPermStateChangeTypeToAniInt(result.permStateChangeType, index);
-    const char* activeStatusDes = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeType;";
+    const char* activeStatusDes = "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStateChangeType";
     SetEnumProperty(
         env, aniObject, activeStatusDes, PERM_STATE_CHANGE_FIELD_CHANGE, static_cast<int32_t>(index));
 }
@@ -181,7 +181,7 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
         return atManagerObj;
     }
 
-    static const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
+    static const char* className = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
@@ -816,7 +816,7 @@ void InitAbilityCtrlFunction(ani_env *env)
         ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
         return;
     }
-    const char* spaceName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
+    const char* spaceName = "@ohos.abilityAccessCtrl.abilityAccessCtrl";
     ani_namespace spc;
     if (ANI_OK != env->FindNamespace(spaceName, &spc)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", spaceName);
@@ -829,7 +829,7 @@ void InitAbilityCtrlFunction(ani_env *env)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", spaceName);
         return;
     };
-    const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
+    const char* className = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
