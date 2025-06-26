@@ -7049,6 +7049,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.CALL_TPM_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.TRIGGER_LOCAL_WANTAGENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
