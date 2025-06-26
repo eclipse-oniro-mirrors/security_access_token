@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,19 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
-import("../privacy_service_fuzz.gni")
+import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("StartUsingPermissionStubFuzzTest") {
-  module_out_path = module_output_path_service_privacy
+ohos_fuzztest("IsToastShownNeededStubFuzzTest") {
+  module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [
-    "${access_token_path}/services/common/proxy_death/src/proxy_death_callback_stub.cpp",
-    "startusingpermissionstub_fuzzer.cpp",
-  ]
+  sources = [ "istoastshownneededstub_fuzzer.cpp" ]
 
   cflags = [
     "-g",
@@ -32,19 +28,22 @@ ohos_fuzztest("StartUsingPermissionStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
+  include_dirs = access_token_include_dirs
+
+  deps = access_token_deps
+
   configs = [
     "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
   ]
 
-  include_dirs = privacy_include_dirs
+  external_deps = access_token_external_deps
 
-  sources += privacy_sources
+  include_dirs += access_token_impl_include_dirs
 
-  defines = privacy_defines
-  cflags_cc = privacy_cflags_cc
+  cflags_cc = access_token_cflags_cc
 
-  deps = privacy_deps
+  sources += access_token_sources
 
-  external_deps = privacy_external_deps
+  sources += access_token_impl_sources
 }

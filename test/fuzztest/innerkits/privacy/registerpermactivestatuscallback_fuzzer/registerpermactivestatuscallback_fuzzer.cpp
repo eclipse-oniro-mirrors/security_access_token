@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,8 +21,11 @@
 #include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
-#undef private
+#include "perm_active_status_change_callback.h"
 #include "privacy_kit.h"
+#define private public
+#include "privacy_manager_client.h"
+#undef private
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -46,20 +49,26 @@ public:
 };
 
 namespace OHOS {
-    bool RegisterPermActiveStatusCallbackFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        std::vector<std::string> permList = {provider.ConsumeRandomLengthString()};
-        auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
-        callback->type_ = PERM_INACTIVE;
-        (void)PrivacyKit::RegisterPermActiveStatusCallback(callback);
-        (void)PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
-        return true;
+bool RegisterPermActiveStatusCallbackFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    std::vector<std::string> permList = {provider.ConsumeRandomLengthString()};
+    auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
+    callback->type_ = PERM_INACTIVE;
+    (void)PrivacyKit::RegisterPermActiveStatusCallback(callback);
+    (void)PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callback);
+    if (callbackWrap == nullptr) {
+        return false;
+    }
+    PrivacyManagerClient::GetInstance().activeCbkMap_[callback] = callbackWrap;
+    (void)PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
+    return true;
+}
 }
 
 /* Fuzzer entry point */
