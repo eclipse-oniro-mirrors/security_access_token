@@ -15,14 +15,10 @@
 
 #include "gethaptokenidservice_fuzzer.h"
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <string>
-#include <thread>
-#include <vector>
-#include "accesstoken_fuzzdata.h"
-#undef private
+
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
 using namespace std;
@@ -37,10 +33,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        int userID = fuzzData.GetData<int>();
-        int instIndex = static_cast<int>(size);
-        std::string bundleName(fuzzData.GenerateStochasticString());
+        FuzzedDataProvider provider(data, size);
+        int32_t userID = provider.ConsumeIntegral<int32_t>();
+        std::string bundleName = provider.ConsumeRandomLengthString();
+        int32_t instIndex = provider.ConsumeIntegral<int32_t>();
 
         MessageParcel sendData;
         sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

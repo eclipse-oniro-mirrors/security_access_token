@@ -15,12 +15,8 @@
 
 #include "allochaptoken_fuzzer.h"
 
-#include <iostream>
 #include <string>
-#include <thread>
-#include <vector>
 
-#undef private
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -84,10 +80,10 @@ namespace OHOS {
         policy.apl = static_cast<ATokenAplEnum>(
             provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(ATokenAplEnum::APL_ENUM_BUTT)));
         policy.domain = provider.ConsumeRandomLengthString();
-        policy.permList = {def};
-        policy.permStateList = {state};
+        policy.permList = { def };
+        policy.permStateList = { state };
         policy.aclRequestedList = {provider.ConsumeRandomLengthString()};
-        policy.preAuthorizationInfo = {info};
+        policy.preAuthorizationInfo = { info };
         policy.checkIgnore = static_cast<HapPolicyCheckIgnore>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(HapPolicyCheckIgnore::ACL_IGNORE_CHECK)));
         policy.aclExtendedMap = {std::make_pair<std::string, std::string>(provider.ConsumeRandomLengthString(),

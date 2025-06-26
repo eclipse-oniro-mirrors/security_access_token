@@ -19,10 +19,10 @@
 #include <thread>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
@@ -38,11 +38,11 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
+        if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
             return false;
         }
 

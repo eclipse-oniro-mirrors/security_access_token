@@ -15,14 +15,8 @@
 
 #include "gethaptokeninfoservice_fuzzer.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <string>
-#include <thread>
-#include <vector>
-#undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_def_parcel.h"
 
@@ -38,9 +32,9 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
-        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-        
+
+        FuzzedDataProvider provider(data, size);
+        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId)) {

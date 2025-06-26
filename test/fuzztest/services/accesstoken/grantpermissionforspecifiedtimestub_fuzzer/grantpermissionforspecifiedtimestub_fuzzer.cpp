@@ -20,9 +20,10 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "accesstoken_fuzzdata.h"
+
 #undef private
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
 #include "iaccess_token_manager.h"
 
@@ -38,10 +39,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-        std::string permissionName(fuzzData.GenerateStochasticString());
-        uint32_t onceTime = fuzzData.GetData<uint32_t>();
+        FuzzedDataProvider provider(data, size);
+        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        std::string permissionName = provider.ConsumeRandomLengthString();
+        uint32_t onceTime = provider.ConsumeIntegral<uint32_t>();
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId) || !datas.WriteString(permissionName) ||

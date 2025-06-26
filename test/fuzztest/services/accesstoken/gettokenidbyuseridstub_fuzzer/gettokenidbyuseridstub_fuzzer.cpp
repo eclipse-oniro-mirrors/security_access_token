@@ -16,8 +16,8 @@
 #include "gettokenidbyuseridstub_fuzzer.h"
 
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
 using namespace std;
@@ -30,12 +30,12 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
-        int32_t userID = fuzzData.GetData<int32_t>();
+        int32_t userID = provider.ConsumeIntegral<int32_t>();
         if (!datas.WriteInt32(userID)) {
             return false;
         }

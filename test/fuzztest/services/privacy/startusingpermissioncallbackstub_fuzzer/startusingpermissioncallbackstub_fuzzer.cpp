@@ -19,8 +19,8 @@
 #include <thread>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #undef private
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
@@ -53,7 +53,7 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
         sptr<StateChangeCallback> callbackWrap = nullptr;
         auto callback = std::make_shared<CbCustomizeTest>();
@@ -61,13 +61,18 @@ namespace OHOS {
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteUint32(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()))) {
+        if (!datas.WriteUint32(provider.ConsumeIntegral<AccessTokenID>())) {
             return false;
         }
-        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
+        if (!datas.WriteString(provider.ConsumeRandomLengthString())) {
             return false;
         }
-        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
+        if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
+            return false;
+        }
+        uint32_t type = static_cast<uint32_t>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        if (!datas.WriteUint32(type)) {
             return false;
         }
         if (!datas.WriteRemoteObject(callbackWrap->AsObject())) {

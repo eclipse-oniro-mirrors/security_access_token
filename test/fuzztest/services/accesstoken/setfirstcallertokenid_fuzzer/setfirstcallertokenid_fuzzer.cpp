@@ -18,12 +18,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "token_setproc.h"
 
 using namespace std;
-using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
     bool SetFirstCallerTokenIDFuzzTest(const uint8_t* data, size_t size)
@@ -32,8 +32,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        SetSelfTokenID(fuzzData.GetData<uint64_t>());
+        FuzzedDataProvider provider(data, size);
+        SetSelfTokenID(provider.ConsumeIntegral<uint64_t>());
 
         return true;
     }

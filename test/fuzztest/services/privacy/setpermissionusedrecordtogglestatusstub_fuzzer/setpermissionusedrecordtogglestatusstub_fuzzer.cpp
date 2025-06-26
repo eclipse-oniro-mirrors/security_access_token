@@ -15,8 +15,8 @@
 
 #include "setpermissionusedrecordtogglestatusstub_fuzzer.h"
 
-#include "accesstoken_fuzzdata.h"
 #undef private
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 
@@ -32,14 +32,14 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
-        int32_t userID = fuzzData.GetData<int32_t>();
-        bool status = fuzzData.GenerateStochasticBool();
-        if (!datas.WriteInt32(userID) || !datas.WriteBool(status)) {
+        int32_t userID = provider.ConsumeIntegral<int32_t>();
+        bool status = provider.ConsumeBool();
+        if (!datas.WriteInt32(userID) || !datas.WriteInt32(status ? 1 : 0)) {
             return false;
         }
 

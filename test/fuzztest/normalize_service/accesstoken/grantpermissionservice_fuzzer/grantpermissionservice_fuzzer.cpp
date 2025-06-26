@@ -20,12 +20,13 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
 #include "access_token.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "token_setproc.h"
 
@@ -65,15 +66,16 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
-    AccessTokenFuzzData fuzzData(data, size);
-    AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-    std::string testName(fuzzData.GenerateStochasticString());
+
+    FuzzedDataProvider provider(data, size);
+    AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+    std::string permissionName = provider.ConsumeRandomLengthString();
+    uint32_t flagIndex = provider.ConsumeIntegral<uint32_t>() % FLAG_LIST_SIZE;
+    PermissionFlag flag = FLAG_LIST[flagIndex];
+
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    
-    uint32_t flagIndex = fuzzData.GetData<uint32_t>() % FLAG_LIST_SIZE;
-    PermissionFlag flag = FLAG_LIST[flagIndex];
-    if (!datas.WriteUint32(tokenId) || !datas.WriteString(testName) ||
+    if (!datas.WriteUint32(tokenId) || !datas.WriteString(permissionName) ||
         !datas.WriteInt32(flag)) {
         return false;
     }
@@ -84,7 +86,7 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
     MessageParcel reply;
     MessageOption option;
     AccessTokenID tokenIdHap;
-    bool enable2 = ((fuzzData.GetData<uint32_t>() % CONSTANTS_NUMBER_TEN) > 0);
+    bool enable2 = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) > 0);
     if (enable2) {
         AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
         tokenIdHap = tokenIdEx.tokenIDEx;
@@ -96,7 +98,7 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
         std::map<int32_t, int32_t> tokenIdAplMap;
         AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
     }
-    bool enable = ((fuzzData.GetData<uint32_t>() % CONSTANTS_NUMBER_FIVE) == 0);
+    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_FIVE) == 0);
     if (enable) {
         setuid(CONSTANTS_NUMBER_FIVE);
     }

@@ -18,11 +18,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
 #include "access_token.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -79,11 +80,11 @@ void ClearUserPolicy()
         static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CLEAR_USER_POLICY), datas, reply, option);
 }
 
-void UpdateUserPolicy(AccessTokenFuzzData &fuzzData)
+void UpdateUserPolicy(FuzzedDataProvider& provider)
 {
-    UserState userList;
-    userList.userId = fuzzData.GetData<int32_t>();
-    userList.isActive = fuzzData.GenerateStochasticBool();
+    UserStateIdl dataBlock;
+    dataBlock.userId = provider.ConsumeIntegral<int32_t>();
+    dataBlock.isActive = provider.ConsumeBool();
 
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -92,10 +93,7 @@ void UpdateUserPolicy(AccessTokenFuzzData &fuzzData)
     if (!datas.WriteUint32(1)) {
         return;
     }
-    if (!datas.WriteInt32(userList.userId)) {
-        return;
-    }
-    if (!datas.WriteBool(userList.isActive)) {
+    if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
         return;
     }
 
@@ -111,12 +109,12 @@ bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    AccessTokenFuzzData fuzzData(data, size);
-    std::string testName(fuzzData.GenerateStochasticString());
+    FuzzedDataProvider provider(data, size);
+    std::string permissionName = provider.ConsumeRandomLengthString();
 
-    UserState userList;
-    userList.userId = fuzzData.GetData<int32_t>();
-    userList.isActive = fuzzData.GenerateStochasticBool();
+    UserStateIdl dataBlock;
+    dataBlock.userId = provider.ConsumeIntegral<int32_t>();
+    dataBlock.isActive = provider.ConsumeBool();
 
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -125,16 +123,13 @@ bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteUint32(1)) {
         return false;
     }
+    if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
+        return false;
+    }
     if (!datas.WriteUint32(1)) {
         return false;
     }
-    if (!datas.WriteInt32(userList.userId)) {
-        return false;
-    }
-    if (!datas.WriteBool(userList.isActive)) {
-        return false;
-    }
-    if (!datas.WriteString(testName)) {
+    if (!datas.WriteString(permissionName)) {
         return false;
     }
 
@@ -150,7 +145,7 @@ bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
         (void)SetSelfTokenID(g_selfTokenId);
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    UpdateUserPolicy(fuzzData);
+    UpdateUserPolicy(provider);
     ClearUserPolicy();
 
     return true;

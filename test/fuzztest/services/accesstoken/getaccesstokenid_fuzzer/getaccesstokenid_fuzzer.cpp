@@ -20,12 +20,12 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "accesstoken_fuzzdata.h"
+
+#include "fuzzer/FuzzedDataProvider.h"
 #include "nativetoken.h"
 #include "nativetoken_kit.h"
 
 using namespace std;
-using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
     bool GetAccessTokenIdFuzzTest(const uint8_t* data, size_t size)
@@ -33,7 +33,8 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
+
+        FuzzedDataProvider provider(data, size);
         NativeTokenInfoParams infoInstance = {
             .permsNum = 0,
             .aclsNum = 0,
@@ -42,7 +43,7 @@ namespace OHOS {
             .aplStr = "system_core",
         };
         infoInstance.dcapsNum = 0;
-        std::string processName(fuzzData.GenerateStochasticString());
+        std::string processName = provider.ConsumeRandomLengthString();
         char name[MAX_PROCESS_NAME_LEN] = { 0 };
         if (strcpy_s(name, MAX_PROCESS_NAME_LEN, processName.c_str()) != EOK) {
             return false;

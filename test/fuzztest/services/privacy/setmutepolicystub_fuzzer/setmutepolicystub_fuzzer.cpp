@@ -19,9 +19,9 @@
 #include <thread>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 #include "nativetoken_kit.h"
@@ -68,14 +68,15 @@ size_t g_baseFuzzPos = 0;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
+
+        FuzzedDataProvider provider(data, size);
         GetNativeToken();
-        AccessTokenFuzzData fuzzData(data, size);
 
         if (size > sizeof(uint32_t) + sizeof(bool) + sizeof(uint32_t)) {
-            uint32_t policyType = fuzzData.GetData<uint32_t>();
-            uint32_t callerType = fuzzData.GetData<uint32_t>();
-            bool isMute = fuzzData.GenerateStochasticBool();
-            uint32_t tokenID = fuzzData.GetData<uint32_t>();
+            uint32_t policyType = provider.ConsumeIntegral<uint32_t>();
+            uint32_t callerType = provider.ConsumeIntegral<uint32_t>();
+            bool isMute = provider.ConsumeBool();
+            uint32_t tokenID = provider.ConsumeIntegral<uint32_t>();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -85,7 +86,7 @@ size_t g_baseFuzzPos = 0;
             if (!datas.WriteUint32(callerType)) {
                 return false;
             }
-            if (!datas.WriteBool(isMute)) {
+            if (!datas.WriteInt32(isMute ? 1 : 0)) {
                 return false;
             }
             if (!datas.WriteUint32(tokenID)) {
