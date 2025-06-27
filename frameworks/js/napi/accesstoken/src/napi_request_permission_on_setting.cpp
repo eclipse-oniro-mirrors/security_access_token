@@ -169,7 +169,7 @@ static void PermissionResultsCallbackUI(int32_t errorCode,
             return;
         }
 
-        int32_t result = retCB->errorCode;
+        asyncContext->result.errorCode = retCB->errorCode;
         napi_handle_scope scope = nullptr;
         napi_open_handle_scope(asyncContext->env, &scope);
         if (scope == nullptr) {
@@ -178,7 +178,7 @@ static void PermissionResultsCallbackUI(int32_t errorCode,
             return;
         }
         napi_value requestResult = WrapRequestResult(asyncContext->env, retCB->stateList);
-        if ((result == RET_SUCCESS) && (requestResult == nullptr)) {
+        if ((asyncContext->result.errorCode == RET_SUCCESS) && (requestResult == nullptr)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Wrap requestResult failed");
             asyncContext->result.errorCode = RET_FAILED;
         }
