@@ -15,12 +15,9 @@
 
 #include "inituserpolicy_fuzzer.h"
 
-#include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 
-#undef private
 #include "accesstoken_kit.h"
 #include "access_token.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -38,11 +35,11 @@ bool InitUserPolicyFuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider provider(data, size);
 
     std::string permissionName = provider.ConsumeRandomLengthString();
-    const std::vector<std::string> permList = {permissionName};
+    const std::vector<std::string> permList = { permissionName };
     UserState state;
     state.userId = provider.ConsumeIntegral<int32_t>();
     state.isActive = provider.ConsumeBool();
-    std::vector<UserState> userList = {state};
+    std::vector<UserState> userList = { state };
     AccessTokenKit::InitUserPolicy(userList, permList);
     AccessTokenKit::UpdateUserPolicy(userList);
     AccessTokenKit::ClearUserPolicy();

@@ -21,8 +21,9 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "accesstoken_fuzzdata.h"
+
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_def_parcel.h"
 
@@ -38,12 +39,13 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(fuzzData.GenerateStochasticString());
+
+        FuzzedDataProvider provider(data, size);
+        std::string processName = provider.ConsumeRandomLengthString();
         
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(processName)) {
             return false;
         }
 

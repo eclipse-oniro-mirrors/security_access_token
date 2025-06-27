@@ -16,14 +16,13 @@
 #include "setremotehaptokeninfostub_fuzzer.h"
 
 #include <string>
-#include <thread>
 #include <vector>
-#undef private
+
 #include "access_token.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_state_full.h"
 #include "token_setproc.h"
@@ -36,51 +35,50 @@ const int CONSTANTS_NUMBER_TWO = 2;
 
 namespace OHOS {
     #ifdef TOKEN_SYNC_ENABLE
-    void ConstructorParam(
-        AccessTokenFuzzData& fuzzData, AccessTokenID tokenId, HapTokenInfoForSyncParcel& hapSyncParcel)
+    void InitRemoteTokenInfo(FuzzedDataProvider& provider, HapTokenInfoForSync& remoteTokenInfo)
     {
-        std::string permissionName(fuzzData.GenerateStochasticString());
         HapTokenInfo baseInfo = {
-            .ver = 1,
-            .userID = 1,
-            .bundleName = fuzzData.GenerateStochasticString(),
-            .instIndex = 1,
-            .tokenID = tokenId,
-            .tokenAttr = 0
+            .ver = '1',
+            .userID = provider.ConsumeIntegral<AccessTokenID>(),
+            .bundleName = provider.ConsumeRandomLengthString(),
+            .apiVersion = provider.ConsumeIntegral<int32_t>(),
+            .instIndex = provider.ConsumeIntegral<int32_t>(),
+            .dlpType = static_cast<int32_t>(
+                provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE))),
+            .tokenID = provider.ConsumeIntegral<AccessTokenID>(),
+            .tokenAttr = provider.ConsumeIntegral<uint32_t>(),
         };
-        PermissionStatus infoManagerTestState = {
-            .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
-            .grantStatus = PermissionState::PERMISSION_GRANTED,
-            .permissionName = permissionName};
-        PermissionStatus infoManagerTestState2 = {
-            .grantFlag = PermissionFlag::PERMISSION_USER_SET,
-            .grantStatus = PermissionState::PERMISSION_DENIED,
-            .permissionName = permissionName};
-        std::vector<PermissionStatus> permStateList;
-        permStateList.emplace_back(infoManagerTestState);
-        HapTokenInfoForSync remoteTokenInfo = {
-            .baseInfo = baseInfo,
-            .permStateList = permStateList
+
+        PermissionStatus state = {
+            .permissionName = provider.ConsumeRandomLengthString(),
+            .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
+            .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME))
         };
-        hapSyncParcel.hapTokenInfoForSyncParams = remoteTokenInfo;
+        std::vector<PermissionStatus> permStateList = { state };
+
+        remoteTokenInfo.baseInfo = baseInfo;
+        remoteTokenInfo.permStateList = permStateList;
     }
     #endif
 
     bool SetRemoteHapTokenInfoStubFuzzTest(const uint8_t* data, size_t size)
     {
-    #ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
+#ifdef TOKEN_SYNC_ENABLE
+        FuzzedDataProvider provider(data, size);
+        std::string deviceID = provider.ConsumeRandomLengthString();
+
         HapTokenInfoForSyncParcel hapSyncParcel;
-        ConstructorParam(fuzzData, tokenId, hapSyncParcel);
+        InitRemoteTokenInfo(provider, hapSyncParcel.hapTokenInfoForSyncParams);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(fuzzData.GenerateStochasticString())) {
+        if (!datas.WriteString(deviceID)) {
             return false;
         }
         if (!datas.WriteParcelable(&hapSyncParcel)) {

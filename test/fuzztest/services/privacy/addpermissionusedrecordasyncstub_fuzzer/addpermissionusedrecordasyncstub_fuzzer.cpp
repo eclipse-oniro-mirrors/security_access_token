@@ -19,8 +19,8 @@
 #include <thread>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #undef private
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 
@@ -34,16 +34,19 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
         AddPermParamInfoParcel infoParcel;
-        infoParcel.info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
-        infoParcel.info.permissionName = fuzzData.GenerateStochasticString();
-        infoParcel.info.successCount = fuzzData.GetData<int32_t>();
-        infoParcel.info.failCount = fuzzData.GetData<int32_t>();
+        infoParcel.info.tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        infoParcel.info.permissionName = provider.ConsumeRandomLengthString();
+        infoParcel.info.successCount = provider.ConsumeIntegral<int32_t>();
+        infoParcel.info.failCount = provider.ConsumeIntegral<int32_t>();
+        infoParcel.info.type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+
         if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }

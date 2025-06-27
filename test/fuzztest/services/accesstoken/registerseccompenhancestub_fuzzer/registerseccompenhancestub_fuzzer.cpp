@@ -20,10 +20,10 @@
 #include <vector>
 
 #include "accesstoken_callbacks.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "hap_token_info.h"
 #include "iaccess_token_manager.h"
 #include "on_permission_used_record_callback_stub.h"
@@ -63,18 +63,17 @@ public:
             return false;
         }
 
+        FuzzedDataProvider provider(data, size);
         sptr<TokenSyncCallback> callback =
             sptr<TokenSyncCallback>(new (std::nothrow) TokenSyncCallback(std::make_shared<TokenSyncCallbackImpl>()));
 
-        AccessTokenFuzzData fuzzData(data, size);
-
         SecCompEnhanceData secData;
         secData.callback = callback->AsObject();
-        secData.pid = fuzzData.GetData<int32_t>();
-        secData.token = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
-        secData.challenge = fuzzData.GetData<uint64_t>();
-        secData.sessionId = fuzzData.GetData<uint32_t>();
-        secData.seqNum = fuzzData.GetData<uint32_t>();
+        secData.pid = provider.ConsumeIntegral<int32_t>();
+        secData.token = provider.ConsumeIntegral<AccessTokenID>();
+        secData.challenge = provider.ConsumeIntegral<uint64_t>();
+        secData.sessionId = provider.ConsumeIntegral<uint32_t>();
+        secData.seqNum = provider.ConsumeIntegral<uint32_t>();
         if (size < AES_KEY_STORAGE_LEN) {
             return false;
         }

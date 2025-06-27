@@ -18,11 +18,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
 #include "access_token.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -70,21 +71,18 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
 
-        UserState userList;
-        userList.userId = fuzzData.GetData<int32_t>();
-        userList.isActive = fuzzData.GenerateStochasticBool();
+        UserStateIdl dataBlock;
+        dataBlock.userId = provider.ConsumeIntegral<int32_t>();
+        dataBlock.isActive = provider.ConsumeBool();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(1)) {
             return false;
         }
-        if (!datas.WriteInt32(userList.userId)) {
-            return false;
-        }
-        if (!datas.WriteBool(userList.isActive)) {
+        if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
             return false;
         }
 

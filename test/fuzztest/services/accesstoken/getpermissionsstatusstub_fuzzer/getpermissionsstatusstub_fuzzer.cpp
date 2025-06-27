@@ -24,6 +24,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
@@ -39,110 +40,78 @@ namespace OHOS {
 const uint8_t *g_baseFuzzData = nullptr;
 size_t g_baseFuzzSize = 0;
 size_t g_baseFuzzPos = 0;
-    void GetNativeToken()
-    {
-        uint64_t tokenId;
-        const char** perms = new (std::nothrow) const char *[1];
-        if (perms == nullptr) {
-            return;
-        }
-
-        perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
-
-        NativeTokenInfoParams infoInstance = {
-            .dcapsNum = 0,
-            .permsNum = 1,
-            .aclsNum = 0,
-            .dcaps = nullptr,
-            .perms = perms,
-            .acls = nullptr,
-            .processName = "getpermissionsstatusstub_fuzzer_test",
-            .aplStr = "system_core",
-        };
-
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        AccessTokenKit::ReloadNativeTokenInfo();
-        delete[] perms;
-    }
-
-    /*
-    * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-    * tips: only support basic type
-    */
-    template<class T> T GetData()
-    {
-        T object {};
-        size_t objectSize = sizeof(object);
-        if (g_baseFuzzData == nullptr || objectSize > g_baseFuzzSize - g_baseFuzzPos) {
-            return object;
-        }
-        errno_t ret = memcpy_s(&object, objectSize, g_baseFuzzData + g_baseFuzzPos, objectSize);
-        if (ret != EOK) {
-            return {};
-        }
-        g_baseFuzzPos += objectSize;
-        return object;
-    }
-
-    std::string GetStringFromData(int strlen)
-    {
-        char cstr[strlen];
-        cstr[strlen - 1] = '\0';
-        for (int i = 0; i < strlen - 1; i++) {
-            cstr[i] = GetData<char>();
-        }
-        std::string str(cstr);
-        return str;
-    }
-
     bool GetPermissionsStatusStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        int32_t result = RET_SUCCESS;
-        g_baseFuzzData = data;
-        g_baseFuzzSize = size;
-        g_baseFuzzPos = 0;
-        if (size > sizeof(uint32_t) + sizeof(std::string)) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(GetData<uint32_t>());
-            std::string testPerName = GetStringFromData(int(size));
-            PermissionListState perm = {
-            .permissionName = testPerName,
-            .state = SETTING_OPER,
-            };
-            PermissionListStateParcel permParcel;
-            permParcel.permsState = perm;
-            MessageParcel datas;
-            datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-            if (!datas.WriteUint32(tokenId)) {
-                return false;
-            }
-            if (!datas.WriteParcelable(&permParcel)) {
-                return false;
-            }
 
-            uint32_t code = static_cast<uint32_t>(
-                IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSIONS_STATUS);
-            MessageParcel reply;
-            MessageOption option;
-            bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
-            if (enable) {
-                setuid(CONSTANTS_NUMBER_TWO);
-            }
-            DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-            setuid(ROOT_UID);
+        FuzzedDataProvider provider(data, size);
+        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        std::string permissionName = provider.ConsumeRandomLengthString();
+        PermissionListState perm = {
+            .permissionName = permissionName,
+            .state = static_cast<PermissionOper>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionOper::BUTT_OPER))),
+        };
+        PermissionListStateParcel permParcel;
+        permParcel.permsState = perm;
+        MessageParcel datas;
+        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+        if (!datas.WriteUint32(tokenId)) {
+            return false;
         }
-        return result == RET_SUCCESS;
+        if (!datas.WriteParcelable(&permParcel)) {
+            return false;
+        }
+
+        uint32_t code = static_cast<uint32_t>(
+            IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSIONS_STATUS);
+        MessageParcel reply;
+        MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        setuid(ROOT_UID);
+        return true;
     }
+}
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    uint64_t tokenId;
+    const char** perms = new (std::nothrow) const char *[1];
+    if (perms == nullptr) {
+        return -1;
+    }
+
+    perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "getpermissionsstatusstub_fuzzer_test",
+        .aplStr = "system_core",
+    };
+
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    delete[] perms;
+
+    return 0;
 }
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetNativeToken();
     OHOS::GetPermissionsStatusStubFuzzTest(data, size);
     return 0;
 }

@@ -15,11 +15,9 @@
 
 #include "setremotehaptokeninfo_fuzzer.h"
 
-#include <string>
 #include <vector>
 #include <thread>
 
-#undef private
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -54,7 +52,7 @@ namespace OHOS {
             .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
                 0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME))
         };
-        std::vector<PermissionStatus> permStateList = {state};
+        std::vector<PermissionStatus> permStateList = { state };
 
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,

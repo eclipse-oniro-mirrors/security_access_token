@@ -14,6 +14,7 @@
  */
 
 #include "getpermissionusedtypestub_fuzzer.h"
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
@@ -21,8 +22,9 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "accesstoken_fuzzdata.h"
+
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
 #include "iaccess_token_manager.h"
 
@@ -38,9 +40,9 @@ bool GetPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    AccessTokenFuzzData fuzzData(data, size);
-    AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-    std::string permissionName(fuzzData.GenerateStochasticString());
+    FuzzedDataProvider provider(data, size);
+    AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+    std::string permissionName = provider.ConsumeRandomLengthString();
 
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

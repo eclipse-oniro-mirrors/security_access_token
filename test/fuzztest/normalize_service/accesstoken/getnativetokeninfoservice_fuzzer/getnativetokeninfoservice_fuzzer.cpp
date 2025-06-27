@@ -20,17 +20,18 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TEN = 10;
 static const int32_t ROOT_UID = 0;
-static bool REAL_DATA_FLAG = true;
+static bool g_realDataFlag = true;
 
 namespace OHOS {
     bool GetNativeTokenInfoServiceFuzzTest(const uint8_t* data, size_t size)
@@ -38,9 +39,10 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
-        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
-        if (REAL_DATA_FLAG) {
+
+        FuzzedDataProvider provider(data, size);
+        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        if (g_realDataFlag) {
             tokenId = AccessTokenKit::GetNativeTokenId("accesstoken_service");
         }
         MessageParcel inData;
@@ -58,9 +60,9 @@ namespace OHOS {
         if (enable) {
             setuid(CONSTANTS_NUMBER_TEN);
         }
-        if (REAL_DATA_FLAG) {
+        if (g_realDataFlag) {
             setuid(ROOT_UID);
-            REAL_DATA_FLAG = false;
+            g_realDataFlag = false;
         }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, inData, reply, option);
         setuid(ROOT_UID);

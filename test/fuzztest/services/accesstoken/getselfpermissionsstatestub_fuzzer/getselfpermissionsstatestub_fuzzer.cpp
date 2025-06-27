@@ -18,9 +18,10 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
 using namespace std;
@@ -33,10 +34,12 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenFuzzData fuzzData(data, size);
+
+        FuzzedDataProvider provider(data, size);
         PermissionListState perm = {
-            .permissionName = fuzzData.GenerateStochasticString(),
-            .state = SETTING_OPER,
+            .permissionName = provider.ConsumeRandomLengthString(),
+            .state = static_cast<PermissionOper>(provider.ConsumeIntegralInRange<uint32_t>(
+                0, static_cast<uint32_t>(PermissionOper::BUTT_OPER))),
         };
         PermissionListStateParcel permParcel;
         permParcel.permsState = perm;

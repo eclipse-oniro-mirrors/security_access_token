@@ -19,7 +19,8 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "accesstoken_fuzzdata.h"
+
+#include "fuzzer/FuzzedDataProvider.h"
 #include "i_token_sync_manager.h"
 #include "token_sync_manager_service.h"
 
@@ -33,13 +34,13 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(fuzzData.GenerateStochasticString());
-        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
+        FuzzedDataProvider provider(data, size);
+        std::string deviceID = provider.ConsumeRandomLengthString();
+        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
         
         MessageParcel datas;
         datas.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(deviceID)) {
             return false;
         }
         if (!datas.WriteUint32(tokenId)) {

@@ -14,15 +14,11 @@
  */
 
 #include "inithaptokenservice_fuzzer.h"
-#include <sys/types.h>
-#include <unistd.h>
-#include <iostream>
+
 #include <string>
-#include <thread>
-#include <vector>
-#include "accesstoken_fuzzdata.h"
-#undef private
+
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
 #include "iaccess_token_manager.h"
 
@@ -30,63 +26,70 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TEN = 10;
 static const int32_t ROOT_UID = 0;
-static const vector<PermissionState> STATU_LIST = {
-    PERMISSION_GRANTED,
-    PERMISSION_DENIED
-};
-static const vector<uint32_t> FLAG_LIST = {
-    static_cast<uint32_t>(0),
-    static_cast<uint32_t>(2),
-    static_cast<uint32_t>(4)
-};
-static const uint32_t FLAG_LIST_SIZE = 3;
-static const uint32_t STATU_LIST_SIZE = 2;
-
-static const vector<ATokenAplEnum> APL_LIST = {
-    APL_NORMAL,
-    APL_SYSTEM_BASIC,
-    APL_SYSTEM_CORE,
-};
-static const uint32_t APL_LIST_SIZE = 3;
 
 namespace OHOS {
-void ConstructorParam(AccessTokenFuzzData& fuzzData, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
+void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams& param)
 {
-    std::string permissionName = fuzzData.GenerateStochasticString();
-    std::string bundleName = fuzzData.GenerateStochasticString();
+    param.userID = provider.ConsumeIntegral<int32_t>();
+    param.bundleName = bundleName;
+    param.instIndex = provider.ConsumeIntegral<int32_t>();
+    param.dlpType = static_cast<int32_t>(
+        provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE)));
+    param.appIDDesc = provider.ConsumeRandomLengthString();
+    param.apiVersion = provider.ConsumeIntegral<int32_t>();
+    param.isSystemApp = provider.ConsumeBool();
+    param.appDistributionType = provider.ConsumeRandomLengthString();
+    param.isRestore = provider.ConsumeBool();
+    param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+    param.isAtomicService = provider.ConsumeBool();
+}
 
-    uint32_t flagIndex = fuzzData.GetData<uint32_t>() % FLAG_LIST_SIZE;
-    uint32_t statusIndex = 1;
-    if (flagIndex != 0) {
-        statusIndex = fuzzData.GetData<uint32_t>() % STATU_LIST_SIZE;
-    }
-    PermissionStatus testState = {
+void InitHapPolicy(const std::string& permissionName, const std::string& bundleName, FuzzedDataProvider& provider,
+    HapPolicy& policy)
+{
+    PermissionDef def = {
         .permissionName = permissionName,
-        .grantStatus = STATU_LIST[statusIndex],
-        .grantFlag = FLAG_LIST[flagIndex],
-    };
-    HapInfoParams testInfoParms = {
-        .userID = fuzzData.GetData<int32_t>(),
         .bundleName = bundleName,
-        .instIndex = 0,
-        .appIDDesc = fuzzData.GenerateStochasticString()
+        .grantMode = static_cast<int32_t>(
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(GrantMode::SYSTEM_GRANT))),
+        .availableLevel = static_cast<ATokenAplEnum>(
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(ATokenAplEnum::APL_ENUM_BUTT))),
+        .provisionEnable = provider.ConsumeBool(),
+        .distributedSceneEnable = provider.ConsumeBool(),
+        .label = provider.ConsumeRandomLengthString(),
+        .labelId = provider.ConsumeIntegral<int32_t>(),
+        .description = provider.ConsumeRandomLengthString(),
+        .descriptionId = provider.ConsumeIntegral<int32_t>(),
+        .availableType = static_cast<ATokenAvailableTypeEnum>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(ATokenAvailableTypeEnum::AVAILABLE_TYPE_BUTT))),
+        .isKernelEffect = provider.ConsumeBool(),
+        .hasValue = provider.ConsumeBool(),
     };
-    PreAuthorizationInfo info1 = {
+
+    PermissionStatus state = {
         .permissionName = permissionName,
-        .userCancelable = fuzzData.GenerateStochasticBool()
+        .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
+        .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME)),
     };
 
-    uint32_t aplIndex = fuzzData.GetData<uint32_t>() % APL_LIST_SIZE;
-    HapPolicy testPolicy = {
-        .apl = APL_LIST[aplIndex],
-        .domain = fuzzData.GenerateStochasticString(),
-        .permStateList = {testState},
-        .aclRequestedList = {permissionName},
-        .preAuthorizationInfo = {info1}
+    PreAuthorizationInfo info = {
+        .permissionName = permissionName,
+        .userCancelable = provider.ConsumeBool(),
     };
 
-    hapInfoParcel.hapInfoParameter = testInfoParms;
-    hapPolicyParcel.hapPolicy = testPolicy;
+    policy.apl = static_cast<ATokenAplEnum>(
+        provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(ATokenAplEnum::APL_ENUM_BUTT)));
+    policy.domain = provider.ConsumeRandomLengthString();
+    policy.permList = { def };
+    policy.permStateList = { state };
+    policy.aclRequestedList = {provider.ConsumeRandomLengthString()};
+    policy.preAuthorizationInfo = { info };
+    policy.checkIgnore = static_cast<HapPolicyCheckIgnore>(provider.ConsumeIntegralInRange<uint32_t>(
+        0, static_cast<uint32_t>(HapPolicyCheckIgnore::ACL_IGNORE_CHECK)));
+    policy.aclExtendedMap = {std::make_pair<std::string, std::string>(provider.ConsumeRandomLengthString(),
+        provider.ConsumeRandomLengthString())};
 }
 
 bool InitHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
@@ -95,10 +98,15 @@ bool InitHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    AccessTokenFuzzData fuzzData(data, size);
+    FuzzedDataProvider provider(data, size);
+    std::string permissionName = provider.ConsumeRandomLengthString();
+    std::string bundleName = provider.ConsumeRandomLengthString();
+
     HapInfoParcel hapInfoParcel;
+    InitHapInfoParams(bundleName, provider, hapInfoParcel.hapInfoParameter);
+
     HapPolicyParcel hapPolicyParcel;
-    ConstructorParam(fuzzData, hapInfoParcel, hapPolicyParcel);
+    InitHapPolicy(permissionName, bundleName, provider, hapPolicyParcel.hapPolicy);
 
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

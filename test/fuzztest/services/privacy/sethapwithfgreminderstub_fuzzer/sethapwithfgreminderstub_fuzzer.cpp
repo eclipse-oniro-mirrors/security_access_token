@@ -19,9 +19,9 @@
 #include <thread>
 #include <vector>
 
-#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
 #include "nativetoken_kit.h"
@@ -65,19 +65,20 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
+
+        FuzzedDataProvider provider(data, size);
         GetNativeToken();
-        AccessTokenFuzzData fuzzData(data, size);
 
         if (size > sizeof(uint32_t) + sizeof(bool)) {
-            uint32_t tokenId = fuzzData.GetData<uint32_t>();
-            bool isAllowed = fuzzData.GenerateStochasticBool();
+            AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+            bool isAllowed = provider.ConsumeBool();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
             if (!datas.WriteUint32(tokenId)) {
                 return false;
             }
-            if (!datas.WriteBool(isAllowed)) {
+            if (!datas.WriteInt32(isAllowed ? 1 : 0)) {
                 return false;
             }
 

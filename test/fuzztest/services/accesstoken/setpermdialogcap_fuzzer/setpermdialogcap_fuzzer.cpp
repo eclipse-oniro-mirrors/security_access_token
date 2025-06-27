@@ -18,11 +18,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #undef private
 #include "access_token.h"
-#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
@@ -65,11 +66,11 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
+        FuzzedDataProvider provider(data, size);
         HapBaseInfoParcel baseInfoParcel;
-        baseInfoParcel.hapBaseInfo.userID = fuzzData.GetData<int32_t>();
-        baseInfoParcel.hapBaseInfo.bundleName = fuzzData.GenerateStochasticString();
-        baseInfoParcel.hapBaseInfo.instIndex = fuzzData.GetData<int32_t>();
+        baseInfoParcel.hapBaseInfo.userID = provider.ConsumeIntegral<int32_t>();
+        baseInfoParcel.hapBaseInfo.bundleName = provider.ConsumeRandomLengthString();
+        baseInfoParcel.hapBaseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -86,11 +87,16 @@ namespace OHOS {
     }
 }
 
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::GetNativeToken();
+    return 0;
+}
+
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetNativeToken();
     OHOS::SetPermDialogCapFuzzTest(data, size);
     return 0;
 }
