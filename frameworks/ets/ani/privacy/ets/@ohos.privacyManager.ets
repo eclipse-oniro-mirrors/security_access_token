@@ -221,6 +221,19 @@ export default namespace privacyManager {
         });
     }
 
+    export function getPermissionUsedRecord(request: PermissionUsedRequest, callback: AsyncCallback<PermissionUsedResponse, void>): void {
+        let p1 = taskpool.execute((): PermissionUsedResponse => {
+            return getPermissionUsedRecordExecute(request);
+        });
+        p1.then((ret: NullishType): void => {
+            let err = new BusinessError<void>();
+            callback(err, ret as PermissionUsedResponse);
+        }).catch((err: Error): void => {
+            let response: PermissionUsedResponse = {};
+            callback(err as BusinessError, response);
+        })
+    }
+
     export function getPermissionUsedTypeInfos(
         tokenId?: int, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>> {
         let tokenIdIn = tokenId ?? 0;
