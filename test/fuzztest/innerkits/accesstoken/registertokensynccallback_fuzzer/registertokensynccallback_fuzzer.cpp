@@ -16,11 +16,16 @@
 #include "registertokensynccallback_fuzzer.h"
 
 #include "accesstoken_kit.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "token_setproc.h"
 #include "token_sync_kit_interface.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+#ifdef TOKEN_SYNC_ENABLE
+static constexpr int32_t NUMBER_TWO = 2;
+#endif // TOKEN_SYNC_ENABLE
+
 namespace {
 class TokenSyncCallback : public TokenSyncKitInterface {
 public:
@@ -62,10 +67,14 @@ bool RegisterTokenSyncCallbackFuzzTest(const uint8_t* data, size_t size)
     if (!NativeTokenGet()) {
         return false;
     }
-    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallback>();
-    AccessTokenKit::RegisterTokenSyncCallback(callback);
-    AccessTokenKit::UnRegisterTokenSyncCallback();
-    #endif // TOKEN_SYNC_ENABLE
+    FuzzedDataProvider provider(data, size);
+    if ((provider.ConsumeIntegral<int32_t>() % NUMBER_TWO) == 0) {
+        std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallback>();
+        AccessTokenKit::RegisterTokenSyncCallback(callback);
+    } else {
+        AccessTokenKit::UnRegisterTokenSyncCallback();
+    }
+#endif // TOKEN_SYNC_ENABLE
     return true;
 }
 }
