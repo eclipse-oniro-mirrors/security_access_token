@@ -36,19 +36,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniRequestPermissionFromUser" };
 std::mutex g_lockFlag;
-constexpr const char* PERMISSION_KEY = "ohos.user.grant.permission";
-constexpr const char* STATE_KEY = "ohos.user.grant.permission.state";
-constexpr const char* RESULT_KEY = "ohos.user.grant.permission.result";
-constexpr const char* EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
-constexpr const char* UI_EXTENSION_TYPE = "sys/commonUI";
-constexpr const char* ORI_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
-constexpr const char* TOKEN_KEY = "ohos.ability.params.token";
-constexpr const char* CALLBACK_KEY = "ohos.ability.params.callback";
-constexpr const char* WINDOW_RECTANGLE_LEFT_KEY = "ohos.ability.params.request.left";
-constexpr const char* WINDOW_RECTANGLE_TOP_KEY = "ohos.ability.params.request.top";
-constexpr const char* WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.height";
-constexpr const char* WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
-constexpr const char* REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
+const std::string PERMISSION_KEY = "ohos.user.grant.permission";
+const std::string STATE_KEY = "ohos.user.grant.permission.state";
+const std::string RESULT_KEY = "ohos.user.grant.permission.result";
+const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
+const std::string UI_EXTENSION_TYPE = "sys/commonUI";
+const std::string ORI_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
+const std::string TOKEN_KEY = "ohos.ability.params.token";
+const std::string CALLBACK_KEY = "ohos.ability.params.callback";
+const std::string WINDOW_RECTANGLE_LEFT_KEY = "ohos.ability.params.request.left";
+const std::string WINDOW_RECTANGLE_TOP_KEY = "ohos.ability.params.request.top";
+const std::string WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.height";
+const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
+const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
 }
 RequestAsyncContext::~RequestAsyncContext()
 {
