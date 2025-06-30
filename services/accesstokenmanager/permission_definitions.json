@@ -6917,6 +6917,39 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.MANAGE_ANTIVIRUS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.REGISTER_ANTIVIRUS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_PREINSTALLED_ANTIVIRUS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType":"MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.ACCESS_VIRUS_PROTECTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -7058,6 +7091,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.READ_LOCAL_DEVICE_NAME",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.kernel.CODE_PROTECT_MANAGE",
