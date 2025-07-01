@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "addpermissionusedrecord_fuzzer.h"
+#include "sethapwithfgreminder_fuzzer.h"
 
 #include "fuzzer/FuzzedDataProvider.h"
 #include "privacy_kit.h"
@@ -21,16 +21,14 @@
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
+bool SetHapWithFGReminderFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
 
     FuzzedDataProvider provider(data, size);
-    return PrivacyKit::AddPermissionUsedRecord(provider.ConsumeIntegral<AccessTokenID>(),
-        provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(),
-        provider.ConsumeIntegral<int32_t>(), provider.ConsumeBool()) == 0;
+    return PrivacyKit::SetHapWithFGReminder(provider.ConsumeIntegral<AccessTokenID>(), provider.ConsumeBool()) == 0;
 }
 }
 
@@ -38,6 +36,6 @@ bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AddPermissionUsedRecordFuzzTest(data, size);
+    (void)OHOS::SetHapWithFGReminderFuzzTest(data, size);
     return 0;
 }

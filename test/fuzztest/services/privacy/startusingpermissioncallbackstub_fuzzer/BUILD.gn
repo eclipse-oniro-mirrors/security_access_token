@@ -20,7 +20,10 @@ ohos_fuzztest("StartUsingPermissionCallbackStubFuzzTest") {
   module_out_path = module_output_path_service_privacy
   fuzz_config_file = "."
 
-  sources = [ "startusingpermissioncallbackstub_fuzzer.cpp" ]
+  sources = [
+    "${access_token_path}/services/common/proxy_death/src/proxy_death_callback_stub.cpp",
+    "startusingpermissioncallbackstub_fuzzer.cpp",
+  ]
 
   cflags = [
     "-g",
