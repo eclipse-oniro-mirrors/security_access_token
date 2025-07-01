@@ -918,6 +918,10 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
     }
     
     sptr<TokenSyncCallback> callback = sptr<TokenSyncCallback>(new (std::nothrow) TokenSyncCallback(syncCallback));
+    if (callback == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Memory allocation for callback failed!");
+        return AccessTokenError::ERR_MALLOC_FAILED;
+    }
 
     std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
     int32_t res = proxy->RegisterTokenSyncCallback(callback->AsObject());
