@@ -40,6 +40,7 @@ public:
 private:
     void OnStart(const SystemAbilityOnDemandReason &startReason) final;
     void OnStop() final;
+    int32_t OnIdle(const SystemAbilityOnDemandReason &idleReason) final;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerServiceAbility);
