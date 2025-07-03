@@ -7115,6 +7115,39 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.kernel.NET_RAW",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.DEBUGGER",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.ALLOW_DEBUG",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.READ_LOCAL_DEVICE_NAME",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
