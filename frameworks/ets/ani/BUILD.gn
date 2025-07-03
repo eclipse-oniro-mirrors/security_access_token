@@ -19,6 +19,7 @@ group("arkts_package") {
     deps += [
       "accesstoken:accesstoken_ets",
       "common:common_ets",
+      "el5filekeymanager:el5filekeymanager_ets",
       "privacy:privacy_ets",
     ]
   }

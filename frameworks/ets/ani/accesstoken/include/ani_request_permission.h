@@ -12,89 +12,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef ANI_REQUEST_PERMISSION_H
+#define ANI_REQUEST_PERMISSION_H
 
-#ifndef ABILITY_ACCESS_CTRL_H
-#define ABILITY_ACCESS_CTRL_H
-
-#include <atomic>
-#include <condition_variable>
-#include <map>
 #include <mutex>
-
-#include "ability.h"
-#include "ability_manager_client.h"
+#include <thread>
 #include "access_token.h"
 #include "ani.h"
+#include "ani_common.h"
+#include "ani_error.h"
+#include "ani_utils.h"
+#ifdef EVENTHANDLER_ENABLE
+#include "event_handler.h"
+#include "event_queue.h"
+#endif
 #include "permission_grant_info.h"
+#include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
-#include "ui_content.h"
-#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-std::condition_variable g_loadedCond;
-std::mutex g_lockCache;
-static std::atomic<int32_t> g_cnt = 0;
-constexpr uint32_t REPORT_CNT = 10;
-constexpr uint32_t VERIFY_TOKENID_INCONSISTENCY = 0;
-const int32_t PARAM_DEFAULT_VALUE = -1;
-
-static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
-
-struct AtManagerAsyncContext {
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    union {
-        uint32_t flag = 0;
-        uint32_t status;
-    };
-    int32_t result = RET_FAILED;
-    int32_t errorCode = 0;
-};
-
-class AniContextCommon {
-public:
-    static constexpr int32_t MAX_PARAMS_ONE = 1;
-    static constexpr int32_t MAX_PARAMS_TWO = 2;
-    static constexpr int32_t MAX_PARAMS_THREE = 3;
-    static constexpr int32_t MAX_PARAMS_FOUR = 4;
-    static constexpr int32_t MAX_LENGTH = 256;
-    static constexpr int32_t MAX_WAIT_TIME = 1000;
-    static constexpr int32_t VALUE_MAX_LEN = 32;
-};
-
-struct PermissionParamCache {
-    long long sysCommitIdCache = PARAM_DEFAULT_VALUE;
-    int32_t commitIdCache = PARAM_DEFAULT_VALUE;
-    int32_t handle = PARAM_DEFAULT_VALUE;
-    std::string sysParamCache;
-};
-
-struct PermissionStatusCache {
-    int32_t status;
-    std::string paramValue;
-};
-
-static PermissionParamCache g_paramCache;
-std::map<std::string, PermissionStatusCache> g_cache;
-
 struct RequestAsyncContext {
+    virtual ~RequestAsyncContext();
     AccessTokenID tokenId = 0;
     std::string bundleName;
     bool needDynamicRequest = true;
-    int32_t result = RET_SUCCESS;
+    AtmResult result;
     int32_t instanceId = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> grantResults;
     std::vector<int32_t> permissionsState;
-    ani_object requestResult = nullptr;
     std::vector<bool> dialogShownResults;
     std::vector<int32_t> permissionQueryResults;
     std::vector<int32_t> errorReasons;
     Security::AccessToken::PermissionGrantInfo info;
-    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
-    std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
+    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> uiExtensionContext = nullptr;
     bool uiAbilityFlag = false;
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
@@ -103,6 +57,11 @@ struct RequestAsyncContext {
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
+    std::thread::id threadId;
+    ani_vm* vm = nullptr;
+    ani_env* env = nullptr;
+    ani_object callback = nullptr;
+    ani_ref callbackRef = nullptr;
 };
 
 class UIExtensionCallback {
@@ -138,7 +97,7 @@ private:
 
 class RequestAsyncInstanceControl {
 public:
-    static bool AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
+    static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
     static void ExecCallback(int32_t id);
     static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
 
@@ -154,10 +113,41 @@ struct ResultCallback {
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
 
-std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> RequestAsyncInstanceControl::instanceIdMap_;
-std::mutex RequestAsyncInstanceControl::instanceIdMutex_;
+void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_object aniContext, ani_array_ref permissionList, ani_object callback);
+
+class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
+    public PermStateChangeCallbackCustomize {
+public:
+    explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
+    ~RegisterPermStateChangeScopePtr() override;
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    void SetCallbackRef(const ani_ref& ref);
+    void SetValid(bool valid);
+    void SetEnv(ani_env* env);
+
+    void SetVm(ani_vm* vm);
+    void SetThreadId(const std::thread::id threadId);
+private:
+    bool valid_ = true;
+    std::mutex validMutex_;
+    ani_env* env_ = nullptr;
+
+    ani_vm* vm_ = nullptr;
+    std::thread::id threadId_;
+    ani_ref ref_ = nullptr;
+};
+
+struct RegisterPermStateChangeInf {
+    ani_env* env = nullptr;
+    ani_ref callbackRef = nullptr;
+    int32_t errCode = RET_SUCCESS;
+    std::string permStateChangeType;
+    std::thread::id threadId;
+    std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
+    PermStateChangeScope scopeInfo;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // ABILITY_ACCESS_CTRL_H
+#endif /* ANI_REQUEST_PERMISSION_H */

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2025 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License"),
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -12,9 +12,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default class PermissionRequestResult {
-  permissions: Array<string> = new Array<string>();
-  authResults: Array<int> = new Array<int>();
-  dialogShownResults?: Array<boolean>;
-  errorReasons?: Array<int>;
-}
+
+#ifndef SCREEN_LOCK_FILE_MANAGER_H
+#define SCREEN_LOCK_FILE_MANAGER_H
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+enum AccessStatus {
+    ACCESS_DENIED = -1,
+    ACCESS_GRANTED = 0
+};
+
+enum ReleaseStatus {
+    RELEASE_DENIED = -1,
+    RELEASE_GRANTED = 0
+};
+
+enum KeyStatus {
+    KEY_NOT_EXIST = -2,
+    KEY_RELEASED = -1,
+    KEY_EXIST = 0
+};
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif //SCREEN_LOCK_FILE_MANAGER_H
