@@ -39,9 +39,6 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "privacy_param.h"
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "privacy_window_manager_agent.h"
-#endif
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
@@ -110,10 +107,6 @@ public:
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus(bool isIpc = false);
 
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    void NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing);
-    void OnWindowMgrRemoteDied();
-#endif
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
@@ -180,10 +173,6 @@ private:
         const PermissionUsedType type);
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    bool HasUsingCamera();
-    void ClearWindowShowing();
-#endif
     bool IsCameraWindowShow(AccessTokenID tokenId);
     uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
     bool RegisterWindowCallback();
@@ -237,22 +226,6 @@ private:
     // foreground reminder
     std::mutex foreReminderMutex_;
     std::vector<uint32_t> foreTokenIdList_;
-
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    std::mutex windowMutex_;
-    bool isWmRegistered = false;
-    sptr<PrivacyWindowManagerAgent> floatWindowCallback_ = nullptr;
-    sptr<PrivacyWindowManagerAgent> pipWindowCallback_ = nullptr;
-
-    std::mutex windowStatusMutex_;
-    // camera float window
-    bool camFloatWindowShowing_ = false;
-    AccessTokenID floatWindowTokenId_ = 0;
-
-    // pip window
-    bool pipWindowShowing_ = false;
-    AccessTokenID pipWindowTokenId_ = 0;
-#endif
 
     // record config
     int32_t recordSizeMaximum_ = 0;

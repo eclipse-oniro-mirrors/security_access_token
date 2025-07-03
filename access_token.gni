@@ -136,22 +136,11 @@ if (!defined(global_parts_info) ||
   access_token_background_task_mgr_continuous_task_enable = false
 }
 
-declare_args() {
-  access_token_camera_float_window_enable = true
-}
-
 if (!defined(global_parts_info) ||
     defined(global_parts_info.appsecurityprivacy_security_privacy_server)) {
   access_token_app_security_privacy_service_enable = true
 } else {
   access_token_app_security_privacy_service_enable = false
-}
-
-if (!defined(global_parts_info) ||
-    defined(global_parts_info.window_window_manager)) {
-  window_manager_enable = true
-} else {
-  window_manager_enable = false
 }
 
 if (!defined(global_parts_info) ||

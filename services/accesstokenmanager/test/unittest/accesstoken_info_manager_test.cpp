@@ -479,7 +479,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level0)
         .permList = {},
         .permStateList = { permissionStateA, permissionStateB }
     };
-    uint64_t fullTokenId;;
+    uint64_t fullTokenId;
     HapInfoCheckResultIdl resultInfoIdl;
     HapInfoCheckResult result;
 
@@ -550,7 +550,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level0)
     HapPolicyParcel policy;
     GetHapParams(info.hapInfoParameter, policy.hapPolicy);
 
-    uint64_t fullTokenId;;
+    uint64_t fullTokenId;
     HapInfoCheckResultIdl result;
     int32_t ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(RET_SUCCESS, ret);
