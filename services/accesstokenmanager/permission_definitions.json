@@ -134,7 +134,7 @@
             "name": "ohos.permission.sec.ACCESS_UDID",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
