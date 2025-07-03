@@ -7104,7 +7104,7 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
-            "name": "ohos.permission.WINDOW_TRANSPARENT",
+            "name": "ohos.permission.SET_WINDOW_TRANSPARENT",
             "grantMode": "system_grant",
             "availableLevel": "normal",
             "availableType": "NORMAL",
