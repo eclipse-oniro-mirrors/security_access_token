@@ -56,6 +56,7 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/variant_value.cpp",
     "dfx/src/data_usage_dfx.cpp",
     "libraryloader/src/libraryloader.cpp",
+    "random/src/random_dev_urandom.cpp",
     "random/src/random_openssl.cpp",
   ]
 

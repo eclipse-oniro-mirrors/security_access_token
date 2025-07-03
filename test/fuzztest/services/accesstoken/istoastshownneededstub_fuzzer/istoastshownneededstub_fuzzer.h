@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,23 +13,9 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_RANDOM_H
-#define ACCESSTOKEN_RANDOM_H
+#ifndef TEST_FUZZTEST_ISTOASTSHOWNNEEDEDSTUB_FUZZER_H
+#define TEST_FUZZTEST_ISTOASTSHOWNNEEDEDSTUB_FUZZER_H
 
-#include <stdint.h>
+#define FUZZ_PROJECT_NAME "istoastshownneededstub_fuzzer"
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif
-#endif
-
-unsigned int GetRandomUint32(void);
-uint32_t GetRandomUint32FromUrandom(void);
-
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-#endif /* ACCESSTOKEN_RANDOM_H */
+#endif // TEST_FUZZTEST_ISTOASTSHOWNNEEDEDSTUB_FUZZER_H

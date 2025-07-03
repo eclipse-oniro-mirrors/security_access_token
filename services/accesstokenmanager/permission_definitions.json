@@ -134,7 +134,7 @@
             "name": "ohos.permission.sec.ACCESS_UDID",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
@@ -7060,6 +7060,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.MOUNT_HDCDEBUG_PATH",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CAMERA_SCENARIOS_CARD",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -7082,6 +7093,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.CALL_TPM_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.TRIGGER_LOCAL_WANTAGENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -7102,6 +7124,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.SET_WINDOW_TRANSPARENT",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.kernel.CODE_PROTECT_MANAGE",

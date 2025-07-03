@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,46 @@
  * limitations under the License.
  */
 
-#include "addpermissionusedrecord_fuzzer.h"
+#include "istoastshownneededstub_fuzzer.h"
 
+#include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
-#include "privacy_kit.h"
+#include "iaccess_token_manager.h"
 
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
+bool IsToastShownNeededStubFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
 
     FuzzedDataProvider provider(data, size);
-    return PrivacyKit::AddPermissionUsedRecord(provider.ConsumeIntegral<AccessTokenID>(),
-        provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(),
-        provider.ConsumeIntegral<int32_t>(), provider.ConsumeBool()) == 0;
+
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return false;
+    }
+
+    int32_t pid = provider.ConsumeIntegral<int32_t>();
+    if (!datas.WriteInt32(pid)) {
+        return false;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_IS_TOAST_SHOWN_NEEDED), datas, reply, option);
+
+    return true;
 }
-}
+} // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AddPermissionUsedRecordFuzzTest(data, size);
+    OHOS::IsToastShownNeededStubFuzzTest(data, size);
     return 0;
 }

@@ -16,6 +16,7 @@
 #include "el5_filekey_manager_service_ability.h"
 
 #include "el5_filekey_manager_error.h"
+#include "el5_memory_manager.h"
 #include "system_ability_definition.h"
 
 namespace OHOS {
@@ -23,6 +24,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 REGISTER_SYSTEM_ABILITY_BY_ID(El5FilekeyManagerServiceAbility, EL5_FILEKEY_MANAGER_SERVICE_ID, false);
+constexpr int32_t SA_READY_TO_UNLOAD = 0;
+constexpr int32_t SA_REFUSE_TO_UNLOAD = -1;
 }
 
 El5FilekeyManagerServiceAbility::El5FilekeyManagerServiceAbility(int32_t systemAbilityId, bool runOnCreate)
@@ -53,6 +56,7 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
         LOG_ERROR("Failed to init the El5FilekeyManagerService instance.");
         return;
     }
+    El5MemoryManager::GetInstance().SetIsDelayedToUnload(false);
 
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
@@ -77,6 +81,18 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
         LOG_ERROR("Failed to publish El5FilekeyManagerService to SystemAbilityMgr");
         return;
     }
+}
+
+int32_t El5FilekeyManagerServiceAbility::OnIdle(const SystemAbilityOnDemandReason &idleReason)
+{
+    if (El5MemoryManager::GetInstance().IsDelayedToUnload() ||
+        El5MemoryManager::GetInstance().IsAllowUnloadService()) {
+        LOG_INFO("IldeReason name=%{public}s, value=%{public}s.",
+            idleReason.GetName().c_str(), idleReason.GetValue().c_str());
+        return SA_READY_TO_UNLOAD;
+    }
+
+    return SA_REFUSE_TO_UNLOAD;
 }
 
 void El5FilekeyManagerServiceAbility::OnStop()

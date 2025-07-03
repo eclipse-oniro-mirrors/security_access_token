@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,34 +15,30 @@
 
 #include "getpermissionsstatus_fuzzer.h"
 
-#include <cstdint>
-#include <string>
 #include <vector>
-#include <thread>
 
-#undef private
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
-#include "nativetoken_kit.h"
-#include "securec.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-
-    bool GetPermissionsStatusFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        std::vector<PermissionListState> permList;
-        return AccessTokenKit::GetPermissionsStatus(provider.ConsumeIntegral<AccessTokenID>(), permList) == RET_SUCCESS;
+bool GetPermissionsStatusFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    PermissionListState perm = {
+        .permissionName = provider.ConsumeRandomLengthString(),
+        .state = SETTING_OPER,
+    };
+    std::vector<PermissionListState> permList = { perm };
+    return AccessTokenKit::GetPermissionsStatus(provider.ConsumeIntegral<AccessTokenID>(), permList) == RET_SUCCESS;
+}
 }
 
 /* Fuzzer entry point */

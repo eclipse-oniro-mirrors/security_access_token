@@ -18,6 +18,7 @@ import data_lock_type;
 import El5FilekeyCallbackInterface;
 sequenceable OHOS.Security.AccessToken.UserAppKeyInfo;
 sequenceable OHOS.Security.AccessToken.AppKeyLoadInfo;
+option_stub_hooks on;
 
 interface OHOS.Security.AccessToken.El5FilekeyManagerInterface{
     void AcquireAccess([in] DataLockType type);

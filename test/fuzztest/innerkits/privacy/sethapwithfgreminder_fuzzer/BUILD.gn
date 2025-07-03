@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,37 +14,29 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
-import("../privacy_service_fuzz.gni")
 
-ohos_fuzztest("StartUsingPermissionStubFuzzTest") {
-  module_out_path = module_output_path_service_privacy
+ohos_fuzztest("SetHapWithFGReminderFuzzTest") {
+  module_out_path = module_output_path_interface_privacy
   fuzz_config_file = "."
-
-  sources = [
-    "${access_token_path}/services/common/proxy_death/src/proxy_death_callback_stub.cpp",
-    "startusingpermissionstub_fuzzer.cpp",
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/test/fuzztest/common",
   ]
-
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
+  sources = [ "sethapwithfgreminder_fuzzer.cpp" ]
 
-  configs = [
-    "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_core",
   ]
-
-  include_dirs = privacy_include_dirs
-
-  sources += privacy_sources
-
-  defines = privacy_defines
-  cflags_cc = privacy_cflags_cc
-
-  deps = privacy_deps
-
-  external_deps = privacy_external_deps
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,35 +21,50 @@
 #include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
-#undef private
+#include "on_permission_used_record_callback_stub.h"
 #include "privacy_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
+class TestCallBack : public OnPermissionUsedRecordCallbackStub {
+public:
+    TestCallBack() = default;
+    virtual ~TestCallBack() = default;
+
+    void OnQueried(OHOS::ErrCode code, PermissionUsedResult& result)
+    {}
+};
+
 namespace OHOS {
-    bool GetPermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        PermissionUsedRequest request = {
-            .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
-            .isRemote = provider.ConsumeBool(),
-            .deviceId = provider.ConsumeRandomLengthString(),
-            .bundleName = provider.ConsumeRandomLengthString(),
-            .permissionList = {provider.ConsumeRandomLengthString()},
-            .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
-            .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
-            .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(
-                0, static_cast<uint32_t>(PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED)))
-        };
-
-        PermissionUsedResult res;
-        return PrivacyKit::GetPermissionUsedRecords(request, res) == 0;
+bool GetPermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    PermissionUsedRequest request = {
+        .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+        .isRemote = provider.ConsumeBool(),
+        .deviceId = provider.ConsumeRandomLengthString(),
+        .bundleName = provider.ConsumeRandomLengthString(),
+        .permissionList = {provider.ConsumeRandomLengthString()},
+        .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
+        .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
+        .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED)))
+    };
+
+    sptr<TestCallBack> callback(new (std::nothrow) TestCallBack());
+    if (callback == nullptr) {
+        return false;
+    }
+    (void)PrivacyKit::GetPermissionUsedRecords(request, callback);
+
+    PermissionUsedResult res;
+    return PrivacyKit::GetPermissionUsedRecords(request, res) == 0;
+}
 }
 
 /* Fuzzer entry point */

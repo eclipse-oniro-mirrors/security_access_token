@@ -128,6 +128,19 @@ void ReloadNativeTokenInfo()
 #endif
 }
 
+void GetPermissionManagerInfo()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return;
+    }
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSION_MANAGER_INFO), data, reply, option);
+}
+
 bool AccessTokenStubCoverageFuzzTest(FuzzedDataProvider &provider)
 {
     if (g_selfTokenId == 0) {
@@ -137,6 +150,7 @@ bool AccessTokenStubCoverageFuzzTest(FuzzedDataProvider &provider)
     GetVersion();
     RegisterTokenSyncCallback();
     UnRegisterTokenSyncCallback();
+    GetPermissionManagerInfo();
     (void)SetSelfTokenID(g_selfTokenId);
     if (g_executionNum < 1) {
         g_executionNum++;
