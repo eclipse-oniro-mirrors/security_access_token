@@ -54,6 +54,7 @@ bool IsCurrentThread(std::thread::id threadId);
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual);
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
+void DeleteReference(ani_env* env, ani_ref& ref);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
