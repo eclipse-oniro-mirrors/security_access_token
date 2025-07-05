@@ -420,22 +420,21 @@ static ani_object WrapResult(ani_env* env, std::shared_ptr<RequestAsyncContext>&
         return nullptr;
     }
     auto state = asyncContext->needDynamicRequest ? asyncContext->grantResults : asyncContext->permissionsState;
-    ani_ref strPermissions = ConvertAniArrayString(env, asyncContext->permissionList);
-    ani_ref intAuthResults = ConvertAniArrayInt(env, state);
-    ani_ref boolDialogShownResults = ConvertAniArrayBool(env, asyncContext->dialogShownResults);
-    ani_ref intPermissionQueryResults = ConvertAniArrayInt(env, asyncContext->permissionQueryResults);
-    if (strPermissions == nullptr || intAuthResults == nullptr || boolDialogShownResults == nullptr ||
-        intPermissionQueryResults == nullptr) {
-        asyncContext->result = RET_FAILED;
-        return nullptr;
+    ani_ref aniPerms = ConvertAniArrayString(env, asyncContext->permissionList);
+    ani_ref aniAuthRes = ConvertAniArrayInt(env, state);
+    ani_ref aniDiasShownRes = ConvertAniArrayBool(env, asyncContext->dialogShownResults);
+    ani_ref aniErrorReasons = ConvertAniArrayInt(env, asyncContext->errorReasons);
+    if (aniPerms == nullptr || aniAuthRes == nullptr || aniDiasShownRes == nullptr || aniErrorReasons == nullptr ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), aniPerms) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), aniAuthRes) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), aniDiasShownRes) ||
+        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), aniErrorReasons)) {
+        aObject = nullptr;
     }
-    if (!CallSetter(env, cls, aObject, SETTER_METHOD_NAME(permissions), strPermissions) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(authResults), intAuthResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(dialogShownResults), boolDialogShownResults) ||
-        !CallSetter(env, cls, aObject, SETTER_METHOD_NAME(errorReasons), intPermissionQueryResults)) {
-        asyncContext->result = RET_FAILED;
-        return nullptr;
-    }
+    DeleteReference(env, aniPerms);
+    DeleteReference(env, aniAuthRes);
+    DeleteReference(env, aniDiasShownRes);
+    DeleteReference(env, aniErrorReasons);
     return aObject;
 }
 

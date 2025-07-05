@@ -264,6 +264,14 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
     }
     return true;
 }
+
+void DeleteReference(ani_env* env, ani_ref& ref)
+{
+    if (ref != nullptr) {
+        env->GlobalReference_Delete(ref);
+        ref = nullptr;
+    }
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
