@@ -54,7 +54,7 @@ bool AudioManagerAdapter::GetPersistentMicMuteState()
     MessageParcel reply;
     MessageOption option;
 
-    std::u16string AUDIO_MGR_DESCRIPTOR = u"IAudioPolicy";
+    std::u16string AUDIO_MGR_DESCRIPTOR = u"OHOS.AudioStandard.IAudioPolicy";
     if (!data.WriteInterfaceToken(AUDIO_MGR_DESCRIPTOR)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to write WriteInterfaceToken.");
         return false;
@@ -66,7 +66,12 @@ bool AudioManagerAdapter::GetPersistentMicMuteState()
         LOGE(PRI_DOMAIN, PRI_TAG, "SendRequest error: %{public}d", error);
         return false;
     }
-    return reply.ReadBool();
+    int32_t errorCode = reply.ReadInt32();
+    if (errorCode != NO_ERROR) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "GET_MICROPHONE_MUTE_PERSISTENT error: %{public}d", errorCode);
+        return false;
+    }
+    return reply.ReadInt32() == 1 ? true : false;
 #endif
 }
 
