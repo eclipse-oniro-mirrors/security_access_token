@@ -207,6 +207,37 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     return false;
 }
 
+bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState)
+{
+    if ((goalGrantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
+        permState.state = INVALID_OPER;
+        permState.errorReason = FIXED_BY_POLICY;
+        return true;
+    }
+    if ((goalGrantFlag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0) {
+        permState.state = SETTING_OPER;
+        permState.errorReason = REQ_SUCCESS;
+        return true;
+    }
+    if ((goalGrantFlag & PERMISSION_FIXED_FOR_SECURITY_POLICY) != 0) {
+        permState.state = SETTING_OPER;
+        permState.errorReason = REQ_SUCCESS;
+        return true;
+    }
+    if ((goalGrantFlag == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlag & PERMISSION_USER_SET) != 0) ||
+        ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0) || ((goalGrantFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
+        permState.state = DYNAMIC_OPER;
+        permState.errorReason = REQ_SUCCESS;
+        return true;
+    }
+    if ((goalGrantFlag & PERMISSION_USER_FIXED) != 0) {
+        permState.state = SETTING_OPER;
+        permState.errorReason = REQ_SUCCESS;
+        return true;
+    }
+    return false;
+}
+
 void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStatus>& permsList,
     PermissionListState& permState, int32_t apiVersion)
 {
@@ -230,24 +261,8 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStatu
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s: status: %{public}d, flag: %{public}d",
         permState.permissionName.c_str(), goalGrantStatus, goalGrantFlag);
-    if (goalGrantStatus == PERMISSION_DENIED) {
-        if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
-            permState.state = SETTING_OPER;
-            permState.errorReason = REQ_SUCCESS;
-            return;
-        }
-
-        if ((goalGrantFlag == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlag & PERMISSION_USER_SET) != 0) ||
-            ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0) || ((goalGrantFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
-            permState.state = DYNAMIC_OPER;
-            permState.errorReason = REQ_SUCCESS;
-            return;
-        }
-        if ((goalGrantFlag & PERMISSION_USER_FIXED) != 0) {
-            permState.state = SETTING_OPER;
-            permState.errorReason = REQ_SUCCESS;
-            return;
-        }
+    if ((goalGrantStatus == PERMISSION_DENIED) && HandlePermissionDeniedCase(goalGrantFlag, permState)) {
+        return;
     }
     permState.state = PASS_OPER;
     permState.errorReason = REQ_SUCCESS;
@@ -268,7 +283,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     uint32_t fullFlag;
     int32_t ret = HapTokenInfoInner::QueryPermissionFlag(tokenID, permissionName, fullFlag);
     if (ret == RET_SUCCESS) {
-        flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
+        flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     }
     return ret;
 }
@@ -321,7 +336,7 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
     if (filtered || (IsUserGrantPermission(permissionName) &&
-        ((flag != PERMISSION_GRANTED_BY_POLICY) && (flag != PERMISSION_SYSTEM_FIXED)))) {
+        ((flag != PERMISSION_PRE_AUTHORIZED_CANCELABLE) && (flag != PERMISSION_SYSTEM_FIXED)))) {
         paramValue_++;
         LOGD(ATM_DOMAIN, ATM_TAG,
             "paramValue_ change %{public}llu", static_cast<unsigned long long>(paramValue_));
@@ -365,6 +380,83 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
         "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "FLAG", flag,
         "PERMISSION_GRANT_TYPE", changeType);
     grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
+}
+
+int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
+    AccessTokenID tokenID, const std::string& permission, bool isGranted, uint32_t flag, bool needKill)
+{
+    bool isSecCompGrantedBefore = HapTokenInfoInner::IsPermissionGrantedWithSecComp(tokenID, permission);
+    bool statusChanged = false;
+    int32_t ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Update info perm status failed, ret is %{public}d", ret);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID",
+            tokenID, "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret, "INT_VAL2",
+            static_cast<int32_t>(flag), "NEED_KILL", needKill);
+        return ret;
+    }
+    if (statusChanged) {
+        NotifyWhenPermissionStateUpdated(tokenID, permission, isGranted, flag, infoPtr);
+        // To notify kill process when perm is revoke
+        if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(),
+                tokenID);
+            std::shared_ptr<LibraryLoader> abilityManagerLoader = GetAbilityManager();
+            AbilityManagerAccessLoaderInterface *abilityManager =
+                abilityManagerLoader->GetObject<AbilityManagerAccessLoaderInterface>();
+            if (abilityManager == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AbilityManager is nullptr!");
+            } else if ((ret = abilityManager->KillProcessForPermissionUpdate(tokenID)) != ERR_OK) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "kill process failed, ret=%{public}d.", ret);
+            }
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr<HapTokenInfoInner> &infoPtr,
+    AccessTokenID tokenID, const std::vector<std::string> &permissionList, bool isGranted, uint32_t flag, bool needKill)
+{
+    HapTokenInfo hapInfo;
+    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    ClearThreadErrorMsg();
+
+    uint32_t ret = RET_SUCCESS;
+    bool isHadSuccess = false;
+    for (const std::string &permissionName : permissionList) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START, "TOKENID",
+            tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
+            "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
+
+        ret = UpdateTokenPermissionState(infoPtr, tokenID, permissionName, isGranted, flag, needKill);
+        if (ret != RET_SUCCESS) {
+            break;
+        }
+
+        isHadSuccess = true;
+
+        uint32_t newFlag = flag;
+        if (GetPermissionFlag(tokenID, permissionName, flag) == RET_SUCCESS) {
+            flag = newFlag;
+        }
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+            "TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted,
+            "ERROR_CODE", ret);
+        ReportSysCommonEventError(static_cast<int32_t>(isGranted ?
+            IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
+            IAccessTokenManagerIpcCode::COMMAND_REVOKE_PERMISSION), ret);
+    }
+
+    if (isHadSuccess) {
+        ParamFlagUpdate();
+#ifdef TOKEN_SYNC_ENABLE
+        TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
+#endif
+    }
+    return ret;
 }
 
 int32_t PermissionManager::UpdateTokenPermissionState(
@@ -449,6 +541,76 @@ int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr
     return ERR_OK;
 }
 
+int32_t PermissionManager::UpdateMultiPermissionStatus(
+    AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag)
+{
+    bool isGranted = (status == PERMISSION_GRANTED);
+    bool needKill = false;
+    // To kill process when perm is revoke
+    if (!isGranted) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm is revoked, kill process(%{public}u).", tokenID);
+        needKill = true;
+    }
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "tokenInfo is null, tokenId=%{public}u.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    int32_t ret = UpdateMultiTokenPermissionStateCheck(infoPtr, tokenID, permissionList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    ret = UpdateMultiTokenPermissionState(infoPtr, tokenID, permissionList, isGranted, flag, needKill);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Update permission %{public}u failed, ret is %{public}d.", tokenID, ret);
+        return ret;
+    }
+
+#ifdef SUPPORT_SANDBOX_APP
+    // The action of sharing would be taken place only if the grant operation or revoke operation equals to success.
+    std::vector<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
+    for (const auto &id : tokenIdList) {
+        (void)UpdateMultiTokenPermissionState(infoPtr, id, permissionList, isGranted, flag, needKill);
+    }
+#endif
+
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::UpdateMultiTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner> &infoPtr,
+    AccessTokenID tokenID, const std::vector<std::string> &permissionList)
+{
+    if (infoPtr->IsRemote()) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remote token can not update.");
+        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
+    }
+
+#ifdef SUPPORT_SANDBOX_APP
+    int32_t hapDlpType = infoPtr->GetDlpType();
+    if (hapDlpType == DLP_COMMON) {
+        return RET_SUCCESS;
+    }
+    for (const std::string& permissionName : permissionList) {
+        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
+        if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
+            LOGC(ATM_DOMAIN, ATM_TAG,
+                "%{public}s cannot to be granted to %{public}u.", permissionName.c_str(), tokenID);
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", tokenID, "PERM",
+                permissionName, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType,
+                "INT_VAL2", permDlpMode);
+            return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
+        }
+    }
+#endif
+
+    return RET_SUCCESS;
+}
+
 int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
     bool isGranted, uint32_t flag, bool needKill)
 {
@@ -482,7 +644,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (!PermissionValidator::IsPermissionFlagValid(flag)) {
+    if (!PermissionValidator::IsPermissionFlagValid(flag) || PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
         LOGC(ATM_DOMAIN, ATM_TAG, "flag: %{public}d, Invalid params!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -524,6 +686,44 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     return ret;
 }
 
+int32_t PermissionManager::CheckMultiPermissionStatus(
+    AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag)
+{
+    if (!PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "flag: %{public}d, Invalid params!", flag);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    for (const std::string& permissionName : permissionList) {
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "tokenID: %{public}d, permissionName: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
+            permissionName.c_str(), status, flag);
+        if (!IsDefinedPermission(permissionName)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
+            return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        }
+        if (!IsUserGrantPermission(permissionName)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to set.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::CheckAndUpdateMultiPermissionStatus(
+    AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag)
+{
+    int32_t ret = RET_SUCCESS;
+    ret = CheckMultiPermissionStatus(tokenID, permissionList, status, flag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    ret = UpdateMultiPermissionStatus(tokenID, permissionList, status, flag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return RET_SUCCESS;
+}
+
 int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
@@ -558,6 +758,13 @@ void PermissionManager::ScopeToString(
 
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenidStr = %{public}s permStr =%{public}s",
         tokenidStr.c_str(), permStr.c_str());
+}
+
+int32_t PermissionManager::SetPermissionStatusWithPolicy(
+    AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, status: %{public}d, flag: %{public}u.", tokenID, status, flag);
+    return CheckAndUpdateMultiPermissionStatus(tokenID, permissionList, status, flag);
 }
 
 int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes)
@@ -1032,7 +1239,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
         }
         bool userCancelable = true;
         if (IsUserGrantPermPreAuthorized(initInfo.policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
-            state.grantFlag = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
+            state.grantFlag = userCancelable ? PERMISSION_PRE_AUTHORIZED_CANCELABLE : PERMISSION_SYSTEM_FIXED;
             state.grantStatus = PERMISSION_GRANTED;
         }
         initializedList.emplace_back(state);

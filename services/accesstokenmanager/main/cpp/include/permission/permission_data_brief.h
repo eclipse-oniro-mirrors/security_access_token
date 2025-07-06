@@ -98,6 +98,7 @@ private:
     void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void MergePermBriefData(std::vector<BriefPermData>& permBriefDataList, BriefPermData& data);
+    bool isRestrictedPermission(uint32_t oldFlag, uint32_t newFlag);
     int32_t UpdatePermStateList(AccessTokenID tokenId, uint32_t opCode, bool isGranted, uint32_t flag);
     int32_t UpdateSecCompGrantedPermList(AccessTokenID tokenId, const std::string& permissionName, bool isToGrant);
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, uint32_t permCode);

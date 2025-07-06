@@ -388,6 +388,22 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
     return result;
 }
 
+int32_t AccessTokenManagerClient::SetPermissionStatusWithPolicy(
+    AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = proxy->SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    return result;
+}
+
 int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
     int32_t userID = 0)
 {

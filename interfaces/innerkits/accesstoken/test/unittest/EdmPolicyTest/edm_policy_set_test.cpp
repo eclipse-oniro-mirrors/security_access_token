@@ -33,12 +33,19 @@ static const uint32_t DEFAULT_ACCOUNT_ID = 100;
 static const uint32_t MOCK_USER_ID_10001 = 10001;
 static const uint32_t MOCK_USER_ID_10002 = 10002;
 static const uint32_t MOCK_USER_ID_10003 = 10003;
+static const int32_t MAX_PERMISSION_LIST_SIZE = 1024;
+static const int32_t MAX_LENGTH = 256;
 const std::string MANAGE_HAP_TOKEN_ID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 const std::string INTERNET = "ohos.permission.INTERNET";
 static const std::string GET_NETWORK_STATS = "ohos.permission.GET_NETWORK_STATS";
 static const std::string LOCATION = "ohos.permission.LOCATION";
 static const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
-static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // system_grant
+static const std::string MICROPHONE = "ohos.permission.MICROPHONE"; // user_grant
+static const std::string CAMERA = "ohos.permission.CAMERA"; // user_grant
+static const std::string CUSTOM_SCREEN_CAPTURE = "ohos.permission.CUSTOM_SCREEN_CAPTURE"; // user_grant
+static const std::string READ_HEALTH_DATA = "ohos.permission.READ_HEALTH_DATA";
+static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY"; // system_grant
 PermissionStateFull g_infoManagerInternetState = {
     .permissionName = INTERNET,
     .isGeneral = true,
@@ -63,6 +70,30 @@ PermissionStateFull g_infoManagerManageNetState = {
     .grantFlags = {0}
 };
 
+PermissionStateFull g_infoManagerMicrophoneState = {
+    .permissionName = MICROPHONE,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {0}
+};
+
+PermissionStateFull g_infoManagerCameraState = {
+    .permissionName = CAMERA,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+
+PermissionStateFull g_infoManagerCustomScreenCaptureState = {
+    .permissionName = CUSTOM_SCREEN_CAPTURE,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {0}
+};
+
 // Permission set
 HapInfoParams g_testHapInfoParams = {
     .userID = 0,
@@ -79,6 +110,45 @@ HapPolicyParams g_testPolicyParams = {
         g_infoManagerInternetState,
         g_infoManagerNetWorkState,
         g_infoManagerManageNetState,
+        g_infoManagerMicrophoneState,
+        g_infoManagerCameraState,
+        g_infoManagerCustomScreenCaptureState,
+    }
+};
+
+PermissionStateFull g_infoManagerCustomScreenCaptureState02 = {
+    .permissionName = CUSTOM_SCREEN_CAPTURE,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {0}
+};
+
+HapPolicyParams g_testPolicyParams02 = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain2",
+    .preAuthorizationInfo = {
+        {
+            .permissionName = CUSTOM_SCREEN_CAPTURE,
+            .userCancelable = true,
+        },
+    },
+    .permStateList = {
+        g_infoManagerCustomScreenCaptureState02
+    }
+};
+
+HapPolicyParams g_testPolicyParams03 = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain2",
+    .preAuthorizationInfo = {
+        {
+            .permissionName = CUSTOM_SCREEN_CAPTURE,
+            .userCancelable = false,
+        },
+    },
+    .permStateList = {
+        g_infoManagerCustomScreenCaptureState02
     }
 };
 
@@ -452,9 +522,9 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
 
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(fullIdUser1.tokenIdExStruct.tokenID);
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(fullIdUser1.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(fullIdUser2.tokenIdExStruct.tokenID);
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(fullIdUser2.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
@@ -468,8 +538,8 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(fullIdUser1.tokenIdExStruct.tokenID);
-    ret = AccessTokenKit::ClearUserGrantedPermissionState(fullIdUser2.tokenIdExStruct.tokenID);
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(fullIdUser1.tokenIdExStruct.tokenID);
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(fullIdUser2.tokenIdExStruct.tokenID);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_DENIED);
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser2.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
@@ -566,4 +636,676 @@ HWTEST_F(EdmPolicySetTest, UserPolicyForUpdateHapTokenTest, TestSize.Level0)
     EXPECT_EQ(AccessTokenKit::VerifyAccessToken(fullIdUser1.tokenIdExStruct.tokenID, INTERNET), PERMISSION_GRANTED);
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy001
+ * @tc.desc: Normal parameter testing.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
+    std::vector<PermissionState> stateList = {PERMISSION_GRANTED, PERMISSION_DENIED};
+    for (auto status : stateList) {
+        GTEST_LOG_(INFO) << "SetPermissionStatusWithPolicy001 status: " << status;
+        EXPECT_EQ(RET_SUCCESS,
+            AccessTokenKit::SetPermissionStatusWithPolicy(tokenID, permList, status, PERMISSION_FIXED_BY_ADMIN_POLICY));
+        std::vector<PermissionListState> permsList;
+        for (auto perm : permList) {
+            GTEST_LOG_(INFO) << "SetPermissionStatusWithPolicy001 check perm: " << perm;
+            EXPECT_EQ(status, AccessTokenKit::VerifyAccessToken(tokenID, perm, false));
+            permsList.push_back({perm, FORBIDDEN_OPER});
+        }
+        SetSelfTokenID(tokenID);
+        PermissionGrantInfo info;
+        EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+        EXPECT_EQ(status == PERMISSION_GRANTED ? PASS_OPER : INVALID_OPER, permsList[0].state);
+        EXPECT_EQ(status == PERMISSION_GRANTED ? REQ_SUCCESS : FIXED_BY_POLICY, permsList[0].errorReason);
+        EXPECT_EQ(status == PERMISSION_GRANTED ? PASS_OPER : INVALID_OPER, permsList[1].state);
+        EXPECT_EQ(status == PERMISSION_GRANTED ? REQ_SUCCESS : FIXED_BY_POLICY, permsList[1].errorReason);
+        SetSelfTokenID(selfTokenId);
+    }
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy002
+ * @tc.desc: tokenID exception test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy002, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy002");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        INVALID_TOKENID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy003
+ * @tc.desc: PermissionList exception test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy003, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy003");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    uint32_t ret = RET_SUCCESS;
+
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, {""}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    std::string permName(MAX_LENGTH + 1, 'A');
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, {""}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    std::vector<std::string> permList = {};
+    ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    permList.resize(MAX_PERMISSION_LIST_SIZE + 1, MICROPHONE);
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    permList.clear();
+    permList.push_back("ohos.permission.TEST_123");
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy004
+ * @tc.desc: status exception test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy004, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy004");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, 1, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy005
+ * @tc.desc: flag exception test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy005, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy005");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
+
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::SetPermissionStatusWithPolicy(tokenID, permList, PERMISSION_DENIED,
+        1<<9));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::SetPermissionStatusWithPolicy(tokenID, permList, PERMISSION_GRANTED,
+        1<<6));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy006
+ * @tc.desc: hap unauthorized testing.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy006, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy006");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
+
+    std::vector<std::string> permList = {CAMERA};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy007
+ * @tc.desc: The caller has no permission to test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy007, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy007");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("foundation");
+
+    std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PERMISSION_DENIED, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy008
+ * @tc.desc: Permission priority test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy008, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy008");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    MockNativeToken mock("edm");
+
+    uint32_t flag = 0;
+    uint32_t ret = RET_SUCCESS;
+
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, flag);
+
+    // 1. set flag is PERMISSION_USER_FIXED.
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_USER_FIXED, flag);
+
+    // 2. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+
+    // 3. can't clear PERMISSION_FIXED_BY_ADMIN_POLICY.
+    EXPECT_EQ(RET_SUCCESS, TestCommon::ClearUserGrantedPermissionStateByTest(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 4. can't set flag is PERMISSION_USER_FIXED.
+    EXPECT_EQ(ERR_PERMISSION_RESTRICTED,
+        TestCommon::GrantPermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+
+    // 5. can set flag is PERMISSION_SYSTEM_FIXED.
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_SYSTEM_FIXED));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
+
+    // 6. can not set flag is PERMISSION_FIXED_BY_ADMIN_POLICY
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: EdmTestGrantPermission001
+ * @tc.desc: Grant permission priority test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestGrantPermission001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestGrantPermission001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. can't grant flag is PERMISSION_USER_FIXED
+    ret = TestCommon::GrantPermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED);
+    EXPECT_EQ(ERR_PERMISSION_RESTRICTED, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 4. can grant flag is PERMISSION_USER_FIXED
+    ret = TestCommon::GrantPermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_USER_FIXED, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: EdmTestRevokePermission001
+ * @tc.desc: Revoke permission priority test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestRevokePermission001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestRevokePermission001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. can't revoke flag is PERMISSION_USER_FIXED
+    ret = TestCommon::RevokePermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED);
+    EXPECT_EQ(ERR_PERMISSION_RESTRICTED, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 4. can revoke flag is PERMISSION_USER_FIXED
+    ret = TestCommon::RevokePermissionByTest(tokenID, CUSTOM_SCREEN_CAPTURE, PERMISSION_USER_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_USER_FIXED, flag);
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: EdmTestClearUserGrantedPermissionState001
+ * @tc.desc: Clear user granted permission state test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestClearUserGrantedPermissionState001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestClearUserGrantedPermissionState001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. can't clear flag is PERMISSION_FIXED_BY_ADMIN_POLICY
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 4. can clear flag is PERMISSION_ADMIN_POLICIES_CANCEL
+    ret = TestCommon::ClearUserGrantedPermissionStateByTest(tokenID);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, flag);
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: EdmTestGetSelfPermissionsState001
+ * @tc.desc: GetSelfPermissionsState test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestGetSelfPermissionsState001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestGetSelfPermissionsState001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_DENIED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. get permission state is INVALID_OPER.
+    std::vector<PermissionListState> permsList = {{CUSTOM_SCREEN_CAPTURE}};
+    PermissionGrantInfo info;
+    SetSelfTokenID(tokenID);
+    EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(INVALID_OPER, permsList[0].state);
+    SetSelfTokenID(selfTokenId);
+
+    // 3. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_DENIED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 4. get permission state is SETTING_OPER.
+    SetSelfTokenID(tokenID);
+    EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(SETTING_OPER, permsList[0].state);
+    SetSelfTokenID(selfTokenId);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+
+/**
+ * @tc.name: EdmTestUpdateHapToken001
+ * @tc.desc: GetSelfPermissionsState test with admin fixed status.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestUpdateHapToken001");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. can't UpdateHapToken flag is PERMISSION_PRE_AUTHORIZED_CANCELABLE.
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = 12;
+    info.isSystemApp = false;
+    {
+        MockNativeToken mock("foundation");
+        ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyParams02);
+    }
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. can UpdateHapToken flag is PERMISSION_SYSTEM_FIXED.
+    {
+        MockNativeToken mock("foundation");
+        ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyParams03);
+    }
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+}
+
+
+/**
+ * @tc.name: EdmTestUpdateHapToken002
+ * @tc.desc: UpdateHapToken test with admin cancel status.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken002, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestUpdateHapToken002");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. can UpdateHapToken flag is PERMISSION_PRE_AUTHORIZED_CANCELABLE.
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = 12;
+    info.isSystemApp = false;
+    {
+        MockNativeToken mock("foundation");
+        ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyParams02);
+    }
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, flag); // PERMISSION_PRE_AUTHORIZED_CANCELABLE not return
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: EdmTestUpdateHapToken003
+ * @tc.desc: UpdateHapToken test with system fixed status.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken003, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "EdmTestUpdateHapToken003");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams, g_testPolicyParams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    MockNativeToken mock("edm");
+    uint32_t flag = 0;
+
+    // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
+    std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
+    uint32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 2. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    // 3. can UpdateHapToken flag is PERMISSION_SYSTEM_FIXED.
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = 12;
+    info.isSystemApp = false;
+    {
+        MockNativeToken mock("foundation");
+        ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyParams03);
+    }
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
