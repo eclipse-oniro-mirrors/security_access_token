@@ -40,6 +40,11 @@ bool PermissionValidator::IsPermissionFlagValid(uint32_t flag)
     return DataValidator::IsPermissionFlagValid(flag);
 }
 
+bool PermissionValidator::IsPermissionFlagValidForAdmin(uint32_t flag)
+{
+    return DataValidator::IsPermissionFlagValidForAdmin(flag);
+}
+
 bool PermissionValidator::IsPermissionNameValid(const std::string& permissionName)
 {
     return DataValidator::IsPermissionNameValid(permissionName);

@@ -76,6 +76,8 @@ public:
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
+    int32_t SetPermissionStatusWithPolicy(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
     int DeleteToken(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;

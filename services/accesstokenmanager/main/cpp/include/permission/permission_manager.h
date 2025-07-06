@@ -71,12 +71,20 @@ public:
         bool isGranted, uint32_t flag);
     int32_t CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag);
+    int32_t CheckMultiPermissionStatus(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
+    int32_t UpdateMultiPermissionStatus(
+        AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag);
+    int32_t CheckAndUpdateMultiPermissionStatus(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     int32_t UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, bool needKill);
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int32_t GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
+    int32_t SetPermissionStatusWithPolicy(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     void GetSelfPermissionState(const std::vector<PermissionStatus>& permsList,
         PermissionListState& permState, int32_t apiVersion);
     int32_t AddPermStateChangeCallback(
@@ -109,6 +117,12 @@ private:
     void ScopeToString(
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
+    int32_t UpdateTokenPermissionState(const std::shared_ptr<HapTokenInfoInner>& infoPtr, AccessTokenID tokenID,
+        const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
+    int32_t UpdateMultiTokenPermissionState(const std::shared_ptr<HapTokenInfoInner> &infoPtr, AccessTokenID tokenID,
+        const std::vector<std::string> &permissionList, bool isGranted, uint32_t flag, bool needKill);
+    int32_t UpdateMultiTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner> &infoPtr,
+        AccessTokenID tokenID, const std::vector<std::string> &permissionList);
     int32_t UpdateTokenPermissionState(
         AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
     int32_t UpdateTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
@@ -123,6 +137,7 @@ private:
         const std::string& appDistributionType, HapInfoCheckResult& result);
     void GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     std::shared_ptr<LibraryLoader> GetAbilityManager();
+    bool HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState);
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;

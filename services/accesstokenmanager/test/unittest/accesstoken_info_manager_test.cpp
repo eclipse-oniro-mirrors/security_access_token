@@ -1821,7 +1821,20 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
     flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
         "ohos.permission.CAMERA", isGranted, flag, changed));
-    
+
+    flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
+    flag = PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
+    flag = PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY;
+    ASSERT_EQ(ERR_PERMISSION_RESTRICTED, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
+    flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
+        "ohos.permission.CAMERA", isGranted, flag, changed));
+
     // flag == PERMISSION_COMPONENT_SET
     flag = PermissionFlag::PERMISSION_COMPONENT_SET;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
@@ -1837,6 +1850,43 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
     flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
         "ohos.permission.CAMERA", isGranted, flag, changed));
+}
+
+/**
+ * @tc.name: UpdatePermStatus001
+ * @tc.desc: PermissionDataBrief::UpdatePermStatus function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdatePermStatus001, TestSize.Level0)
+{
+    BriefPermData permOld;
+    BriefPermData permNew;
+
+    permOld.flag = PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY;
+    permOld.status = PERMISSION_DENIED;
+
+    permNew.flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
+    permNew.status = PERMISSION_GRANTED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    ASSERT_NE(permOld.status, permNew.status);
+
+    permOld.flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    ASSERT_NE(permOld.status, permNew.status);
+
+    permOld.flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+    permNew.flag = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    ASSERT_NE(permOld.status, permNew.status);
+
+    permOld.flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    ASSERT_NE(permOld.status, permNew.status);
+
+    permOld.flag = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    ASSERT_NE(permOld.status, permNew.status);
 }
 
 #ifdef TOKEN_SYNC_ENABLE

@@ -182,7 +182,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
     ASSERT_NE(tokenID, INVALID_TOKENID);
 
     // system grant
-    int32_t res = TestCommon::GrantPermissionByTest(tokenID, TEST_PERMISSION, PERMISSION_GRANTED_BY_POLICY);
+    int32_t res = TestCommon::GrantPermissionByTest(tokenID, TEST_PERMISSION, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     ASSERT_EQ(res, RET_SUCCESS);
 
     // security component grant

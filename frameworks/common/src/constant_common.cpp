@@ -63,7 +63,7 @@ bool ConstantCommon::IsPermOperatedByUser(int32_t flag)
 bool ConstantCommon::IsPermOperatedBySystem(int32_t flag)
 {
     uint32_t uFlag = static_cast<uint32_t>(flag);
-    return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_GRANTED_BY_POLICY);
+    return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_PRE_AUTHORIZED_CANCELABLE);
 }
 
 bool ConstantCommon::IsPermGrantedBySecComp(int32_t flag)

@@ -49,6 +49,8 @@ public:
 
     static bool IsDescValid(const std::string& desc);
     static bool IsPermissionFlagValid(uint32_t flag);
+    static bool IsPermissionFlagValidForAdmin(uint32_t flag);
+    static bool IsPermissionStatusValid(int32_t status);
     static bool IsDcapValid(const std::string& dcap);
     static bool IsTokenIDValid(AccessTokenID id);
     static bool IsDlpTypeValid(int dlpType);
@@ -59,6 +61,7 @@ public:
     static bool IsHapCaller(AccessTokenID id);
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
+    static bool IsPermissionListSizeValid(const std::vector<std::string>& permissionList);
 
 private:
     const static int MAX_LENGTH = 256;
@@ -66,6 +69,7 @@ private:
     const static int MAX_DCAP_LENGTH = 1024;
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
     const static int32_t MAX_VALUE_LENGTH = 1024;
+    const static int32_t MAX_PERMISSION_LIST_SIZE = 1024;
 };
 } // namespace AccessToken
 } // namespace Security
