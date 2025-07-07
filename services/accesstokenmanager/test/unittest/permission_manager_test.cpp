@@ -130,25 +130,49 @@ static PermissionStatus g_permState2 = {
 static PermissionStatus g_permState6 = {
     .permissionName = "ohos.permission.CAMERA",
     .grantStatus = PermissionState::PERMISSION_DENIED,
-    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED
+    .grantFlag = PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY
 };
 
 static PermissionStatus g_permState7 = {
     .permissionName = "ohos.permission.CAMERA",
     .grantStatus = PermissionState::PERMISSION_GRANTED,
-    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED
+    .grantFlag = PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY
 };
 
 static PermissionStatus g_permState8 = {
     .permissionName = "ohos.permission.CAMERA",
     .grantStatus = PermissionState::PERMISSION_DENIED,
-    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET
+    .grantFlag = PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY | PermissionFlag::PERMISSION_USER_SET
 };
 
 static PermissionStatus g_permState9 = {
     .permissionName = "ohos.permission.CAMERA",
     .grantStatus = PermissionState::PERMISSION_GRANTED,
-    .grantFlag = PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET
+    .grantFlag = PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY | PermissionFlag::PERMISSION_USER_SET
+};
+
+static PermissionStatus g_permState10 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY
+};
+
+static PermissionStatus g_permState11 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL
+};
+
+static PermissionStatus g_permState12 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+};
+
+static PermissionStatus g_permState13 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
 };
 
 static PermissionDef g_infoManagerPermDef1 = {
@@ -523,7 +547,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
     permState1.permissionName = "ohos.permission.CAMERA";
     int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
 
-    // flag is PERMISSION_POLICY_FIXED and state is denied, return SETTING_OPER
+    // flag is PERMISSION_FIXED_FOR_SECURITY_POLICY and state is denied, return SETTING_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
     ASSERT_EQ(PermissionOper::SETTING_OPER, permState1.state);
 
@@ -532,7 +556,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
     PermissionListState permState2;
     permState2.permissionName = "ohos.permission.CAMERA";
 
-    // flag is PERMISSION_POLICY_FIXED and state is granted, return PASS_OPER
+    // flag is PERMISSION_FIXED_FOR_SECURITY_POLICY and state is granted, return PASS_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
     ASSERT_EQ(PermissionOper::PASS_OPER, permState2.state);
 
@@ -541,7 +565,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
     PermissionListState permState3;
     permState3.permissionName = "ohos.permission.CAMERA";
 
-    // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is denied, return SETTING_OPER
+    // flag is PERMISSION_FIXED_FOR_SECURITY_POLICY | PERMISSION_USER_SET and state is denied, return SETTING_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList3, permState3, apiVersion);
     ASSERT_EQ(PermissionOper::SETTING_OPER, permState3.state);
 
@@ -550,7 +574,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
     PermissionListState permState4;
     permState4.permissionName = "ohos.permission.CAMERA";
 
-    // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is granted, return PASS_OPER
+    // flag is PERMISSION_FIXED_FOR_SECURITY_POLICY | PERMISSION_USER_SET and state is granted, return PASS_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList4, permState4, apiVersion);
     ASSERT_EQ(PermissionOper::PASS_OPER, permState4.state);
 }
@@ -576,6 +600,48 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level0)
     ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
 
     AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
+}
+
+/**
+ * @tc.name: GetSelfPermissionState004
+ * @tc.desc: PermissionManager::GetSelfPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetSelfPermissionState004, TestSize.Level0)
+{
+    std::vector<PermissionStatus> permsList1;
+    permsList1.emplace_back(g_permState10);
+    PermissionListState permState1;
+    permState1.permissionName = "ohos.permission.CAMERA";
+    int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
+
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
+    ASSERT_EQ(PermissionOper::INVALID_OPER, permState1.state);
+
+    std::vector<PermissionStatus> permsList2;
+    permsList2.emplace_back(g_permState11);
+    PermissionListState permState2;
+    permState2.permissionName = "ohos.permission.CAMERA";
+
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState2.state);
+
+    std::vector<PermissionStatus> permsList3;
+    permsList3.emplace_back(g_permState12);
+    PermissionListState permState3;
+    permState3.permissionName = "ohos.permission.CAMERA";
+
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList3, permState3, apiVersion);
+    ASSERT_EQ(PermissionOper::DYNAMIC_OPER, permState3.state);
+
+    std::vector<PermissionStatus> permsList4;
+    permsList4.emplace_back(g_permState13);
+    PermissionListState permState4;
+    permState4.permissionName = "ohos.permission.CAMERA";
+
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList4, permState4, apiVersion);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState4.state);
 }
 
 /**
@@ -1711,6 +1777,134 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level0)
 }
 
 /**
+ * @tc.name: SetPermissionStatusWithPolicy001
+ * @tc.desc: SetPermissionStatusWithPolicy test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, SetPermissionStatusWithPolicy001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    TempPermissionObserver::GetInstance().RegisterCallback();
+
+    std::vector<std::string> permList = {"ohos.permission.APPROXIMATELY_LOCATION"};
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+
+    EXPECT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_ALLOW_THIS_TIME));
+
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, {"ohos.permission.test123"}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    
+    EXPECT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, {"ohos.permission.MANAGE_INPUT_INFRARED_EMITTER"},
+        PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+}
+
+/**
+ * @tc.name: newUpdateTokenPermissionState003
+ * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, newUpdateTokenPermissionState003, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.DUMP";
+    uint32_t flag = 0;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    PermissionStatus permStat = {
+        .permissionName = permissionName,
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain",
+        .permStateList = {permStat}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+
+    flag = PERMISSION_ALLOW_THIS_TIME;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        infoPtr, tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_COMPONENT_SET;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        infoPtr, tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_USER_FIXED;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        infoPtr, tokenId, permissionName, false, flag, true));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdateMultiTokenPermissionState001
+ * @tc.desc: PermissionManager::UpdateMultiTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdateMultiTokenPermissionState001, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.DUMP";
+    uint32_t flag = 0;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test",
+        .dlpType = DLP_FULL_CONTROL
+    };
+    PermissionStatus permStat = {
+        .permissionName = permissionName,
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain",
+        .permStateList = {permStat}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    std::vector<std::string> permList;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
+        tokenId, permList, PERMISSION_DENIED, flag));
+
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
+        0, permList, PERMISSION_DENIED, flag));
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    infoPtr->SetRemote(true);
+    ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
+        tokenId, permList, PERMISSION_DENIED, flag));
+    infoPtr->SetRemote(false);
+}
+
+ /**
  * @tc.name: PermissionCallbackTest001
  * @tc.desc: Test nullptr input for callback
  * @tc.type: FUNC

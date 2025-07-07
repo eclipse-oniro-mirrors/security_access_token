@@ -199,7 +199,7 @@ typedef enum TypePermissionFlag {
      * a user_grant permission has been set by system for pre-authorization,
      * and it is cancellable. it always works with other flags.
      */
-    PERMISSION_GRANTED_BY_POLICY = 1 << 3,
+    PERMISSION_PRE_AUTHORIZED_CANCELABLE = 1 << 3,
     /**
      * permission has been set by security component.
      */
@@ -207,11 +207,21 @@ typedef enum TypePermissionFlag {
     /*
      * permission is fixed by policy and the permission cannot be granted or revoked by user
      */
-    PERMISSION_POLICY_FIXED = 1 << 5,
+    PERMISSION_FIXED_FOR_SECURITY_POLICY = 1 << 5,
     /*
      * permission is only allowed during the current lifecycle foreground period
      */
     PERMISSION_ALLOW_THIS_TIME = 1 << 6,
+    /**
+     * permission is fixed by admin policy, it cannot be granted or revoked by user,
+     * and it can be cancelled by admin.
+     */
+    PERMISSION_FIXED_BY_ADMIN_POLICY = 1 << 7,
+    /**
+     * permission which is fixed by admin policy, cancel fixed by admin policy.
+     * it can be granted or revoked by user.
+     */
+    PERMISSION_ADMIN_POLICIES_CANCEL = 1 << 8,
 } PermissionFlag;
 
 /**
@@ -249,6 +259,8 @@ typedef enum TypePermissionErrorReason {
     PRIVACY_STATEMENT_NOT_AGREED = 4,
     /** The permission cannot be requested in a pop-up window */
     UNABLE_POP_UP = 5,
+    /** The permission is fixed by policy */
+    FIXED_BY_POLICY = 6,
     /** The service is abnormal */
     SERVICE_ABNORMAL = 12,
 } PermissionErrorReason;

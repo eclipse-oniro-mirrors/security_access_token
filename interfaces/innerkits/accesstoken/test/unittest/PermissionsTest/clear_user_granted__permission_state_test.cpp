@@ -138,14 +138,14 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateFun
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PERMISSION_GRANTED_BY_POLICY | PERMISSION_DEFAULT_FLAG}
+        .grantFlags = {PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_DEFAULT_FLAG}
     };
     OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState2 = {
         .permissionName = "ohos.permission.SEND_MESSAGES",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PERMISSION_GRANTED_BY_POLICY | PERMISSION_USER_FIXED}
+        .grantFlags = {PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_USER_FIXED}
     };
     OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState3 = {
         .permissionName = "ohos.permission.RECEIVE_SMS",
