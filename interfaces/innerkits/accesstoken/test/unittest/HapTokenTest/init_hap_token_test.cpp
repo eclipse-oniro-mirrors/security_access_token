@@ -668,7 +668,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest004, TestSize.Level0)
     ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
     ASSERT_EQ("ohos.permission.ACCESS_NEARLINK", permStatList[0].permissionName);
     EXPECT_EQ(permStatList[0].grantStatus[0], PERMISSION_GRANTED);
-    EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     ASSERT_EQ("ohos.permission.READ_WRITE_DESKTOP_DIRECTORY", permStatList[1].permissionName);
     EXPECT_EQ(permStatList[1].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(permStatList[1].grantFlags[0], PERMISSION_SYSTEM_FIXED);

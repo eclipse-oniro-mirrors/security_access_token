@@ -31,6 +31,7 @@ public:
     static bool IsUserIdValid(const int32_t userID);
     static bool IsToggleStatusValid(const uint32_t status);
     static bool IsPermissionFlagValid(uint32_t flag);
+    static bool IsPermissionFlagValidForAdmin(uint32_t flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
     static bool IsPermissionStateValid(const PermissionStatus& permState);
     static void FilterInvalidPermissionDef(

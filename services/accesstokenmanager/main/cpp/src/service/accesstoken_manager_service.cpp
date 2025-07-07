@@ -81,6 +81,7 @@ const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITI
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
+const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 
@@ -404,11 +405,11 @@ int AccessTokenManagerService::GetPermissionFlag(
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
-
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
-        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        VerifyAccessToken(callingTokenID, MANAGE_EDM_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -543,6 +544,30 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
+    AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "tokenID: %{public}d, permList size:%{public}zu, status: %{public}d, flag: %{public}u.",
+         tokenID, permissionList.size(), status, flag);
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsPrivilegedCalling() &&
+        VerifyAccessToken(callingTokenID, MANAGE_EDM_POLICY) == PERMISSION_DENIED) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
+            callingTokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    if (!DataValidator::IsPermissionListSizeValid(permissionList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionList size is invalid: %{public}zu.", permissionList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return PermissionManager::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
 }
 
 int32_t AccessTokenManagerService::RegisterPermStateChangeCallback(

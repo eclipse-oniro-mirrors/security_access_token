@@ -261,6 +261,20 @@ void PermissionDataBrief::AddPermToBriefPermission(
 
 void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew)
 {
+    // If old permission is fixed by admin policy or admin cancel, and new permisson is fixed by system,
+    // use new initalized state.
+    if (((permOld.flag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0 ||
+        (permOld.flag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0) &&
+        (permNew.flag == PERMISSION_SYSTEM_FIXED)) {
+        return;
+    }
+    // If old permission is admin cancel, and new permisson is pre_authorization cancelable,
+    // use new initalized state.
+    if ((permOld.flag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0 &&
+        permNew.flag == PERMISSION_PRE_AUTHORIZED_CANCELABLE) {
+        return;
+    }
+
     // if user_grant permission is not operated by user, it keeps the new initalized state.
     // the new state can be pre_authorization.
     if ((permOld.flag == PERMISSION_DEFAULT_FLAG) && (permOld.status == PERMISSION_DENIED)) {
@@ -271,7 +285,7 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
     if ((permOld.flag == PERMISSION_SYSTEM_FIXED) ||
         // if old user_grant permission is granted by pre_authorization unfixed
         // and the user has not operated this permission, it keeps the new initalized state.
-        (permOld.flag == PERMISSION_GRANTED_BY_POLICY)) {
+        (permOld.flag == PERMISSION_PRE_AUTHORIZED_CANCELABLE)) {
         return;
     }
 
@@ -403,8 +417,30 @@ int32_t PermissionDataBrief::StorePermissionBriefData(AccessTokenID tokenId,
 
 static uint32_t UpdateWithNewFlag(uint32_t oldFlag, uint32_t currFlag)
 {
-    uint32_t newFlag = currFlag | (oldFlag & PERMISSION_GRANTED_BY_POLICY);
+    uint32_t newFlag = currFlag | (oldFlag & PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     return newFlag;
+}
+
+/**
+ * @brief Check whether the permission is restricted by admin policy and cannot be modified.
+ * Returns true if:
+ *      - the oldFlag was set with PERMISSION_FIXED_BY_ADMIN_POLICY, and
+ *      - the newFlag does NOT contain any of the following flags:
+ *          PERMISSION_FIXED_BY_ADMIN_POLICY, PERMISSION_SYSTEM_FIXED, or PERMISSION_ADMIN_POLICIES_CANCEL.
+ * This indicates that the permission is controlled by admin policy and cannot be modified.
+ *
+ * @param oldFlag The original permission flag before modification.
+ * @param newFlag The new permission flag to be applied.
+ * @return Returns true if the permission is restricted and cannot be modified;
+ *         otherwise returns false.
+ */
+bool PermissionDataBrief::isRestrictedPermission(uint32_t oldFlag, uint32_t newFlag)
+{
+    bool isFixedByAdmin = ((oldFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) == PERMISSION_FIXED_BY_ADMIN_POLICY);
+    bool newFlagDoesNotHaveFixedAdmin = (newFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0;
+    bool newFlagHasNoSystemFixed = (newFlag & PERMISSION_SYSTEM_FIXED) == 0;
+    bool newFlagHasNoAdminCancel = (newFlag & PERMISSION_ADMIN_POLICIES_CANCEL) == 0;
+    return isFixedByAdmin && newFlagDoesNotHaveFixedAdmin && newFlagHasNoSystemFixed && newFlagHasNoAdminCancel;
 }
 
 int32_t PermissionDataBrief::UpdatePermStateList(
@@ -424,13 +460,26 @@ int32_t PermissionDataBrief::UpdatePermStateList(
         LOGC(ATM_DOMAIN, ATM_TAG, "Permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    
     if ((static_cast<uint32_t>(iter->flag) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Permission fixed by system!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    iter->status = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    if (isRestrictedPermission(iter->flag, flag)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Oldflag: %{public}d, invalid params!", iter->flag);
+        return AccessTokenError::ERR_PERMISSION_RESTRICTED;
+    }
+    if ((flag & PERMISSION_ADMIN_POLICIES_CANCEL) == PERMISSION_ADMIN_POLICIES_CANCEL &&
+        (iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Permission is not fixed by admin policy, cannot cancel.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if ((flag & PERMISSION_ADMIN_POLICIES_CANCEL) == 0) {
+        iter->status = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    }
     iter->flag = UpdateWithNewFlag(iter->flag, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "Update perm state list, tokenId: %{public}d, permCode: %{public}d, status: %{public}d, flag: %{public}d",
+        tokenId, opCode, iter->status, iter->flag);
     return RET_SUCCESS;
 }
 
@@ -503,9 +552,12 @@ int32_t PermissionDataBrief::ResetUserGrantPermissionStatus(AccessTokenID tokenI
         }
         /* A user_grant permission has been set by system for cancellable pre-authorization. */
         /* it should keep granted when the app reset. */
-        if ((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) {
+        if ((oldFlag & PERMISSION_PRE_AUTHORIZED_CANCELABLE) != 0) {
             perm.status = PERMISSION_GRANTED;
-            perm.flag = PERMISSION_GRANTED_BY_POLICY;
+            perm.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+            continue;
+        }
+        if ((oldFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
             continue;
         }
         perm.status = PERMISSION_DENIED;

@@ -140,14 +140,27 @@ bool DataValidator::IsDcapValid(const std::string& dcap)
 bool DataValidator::IsPermissionFlagValid(uint32_t flag)
 {
     uint32_t unmaskedFlag =
-        flag & (~PermissionFlag::PERMISSION_GRANTED_BY_POLICY);
+        flag & (~PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     return unmaskedFlag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
         unmaskedFlag == PermissionFlag::PERMISSION_USER_SET ||
         unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_COMPONENT_SET ||
-        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED ||
-        unmaskedFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME;
+        unmaskedFlag == PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY ||
+        unmaskedFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME ||
+        unmaskedFlag == PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY ||
+        unmaskedFlag == PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+}
+
+bool DataValidator::IsPermissionFlagValidForAdmin(uint32_t flag)
+{
+    return flag == PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY ||
+           flag == PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+}
+
+bool DataValidator::IsPermissionStatusValid(int32_t status)
+{
+    return status == PERMISSION_GRANTED || status == PERMISSION_DENIED;
 }
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)
@@ -209,6 +222,15 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     ATokenTypeEnum type = static_cast<ATokenTypeEnum>(idInner->type);
     if (type != TOKEN_HAP) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not hap(%{public}d).", id);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsPermissionListSizeValid(const std::vector<std::string>& permissionList)
+{
+    if (permissionList.size() <= 0 || permissionList.size() > MAX_PERMISSION_LIST_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission list size is invalid(%{public}zu).", permissionList.size());
         return false;
     }
     return true;

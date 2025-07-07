@@ -71,6 +71,7 @@ public:
         int32_t userID, const std::string& bundleName, int32_t instIndex);
     static int32_t GrantPermissionByTest(AccessTokenID tokenID, const std::string& permission, uint32_t flag);
     static int32_t RevokePermissionByTest(AccessTokenID tokenID, const std::string& permission, uint32_t flag);
+    static int32_t ClearUserGrantedPermissionStateByTest(AccessTokenID tokenID);
     static int32_t GetReqPermissionsByTest(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& permStatList, bool isSystemGrant);
     static int32_t GetPermissionFlagByTest(AccessTokenID tokenID, const std::string& permission, uint32_t& flag);

@@ -481,7 +481,7 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsPermissionFlagValid(flag)) {
+    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Flag is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -500,7 +500,7 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permissionName");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsPermissionFlagValid(flag)) {
+    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -861,6 +861,40 @@ bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
 bool AccessTokenKit::IsToastShownNeeded(int32_t pid)
 {
     return AccessTokenManagerClient::GetInstance().IsToastShownNeeded(pid);
+}
+
+int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
+    uint32_t tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permList.size=%{public}zu, status=%{public}d, flag=%{public}u.",
+        tokenID, permissionList.size(), status, flag);
+    if (tokenID == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "tokenID: %{public}d, TokenID is invalid.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (permissionList.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionList is empty.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    for (const auto& perm : permissionList) {
+        if (!DataValidator::IsPermissionNameValid(perm)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid: %{public}s.", perm.c_str());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+    }
+    if (!DataValidator::IsPermissionStatusValid(status)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Status: %{public}d, status is invalid.", status);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsPermissionFlagValidForAdmin(flag)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Flag: %{public}u, flag is invalid.", flag);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsPermissionListSizeValid(permissionList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionList size is invalid: %{public}zu.", permissionList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
 }
 } // namespace AccessToken
 } // namespace Security

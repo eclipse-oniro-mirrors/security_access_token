@@ -1219,7 +1219,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest008, TestSize.Level0)
     AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
     EXPECT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
-    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_DEFAULT_FLAG);
 
@@ -1276,7 +1276,7 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest009, TestSize.Level0)
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
-    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_PRE_AUTHORIZED_CANCELABLE);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
