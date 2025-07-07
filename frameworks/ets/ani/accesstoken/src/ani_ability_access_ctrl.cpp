@@ -841,6 +841,8 @@ void InitAbilityCtrlFunction(ani_env *env)
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
         ani_native_function { "requestPermissionOnSettingExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
+        ani_native_function {"requestGlobalSwitchExecute",
+            nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
         ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
             reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
         ani_native_function { "revokeUserGrantedPermissionExecute",
