@@ -38,9 +38,6 @@ group("accesstoken_build_module_test") {
         "services/privacymanager/test:unittest",
       ]
     }
-    if (window_manager_enable == true) {
-      deps += [ "services/common/window_manager/test:unittest" ]
-    }
   }
   if (token_sync_enable == true) {
     deps += [

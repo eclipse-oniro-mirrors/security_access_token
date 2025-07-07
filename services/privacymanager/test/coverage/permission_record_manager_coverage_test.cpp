@@ -248,7 +248,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
     MockHapToken mock("FindRecordsToUpdateAndExecutedTest001", reqPerm, false);
 
-    AccessTokenID tokenId = GetSelfTokenID();;
+    AccessTokenID tokenId = GetSelfTokenID();
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
@@ -256,10 +256,6 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, false,
         RANDOM_TOKENID);
     PermissionRecordManager::GetInstance().AddRecordToStartList(MakeInfo(tokenId, PID, permission), status, CALLER_PID);
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-#endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, status);
 
@@ -282,10 +278,6 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.MICROPHONE";
     PermissionRecordManager::GetInstance().AddRecordToStartList(MakeInfo(tokenId, PID, permission), status, CALLER_PID);
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-#endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, status);
 
@@ -308,10 +300,6 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
     std::string permission = "ohos.permission.CAMERA";
     PermissionRecordManager::GetInstance().AddRecordToStartList(MakeInfo(tokenId, PID, permission), status, CALLER_PID);
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-#endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(
@@ -333,10 +321,6 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
     std::string permission = "ohos.permission.CAMERA";
     PermissionRecordManager::GetInstance().AddRecordToStartList(MakeInfo(tokenId, PID, permission), status, CALLER_PID);
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-#endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(
@@ -1138,7 +1122,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
     reqPerm.emplace_back("ohos.permission.MANAGE_CAMERA_CONFIG");
     MockHapToken mock("RemoveRecordFromStartListTest001", reqPerm, false);
 
-    AccessTokenID tokenId = GetSelfTokenID();;
+    AccessTokenID tokenId = GetSelfTokenID();
 
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
     PermissionRecordManager::GetInstance().AddRecordToStartList(

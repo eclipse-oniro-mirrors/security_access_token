@@ -106,23 +106,6 @@ if (common_event_service_enable) {
   privacy_sources += [ "${access_token_path}/services/privacymanager/src/common/privacy_common_event_subscriber.cpp" ]
 }
 
-if (window_manager_enable && access_token_camera_float_window_enable) {
-  privacy_cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
-  privacy_include_dirs +=
-      [ "${access_token_path}/services/common/window_manager/include" ]
-  privacy_sources += [
-    "${access_token_path}/services/common/window_manager/src/privacy_mock_session_manager_proxy.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_scene_session_manager_lite_proxy.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_scene_session_manager_proxy.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_session_manager_proxy.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_window_manager_agent.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_window_manager_client.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_window_manager_death_recipient.cpp",
-    "${access_token_path}/services/common/window_manager/src/privacy_window_manager_proxy.cpp",
-  ]
-  privacy_external_deps += [ "window_manager:libwsutils" ]
-}
-
 if (theme_screenlock_mgr_enable) {
   privacy_cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
   privacy_external_deps += [ "screenlock_mgr:screenlock_client" ]

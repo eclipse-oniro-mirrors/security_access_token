@@ -217,18 +217,6 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level0
         tokenId, LOCATION_PERMISSION_NAME, -1));
     ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
         tokenId, CAMERA_PERMISSION_NAME, -1));
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    // not pip
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
-        tokenId, CAMERA_PERMISSION_NAME, -1));
-
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
-    // pip
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
-    ASSERT_EQ(false, PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
-        tokenId, CAMERA_PERMISSION_NAME, -1));
-#endif
 }
 
 /*
