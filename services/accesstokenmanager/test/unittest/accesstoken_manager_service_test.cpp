@@ -881,7 +881,7 @@ HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy001, TestSi
         0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
-    permList.resize(1024 + 1, 0);
+    permList.resize(1024 + 1);
     ret = atManagerService_->SetPermissionStatusWithPolicy(
         0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
