@@ -80,8 +80,7 @@ export default namespace privacyManager {
                 successCount, failCount, options);
         });
         p.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
+            callback(null, undefined);
         },(err: Error): void=> {
             callback(err as BusinessError, undefined);
         });
@@ -117,8 +116,7 @@ export default namespace privacyManager {
         let p = taskpool.execute((): void => {
             return stopUsingPermissionExecute(tokenID, permissionName, -1) });
         p.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
+            callback(null, undefined);
         },(err: Error): void=> {
             callback(err as BusinessError, undefined);
         });
@@ -176,8 +174,7 @@ export default namespace privacyManager {
             return startUsingPermissionExecute(tokenID, permissionName,
                 -1, PermissionUsedType.NORMAL_TYPE) });
         p.then(() => {
-            let err = new BusinessError<void>();
-            callback(err, undefined);
+            callback(null, undefined);
         },(err: Error): void => {
             callback(err as BusinessError, undefined);
         })
@@ -226,11 +223,9 @@ export default namespace privacyManager {
             return getPermissionUsedRecordExecute(request);
         });
         p1.then((ret: NullishType): void => {
-            let err = new BusinessError<void>();
-            callback(err, ret as PermissionUsedResponse);
+            callback(null, ret as PermissionUsedResponse);
         }).catch((err: Error): void => {
-            let response: PermissionUsedResponse = {};
-            callback(err as BusinessError, response);
+            callback(err as BusinessError, undefined);
         })
     }
 

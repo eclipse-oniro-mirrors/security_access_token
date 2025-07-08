@@ -314,8 +314,7 @@ export default namespace abilityAccessCtrl {
             let p1 = taskpool.execute((): void => {
                 new AtManagerInner().grantUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);});
             p1.then(() => {
-                let err = new BusinessError<void>();
-                callback(err, undefined);
+                callback(null, undefined);
             }, (err: Error): void => {
                 callback(err as BusinessError, undefined);
             });
@@ -355,8 +354,7 @@ export default namespace abilityAccessCtrl {
                 new AtManagerInner().revokeUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
             });
             job.then(() => {
-                let err = new BusinessError<void>();
-                callback(err, undefined);
+                callback(null, undefined);
             }, (err: Error): void=> {
                 callback(err as BusinessError, undefined);
             });
