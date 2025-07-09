@@ -398,7 +398,11 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, atManagerService_);
  
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->UpdateUndefinedInfo(validValueList));
+    std::vector<GenericValues> stateValues;
+    std::vector<GenericValues> extendValues;
+    atManagerService_->UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
+    ASSERT_EQ(true, stateValues.empty());
+    ASSERT_EQ(true, extendValues.empty());
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
     atManagerService_ = nullptr;
 }
@@ -431,7 +435,12 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo001, TestSize.Leve
     EXPECT_NE(nullptr, atManagerService_);
  
     std::map<int32_t, int32_t> tokenIdAplMap;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
  
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
     addValues.emplace_back(results);
@@ -483,7 +492,12 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Leve
     EXPECT_NE(nullptr, atManagerService_);
  
     std::map<int32_t, int32_t> tokenIdAplMap;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
  
     addValues.emplace_back(results);
     ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
