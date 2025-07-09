@@ -1420,59 +1420,53 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
-int32_t AccessTokenManagerService::UpdatePermDefVersion(const std::string& permDefVersion)
+void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValues>& results,
+    const std::map<int32_t, int32_t>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
 {
-    GenericValues delValue;
-    delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    int32_t tokenId = 0;
+    std::string permissionName;
+    std::string appDistributionType;
+    int32_t acl = 0;
+    std::string value;
+    PermissionBriefDef data;
 
-    GenericValues addValue;
-    addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    addValue.Put(TokenFiledConst::FIELD_VALUE, permDefVersion);
-    std::vector<GenericValues> values;
-    values.emplace_back(addValue);
+    for (const auto& result : results) {
+        tokenId = result.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
+        auto iter = tokenIdAplMap.find(tokenId);
+        if (iter == tokenIdAplMap.end()) {
+            continue;
+        }
 
-    std::vector<AtmDataType> deleteDataTypes;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    std::vector<GenericValues> deleteValues;
-    deleteValues.emplace_back(delValue);
-    std::vector<AtmDataType> addDataTypes;
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    std::vector<std::vector<GenericValues>> addValues;
-    addValues.emplace_back(values);
+        permissionName = result.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        if (!GetPermissionBriefDef(permissionName, data)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
+            continue;
+        }
 
-    return AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
-}
+        appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
+        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(data, appDistributionType)) {
+            continue;
+        }
 
-int32_t AccessTokenManagerService::UpdateUndefinedToDb(const std::vector<GenericValues>& stateValues,
-    const std::vector<GenericValues>& extendValues, const std::vector<GenericValues>& validValueList)
-{
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
+        acl = result.GetInt(TokenFiledConst::FIELD_ACL);
+        value = result.GetString(TokenFiledConst::FIELD_VALUE);
+        if (!IsPermissionValid(iter->second, data, value, (acl == 1))) {
+            // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
+            continue;
+        }
 
-    for (const auto& value : validValueList) {
-        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-        deleteValues.emplace_back(value);
+        validValueList.emplace_back(result);
     }
-
-    std::vector<AtmDataType> addDataTypes;
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
-    std::vector<std::vector<GenericValues>> addValues;
-    addValues.emplace_back(stateValues);
-    addValues.emplace_back(extendValues);
-
-    return AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
 }
 
-int32_t AccessTokenManagerService::UpdateUndefinedInfo(const std::vector<GenericValues>& validValueList)
+void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
+    std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues)
 {
     std::string permissionName;
     PermissionState grantStatus;
     PermissionFlag grantFlag;
     AccessTokenID tokenId = 0;
     std::string value;
-    std::vector<GenericValues> stateValues;
-    std::vector<GenericValues> extendValues;
 
     for (const auto& validValue : validValueList) {
         permissionName = validValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
@@ -1518,8 +1512,6 @@ int32_t AccessTokenManagerService::UpdateUndefinedInfo(const std::vector<Generic
             extendValues.emplace_back(extendValue);
         }
     }
-
-    return UpdateUndefinedToDb(stateValues, extendValues, validValueList);
 }
 
 bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
@@ -1541,7 +1533,9 @@ bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const Permissi
     return false;
 }
 
-void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenIdAplMap)
+void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, int32_t>& tokenIdAplMap,
+    std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
+    std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> results;
@@ -1555,46 +1549,39 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(std::map<int32_t, int32_t
         return;
     }
 
-    int32_t tokenId = 0;
-    std::string permissionName;
-    std::string appDistributionType;
-    int32_t apl = 0;
-    std::string value;
-    PermissionBriefDef data;
-    std::vector<GenericValues> validValueList;
-
     // filter invalid data
-    for (const auto& result : results) {
-        tokenId = result.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        if (tokenIdAplMap.count(tokenId) == 0) {
-            continue;
-        }
+    std::vector<GenericValues> validValueList;
+    FilterInvalidData(results, tokenIdAplMap, validValueList);
 
-        permissionName = result.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        if (!GetPermissionBriefDef(permissionName, data)) {
-            LOGI(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
-            continue;
-        }
+    std::vector<GenericValues> stateValues;
+    std::vector<GenericValues> extendValues;
+    UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
 
-        appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
-        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(data, appDistributionType)) {
-            continue;
-        }
-
-        apl = result.GetInt(TokenFiledConst::FIELD_ACL);
-        value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(tokenIdAplMap[tokenId], data, value, (apl == 1))) {
-            // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
-            continue;
-        }
-
-        validValueList.emplace_back(result);
+    for (const auto& value : validValueList) {
+        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
+        deleteValues.emplace_back(value);
     }
 
-    UpdateUndefinedInfo(validValueList);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
+    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
+    addValues.emplace_back(stateValues);
+    addValues.emplace_back(extendValues);
 }
 
-void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenIdAplMap)
+void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<AtmDataType>& deleteDataTypes,
+    const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
+    const std::vector<std::vector<GenericValues>>& addValues)
+{
+    auto task = [deleteDataTypes, deleteValues, addDataTypes, addValues]() {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
+        (void)AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+            addValues);
+    };
+    std::thread updateDbThread(task);
+    updateDbThread.detach();
+}
+
+void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     std::string dbPermDefVersion;
     GenericValues conditionValue;
@@ -1610,18 +1597,35 @@ void AccessTokenManagerService::HandlePermDefUpdate(std::map<int32_t, int32_t>& 
     }
 
     const char* curPermDefVersion = GetPermDefVersion();
-    bool isUpdate = dbPermDefVersion != curPermDefVersion;
+    bool isUpdate = dbPermDefVersion != std::string(curPermDefVersion);
     if (isUpdate) {
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Permission definition version from db %{public}s is not same with current version %{public}s.",
             dbPermDefVersion.c_str(), curPermDefVersion);
-        int32_t res = UpdatePermDefVersion(std::string(curPermDefVersion));
-        if (res != 0) {
-            return;
-        }
+
+        GenericValues delValue;
+        delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+        GenericValues addValue;
+        addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+        addValue.Put(TokenFiledConst::FIELD_VALUE, std::string(curPermDefVersion));
+        std::vector<GenericValues> values;
+        values.emplace_back(addValue);
+
+        // update or insert permission define version to db
+        std::vector<AtmDataType> deleteDataTypes;
+        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
+        std::vector<GenericValues> deleteValues;
+        deleteValues.emplace_back(delValue);
+        std::vector<AtmDataType> addDataTypes;
+        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
+        std::vector<std::vector<GenericValues>> addValues;
+        addValues.emplace_back(values);
+
         if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
-            HandleHapUndefinedInfo(tokenIdAplMap);
+            HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes, deleteValues, addDataTypes, addValues);
         }
+
+        UpdateDatabaseAsync(deleteDataTypes, deleteValues, addDataTypes, addValues);
     }
 }
 

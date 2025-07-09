@@ -432,7 +432,15 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
@@ -443,14 +451,14 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level0)
 
     GenericValues delValue; // system grant
     delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
-    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<AtmDataType> deleteDataTypes3;
     deleteDataTypes2.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-    std::vector<GenericValues> deleteValues2;
+    std::vector<GenericValues> deleteValues3;
     deleteValues2.emplace_back(delValue);
-    std::vector<AtmDataType> addDataTypes2;
-    std::vector<std::vector<GenericValues>> addValues2;
+    std::vector<AtmDataType> addDataTypes3;
+    std::vector<std::vector<GenericValues>> addValues3;
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes2, deleteValues2, addDataTypes2, addValues2));
+        deleteDataTypes3, deleteValues3, addDataTypes3, addValues3));
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
@@ -487,7 +495,15 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -511,6 +527,20 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level0)
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
+void SetValues003(AccessTokenID tokenId, std::vector<GenericValues>& values)
+{
+    GenericValues value1; // user grant
+    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state4.permissionName);
+    value1.Put(TokenFiledConst::FIELD_ACL, 0);
+    GenericValues value2; // system grant
+    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state5.permissionName);
+    value2.Put(TokenFiledConst::FIELD_ACL, 0);
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+}
+
 /**
  * @tc.name: OTATest003
  * @tc.desc: test after ota valid user grant and system grant permissions move from undefine to permission state
@@ -528,17 +558,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level0)
     std::map<int32_t, int32_t> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
-    GenericValues value1; // user grant
-    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state4.permissionName);
-    value1.Put(TokenFiledConst::FIELD_ACL, 0);
-    GenericValues value2; // system grant
-    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state5.permissionName);
-    value2.Put(TokenFiledConst::FIELD_ACL, 0);
     std::vector<GenericValues> values;
-    values.emplace_back(value1);
-    values.emplace_back(value2);
+    SetValues003(tokenId, values);
 
     std::vector<AtmDataType> deleteDataTypes;
     std::vector<GenericValues> deleteValues;
@@ -548,7 +569,15 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -607,7 +636,15 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -659,7 +696,12 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    addDataTypes.clear();
+    addValues.clear();
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes, deleteValues, addDataTypes, addValues);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+        addValues));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -683,6 +725,16 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level0)
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
+void SetValues006(AccessTokenID tokenId, std::vector<GenericValues>& values)
+{
+    GenericValues value; // system grant
+    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state6.permissionName);
+    value.Put(TokenFiledConst::FIELD_ACL, 1); // system core permission with acl
+    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // system core permission with acl
+    values.emplace_back(value);
+}
+
 /**
  * @tc.name: OTATest006
  * @tc.desc: test after ota valid permission which hasValue is false
@@ -702,13 +754,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
     std::map<int32_t, int32_t> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state6.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 1); // system core permission with acl
-    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // system core permission with acl
     std::vector<GenericValues> values;
-    values.emplace_back(value);
+    SetValues006(tokenId, values);
 
     std::vector<AtmDataType> deleteDataTypes;
     std::vector<GenericValues> deleteValues;
@@ -718,7 +765,12 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    addDataTypes.clear();
+    addValues.clear();
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes, deleteValues, addDataTypes, addValues);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+        addValues));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -747,6 +799,16 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
+void SetValues007(AccessTokenID tokenId, std::vector<GenericValues>& values)
+{
+    GenericValues value; // system grant
+    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state1.permissionName);
+    value.Put(TokenFiledConst::FIELD_ACL, 0); // system core permission without acl
+    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // permission has value
+    values.emplace_back(value);
+}
+
 /**
  * @tc.name: OTATest007
  * @tc.desc: test after ota valid permission which hasValue is true with value
@@ -765,13 +827,8 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level0)
     std::map<int32_t, int32_t> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // KERNEL_ATM_SELF_USE, hasValue is true
 
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state1.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 0); // system core permission without acl
-    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // permission has value
     std::vector<GenericValues> values;
-    values.emplace_back(value);
+    SetValues007(tokenId, values);
 
     std::vector<AtmDataType> deleteDataTypes;
     std::vector<GenericValues> deleteValues;
@@ -781,7 +838,12 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    addDataTypes.clear();
+    addValues.clear();
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes, deleteValues, addDataTypes, addValues);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
+        addValues));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -844,7 +906,15 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
     addValues.emplace_back(values);
     ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(
         deleteDataTypes, deleteValues, addDataTypes, addValues));
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap);
+
+    std::vector<AtmDataType> deleteDataTypes2;
+    std::vector<GenericValues> deleteValues2;
+    std::vector<AtmDataType> addDataTypes2;
+    std::vector<std::vector<GenericValues>> addValues2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2);
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes2, deleteValues2, addDataTypes2,
+        addValues2));
 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));

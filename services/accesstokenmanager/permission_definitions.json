@@ -7216,6 +7216,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_USER_GRANT_PERMISSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.kernel.CODE_PROTECT_MANAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",

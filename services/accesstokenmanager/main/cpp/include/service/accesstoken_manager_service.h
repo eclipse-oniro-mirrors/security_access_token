@@ -26,6 +26,7 @@
 #include "access_event_handler.h"
 #endif
 #include "access_token.h"
+#include "access_token_db_util.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
 #include "iremote_object.h"
@@ -148,13 +149,18 @@ private:
     void ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy);
     void ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info, int64_t beginTime,
         int32_t errorCode);
-    int32_t UpdatePermDefVersion(const std::string& permDefVersion);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
-    int32_t UpdateUndefinedToDb(const std::vector<GenericValues>& stateValues,
-        const std::vector<GenericValues>& extendValues, const std::vector<GenericValues>& validValueList);
-    int32_t UpdateUndefinedInfo(const std::vector<GenericValues>& validValueList);
-    void HandleHapUndefinedInfo(std::map<int32_t, int32_t>& tokenIdAplMap);
-    void HandlePermDefUpdate(std::map<int32_t, int32_t>& tokenIdAplMap);
+    void FilterInvalidData(const std::vector<GenericValues>& results, const std::map<int32_t, int32_t>& tokenIdAplMap,
+        std::vector<GenericValues>& validValueList);
+    void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
+        std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
+    void HandleHapUndefinedInfo(const std::map<int32_t, int32_t>& tokenIdAplMap,
+        std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
+        std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues);
+    void UpdateDatabaseAsync(const std::vector<AtmDataType>& deleteDataTypes,
+        const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
+        const std::vector<std::vector<GenericValues>>& addValues);
+    void HandlePermDefUpdate(const std::map<int32_t, int32_t>& tokenIdAplMap);
 
     ServiceRunningState state_;
     std::string grantBundleName_;
