@@ -66,6 +66,8 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
+constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
+constexpr const char* APP_DISTRIBUTION_TYPE_DEBUG = "none";
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -1073,7 +1075,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 }
 
 bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef,
-    const std::string& appDistributionType)
+    const std::string& appDistributionType, bool isSystemApp, PermissionRulesEnum& rule)
 {
     if (briefDef.availableType == ATokenAvailableTypeEnum::MDM) {
         if (appDistributionType == "none") {
@@ -1084,8 +1086,21 @@ bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& 
         if (appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
                 briefDef.permissionName);
+                rule = PERMISSION_EDM_RULE;
             return false;
         }
+    }
+    if (briefDef.availableType == ATokenAvailableTypeEnum::ENTERPRISE_NORMAL) {
+        if (appDistributionType == APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM ||
+            appDistributionType == APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL ||
+            isSystemApp ||
+            appDistributionType == APP_DISTRIBUTION_TYPE_DEBUG) {
+            return true;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "permission %{public}s is only enable in enterpriseApp, systemApp, debugApp",
+            briefDef.permissionName);
+        rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
+        return false;
     }
     return true;
 }
@@ -1172,21 +1187,29 @@ void PermissionManager::FillUndefinedPermVector(const std::string& permissionNam
     return;
 }
 
-bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy,
+bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapInitInfo& initInfo,
     const std::string& permissionName, const std::string& appDistributionType, HapInfoCheckResult& result)
 {
     // acl check
-    if (!IsAclSatisfied(briefDef, policy)) {
+    if (!IsAclSatisfied(briefDef, initInfo.policy)) {
         result.permCheckResult.permissionName = permissionName;
         result.permCheckResult.rule = PERMISSION_ACL_RULE;
         LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
         return false;
     }
 
-    // edm check
-    if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
+    // edm and enterprise_normal check
+    bool isSystemApp = initInfo.isUpdate? initInfo.updateInfo.isSystemApp : initInfo.installInfo.isSystemApp;
+    PermissionRulesEnum rule = PERMISSION_ACL_RULE;
+    if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType, isSystemApp, rule)) {
         result.permCheckResult.permissionName = permissionName;
-        result.permCheckResult.rule = PERMISSION_EDM_RULE;
+        if (rule == PERMISSION_EDM_RULE) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "mdm permission check failed.");
+            result.permCheckResult.rule = PERMISSION_EDM_RULE;
+        } else if (rule == PERMISSION_ENTERPRISE_NORMAL_RULE) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "enterprise_normal permission check failed.");
+            result.permCheckResult.rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
+        }
         LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
 
         return false;
@@ -1215,7 +1238,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
             continue;
         }
 
-        if (!AclAndEdmCheck(briefDef, initInfo.policy, state.permissionName, appDistributionType, result)) {
+        if (!AclAndEdmCheck(briefDef, initInfo, state.permissionName, appDistributionType, result)) {
             if (initInfo.updateInfo.dataRefresh) {
                 FillUndefinedPermVector(state.permissionName, appDistributionType, initInfo.policy, undefValues);
                 continue;
