@@ -580,7 +580,6 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
 }
 
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 /*
  * @tc.name: StartUsingPermissionTest009
  * @tc.desc: Test multiple process start using permission
@@ -609,28 +608,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Leve
         MakeInfo(tokenId, TEST_PID_1, permissionName), callbackWrap1->AsObject(), CALLER_PID));
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, TEST_PID_2, permissionName), callbackWrap2->AsObject(), CALLER_PID));
-
-    AppStateData appStateData;
-    appStateData.accessTokenId = tokenId;
-    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    appStateData.pid = TEST_PID_1;
-    appStateObserver_->OnAppStateChanged(appStateData);
-    appStateData.pid = TEST_PID_2;
-    appStateObserver_->OnAppStateChanged(appStateData);
-
-    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
-    appStateData.pid = TEST_PID_1;
-    appStateObserver_->OnAppStateChanged(appStateData);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(callbackPtr1->isShow_);
-    ASSERT_TRUE(callbackPtr2->isShow_);
-
-    appStateData.pid = TEST_PID_2;
-    appStateObserver_->OnAppStateChanged(appStateData);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(callbackPtr2->isShow_);
 }
-#endif
 
 /*
  * @tc.name: StartUsingPermissionTest010

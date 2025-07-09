@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,20 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "privacy_window_manager_death_recipient.h"
-#include "accesstoken_common_log.h"
-#include "privacy_window_manager_client.h"
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
+#ifndef TEST_FUZZTEST_SETPERMISSIONSTATUSWITHPOLICY_FUZZER_H
+#define TEST_FUZZTEST_SETPERMISSIONSTATUSWITHPOLICY_FUZZER_H
 
-void PrivacyWindowManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "WindowManger died.");
-    PrivacyWindowManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
+#define FUZZ_PROJECT_NAME "setpermissionstatuswithpolicy_fuzzer"
 
+#endif // TEST_FUZZTEST_SETPERMISSIONSTATUSWITHPOLICY_FUZZER_H

@@ -867,6 +867,25 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
 
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy001
+ * @tc.desc: AccessTokenManagerService SetPermissionStatusWithPolicy test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy001, TestSize.Level0)
+{
+    std::vector<std::string> permList;
+    uint32_t ret = atManagerService_->SetPermissionStatusWithPolicy(
+        0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
+
+    permList.resize(1024 + 1);
+    ret = atManagerService_->SetPermissionStatusWithPolicy(
+        0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

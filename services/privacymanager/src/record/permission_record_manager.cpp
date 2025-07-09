@@ -48,10 +48,6 @@
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "privacy_window_manager_client.h"
-#include "scene_board_judgement.h"
-#endif
 
 namespace OHOS {
 namespace Security {
@@ -200,8 +196,8 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
             bool mergeFlag = false;
             for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
                 if (RecordMergeCheck(it->record, record)) {
-                    LOGI(PRI_DOMAIN, PRI_TAG, "Merge record, ori timestamp is %{public}" PRId64 ".",
-                        it->record.timestamp);
+                    LOGI(PRI_DOMAIN, PRI_TAG, "Merge record, ori timestamp is %{public}s.",
+                        std::to_string(it->record.timestamp).c_str());
 
                     // merge new record to older one if match the merge condition
                     it->record.accessCount += record.accessCount;
@@ -234,9 +230,9 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "Add record, id %{public}d, op %{public}d, status: %{public}d, sucCnt: %{public}d, "
-        "failCnt: %{public}d, lockScreenStatus %{public}d, timestamp %{public}" PRId64 ", type %{public}d.",
+        "failCnt: %{public}d, lockScreenStatus %{public}d, timestamp %{public}s, type %{public}d.",
         record.tokenId, record.opCode, record.status, record.accessCount, record.rejectCount, record.lockScreenStatus,
-        record.timestamp, record.type);
+        std::to_string(record.timestamp).c_str(), record.type);
 
     return Constant::SUCCESS;
 }
@@ -286,8 +282,8 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
             whether update database succeed or not, recod remove from cache
         */
         if ((it->needUpdateToDb) && (!UpdatePermissionUsedRecordToDb(it->record))) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Record with timestamp %{public}" PRId64 "update database failed!",
-                it->record.timestamp);
+            LOGE(PRI_DOMAIN, PRI_TAG, "Record with timestamp %{public}s update database failed!",
+                std::to_string(it->record.timestamp).c_str());
         }
 
         it = permUsedRecList_.erase(it);
@@ -966,7 +962,9 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     std::set<ContinusPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        if ((it->tokenId == tokenId) && (it->pid == pid) && (it->status != PERM_INACTIVE) && (it->status != status)) {
+        if ((it->tokenId == tokenId) && // tokenId
+            ((it->pid == -1) || (it->pid == pid)) && // pid
+            ((it->status != PERM_INACTIVE) && (it->status != status))) { // status
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
@@ -974,14 +972,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
                 continue;
             }
 
-            // app use camera background without float window
-            bool isShow = IsCameraWindowShow(tokenId);
-            bool isAllowedBackGround = false;
-            if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
-                isAllowedBackGround = true;
-            }
-            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
-                (!isShow) && (!isAllowedBackGround)) {
+            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND)) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 ++it;
@@ -1014,7 +1005,12 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
 void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}u, pid %{public}d, status %{public}d", tokenId, pid, status);
-    // find permissions from startRecordList_ by tokenId which status diff from currStatus
+
+    // only handle camera turn background now, send callback only when app without process foreground
+    if (GetAppStatus(tokenId) == PERM_ACTIVE_IN_FOREGROUND) {
+        return;
+    }
+
     ExecuteAndUpdateRecord(tokenId, pid, status);
 }
 
@@ -1275,7 +1271,8 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
         LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCameraCallbackAsync task called.");
         auto it = [&](uint64_t id, sptr<IRemoteObject> cameraCallback) {
             auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
-            if ((uniqueId == id) && (callback != nullptr)) {
+            int32_t pid = static_cast<int32_t>(id >> 32);
+            if (((pid == 0) || (uniqueId == id)) && (callback != nullptr)) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "CameraCallback tokenId(%{public}u) pid( %{public}d) changeType %{public}d",
                     tokenId, pid, PERM_INACTIVE);
                 callback->StateChangeNotify(tokenId, false);
@@ -1354,10 +1351,6 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 #endif
     uint64_t id = GetUniqueId(tokenId, info.pid);
     cameraCallbackMap_.EnsureInsert(id, callback);
-    if (!RegisterWindowCallback()) {
-        cameraCallbackMap_.Erase(id);
-        return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
-    }
     int32_t ret = AddRecordToStartList(info, status, callerPid);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
@@ -1735,79 +1728,6 @@ bool PermissionRecordManager::Register()
     return true;
 }
 
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-bool PermissionRecordManager::HasUsingCamera()
-{
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    bool hasCamera = std::any_of(startRecordList_.begin(), startRecordList_.end(),
-        [](const auto& record) { return record.opCode == Constant::OP_CAMERA; });
-    return hasCamera;
-}
-
-void UpdateCameraFloatWindowStatus(AccessTokenID tokenId, bool isShowing)
-{
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, isShowing);
-}
-
-void UpdatePipWindowStatus(AccessTokenID tokenId, bool isShowing)
-{
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, isShowing);
-}
-
-/* Handle window manager die */
-void HandleWindowDied()
-{
-    PermissionRecordManager::GetInstance().OnWindowMgrRemoteDied();
-}
-#endif
-
-bool PermissionRecordManager::RegisterWindowCallback()
-{
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    LOGI(PRI_DOMAIN, PRI_TAG, "Begin to RegisterWindowCallback.");
-
-    std::lock_guard<std::mutex> lock(windowMutex_);
-    WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
-    if (floatWindowCallback_ == nullptr) {
-        floatWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(floatCallback);
-        if (floatWindowCallback_ == nullptr) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to new PrivacyWindowManagerAgent.");
-            return false;
-        }
-    }
-    ErrCode err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
-        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
-    if (err != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to register float window listener, err:%{public}d", err);
-        return false;
-    }
-
-    if (Rosen::SceneBoardJudgement::IsSceneBoardEnabled()) {
-        WindowChangeCallback pipCallback = UpdatePipWindowStatus;
-
-        if (pipWindowCallback_ == nullptr) {
-            pipWindowCallback_ = new (std::nothrow) PrivacyWindowManagerAgent(pipCallback);
-            if (floatWindowCallback_ == nullptr) {
-                LOGE(PRI_DOMAIN, PRI_TAG, "Failed to new PrivacyWindowManagerAgent.");
-                return false;
-            }
-        }
-
-        err = PrivacyWindowManagerClient::GetInstance().RegisterWindowManagerAgent(
-            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW, pipWindowCallback_);
-        if (err != ERR_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to register pip window listener, err:%{public}d", err);
-            PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
-                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
-            return false;
-        }
-    }
-
-    PrivacyWindowManagerClient::GetInstance().AddDeathCallback(HandleWindowDied);
-#endif
-    return true;
-}
-
 void PermissionRecordManager::InitializeMuteState(const std::string& permissionName)
 {
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
@@ -1893,71 +1813,7 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
         std::lock_guard<std::mutex> lock(camLoadMutex_);
         isCamLoad_ = false;
     }
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    ClearWindowShowing();
-#endif
 }
-
-bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
-{
-    bool isShow = true;
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    std::lock_guard<std::mutex> lock(windowStatusMutex_);
-    isShow = (((floatWindowTokenId_ == tokenId) && camFloatWindowShowing_) ||
-        ((pipWindowTokenId_ == tokenId) && pipWindowShowing_));
-#endif
-    return isShow;
-}
-
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-/*
- * when camera float window is not show, notice camera service to use StopUsingPermission
- */
-void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing)
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "Update window, isPip(%{public}d), id(%{public}u), status(%{public}d)",
-        isPip, tokenId, isShowing);
-    {
-        std::lock_guard<std::mutex> lock(windowStatusMutex_);
-        if (isPip) {
-            pipWindowShowing_ = isShowing;
-            pipWindowTokenId_ = tokenId;
-        } else {
-            camFloatWindowShowing_ = isShowing;
-            floatWindowTokenId_ = tokenId;
-        }
-    }
-    if (isShowing) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is showing!");
-    } else {
-        if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) &&
-            !IsCameraWindowShow(tokenId)) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Token(%{public}d) is background, pip and float window is not show.", tokenId);
-            ExecuteCameraCallbackAsync(tokenId, -1);
-        }
-    }
-}
-
-void PermissionRecordManager::ClearWindowShowing()
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "Clear window show status.");
-    {
-        std::lock_guard<std::mutex> lock(windowStatusMutex_);
-        camFloatWindowShowing_ = false;
-        floatWindowTokenId_ = 0;
-
-        pipWindowShowing_ = false;
-        pipWindowTokenId_ = 0;
-    }
-}
-
-/* Handle window manager die */
-void PermissionRecordManager::OnWindowMgrRemoteDied()
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "Handle window manager died.");
-    ClearWindowShowing();
-}
-#endif
 
 void PermissionRecordManager::SetDefaultConfigValue()
 {

@@ -275,7 +275,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken005, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, res);
     EXPECT_EQ(static_cast<uint32_t>(1), permStatList.size());
     EXPECT_EQ(CALENDAR_PERMISSION, permStatList[0].permissionName);
-    EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(permStatList[0].grantFlags[0], PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
@@ -589,7 +589,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken003, TestSize.Level0)
     EXPECT_EQ(permStatList1[0].grantFlags[0], PERMISSION_DEFAULT_FLAG);
     EXPECT_EQ(CALENDAR_PERMISSION, permStatList1[1].permissionName);
     EXPECT_EQ(permStatList1[1].grantStatus[0], PERMISSION_GRANTED);
-    EXPECT_EQ(permStatList1[1].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(permStatList1[1].grantFlags[0], PERMISSION_PRE_AUTHORIZED_CANCELABLE);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
@@ -997,7 +997,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level0)
     TestCommon::GetReqPermissionsByTest(fullTokenId.tokenIdExStruct.tokenID, state, false);
     EXPECT_EQ(static_cast<uint32_t>(2), state.size());
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
-    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(state[1].grantFlags[0], PERMISSION_DEFAULT_FLAG);
 
@@ -1050,7 +1050,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level0)
     EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
     EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
-    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_PRE_AUTHORIZED_CANCELABLE);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }

@@ -286,7 +286,7 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest001, TestSize.Lev
     AccessTokenID tokenFullRead = AllocHapTokenId(g_infoParmsReadOnly, g_policyParams);
 
     // grant pre-authorization
-    ret = TestCommon::GrantPermissionByTest(tokenFullControl, PERMISSION_ALL, PERMISSION_GRANTED_BY_POLICY);
+    ret = TestCommon::GrantPermissionByTest(tokenFullControl, PERMISSION_ALL, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
     EXPECT_EQ(RET_SUCCESS, ret);
     uint32_t flag;
     EXPECT_EQ(RET_SUCCESS, TestCommon::GetPermissionFlagByTest(tokenCommon, PERMISSION_ALL, flag));

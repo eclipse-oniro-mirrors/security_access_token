@@ -336,6 +336,14 @@ int32_t TestCommon::RevokePermissionByTest(AccessTokenID tokenID, const std::str
     return AccessTokenKit::RevokePermission(tokenID, permission, flag);
 }
 
+int32_t TestCommon::ClearUserGrantedPermissionStateByTest(AccessTokenID tokenID)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("AccessTokenTestRevoke", reqPerm);
+    return AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
+}
+
 AccessTokenID TestCommon::GetNativeTokenIdFromProcess(const std::string &process)
 {
     uint64_t selfTokenId = GetSelfTokenID();

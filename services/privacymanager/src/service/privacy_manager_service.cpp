@@ -280,9 +280,9 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
         permissionList.append(perm);
         permissionList.append(" ");
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, timestamp: [%{public}" PRId64 "-%{public}" PRId64
-        "], flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
-        request.request.endTimeMillis, request.request.flag, permissionList.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, timestamp: [%{public}s-%{public}s], flag: %{public}d, perm: %{public}s.",
+        request.request.tokenId, std::to_string(request.request.beginTimeMillis).c_str(),
+        std::to_string(request.request.endTimeMillis).c_str(), request.request.flag, permissionList.c_str());
 
     PermissionUsedResult permissionRecord;
     int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);

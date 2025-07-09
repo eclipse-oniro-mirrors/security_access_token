@@ -2025,6 +2025,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.MANAGE_FILE_ENCRYPTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.securityguard.SET_MODEL_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -7104,6 +7115,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.atomicService.MANAGE_STORAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.TRIGGER_LOCAL_WANTAGENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -7113,6 +7135,39 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.kernel.NET_RAW",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.DEBUGGER",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.ALLOW_DEBUG",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.READ_LOCAL_DEVICE_NAME",
@@ -7134,6 +7189,30 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.IGNORE_LIBRARY_VALIDATION",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.LOAD_INDEPENDENT_LIBRARY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
         {

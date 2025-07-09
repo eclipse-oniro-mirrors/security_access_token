@@ -559,6 +559,17 @@ public:
      * @return bool
      */
     static bool IsToastShownNeeded(int32_t pid);
+
+    /**
+     * @brief Set multiple permissions status and flag with policy.
+     * @param tokenID token id
+     * @param permissionList permission list to be set
+     * @param status the permission status to be set
+     * @param flag enum PermissionFlag, see access_token.h
+     * @return error code, see access_token_error.h
+     */
+    static int32_t SetPermissionStatusWithPolicy(
+        uint32_t tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
 };
 } // namespace AccessToken
 } // namespace Security
