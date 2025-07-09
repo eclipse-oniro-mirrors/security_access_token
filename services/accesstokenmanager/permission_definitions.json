@@ -7157,6 +7157,30 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.IGNORE_LIBRARY_VALIDATION",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.kernel.LOAD_INDEPENDENT_LIBRARY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
