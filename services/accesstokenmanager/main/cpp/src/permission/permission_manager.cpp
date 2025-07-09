@@ -422,7 +422,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
 
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     bool isHadSuccess = false;
     for (const std::string &permissionName : permissionList) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
