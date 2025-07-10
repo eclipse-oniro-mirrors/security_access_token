@@ -36,6 +36,10 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}d", __func__, code);
+    if (!IPCSkeleton::IsLocalCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported rpc calling.");
+        return ERROR_IPC_REQUEST_FAIL;
+    }
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenSyncManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
