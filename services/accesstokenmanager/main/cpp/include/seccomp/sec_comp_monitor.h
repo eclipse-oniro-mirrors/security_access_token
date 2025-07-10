@@ -58,7 +58,9 @@ private:
     SecCompMonitor();
     void InitAppObserver();
     DISALLOW_COPY_AND_MOVE(SecCompMonitor);
+    std::mutex observerMutex_;
     sptr<SecCompUsageObserver> observer_ = nullptr;
+    std::mutex appManagerDeathMutex_;
     std::shared_ptr<SecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex appfgLock_;
     std::set<int32_t> appsInForeground_;
