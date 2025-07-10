@@ -126,6 +126,7 @@ private:
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
     bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
+    bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     bool AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);

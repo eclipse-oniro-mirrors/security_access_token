@@ -216,6 +216,17 @@ bool DataValidator::IsCallerTypeValid(uint32_t type)
     return true;
 }
 
+bool DataValidator::IsNativeCaller(AccessTokenID id)
+{
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
+    ATokenTypeEnum type = static_cast<ATokenTypeEnum>(idInner->type);
+    if (type != TOKEN_NATIVE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not Native(%{public}d).", id);
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsHapCaller(AccessTokenID id)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);

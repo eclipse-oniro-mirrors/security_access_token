@@ -23,6 +23,7 @@
 #include "ability_manager_access_loader.h"
 #endif
 #include "access_token.h"
+#include "access_token_helper.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "active_status_callback_manager.h"
@@ -411,8 +412,33 @@ bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t user
     return true;
 }
 
+bool PermissionRecordManager::VerifyNativeRecordPermission(
+    const std::string& permissionName, const AccessTokenID& tokenId)
+{
+    bool isGranted = false;
+    if (permissionName == CAMERA_PERMISSION_NAME) {
+        isGranted = (AccessTokenHelper::VerifyAccessToken(
+            tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
+            tokenId, isGranted, permissionName.c_str());
+        return isGranted;
+    } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        isGranted = (AccessTokenHelper::VerifyAccessToken(
+            tokenId, "ohos.permission.MICROPHONE_BACKGROUND") == PERMISSION_GRANTED);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
+            tokenId, isGranted, permissionName.c_str());
+        return isGranted;
+    }
+    LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission %{public}s.", permissionName.c_str());
+    return isGranted;
+}
+
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
+    if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(
+            info.permissionName, info.tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
+    }
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid tokenId(%{public}d).", info.tokenId);
@@ -1292,6 +1318,12 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
     LOGI(PRI_DOMAIN, PRI_TAG,
         "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
         tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
+
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(
+            permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
+    }
+
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1326,6 +1358,12 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
     LOGI(PRI_DOMAIN, PRI_TAG,
         "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
         tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
+
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(
+            permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
+    }
+
     if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1361,6 +1399,11 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 int32_t PermissionRecordManager::StopUsingPermission(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid)
 {
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(
+            permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
+    }
+
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Not hap(%{public}d).", tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
@@ -1444,6 +1487,10 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, in
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     int32_t pid)
 {
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(permissionName, tokenId);
+    }
+
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", tokenId);
         return false;

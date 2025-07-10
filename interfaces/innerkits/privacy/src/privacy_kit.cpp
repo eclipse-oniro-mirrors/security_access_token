@@ -86,7 +86,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         (!DataValidator::IsPermissionUsedTypeValid(info.type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(info.tokenId)) {
+    if (!DataValidator::IsHapCaller(info.tokenId) && !DataValidator::IsNativeCaller(info.tokenId)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -128,7 +128,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
         (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID)) {
+    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type);
@@ -142,7 +142,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
         (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID)) {
+    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback, type);
@@ -153,7 +153,7 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID)) {
+    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
@@ -164,7 +164,7 @@ int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID)
     if (!DataValidator::IsTokenIDValid(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID)) {
+    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID);

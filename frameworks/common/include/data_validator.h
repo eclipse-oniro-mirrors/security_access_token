@@ -58,6 +58,7 @@ public:
     static bool IsPermissionUsedTypeValid(uint32_t type);
     static bool IsPolicyTypeValid(uint32_t type);
     static bool IsCallerTypeValid(uint32_t type);
+    static bool IsNativeCaller(AccessTokenID id);
     static bool IsHapCaller(AccessTokenID id);
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
