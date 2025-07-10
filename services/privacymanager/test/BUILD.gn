@@ -15,6 +15,7 @@ group("unittest") {
   testonly = true
   deps = [
     "coverage:libprivacy_manager_service_coverage_test",
+    "mock:libprivacy_manager_service_mock_test",
     "unittest:libprivacy_manager_service_standard_test",
   ]
 }

@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../../access_token.gni")
 
 if (is_standard_system && ability_base_enable == true) {
-  ohos_unittest("libprivacy_manager_service_standard_test") {
+  ohos_unittest("libprivacy_manager_service_mock_test") {
     subsystem_name = "accesscontrol"
     module_out_path = module_output_path_unittest_privacy
     sanitize = {
@@ -59,7 +59,6 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/active/perm_active_status_change_callback_proxy.cpp",
       "../../src/active/state_change_callback_proxy.cpp",
       "../../src/common/constant.cpp",
-      "../../src/common/access_token_helper.cpp",
       "../../src/database/data_translator.cpp",
       "../../src/database/permission_used_record_db.cpp",
       "../../src/database/privacy_field_const.cpp",
@@ -71,13 +70,8 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/sensitive/audio_manager/audio_manager_adapter.cpp",
       "../../src/sensitive/camera_manager/camera_manager_adapter.cpp",
       "../../src/service/privacy_manager_service.cpp",
-      "active_status_callback_manager_test.cpp",
-      "permission_record_db_test.cpp",
-      "permission_record_manager_test.cpp",
-      "permission_record_set_test.cpp",
-      "privacy_manager_proxy_death_test.cpp",
-      "privacy_manager_service_test.cpp",
-      "sensitive_manager_test.cpp",
+      "access_token_helper_mock.cpp",
+      "permission_record_manager_mock_test.cpp",
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -135,16 +129,11 @@ if (is_standard_system && ability_base_enable == true) {
       external_deps += [ "common_event_service:cesfwk_innerkits" ]
       sources += [ "../../src/common/privacy_common_event_subscriber.cpp" ]
     }
-    if (theme_screenlock_mgr_enable) {
-      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
-      external_deps += [ "screenlock_mgr:screenlock_client" ]
-    }
 
     if (access_token_app_security_privacy_service_enable) {
       cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
     } else {
-      include_dirs +=
-          [ "${access_token_path}/services/common/ability_manager/include" ]
+      include_dirs += [ "${access_token_path}/services/common/ability_manager/include" ]
     }
   }
 }

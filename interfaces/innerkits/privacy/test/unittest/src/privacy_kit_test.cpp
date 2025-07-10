@@ -48,6 +48,7 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static const uint32_t ACCESS_TOKEN_UID = 3020;
 static AccessTokenID g_nativeToken = 0;
+static AccessTokenID g_shellToken = 0;
 static MockHapToken* g_mock = nullptr;
 #ifdef AUDIO_FRAMEWORK_ENABLE
 static bool g_isMicMute = false;
@@ -245,6 +246,7 @@ void PrivacyKitTest::SetUpTestCase()
     g_mock = new (std::nothrow) MockHapToken("PrivacyKitTest", reqPerm, true);
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
+    g_shellToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("hdcd");
 
     DeleteTestToken();
 #ifdef AUDIO_FRAMEWORK_ENABLE
@@ -736,6 +738,18 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level0)
     MockHapToken mock("RemovePermissionUsedRecords003", reqPerm, false);
     AccessTokenID tokenID = GetSelfTokenID();
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::RemovePermissionUsedRecords(tokenID));
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecords004
+ * @tc.desc: cannot RemovePermissionUsedRecords function test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords004, TestSize.Level0)
+{
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(g_nativeToken));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(g_shellToken));
 }
 
 /**
@@ -1842,6 +1856,46 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission014, TestSize.Level0)
 }
 
 /**
+ * @tc.name: StartUsingPermission015
+ * @tc.desc: StartUsingPermission function test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission015, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(g_nativeToken, permissionName, callbackPtr));
+
+    permissionName = "ohos.permission.MICROPHONE";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(g_nativeToken, permissionName, callbackPtr));
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(g_shellToken, permissionName, callbackPtr));
+}
+
+/**
+ * @tc.name: StartUsingPermission016
+ * @tc.desc: StartUsingPermission caller is shell.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission016, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(g_nativeToken, permissionName));
+
+    permissionName = "ohos.permission.MICROPHONE";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(g_nativeToken, permissionName));
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(g_shellToken, permissionName));
+}
+
+/**
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
@@ -1899,7 +1953,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level0)
 
 /**
  * @tc.name: StopUsingPermission005
- * @tc.desc: stop use whith native token
+ * @tc.desc: stop use with native token
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
@@ -1951,6 +2005,24 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level0)
     ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+}
+
+/**
+ * @tc.name: StopUsingPermission008
+ * @tc.desc: StopUsingPermission test with shell tokenid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, permissionName));
+
+    permissionName = "ohos.permission.MICROPHONE";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, permissionName));
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_shellToken, permissionName));
 }
 
 class TestCallBack1 : public StateChangeCallbackStub {
@@ -2368,6 +2440,29 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord018, TestSize.Level0)
     info.failCount = 0;
     info.type = PermissionUsedType::INVALID_USED_TYPE;
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info)); // add invalid used type
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord019
+ * @tc.desc: Test AddPermissionUsedRecord with shell token
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord019, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_nativeToken;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.permissionName = "ohos.permission.MICROPHONE";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.tokenId = g_shellToken;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
 }
 
 /**
