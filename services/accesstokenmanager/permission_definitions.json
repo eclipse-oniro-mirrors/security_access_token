@@ -7145,6 +7145,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -7156,6 +7157,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -7167,6 +7169,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
         {
