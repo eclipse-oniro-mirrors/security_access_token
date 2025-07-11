@@ -82,7 +82,7 @@ namespace OHOS {
             uint32_t nativeSize = 0;
             uint32_t pefDefSize = 0;
             uint32_t dlpSize = 0;
-            std::map<int32_t, int32_t> tokenIdAplMap;
+            std::map<int32_t, TokenIdInfo> tokenIdAplMap;
             AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
         }
         bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);

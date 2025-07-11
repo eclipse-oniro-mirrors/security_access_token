@@ -130,7 +130,7 @@ void AccessTokenInfoManagerTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
 }
 
@@ -681,6 +681,64 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level0)
     EXPECT_EQ("", value);
 
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: InitHapToken008
+ * @tc.desc: InitHapToken function test with invalid apl permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken008, TestSize.Level0)
+{
+    HapInfoParcel info;
+    info.hapInfoParameter = {
+        .userID = 0,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+    };
+    HapPolicyParcel policy;
+    PermissionStatus permissionStateA = {
+        .permissionName = "ohos.permission.GET_ALL_APP_ACCOUNTS",
+        .grantStatus = 1,
+        .grantFlag = 1
+    };
+    PermissionStatus permissionStateB = {
+        .permissionName = "ohos.permission.test",
+        .grantStatus = 1,
+        .grantFlag = 1
+    };
+    policy.hapPolicy = {
+        .apl = APL_NORMAL,
+        .domain = "test",
+        .permList = {},
+        .permStateList = { permissionStateA, permissionStateB }
+    };
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl resultInfoIdl;
+    HapInfoCheckResult result;
+
+    ASSERT_EQ(0,
+        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+
+    PermissionInfoCheckResult permCheckResult;
+    permCheckResult.permissionName = resultInfoIdl.permissionName;
+    int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
+    permCheckResult.rule = PermissionRulesEnum(rule);
+    result.permCheckResult = permCheckResult;
+    ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
+    ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
+    permissionStateA.permissionName = "ohos.permission.FILE_GUARD_MANAGER";
+    policy.hapPolicy.aclRequestedList = { "ohos.permission.FILE_GUARD_MANAGER" };
+    policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
+    ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+    ASSERT_EQ(resultInfoIdl.permissionName, "ohos.permission.FILE_GUARD_MANAGER");
+    rule = static_cast<int32_t>(resultInfoIdl.rule);
+    ASSERT_EQ(PermissionRulesEnum(rule), PERMISSION_ENTERPRISE_NORMAL_RULE);
 }
 
 /**
@@ -1594,7 +1652,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
