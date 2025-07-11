@@ -1985,6 +1985,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.FILE_GUARD_FILE_WRITE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_RECOVERY_KEY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
