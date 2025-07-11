@@ -210,7 +210,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
 bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState)
 {
     if ((goalGrantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
-        permState.state = INVALID_OPER;
+        permState.state = FORBIDDEN_OPER;
         permState.errorReason = FIXED_BY_POLICY;
         return true;
     }

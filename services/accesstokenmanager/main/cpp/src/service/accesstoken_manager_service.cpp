@@ -353,6 +353,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
 
     bool needRes = false;
+    bool fixedByPolicyRes = false;
     std::vector<PermissionStatus> permsList;
     if (!GetAppReqPermissions(tokenID, permsList)) {
         return INVALID_OPER;
@@ -378,6 +379,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
+        if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
+            fixedByPolicyRes = true;
+        }
         LOGD(ATM_DOMAIN, ATM_TAG, "Perm: %{public}s, state: %{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
@@ -390,6 +394,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
                 reqPermList[i].permsState.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
             }
         }
+        return FORBIDDEN_OPER;
+    }
+    if (fixedByPolicyRes) {
         return FORBIDDEN_OPER;
     }
     if (needRes) {
