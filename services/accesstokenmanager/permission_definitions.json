@@ -6150,6 +6150,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_NET_TRACE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.LINKTURBO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
