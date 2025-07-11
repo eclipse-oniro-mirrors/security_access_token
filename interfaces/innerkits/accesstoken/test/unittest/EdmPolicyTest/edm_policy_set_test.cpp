@@ -864,10 +864,12 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy007, TestSize.Level0)
 
     std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
     uint32_t ret = RET_SUCCESS;
+    int32_t selfUid = getuid();
+    setuid(10001);
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(ERR_PERMISSION_DENIED, ret);
-
+    setuid(selfUid);
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
