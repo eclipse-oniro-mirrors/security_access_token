@@ -16,7 +16,7 @@ import("//build/config/components/ets_frontend/ets2abc_config.gni")
 import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 
-ohos_shared_library("privacy_ani") {
+ohos_shared_library("el5filekeymanager_ani") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -30,18 +30,22 @@ ohos_shared_library("privacy_ani") {
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/frameworks/ets/ani/common/include",
     "${access_token_path}/frameworks/ets/ani/privacy/include",
+    "./include",
+    "${access_token_path}/interfaces/inner_api/el5filekeymanager/include",
   ]
-  sources = [ "src/privacy_manager.cpp" ]
+  sources = [ "src/screen_lock_file_manager.cpp" ]
 
   deps = [
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/ets/ani/common:libani_common",
+    "${access_token_path}/interfaces/inner_api/el5filekeymanager:el5_filekey_manager_sdk",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]
 
   external_deps = [
+    "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
+    "napi:ace_napi",
     "runtime_core:ani",
     "runtime_core:libarkruntime",
   ]
@@ -50,26 +54,26 @@ ohos_shared_library("privacy_ani") {
   subsystem_name = "security"
 }
 
-generate_static_abc("privacy_manager") {
+generate_static_abc("screen_lock_file_manager") {
   base_url = "./ets"
-  files = [ "./ets/@ohos.privacyManager.ets" ]
+  files = [ "./ets/@ohos.ability.screenLockFileManager.ets" ]
 
   is_boot_abc = "True"
-  device_dst_file = "/system/framework/privacy_manager.abc"
+  device_dst_file = "/system/framework/screen_lock_file_manager.abc"
 }
 
-ohos_prebuilt_etc("privacy_manager_etc") {
-  source = "$target_out_dir/privacy_manager.abc"
-  deps = [ ":privacy_manager" ]
+ohos_prebuilt_etc("screen_lock_file_manager_etc") {
+  source = "$target_out_dir/screen_lock_file_manager.abc"
+  deps = [ ":screen_lock_file_manager" ]
   module_install_dir = "framework"
 
   part_name = "access_token"
   subsystem_name = "security"
 }
 
-group("privacy_ets") {
+group("el5filekeymanager_ets") {
   deps = [
-    ":privacy_ani",
-    ":privacy_manager_etc",
+    ":el5filekeymanager_ani",
+    ":screen_lock_file_manager_etc",
   ]
 }
