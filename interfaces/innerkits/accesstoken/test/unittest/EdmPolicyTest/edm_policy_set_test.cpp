@@ -1131,7 +1131,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestGetSelfPermissionsState001, TestSize.Level0)
     PermissionGrantInfo info;
     SetSelfTokenID(tokenID);
     EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-    EXPECT_EQ(INVALID_OPER, permsList[0].state);
+    EXPECT_EQ(FORBIDDEN_OPER, permsList[0].state);
     SetSelfTokenID(selfTokenId);
 
     // 3. set flag is PERMISSION_ADMIN_POLICIES_CANCEL.
