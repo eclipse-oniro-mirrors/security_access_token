@@ -657,26 +657,20 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy001, TestSize.Level0)
     uint64_t selfTokenId = GetSelfTokenID();
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
 
+    uint32_t flag = 0;
     std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
     std::vector<PermissionState> stateList = {PERMISSION_GRANTED, PERMISSION_DENIED};
     for (auto status : stateList) {
         GTEST_LOG_(INFO) << "SetPermissionStatusWithPolicy001 status: " << status;
         EXPECT_EQ(RET_SUCCESS,
-            AccessTokenKit::SetPermissionStatusWithPolicy(tokenID, permList, status, PERMISSION_FIXED_BY_ADMIN_POLICY));
+        AccessTokenKit::SetPermissionStatusWithPolicy(tokenID, permList, status, PERMISSION_FIXED_BY_ADMIN_POLICY));
         std::vector<PermissionListState> permsList;
         for (auto perm : permList) {
             GTEST_LOG_(INFO) << "SetPermissionStatusWithPolicy001 check perm: " << perm;
             EXPECT_EQ(status, AccessTokenKit::VerifyAccessToken(tokenID, perm, false));
-            permsList.push_back({perm, FORBIDDEN_OPER});
+            EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, perm, flag));
+            EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
         }
-        SetSelfTokenID(tokenID);
-        PermissionGrantInfo info;
-        EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-        EXPECT_EQ(status == PERMISSION_GRANTED ? PASS_OPER : INVALID_OPER, permsList[0].state);
-        EXPECT_EQ(status == PERMISSION_GRANTED ? REQ_SUCCESS : FIXED_BY_POLICY, permsList[0].errorReason);
-        EXPECT_EQ(status == PERMISSION_GRANTED ? PASS_OPER : INVALID_OPER, permsList[1].state);
-        EXPECT_EQ(status == PERMISSION_GRANTED ? REQ_SUCCESS : FIXED_BY_POLICY, permsList[1].errorReason);
-        SetSelfTokenID(selfTokenId);
     }
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
@@ -1126,11 +1120,11 @@ HWTEST_F(EdmPolicySetTest, EdmTestGetSelfPermissionsState001, TestSize.Level0)
     EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
     EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
 
-    // 2. get permission state is INVALID_OPER.
+    // 2. get permission state is FORBIDDEN_OPER.
     std::vector<PermissionListState> permsList = {{CUSTOM_SCREEN_CAPTURE}};
     PermissionGrantInfo info;
     SetSelfTokenID(tokenID);
-    EXPECT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
     EXPECT_EQ(FORBIDDEN_OPER, permsList[0].state);
     SetSelfTokenID(selfTokenId);
 

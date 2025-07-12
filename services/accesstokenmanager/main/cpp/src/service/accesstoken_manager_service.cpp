@@ -342,6 +342,14 @@ static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionSt
     return true;
 }
 
+bool AccessTokenManagerService::isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion)
+{
+    return ((permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
+            (permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
+            (permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
+        (apiVersion >= ACCURATE_LOCATION_API_VERSION);
+}
+
 PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList)
 {
@@ -368,10 +376,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     uint32_t size = reqPermList.size();
     for (uint32_t i = 0; i < size; i++) {
         // api9 location permission special handle above
-        if (((reqPermList[i].permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
-            (reqPermList[i].permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
-            (reqPermList[i].permsState.permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
-            (apiVersion >= ACCURATE_LOCATION_API_VERSION)) {
+        if (isLocationPermSpecialHandle(reqPermList[i].permsState.permissionName, apiVersion)) {
             continue;
         }
 
@@ -396,11 +401,11 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         }
         return FORBIDDEN_OPER;
     }
-    if (fixedByPolicyRes) {
-        return FORBIDDEN_OPER;
-    }
     if (needRes) {
         return DYNAMIC_OPER;
+    }
+    if (fixedByPolicyRes) {
+        return FORBIDDEN_OPER;
     }
     return PASS_OPER;
 }
