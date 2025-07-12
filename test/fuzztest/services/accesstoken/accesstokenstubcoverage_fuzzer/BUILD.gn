@@ -41,8 +41,6 @@ ohos_fuzztest("AccessTokenStubCoverageFuzzTest") {
 
   external_deps = access_token_external_deps
 
-  include_dirs += access_token_impl_include_dirs
-
   cflags_cc = access_token_cflags_cc
 
   if (build_variant == "user") {
@@ -50,8 +48,6 @@ ohos_fuzztest("AccessTokenStubCoverageFuzzTest") {
   }
 
   sources += access_token_sources
-
-  sources += access_token_impl_sources
 
   include_dirs +=
       [ "${access_token_path}/interfaces/innerkits/accesstoken/src" ]

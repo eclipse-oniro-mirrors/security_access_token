@@ -24,20 +24,6 @@ module_output_path_service_access_token =
 module_output_path_unittest_accesstoken = "access_token/access_token"
 module_output_path_unittest_privacy = "access_token/privacy"
 
-VENDOR_CONFIG_PATH = rebase_path(
-        "//vendor/${product_company}/${product_name}/base/security/access_token/access_token_impl.gni")
-CMD = "if [ -f ${VENDOR_CONFIG_PATH} ]; then echo true; else echo false; fi"
-
-vendor_config_exist =
-    exec_script("//build/lite/run_shell_cmd.py", [ CMD ], "value")
-if (vendor_config_exist) {
-  import(
-      "//vendor/${product_company}/${product_name}/base/security/access_token/access_token_impl.gni")
-} else {
-  access_token_impl_sources = []
-  access_token_impl_include_dirs = []
-}
-
 if (!defined(global_parts_info) ||
     defined(global_parts_info.distributedhardware_device_manager)) {
   token_sync_enable = true
