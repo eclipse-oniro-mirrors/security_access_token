@@ -210,7 +210,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
 bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState)
 {
     if ((goalGrantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
-        permState.state = INVALID_OPER;
+        permState.state = FORBIDDEN_OPER;
         permState.errorReason = FIXED_BY_POLICY;
         return true;
     }
@@ -422,7 +422,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
 
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     bool isHadSuccess = false;
     for (const std::string &permissionName : permissionList) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",

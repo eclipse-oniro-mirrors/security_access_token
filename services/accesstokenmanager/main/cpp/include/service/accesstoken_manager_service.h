@@ -143,6 +143,7 @@ private:
     void GetConfigValue(uint32_t& parseConfigFlag);
     bool Initialize();
     void AccessTokenServiceParamSet() const;
+    bool isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
     int32_t UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl);

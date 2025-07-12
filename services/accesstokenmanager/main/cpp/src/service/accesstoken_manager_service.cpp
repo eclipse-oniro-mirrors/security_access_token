@@ -342,6 +342,14 @@ static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionSt
     return true;
 }
 
+bool AccessTokenManagerService::isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion)
+{
+    return ((permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
+            (permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
+            (permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
+        (apiVersion >= ACCURATE_LOCATION_API_VERSION);
+}
+
 PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList)
 {
@@ -353,6 +361,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
 
     bool needRes = false;
+    bool fixedByPolicyRes = false;
     std::vector<PermissionStatus> permsList;
     if (!GetAppReqPermissions(tokenID, permsList)) {
         return INVALID_OPER;
@@ -367,16 +376,16 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     uint32_t size = reqPermList.size();
     for (uint32_t i = 0; i < size; i++) {
         // api9 location permission special handle above
-        if (((reqPermList[i].permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
-            (reqPermList[i].permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
-            (reqPermList[i].permsState.permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
-            (apiVersion >= ACCURATE_LOCATION_API_VERSION)) {
+        if (isLocationPermSpecialHandle(reqPermList[i].permsState.permissionName, apiVersion)) {
             continue;
         }
 
         PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
+        }
+        if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
+            fixedByPolicyRes = true;
         }
         LOGD(ATM_DOMAIN, ATM_TAG, "Perm: %{public}s, state: %{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
@@ -394,6 +403,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     }
     if (needRes) {
         return DYNAMIC_OPER;
+    }
+    if (fixedByPolicyRes) {
+        return FORBIDDEN_OPER;
     }
     return PASS_OPER;
 }

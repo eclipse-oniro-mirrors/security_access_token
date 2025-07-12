@@ -617,7 +617,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState004, TestSize.Level0)
     int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
 
     PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
-    ASSERT_EQ(PermissionOper::INVALID_OPER, permState1.state);
+    ASSERT_EQ(PermissionOper::FORBIDDEN_OPER, permState1.state);
 
     std::vector<PermissionStatus> permsList2;
     permsList2.emplace_back(g_permState11);
