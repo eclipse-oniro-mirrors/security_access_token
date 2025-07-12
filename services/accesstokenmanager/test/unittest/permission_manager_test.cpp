@@ -625,7 +625,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState004, TestSize.Level0)
     permState2.permissionName = "ohos.permission.CAMERA";
 
     PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
-    ASSERT_EQ(PermissionOper::FORBIDDEN_OPER, permState2.state);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState2.state);
 
     std::vector<PermissionStatus> permsList3;
     permsList3.emplace_back(g_permState12);
