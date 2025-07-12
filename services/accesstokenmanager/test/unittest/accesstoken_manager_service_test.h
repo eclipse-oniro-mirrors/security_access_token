@@ -33,7 +33,7 @@ public:
 
     void TearDown();
     void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
-        std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit = false);
+        std::map<int32_t, int32_t>& tokenIdAplMap, bool hasInit = false);
 
     std::shared_ptr<AccessTokenManagerService> atManagerService_;
 };

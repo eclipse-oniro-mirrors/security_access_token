@@ -87,7 +87,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 }
 
 void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-    std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+    std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
     if (hasInited_) {
@@ -207,7 +207,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
     return RET_SUCCESS;
 }
 
-void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenIdAplMap)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
@@ -228,15 +228,13 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
     }
     for (const GenericValues& tokenValue : hapTokenRes) {
         int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        TokenIdInfo tokenIdInfo;
-        tokenIdInfo.apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
-        tokenIdInfo.isSystemApp = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR) == 1 ? true : false;
+        int32_t apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
         ret = AddHapInfoToCache(tokenValue, permStateRes, extendedPermRes);
         if (ret != RET_SUCCESS) {
             continue;
         }
         hapSize++;
-        tokenIdAplMap[tokenId] = tokenIdInfo;
+        tokenIdAplMap[tokenId] = apl;
     }
 }
 

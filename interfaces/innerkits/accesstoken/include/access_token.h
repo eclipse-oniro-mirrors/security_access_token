@@ -333,8 +333,7 @@ typedef enum TypeOptType {
  */
 typedef enum TypePermissionRulesEnum {
     PERMISSION_EDM_RULE = 0,
-    PERMISSION_ACL_RULE,
-    PERMISSION_ENTERPRISE_NORMAL_RULE
+    PERMISSION_ACL_RULE
 } PermissionRulesEnum;
 
 /**
@@ -357,15 +356,6 @@ typedef enum HapPolicyCheckIgnoreType {
     ACL_IGNORE_CHECK,
 } HapPolicyCheckIgnore;
 
-/**
- * @brief Apl and isSystemApp info about tokenId
- */
-typedef struct {
-    /** apl for tokenId */
-    int32_t apl;
-    /** is system app */
-    bool isSystemApp;
-} TokenIdInfo;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

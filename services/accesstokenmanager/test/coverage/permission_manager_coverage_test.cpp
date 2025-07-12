@@ -80,7 +80,7 @@ void PermissionManagerCoverageTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::map<int32_t, int32_t> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
 }
 
@@ -434,7 +434,7 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo001, TestSize.Leve
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::map<int32_t, int32_t> tokenIdAplMap;
     std::vector<AtmDataType> deleteDataTypes2;
     std::vector<GenericValues> deleteValues2;
     std::vector<AtmDataType> addDataTypes2;
@@ -491,7 +491,7 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Leve
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::map<int32_t, int32_t> tokenIdAplMap;
     std::vector<AtmDataType> deleteDataTypes2;
     std::vector<GenericValues> deleteValues2;
     std::vector<AtmDataType> addDataTypes2;
@@ -532,7 +532,7 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate001, TestSize.Level4)
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::map<int32_t, int32_t> tokenIdAplMap;
     atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is empty
  
     addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
@@ -579,7 +579,7 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate002, TestSize.Level4)
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::map<int32_t, int32_t> tokenIdAplMap;
     atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is not empty
  
     addValues.emplace_back(results);
