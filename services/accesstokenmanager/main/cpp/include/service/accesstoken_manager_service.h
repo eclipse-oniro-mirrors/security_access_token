@@ -150,17 +150,17 @@ private:
     void ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info, int64_t beginTime,
         int32_t errorCode);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
-    void FilterInvalidData(const std::vector<GenericValues>& results,
-        const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
+    void FilterInvalidData(const std::vector<GenericValues>& results, const std::map<int32_t, int32_t>& tokenIdAplMap,
+        std::vector<GenericValues>& validValueList);
     void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
         std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
-    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
+    void HandleHapUndefinedInfo(const std::map<int32_t, int32_t>& tokenIdAplMap,
         std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
         std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues);
     void UpdateDatabaseAsync(const std::vector<AtmDataType>& deleteDataTypes,
         const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
         const std::vector<std::vector<GenericValues>>& addValues);
-    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void HandlePermDefUpdate(const std::map<int32_t, int32_t>& tokenIdAplMap);
 
     ServiceRunningState state_;
     std::string grantBundleName_;
