@@ -138,6 +138,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
 
         OHOS::Ace::ModalUIExtensionConfig config;
         config.isProhibitBack = true;
+        config.isModalRequestFocus = false;
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
         if (sessionId == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Create component failed, sessionId is 0");
