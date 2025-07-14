@@ -69,8 +69,6 @@ if (is_standard_system) {
       "main/cpp/include/permission",
     ]
 
-    include_dirs += access_token_impl_include_dirs
-
     sources = [
       "main/cpp/src/callback/accesstoken_callback_proxys.cpp",
       "main/cpp/src/callback/callback_death_recipients.cpp",
@@ -98,7 +96,6 @@ if (is_standard_system) {
       "main/cpp/src/token/accesstoken_info_manager.cpp",
       "main/cpp/src/token/hap_token_info_inner.cpp",
     ]
-    sources += access_token_impl_sources
 
     cflags_cc = [
       "-DHILOG_ENABLE",
