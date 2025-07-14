@@ -90,14 +90,14 @@ export default namespace abilityAccessCtrl {
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
             err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
         if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
             permissionList.length == 0 || typeof permissionList[0] !== "string") {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
             err.data = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
             throw err;
         }
