@@ -658,7 +658,8 @@
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.UPDATE_SYSTEM",
