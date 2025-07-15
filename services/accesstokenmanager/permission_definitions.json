@@ -651,17 +651,6 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.KEEP_BACKGROUND_RUNNING_SYSTEM",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "NORMAL",
-            "since": 20,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
-        },
-        {
             "name": "ohos.permission.UPDATE_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -7290,6 +7279,17 @@
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },        
+        {
+            "name": "ohos.permission.KEEP_BACKGROUND_RUNNING_SYSTEM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
