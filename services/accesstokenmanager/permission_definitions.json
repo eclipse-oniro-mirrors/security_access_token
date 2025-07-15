@@ -6803,7 +6803,8 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1"],
+            "isKernelEffect": true
         },
         {
             "name": "ohos.permission.kernel.AUTH_AUDIT_EVENT",
