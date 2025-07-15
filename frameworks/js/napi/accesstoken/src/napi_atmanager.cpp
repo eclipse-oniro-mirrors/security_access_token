@@ -1365,7 +1365,8 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
     if (subscriber == nullptr) {
         return false;
     }
-    napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber), [](napi_env nev, void *data, void *hint) {
+    napi_status status = napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber),
+        [](napi_env nev, void *data, void *hint) {
         std::shared_ptr<RegisterPermStateChangeScopePtr>* subscriber =
             static_cast<std::shared_ptr<RegisterPermStateChangeScopePtr>*>(data);
         if (subscriber != nullptr && *subscriber != nullptr) {
@@ -1373,6 +1374,12 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
             delete subscriber;
         }
     }, nullptr, nullptr);
+    if (status != napi_ok) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to wrap subscriber obj!");
+        delete subscriber;
+        subscriber = nullptr;
+        return false;
+    }
 
     return true;
 }
