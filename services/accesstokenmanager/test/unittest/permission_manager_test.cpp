@@ -1902,6 +1902,8 @@ HWTEST_F(PermissionManagerTest, UpdateMultiTokenPermissionState001, TestSize.Lev
     ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
         tokenId, permList, PERMISSION_DENIED, flag));
     infoPtr->SetRemote(false);
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
  /**

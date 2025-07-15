@@ -488,6 +488,10 @@ int32_t PermissionDataBrief::UpdateSecCompGrantedPermList(AccessTokenID tokenId,
 {
     uint32_t flag = 0;
     int32_t ret = QueryPermissionFlag(tokenId, permissionName, flag);
+    if ((flag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Flag is fixed by admin not Update, oldFlag %{public}u .", flag);
+        return ERR_PERMISSION_RESTRICTED;
+    }
 
     LOGD(ATM_DOMAIN, ATM_TAG, "Ret is %{public}d. flag is %{public}d", ret, flag);
     // if the permission has been operated by user or the permission has been granted by system.
