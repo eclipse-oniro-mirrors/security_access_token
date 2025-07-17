@@ -34,7 +34,7 @@ export default namespace privacyManager {
     native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
     native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
     native function getPermissionUsedTypeInfosExecute(
-        tokenId: int, permissionName: Permissions): Array<PermissionUsedTypeInfo>;
+        tokenId: int, permissionName: Permissions | ""): Array<PermissionUsedTypeInfo>;
     native function setPermissionUsedRecordToggleStatusExecute(status: boolean): void;
     native function getPermissionUsedRecordToggleStatusExecute(): boolean;
     native function onExecute(
