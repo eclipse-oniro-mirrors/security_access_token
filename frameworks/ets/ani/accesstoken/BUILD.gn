@@ -17,6 +17,7 @@ import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 
 ohos_shared_library("accesstoken_ani") {
+  shlib_type = "ani"
   sanitize = {
     cfi = true
     cfi_cross_dso = true
