@@ -18,6 +18,7 @@
 #include "common_event_support.h"
 #include "el5_filekey_manager_log.h"
 #include "el5_filekey_manager_service.h"
+#include "el5_memory_manager.h"
 #include "want.h"
 
 namespace OHOS {
@@ -40,6 +41,7 @@ void El5FilekeyManagerSubscriber::OnReceiveEvent(const EventFwk::CommonEventData
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
         DelayedSingleton<El5FilekeyManagerService>::GetInstance()->PostDelayedUnloadTask(SCREEN_ON_DELAY_TIME);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
+        El5MemoryManager::GetInstance().SetIsAllowUnloadService(false);
         // cancel unload task when screen is locked
         DelayedSingleton<El5FilekeyManagerService>::GetInstance()->CancelDelayedUnloadTask();
     }

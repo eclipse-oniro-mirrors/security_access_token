@@ -32,15 +32,15 @@ public:
     static El5MemoryManager& GetInstance();
     void AddFunctionRuningNum();
     void DecreaseFunctionRuningNum();
+    bool IsFunctionFinished();
     bool IsAllowUnloadService();
-    void SetIsDelayedToUnload(bool isUnload);
-    bool IsDelayedToUnload();
+    void SetIsAllowUnloadService(bool allow);
 
 private:
-    bool isDelayedToUnload_ = false;
+    bool isAllowUnloadService_ = false;
     int32_t callFuncRunningNum_ = 0;
     std::mutex callNumberMutex_;
-    std::mutex isDelayedMutex_;
+    std::mutex isAllowUnloadServiceMutex_;
 };
 }  // namespace AccessToken
 }  // namespace Security
