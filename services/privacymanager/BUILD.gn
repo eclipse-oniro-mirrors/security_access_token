@@ -241,6 +241,9 @@ if (is_standard_system && ability_base_enable == true) {
       sources += [ "src/common/privacy_common_event_subscriber.cpp" ]
     }
 
+    if (access_token_camera_float_window_enable) {
+      cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
+    }
     if (access_token_app_security_privacy_service_enable) {
       cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
     } else {
