@@ -140,6 +140,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
 
         Ace::ModalUIExtensionConfig config;
         config.isProhibitBack = true;
+        config.isModalRequestFocus = false;
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
 
         LOGI(ATM_DOMAIN, ATM_TAG, "Create end, sessionId: %{public}d, tokenId: %{public}d, permNum: %{public}zu",

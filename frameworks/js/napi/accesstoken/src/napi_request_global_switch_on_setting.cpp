@@ -295,6 +295,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestGlobalSwitchAsync
 
         Ace::ModalUIExtensionConfig config;
         config.isProhibitBack = true;
+        config.isModalRequestFocus = false;
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
         LOGI(ATM_DOMAIN, ATM_TAG, "Create end, sessionId: %{public}d, tokenId: %{public}d, switchType: %{public}d.",
             sessionId, asyncContext->tokenId, asyncContext->switchType);
