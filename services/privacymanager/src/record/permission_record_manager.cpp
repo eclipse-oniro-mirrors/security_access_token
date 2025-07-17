@@ -998,12 +998,14 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
                 continue;
             }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
             if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND)) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 ++it;
                 continue;
             }
+#endif
 
             // update status to input and timestamp to now in cache
             auto record = *it;
