@@ -70,8 +70,7 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
         case IApplicationStateObserver::Message::TRANSACT_ON_PAGE_HIDE:
         case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_SHOW:
         case IApplicationStateObserver::Message::TRANSACT_ON_WINDOW_HIDDEN:
-        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_BINDINGRELATION_CHANGED:
-        {
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_BINDINGRELATION_CHANGED: {
             return NO_ERROR;
         }
         default: {

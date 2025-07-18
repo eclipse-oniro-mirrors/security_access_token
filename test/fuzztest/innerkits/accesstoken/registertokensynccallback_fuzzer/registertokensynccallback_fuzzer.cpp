@@ -24,8 +24,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 #ifdef TOKEN_SYNC_ENABLE
 static constexpr int32_t NUMBER_TWO = 2;
-#endif // TOKEN_SYNC_ENABLE
-
+#endif
 namespace {
 class TokenSyncCallback : public TokenSyncKitInterface {
 public:

@@ -54,6 +54,7 @@ group("fuzztest") {
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
+    "setpermissionstatuswithpolicystub_fuzzer:SetPermissionStatusWithPolicyStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "updateuserpolicystub_fuzzer:UpdateUserPolicyStubFuzzTest",
