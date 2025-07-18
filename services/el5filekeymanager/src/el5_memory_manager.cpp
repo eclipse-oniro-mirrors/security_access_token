@@ -53,7 +53,7 @@ void El5MemoryManager::DecreaseFunctionRuningNum()
     callFuncRunningNum_--;
 }
 
-bool El5MemoryManager::IsAllowUnloadService()
+bool El5MemoryManager::IsFunctionFinished()
 {
     std::lock_guard<std::mutex> lock(callNumberMutex_);
     if (callFuncRunningNum_ == 0) {
@@ -63,16 +63,17 @@ bool El5MemoryManager::IsAllowUnloadService()
     return false;
 }
 
-void El5MemoryManager::SetIsDelayedToUnload(bool isUnload)
+bool El5MemoryManager::IsAllowUnloadService()
 {
-    std::lock_guard<std::mutex> lock(isDelayedMutex_);
-    isDelayedToUnload_ = isUnload;
+    std::lock_guard<std::mutex> lock(isAllowUnloadServiceMutex_);
+    return isAllowUnloadService_;
 }
 
-bool El5MemoryManager::IsDelayedToUnload()
+void El5MemoryManager::SetIsAllowUnloadService(bool allow)
 {
-    std::lock_guard<std::mutex> lock(isDelayedMutex_);
-    return isDelayedToUnload_;
+    LOG_INFO("The allow flag is (%{public}d).", allow);
+    std::lock_guard<std::mutex> lock(isAllowUnloadServiceMutex_);
+    isAllowUnloadService_ = allow;
 }
 }  // namespace AccessToken
 }  // namespace Security

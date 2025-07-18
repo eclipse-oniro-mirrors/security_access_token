@@ -143,7 +143,9 @@ void El5FilekeyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
     if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
         // screen is unlocked, sa is called by USER_REMOVED, auto stop in 30s.
-        if (!ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()) {
+        bool isScreenLocked = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
+        El5MemoryManager::GetInstance().SetIsAllowUnloadService(!isScreenLocked);
+        if (!isScreenLocked) {
             LOG_INFO("Init when screen is unlocked.");
             PostDelayedUnloadTask(SCREEN_ON_DELAY_TIME);
         }
@@ -166,7 +168,6 @@ void El5FilekeyManagerService::PostDelayedUnloadTask(uint32_t delayedTime)
             return;
         }
 
-        El5MemoryManager::GetInstance().SetIsDelayedToUnload(true);
         int32_t ret = systemAbilityManager->UnloadSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID);
         if (ret != ERR_OK) {
             LOG_ERROR("Unload el5_filekey_manager failed.");

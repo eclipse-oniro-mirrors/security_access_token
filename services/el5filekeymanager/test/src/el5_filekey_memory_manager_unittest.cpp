@@ -25,6 +25,7 @@ constexpr int32_t MAX_RUNNING_NUM = 256;
 constexpr int64_t EXTRA_PARAM = 3;
 constexpr int32_t SA_READY_TO_UNLOAD = 0;
 constexpr int32_t SA_REFUSE_TO_UNLOAD = -1;
+const std::string LOW_MEMORY_PARAM = "resourceschedule.memmgr.low.memory.prepare";
 } // namespace
 
 void El5FilekeyMemoryManagerTest::SetUp()
@@ -35,34 +36,29 @@ void El5FilekeyMemoryManagerTest::SetUp()
 
 /**
  * @tc.name: MemoryManagerTest001
- * @tc.desc: test AddFunctionRuningNum and DecreaseFunctionRuningNum.
+ * @tc.desc: test OnIdle
  * @tc.type: FUNC
  * @tc.require: issueICIZZE
  */
 HWTEST_F(El5FilekeyMemoryManagerTest, MemoryManagerTest001, TestSize.Level1)
 {
-    El5MemoryManager::GetInstance().SetIsDelayedToUnload(false);
-    OHOS::SystemAbilityOnDemandReason reason(OHOS::OnDemandReasonId::PARAM, "test", "true", EXTRA_PARAM);
+    OHOS::SystemAbilityOnDemandReason reason1(OHOS::OnDemandReasonId::PARAM, "test", "true", EXTRA_PARAM);
+    EXPECT_EQ(SA_READY_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason1));
+
+    El5MemoryManager::GetInstance().SetIsAllowUnloadService(false);
+    OHOS::SystemAbilityOnDemandReason reason2(OHOS::OnDemandReasonId::PARAM, LOW_MEMORY_PARAM, "true", EXTRA_PARAM);
+    EXPECT_EQ(SA_REFUSE_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason2));
+
     for (int32_t i = 0; i <= MAX_RUNNING_NUM + 1; i++) {
         El5MemoryManager::GetInstance().AddFunctionRuningNum();
     }
-    EXPECT_EQ(SA_REFUSE_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason));
+    EXPECT_EQ(SA_REFUSE_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason2));
+
+    El5MemoryManager::GetInstance().SetIsAllowUnloadService(true);
+    EXPECT_EQ(SA_REFUSE_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason2));
+
     for (int32_t i = 0; i <= MAX_RUNNING_NUM + 1; i++) {
         El5MemoryManager::GetInstance().DecreaseFunctionRuningNum();
     }
-    EXPECT_EQ(SA_READY_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason));
-}
-
-/**
- * @tc.name: MemoryManagerTest002
- * @tc.desc: test SetIsDelayedToUnload and IsDelayedToUnload.
- * @tc.type: FUNC
- * @tc.require: issueICIZZE
- */
-HWTEST_F(El5FilekeyMemoryManagerTest, MemoryManagerTest002, TestSize.Level1)
-{
-    El5MemoryManager::GetInstance().SetIsDelayedToUnload(true);
-    OHOS::SystemAbilityOnDemandReason reason(OHOS::OnDemandReasonId::PARAM, "test", "true", EXTRA_PARAM);
-    EXPECT_EQ(SA_READY_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason));
-    El5MemoryManager::GetInstance().SetIsDelayedToUnload(false);
+    EXPECT_EQ(SA_READY_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason2));
 }
