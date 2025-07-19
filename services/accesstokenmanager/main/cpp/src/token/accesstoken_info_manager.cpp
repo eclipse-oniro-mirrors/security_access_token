@@ -124,11 +124,10 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     pefDefSize = GetDefPermissionsSize();
 
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "InitTokenInfo end, hapSize %{public}u, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
+        "Init success, hapSize %{public}u, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
         hapSize, nativeSize, pefDefSize, dlpSize);
 
     hasInited_ = true;
-    LOGI(ATM_DOMAIN, ATM_TAG, "Init success");
 }
 
 static bool IsSystemResource(const std::string& bundleName)
