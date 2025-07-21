@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_service_test.h"
 #include "gtest/gtest.h"
+#include <gtest/hwext/gtest-multithread.h>
 
 #include "access_token_db.h"
 #include "access_token_error.h"
@@ -26,6 +27,7 @@ const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 
 using namespace testing::ext;
+using namespace testing::mt;
 using namespace OHOS;
 
 namespace OHOS {
@@ -36,6 +38,7 @@ static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr int32_t MULTIPLE_COUNT = 10;
 
 static PermissionStatus g_state1 = { // kernel permission
     .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
@@ -955,6 +958,52 @@ HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy001, TestSi
     ret = atManagerService_->SetPermissionStatusWithPolicy(
         0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: OnRemoteRequestTest001
+ * @tc.desc: OnRemoteRequest test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWMTEST_F(AccessTokenManagerServiceTest, OnRemoteRequestTest001, TestSize.Level1, MULTIPLE_COUNT)
+{
+    uint32_t code = 0;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    std::shared_ptr<AccessTokenManagerService> atService = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, atService);
+    int32_t ret = atService->OnRemoteRequest(code, data, reply, option);
+    EXPECT_NE(ERR_OK, ret);
+    atService = nullptr;
+}
+
+/**
+ * @tc.name: CallbackEnterAndExitTest001
+ * @tc.desc: CallbackEnter & CallbackExit test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, CallbackEnterAndExitTest001, TestSize.Level0)
+{
+    // stack empty
+    int32_t ret = atManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    // normal
+    ret = atManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = atManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    // ipc twice
+    ret = atManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = atManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = atManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = atManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
 }
 } // namespace AccessToken
 } // namespace Security
