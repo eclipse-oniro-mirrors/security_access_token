@@ -25,6 +25,11 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 
 bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_namespace& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->FindNamespace(namespaceDescriptor.c_str(), &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace failed!");
         return false;
@@ -34,6 +39,11 @@ bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_
 
 bool AniFindClass(ani_env* env, const std::string& classDescriptor, ani_class& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->FindClass(classDescriptor.c_str(), &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass(%{public}s) failed.", classDescriptor.c_str());
         return false;
@@ -45,6 +55,11 @@ bool AniClassFindMethod(
     ani_env* env, const ani_class& aniClass, const std::string& methodDescriptor,
     const std::string& signature, ani_method& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->Class_FindMethod(aniClass, methodDescriptor.c_str(), signature.c_str(), &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed!");
         return false;
@@ -54,6 +69,11 @@ bool AniClassFindMethod(
 
 bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fieldName, ani_field& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->Class_FindField(aniClass, fieldName, &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField failed!");
         return false;
@@ -63,6 +83,11 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fiel
 
 bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_int tmp;
     ani_status status;
     if ((status = env->Object_CallMethodByName_Int(
@@ -77,6 +102,11 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
 
 bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_size size;
     if (env->Array_GetLength(array, &size) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
@@ -104,6 +134,10 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::v
 std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref& aniStrArr)
 {
     std::vector<std::string> out;
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return out;
+    }
     ani_size size = 0;
     if (env->Array_GetLength(aniStrArr, &size) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
@@ -127,6 +161,11 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref&
 
 bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->GlobalReference_Create(aniCallback, &out) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed!");
         return false;
@@ -136,6 +175,11 @@ bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
 
 bool AniIsRefUndefined(ani_env* env, const ani_ref& ref)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_boolean isUnd;
     if (env->Reference_IsUndefined(ref, &isUnd) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Reference_IsUndefined failed!");
@@ -147,6 +191,11 @@ bool AniIsRefUndefined(ani_env* env, const ani_ref& ref)
 ani_string CreateAniString(ani_env* env, const std::string& str)
 {
     ani_string aniStr = {};
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return aniStr;
+    }
+
     if (env->String_NewUTF8(str.c_str(), str.size(), &aniStr) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_NewUTF8 failed!");
         return aniStr;
@@ -162,6 +211,11 @@ bool IsCurrentThread(std::thread::id threadId)
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (!IsCurrentThread(threadId)) {
         return false;
     }
@@ -177,6 +231,11 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
 
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     if (env->FunctionalObject_Call(fn, size, argv, &result) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AniFunctionalObjectCall failed.");
         return false;
@@ -186,6 +245,11 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
 
 std::string ParseAniString(ani_env* env, ani_string aniStr)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return "";
+    }
+
     ani_size strSize;
     if (env->String_GetUTF8Size(aniStr, &strSize) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size error.");
@@ -206,6 +270,11 @@ std::string ParseAniString(ani_env* env, ani_string aniStr)
 
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_size length = cArray.size();
     ani_array_ref aArrayRef = nullptr;
     ani_class aStringcls = nullptr;
@@ -237,6 +306,11 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
 
 ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_size length = cArray.size();
     ani_array_int aArrayInt = nullptr;
     if (env->Array_New_Int(length, &aArrayInt) != ANI_OK) {
@@ -256,6 +330,11 @@ ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
 
 ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_size length = cArray.size();
     ani_array_boolean aArrayBool = nullptr;
     if (env->Array_New_Boolean(length, &aArrayBool) != ANI_OK) {
@@ -279,6 +358,12 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
 
 void DeleteReference(ani_env* env, ani_ref& ref)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        ref = nullptr;
+        return;
+    }
+
     if (ref != nullptr) {
         env->GlobalReference_Delete(ref);
         ref = nullptr;
@@ -287,6 +372,11 @@ void DeleteReference(ani_env* env, ani_ref& ref)
 
 ani_object CreateBooleanObject(ani_env *env, bool value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("Lstd/core/Boolean;", &persionCls)) != ANI_OK) {
@@ -308,6 +398,11 @@ ani_object CreateBooleanObject(ani_env *env, bool value)
 
 ani_object CreateIntObject(ani_env *env, int32_t value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("Lstd/core/Int;", &persionCls)) != ANI_OK) {
@@ -329,6 +424,11 @@ ani_object CreateIntObject(ani_env *env, int32_t value)
 
 ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_class aniClass;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass(classDescriptor.c_str(), &aniClass)) != ANI_OK) {
@@ -352,6 +452,11 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 
 ani_object CreateArrayObject(ani_env* env, uint32_t length)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return nullptr;
+    }
+
     ani_class aniClass;
     if (!AniFindClass(env, "Lescompat/Array;", aniClass)) {
         return nullptr;
@@ -373,6 +478,11 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
 
 bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
@@ -395,6 +505,11 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
 
 bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
@@ -420,6 +535,11 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
 
 bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
@@ -442,6 +562,11 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
 
 bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
@@ -458,6 +583,11 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
 
 bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
@@ -481,6 +611,11 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
 bool GetStringVecProperty(
     ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value)
 {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        return false;
+    }
+
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {

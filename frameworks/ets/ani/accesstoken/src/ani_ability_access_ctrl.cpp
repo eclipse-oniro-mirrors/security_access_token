@@ -62,11 +62,12 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
-
-    if (ref_ != nullptr) {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Current env is nulltpr.");
+    } else if (ref_ != nullptr) {
         env->GlobalReference_Delete(ref_);
-        ref_ = nullptr;
     }
+    ref_ = nullptr;
 
     if (!isSameThread) {
         vm_->DetachCurrentThread();

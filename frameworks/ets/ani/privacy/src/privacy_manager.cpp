@@ -135,11 +135,12 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
-
-    if (ref_ != nullptr) {
+    if (env == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Current env is nulltpr.");
+    } else if (ref_ != nullptr) {
         env->GlobalReference_Delete(ref_);
-        ref_ = nullptr;
     }
+    ref_ = nullptr;
 
     if (!isSameThread) {
         vm_->DetachCurrentThread();
@@ -826,6 +827,7 @@ static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
 {
     if (env == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission = ParseAniString(env, static_cast<ani_string>(aniPermission));
