@@ -6803,8 +6803,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"],
-            "isKernelEffect": true
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.kernel.AUTH_AUDIT_EVENT",
@@ -6827,7 +6826,8 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["general"],
+            "isKernelEffect": true
         },
         {
             "name": "ohos.permission.SUPPORT_APP_SERVICE_EXTENSION",
