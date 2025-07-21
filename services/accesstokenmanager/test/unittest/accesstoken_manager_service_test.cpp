@@ -144,7 +144,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level
 }
 
 void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,
-    AccessTokenID& tokenId, std::map<int32_t, int32_t>& tokenIdAplMap, bool hasInit)
+    AccessTokenID& tokenId, std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit)
 {
     if (!hasInit) {
         atManagerService_->Initialize();
@@ -159,7 +159,7 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
     tokenIDEx.tokenIDEx = fullTokenId;
     tokenId = tokenIDEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    tokenIdAplMap[static_cast<int32_t>(tokenId)] = g_policy.apl;
+    tokenIdAplMap[static_cast<int32_t>(tokenId)].apl = g_policy.apl;
 }
 
 /**
@@ -194,7 +194,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE(hasValue is true) + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
@@ -231,7 +231,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // create master app
 
     HapInfoParcel infoParCel2;
@@ -272,7 +272,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
@@ -323,7 +323,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // update hap
@@ -359,7 +359,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // query undefine table
@@ -414,7 +414,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level0)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
@@ -477,7 +477,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level0)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
@@ -555,7 +555,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level0)
     policyParcel.hapPolicy = g_policy;
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     std::vector<GenericValues> values;
@@ -618,7 +618,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level0)
     policyParcel.hapPolicy = g_policy;
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
@@ -678,7 +678,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level0)
     policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
     policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName };
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant
@@ -751,7 +751,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
     policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName }; // POWER_MANAGER, hasValue is false
     policyParcel.hapPolicy.aclExtendedMap = { std::make_pair(g_state6.permissionName, "test") };
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     std::vector<GenericValues> values;
@@ -824,7 +824,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level0)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // KERNEL_ATM_SELF_USE, hasValue is true
 
     std::vector<GenericValues> values;
@@ -888,7 +888,7 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
     policyParcel.hapPolicy.permStateList = {g_state4};
     policyParcel.hapPolicy.aclExtendedMap = {};
     AccessTokenID tokenId;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     GenericValues value; // system grant

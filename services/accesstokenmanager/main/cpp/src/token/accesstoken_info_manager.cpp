@@ -59,6 +59,7 @@ std::recursive_mutex g_instanceMutex;
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+static constexpr int32_t SYSTEM_APP = 1;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
@@ -87,7 +88,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 }
 
 void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-    std::map<int32_t, int32_t>& tokenIdAplMap)
+    std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
     if (hasInited_) {
@@ -207,7 +208,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
     return RET_SUCCESS;
 }
 
-void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenIdAplMap)
+void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
@@ -228,13 +229,15 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
     }
     for (const GenericValues& tokenValue : hapTokenRes) {
         int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        int32_t apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
+        TokenIdInfo tokenIdInfo;
+        tokenIdInfo.apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
+        tokenIdInfo.isSystemApp = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR) == SYSTEM_APP;
         ret = AddHapInfoToCache(tokenValue, permStateRes, extendedPermRes);
         if (ret != RET_SUCCESS) {
             continue;
         }
         hapSize++;
-        tokenIdAplMap[tokenId] = apl;
+        tokenIdAplMap[tokenId] = tokenIdInfo;
     }
 }
 

@@ -119,6 +119,26 @@ CJson* GetArrayFromJson(CJsonUnique& jsonObj, const std::string& key)
     return GetArrayFromJson(jsonObj.get(), key);
 }
 
+bool GetArrayFromJson(const CJson* jsonObj, const std::string& key, std::vector<std::string>& out)
+{
+    if (jsonObj == nullptr || key.empty()) {
+        return false;
+    }
+
+    cJSON* stringArray = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
+    if (stringArray != nullptr && cJSON_IsArray(stringArray)) {
+        int32_t arraySize = cJSON_GetArraySize(stringArray);
+        for (int32_t i = 0; i < arraySize; i++) {
+            CJson* stringItem = cJSON_GetArrayItem(stringArray, i);
+            if (stringItem != nullptr && cJSON_IsString(stringItem)) {
+                out.emplace_back(cJSON_GetStringValue(stringItem));
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string& out)
 {
     if (jsonObj == nullptr || key.empty()) {

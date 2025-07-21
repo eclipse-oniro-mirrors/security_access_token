@@ -34,6 +34,7 @@ struct AccessTokenServiceConfig final {
     std::string globalSwitchAbilityName;
     int32_t cancelTime = 0;
     std::string applicationSettingAbilityName;
+    std::vector<std::string> enterpriseNormalPermissiveBundles;
 };
 
 struct PrivacyServiceConfig final {

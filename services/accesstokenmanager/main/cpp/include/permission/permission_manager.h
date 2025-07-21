@@ -109,7 +109,8 @@ public:
         std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
-    bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType);
+    bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType,
+        bool isSystemApp, PermissionRulesEnum& rule, const HapInitInfo& initInfo);
 
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
@@ -133,8 +134,8 @@ private:
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     void FillUndefinedPermVector(const std::string& permissionName, const std::string& appDistributionType,
         const HapPolicy& policy, std::vector<GenericValues>& undefValues);
-    bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy, const std::string& permissionName,
-        const std::string& appDistributionType, HapInfoCheckResult& result);
+    bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapInitInfo& initInfo,
+        const std::string& permissionName, const std::string& appDistributionType, HapInfoCheckResult& result);
     void GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     std::shared_ptr<LibraryLoader> GetAbilityManager();
     bool HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState);

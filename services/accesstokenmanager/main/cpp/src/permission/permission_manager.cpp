@@ -36,6 +36,7 @@
 #include "ipc_skeleton.h"
 #include "hisysevent_adapter.h"
 #include "parameter.h"
+#include "parameters.h"
 #include "short_grant_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
@@ -49,6 +50,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
 static constexpr int32_t VALUE_MAX_LEN = 32;
@@ -66,6 +68,8 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
+constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
+constexpr const char* APP_DISTRIBUTION_TYPE_DEBUG = "none";
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -1073,7 +1077,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 }
 
 bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef,
-    const std::string& appDistributionType)
+    const std::string& appDistributionType, bool isSystemApp, PermissionRulesEnum& rule, const HapInitInfo& initInfo)
 {
     if (briefDef.availableType == ATokenAvailableTypeEnum::MDM) {
         if (appDistributionType == "none") {
@@ -1084,6 +1088,27 @@ bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& 
         if (appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
                 briefDef.permissionName);
+                rule = PERMISSION_EDM_RULE;
+            return false;
+        }
+    }
+    if (briefDef.availableType == ATokenAvailableTypeEnum::ENTERPRISE_NORMAL) {
+        if (appDistributionType == APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM ||
+            appDistributionType == APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL ||
+            isSystemApp ||
+            appDistributionType == APP_DISTRIBUTION_TYPE_DEBUG) {
+            return true;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "EnterpriseRuleCheck permission = %{public}s bundleName = %{public}s, tokenID = %{public}d.",
+            briefDef.permissionName, initInfo.bundleName.c_str(), initInfo.tokenID);
+        rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
+            initInfo.tokenID, "PERMISSION_NAME", briefDef.permissionName, "INTERFACE", initInfo.bundleName);
+
+        bool isEnterpriseNormal = OHOS::system::GetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
+        if (isEnterpriseNormal) {
             return false;
         }
     }
@@ -1172,27 +1197,35 @@ void PermissionManager::FillUndefinedPermVector(const std::string& permissionNam
     return;
 }
 
-bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapPolicy& policy,
+bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapInitInfo& initInfo,
     const std::string& permissionName, const std::string& appDistributionType, HapInfoCheckResult& result)
 {
     // acl check
-    if (!IsAclSatisfied(briefDef, policy)) {
+    if (!IsAclSatisfied(briefDef, initInfo.policy)) {
         result.permCheckResult.permissionName = permissionName;
         result.permCheckResult.rule = PERMISSION_ACL_RULE;
         LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
         return false;
     }
 
-    // edm check
-    if (!IsPermAvailableRangeSatisfied(briefDef, appDistributionType)) {
-        result.permCheckResult.permissionName = permissionName;
-        result.permCheckResult.rule = PERMISSION_EDM_RULE;
-        LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
-
-        return false;
+    // edm and enterprise_normal check
+    bool isSystemApp = initInfo.isUpdate ? initInfo.updateInfo.isSystemApp : initInfo.installInfo.isSystemApp;
+    PermissionRulesEnum rule = PERMISSION_ACL_RULE;
+    if (IsPermAvailableRangeSatisfied(briefDef, appDistributionType, isSystemApp, rule, initInfo)) {
+        return true;
     }
 
-    return true;
+    std::string bundleName = initInfo.bundleName;
+    result.permCheckResult.permissionName = permissionName;
+    if (rule == PERMISSION_EDM_RULE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "MDM permission check failed.");
+        result.permCheckResult.rule = PERMISSION_EDM_RULE;
+    } else if (rule == PERMISSION_ENTERPRISE_NORMAL_RULE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enterprise normal permission check failed.");
+        result.permCheckResult.rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
+    }
+    LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
+    return false;
 }
 
 bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
@@ -1215,7 +1248,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
             continue;
         }
 
-        if (!AclAndEdmCheck(briefDef, initInfo.policy, state.permissionName, appDistributionType, result)) {
+        if (!AclAndEdmCheck(briefDef, initInfo, state.permissionName, appDistributionType, result)) {
             if (initInfo.updateInfo.dataRefresh) {
                 FillUndefinedPermVector(state.permissionName, appDistributionType, initInfo.policy, undefValues);
                 continue;
