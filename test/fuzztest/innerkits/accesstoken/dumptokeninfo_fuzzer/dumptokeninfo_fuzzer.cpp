@@ -15,35 +15,45 @@
 
 #include "dumptokeninfo_fuzzer.h"
 
-#include <iostream>
-#include <thread>
 #include <string>
 #include <vector>
 
-#undef private
+#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static const vector<OptType> TYPE_LIST = {
+    DEFAULT_OPER,
+    DUMP_TOKEN,
+    DUMP_RECORD,
+    DUMP_TYPE,
+    DUMP_PERM,
+    PERM_GRANT,
+    PERM_REVOKE
+};
 
 namespace OHOS {
-    bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        AtmToolsParamInfo info = {
-            .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
-        };
-
-        std::string dumpInfo;
-        AccessTokenKit::DumpTokenInfo(info, dumpInfo);
- 
-        return true;
+bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    uint32_t typeIndex = provider.ConsumeIntegral<uint32_t>() % static_cast<uint32_t>(TYPE_LIST.size());
+    OptType type = TYPE_LIST[typeIndex];
+    AtmToolsParamInfo info = {
+        .type = type,
+        .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+    };
+
+    std::string dumpInfo;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+
+    return true;
+}
 }
 
 /* Fuzzer entry point */

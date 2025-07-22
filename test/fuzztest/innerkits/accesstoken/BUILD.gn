@@ -56,13 +56,13 @@ group("fuzztest") {
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
+    "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
     "setremotehaptokeninfo_fuzzer:SetRemoteHapTokenInfoFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
     "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
     "verifyaccesstokenwithlist_fuzzer:VerifyAccessTokenWithListFuzzTest",
-    "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
   ]
   if (security_component_enhance_enable) {
     deps += [

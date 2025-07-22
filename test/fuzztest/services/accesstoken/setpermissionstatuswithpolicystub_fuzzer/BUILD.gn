@@ -11,15 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
 import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("IsToastShownNeededStubFuzzTest") {
+ohos_fuzztest("SetPermissionStatusWithPolicyStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [ "istoastshownneededstub_fuzzer.cpp" ]
+  sources = [ "setpermissionstatuswithpolicystub_fuzzer.cpp" ]
 
   cflags = [
     "-g",
