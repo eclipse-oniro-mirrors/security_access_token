@@ -175,6 +175,13 @@ int32_t AccessTokenManagerService::GetPermissionUsedType(
     return ERR_OK;
 }
 
+int32_t AccessTokenManagerService::VerifyAccessToken(
+    AccessTokenID tokenID, const std::string& permissionName, int32_t& state)
+{
+    state = VerifyAccessToken(tokenID, permissionName);
+    return RET_SUCCESS;
+}
+
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
 #ifdef HITRACE_NATIVE_ENABLE

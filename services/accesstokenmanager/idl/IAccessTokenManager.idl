@@ -34,7 +34,7 @@ import IdlCommon;
 option_stub_hooks on;
 
 interface OHOS.Security.AccessToken.IAccessTokenManager{
-    [ipccode 1] void VerifyAccessToken([in] unsigned int tokenID, [in] String permissionName);
+    [ipccode 1] void VerifyAccessToken([in] unsigned int tokenID, [in] String permissionName, [out] int state);
     [ipccode 2] void GetDefPermission([in] String permissionName, [out] PermissionDefParcel permissionDefResult);
     [ipccode 3] void GetReqPermissions([in] unsigned int tokenID, [out] List<PermissionStatusParcel> reqPermList, [in] boolean isSystemGrant);
     [ipccode 4] void GetPermissionFlag([in] unsigned int tokenID, [in] String permissionName, [out] unsigned int flag);

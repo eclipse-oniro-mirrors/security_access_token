@@ -295,6 +295,47 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithListAbnormalTest001, TestSi
     ASSERT_EQ(PERMISSION_DENIED, permStateList[1]);
     ASSERT_EQ(PERMISSION_DENIED, permStateList[2]);
 }
+
+/**
+ * @tc.name: VerifyAccessTokenWithRender001
+ * @tc.desc: Verify permission that tokenID is render.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithRender001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    int ret = TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", true);
+    EXPECT_EQ(PERMISSION_GRANTED, ret);
+    // get render token
+    uint64_t renderToken = TokenIdKit::GetRenderTokenID(tokenID);
+    ASSERT_NE(renderToken, INVALID_TOKENID);
+    ASSERT_NE(renderToken, tokenID);
+    AccessTokenID renderTokenID = static_cast<uint32_t>(renderToken);
+    // render return DENIED
+    ret = AccessTokenKit::VerifyAccessToken(renderTokenID, "ohos.permission.MICROPHONE", true);
+    EXPECT_EQ(ret, PERMISSION_DENIED);
+
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back("ohos.permission.MICROPHONE");
+    permissionList.emplace_back("ohos.permission.APPROXIMATELY_LOCATION");
+
+    std::vector<int32_t> permStateList;
+    ret = AccessTokenKit::VerifyAccessToken(renderTokenID, permissionList, permStateList, true);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permissionList.size(), permStateList.size());
+    EXPECT_EQ(PERMISSION_DENIED, permStateList[0]);
+    EXPECT_EQ(PERMISSION_DENIED, permStateList[1]);
+
+    ret = TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", true);
+    ASSERT_EQ(PERMISSION_DENIED, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

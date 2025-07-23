@@ -121,6 +121,7 @@ public:
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
     bool IsToastShownNeeded(int32_t pid);
+    bool IsRenderToken(int32_t tokenID);
 
 private:
     AccessTokenManagerClient();
