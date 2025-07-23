@@ -27,6 +27,10 @@ static constexpr int32_t MAX_CALLBACK_NUM = 10 * 1024;
 
 int32_t BackgroundTaskManagerAccessProxy::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
+    if (subscriber == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Subscriber is nullptr.");
+        return ERROR;
+    }
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -59,6 +63,10 @@ int32_t BackgroundTaskManagerAccessProxy::SubscribeBackgroundTask(const sptr<IBa
 
 int32_t BackgroundTaskManagerAccessProxy::UnsubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
+    if (subscriber == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Subscriber is nullptr.");
+        return ERROR;
+    }
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;

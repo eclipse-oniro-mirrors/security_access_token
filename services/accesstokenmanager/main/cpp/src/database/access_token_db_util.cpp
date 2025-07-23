@@ -108,6 +108,9 @@ void AccessTokenDbUtil::ToRdbPredicates(const GenericValues& conditionValue, Nat
 void AccessTokenDbUtil::ResultToGenericValues(const std::shared_ptr<NativeRdb::ResultSet>& resultSet,
     GenericValues& value)
 {
+    if (resultSet == nullptr) {
+        return;
+    }
     std::vector<std::string> columnNames;
     resultSet->GetAllColumnNames(columnNames);
     uint32_t size = columnNames.size(); // size 0 means insert or update nonthing, this should ignore

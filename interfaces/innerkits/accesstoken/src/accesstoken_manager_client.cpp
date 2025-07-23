@@ -540,6 +540,10 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
         LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback already is not exist");
         return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
     }
+    if (goalCallback->second == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback is null");
+        return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
+    }
     int32_t result;
     if (type == SYSTEM_REGISTER_TYPE) {
         result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());

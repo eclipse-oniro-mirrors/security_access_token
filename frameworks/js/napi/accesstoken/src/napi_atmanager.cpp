@@ -420,6 +420,10 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
@@ -501,8 +505,11 @@ void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, v
     __attribute__((no_sanitize("cfi")))
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-
     napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
     ReturnPromiseResult(env, *asyncContext, result);
@@ -739,6 +746,10 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* context = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (context == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {context};
     napi_value result = GetNapiNull(env);
 
@@ -794,6 +805,10 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
 void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result = nullptr;
     LOGD(ATM_DOMAIN, ATM_TAG, "Version result = %{public}d.", asyncContext->result);
@@ -931,6 +946,10 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
 
     asyncContext->errorCode = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
         asyncContext->permissionName, asyncContext->flag);
@@ -939,6 +958,10 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = nullptr;
@@ -1044,6 +1067,10 @@ bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_cal
 void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
 
     asyncContext->errorCode = AccessTokenKit::SetPermissionRequestToggleStatus(asyncContext->permissionName,
         asyncContext->status, 0);
@@ -1052,6 +1079,10 @@ void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *
 void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = nullptr;
@@ -1063,6 +1094,10 @@ void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_
 void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
 
     asyncContext->errorCode = AccessTokenKit::GetPermissionRequestToggleStatus(asyncContext->permissionName,
         asyncContext->status, 0);
@@ -1071,6 +1106,10 @@ void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *
 void NapiAtManager::GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = nullptr;
@@ -1198,6 +1237,10 @@ void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void *data)
 void NapiAtManager::RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = GetNapiNull(env);

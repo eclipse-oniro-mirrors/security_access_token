@@ -78,7 +78,7 @@ void ProxyDeathHandler::ReleaseProxies()
     std::lock_guard lock(proxyLock_);
     for (auto iter: proxyStubAndRecipientMap_) {
         auto object = iter.first;
-        if (!object->IsObjectDead()) {
+        if (object != nullptr && !object->IsObjectDead()) {
             object->RemoveDeathRecipient(iter.second.first);
         }
     }
@@ -88,9 +88,13 @@ void ProxyDeathHandler::ReleaseProxyByParam(const std::shared_ptr<ProxyDeathPara
 {
     std::lock_guard lock(proxyLock_);
     for (auto iter = proxyStubAndRecipientMap_.begin(); iter != proxyStubAndRecipientMap_.end();) {
+        if (iter->second.second == nullptr || param == nullptr) {
+            ++iter;
+            continue;
+        }
         if (iter->second.second->IsEqual(param.get())) {
             auto object = iter->first;
-            if (!object->IsObjectDead()) {
+            if (object != nullptr && !object->IsObjectDead()) {
                 object->RemoveDeathRecipient(iter->second.first);
             }
             iter = proxyStubAndRecipientMap_.erase(iter);

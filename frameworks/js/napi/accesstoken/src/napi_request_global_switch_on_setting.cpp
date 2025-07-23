@@ -190,6 +190,10 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestGlobalSwitchA
 
 void SwitchOnSettingUICallback::ReleaseHandler(int32_t code)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
         if (this->reqContext_->releaseFlag) {
@@ -226,6 +230,10 @@ void SwitchOnSettingUICallback::SetSessionId(int32_t sessionId)
  */
 void SwitchOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->reqContext_->switchStatus = result.GetBoolParam(GLOBAL_SWITCH_RESULT_KEY, 0);
     LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d, errorCode=%{public}d, switchStatus=%{public}d",
@@ -421,6 +429,10 @@ void RequestGlobalSwitchAsyncInstanceControl::UpdateQueueData(
         int32_t targetSwitchType = reqContext->switchType;
         LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
         for (auto& asyncContext : iter->second) {
+            if (asyncContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+                continue;
+            }
             if (targetSwitchType == asyncContext->switchType) {
                 asyncContext->errorCode = reqContext->errorCode;
                 asyncContext->switchStatus = reqContext->switchStatus;
@@ -444,6 +456,11 @@ void RequestGlobalSwitchAsyncInstanceControl::ExecCallback(int32_t id)
         while (!iter->second.empty()) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
+            if (asyncContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+                iter->second.erase(iter->second.begin());
+                continue;
+            }
             iter->second.erase(iter->second.begin());
             CheckDynamicRequest(asyncContext, isDynamic);
             if (isDynamic) {
@@ -482,6 +499,10 @@ napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callb
         return nullptr;
     }
     auto asyncContextHandle = std::make_unique<RequestGlobalSwitchAsyncContextHandle>(asyncContext);
+    if (asyncContextHandle->asyncContextPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return nullptr;
+    }
     napi_value result = nullptr;
     if (asyncContextHandle->asyncContextPtr->callbackRef == nullptr) {
         NAPI_CALL(env, napi_create_promise(env, &(asyncContextHandle->asyncContextPtr->deferred), &result));

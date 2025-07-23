@@ -138,6 +138,10 @@ int RemoteCommandManager::Loop()
     std::unique_lock<std::mutex> lock(mutex_);
     for (auto it = executors_.begin(); it != executors_.end(); it++) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Udid:%{public}s", ConstantCommon::EncryptDevId(it->first).c_str());
+        if (it->second == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "RemoteCommandExecutor is null.");
+            continue;
+        }
         (*it).second->ProcessBufferedCommandsWithThread();
     }
     return Constant::SUCCESS;
@@ -222,8 +226,12 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
     });
 
 #ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AccessEventHandler> handler =
-        DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
+    auto tokenSyncManagerService = DelayedSingleton<TokenSyncManagerService>::GetInstance();
+    if (tokenSyncManagerService == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService is null.");
+        return Constant::FAILURE;
+    }
+    std::shared_ptr<AccessEventHandler> handler = tokenSyncManagerService->GetSendEventHandler();
     if (handler == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return Constant::FAILURE;

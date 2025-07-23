@@ -221,8 +221,12 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
     };
 
 #ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AccessEventHandler> handler =
-        DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
+    auto tokenSyncManagerService = DelayedSingleton<TokenSyncManagerService>::GetInstance();
+    if (tokenSyncManagerService == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService is null.");
+        return;
+    }
+    std::shared_ptr<AccessEventHandler> handler = tokenSyncManagerService->GetSendEventHandler();
     if (handler == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return;
@@ -243,8 +247,9 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     const std::shared_ptr<BaseRemoteCommand>& ptrCommand, const bool isRemote)
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
+    std::string tartgetNodeId = ConstantCommon::EncryptDevId(targetNodeId_);
     LOGI(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, uniqueId %{public}s, remote %{public}d: start to execute.",
-        ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str(), isRemote);
+        tartgetNodeId.c_str(), uniqueId.c_str(), isRemote);
 
     ptrCommand->remoteProtocol_.statusCode = Constant::STATUS_CODE_BEFORE_RPC;
 
@@ -261,18 +266,22 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
 
     std::string responseString;
     int32_t repeatTimes = SoftBusManager::GetInstance().GetRepeatTimes(); // repeat 5 times if responseString empty
+    if (ptrChannel_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, channel is null.", tartgetNodeId.c_str());
+        return Constant::FAILURE;
+    }
+    std::string commandName = ptrCommand->remoteProtocol_.commandName;
     for (int32_t i = 0; i < repeatTimes; ++i) {
-        responseString = ptrChannel_->ExecuteCommand(ptrCommand->remoteProtocol_.commandName,
-            ptrCommand->ToJsonPayload());
+        responseString = ptrChannel_->ExecuteCommand(commandName, ptrCommand->ToJsonPayload());
         if (!responseString.empty()) {
             break; // when responseString is not empty, break the loop
         }
 
         LOGW(ATM_DOMAIN, ATM_TAG,
             "TargetNodeId %{public}s, uniqueId %{public}s, execute remote command error, response is empty.",
-            ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
+            tartgetNodeId.c_str(), uniqueId.c_str());
     }
-    
+
     if (responseString.empty()) {
         if (commands_.empty()) {
             ptrChannel_->CloseConnection(); // if command send failed, also try to close session
@@ -281,11 +290,9 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     }
 
     std::shared_ptr<BaseRemoteCommand> ptrResponseCommand =
-        RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(
-            ptrCommand->remoteProtocol_.commandName, responseString);
+        RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, responseString);
     if (ptrResponseCommand == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, get null response command!",
-            ConstantCommon::EncryptDevId(targetNodeId_).c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, get null response command!", tartgetNodeId.c_str());
         return Constant::FAILURE;
     }
     int32_t result = ClientProcessResult(ptrResponseCommand);

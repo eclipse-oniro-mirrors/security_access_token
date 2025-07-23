@@ -455,6 +455,10 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
     std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
     BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
     for (auto iter = continuousTaskList.begin(); iter != continuousTaskList.end(); iter++) {
+        if ((*iter) == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "ContinuousTaskCallbackInfo is null");
+            continue;
+        }
         if (static_cast<AccessTokenID>((*iter)->tokenId_) == tokenID) {
             if (std::any_of((*iter)->typeIds_.begin(), (*iter)->typeIds_.end(),
                 [](const auto& typeId) { return static_cast<BackgroundMode>(typeId) == BackgroundMode::LOCATION; })) {

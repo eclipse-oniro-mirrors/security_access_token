@@ -291,6 +291,10 @@ static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& perm
 static void RequestResultsHandler(const std::vector<std::string>& permissionList,
     const std::vector<int32_t>& permissionStates, std::shared_ptr<RequestAsyncContext>& data)
 {
+    if (data == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     auto* retCB = new (std::nothrow) ResultCallback();
     if (retCB == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Insufficient memory for work!");
@@ -451,6 +455,10 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
 
 void UIExtensionCallback::ReleaseHandler(int32_t code)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
         if (this->reqContext_->releaseFlag) {
@@ -484,6 +492,10 @@ void UIExtensionCallback::SetSessionId(int32_t sessionId)
  */
 void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     isOnResult_.exchange(true);
     LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d", resultCode);
     this->reqContext_->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
@@ -660,10 +672,21 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
     return true;
 }
 
+static inline void ReportHisysEventReqPermsFromUserBehavior(std::string bundleName, bool uiExtensionFlag)
+{
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "BUNDLENAME", bundleName, "UIEXTENSION_FLAG", uiExtensionFlag);
+}
+
 void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void* data)
 {
     // asyncContext release in complete.
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
+    if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID: %{public}d, selfTokenID: %{public}d.",
@@ -683,6 +706,7 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
         return;
     }
     GetInstanceId(asyncContextHandle->asyncContextPtr);
+    std::string bundleName = asyncContextHandle->asyncContextPtr->bundleName;
     // service extension dialog
     if (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Pop service extension dialog, uiContentFlag=%{public}d",
@@ -695,18 +719,12 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
     } else if (asyncContextHandle->asyncContextPtr->instanceId == -1) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Pop service extension dialog, instanceId is -1.");
         CreateServiceExtension(asyncContextHandle->asyncContextPtr);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-            "BUNDLENAME", asyncContextHandle->asyncContextPtr->bundleName,
-            "UIEXTENSION_FLAG", false);
+        ReportHisysEventReqPermsFromUserBehavior(bundleName, false);
     } else {
         LOGI(ATM_DOMAIN, ATM_TAG, "Pop ui extension dialog");
         asyncContextHandle->asyncContextPtr->uiExtensionFlag = true;
         RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-            "BUNDLENAME", asyncContextHandle->asyncContextPtr->bundleName,
-            "UIEXTENSION_FLAG", asyncContextHandle->asyncContextPtr->uiExtensionFlag);
+        ReportHisysEventReqPermsFromUserBehavior(bundleName, asyncContextHandle->asyncContextPtr->uiExtensionFlag);
         if (!asyncContextHandle->asyncContextPtr->uiExtensionFlag) {
             LOGW(ATM_DOMAIN, ATM_TAG, "Pop uiextension dialog fail, start to pop service extension dialog.");
             RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
@@ -717,6 +735,10 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
 void NapiRequestPermission::RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data)
 {
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
+    if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RequestAsyncContextHandle> callbackPtr {asyncContextHandle};
 
     if (asyncContextHandle->asyncContextPtr->needDynamicRequest) {
@@ -820,6 +842,10 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
 void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void *data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
 
     std::vector<PermissionListState> permList;
     for (const auto& permission : asyncContext->permissionList) {
@@ -842,6 +868,10 @@ void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void *data
 void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_status status, void *data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
 
     if ((asyncContext->permissionQueryResults.empty()) && asyncContext->result.errorCode == RET_SUCCESS) {
@@ -912,6 +942,11 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
         while (!iter->second.empty()) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
+            if (asyncContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+                iter->second.erase(iter->second.begin());
+                continue;
+            }
             iter->second.erase(iter->second.begin());
             CheckDynamicRequest(asyncContext, isDynamic);
             if (isDynamic) {

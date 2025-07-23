@@ -76,6 +76,24 @@ int SoftBusChannel::BuildConnection()
     return Constant::SUCCESS;
 }
 
+#ifdef EVENTHANDLER_ENABLE
+static bool GetSendEventHandler(std::shared_ptr<AccessEventHandler>& handler)
+{
+    auto tokenSyncManagerService = DelayedSingleton<TokenSyncManagerService>::GetInstance();
+    if (tokenSyncManagerService == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService is null.");
+        return false;
+    }
+    handler = tokenSyncManagerService->GetSendEventHandler();
+    if (handler == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
+        return false;
+    }
+
+    return true;
+}
+#endif
+
 void SoftBusChannel::CloseConnection()
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Close connection");
@@ -85,9 +103,8 @@ void SoftBusChannel::CloseConnection()
     }
 
 #ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AccessEventHandler> handler =
-        DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
-    if (handler == nullptr) {
+    std::shared_ptr<AccessEventHandler> handler = nullptr;
+    if (!GetSendEventHandler(handler)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return;
     }
@@ -122,9 +139,8 @@ void SoftBusChannel::CloseConnection()
 void SoftBusChannel::Release()
 {
 #ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AccessEventHandler> handler =
-        DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
-    if (handler == nullptr) {
+    std::shared_ptr<AccessEventHandler> handler = nullptr;
+    if (!GetSendEventHandler(handler)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return;
     }
@@ -243,9 +259,8 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
         });
 
 #ifdef EVENTHANDLER_ENABLE
-        std::shared_ptr<AccessEventHandler> handler =
-            DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRecvEventHandler();
-        if (handler == nullptr) {
+        std::shared_ptr<AccessEventHandler> handler = nullptr;
+        if (!GetSendEventHandler(handler)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
             return;
         }

@@ -199,6 +199,10 @@ void AppManagerAccessClient::OnRemoteDiedHandle()
     }
 
     for (size_t i = 0; i < tmpCallbackList.size(); i++) {
+        if (tmpCallbackList[i] == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "AppManagerDeathCallback is null");
+            continue;
+        }
         tmpCallbackList[i]->NotifyAppManagerDeath();
     }
     {
