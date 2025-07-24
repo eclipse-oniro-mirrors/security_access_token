@@ -90,9 +90,9 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
         return nullptr;
     }
-    status = env->Object_SetField_Double(obj, field, code);
+    status = env->Object_SetField_Int(obj, field, code);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Double : %{public}d", status);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Int : %{public}d", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "data", &field);
