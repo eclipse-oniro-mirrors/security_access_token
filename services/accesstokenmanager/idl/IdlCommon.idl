@@ -43,7 +43,8 @@ struct UpdateHapInfoParamsIdl {
 
 enum PermissionRulesEnumIdl {
     PERMISSION_EDM_RULE = 0,
-    PERMISSION_ACL_RULE
+    PERMISSION_ACL_RULE,
+    PERMISSION_ENTERPRISE_NORMAL_RULE
 };
 
 struct HapInfoCheckResultIdl {

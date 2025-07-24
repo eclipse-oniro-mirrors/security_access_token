@@ -47,7 +47,7 @@ public:
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
     void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-        std::map<int32_t, int32_t>& tokenIdAplMap);
+        std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
@@ -109,7 +109,7 @@ private:
 
     int32_t AddHapInfoToCache(const GenericValues& tokenValue, const std::vector<GenericValues>& permStateRes,
         const std::vector<GenericValues>& extendedPermRes);
-    void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, int32_t>& tokenIdAplMap);
+    void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
     void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;

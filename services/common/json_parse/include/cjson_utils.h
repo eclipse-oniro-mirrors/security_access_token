@@ -51,6 +51,7 @@ CJson* GetObjFromJson(const CJson* jsonObj, const std::string& key);
 CJson* GetObjFromJson(CJsonUnique& jsonObj, const std::string& key);
 CJson* GetArrayFromJson(const CJson* jsonObj, const std::string& key);
 CJson* GetArrayFromJson(CJsonUnique& jsonObj, const std::string& key);
+bool GetArrayFromJson(const CJson* jsonObj, const std::string& key, std::vector<std::string>& out);
 
 /*
 * Return a copy of string in jsonObj in std::string

@@ -753,6 +753,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         HapInitInfo initInfo;
         initInfo.installInfo = info.hapInfoParameter;
         initInfo.policy = policyCopy.hapPolicy;
+        initInfo.bundleName = info.hapInfoParameter.bundleName;
         if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult,
             undefValues)) {
             resultInfoIdl.realResult = ERROR;
@@ -858,8 +859,8 @@ int32_t AccessTokenManagerService::AllocLocalTokenID(
     return ERR_OK;
 }
 
-int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
-    const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl)
+int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const std::string& bundleName,
+    const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl)
 {
     std::vector<PermissionStatus> InitializedList;
     resultInfoIdl.realResult = ERR_OK;
@@ -869,6 +870,8 @@ int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx
     initInfo.updateInfo = info;
     initInfo.policy = policyParcel.hapPolicy;
     initInfo.isUpdate = true;
+    initInfo.bundleName = bundleName;
+    initInfo.tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!PermissionManager::GetInstance().InitPermissionList(initInfo, InitializedList, permCheckResult, undefValues)) {
         resultInfoIdl.realResult = ERROR;
         resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
@@ -946,7 +949,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         "PERM_INFO", dfxInfo.permInfo, "ACL_INFO", dfxInfo.aclInfo, "PREAUTH_INFO", dfxInfo.preauthInfo,
         "EXTEND_INFO", dfxInfo.extendInfo);
 
-    int32_t ret = UpdateHapTokenCore(tokenIdEx, info, policyParcel, resultInfoIdl);
+    int32_t ret = UpdateHapTokenCore(tokenIdEx, hapInfo.bundleName, info, policyParcel, resultInfoIdl);
     fullTokenId = tokenIdEx.tokenIDEx;
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -1433,7 +1436,7 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
 }
 
 void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValues>& results,
-    const std::map<int32_t, int32_t>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
+    const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
 {
     int32_t tokenId = 0;
     std::string permissionName;
@@ -1455,14 +1458,18 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
             continue;
         }
 
+        PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
-        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(data, appDistributionType)) {
+        HapInitInfo initInfo;
+        initInfo.tokenID = tokenId;
+        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
+            data, appDistributionType, iter->second.isSystemApp, rule, initInfo)) {
             continue;
         }
 
         acl = result.GetInt(TokenFiledConst::FIELD_ACL);
         value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(iter->second, data, value, (acl == 1))) {
+        if (!IsPermissionValid(iter->second.apl, data, value, (acl == 1))) {
             // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
             continue;
         }
@@ -1545,7 +1552,7 @@ bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const Permissi
     return false;
 }
 
-void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, int32_t>& tokenIdAplMap,
+void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
     std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
     std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues)
 {
@@ -1593,7 +1600,7 @@ void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<AtmDataTyp
     updateDbThread.detach();
 }
 
-void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, int32_t>& tokenIdAplMap)
+void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
 {
     std::string dbPermDefVersion;
     GenericValues conditionValue;
@@ -1650,7 +1657,7 @@ bool AccessTokenManagerService::Initialize()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, int32_t> tokenIdAplMap;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
     HandlePermDefUpdate(tokenIdAplMap);
 
