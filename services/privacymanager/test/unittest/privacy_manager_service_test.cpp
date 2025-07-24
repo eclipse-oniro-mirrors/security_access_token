@@ -1164,7 +1164,7 @@ HWTEST_F(PrivacyManagerServiceTest, SetMutePolicyInner002, TestSize.Level0)
     uint32_t callerType = 0;
     bool isMute = false;
 
-    MockNativeToken mock("camera_service");
+    MockNativeToken mock("audio_server");
 
     int32_t ret = privacyManagerService_->SetMutePolicy(policyType, callerType, isMute, tokenID);
     EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);

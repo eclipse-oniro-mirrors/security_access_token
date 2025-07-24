@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,12 +20,12 @@
 #include <sstream>
 
 #include "access_token.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_common_log.h"
-#include "access_token_db.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
 #include "constant_common.h"
@@ -1135,8 +1135,9 @@ void PermissionManager::GetMasterAppUndValues(AccessTokenID tokenId, std::vector
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    int32_t res = AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results); // get master app hap undefined data
+
+    // get master app hap undefined data
+    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results);
     if (res != 0) {
         return;
     }

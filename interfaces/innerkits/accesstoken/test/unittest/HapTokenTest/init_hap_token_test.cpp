@@ -266,6 +266,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest004, TestSize.Level0)
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
+#ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: InitHapTokenFuncTest005
  * @tc.desc: InitHapToken with dlp type.
@@ -329,6 +330,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest005, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(dlpFullTokenId1.tokenIdExStruct.tokenID));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(dlpFullTokenId2.tokenIdExStruct.tokenID));
 }
+#endif
 
 /**
  * @tc.name: InitHapTokenFuncTest006

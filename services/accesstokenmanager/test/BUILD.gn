@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../access_token.gni")
+
 group("unittest") {
   testonly = true
   deps = [
@@ -18,4 +20,7 @@ group("unittest") {
     "mock:libpermission_manager_mock_test",
     "unittest:libaccesstoken_manager_service_standard_test",
   ]
+  if (light_device_enable) {
+    deps += [ "database_dlopen:libaccesstoken_manager_service_dlopen_test" ]
+  }
 }

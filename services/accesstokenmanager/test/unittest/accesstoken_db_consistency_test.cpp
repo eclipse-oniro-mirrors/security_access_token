@@ -147,7 +147,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, CreateHapTokenCompareTest001, TestSize.Le
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results));
     EXPECT_EQ(policyParcel.hapPolicy.permStateList.size(), results.size()); // size is 3
     for (auto const &val : results) {
@@ -159,7 +159,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, CreateHapTokenCompareTest001, TestSize.Le
     }
 
     std::vector<GenericValues> results2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
@@ -202,7 +202,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdateHapTokenCompareTest001, TestSize.Le
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results));
     EXPECT_EQ(policyParcel.hapPolicy.permStateList.size(), results.size()); // size is 4
     for (auto const &val : results) {
@@ -214,7 +214,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdateHapTokenCompareTest001, TestSize.Le
     }
 
     std::vector<GenericValues> results2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
@@ -247,7 +247,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdatePermStatusCompareTest001, TestSize.
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results));
     EXPECT_EQ(policyParcel.hapPolicy.permStateList.size(), results.size()); // size is 3
     for (auto const &val : results) {
@@ -266,7 +266,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdatePermStatusCompareTest001, TestSize.
 
     // compare after revoke
     std::vector<GenericValues> results2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results2));
     EXPECT_EQ(policyParcel.hapPolicy.permStateList.size(), results2.size()); // size is 3
     for (auto const &val : results2) {
@@ -278,7 +278,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdatePermStatusCompareTest001, TestSize.
     }
 
     std::vector<GenericValues> results3;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results3));
     EXPECT_EQ(1, results3.size());
 
@@ -312,12 +312,12 @@ HWTEST_F(AccessTokenDbConsistencyTest, DeleteHapTokenCompareTest001, TestSize.Le
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results));
     EXPECT_EQ(0, results.size()); // size is 0
 
     std::vector<GenericValues> results2;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
     EXPECT_EQ(0, results2.size()); // size is 0
 }

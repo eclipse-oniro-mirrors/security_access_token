@@ -138,14 +138,14 @@ static void RemoveTestTokenHapInfo()
 {
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TEST_TOKEN_ID));
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
-    deleteValues.emplace_back(condition);
+    DelInfo delInfo;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    delInfo.delValue = condition;
 
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues);
+    std::vector<DelInfo> delInfoVec;
+    delInfoVec.emplace_back(delInfo);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
 /*
@@ -173,18 +173,14 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
     genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    addInfo.addValues.emplace_back(genericValues);
 
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    std::vector<GenericValues> value;
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
-    value.emplace_back(genericValues);
-    addValues.emplace_back(value);
-    EXPECT_EQ(0,
-        AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes, addValues));
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
 
     GenericValues modifyValues;
     modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
@@ -193,12 +189,12 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
     conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
     conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
-    ASSERT_EQ(0, AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValues, conditions));
+    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValues, conditions));
 
     bool modifySuccess = false;
     GenericValues conditionValue;
     std::vector<GenericValues> hapInfoResults;
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
+    AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {

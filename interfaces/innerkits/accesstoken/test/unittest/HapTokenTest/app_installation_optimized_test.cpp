@@ -376,6 +376,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
+#ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: InitHapToken011
  * @tc.desc: InitHapToken with dlp type.
@@ -431,6 +432,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level0)
     EXPECT_EQ(permStatList2[1].grantFlags[0], PERMISSION_USER_SET);
     EXPECT_EQ(RET_SUCCESS, res);
 }
+#endif
 
 /**
  * @tc.name: UpdateHapToken001

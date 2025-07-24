@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "access_token_db.h"
 #include "access_token.h"
 #include "atm_tools_param_info.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -115,8 +116,10 @@ private:
     std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
     std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     int32_t RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId);
-    void FillDelValues(AccessTokenID tokenID, bool isSystemRes, const std::vector<GenericValues>& permExtendValues,
-        const std::vector<GenericValues>& undefValues, std::vector<GenericValues>& deleteValues);
+    void GenerateAddInfoToVec(AtmDataType type, const std::vector<GenericValues>& addValues,
+        std::vector<AddInfo>& addInfoVec);
+    void GenerateDelInfoToVec(AtmDataType type, const GenericValues& delValue,
+        std::vector<DelInfo>& delInfoVec);
     void AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo, const std::string& appId,
         const HapPolicy& policy, bool isUpdate, const std::vector<GenericValues>& undefValues);

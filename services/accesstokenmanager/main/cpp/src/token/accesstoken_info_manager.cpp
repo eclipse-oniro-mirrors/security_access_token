@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,11 +22,11 @@
 #include <unistd.h>
 #include <securec.h>
 #include "access_token.h"
-#include "access_token_db.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_remote_token_manager.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "atm_tools_param_info_parcel.h"
 #include "callback_manager.h"
@@ -213,16 +213,16 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permStateRes;
     std::vector<GenericValues> extendedPermRes;
-    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
     if (ret != RET_SUCCESS || hapTokenRes.empty()) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load hap from db fail.", ret);
     }
-    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS || permStateRes.empty()) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load perm state from db fail.", ret);
     }
-    ret = AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, extendedPermRes);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue,
+        extendedPermRes);
     if (ret != RET_SUCCESS) { // extendedPermRes may be empty
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
     }
@@ -303,15 +303,17 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
 {
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
+
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS || hapTokenResults.empty()) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
             "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
         return nullptr;
     }
+
     std::vector<GenericValues> permStateRes;
-    ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
             "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
@@ -319,8 +321,8 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     }
 
     std::vector<GenericValues> extendedPermRes;
-    ret = AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, extendedPermRes);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue,
+        extendedPermRes);
     if (ret != RET_SUCCESS) { // extendedPermRes may be empty
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_extend_value_table, err: %{public}d, "
             "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
@@ -391,8 +393,8 @@ int32_t AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordere
     GenericValues conditionValue;
     std::vector<GenericValues> tokenIDResults;
     conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    int32_t ret = AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, tokenIDResults);
+
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, tokenIDResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "UserID(%{public}d) find tokenID failed, ret: %{public}d.", userID, ret);
         return ret;
@@ -1052,27 +1054,22 @@ static void GetUserGrantPermFromDef(const std::vector<PermissionDef>& permList, 
     }
 }
 
-void AccessTokenInfoManager::FillDelValues(AccessTokenID tokenID, bool isSystemRes,
-    const std::vector<GenericValues>& permExtendValues, const std::vector<GenericValues>& undefValues,
-    std::vector<GenericValues>& deleteValues)
+void AccessTokenInfoManager::GenerateAddInfoToVec(AtmDataType type, const std::vector<GenericValues>& addValues,
+    std::vector<AddInfo>& addInfoVec)
 {
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    deleteValues.emplace_back(conditionValue); // hap_token_info_table
-    deleteValues.emplace_back(conditionValue); // permission_state_table
+    AddInfo addInfo;
+    addInfo.addType = type;
+    addInfo.addValues = addValues;
+    addInfoVec.emplace_back(addInfo);
+}
 
-    if (isSystemRes) {
-        deleteValues.emplace_back(conditionValue); // permission_definition_table
-    }
-
-    if (!permExtendValues.empty()) {
-        deleteValues.emplace_back(conditionValue); // permission_extend_value_table
-    }
-
-    if (!undefValues.empty()) {
-        deleteValues.emplace_back(conditionValue); // hap_undefine_info_table
-    }
-    return;
+void AccessTokenInfoManager::GenerateDelInfoToVec(AtmDataType type, const GenericValues& delValue,
+    std::vector<DelInfo>& delInfoVec)
+{
+    DelInfo delInfo;
+    delInfo.delType = type;
+    delInfo.delValue = delValue;
+    delInfoVec.emplace_back(delInfo);
 }
 
 int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
@@ -1089,52 +1086,39 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(const std::shared_ptr<HapTokenIn
     AccessTokenID tokenID = hapInfo->GetTokenID();
     bool isSystemRes = IsSystemResource(hapInfo->GetBundleName());
 
+    std::vector<AddInfo> addInfoVec;
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, undefValues, addInfoVec);
+
     std::vector<GenericValues> hapInfoValues; // get new hap token info from cache
     hapInfo->StoreHapInfo(hapInfoValues, appId, policy.apl);
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues, addInfoVec);
 
     std::vector<GenericValues> permStateValues; // get new permission status from cache if exist
     hapInfo->StorePermissionPolicy(permStateValues);
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues, addInfoVec);
 
-    std::vector<GenericValues> permExtendValues; // get new extend permission value
     std::vector<PermissionWithValue> extendedPermList;
-    PermissionDataBrief::GetInstance().GetExetendedValueList(tokenID, extendedPermList);
-
+    PermissionDataBrief::GetInstance().GetExtendedValueList(tokenID, extendedPermList);
+    std::vector<GenericValues> permExtendValues; // get new extend permission value
     GeneratePermExtendValues(tokenID, extendedPermList, permExtendValues);
-
-    std::vector<AtmDataType> addDataTypes;
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
-
-    std::vector<std::vector<GenericValues>> addValues;
-    addValues.emplace_back(hapInfoValues);
-    addValues.emplace_back(permStateValues);
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, permExtendValues, addInfoVec);
 
     if (isSystemRes) {
         std::vector<GenericValues> permDefValues;
         GetUserGrantPermFromDef(policy.permList, tokenID, permDefValues);
-        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
-        addValues.emplace_back(permDefValues);
+        GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, permDefValues, addInfoVec);
     }
 
-    if (!permExtendValues.empty()) {
-        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
-        addValues.emplace_back(permExtendValues);
-    }
-
-    if (!undefValues.empty()) {
-        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-        addValues.emplace_back(undefValues);
-    }
-
-    std::vector<AtmDataType> delDataTypes;
-    std::vector<GenericValues> deleteValues;
-
+    std::vector<DelInfo> delInfoVec;
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     if (isUpdate) { // udapte: delete and add; otherwise add only
-        delDataTypes.assign(addDataTypes.begin(), addDataTypes.end());
-        FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues, deleteValues);
+        for (auto const& addInfo : addInfoVec) {
+            GenerateDelInfoToVec(addInfo.addType, delValue, delInfoVec);
+        }
     }
 
-    return AccessTokenDb::GetInstance().DeleteAndInsertValues(delDataTypes, deleteValues, addDataTypes, addValues);
+    return AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
 int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info)
@@ -1143,27 +1127,18 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTo
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    std::vector<AtmDataType> deleteDataTypes;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_INFO);
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-
-    std::vector<GenericValues> deleteValues;
-    deleteValues.emplace_back(condition);
-    deleteValues.emplace_back(condition);
-    deleteValues.emplace_back(condition);
-    deleteValues.emplace_back(condition);
+    std::vector<DelInfo> delInfoVec;
+    GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
+    GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, condition, delInfoVec);
+    GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, condition, delInfoVec);
 
     if (IsSystemResource(info->GetBundleName())) {
-        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_DEF);
-        deleteValues.emplace_back(condition);
+        GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, condition, delInfoVec);
     }
 
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
-        addValues);
+    std::vector<AddInfo> addInfoVec;
+    int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
         return ret;
@@ -1200,7 +1175,7 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
@@ -1683,7 +1658,7 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
+    int32_t res = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
     if (res != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Update tokenID %{public}u permissionDialogForbidden %{public}d to database failed", tokenID, enable);
@@ -1755,20 +1730,17 @@ int32_t AccessTokenInfoManager::AddPermRequestToggleStatusToDb(
     condition.Put(TokenFiledConst::FIELD_USER_ID, userID);
     condition.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
-    std::vector<AtmDataType> dataTypes;
-    dataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
+    std::vector<DelInfo> delInfoVec;
+    GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, condition, delInfoVec);
 
-    // delete
-    std::vector<GenericValues> deleteValues;
-    deleteValues.emplace_back(condition);
-
-    // add
-    std::vector<std::vector<GenericValues>> addValues;
-    std::vector<GenericValues> value;
+    std::vector<GenericValues> values;
     condition.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
-    value.emplace_back(condition);
-    addValues.emplace_back(value);
-    int32_t ret = AccessTokenDb::GetInstance().DeleteAndInsertValues(dataTypes, deleteValues, dataTypes, addValues);
+    values.emplace_back(condition);
+
+    std::vector<AddInfo> addInfoVec;
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values, addInfoVec);
+
+    int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertHap failed, ret %{public}d.", ret);
         return ret;
@@ -1821,8 +1793,8 @@ int32_t AccessTokenInfoManager::FindPermRequestToggleStatusFromDb(int32_t userID
     conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
     conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
-    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        conditionValue, result);
+    (void)AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, conditionValue,
+        result);
     if (result.empty()) {
         // never set, return default status: CLOSED if APP_TRACKING_CONSENT
         return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?

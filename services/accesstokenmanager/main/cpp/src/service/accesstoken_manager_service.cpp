@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 #include "access_token.h"
-#include "access_token_db.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
@@ -231,7 +231,7 @@ int AccessTokenManagerService::GetDefPermission(
     conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
     std::vector<GenericValues> results;
-    int32_t res = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, results);
+    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, results);
     if (res != 0) {
         return res;
     }
@@ -562,7 +562,7 @@ int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
     AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "tokenID: %{public}d, permList size:%{public}zu, status: %{public}d, flag: %{public}u.",
-         tokenID, permissionList.size(), status, flag);
+        tokenID, permissionList.size(), status, flag);
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
@@ -1553,13 +1553,13 @@ bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const Permissi
 }
 
 void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
-    std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
-    std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues)
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
 {
     GenericValues conditionValue;
     std::vector<GenericValues> results;
-    int32_t res = AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results); // get all hap undefined data
+
+    // get all hap undefined data
+    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results);
     if (res != 0) {
         return;
     }
@@ -1576,25 +1576,28 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, T
     std::vector<GenericValues> extendValues;
     UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
 
+    DelInfo delInfo;
     for (const auto& value : validValueList) {
-        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-        deleteValues.emplace_back(value);
+        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
+        delInfo.delValue = value;
+        delInfoVec.emplace_back(delInfo);
     }
 
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_STATE);
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE);
-    addValues.emplace_back(stateValues);
-    addValues.emplace_back(extendValues);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_PERMISSION_STATE;
+    addInfo.addValues = stateValues;
+    addInfoVec.emplace_back(addInfo);
+    addInfo.addType = AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE;
+    addInfo.addValues = extendValues;
+    addInfoVec.emplace_back(addInfo);
 }
 
-void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<AtmDataType>& deleteDataTypes,
-    const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
-    const std::vector<std::vector<GenericValues>>& addValues)
+void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec,
+    const std::vector<AddInfo>& addInfoVec)
 {
-    auto task = [deleteDataTypes, deleteValues, addDataTypes, addValues]() {
+    auto task = [delInfoVec, addInfoVec]() {
         LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
-        (void)AccessTokenDb::GetInstance().DeleteAndInsertValues(deleteDataTypes, deleteValues, addDataTypes,
-            addValues);
+        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
     };
     std::thread updateDbThread(task);
     updateDbThread.detach();
@@ -1606,7 +1609,7 @@ void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, Toke
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
     std::vector<GenericValues> results;
-    int32_t res = AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results);
+    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results);
     if (res != 0) {
         return;
     }
@@ -1627,24 +1630,24 @@ void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, Toke
         GenericValues addValue;
         addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
         addValue.Put(TokenFiledConst::FIELD_VALUE, std::string(curPermDefVersion));
-        std::vector<GenericValues> values;
-        values.emplace_back(addValue);
+        DelInfo delInfo;
+        delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+        delInfo.delValue = delValue;
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+        addInfo.addValues.emplace_back(addValue);
 
         // update or insert permission define version to db
-        std::vector<AtmDataType> deleteDataTypes;
-        deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-        std::vector<GenericValues> deleteValues;
-        deleteValues.emplace_back(delValue);
-        std::vector<AtmDataType> addDataTypes;
-        addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-        std::vector<std::vector<GenericValues>> addValues;
-        addValues.emplace_back(values);
+        std::vector<DelInfo> delInfoVec;
+        delInfoVec.emplace_back(delInfo);
+        std::vector<AddInfo> addInfoVec;
+        addInfoVec.emplace_back(addInfo);
 
         if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
-            HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes, deleteValues, addDataTypes, addValues);
+            HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
         }
 
-        UpdateDatabaseAsync(deleteDataTypes, deleteValues, addDataTypes, addValues);
+        UpdateDatabaseAsync(delInfoVec, addInfoVec);
     }
 }
 

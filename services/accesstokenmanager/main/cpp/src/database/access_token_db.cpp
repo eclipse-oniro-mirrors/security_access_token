@@ -33,25 +33,17 @@ namespace {
 constexpr const char* DATABASE_NAME = "access_token.db";
 constexpr const char* ACCESSTOKEN_SERVICE_NAME = "accesstoken_service";
 static constexpr int32_t ACCESSTOKEN_CLEAR_MEMORY_SIZE = 4;
-std::recursive_mutex g_instanceMutex;
-}
-
-AccessTokenDb& AccessTokenDb::GetInstance()
-{
-    static AccessTokenDb* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            AccessTokenDb* tmp = new (std::nothrow) AccessTokenDb();
-            instance = std::move(tmp);
-        }
-    }
-    return *instance;
 }
 
 AccessTokenDb::AccessTokenDb()
 {
     InitRdb();
+}
+
+AccessTokenDb::~AccessTokenDb()
+{
+    db_ = nullptr;
+    LOGI(ATM_DOMAIN, ATM_TAG, "~AccessTokenDb");
 }
 
 int32_t AccessTokenDb::RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
@@ -123,7 +115,7 @@ int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<Gener
 
     std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
     if (db == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -188,7 +180,7 @@ int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues&
 
     std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
     if (db == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -264,7 +256,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -340,7 +332,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
         OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
@@ -400,9 +392,8 @@ int32_t AccessTokenDb::RestoreAndCommitIfCorrupt(const int32_t resultCode,
     return NativeRdb::E_OK;
 }
 
-int32_t AccessTokenDb::DeleteAndInsertValues(
-    const std::vector<AtmDataType>& delDataTypes, const std::vector<GenericValues>& delValues,
-    const std::vector<AtmDataType>& addDataTypes, const std::vector<std::vector<GenericValues>>& addValues)
+int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
+    const std::vector<AddInfo>& addInfoVec)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
@@ -410,16 +401,16 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
         OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
         std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
         if (db == nullptr) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "db is nullptr.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
         db->BeginTransaction();
 
         int32_t res = 0;
-        size_t count = delDataTypes.size();
+        size_t count = delInfoVec.size();
         for (size_t i = 0; i < count; ++i) {
-            res = RemoveValues(delDataTypes[i], delValues[i]);
+            res = RemoveValues(delInfoVec[i].delType, delInfoVec[i].delValue);
             if (res != 0) {
                 db->RollBack();
                 LOGC(ATM_DOMAIN, ATM_TAG, "Remove values failed, res is %{public}d.", res);
@@ -427,9 +418,9 @@ int32_t AccessTokenDb::DeleteAndInsertValues(
             }
         }
 
-        count = addDataTypes.size();
+        count = addInfoVec.size();
         for (size_t i = 0; i < count; ++i) {
-            res = AddValues(addDataTypes[i], addValues[i]);
+            res = AddValues(addInfoVec[i].addType, addInfoVec[i].addValues);
             if (res != 0) {
                 db->RollBack();
                 LOGC(ATM_DOMAIN, ATM_TAG, "Add values failed, res is %{public}d.", res);

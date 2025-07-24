@@ -93,14 +93,14 @@ bool PermissionDataBrief::GetPermissionBriefData(
     return false;
 }
 
-void PermissionDataBrief::GetExetendedValueList(
+void PermissionDataBrief::GetExtendedValueList(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
-    return GetExetendedValueListInner(tokenId, extendedPermList);
+    return GetExtendedValueListInner(tokenId, extendedPermList);
 }
 
-void PermissionDataBrief::GetExetendedValueListInner(
+void PermissionDataBrief::GetExtendedValueListInner(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList)
 {
     for (const auto& item : extendedValue_) {

@@ -85,7 +85,7 @@ public:
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(
         AccessTokenID tokenId, const std::string& permissionName, std::string& value, bool tokenIdCheck);
-    void GetExetendedValueList(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
+    void GetExtendedValueList(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
 private:
     bool GetPermissionBriefData(AccessTokenID tokenID, const PermissionStatus &permState,
         const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData);
@@ -107,7 +107,7 @@ private:
     int32_t GetBriefPermDataByTokenIdInner(AccessTokenID tokenID, std::vector<BriefPermData>& list);
     int32_t TranslationIntoAclExtendedMap(AccessTokenID tokenId, const std::vector<GenericValues>& extendedPermRes,
         std::map<std::string, std::string>& aclExtendedMap);
-    void GetExetendedValueListInner(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
+    void GetExtendedValueListInner(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
     void DeleteExtendedValue(AccessTokenID tokenID);
     PermissionDataBrief() = default;
     DISALLOW_COPY_AND_MOVE(PermissionDataBrief);
