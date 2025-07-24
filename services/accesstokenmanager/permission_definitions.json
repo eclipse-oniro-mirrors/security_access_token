@@ -6637,6 +6637,28 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.PARENT_CONTROL_UI",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.PARENT_CONTROL_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
