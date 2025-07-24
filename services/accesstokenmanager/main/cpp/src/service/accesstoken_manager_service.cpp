@@ -1467,7 +1467,7 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
         HapInitInfo initInfo;
-        initInfo.tokenID = tokenId;
+        initInfo.tokenID = static_cast<AccessTokenID>(tokenId);
         if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
             data, appDistributionType, iter->second.isSystemApp, rule, initInfo)) {
             continue;

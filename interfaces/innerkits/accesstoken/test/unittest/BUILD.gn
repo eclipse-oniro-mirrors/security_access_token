@@ -96,6 +96,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "cJSON:cjson",
     "c_utils:utils",
     "hilog:libhilog",
+    "init:libbegetutil",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
   ]

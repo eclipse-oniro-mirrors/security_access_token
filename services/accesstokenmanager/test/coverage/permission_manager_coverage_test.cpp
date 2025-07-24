@@ -29,16 +29,19 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#include "parameters.h"
+#include "permission_data_brief.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
-#include "permission_data_brief.h"
 
+using namespace OHOS;
 using namespace testing::ext;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
 static const std::string FORM_VISIBLE_NAME = "#1";
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
@@ -465,6 +468,47 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Leve
 }
 
 /**
+ * @tc.name: HandleHapUndefinedInfo003
+ * @tc.desc: AccessTokenManagerService::HandleHapUndefinedInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo003, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    // enterprise_normal permission
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.FILE_GUARD_MANAGER");
+    value.Put(TokenFiledConst::FIELD_ACL, 0);
+    value.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "os_integration");
+    AddInfo addInfo;
+    addInfo.addType = type;
+    addInfo.addValues.emplace_back(value);
+
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    // add test data
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService_);
+
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::vector<DelInfo> delInfoVec2;
+    std::vector<AddInfo> addInfoVec2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
+
+    DelTestDataAndRestoreOri(type, oriData);
+    atManagerService_ = nullptr;
+}
+
+/**
  * @tc.name: HandlePermDefUpdate001
  * @tc.desc: AccessTokenManagerService::HandlePermDefUpdate function test
  * @tc.type: FUNC
@@ -521,6 +565,30 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate002, TestSize.Level4)
 
     DelTestDataAndRestoreOri(type, oriData);
     atManagerService_ = nullptr;
+}
+
+/**
+ * @tc.name: IsPermAvailableRangeSatisfied001
+ * @tc.desc: PermissionManager::IsPermAvailableRangeSatisfied function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSize.Level4)
+{
+    PermissionBriefDef briefDef;
+    briefDef.availableType = ATokenAvailableTypeEnum::ENTERPRISE_NORMAL;
+    char permissionName[] = "ohos.permission.FILE_GUARD_MANAGER";
+    briefDef.permissionName = permissionName;
+    std::string appDistributionType = "os_integration";
+    bool isSystemApp = false;
+    PermissionRulesEnum rule;
+    HapInitInfo initInfo;
+    system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, true);
+    ASSERT_FALSE(PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
+        briefDef, appDistributionType, isSystemApp, rule, initInfo));
+    system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
+    ASSERT_TRUE(PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
+        briefDef, appDistributionType, isSystemApp, rule, initInfo));
 }
 } // namespace AccessToken
 } // namespace Security
