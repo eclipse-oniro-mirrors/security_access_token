@@ -18,6 +18,7 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",

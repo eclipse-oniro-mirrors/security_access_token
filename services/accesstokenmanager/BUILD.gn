@@ -62,20 +62,18 @@ if (is_standard_system) {
       "main/cpp/include/callback",
       "main/cpp/include/database",
       "main/cpp/include/dfx",
+      "main/cpp/include/form_manager",
+      "main/cpp/include/permission",
       "main/cpp/include/seccomp",
       "main/cpp/include/service",
-      "main/cpp/include/form_manager",
       "main/cpp/include/token",
-      "main/cpp/include/permission",
     ]
 
     sources = [
       "main/cpp/src/callback/accesstoken_callback_proxys.cpp",
       "main/cpp/src/callback/callback_death_recipients.cpp",
       "main/cpp/src/callback/callback_manager.cpp",
-      "main/cpp/src/database/access_token_db.cpp",
-      "main/cpp/src/database/access_token_db_util.cpp",
-      "main/cpp/src/database/access_token_open_callback.cpp",
+      "main/cpp/src/database/access_token_db_operator.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
       "main/cpp/src/dfx/hisysevent_adapter.cpp",
@@ -193,8 +191,69 @@ if (is_standard_system) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
       sources += [ "main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
     }
-    if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
+
+    if (light_device_enable) {
+      sources += [ "main/cpp/src/database/rdb_dlopen_manager.cpp" ]
       cflags_cc += [ "-DDYNAMIC_CLOSE_LIBS" ]
+      deps += [ ":accesstoken_db_loader" ]
+    } else {
+      sources += [
+        "main/cpp/src/database/access_token_db.cpp",
+        "main/cpp/src/database/access_token_db_util.cpp",
+        "main/cpp/src/database/access_token_open_callback.cpp",
+      ]
+      external_deps += [ "relational_store:native_rdb" ]
     }
+  }
+}
+
+if (is_standard_system) {
+  config("accesstoken_rdb_config") {
+    visibility = [ ":*" ]
+    include_dirs = [ "include" ]
+  }
+
+  ohos_shared_library("accesstoken_db_loader") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
+    public_configs = [ ":accesstoken_rdb_config" ]
+
+    include_dirs = [
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/services/common/database/include",
+      "main/cpp/include/database",
+    ]
+
+    sources = [
+      "${access_token_path}/services/common/database/src/generic_values.cpp",
+      "${access_token_path}/services/common/database/src/variant_value.cpp",
+      "main/cpp/src/database/access_token_db.cpp",
+      "main/cpp/src/database/access_token_db_loader.cpp",
+      "main/cpp/src/database/access_token_db_util.cpp",
+      "main/cpp/src/database/access_token_open_callback.cpp",
+      "main/cpp/src/database/token_field_const.cpp",
+    ]
+
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
+      "relational_store:native_rdb",
+    ]
   }
 }

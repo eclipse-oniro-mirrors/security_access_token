@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_common_log.h"
-#include "access_token_db.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "data_translator.h"
 #include "data_validator.h"
@@ -317,8 +317,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-        AccessTokenDb::GetInstance().Modify(
-            AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
+        (void)AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     return RET_SUCCESS;
 }
@@ -351,8 +350,7 @@ bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<Perm
         GenericValues conditionValue;
         conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
         conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, state.permissionName);
-
-        int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
+        int32_t res = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
             conditionValue);
         if (res != 0) {
             LOGE(ATM_DOMAIN, ATM_TAG,
@@ -386,7 +384,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     // update permission status with dlp permission rule.
     DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(tokenInfoBasic_.dlpType, permListOfHap);
     std::vector<PermissionWithValue> extendedPermList;
-    PermissionDataBrief::GetInstance().GetExetendedValueList(tokenInfoBasic_.tokenID, extendedPermList);
+    PermissionDataBrief::GetInstance().GetExtendedValueList(tokenInfoBasic_.tokenID, extendedPermList);
     std::map<std::string, std::string> aclExtendedMap;
     for (const auto& extendedperm : extendedPermList) {
         aclExtendedMap[extendedperm.permissionName] = extendedperm.value;

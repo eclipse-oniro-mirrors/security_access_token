@@ -1107,18 +1107,18 @@ public:
  */
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
 {
-    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
 
     auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
     callbackPtr->type_ = PERM_TEMPORARY_CALL;
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
 
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
@@ -1126,12 +1126,12 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
     callbackPtr->type_ = PERM_TEMPORARY_CALL;
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
     EXPECT_NE(PERM_INACTIVE, callbackPtr->type_);
     EXPECT_NE(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
     EXPECT_NE(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.READ_MEDIA"));
     ASSERT_NE(PERM_INACTIVE, callbackPtr->type_);
     ASSERT_NE(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
     ASSERT_NE(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
@@ -2742,7 +2742,7 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, SetMutePolicyTest003, TestSize.Level0)
 {
-    MockNativeToken mock("camera_service"); // as a system service with SET_MUTE_POLICY
+    MockNativeToken mock("audio_server"); // as a system service with SET_MUTE_POLICY
 
     ASSERT_EQ(PrivacyError::ERR_FIRST_CALLER_NOT_EDM,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, RANDOM_TOKENID));

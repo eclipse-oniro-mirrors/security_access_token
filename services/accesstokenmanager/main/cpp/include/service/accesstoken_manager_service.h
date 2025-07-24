@@ -25,8 +25,8 @@
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
 #endif
+#include "access_token_db.h"
 #include "access_token.h"
-#include "access_token_db_util.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
 #include "iremote_object.h"
@@ -155,12 +155,9 @@ private:
         const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
     void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
         std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
-    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
-        std::vector<AtmDataType>& deleteDataTypes, std::vector<GenericValues>& deleteValues,
-        std::vector<AtmDataType>& addDataTypes, std::vector<std::vector<GenericValues>>& addValues);
-    void UpdateDatabaseAsync(const std::vector<AtmDataType>& deleteDataTypes,
-        const std::vector<GenericValues>& deleteValues, const std::vector<AtmDataType>& addDataTypes,
-        const std::vector<std::vector<GenericValues>>& addValues);
+    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
+        std::vector<AddInfo>& addInfoVec);
+    void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
 
     ServiceRunningState state_;

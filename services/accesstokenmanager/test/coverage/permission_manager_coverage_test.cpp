@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "access_token.h"
+#include "access_token_db_operator.h"
 #include "access_token_db.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
@@ -66,11 +67,8 @@ static HapPolicy g_policy = {
 class PermissionManagerCoverageTest : public testing::Test {
 public:
     static void SetUpTestCase();
-
     static void TearDownTestCase();
-
     void SetUp();
-
     void TearDown();
 };
 
@@ -226,7 +224,6 @@ HWTEST_F(PermissionManagerCoverageTest, RestorePermissionPolicy001, TestSize.Lev
     std::vector<BriefPermData> briefPermDataList;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermDataList));
 
-
     GenericValues value2;
     value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
@@ -329,44 +326,6 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
 }
 
 /**
- * @tc.name: FillDelValues001
- * @tc.desc: AccessTokenInfoManager::FillDelValues function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerCoverageTest, FillDelValues001, TestSize.Level4)
-{
-    AccessTokenID tokenID = RANDOM_TOKENID;
-    bool isSystemRes = false;
-    std::vector<GenericValues> permExtendValues;
-    std::vector<GenericValues> undefValues;
-    std::vector<GenericValues> deleteValues;
-    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
-        deleteValues);
-    ASSERT_EQ(2, deleteValues.size());
-
-    isSystemRes = true;
-    std::vector<GenericValues> deleteValues2;
-    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
-        deleteValues2);
-    ASSERT_EQ(3, deleteValues2.size());
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    permExtendValues.emplace_back(conditionValue);
-    std::vector<GenericValues> deleteValues3;
-    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
-        deleteValues3);
-    ASSERT_EQ(4, deleteValues3.size());
-
-    undefValues.emplace_back(conditionValue);
-    std::vector<GenericValues> deleteValues4;
-    AccessTokenInfoManager::GetInstance().FillDelValues(tokenID, isSystemRes, permExtendValues, undefValues,
-        deleteValues4);
-    ASSERT_EQ(5, deleteValues4.size());
-}
-
-/**
  * @tc.name: UpdateUndefinedInfo001
  * @tc.desc: AccessTokenManagerService::UpdateUndefinedInfo function test
  * @tc.type: FUNC
@@ -380,7 +339,7 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
         undefValues));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
- 
+
     GenericValues value1;
     value1.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId)); // permissionName invalid
     value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.INVALID");
@@ -392,12 +351,12 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     std::vector<GenericValues> validValueList;
     validValueList.emplace_back(value1);
     validValueList.emplace_back(value2);
- 
+
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(RANDOM_TOKENID);
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, atManagerService_);
- 
+
     std::vector<GenericValues> stateValues;
     std::vector<GenericValues> extendValues;
     atManagerService_->UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
@@ -406,7 +365,40 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
     atManagerService_ = nullptr;
 }
- 
+
+void BackupAndDelOriData(AtmDataType type, std::vector<GenericValues>& oriData)
+{
+    GenericValues conditionValue;
+    // store origin data for backup
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(type, conditionValue, oriData));
+
+    DelInfo delInfo;
+    delInfo.delType = type;
+
+    std::vector<DelInfo> delInfoVec;
+    delInfoVec.emplace_back(delInfo);
+    std::vector<AddInfo> addInfoVec;
+    // delete origin data from db
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+}
+
+void DelTestDataAndRestoreOri(AtmDataType type, const std::vector<GenericValues>& oriData)
+{
+    DelInfo delInfo;
+    delInfo.delType = type;
+
+    AddInfo addInfo;
+    addInfo.addType = type;
+    addInfo.addValues = oriData;
+
+    std::vector<DelInfo> delInfoVec;
+    delInfoVec.emplace_back(delInfo);
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    // delete test data and restore origin data from backup
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+}
+
 /**
  * @tc.name: HandleHapUndefinedInfo001
  * @tc.desc: AccessTokenManagerService::HandleHapUndefinedInfo function test
@@ -415,41 +407,23 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
  */
 HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo001, TestSize.Level4)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results)); // store origin data
- 
-    GenericValues value;
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-    deleteValues.emplace_back(value);
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // delete all data
- 
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
- 
+
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    std::vector<AtmDataType> deleteDataTypes2;
-    std::vector<GenericValues> deleteValues2;
-    std::vector<AtmDataType> addDataTypes2;
-    std::vector<std::vector<GenericValues>> addValues2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
-        addValues2);
- 
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-    addValues.emplace_back(results);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // sotre origin data
- 
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
+
+    DelTestDataAndRestoreOri(type, oriData);
     atManagerService_ = nullptr;
 }
- 
+
 /**
  * @tc.name: HandleHapUndefinedInfo002
  * @tc.desc: AccessTokenManagerService::HandleHapUndefinedInfo function test
@@ -458,53 +432,38 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo001, TestSize.Leve
  */
 HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Level4)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results)); // store origin data
- 
-    GenericValues delValue;
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-    deleteValues.emplace_back(delValue);
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // delete all data
- 
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.SET_ENTERPRISE_INFO"); // mdm permission
     value.Put(TokenFiledConst::FIELD_ACL, 0);
     value.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "os_integration");
-    std::vector<GenericValues> values;
-    values.emplace_back(value);
- 
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO);
-    addValues.emplace_back(values);
-    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // add test data
-    addValues.clear();
- 
+    AddInfo addInfo;
+    addInfo.addType = type;
+    addInfo.addValues.emplace_back(value);
+
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    // add test data
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
- 
+
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    std::vector<AtmDataType> deleteDataTypes2;
-    std::vector<GenericValues> deleteValues2;
-    std::vector<AtmDataType> addDataTypes2;
-    std::vector<std::vector<GenericValues>> addValues2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, deleteDataTypes2, deleteValues2, addDataTypes2,
-        addValues2);
- 
-    addValues.emplace_back(results);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // sotre origin data
+    std::vector<DelInfo> delInfoVec2;
+    std::vector<AddInfo> addInfoVec2;
+    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
+
+    DelTestDataAndRestoreOri(type, oriData);
     atManagerService_ = nullptr;
 }
- 
+
 /**
  * @tc.name: HandlePermDefUpdate001
  * @tc.desc: AccessTokenManagerService::HandlePermDefUpdate function test
@@ -513,36 +472,21 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Leve
  */
 HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate001, TestSize.Level4)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results)); // store origin data
- 
-    GenericValues value;
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    deleteValues.emplace_back(value);
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // delete all data
- 
+    AtmDataType type = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is empty
- 
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    addValues.emplace_back(results);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // sotre origin data
- 
+
+    DelTestDataAndRestoreOri(type, oriData);
     atManagerService_ = nullptr;
 }
- 
+
 /**
  * @tc.name: HandlePermDefUpdate002
  * @tc.desc: AccessTokenManagerService::HandlePermDefUpdate function test
@@ -551,41 +495,31 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate001, TestSize.Level4)
  */
 HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate002, TestSize.Level4)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().Find(
-        AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results)); // store origin data
- 
-    GenericValues value;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
     GenericValues addValue;
     addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
     addValue.Put(TokenFiledConst::FIELD_VALUE, "sfdsfdsfsf"); // random input
-    std::vector<GenericValues> values;
-    values.emplace_back(addValue);
- 
-    std::vector<AtmDataType> deleteDataTypes;
-    std::vector<GenericValues> deleteValues;
-    deleteDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    deleteValues.emplace_back(value);
-    std::vector<AtmDataType> addDataTypes;
-    std::vector<std::vector<GenericValues>> addValues;
-    addDataTypes.emplace_back(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG);
-    addValues.emplace_back(values);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // update permission define version in db
-    addValues.clear();
- 
+    AddInfo addInfo;
+    addInfo.addType = type;
+    addInfo.addValues.emplace_back(addValue);
+
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    // update permission define version in db to test data
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is not empty
- 
-    addValues.emplace_back(results);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance().DeleteAndInsertValues(
-        deleteDataTypes, deleteValues, addDataTypes, addValues)); // sotre origin data
- 
+
+    DelTestDataAndRestoreOri(type, oriData);
     atManagerService_ = nullptr;
 }
 } // namespace AccessToken

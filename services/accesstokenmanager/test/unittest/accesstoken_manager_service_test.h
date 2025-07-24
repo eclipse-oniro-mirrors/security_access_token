@@ -34,6 +34,7 @@ public:
     void TearDown();
     void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
         std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit = false);
+    void DelTestDataAndRestoreOri(AccessTokenID tokenId, const std::vector<GenericValues>& oriData);
 
     std::shared_ptr<AccessTokenManagerService> atManagerService_;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_data_type.h"
 #include "generic_values.h"
 #include "rdb_predicates.h"
 #include "result_set.h"
@@ -28,17 +29,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum AtmDataType {
-    ACCESSTOKEN_HAP_INFO,
-    ACCESSTOKEN_NATIVE_INFO,
-    ACCESSTOKEN_PERMISSION_DEF,
-    ACCESSTOKEN_PERMISSION_STATE,
-    ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-    ACCESSTOKEN_PERMISSION_EXTEND_VALUE,
-    ACCESSTOKEN_HAP_UNDEFINE_INFO,
-    ACCESSTOKEN_SYSTEM_CONFIG,
-};
-
 class AccessTokenDbUtil final {
 public:
     static void GetTableNameByType(const AtmDataType type, std::string& tableName);

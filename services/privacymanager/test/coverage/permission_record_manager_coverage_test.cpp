@@ -431,13 +431,13 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     PrivacyAppStateObserver observer;
-    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
 
     auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb3>(permList);
     callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
 
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
     appStateData.accessTokenId = tokenId;
@@ -449,7 +449,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
 }
 
 /*

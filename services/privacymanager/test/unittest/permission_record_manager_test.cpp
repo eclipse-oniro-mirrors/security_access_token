@@ -760,7 +760,7 @@ HWTEST_F(PermissionRecordManagerTest, TransferOpcodeToPermission001, TestSize.Le
  */
 HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level0)
 {
-    MockNativeToken mock("camera_service"); // native process with have add permission
+    MockNativeToken mock("audio_server"); // native process with have add permission
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
@@ -792,7 +792,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level0)
 {
-    MockNativeToken mock("camera_service"); // native process with have permission
+    MockNativeToken mock("audio_server"); // native process with have permission
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
