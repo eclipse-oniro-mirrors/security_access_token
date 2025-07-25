@@ -104,15 +104,20 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenId %{public}d is render, perm denied.", tokenID);
+        return PERMISSION_DENIED;
+    }
     auto proxy = GetProxy();
     if (proxy != nullptr) {
-        int32_t errCode = proxy->VerifyAccessToken(tokenID, permissionName);
+        int32_t state = PERMISSION_DENIED;
+        int32_t errCode = proxy->VerifyAccessToken(tokenID, permissionName, state);
         if (errCode != RET_SUCCESS) {
             errCode = ConvertResult(errCode);
             LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
             return PERMISSION_DENIED;
         }
-        return errCode;
+        return state;
     }
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -132,6 +137,12 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
     const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
 {
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenId %{public}d is render, perm denied.", tokenID);
+        permStateList.clear();
+        permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+        return RET_SUCCESS;
+    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
@@ -1283,6 +1294,12 @@ bool AccessTokenManagerClient::IsToastShownNeeded(int32_t pid)
     }
 
     return needToShow;
+}
+
+bool AccessTokenManagerClient::IsRenderToken(int32_t tokenID)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    return idInner->renderFlag;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -56,7 +56,7 @@ public:
         AccessTokenID tokenID, const std::string& permissionName, int32_t& permUsedType) override;
     int32_t InitHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy,
         uint64_t& fullTokenId, HapInfoCheckResultIdl& resultInfoIdl) override;
-    int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
+    int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, int32_t& state) override;
     int VerifyAccessToken(AccessTokenID tokenID,
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
@@ -144,6 +144,7 @@ private:
     bool Initialize();
     void AccessTokenServiceParamSet() const;
     bool isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
+    int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
     int32_t UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const std::string& bundleName,
         const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl);
