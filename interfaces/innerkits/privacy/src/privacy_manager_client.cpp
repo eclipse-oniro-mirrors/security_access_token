@@ -328,6 +328,10 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
         LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback already is not exist.");
         return PrivacyError::ERR_CALLBACK_NOT_EXIST;
     }
+    if (goalCallback->second == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback is null.");
+        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+    }
 
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
     if (result == RET_SUCCESS) {

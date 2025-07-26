@@ -563,6 +563,10 @@ static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, vo
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "AddPermissionUsedRecord complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -626,6 +630,10 @@ static void SetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_statu
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "SetPermissionUsedRecordToggleStatus complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -688,6 +696,10 @@ static void GetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_statu
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordToggleStatus complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -748,6 +760,10 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "StartUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -810,6 +826,10 @@ static void StopUsingPermissionComplete(napi_env env, napi_status status, void* 
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "StopUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -872,6 +892,10 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecords complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
     napi_value result = GetNapiNull(env);
@@ -1250,6 +1274,10 @@ static void GetPermissionUsedTypeInfosComplete(napi_env env, napi_status status,
     LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedTypeInfos complete.");
 
     PermissionUsedTypeAsyncContext* asyncContext = reinterpret_cast<PermissionUsedTypeAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "AsyncContext is null.");
+        return;
+    }
     std::unique_ptr<PermissionUsedTypeAsyncContext> callbackPtr{asyncContext};
 
     napi_value result = GetNapiNull(env);

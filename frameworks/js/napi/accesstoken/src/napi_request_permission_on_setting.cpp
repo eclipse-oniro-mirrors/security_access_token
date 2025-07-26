@@ -219,6 +219,10 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestPermOnSetting
 
 void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
         if (this->reqContext_->releaseFlag) {
@@ -474,6 +478,10 @@ void RequestOnSettingAsyncInstanceControl::UpdateQueueData(
         std::vector<std::string> permList = reqContext->permissionList;
         LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
         for (auto& asyncContext : iter->second) {
+            if (asyncContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+                continue;
+            }
             std::vector<std::string> tmpPermList = asyncContext->permissionList;
             
             if (CheckPermList(permList, tmpPermList)) {
@@ -499,6 +507,11 @@ void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
         while (!iter->second.empty()) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
+            if (asyncContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+                iter->second.erase(iter->second.begin());
+                continue;
+            }
             iter->second.erase(iter->second.begin());
             CheckDynamicRequest(asyncContext, isDynamic);
             if (isDynamic) {
@@ -537,6 +550,10 @@ napi_value NapiRequestPermissionOnSetting::RequestPermissionOnSetting(napi_env e
         return nullptr;
     }
     auto asyncContextHandle = std::make_unique<RequestOnSettingAsyncContextHandle>(asyncContext);
+    if (asyncContextHandle->asyncContextPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Async context is null.");
+        return nullptr;
+    }
     napi_value result = nullptr;
     if (asyncContextHandle->asyncContextPtr->callbackRef == nullptr) {
         NAPI_CALL(env, napi_create_promise(env, &(asyncContextHandle->asyncContextPtr->deferred), &result));
