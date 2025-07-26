@@ -171,3 +171,9 @@ ACCESSTOKEN_EXCEPTION:
   ERROR_CODE: {type: INT32, desc: error code}
   ERROR_MSG: {type: STRING, desc: error reason}
 
+DATABASE_EXCEPTION:
+  __BASE: {type: FAULT, level: CRITICAL, desc: database exception}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  ERROR_CODE: {type: INT32, desc: error code}
+  TABLE_NAME: {type: STRING, desc: table name}
+

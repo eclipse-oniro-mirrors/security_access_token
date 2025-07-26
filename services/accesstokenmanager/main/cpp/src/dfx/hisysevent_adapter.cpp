@@ -95,6 +95,13 @@ void ReportSysEventAddHap(const AccessTokenDfxInfo& info)
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", res);
     }
 }
+
+void ReportSysEventDbException(AccessTokenDbSceneCode sceneCode, int32_t errCode, const std::string& tableName)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DATABASE_EXCEPTION",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", sceneCode, "ERROR_CODE", errCode,
+        "TABLE_NAME", tableName);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
