@@ -381,9 +381,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         }
 
         PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
-        if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
-            needRes = true;
-        }
+        needRes = (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) ? true : needRes;
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
             fixedByPolicyRes = true;
         }
