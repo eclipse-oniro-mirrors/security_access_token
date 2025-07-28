@@ -76,7 +76,8 @@ int32_t ActiveStatusCallbackManager::AddCallback(
         LOGE(PRI_DOMAIN, PRI_TAG, "List size has reached max value");
         return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
-    if (callback->IsProxyObject() && !callback->AddDeathRecipient(callbackDeathRecipient_)) {
+    if (callback->IsProxyObject() &&
+        ((callbackDeathRecipient_ == nullptr) || !callback->AddDeathRecipient(callbackDeathRecipient_))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "add death recipient failed");
         return PrivacyError::ERR_ADD_DEATH_RECIPIENT_FAILED;
     }
