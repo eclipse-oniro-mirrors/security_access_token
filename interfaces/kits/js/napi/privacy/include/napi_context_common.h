@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <uv.h>
-#include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"

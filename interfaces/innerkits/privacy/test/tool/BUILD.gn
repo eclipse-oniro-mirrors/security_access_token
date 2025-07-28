@@ -29,6 +29,7 @@ ohos_executable("AddPermissionUsedRecord") {
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
   ]
 
   deps = [

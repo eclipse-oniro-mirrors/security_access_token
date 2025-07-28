@@ -64,6 +64,7 @@ ohos_unittest("libtoken_sync_service_standard_test") {
     "${access_token_path}/services/common/json_parse/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/",
+    "${access_token_path}/interfaces/innerkits/tokensync/include",
   ]
 
   deps = [

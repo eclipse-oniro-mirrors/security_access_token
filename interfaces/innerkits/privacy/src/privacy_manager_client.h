@@ -25,7 +25,7 @@
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_death_recipient.h"
-#include "proxy_death_callback_stub.h"
+#include "proxy_death_callback.h"
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
 
@@ -75,7 +75,7 @@ private:
     sptr<IPrivacyManager> GetProxy();
     void ReleaseProxy();
     uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
-    sptr<ProxyDeathCallBackStub> GetAnonyStub();
+    sptr<ProxyDeathCallBack> GetAnonyStub();
 
 private:
     std::mutex activeCbkMutex_;
@@ -83,7 +83,7 @@ private:
     std::mutex stateCbkMutex_;
     std::map<uint64_t, sptr<StateChangeCallback>> stateChangeCallbackMap_;
     std::mutex stubMutex_;
-    sptr<ProxyDeathCallBackStub> anonyStub_ = nullptr;
+    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

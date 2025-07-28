@@ -23,6 +23,7 @@ ohos_fuzztest("RegisterPermActiveStatusCallbackFuzzTest") {
     "${access_token_path}/frameworks/privacy/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/src",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
     "${access_token_path}/services/common/proxy_death/include",
     "${access_token_path}/test/fuzztest/common",
   ]

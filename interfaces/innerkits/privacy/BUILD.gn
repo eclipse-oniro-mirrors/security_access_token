@@ -45,6 +45,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/interfaces/innerkits/proxy_death/include",
       "include",
       "src",
     ]
