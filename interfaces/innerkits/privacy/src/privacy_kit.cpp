@@ -209,7 +209,7 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
 
 bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsPermissionNameValid(permissionName)) {
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         return false;
     }
     return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName, pid);
