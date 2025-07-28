@@ -7353,6 +7353,18 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.kernel.READ_PROTECT_RANGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"],
+            "isKernelEffect": true
         }
     ]
 }
