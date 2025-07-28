@@ -94,7 +94,7 @@ void SecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
             return;
         }
     }
-    LOGE(ATM_DOMAIN, ATM_TAG, "Not found pid %{public}d data.", pid);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Not found pid %{public}d data.", pid);
     return;
 }
 
