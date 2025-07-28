@@ -19,6 +19,8 @@
 #include "iservice_registry.h"
 #include "privacy_error.h"
 #include "privacy_manager_proxy.h"
+#include "proxy_death_callback_stub.h"
+
 
 namespace OHOS {
 namespace Security {
@@ -131,7 +133,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
-    int32_t ret = proxy->StartUsingPermission(parcel, anonyStub);
+    int32_t ret = proxy->StartUsingPermission(parcel, anonyStub->AsObject());
     return ConvertResult(ret);
 }
 
@@ -183,7 +185,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
-    result = proxy->StartUsingPermissionCallback(parcel, callbackWrap->AsObject(), anonyStub);
+    result = proxy->StartUsingPermissionCallback(parcel, callbackWrap->AsObject(), anonyStub->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
@@ -448,7 +450,7 @@ void PrivacyManagerClient::ReleaseProxy()
     serviceDeathObserver_ = nullptr;
 }
 
-sptr<ProxyDeathCallBackStub> PrivacyManagerClient::GetAnonyStub()
+sptr<ProxyDeathCallBack> PrivacyManagerClient::GetAnonyStub()
 {
     std::lock_guard<std::mutex> lock(stubMutex_);
     if (anonyStub_ == nullptr) {

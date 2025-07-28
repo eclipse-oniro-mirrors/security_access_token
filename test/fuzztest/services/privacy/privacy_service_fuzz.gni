@@ -21,6 +21,7 @@ privacy_include_dirs = [
   "${access_token_path}/interfaces/innerkits/accesstoken/include",
   "${access_token_path}/interfaces/innerkits/privacy/include",
   "${access_token_path}/interfaces/innerkits/privacy/src",
+  "${access_token_path}/interfaces/innerkits/proxy_death/include",
   "${access_token_path}/services/privacymanager/include/active",
   "${access_token_path}/services/privacymanager/include/common",
   "${access_token_path}/services/privacymanager/include/database",

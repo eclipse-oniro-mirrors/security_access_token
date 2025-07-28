@@ -33,6 +33,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
   ]
 
@@ -92,6 +93,7 @@ ohos_unittest("libprivacy_mock_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
   ]
 
   sources = [

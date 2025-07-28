@@ -29,7 +29,10 @@ ohos_source_set("proxy_death_stub") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = [ "include" ]
+  include_dirs = [ 
+    "include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
+   ]
 
   sources = [ "src/proxy_death_callback_stub.cpp" ]
 

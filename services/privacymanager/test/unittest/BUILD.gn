@@ -33,6 +33,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/nativetoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
       "${access_token_path}/interfaces/innerkits/privacy/src",
+      "${access_token_path}/interfaces/innerkits/proxy_death/include",
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/database/include",

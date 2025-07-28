@@ -16,7 +16,6 @@
 #define INTERFACES_ACCESSTOKEN_KITS_NAPI_CONTEXT_COMMON_H
 
 #include <uv.h>
-#include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "napi_error.h"
 #include "napi_common.h"
