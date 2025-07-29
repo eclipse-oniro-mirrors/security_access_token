@@ -134,6 +134,11 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "samgr:samgr_proxy",
   ]
 
+  if (hicollie_enable == true) {
+    external_deps += [ "hicollie:libhicollie" ]
+    cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+  }
+
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
     sources += [

@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <stack>
 #include <unistd.h>
 
 #include "access_token.h"
@@ -87,7 +88,7 @@ static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
-thread_local int32_t g_timerId = 0;
+thread_local std::stack<int32_t> g_timerIdStack;
 #endif // HICOLLIE_ENABLE
 
 constexpr uint32_t BITMAP_INDEX_1 = 1;
@@ -1739,8 +1740,8 @@ int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)
     ClearThreadErrorMsg();
 #ifdef HICOLLIE_ENABLE
     std::string name = "AtmTimer";
-    g_timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
-        HiviewDFX::XCOLLIE_FLAG_LOG);
+    g_timerIdStack.push(HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
+        HiviewDFX::XCOLLIE_FLAG_LOG));
 #endif // HICOLLIE_ENABLE
     return ERR_OK;
 }
@@ -1748,7 +1749,10 @@ int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)
 int32_t AccessTokenManagerService::CallbackExit(uint32_t code, int32_t result)
 {
 #ifdef HICOLLIE_ENABLE
-    HiviewDFX::XCollie::GetInstance().CancelTimer(g_timerId);
+    if (!g_timerIdStack.empty()) {
+        HiviewDFX::XCollie::GetInstance().CancelTimer(g_timerIdStack.top());
+        g_timerIdStack.pop();
+    }
 #endif // HICOLLIE_ENABLE
     ClearThreadErrorMsg();
     return ERR_OK;
