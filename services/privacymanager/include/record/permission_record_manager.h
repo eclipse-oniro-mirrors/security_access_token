@@ -167,7 +167,7 @@ private:
     void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);
     bool GetMuteStatus(const std::string& permissionName, int32_t index);
 
-    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t pid);
+    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t callbackPid);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,

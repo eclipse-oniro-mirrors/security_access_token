@@ -56,7 +56,9 @@ namespace AccessToken {
 namespace {
 static const int32_t VALUE_MAX_LEN = 32;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* CAMERA_BACKGROUND_PERMISSION_NAME = "ohos.permission.CAMERA_BACKGROUND";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+constexpr const char* MICROPHONE_BACKGROUND_PERMISSION_NAME = "ohos.permission.MICROPHONE_BACKGROUND";
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -418,13 +420,13 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
     bool isGranted = false;
     if (permissionName == CAMERA_PERMISSION_NAME) {
         isGranted = (AccessTokenHelper::VerifyAccessToken(
-            tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
+            tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
         LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
             tokenId, isGranted, permissionName.c_str());
         return isGranted;
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         isGranted = (AccessTokenHelper::VerifyAccessToken(
-            tokenId, "ohos.permission.MICROPHONE_BACKGROUND") == PERMISSION_GRANTED);
+            tokenId, MICROPHONE_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
         LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
             tokenId, isGranted, permissionName.c_str());
         return isGranted;
@@ -535,7 +537,7 @@ bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool
 
     if (results.empty()) {
         // empty means there is no user record, add it
-        LOGD(PRI_DOMAIN, PRI_TAG, "No exsit record, add it.");
+        LOGD(PRI_DOMAIN, PRI_TAG, "No exist record, add it.");
 
         GenericValues recordValue;
         recordValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
@@ -1291,11 +1293,11 @@ void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
     this->cameraCallbackMap_.Iterate(it);
 }
 
-void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t pid)
+void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t callbackPid)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "Entry.");
-    auto task = [tokenId, pid, this]() {
-        uint64_t uniqueId = GetUniqueId(tokenId, pid);
+    auto task = [tokenId, callbackPid, this]() {
+        uint64_t uniqueId = GetUniqueId(tokenId, callbackPid);
         LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCameraCallbackAsync task called.");
         auto it = [&](uint64_t id, sptr<IRemoteObject> cameraCallback) {
             auto callback = iface_cast<IStateChangeCallback>(cameraCallback);

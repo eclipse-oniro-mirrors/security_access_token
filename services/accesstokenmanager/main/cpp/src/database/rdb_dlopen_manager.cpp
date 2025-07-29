@@ -157,7 +157,7 @@ AccessTokenDbLoaderInterface* RdbDlopenManager::GetDbInstance()
             handle_ = dlopen(RDB_ADAPTER_LIBPATH, RTLD_LAZY);
             if (handle_ == nullptr) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen %{public}s failed, errno is %{public}d, errMsg is %{public}s.",
-                    RDB_SYMBOL_DESTROY, errno, dlerror());
+                    RDB_ADAPTER_LIBPATH, errno, dlerror());
                 return nullptr;
             }
         }

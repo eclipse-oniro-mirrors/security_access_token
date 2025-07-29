@@ -315,7 +315,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
 }
 
 /**
- * @tc.name: InitHapTokenTest002
+ * @tc.name: UpdateHapTokenTest002
  * @tc.desc: test ota update acl check fail return false
  * @tc.type: FUNC
  * @tc.require:

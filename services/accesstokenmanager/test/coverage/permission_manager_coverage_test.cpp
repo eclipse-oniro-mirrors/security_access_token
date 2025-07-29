@@ -288,14 +288,14 @@ HWTEST_F(PermissionManagerCoverageTest, GetMasterAppUndValues001, TestSize.Level
  */
 HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
 {
-    PermissionStatus status1;
+    PermissionStatus status1; // user grant permission ohos.permission.READ_MEDIA with pre-authorization
     status1.permissionName = "ohos.permission.READ_MEDIA";
     status1.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_DENIED);
-    status1.grantFlag = static_cast<int32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
-    PermissionStatus status2;
+    status1.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    PermissionStatus status2; // user grant permission ohos.permission.WRITE_MEDIA without pre-authorization
     status2.permissionName = "ohos.permission.WRITE_MEDIA";
     status2.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_DENIED);
-    status2.grantFlag = static_cast<int32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    status2.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
     PreAuthorizationInfo info;
     info.permissionName = "ohos.permission.READ_MEDIA";
 
@@ -309,8 +309,8 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
     param.appDistributionType = "os_integration";
 
     HapInitInfo initInfo;
-    initInfo.installInfo = param;
     initInfo.policy = policy;
+    initInfo.installInfo = param;
     std::vector<PermissionStatus> initializedList;
     HapInfoCheckResult result;
     std::vector<GenericValues> undefValues;

@@ -1461,6 +1461,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level0)
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(0, permissionName));
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, ""));
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(0, ""));
 }
 
 /**

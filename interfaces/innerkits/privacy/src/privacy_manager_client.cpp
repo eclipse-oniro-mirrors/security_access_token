@@ -68,6 +68,7 @@ static int32_t ConvertResult(int32_t ret)
         default:
             return ret;
     }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Request result is %{public}d.", ret);
     return ret;
 }
 
@@ -352,6 +353,7 @@ bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const
     }
     bool isAllowed = false;
     proxy->IsAllowedUsingPermission(tokenID, permissionName, pid, isAllowed);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Request result is %{public}s.", (isAllowed ? "true" : "false"));
     return isAllowed;
 }
 

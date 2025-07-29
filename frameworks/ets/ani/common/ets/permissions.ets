@@ -25,7 +25,7 @@
  * @syscap SystemCapability.Security.AccessToken
  * @since 9
  */
- /**
+/**
  * Indicates permissions.
  *
  * @typedef { string }
