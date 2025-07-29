@@ -17,29 +17,21 @@
 #include <unordered_map>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
+#include "data_validator.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonAni" };
-} // namespace
-constexpr const int32_t RET_SUCCESS = 0;
 constexpr const char* BUSINESS_ERROR_CLASS = "L@ohos/base/BusinessError;";
-constexpr const char* ERR_MSG_PARAM_NUMBER_ERROR =
-    "BusinessError 401: Parameter error. The number of parameters is incorrect.";
-constexpr const char* ERR_MSG_ENUM_EROOR = "Parameter error. The value of $ is not a valid enum $.";
-constexpr const char* ERR_MSG_BUSINESS_ERROR = "BusinessError $: ";
-constexpr const char* ERR_MSG_PARAM_TYPE_ERROR = "Parameter error. The type of $ must be $.";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
     { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability." },
     { STS_ERROR_START_ABILITY_FAIL, "Start grant ability failed." },
-    { STS_ERROR_BACKGROUND_FAIL, "Ui extension turn background failed." },
-    { STS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed." },
-    { STS_ERROR_PARAM_INVALID, "Invalid parameter $." },
+    { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
+    { STS_ERROR_TERMINATE_FAIL, "UI extension terminate failed." },
+    { STS_ERROR_PARAM_INVALID, "Invalid parameter." },
     { STS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist." },
     { STS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist." },
     { STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others." },
@@ -50,25 +42,24 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_INNER, "Common inner error." },
     { STS_ERROR_REQUEST_IS_ALREADY_EXIST, "The request already exists." },
     { STS_ERROR_ALL_PERM_GRANTED, "All permissions in the permission list have been granted." },
-    { STS_ERROR_PERM_REVOKE_BY_USER,
+    { STS_ERROR_PERM_NOT_REVOKE_BY_USER,
         "The permission list contains the permission that has not been revoked by the user." },
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
-    { STS_ERROR_PARAM_ILLEGAL, ERR_MSG_PARAM_TYPE_ERROR },
 };
 
-void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& msg)
+void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
 {
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateError(env, err, msg);
+    ani_object error = CreateError(env, err, errMsg);
     ThrowError(env, error);
 }
 
 ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::string& msg)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
     ani_class cls = nullptr;
@@ -78,139 +69,73 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
 
     ani_status status = env->FindClass(BUSINESS_ERROR_CLASS, &cls);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindMethod(cls, "<ctor>", ":V", &method);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}d.", status);
         return nullptr;
     }
     status = env->Object_New(cls, method, &obj);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "code", &field);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", status);
         return nullptr;
     }
     status = env->Object_SetField_Double(obj, field, code);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Double : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Double: %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "data", &field);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", status);
         return nullptr;
     }
     ani_string string = nullptr;
     env->String_NewUTF8(msg.c_str(), msg.size(), &string);
     status = env->Object_SetField_Ref(obj, field, static_cast<ani_ref>(string));
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Ref : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Ref: %{public}d.", status);
         return nullptr;
     }
     return obj;
 }
 
-std::string GetParamErrorMsg(const std::string& param, const std::string& type)
+std::string GetParamErrorMsg(const std::string& param, const std::string& errMsg)
 {
-    std::string msg = "Parameter Error. The type of \"" + param + "\" must be " + type + ".";
+    std::string msg = "Parameter Error. The type of \"" + param + "\" must be " + errMsg + ".";
     return msg;
 }
 
-std::string GetErrorMessage(uint32_t errCode)
+std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg)
 {
     auto iter = g_errorStringMap.find(errCode);
     if (iter != g_errorStringMap.end()) {
-        return iter->second;
+        return iter->second + (extendMsg.empty() ? "" : ("" + extendMsg));
     }
-    std::string errMsg = "Unknown error, errCode + " + std::to_string(errCode) + ".";
+    std::string errMsg = "Failed to Unknown error, errCode " + std::to_string(errCode) + ".";
     return errMsg;
 }
 
-void BusinessErrorAni::ThrowParameterTypeError(
-    ani_env* env, int32_t err, const std::string& parameter, const std::string& type)
+void BusinessErrorAni::ThrowParameterTypeError(ani_env* env, int32_t err, const std::string& errMsg)
 {
     if (env == nullptr) {
         return;
     }
-    ani_object error = CreateCommonError(env, err, parameter, type);
+    ani_object error = CreateError(env, err, errMsg);
     ThrowError(env, error);
-}
-
-void BusinessErrorAni::ThrowTooFewParametersError(ani_env* env, int32_t err)
-{
-    if (env == nullptr) {
-        return;
-    }
-    ThrowError(env, err, ERR_MSG_PARAM_NUMBER_ERROR);
-}
-
-ani_object BusinessErrorAni::CreateCommonError(
-    ani_env* env, int32_t err, const std::string& functionName, const std::string& permissionName)
-{
-    if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
-        return nullptr;
-    }
-    std::string errMessage = ERR_MSG_BUSINESS_ERROR;
-    auto iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, std::to_string(err));
-    }
-    if (g_errorStringMap.find(err) != g_errorStringMap.end()) {
-        errMessage += g_errorStringMap.at(err);
-    }
-    iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, functionName);
-        iter = errMessage.find("$");
-        if (iter != std::string::npos) {
-            errMessage = errMessage.replace(iter, 1, permissionName);
-        }
-    }
-    return CreateError(env, err, errMessage);
-}
-
-void BusinessErrorAni::ThrowEnumError(ani_env* env, const std::string& parameter, const std::string& type)
-{
-    if (env == nullptr) {
-        return;
-    }
-    ani_object error = CreateEnumError(env, parameter, type);
-    ThrowError(env, error);
-}
-
-ani_object BusinessErrorAni::CreateEnumError(ani_env* env, const std::string& parameter, const std::string& enumClass)
-{
-    if (env == nullptr) {
-        return nullptr;
-    }
-    std::string errMessage = ERR_MSG_BUSINESS_ERROR;
-    auto iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, std::to_string(STS_ERROR_PARAM_ILLEGAL));
-    }
-    errMessage += ERR_MSG_ENUM_EROOR;
-    iter = errMessage.find("$");
-    if (iter != std::string::npos) {
-        errMessage = errMessage.replace(iter, 1, parameter);
-        iter = errMessage.find("$");
-        if (iter != std::string::npos) {
-            errMessage = errMessage.replace(iter, 1, enumClass);
-        }
-    }
-    return CreateError(env, STS_ERROR_PARAM_ILLEGAL, errMessage);
 }
 
 void BusinessErrorAni::ThrowError(ani_env* env, ani_object err)
 {
     if (err == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "err is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Err is null.");
         return;
     }
     env->ThrowError(static_cast<ani_error>(err));
@@ -261,8 +186,39 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             stsCode = STS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
+    LOGD(ATM_DOMAIN, ATM_TAG, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
     return stsCode;
+}
+
+bool BusinessErrorAni::ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The tokenID is 0.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
+}
+
+bool BusinessErrorAni::ValidatePermissionWithThrowError(ani_env* env, const std::string& permission)
+{
+    if (!DataValidator::IsPermissionNameValid(permission)) {
+        std::string errMsg = GetErrorMessage(
+            STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
+}
+
+bool BusinessErrorAni::ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag)
+{
+    if (!DataValidator::IsPermissionFlagValid(flag)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The permissionFlags is invalid.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security
