@@ -39,6 +39,13 @@ enum CommonSceneCode {
     AT_COMMOM_START = 0,
     AT_COMMON_FINISH = 1,
 };
+enum AccessTokenDbSceneCode {
+    AT_DB_INSERT_RESTORE = 1001,
+    AT_DB_DELETE_RESTORE = 1002,
+    AT_DB_UPDATE_RESTORE = 1003,
+    AT_DB_QUERY_RESTORE = 1004,
+    AT_DB_COMMIT_RESTORE = 1005,
+};
 enum AddHapSceneCode {
     INSTALL_START = 0,
     TOKEN_ID_CHANGE,
@@ -74,6 +81,7 @@ void ReportSysEventServiceStart(const AccessTokenDfxInfo& info);
 void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg, int32_t errCode);
 void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode);
 void ReportSysEventAddHap(const AccessTokenDfxInfo& info);
+void ReportSysEventDbException(AccessTokenDbSceneCode sceneCode, int32_t errCode, const std::string& tableName);
 
 } // namespace AccessToken
 } // namespace Security
