@@ -365,6 +365,31 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level0)
     ASSERT_TRUE(res);
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
+
+/**
+ * @tc.name: GetHapTokenInfoWithRenderTest001
+ * @tc.desc: GetHapTokenInfo with render tokenID
+ * @tc.type: FUNC
+ * @tc.require: issue
+ */
+HWTEST_F(GetHapTokenTest, GetHapTokenInfoWithRenderTest001, TestSize.Level0)
+{
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    
+    // get render token
+    uint64_t renderToken = AccessTokenKit::GetRenderTokenID(tokenID);
+    ASSERT_NE(renderToken, INVALID_TOKENID);
+    ASSERT_NE(renderToken, tokenID);
+
+    HapTokenInfo hapTokenInfoRes;
+    int ret = AccessTokenKit::GetHapTokenInfo(renderToken, hapTokenInfoRes);
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
+
+    HapTokenInfoExt hapTokenInfoExt;
+    ret = AccessTokenKit::GetHapTokenInfoExtension(renderToken, hapTokenInfoExt);
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

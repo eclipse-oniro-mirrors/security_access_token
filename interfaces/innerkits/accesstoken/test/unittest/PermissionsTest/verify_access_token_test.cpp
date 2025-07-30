@@ -312,12 +312,14 @@ HWTEST_F(VerifyAccessTokenTest, VerifyAccessTokenWithRender001, TestSize.Level0)
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE", true);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
     // get render token
-    uint64_t renderToken = TokenIdKit::GetRenderTokenID(tokenID);
+    uint64_t renderToken = AccessTokenKit::GetRenderTokenID(tokenID);
     ASSERT_NE(renderToken, INVALID_TOKENID);
     ASSERT_NE(renderToken, tokenID);
     AccessTokenID renderTokenID = static_cast<uint32_t>(renderToken);
     // render return DENIED
     ret = AccessTokenKit::VerifyAccessToken(renderTokenID, "ohos.permission.MICROPHONE", true);
+    EXPECT_EQ(ret, PERMISSION_DENIED);
+    ret = AccessTokenKit::VerifyAccessToken(renderTokenID, "ohos.permission.MICROPHONE");
     EXPECT_EQ(ret, PERMISSION_DENIED);
 
     std::vector<std::string> permissionList;

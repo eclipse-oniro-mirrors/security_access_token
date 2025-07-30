@@ -302,6 +302,28 @@ HWTEST_F(GrantPermissionTest, GrantPermissionSpecsTest004, TestSize.Level0)
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
+
+/**
+ * @tc.name: GrantPermissionWithRenderTest001
+ * @tc.desc: Grant permission with render tokenID
+ * @tc.type: FUNC
+ * @tc.require: issue
+ */
+HWTEST_F(GrantPermissionTest, GrantPermissionWithRenderTest001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // get render token
+    uint64_t renderToken = AccessTokenKit::GetRenderTokenID(tokenID);
+    ASSERT_NE(renderToken, INVALID_TOKENID);
+    ASSERT_NE(renderToken, tokenID);
+
+    int ret = AccessTokenKit::GrantPermission(renderToken, "ohos.permission.SECURE_PASTE", PERMISSION_COMPONENT_SET);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
