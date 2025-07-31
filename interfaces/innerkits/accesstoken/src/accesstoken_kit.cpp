@@ -70,6 +70,12 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
     return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
 }
 
+static bool IsRenderToken(AccessTokenID tokenID)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    return idInner->renderFlag;
+}
+
 static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& policyOut)
 {
     policyOut.apl = policyIn.apl;
@@ -269,6 +275,10 @@ int AccessTokenKit::GetHapTokenInfo(
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
+    }
 
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes);
 }
@@ -313,6 +323,10 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
         tokenID, permissionName.c_str(), crossIpc);
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process, perm denied.", tokenID);
+        return PERMISSION_DENIED;
+    }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
@@ -348,6 +362,10 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s.",
         tokenID, permissionName.c_str());
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process, perm denied.", tokenID);
+        return PERMISSION_DENIED;
+    }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
@@ -382,6 +400,11 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionlist.size=%{public}zu, crossIpc=%{public}d.",
         tokenID, permissionList.size(), crossIpc);
     permStateList.clear();
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process, perm denied.", tokenID);
+        permStateList.resize(permissionList.size(), PERMISSION_DENIED);
+        return RET_SUCCESS;
+    }
     if (crossIpc) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionList, permStateList);
     }
@@ -477,6 +500,10 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
+    }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -495,6 +522,10 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenID");
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permissionName");
@@ -613,6 +644,10 @@ int AccessTokenKit::GetHapTokenInfoExtension(AccessTokenID tokenID, HapTokenInfo
     if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID =%{public}d is invalid.", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (IsRenderToken(tokenID)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
     }
 
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfoExtension(tokenID, info);

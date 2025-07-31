@@ -104,10 +104,6 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (IsRenderToken(tokenID)) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "TokenId %{public}d is render, perm denied.", tokenID);
-        return PERMISSION_DENIED;
-    }
     auto proxy = GetProxy();
     if (proxy != nullptr) {
         int32_t state = PERMISSION_DENIED;
@@ -137,12 +133,6 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
     const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList)
 {
-    if (IsRenderToken(tokenID)) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "TokenId %{public}d is render, perm denied.", tokenID);
-        permStateList.clear();
-        permStateList.resize(permissionList.size(), PERMISSION_DENIED);
-        return RET_SUCCESS;
-    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
@@ -1298,12 +1288,6 @@ bool AccessTokenManagerClient::IsToastShownNeeded(int32_t pid)
     }
 
     return needToShow;
-}
-
-bool AccessTokenManagerClient::IsRenderToken(int32_t tokenID)
-{
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
-    return idInner->renderFlag;
 }
 } // namespace AccessToken
 } // namespace Security
