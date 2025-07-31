@@ -105,6 +105,30 @@ HWTEST_F(CJsonUtilsTest, GetArrayFromJsonTest001, TestSize.Level3)
 }
 
 /*
+ * @tc.name: GetArrayFromJson
+ * @tc.desc: GetArrayFromJson
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, GetArrayFromJsonTest002, TestSize.Level3)
+{
+    std::string test;
+    std::vector<std::string> out;
+    EXPECT_FALSE(GetArrayFromJson(nullptr, test, out));
+
+    cJSON* arrayJson = cJSON_CreateArray();
+    cJSON* arrayItem = cJSON_CreateString("test");
+    cJSON_AddItemToArray(arrayJson, arrayItem);
+    std::string key = "data";
+    cJSON* array = cJSON_CreateObject();
+    EXPECT_NE(NULL, array);
+    cJSON_AddItemToObject(array, key.c_str(), arrayJson);
+    EXPECT_TRUE(GetArrayFromJson(array, key, out));
+    EXPECT_FALSE(GetArrayFromJson(arrayItem, key, out));
+    cJSON_Delete(array);
+}
+
+/*
  * @tc.name: GetStringFromJson
  * @tc.desc: GetStringFromJson
  * @tc.type: FUNC

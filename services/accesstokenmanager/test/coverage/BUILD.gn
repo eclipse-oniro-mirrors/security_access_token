@@ -41,6 +41,8 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
+  "${access_token_path}/services/accesstokenmanager/test/unittest/parameter.cpp",
+  "${access_token_path}/services/accesstokenmanager/test/unittest/parameters.cpp",
 ]
 
 ohos_unittest("libaccesstoken_manager_service_coverage_test") {
@@ -79,6 +81,7 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/accesstokenmanager/test/unittest",
   ]
 
   sources = [

@@ -22,6 +22,8 @@
 #include "accesstoken_common_log.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
+#include "parameter.h"
+#include "parameters.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
@@ -34,6 +36,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
 static constexpr uint32_t NUMBER_ONE = 1;
 static constexpr uint32_t NUMBER_TWO = 2;
 static constexpr uint32_t NUMBER_THREE = 3;
@@ -1245,11 +1248,22 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest019, TestSize.Level0)
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
-    ASSERT_EQ(RET_SUCCESS, ret);
+    bool isEnterpriseNormal = OHOS::system::GetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
+    if (isEnterpriseNormal) {
+        ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    } else {
+        ASSERT_EQ(RET_SUCCESS, ret);
+    }
 
     HapInfoCheckResult result;
     ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    if (isEnterpriseNormal) {
+        ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+        ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.FILE_GUARD_MANAGER");
+        ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ENTERPRISE_NORMAL_RULE);
+    } else {
+        ASSERT_EQ(RET_SUCCESS, ret);
+    }
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
     EXPECT_EQ(PERMISSION_DENIED, ret);

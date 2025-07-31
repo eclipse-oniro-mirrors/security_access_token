@@ -50,7 +50,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
+static const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
 static constexpr int32_t VALUE_MAX_LEN = 32;
@@ -427,7 +427,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     ClearThreadErrorMsg();
 
     int32_t ret = RET_SUCCESS;
-    bool isHadSuccess = false;
+    bool isUpdateSuccess = false;
     for (const std::string &permissionName : permissionList) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START, "TOKENID",
@@ -439,7 +439,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
             break;
         }
 
-        isHadSuccess = true;
+        isUpdateSuccess = true;
 
         uint32_t newFlag = flag;
         if (GetPermissionFlag(tokenID, permissionName, flag) == RET_SUCCESS) {
@@ -454,7 +454,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
             IAccessTokenManagerIpcCode::COMMAND_REVOKE_PERMISSION), ret);
     }
 
-    if (isHadSuccess) {
+    if (isUpdateSuccess) {
         ParamFlagUpdate();
 #ifdef TOKEN_SYNC_ENABLE
         TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);

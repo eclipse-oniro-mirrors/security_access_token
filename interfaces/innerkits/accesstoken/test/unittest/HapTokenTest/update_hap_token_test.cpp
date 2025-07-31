@@ -22,6 +22,8 @@
 #include "accesstoken_common_log.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
+#include "parameter.h"
+#include "parameters.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
@@ -34,6 +36,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static const int THREAD_NUM = 3;
@@ -1548,9 +1551,20 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenSpecsTest015, TestSize.Level0)
         .isSystemApp = false,
         .appDistributionType = ""
     };
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams));
-    HapInfoCheckResult result;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result));
+    bool isEnterpriseNormal = OHOS::system::GetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
+    if (isEnterpriseNormal) {
+        ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+            AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams));
+        HapInfoCheckResult result;
+        ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+            AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result));
+        EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.FILE_GUARD_MANAGER");
+        EXPECT_EQ(result.permCheckResult.rule, PERMISSION_ENTERPRISE_NORMAL_RULE);
+    } else {
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams));
+        HapInfoCheckResult result;
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateHapInfoParams, policyParams, result));
+    }
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
