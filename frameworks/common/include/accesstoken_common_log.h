@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include "hilog/log.h"
+#include "accesstoken_thread_msg.h"
 
 #define ATM_DOMAIN 0xD005A01
 #define ATM_TAG "ATM"
@@ -43,22 +44,12 @@
     ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, domain, tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-uint32_t GetThreadErrorMsgLen(void);
-const char *GetThreadErrorMsg(void);
-void ClearThreadErrorMsg(void);
-void AddEventMessage(unsigned int domain, const char *tag, const char *format, ...);
-}
-}
-}
-
+// LOGC is used for critical errors that should be logged and reported.
 #define LOGC(domain, tag, fmt, ...)            \
 do { \
     ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, \
     "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)); \
-    OHOS::Security::AccessToken::AddEventMessage(domain, tag, \
+    AddEventMessage(domain, tag, \
         "%" LOG_PUBLIC "s[%" LOG_PUBLIC "u]: " fmt, __func__, __LINE__, ##__VA_ARGS__); \
 } while (0)
 

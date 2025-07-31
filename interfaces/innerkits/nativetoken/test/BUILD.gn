@@ -24,7 +24,10 @@ ohos_unittest("libnativetoken_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = [ "../include" ]
+  include_dirs = [
+    "../include",
+    "${access_token_path}/frameworks/common/include",
+  ]
 
   sources = [
     "unittest/src/nativetoken_kit_test.cpp",
@@ -54,13 +57,14 @@ ohos_unittest("libnativetoken_mock_test") {
 
   include_dirs = [
     "../include",
+    "${access_token_path}/frameworks/common/include",
     "mock/include/",
   ]
 
   sources = [
     "../src/nativetoken.c",
+    "../src/nativetoken_hisysevent.c",
     "../src/nativetoken_json_oper.c",
-    "../src/nativetoken_klog.c",
     "mock/src/cJSON.c",
     "mock/src/secure_function.c",
     "unittest/mock/nativetoken_oper_test.cpp",
@@ -68,11 +72,14 @@ ohos_unittest("libnativetoken_mock_test") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
+
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "googletest:gmock",
     "googletest:gtest",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
   ]
 }
 

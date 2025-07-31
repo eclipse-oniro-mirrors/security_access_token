@@ -18,41 +18,11 @@
 
 #include <string>
 #include "access_token.h"
+#include "hisysevent_common.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum SceneCode {
-    SA_PUBLISH_FAILED,
-    EVENTRUNNER_CREATE_ERROR,
-    INIT_HAP_TOKENINFO_ERROR,
-    INIT_NATIVE_TOKENINFO_ERROR,
-    INIT_PERM_DEF_JSON_ERROR,
-    TOKENID_NOT_EQUAL,
-};
-enum UpdatePermStatusErrorCode {
-    GRANT_TEMP_PERMISSION_FAILED = 0,
-    DLP_CHECK_FAILED = 1,
-    UPDATE_PERMISSION_STATUS_FAILED = 2,
-};
-enum CommonSceneCode {
-    AT_COMMOM_START = 0,
-    AT_COMMON_FINISH = 1,
-};
-enum AccessTokenDbSceneCode {
-    AT_DB_INSERT_RESTORE = 1001,
-    AT_DB_DELETE_RESTORE = 1002,
-    AT_DB_UPDATE_RESTORE = 1003,
-    AT_DB_QUERY_RESTORE = 1004,
-    AT_DB_COMMIT_RESTORE = 1005,
-};
-enum AddHapSceneCode {
-    INSTALL_START = 0,
-    TOKEN_ID_CHANGE,
-    INIT,
-    MAP,
-    INSTALL_FINISH,
-};
 struct AccessTokenDfxInfo {
     AddHapSceneCode sceneCode;
     AccessTokenID tokenId;

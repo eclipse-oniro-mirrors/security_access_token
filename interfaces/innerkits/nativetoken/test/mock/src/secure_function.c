@@ -36,6 +36,7 @@ int strcpy_s(char *strDest, size_t destMax, const char *strSrc)
         printf("dlopen failed\n");
     }
     if (g_strcpyTime == 0) {
+        g_strcpyTime++;
         return -1;
     }
 

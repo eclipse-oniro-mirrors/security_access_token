@@ -30,6 +30,7 @@ ohos_fuzztest("GetAccessTokenIdFuzzTest") {
 
   include_dirs = [
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/test/fuzztest/common",
   ]
 

@@ -13,16 +13,16 @@
  * limitations under the License.
  */
 
-#include "nativetoken_klog.h"
+#include "accesstoken_klog.h"
+#include <cstdio>
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "securec.h"
 
 #define MAX_LOG_SIZE 1024
 #define MAX_LEVEL_SIZE 3
 
-static const char *LOG_LEVEL_STR[] = {"ERROR", "WARNING", "INFO"};
+static const char *g_logLevelStr[] = {"ERROR", "WARNING", "INFO"};
 
 #ifndef UNLIKELY
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -64,7 +64,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
 
     char logInfo[MAX_LOG_SIZE];
     int res = snprintf_s(logInfo, MAX_LOG_SIZE, MAX_LOG_SIZE - 1, "[pid=%d][%s][%s] %s",
-        getpid(), "access_token", LOG_LEVEL_STR[logLevel], tmpFmt);
+        getpid(), "access_token", g_logLevelStr[logLevel], tmpFmt);
     if (res == -1) {
         (void)fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;

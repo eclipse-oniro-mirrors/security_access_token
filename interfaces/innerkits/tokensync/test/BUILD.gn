@@ -26,6 +26,7 @@ ohos_unittest("libtokensync_sdk_test") {
 
   include_dirs = [
     "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/tokensync/include",
