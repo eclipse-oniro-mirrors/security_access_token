@@ -234,6 +234,7 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/services/common/database/include",
       "main/cpp/include/database",
+      "main/cpp/include/dfx",
     ]
 
     sources = [
@@ -244,6 +245,7 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_db_util.cpp",
       "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/token_field_const.cpp",
+      "main/cpp/src/dfx/hisysevent_adapter.cpp",
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -253,6 +255,7 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "relational_store:native_rdb",
     ]
   }
