@@ -282,7 +282,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     }
     if (idRemoved != INVALID_TOKENID) {
         oriTokenId = idRemoved;
-        RemoveHapTokenInfo(idRemoved);
+        (void)RemoveHapTokenInfo(idRemoved);
     }
     // add hap to kernel
     int32_t userId = info->GetUserID();
@@ -338,7 +338,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
+    (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
     PermissionManager::GetInstance().AddHapPermToKernel(id, std::vector<std::string>());
@@ -612,7 +612,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-        RemoveHapTokenInfoFromDb(tokenInfo);
+        (void)RemoveHapTokenInfoFromDb(tokenInfo);
         return ret;
     }
 
@@ -623,7 +623,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d isRestore %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex(), info.isRestore);
-    AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
+    (void)AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
     return RET_SUCCESS;
 }
 
@@ -853,7 +853,7 @@ bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, 
         return true;
     }
 
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
         HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_RESPONSE_ERROR,
         "REMOTE_ID", ConstantCommon::EncryptDevId(deviceID), "ERROR_REASON", errReason);
     return false;
@@ -978,7 +978,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
             "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "deviceID error");
         return 0;
@@ -1001,7 +1001,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
         std::string errorReason = "token sync call error, error number is " + std::to_string(ret);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
             "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", errorReason);
         return 0;
@@ -1295,7 +1295,7 @@ void AccessTokenInfoManager::DumpToken()
     AtmToolsParamInfoParcel infoParcel;
     DumpTokenInfo(infoParcel.info, dumpStr);
     dprintf(fd, "%s\n", dumpStr.c_str());
-    fdsan_close_with_tag(fd, FD_TAG);
+    (void)fdsan_close_with_tag(fd, FD_TAG);
 }
 
 void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
@@ -1331,7 +1331,7 @@ void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID token
         (void)ClearUserGrantedPermission(id);
     }
     // DFX
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CLEAR_USER_PERMISSION_STATE",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CLEAR_USER_PERMISSION_STATE",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID,
         "TOKENID_LEN", static_cast<uint32_t>(tokenIdList.size()));
 }
@@ -1352,7 +1352,10 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
     HapTokenInfoInner::GetGrantedPermByTokenId(id, emptyList, grantedPermListBefore);
 
     // reset permission.
-    infoPtr->ResetUserGrantPermissionStatus();
+    int32_t ret = infoPtr->ResetUserGrantPermissionStatus();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
 
     std::vector<std::string> grantedPermListAfter;
     HapTokenInfoInner::GetGrantedPermByTokenId(id, emptyList, grantedPermListAfter);
@@ -1700,7 +1703,7 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
 int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (tokenID == INVALID_TOKENID) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
             static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
@@ -1779,7 +1782,7 @@ int32_t AccessTokenInfoManager::SetPermissionRequestToggleStatus(const std::stri
         return ret;
     }
 
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
         "TOGGLE_STATUS", status);
 

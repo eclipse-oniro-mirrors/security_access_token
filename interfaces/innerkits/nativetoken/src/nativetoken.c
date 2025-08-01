@@ -254,7 +254,7 @@ static int32_t ClearOrCreateCfgFile(void)
     Restorecon(TOKEN_ID_CFG_FILE_PATH);
 #endif // WITH_SELINUX
 
-    fdsan_close_with_tag(fd, g_nativeFdTag);
+    (void)fdsan_close_with_tag(fd, g_nativeFdTag);
     fd = -1;
 
     struct stat buf;
@@ -316,7 +316,7 @@ static int32_t GetRandomTokenId(uint32_t *randNum)
     }
     fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
     len = read(fd, &random, sizeof(random));
-    fdsan_close_with_tag(fd, g_nativeFdTag);
+    (void)fdsan_close_with_tag(fd, g_nativeFdTag);
 
     if (len != sizeof(random)) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:read failed.", __func__);
@@ -413,7 +413,7 @@ static void WriteToFile(const cJSON *root)
         if (fsync(fd) != 0) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fsync failed, errno is %d.", __func__, errno);
         }
-        fdsan_close_with_tag(fd, g_nativeFdTag);
+        (void)fdsan_close_with_tag(fd, g_nativeFdTag);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
@@ -728,7 +728,7 @@ static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
         }
     }
     if (ret == -1) {
-        fdsan_close_with_tag(fd, g_nativeFdTag);
+        (void)fdsan_close_with_tag(fd, g_nativeFdTag);
         return ATRET_FAILED;
     }
     *lockFileFd = fd;
@@ -747,7 +747,7 @@ static void UnlockNativeTokenFile(int32_t lockFileFd)
         NativeTokenKmsg(NATIVETOKEN_KERROR,
             "[%s]: Failed to unlock file, errno is %d.", __func__, errno);
     }
-    fdsan_close_with_tag(lockFileFd, g_nativeFdTag);
+    (void)fdsan_close_with_tag(lockFileFd, g_nativeFdTag);
 }
 
 static uint32_t AddOrUpdateTokenInfo(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,

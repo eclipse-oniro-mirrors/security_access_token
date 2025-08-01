@@ -72,7 +72,7 @@ void ReportAccessTokenUserData()
     std::vector<uint64_t> fileSize = { GetFileSize(NATIVE_CFG_FILE_PATH) };
     GetDatabaseFileSize(ACCESSTOKEN_DATABASE_NAME, filePath, fileSize);
     GetDatabaseFileSize(ACCESSTOKEN_DATABASE_NAME_BACK, filePath, fileSize);
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "COMPONENT_NAME", ACCESSTOKEN_NAME, "PARTITION_NAME", DATA_FOLDER,
         "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
@@ -83,7 +83,7 @@ void ReportPrivacyUserData()
     std::vector<std::string> filePath;
     std::vector<uint64_t> fileSize;
     GetDatabaseFileSize(PRIVACY_DATABASE_NAME, filePath, fileSize);
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "COMPONENT_NAME", ACCESSTOKEN_NAME, "PARTITION_NAME", DATA_FOLDER,
         "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);

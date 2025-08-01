@@ -89,18 +89,18 @@ int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& raw
 
     if (fstat(fd, &statBuffer) != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Fstat failed.");
-        fdsan_close_with_tag(fd, FD_TAG);
+        (void)fdsan_close_with_tag(fd, FD_TAG);
         return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is invalid.");
-        fdsan_close_with_tag(fd, FD_TAG);
+        (void)fdsan_close_with_tag(fd, FD_TAG);
         return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Config file size is too large.");
-        fdsan_close_with_tag(fd, FD_TAG);
+        (void)fdsan_close_with_tag(fd, FD_TAG);
         return ERR_OVERSIZE;
     }
     rawData.reserve(statBuffer.st_size);
@@ -110,7 +110,7 @@ int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& raw
     while ((readLen = read(fd, buff, BUFFER_SIZE)) > 0) {
         rawData.append(buff, readLen);
     }
-    fdsan_close_with_tag(fd, FD_TAG);
+    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (readLen == 0) {
         return RET_SUCCESS;
     }

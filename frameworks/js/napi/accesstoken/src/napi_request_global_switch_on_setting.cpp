@@ -407,7 +407,7 @@ void RequestGlobalSwitchAsyncInstanceControl::AddCallbackByInstanceId(
         // make sure id is in map to indicate a pop-up window is showing
         instanceIdMap_[asyncContext->instanceId] = {};
     }
-    StartUIExtension(asyncContext);
+    (void)StartUIExtension(asyncContext);
 }
 
 void RequestGlobalSwitchAsyncInstanceControl::UpdateQueueData(
@@ -473,7 +473,7 @@ void RequestGlobalSwitchAsyncInstanceControl::ExecCallback(int32_t id)
         }
     }
     if (isDynamic) {
-        StartUIExtension(asyncContext);
+        (void)StartUIExtension(asyncContext);
     }
 }
 

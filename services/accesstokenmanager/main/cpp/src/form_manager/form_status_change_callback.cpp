@@ -44,7 +44,7 @@ int32_t FormStateObserverStub::OnRemoteRequest(
     }
     switch (static_cast<IJsFormStateObserver::Message>(code)) {
         case IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE: {
-            HandleNotifyWhetherFormsVisible(data, reply);
+            (void)HandleNotifyWhetherFormsVisible(data, reply);
             return NO_ERROR;
         }
         default: {
@@ -73,7 +73,7 @@ int32_t FormStateObserverStub::HandleNotifyWhetherFormsVisible(MessageParcel &da
         }
         formInstances.emplace_back(*info);
     }
-    NotifyWhetherFormsVisible(visibleType, bundleName, formInstances);
+    (void)NotifyWhetherFormsVisible(visibleType, bundleName, formInstances);
     return NO_ERROR;
 }
 } // namespace AccessToken

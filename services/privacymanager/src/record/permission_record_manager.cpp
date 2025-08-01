@@ -300,7 +300,7 @@ void PermissionRecordManager::UpdatePermRecImmediately()
     std::lock_guard<std::mutex> lock(permUsedRecMutex_);
     for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
         if (it->needUpdateToDb) {
-            UpdatePermissionUsedRecordToDb(it->record);
+            (void)UpdatePermissionUsedRecordToDb(it->record);
         }
     }
 }
@@ -602,7 +602,7 @@ void PermissionRecordManager::UpdatePermUsedRecToggleStatusMapFromDb()
     while (it != permUsedRecordToggleStatusRes.end()) {
         userID = it->GetInt(PrivacyFiledConst::FIELD_USER_ID);
         status = static_cast<bool>(it->GetInt(PrivacyFiledConst::FIELD_STATUS));
-        UpdatePermUsedRecToggleStatusMap(userID, status);
+        (void)UpdatePermUsedRecToggleStatusMap(userID, status);
         ++it;
     }
 
@@ -615,7 +615,7 @@ void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_
     std::vector<PermissionUsedRecordDb::DataType> dataTypes;
     dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
     dataTypes.emplace_back(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE);
-    PermissionUsedRecordDb::GetInstance().DeleteHistoryRecordsInTables(dataTypes, tokenIDList);
+    (void)PermissionUsedRecordDb::GetInstance().DeleteHistoryRecordsInTables(dataTypes, tokenIDList);
 
     {
         // remove from record cache
@@ -900,7 +900,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
     AddDeleteTaskNum();
 
     std::function<void()> delayed = ([this]() {
-        DeletePermissionRecord(recordAgingTime_);
+        (void)DeletePermissionRecord(recordAgingTime_);
         LOGI(PRI_DOMAIN, PRI_TAG, "Delete record end.");
         // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
@@ -931,10 +931,12 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
     int32_t total = PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::DataType::PERMISSION_RECORD);
     if (total > recordSizeMaximum_) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "The count of record is %{public}d, begin to delete aging data.", total);
         uint32_t excessiveSize = static_cast<uint32_t>(total) - static_cast<uint32_t>(recordSizeMaximum_);
         int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(
             PermissionUsedRecordDb::DataType::PERMISSION_RECORD, excessiveSize);
         if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Delete excessive records failed, res %{public}d.", res);
             return Constant::FAILURE;
         }
     }
@@ -944,6 +946,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(
         PermissionUsedRecordDb::DataType::PERMISSION_RECORD, andConditionValues);
     if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Delete expire records failed, res %{public}d.", res);
         return Constant::FAILURE;
     }
     return Constant::SUCCESS;
@@ -1732,7 +1735,7 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId, int32_t pid
 {
     int32_t status = PERM_ACTIVE_IN_BACKGROUND;
     std::vector<AppStateData> foreGroundAppList;
-    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
+    (void)AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [=](const auto& foreGroundApp) {
         if (pid == -1) {

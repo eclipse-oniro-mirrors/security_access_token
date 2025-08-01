@@ -78,7 +78,7 @@ void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateD
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, true);
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
     } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, false);
         if (list[FORMS_FLAG]) {
@@ -90,7 +90,7 @@ void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateD
             return;
         }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
+        (void)TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
     }
 }
 
@@ -101,7 +101,7 @@ void PermissionAppStateObserver::OnAppStopped(const AppStateData &appStateData)
         LOGI(ATM_DOMAIN, ATM_TAG, "TokenID:%{public}d died.", tokenID);
         // cancle task when process die
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
     }
 }
@@ -117,7 +117,7 @@ void PermissionAppStateObserver::OnAppCacheStateChanged(const AppStateData &appS
         so temporary authorization should be cancle as OnAppStopped when receive this callback
      */
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+    (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
     TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
 }
 
@@ -141,7 +141,7 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
         if (formInstances[i].formVisiblity_ == FormVisibilityType::VISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, true);
             std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-            TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+            (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
         } else if (formInstances[i].formVisiblity_ == FormVisibilityType::INVISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, false);
             if (list[FOREGROUND_FLAG]) {
@@ -153,7 +153,7 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
                 continue;
             }
             std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-            TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
+            (void)TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
         }
     }
     return RET_SUCCESS;
@@ -178,7 +178,7 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStart(
     TempPermissionObserver::GetInstance().AddContinuousTask(tokenID);
     TempPermissionObserver::GetInstance().ModifyAppState(tokenID, CONTINUOUS_TASK_FLAG, true);
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+    (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
 }
 
 void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
@@ -208,7 +208,7 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
         return;
     }
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
+    (void)TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
 }
 #endif
 void PermissionAppManagerDeathCallback::NotifyAppManagerDeath()
@@ -445,7 +445,7 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
 {
     bool isForeground = false;
     std::vector<AppStateData> foreGroundAppList;
-    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
+    (void)AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [tokenID](const auto& foreGroundApp) { return foreGroundApp.accessTokenId == tokenID; })) {
         isForeground = true;
@@ -453,7 +453,7 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
     bool isContinuousTaskExist = false;
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
-    BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
+    (void)BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
     for (auto iter = continuousTaskList.begin(); iter != continuousTaskList.end(); iter++) {
         if ((*iter) == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "ContinuousTaskCallbackInfo is null");
@@ -487,7 +487,7 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
         AddTempPermTokenToList(tokenID, bundleName, permissionName, list);
         return true;
     }
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
         HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GRANT_TEMP_PERMISSION_FAILED,
         "TOKENID", tokenID, "PERM", permissionName, "BUNDLE_NAME", bundleName);
     return false;
@@ -502,7 +502,7 @@ void TempPermissionObserver::AddTempPermTokenToList(AccessTokenID tokenID,
         tempPermTokenMap_[tokenID] = list;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID:%{public}d, permissionName:%{public}s", tokenID, permissionName.c_str());
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "GRANT_TEMP_PERMISSION",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "GRANT_TEMP_PERMISSION",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         "TOKENID", tokenID, "PERMISSION_NAME", permissionName);
     {
@@ -598,7 +598,7 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
             }
         }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(iter->first);
-        TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
     }
     tempPermTokenMap_.clear();
     LOGI(ATM_DOMAIN, ATM_TAG, "TempPermTokenMap_ clear!");

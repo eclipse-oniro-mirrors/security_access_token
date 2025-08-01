@@ -54,7 +54,7 @@ void PermissionGrantEvent::NotifyPermGrantStoreResult(bool isStoreSucc, uint64_t
     for (auto iter = permGrantEventList_.begin(); iter != permGrantEventList_.end();) {
         if (timestamp >= iter->timeStamp) {
             if (!isStoreSucc) {
-                HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+                (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
                     HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", PERMISSION_STORE_ERROR,
                     "CALLER_TOKENID", iter->tokenID, "PERMISSION_NAME", iter->permissionName);
             }

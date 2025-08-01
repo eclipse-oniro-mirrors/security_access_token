@@ -105,7 +105,7 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
             return;
         }
@@ -149,7 +149,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is 0");
             asyncContext->result.errorCode = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", CREATE_MODAL_UI_FAILED);
             return;
         }
@@ -382,7 +382,7 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         LOGE(ATM_DOMAIN, ATM_TAG, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
     }
@@ -518,7 +518,7 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
         HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_RELEASE, "INNER_CODE", releaseCode);
     ReleaseHandler(-1);
 }
@@ -530,7 +530,7 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
         HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_ONERROR, "INNER_CODE", code);
     ReleaseHandler(-1);
 }
@@ -551,7 +551,7 @@ void UIExtensionCallback::OnDestroy()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
     if (isOnResult_.load() == false) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_DESTROY);
     }
     ReleaseHandler(-1);
@@ -674,7 +674,7 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
 
 static inline void ReportHisysEventReqPermsFromUserBehavior(std::string bundleName, bool uiExtensionFlag)
 {
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         "BUNDLENAME", bundleName, "UIEXTENSION_FLAG", uiExtensionFlag);
 }
@@ -694,7 +694,7 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
         asyncContextHandle->asyncContextPtr->result.errorCode = RET_FAILED;
         asyncContextHandle->asyncContextPtr->result.errorMsg =
             "The specified context does not belong to the current application.";
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
             "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContextHandle->asyncContextPtr->tokenId);
         return;

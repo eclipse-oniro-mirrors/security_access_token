@@ -56,7 +56,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     va_start(vargs, fmt);
     char tmpFmt[MAX_LOG_SIZE];
     if (vsnprintf_s(tmpFmt, MAX_LOG_SIZE, MAX_LOG_SIZE - 1, fmt, vargs) == -1) {
-        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
+        (void)fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
         va_end(vargs);
         return -1;
@@ -66,7 +66,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     int res = snprintf_s(logInfo, MAX_LOG_SIZE, MAX_LOG_SIZE - 1, "[pid=%d][%s][%s] %s",
         getpid(), "access_token", LOG_LEVEL_STR[logLevel], tmpFmt);
     if (res == -1) {
-        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
+        (void)fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
         va_end(vargs);
         return -1;
@@ -74,7 +74,7 @@ int NativeTokenKmsg(int logLevel, const char *fmt, ...)
     va_end(vargs);
 
     if (write(g_fd, logInfo, strlen(logInfo)) < 0) {
-        fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
+        (void)fdsan_close_with_tag(g_fd, g_nativeKmsgFdTag);
         g_fd = -1;
     }
     return 0;

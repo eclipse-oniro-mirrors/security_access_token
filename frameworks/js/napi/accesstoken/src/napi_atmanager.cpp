@@ -409,7 +409,7 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
         asyncContext->tokenId != selfTokenIdEx.tokenIdExStruct.tokenID) {
         int32_t cnt = g_cnt.fetch_add(1);
         if (cnt % REPORT_CNT == 0) {
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
                 "SELF_TOKENID", selfTokenIdEx.tokenIdExStruct.tokenID, "CONTEXT_TOKENID", asyncContext->tokenId);
         }
@@ -491,7 +491,7 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         asyncContext->tokenId != selfTokenIdEx.tokenIdExStruct.tokenID) {
         int32_t cnt = g_cnt.fetch_add(1);
         if (cnt % REPORT_CNT == 0) {
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
                 "SELF_TOKENID", selfTokenIdEx.tokenIdExStruct.tokenID, "CONTEXT_TOKENID", asyncContext->tokenId);
         }
@@ -632,7 +632,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         int32_t cnt = g_cnt.fetch_add(1);
         if (!AccessTokenKit::IsSystemAppByFullTokenID(selfTokenId) && cnt % REPORT_CNT == 0) {
             AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
-            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
                 HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
                 "SELF_TOKENID", selfToken, "CONTEXT_TOKENID", syncContext->tokenId);
         }
