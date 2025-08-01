@@ -7376,6 +7376,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_WORKSPACES_EVENT_SUBSCRIBE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
