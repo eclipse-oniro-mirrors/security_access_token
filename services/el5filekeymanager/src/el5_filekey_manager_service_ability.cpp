@@ -63,6 +63,7 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
     AddSystemAbilityListener(TELEPHONY_CALL_MANAGER_SYS_ABILITY_ID);
     AddSystemAbilityListener(TIME_SERVICE_ID);
     AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+    AddSystemAbilityListener(STORAGE_MANAGER_DAEMON_ID);
 
     if (reasonName == "usual.event.SCREEN_LOCKED") {
         service_->SetPolicyScreenLocked();
