@@ -28,7 +28,7 @@ namespace {
 constexpr const char* RDB_SYMBOL_CREATE = "Create";
 constexpr const char* RDB_SYMBOL_DESTROY = "Destroy";
 constexpr const char* DELAY_DLCLOSE_TASK_NAME = "DelayDlclose";
-constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 6 * 1000;
+constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 3600 * 1000;
 
 using CreateFunc = void* (*)(void);
 using DestroyFunc = void (*)(void*);
