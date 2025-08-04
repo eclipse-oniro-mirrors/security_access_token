@@ -54,6 +54,7 @@ static MockHapToken* g_mock = nullptr;
 static bool g_isMicMute = false;
 #endif
 static constexpr uint32_t RANDOM_TOKENID = 123;
+static constexpr uint32_t RANDOM_PID = 123;
 static constexpr int32_t INVALID_PERMISSIONAME_LENGTH = 257;
 static constexpr int32_t FIRST_INDEX = 0;
 static constexpr int32_t SECOND_INDEX = 1;
@@ -2024,6 +2025,31 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level0)
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, permissionName));
 
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_shellToken, permissionName));
+}
+
+/**
+ * @tc.name: StopUsingPermission009
+ * @tc.desc: StopUsingPermission test with different pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission009, TestSize.Level0)
+{
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", callbackPtr));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", callbackPtr, RANDOM_PID));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE", RANDOM_PID));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE", RANDOM_PID));
+
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", RANDOM_PID));
+    ASSERT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", RANDOM_PID));
 }
 
 class TestCallBack1 : public StateChangeCallbackStub {

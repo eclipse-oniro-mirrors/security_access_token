@@ -165,7 +165,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
     }
 
     sptr<StateChangeCallback> callbackWrap = nullptr;
-    uint64_t id = GetUniqueId(tokenId, pid);
+    uint64_t id = GetUniqueId(tokenId, -1);
     int32_t result = CreateStateChangeCbk(id, callback, callbackWrap);
     if (result != RET_SUCCESS) {
         return result;

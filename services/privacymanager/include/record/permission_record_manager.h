@@ -160,7 +160,8 @@ private:
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
         const std::string& permissionName, int32_t callerPid);
-    int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
+    int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid,
+        bool isCamera = false);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
