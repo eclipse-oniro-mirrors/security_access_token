@@ -443,7 +443,7 @@ int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
     }
 
     if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
             callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "SetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d).", callingTokenID);
@@ -462,7 +462,7 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
 
     if (!IsShellProcessCalling() && !IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
             callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "GetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d).", callingTokenID);
@@ -496,7 +496,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -516,7 +516,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -535,7 +535,7 @@ int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SHORT_TERM_WRITE_MEDIAVIDEO) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -552,7 +552,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID);
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -575,7 +575,7 @@ int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
     }
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, MANAGE_EDM_POLICY) == PERMISSION_DENIED) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
             callingTokenID);
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d).", callingTokenID);
@@ -803,9 +803,9 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
     HapTokenInfo hapInfo;
-    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    (void)AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
         "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex);
 
@@ -813,7 +813,7 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
         "TOKENID", tokenID, "DURATION", endTime - beginTime, "ERROR_CODE", ret);
     ReportSysCommonEventError(static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_TOKEN), ret);
@@ -943,12 +943,12 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
 
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapTokenInfo hapInfo;
-    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
+    (void)AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
     ClearThreadErrorMsg();
 
     AccessTokenDfxInfo dfxInfo;
     DumpEventInfo(policyParcel.hapPolicy, dfxInfo);
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
         "TOKENID", tokenIdEx.tokenIdExStruct.tokenID, "TOKENIDEX", tokenIdEx.tokenIDEx,
         "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
@@ -959,7 +959,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     fullTokenId = tokenIdEx.tokenIDEx;
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
         "TOKENID", tokenIdEx.tokenIdExStruct.tokenID, "TOKENIDEX", tokenIdEx.tokenIDEx,
         "DURATION", endTime - beginTime, "ERROR_CODE", ret);
@@ -1220,7 +1220,7 @@ int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hap
         hapBaseInfoParcel.hapBaseInfo.instIndex);
     int32_t ret = AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenIdEx.tokenIdExStruct.tokenID, enable);
     // DFX
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "SET_PERMISSION_DIALOG_CAP",
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "SET_PERMISSION_DIALOG_CAP",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenIdEx.tokenIdExStruct.tokenID,
         "USERID", hapBaseInfoParcel.hapBaseInfo.userID, "BUNDLENAME", hapBaseInfoParcel.hapBaseInfo.bundleName,
         "INSTINDEX", hapBaseInfoParcel.hapBaseInfo.instIndex, "ENABLE", enable);

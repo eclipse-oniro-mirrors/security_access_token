@@ -35,7 +35,7 @@ void PermActiveStatusCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObje
         LOGE(ATM_DOMAIN, ATM_TAG, "Object is nullptr");
         return;
     }
-    ActiveStatusCallbackManager::GetInstance().RemoveCallback(object);
+    (void)ActiveStatusCallbackManager::GetInstance().RemoveCallback(object);
     LOGI(ATM_DOMAIN, ATM_TAG, "End");
 }
 } // namespace AccessToken

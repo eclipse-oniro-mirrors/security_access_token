@@ -46,11 +46,11 @@ uint64_t GetSelfTokenID(void)
     fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_GET_TOKENID, &token);
     if (ret) {
-        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+        (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return INVAL_TOKEN_ID;
     }
 
-    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+    (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return token;
 }
 
@@ -63,11 +63,11 @@ int SetSelfTokenID(uint64_t tokenID)
     fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_SET_TOKENID, &tokenID);
     if (ret) {
-        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+        (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return ret;
     }
 
-    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+    (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return ACCESS_TOKEN_OK;
 }
 
@@ -81,11 +81,11 @@ uint64_t GetFirstCallerTokenID(void)
     fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_GET_FTOKENID, &token);
     if (ret) {
-        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+        (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return INVAL_TOKEN_ID;
     }
 
-    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+    (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return token;
 }
 
@@ -98,10 +98,10 @@ int SetFirstCallerTokenID(uint64_t tokenID)
     fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
     int ret = ioctl(fd, ACCESS_TOKENID_SET_FTOKENID, &tokenID);
     if (ret) {
-        fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+        (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
         return ret;
     }
 
-    fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+    (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
     return ACCESS_TOKEN_OK;
 }

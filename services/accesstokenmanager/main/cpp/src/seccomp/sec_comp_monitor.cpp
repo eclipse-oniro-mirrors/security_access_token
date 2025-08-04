@@ -145,7 +145,7 @@ SecCompMonitor::~SecCompMonitor()
 {
     std::lock_guard<std::mutex> lock(observerMutex_);
     if (observer_ != nullptr) {
-        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
+        (void)AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
         observer_ = nullptr;
     }
 }
@@ -155,7 +155,7 @@ void SecCompMonitor::OnAppMgrRemoteDiedHandle()
     LOGI(ATM_DOMAIN, ATM_TAG, "OnAppMgrRemoteDiedHandle.");
     std::lock_guard<std::mutex> lock(observerMutex_);
     if (observer_ != nullptr) {
-        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
+        (void)AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
         observer_ = nullptr;
     }
 }

@@ -90,7 +90,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
         return ERR_PARAM_INVALID;
@@ -99,7 +99,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantFlag is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant flag error");
         return ERR_PARAM_INVALID;
@@ -109,7 +109,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantStatus is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant status error");
         return ERR_PARAM_INVALID;
@@ -128,7 +128,7 @@ int32_t DataTranslator::TranslationIntoExtendedPermission(
     perm.permissionName =  inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(perm.permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
         return ERR_PARAM_INVALID;

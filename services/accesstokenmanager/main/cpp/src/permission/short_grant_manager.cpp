@@ -77,7 +77,7 @@ void ShortGrantManager::OnAppMgrRemoteDiedHandle()
                 item->tokenID, item->permissionName.c_str());
         }
         std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(item->tokenID) + item->permissionName;
-        ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
+        (void)ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         ++item;
     }
     shortGrantData_.clear();
@@ -172,7 +172,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
     if (cancelTimes > currRemainedTime) {
         iter->revokeTimes = GetCurrentTime() + cancelTimes;
-        ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
+        (void)ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "GrantPermission failed result %{public}d", ret);
@@ -223,7 +223,7 @@ void ShortGrantManager::ClearShortPermissionByTokenID(AccessTokenID tokenID)
             }
             // clear task and data
             std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(tokenID) + item->permissionName;
-            ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
+            (void)ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
             item = shortGrantData_.erase(item);
         } else {
             ++item;

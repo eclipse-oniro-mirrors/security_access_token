@@ -431,7 +431,7 @@ void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
         // make sure id is in map to indicate a pop-up window is showing
         instanceIdMap_[asyncContext->instanceId] = {};
     }
-    StartUIExtension(asyncContext);
+    (void)StartUIExtension(asyncContext);
 }
 
 bool static CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
@@ -524,7 +524,7 @@ void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
         }
     }
     if (isDynamic) {
-        StartUIExtension(asyncContext);
+        (void)StartUIExtension(asyncContext);
     }
 }
 

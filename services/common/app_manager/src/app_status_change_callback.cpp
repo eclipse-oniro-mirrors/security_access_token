@@ -40,23 +40,23 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
         case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED: {
-            HandleOnProcessStateChanged(data, reply);
+            (void)HandleOnProcessStateChanged(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED: {
-            HandleOnProcessDied(data, reply);
+            (void)HandleOnProcessDied(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED: {
-            HandleOnAppStateChanged(data, reply);
+            (void)HandleOnAppStateChanged(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED: {
-            HandleOnAppStopped(data, reply);
+            (void)HandleOnAppStopped(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_APP_CACHE_STATE_CHANGED: {
-            HandleOnAppCacheStateChanged(data, reply);
+            (void)HandleOnAppCacheStateChanged(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED:

@@ -90,7 +90,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
 HapTokenInfoInner::~HapTokenInfoInner()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d destruction", tokenInfoBasic_.tokenID);
-    PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
+    (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
 
 void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
@@ -135,7 +135,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.bundleName = inGenericValues.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "bundleName error");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -148,7 +148,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -194,7 +194,7 @@ void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permSt
         return;
     }
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->policySetLock_);
-    PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
+    (void)PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
 }
 
 uint32_t HapTokenInfoInner::GetReqPermissionSize()
@@ -308,7 +308,10 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         return RET_SUCCESS;
     }
     std::vector<GenericValues> permStateValues;
-    PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
+    ret = PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
 
     for (size_t i = 0; i < permStateValues.size(); i++) {
         if (permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME) != permissionName) {
@@ -400,7 +403,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 void HapTokenInfoInner::RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
     bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList)
 {
-    PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
+    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
         constrainedList, hapUserIsActive, tokenId, refreshedPermList);
 }
 
