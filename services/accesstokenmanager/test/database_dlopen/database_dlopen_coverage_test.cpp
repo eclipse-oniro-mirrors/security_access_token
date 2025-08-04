@@ -47,7 +47,10 @@ void AccessTokenDatabaseDlopenTest::TearDownTestCase() {}
 
 void AccessTokenDatabaseDlopenTest::SetUp() {}
 
-void AccessTokenDatabaseDlopenTest::TearDown() {}
+void AccessTokenDatabaseDlopenTest::TearDown()
+{
+    RdbDlopenManager::DestroyInstance();
+}
 
 /*
  * @tc.name: GetEventHandler001
@@ -66,8 +69,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, GetEventHandler001, TestSize.Level4)
     ASSERT_NE(nullptr, instance->eventRunner_);
     ASSERT_NE(nullptr, instance->eventHandler_);
     instance->GetEventHandler();
-
-    RdbDlopenManager::DestroyInstance();
 }
 
 /*
@@ -87,7 +88,7 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, Create001, TestSize.Level4)
     void* handle = nullptr;
     instance->Create(handle);
 
-    handle = dlopen("libaccesstoken_manager_service.z.so", RTLD_LAZY);
+    handle = dlopen("libaccesstoken_sdk.z.so", RTLD_LAZY);
     ASSERT_NE(nullptr, handle);
     instance->Create(handle);
     ASSERT_EQ(nullptr, instance->instance_);
@@ -100,8 +101,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, Create001, TestSize.Level4)
     ASSERT_NE(nullptr, instance->instance_);
     dlclose(handle);
     handle = nullptr;
-
-    RdbDlopenManager::DestroyInstance();
 }
 
 /*
@@ -120,7 +119,7 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, Destroy001, TestSize.Level4)
     void* handle = nullptr;
     instance->Destroy(handle);
 
-    handle = dlopen("libaccesstoken_manager_service.z.so", RTLD_LAZY);
+    handle = dlopen("libaccesstoken_sdk.z.so", RTLD_LAZY);
     ASSERT_NE(nullptr, handle);
     instance->Destroy(handle);
     ASSERT_EQ(nullptr, instance->instance_);
@@ -137,8 +136,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, Destroy001, TestSize.Level4)
 
     dlclose(handle);
     handle = nullptr;
-
-    RdbDlopenManager::DestroyInstance();
 }
 
 /*
@@ -156,7 +153,7 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, DelayDlcloseHandle001, TestSize.Level4)
 
     instance->DelayDlcloseHandle(0); // handle_ is nullptr
 
-    instance->handle_ = dlopen("libaccesstoken_manager_service.z.so", RTLD_LAZY);
+    instance->handle_ = dlopen("libaccesstoken_sdk.z.so", RTLD_LAZY);
     ASSERT_NE(nullptr, instance->handle_);
     instance->DelayDlcloseHandle(0); // handle_ is not nullptr, instance_ is nullptr
     sleep(WAIT_EVENTHANDLE_TIME);
@@ -170,8 +167,36 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, DelayDlcloseHandle001, TestSize.Level4)
     sleep(WAIT_EVENTHANDLE_TIME);
     ASSERT_EQ(nullptr, instance->instance_);
     ASSERT_EQ(nullptr, instance->handle_);
+}
 
-    RdbDlopenManager::DestroyInstance();
+/*
+ * @tc.name: DelayDlcloseHandle002
+ * @tc.desc: RdbDlopenManager::DelayDlcloseHandle
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseDlopenTest, DelayDlcloseHandle002, TestSize.Level4)
+{
+    auto instance = RdbDlopenManager::GetInstance();
+    ASSERT_NE(nullptr, instance);
+    ASSERT_EQ(nullptr, instance->handle_);
+    ASSERT_EQ(nullptr, instance->instance_);
+    ASSERT_EQ(0, instance->taskNum_);
+    instance->DelayDlcloseHandle(0); // handle_ is nullptr
+    instance->handle_ = dlopen(RDB_ADAPTER_LIBPATH, RTLD_LAZY);
+    ASSERT_NE(nullptr, instance->handle_);
+    instance->Create(instance->handle_);
+    ASSERT_NE(nullptr, instance->instance_);
+    instance->taskNum_++;
+    instance->DelayDlcloseHandle(0); // handle_ and instance_ both not nullptr
+    sleep(WAIT_EVENTHANDLE_TIME);
+    ASSERT_NE(nullptr, instance->instance_);
+    ASSERT_NE(nullptr, instance->handle_);
+    instance->taskNum_--;
+    instance->DelayDlcloseHandle(0); // handle_ and instance_ both not nullptr
+    sleep(WAIT_EVENTHANDLE_TIME);
+    ASSERT_EQ(nullptr, instance->instance_);
+    ASSERT_EQ(nullptr, instance->handle_);
 }
 
 /*
@@ -194,8 +219,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, GetDbInstance001, TestSize.Level4)
     sleep(WAIT_DELAY_DLCLOSE_TIME);
     ASSERT_EQ(nullptr, instance->handle_);
     ASSERT_EQ(nullptr, instance->instance_);
-
-    RdbDlopenManager::DestroyInstance();
 }
 
 /*
@@ -252,8 +275,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, DynamicCallTest001, TestSize.Level4)
     std::vector<GenericValues> results3;
     ASSERT_EQ(0, instance->Find(type, conditionValue, results3));
     ASSERT_EQ(true, results3.empty());
-
-    RdbDlopenManager::DestroyInstance();
 }
 } // namespace AccessToken
 } // namespace Security

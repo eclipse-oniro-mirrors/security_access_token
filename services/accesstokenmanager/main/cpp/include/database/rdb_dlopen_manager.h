@@ -66,6 +66,7 @@ private:
     std::mutex handleMutex_;
     void* handle_ = nullptr;
     AccessTokenDbLoaderInterface* instance_ = nullptr;
+    std::atomic_int32_t taskNum_ = 0;
 };
 } // namespace AccessToken
 } // namespace Security
