@@ -132,13 +132,13 @@ static void StateToEnumIndex(int32_t state, ani_size& enumIndex)
 static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     ani_class arrayCls = nullptr;
-    if (env->FindClass("Lescompat/Array;", &arrayCls) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass name Lescompat/Array failed!");
+    if (env->FindClass("escompat.Array", &arrayCls) != ANI_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass name escompat.Array failed!");
         return nullptr;
     }
 
     ani_method arrayCtor;
-    if (env->Class_FindMethod(arrayCls, "<ctor>", "I:V", &arrayCtor) != ANI_OK) {
+    if (env->Class_FindMethod(arrayCls, "<ctor>", "i:", &arrayCtor) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass <ctor> failed!");
         return nullptr;
     }
@@ -149,7 +149,7 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
         return nullptr;
     }
 
-    const char* enumDescriptor = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/GrantStatus;";
+    const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
     ani_enum enumType;
     if (env->FindEnum(enumDescriptor, &enumType) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass name %{public}s failed!", enumDescriptor);
@@ -166,7 +166,7 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
             break;
         }
 
-        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "ILstd/core/Object;:V", index, enumItem) != ANI_OK) {
+        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem) != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Void $_set failed!");
             break;
         }

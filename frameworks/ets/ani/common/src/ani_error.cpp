@@ -26,7 +26,7 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonAni" };
 } // namespace
-constexpr const char* BUSINESS_ERROR_CLASS = "L@ohos/base/BusinessError;";
+constexpr const char* BUSINESS_ERROR_CLASS = "@ohos.base.BusinessError";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
@@ -75,7 +75,7 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass : %{public}d", status);
         return nullptr;
     }
-    status = env->Class_FindMethod(cls, "<ctor>", ":V", &method);
+    status = env->Class_FindMethod(cls, "<ctor>", ":", &method);
     if (status != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod : %{public}d", status);
         return nullptr;

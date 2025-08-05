@@ -236,7 +236,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
     }
 
     ani_namespace ns;
-    if (ANI_OK != env->FindNamespace("L@ohos/ability/screenLockFileManager/screenLockFileManager;", &ns)) {
+    if (ANI_OK != env->FindNamespace("@ohos.ability.screenLockFileManager.screenLockFileManager", &ns)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace screenLockFileManager failed.");
         return ANI_NOT_FOUND;
     }

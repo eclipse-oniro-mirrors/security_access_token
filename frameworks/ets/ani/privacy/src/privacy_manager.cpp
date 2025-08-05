@@ -169,7 +169,7 @@ void PermActiveStatusPtr::SetThreadId(const std::thread::id threadId)
 
 static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeResponse& result)
 {
-    ani_object aniObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/ActiveChangeResponseInner;");
+    ani_object aniObject = CreateClassObject(env, "@ohos.privacyManager.privacyManager.ActiveChangeResponseInner");
     if (aniObject == nullptr) {
         return nullptr;
     }
@@ -187,12 +187,12 @@ static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeRe
     SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_DEVICE_ID, result.deviceId);
 
     // set activeStatus: PermissionActiveStatus
-    const char* activeStatusDes = "L@ohos/privacyManager/privacyManager/PermissionActiveStatus;";
+    const char* activeStatusDes = "@ohos.privacyManager.privacyManager.PermissionActiveStatus";
     SetEnumProperty(
         env, aniObject, activeStatusDes, ACTIVE_CHANGE_FIELD_ACTIVE_STATUS, static_cast<uint32_t>(result.type));
 
     // set usedType?: PermissionUsedType
-    const char* permUsedTypeDes = "L@ohos/privacyManager/privacyManager/PermissionUsedType;";
+    const char* permUsedTypeDes = "@ohos.privacyManager.privacyManager.PermissionUsedType";
     SetEnumProperty(
         env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, static_cast<uint32_t>(result.usedType));
     return aniObject;
@@ -524,7 +524,7 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
 
 static ani_object ConvertSingleUsedRecordDetail(ani_env* env, const UsedRecordDetail& record)
 {
-    ani_object arrayObj = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/UsedRecordDetailInner;");
+    ani_object arrayObj = CreateClassObject(env, "@ohos.privacyManager.privacyManager.UsedRecordDetailInner");
     if (arrayObj == nullptr) {
         return nullptr;
     }
@@ -543,7 +543,7 @@ static ani_object ConvertSingleUsedRecordDetail(ani_env* env, const UsedRecordDe
     if (!SetOptionalIntProperty(env, arrayObj, "count", record.count)) {
         return nullptr;
     }
-    if (!SetEnumProperty(env, arrayObj, "L@ohos/privacyManager/privacyManager/PermissionUsedType;", "usedType",
+    if (!SetEnumProperty(env, arrayObj, "@ohos.privacyManager.privacyManager.PermissionUsedType", "usedType",
         static_cast<uint32_t>(record.type))) {
         return nullptr;
     }
@@ -564,7 +564,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
             break;
@@ -576,7 +576,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
 
 static ani_object ConvertSinglePermissionRecord(ani_env* env, const PermissionUsedRecord& record)
 {
-    ani_object arrayObj = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedRecordInner;");
+    ani_object arrayObj = CreateClassObject(env, "@ohos.privacyManager.privacyManager.PermissionUsedRecordInner");
     if (arrayObj == nullptr) {
         return nullptr;
     }
@@ -620,7 +620,7 @@ static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<Permissi
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "Set permission record fail, status: %{public}d.", static_cast<int32_t>(status));
@@ -633,7 +633,7 @@ static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<Permissi
 
 static ani_object ConvertBundleUsedRecord(ani_env* env, const BundleUsedRecord& record)
 {
-    ani_object aniRecord = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/BundleUsedRecordInner;");
+    ani_object aniRecord = CreateClassObject(env, "@ohos.privacyManager.privacyManager.BundleUsedRecordInner");
     if (aniRecord == nullptr) {
         return nullptr;
     }
@@ -672,7 +672,7 @@ static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<Bundl
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
+            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
             continue;
@@ -684,7 +684,7 @@ static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<Bundl
 
 static ani_object ProcessRecordResult(ani_env* env, const PermissionUsedResult& result)
 {
-    ani_object aObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedResponseInner;");
+    ani_object aObject = CreateClassObject(env, "@ohos.privacyManager.privacyManager.PermissionUsedResponseInner");
     if (aObject == nullptr) {
         return nullptr;
     }
@@ -704,7 +704,7 @@ static ani_object ProcessRecordResult(ani_env* env, const PermissionUsedResult& 
 static bool ParseRequest(ani_env* env, const ani_object& aniRequest, PermissionUsedRequest& request)
 {
     ani_class requestClass;
-    if (ANI_OK != env->FindClass("L@ohos/privacyManager/privacyManager/PermissionUsedRequest;", &requestClass)) {
+    if (ANI_OK != env->FindClass("@ohos.privacyManager.privacyManager.PermissionUsedRequest", &requestClass)) {
         return false;
     }
     ani_boolean isRequestObject = false;
@@ -778,7 +778,7 @@ static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, 
 
 static ani_object ConvertPermissionUsedTypeInfo(ani_env *env, const PermissionUsedTypeInfo& info)
 {
-    ani_object aObject = CreateClassObject(env, "L@ohos/privacyManager/privacyManager/PermissionUsedTypeInfoInner;");
+    ani_object aObject = CreateClassObject(env, "@ohos.privacyManager.privacyManager.PermissionUsedTypeInfoInner");
     if (aObject == nullptr) {
         return nullptr;
     }
@@ -790,7 +790,7 @@ static ani_object ConvertPermissionUsedTypeInfo(ani_env *env, const PermissionUs
         ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName set fail.");
         return nullptr;
     }
-    const char* permUsedTypeDes = "L@ohos/privacyManager/privacyManager/PermissionUsedType;";
+    const char* permUsedTypeDes = "@ohos.privacyManager.privacyManager.PermissionUsedType";
     if (!SetEnumProperty(env, aObject, permUsedTypeDes, "usedType", static_cast<uint32_t>(info.type))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UsedType set fail.");
         return nullptr;
@@ -812,7 +812,7 @@ static ani_ref ConvertPermissionUsedTypeInfos(ani_env* env, const std::vector<Pe
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "ILstd/core/Object;:V", index, aniType);
+            arrayObj, "$_set", "iC{std.core.Object}:", index, aniType);
         if (status != ANI_OK) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Set type fail, status: %{public}d.", static_cast<int32_t>(status));
             continue;
@@ -883,7 +883,7 @@ void InitPrivacyFunction(ani_env *env)
     }
 
     ani_namespace ns;
-    if (ANI_OK != env->FindNamespace("L@ohos/privacyManager/privacyManager;", &ns)) {
+    if (ANI_OK != env->FindNamespace("@ohos.privacyManager.privacyManager", &ns)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace privacyManager failed.");
         return;
     }

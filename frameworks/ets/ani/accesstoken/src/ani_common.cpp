@@ -20,7 +20,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniAccessTokenCommon" };
-constexpr const char* WRAPPER_CLASS_NAME = "L@ohos/abilityAccessCtrl/AsyncCallbackWrapper;";
+constexpr const char* WRAPPER_CLASS_NAME = "@ohos.abilityAccessCtrl.AsyncCallbackWrapper";
 constexpr const char* INVOKE_METHOD_NAME = "invoke";
 } // namespace
 
@@ -39,7 +39,7 @@ bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, a
     }
     ani_method method = {};
     if ((status = env->Class_FindMethod(
-        clsCall, INVOKE_METHOD_NAME, "L@ohos/base/BusinessError;Lstd/core/Object;:V", &method)) != ANI_OK) {
+        clsCall, INVOKE_METHOD_NAME, "C{@ohos.base.BusinessError}C{std.core.Object}:", &method)) != ANI_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
