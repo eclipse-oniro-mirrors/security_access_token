@@ -953,7 +953,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 }
 
 int32_t PermissionRecordManager::AddRecordToStartList(
-    const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid)
+    const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid, bool isCamera)
 {
     int32_t opCode;
     int ret = Constant::SUCCESS;
@@ -967,7 +967,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         .tokenId = info.tokenId,
         .opCode = opCode,
         .status = status,
-        .pid = info.pid,
+        .pid = (isCamera ? -1 : info.pid),
         .callerPid = callerPid,
     };
 
@@ -980,9 +980,9 @@ int32_t PermissionRecordManager::AddRecordToStartList(
     }
     if (ret != PrivacyError::ERR_PERMISSION_ALREADY_START_USING) {
         startRecordList_.emplace(newRecord);
+        newRecord.pid = info.pid;
+        CallbackExecute(newRecord, permissionName, info.type);
     }
-
-    CallbackExecute(newRecord, permissionName, info.type);
     
     return ret;
 }
@@ -1394,9 +1394,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
-    uint64_t id = GetUniqueId(tokenId, info.pid);
+    uint64_t id = GetUniqueId(tokenId, -1);
     cameraCallbackMap_.EnsureInsert(id, callback);
-    int32_t ret = AddRecordToStartList(info, status, callerPid);
+    int32_t ret = AddRecordToStartList(info, status, callerPid, true);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }
