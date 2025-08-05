@@ -29,10 +29,12 @@ ohos_shared_library("privacy_ani") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/frameworks/ets/ani/common/include",
+    "${access_token_path}/frameworks/ets/ani/privacy/include",
   ]
   sources = [ "src/privacy_manager.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/ets/ani/common:libani_common",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]
