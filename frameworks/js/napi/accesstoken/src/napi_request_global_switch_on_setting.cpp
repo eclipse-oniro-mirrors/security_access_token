@@ -535,7 +535,7 @@ bool NapiRequestGlobalSwitch::ParseRequestGlobalSwitch(const napi_env& env,
         LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
         return false;
     }
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO - 1) {
+    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
