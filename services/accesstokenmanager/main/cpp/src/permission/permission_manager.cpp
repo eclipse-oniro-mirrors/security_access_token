@@ -442,7 +442,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
         isUpdateSuccess = true;
 
         uint32_t newFlag = flag;
-        if (GetPermissionFlag(tokenID, permissionName, flag) == RET_SUCCESS) {
+        if (GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
             flag = newFlag;
         }
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
@@ -677,7 +677,7 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag);
 
     uint32_t newFlag = flag;
-    if (ret == RET_SUCCESS && GetPermissionFlag(tokenID, permissionName, flag) == RET_SUCCESS) {
+    if (ret == RET_SUCCESS && GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
         flag = newFlag;
     }
 
