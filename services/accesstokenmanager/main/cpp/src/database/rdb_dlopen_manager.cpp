@@ -28,7 +28,7 @@ namespace {
 constexpr const char* RDB_SYMBOL_CREATE = "Create";
 constexpr const char* RDB_SYMBOL_DESTROY = "Destroy";
 constexpr const char* DELAY_DLCLOSE_TASK_NAME = "DelayDlclose";
-constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 3600 * 1000;
+constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 180 * 1000;
 
 using CreateFunc = void* (*)(void);
 using DestroyFunc = void (*)(void*);
@@ -135,6 +135,13 @@ void RdbDlopenManager::DelayDlcloseHandle(int64_t delayTime)
             return;
         }
 
+        if (taskNum_ > 0) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "There is still %{public}d database call remain, wait for next task.",
+                taskNum_.load());
+            return;
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "There is no database call remain, clean up resource.");
+
         if (!CleanUp()) {
             return;
         }
@@ -179,7 +186,10 @@ int32_t RdbDlopenManager::Modify(const AtmDataType type, const GenericValues& mo
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    return instance->Modify(type, modifyValue, conditionValue);
+    taskNum_++;
+    int32_t res = instance->Modify(type, modifyValue, conditionValue);
+    taskNum_--;
+    return res;
 }
 
 int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionValue,
@@ -190,7 +200,10 @@ int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionV
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    return instance->Find(type, conditionValue, results);
+    taskNum_++;
+    int32_t res = instance->Find(type, conditionValue, results);
+    taskNum_--;
+    return res;
 }
 
 int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
@@ -201,7 +214,10 @@ int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delI
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    return instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
+    taskNum_++;
+    int32_t res = instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
+    taskNum_--;
+    return res;
 }
 } // namespace AccessToken
 } // namespace Security
