@@ -17,14 +17,16 @@
 
 #include "access_token.h"
 #include "ani.h"
-#include "ani_common.h"
 #include "ani_error.h"
+#include "ani_request_base.h"
 #include "ani_utils.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
 #include "event_queue.h"
 #endif
 #include "permission_grant_info.h"
+#include "ui_content.h"
+#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,62 +37,21 @@ typedef enum {
     LOCATION = 2,
 } SwitchType;
 
-struct RequestGlobalSwitchAsyncContext {
-    virtual ~RequestGlobalSwitchAsyncContext();
-    AccessTokenID tokenId = 0;
-    AtmResult result;
-    PermissionGrantInfo info;
-
-    int32_t instanceId = -1;
+struct RequestGlobalSwitchAsyncContext : public RequestAsyncContextBase {
     bool isDynamic = true;
     bool switchStatus = false;
     int32_t switchType = -1;
-
-    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
-    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> uiExtensionContext = nullptr;
-    bool uiAbilityFlag = false;
-    bool releaseFlag = false;
-    std::mutex lockReleaseFlag;
-
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventHandler> handler_ =
-        std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
-#endif
-    std::thread::id threadId;
-    ani_vm* vm = nullptr;
-    ani_env* env = nullptr;
-    ani_object callback = nullptr;
-    ani_ref callbackRef = nullptr;
-};
-
-class RequestGlobalSwitchAsyncInstanceControl {
-    public:
-        static void AddCallbackByInstanceId(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext);
-        static void ExecCallback(int32_t id);
-        static void CheckDynamicRequest(
-            std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext, bool& isDynamic);
-        static void UpdateQueueData(const std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext);
-    private:
-        static std::map<int32_t, std::vector<std::shared_ptr<RequestGlobalSwitchAsyncContext>>> instanceIdMap_;
-        static std::mutex instanceIdMutex_;
-};
-
-class SwitchOnSettingUICallback {
-public:
-    explicit SwitchOnSettingUICallback(const std::shared_ptr<RequestGlobalSwitchAsyncContext>& reqContext);
-    ~SwitchOnSettingUICallback();
-    void SetSessionId(int32_t sessionId);
-    void ReleaseHandler(int32_t code);
-    void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
-    void OnReceive(const OHOS::AAFwk::WantParams& request);
-    void OnError(int32_t code, const std::string& name, const std::string& message);
-    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void OnDestroy();
-
-private:
-    std::shared_ptr<RequestGlobalSwitchAsyncContext> reqContext_ = nullptr;
-    int32_t sessionId_ = 0;
+    RequestGlobalSwitchAsyncContext(ani_vm* vm, ani_env* env);
+    ~RequestGlobalSwitchAsyncContext() override;
+    int32_t ConvertErrorCode(int32_t errCode) override;
+    ani_object WrapResult(ani_env* env) override;
+    void ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result) override;
+    void StartExtensionAbility(std::shared_ptr<RequestAsyncContextBase> asyncContext) override;
+    bool IsSameRequest(const std::shared_ptr<RequestAsyncContextBase> other) override;
+    void CopyResult(const std::shared_ptr<RequestAsyncContextBase> other) override;
+    bool CheckDynamicRequest() override;
+    bool NoNeedUpdate() override;
+    void ProcessFailResult(int32_t code) override;
 };
 
 void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
