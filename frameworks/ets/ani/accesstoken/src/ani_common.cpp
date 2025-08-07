@@ -68,6 +68,69 @@ OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::A
     }
     return uiContent;
 }
+
+void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncContext,
+    const OHOS::AAFwk::Want& want, const OHOS::Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
+    const std::shared_ptr<UIExtensionCallback> uiExtCallback)
+{
+    auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
+        OHOS::Ace::UIContent* uiContent = GetUIContent(asyncContext->abilityContext,
+            asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
+        if (uiContent == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->uiExtensionFlag = false;
+            return;
+        }
+
+        OHOS::Ace::ModalUIExtensionConfig config;
+        config.isProhibitBack = true;
+        int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
+            sessionId, asyncContext->tokenId);
+        if (sessionId == 0) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is 0");
+            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->uiExtensionFlag = false;
+            return;
+        }
+        uiExtCallback->SetSessionId(sessionId);
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CreateUIExtensionMainThread");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+}
+
+void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncContext, int32_t sessionId)
+{
+    auto task = [asyncContext, sessionId]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext->abilityContext,
+            asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
+        if (uiContent == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            asyncContext->result.errorCode = RET_FAILED;
+            return;
+        }
+        uiContent->CloseModalUIExtension(sessionId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Close end, sessionId: %{public}d", sessionId);
+    };
+#ifdef EVENTHANDLER_ENABLE
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CloseModalUIExtensionMainThread");
+    } else {
+        task();
+    }
+#else
+    task();
+#endif
+    LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d", asyncContext->instanceId);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

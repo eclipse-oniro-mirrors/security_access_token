@@ -15,6 +15,7 @@
 #include "ani_request_permission_on_setting.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
+#include "ani_common.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -379,7 +380,7 @@ static void CreateSettingUIExtensionMainThread(std::shared_ptr<RequestPermOnSett
 #endif
 }
 
-static void CreateUIExtension(
+void CreateUIExtension(
     const OHOS::AAFwk::Want &want, std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
 {
     auto uiExtCallback = std::make_shared<PermissonOnSettingUICallback>(asyncContext);

@@ -17,7 +17,6 @@
 
 #include "access_token.h"
 #include "ani.h"
-#include "ani_common.h"
 #include "ani_error.h"
 #include "ani_utils.h"
 #ifdef EVENTHANDLER_ENABLE
@@ -25,6 +24,8 @@
 #include "event_queue.h"
 #endif
 #include "permission_grant_info.h"
+#include "ui_content.h"
+#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {

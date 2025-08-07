@@ -37,6 +37,7 @@ ohos_shared_library("accesstoken_ani") {
     "src/ani_request_global_switch_on_setting.cpp",
     "src/ani_request_permission.cpp",
     "src/ani_request_permission_on_setting.cpp",
+    "src/ani_request_base.cpp"
   ]
 
   deps = [

@@ -19,8 +19,8 @@
 #include <thread>
 #include "access_token.h"
 #include "ani.h"
-#include "ani_common.h"
 #include "ani_error.h"
+#include "ani_request_base.h"
 #include "ani_utils.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
@@ -29,56 +29,30 @@
 #include "permission_grant_info.h"
 #include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
+#include "ui_content.h"
+#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct RequestAsyncContext {
-    virtual ~RequestAsyncContext();
-    AccessTokenID tokenId = 0;
-    std::string bundleName;
+struct RequestAsyncContext : public RequestAsyncContextBase {
+    RequestAsyncContext(ani_vm* vm, ani_env* env);
+    ~RequestAsyncContext() override;
+    void StartExtensionAbility() override;
+    bool IsDynamicRequest();
+    void ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result) override;
+    void HandleResult() override;
+    ani_object WrapResult() override;
+    bool CheckDynamicRequest() override;
+    void UpdateGrantPermissionResultOnly(std::vector<int32_t>& newGrantResults);
+
     bool needDynamicRequest = true;
-    AtmResult result;
-    int32_t instanceId = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> grantResults;
     std::vector<int32_t> permissionsState;
     std::vector<bool> dialogShownResults;
     std::vector<int32_t> permissionQueryResults;
     std::vector<int32_t> errorReasons;
-    Security::AccessToken::PermissionGrantInfo info;
-    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
-    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> uiExtensionContext = nullptr;
-    bool uiAbilityFlag = false;
-    bool uiExtensionFlag = false;
-    bool uiContentFlag = false;
-    bool releaseFlag = false;
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
-#endif
-    std::thread::id threadId;
-    ani_vm* vm = nullptr;
-    ani_env* env = nullptr;
-    ani_object callback = nullptr;
-    ani_ref callbackRef = nullptr;
-};
-
-class UIExtensionCallback {
-public:
-    explicit UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext);
-    ~UIExtensionCallback();
-    void SetSessionId(int32_t sessionId);
-    void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
-    void OnReceive(const OHOS::AAFwk::WantParams& request);
-    void OnError(int32_t code, const std::string& name, const std::string& message);
-    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void OnDestroy();
-    void ReleaseHandler(int32_t code);
-
-private:
-    int32_t sessionId_ = 0;
-    std::shared_ptr<RequestAsyncContext> reqContext_ = nullptr;
 };
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
@@ -94,16 +68,6 @@ private:
     std::shared_ptr<RequestAsyncContext> data_ = nullptr;
 };
 
-class RequestAsyncInstanceControl {
-public:
-    static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
-    static void ExecCallback(int32_t id);
-    static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
-
-private:
-    static std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> instanceIdMap_;
-    static std::mutex instanceIdMutex_;
-};
 
 struct ResultCallback {
     std::vector<std::string> permissions;

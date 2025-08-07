@@ -14,6 +14,7 @@
  */
 #include "ani_request_global_switch_on_setting.h"
 #include "accesstoken_kit.h"
+#include "ani_common.h"
 #include "accesstoken_common_log.h"
 #include "token_setproc.h"
 #include "want.h"
