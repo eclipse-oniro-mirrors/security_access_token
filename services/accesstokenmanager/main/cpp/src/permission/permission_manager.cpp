@@ -430,7 +430,7 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     bool isUpdateSuccess = false;
     for (const std::string &permissionName : permissionList) {
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START, "TOKENID",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_START, "TOKENID",
             tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
             "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
 
@@ -670,7 +670,7 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
         "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
         "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
 

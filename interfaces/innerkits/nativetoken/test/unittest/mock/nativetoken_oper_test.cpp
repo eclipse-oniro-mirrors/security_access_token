@@ -534,10 +534,10 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     g_printUnformatted = DEFAULT_TIME;
-    EXPECT_NE(Start("process1"), 0);
+    EXPECT_EQ(Start("process1"), 0);
 
     // CreateNativeTokenJsonObject failed 385 line
-    EXPECT_NE(Start("processUnique"), 0);
+    EXPECT_EQ(Start("processUnique"), 0);
 
     EXPECT_NE(Start("processUnique1"), 0);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);

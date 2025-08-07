@@ -806,7 +806,7 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     (void)AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
         "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex);
 
     // only support hap token deletion
@@ -949,7 +949,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     AccessTokenDfxInfo dfxInfo;
     DumpEventInfo(policyParcel.hapPolicy, dfxInfo);
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMOM_START,
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
         "TOKENID", tokenIdEx.tokenIdExStruct.tokenID, "TOKENIDEX", tokenIdEx.tokenIDEx,
         "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
         "PERM_INFO", dfxInfo.permInfo, "ACL_INFO", dfxInfo.aclInfo, "PREAUTH_INFO", dfxInfo.preauthInfo,

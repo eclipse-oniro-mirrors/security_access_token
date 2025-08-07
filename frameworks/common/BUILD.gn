@@ -52,6 +52,36 @@ action("permission_definition_parse") {
   }
 }
 
+ohos_static_library("accesstoken_hisysevent") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":accesstoken_common_cxx_public_config" ]
+
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/accesstoken/include" ]
+
+  sources = [ "src/hisysevent_adapter.cpp" ]
+
+  external_deps = [
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+  ]
+
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+}
+
 ohos_static_library("accesstoken_static_log") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -79,6 +109,37 @@ ohos_static_library("accesstoken_static_log") {
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
+}
+
+ohos_static_library("accesstoken_static_log_for_nativetoken") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":accesstoken_common_cxx_public_config" ]
+
+  include_dirs = [
+    "include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+  ]
+  cflags_cc = [ "-DUSE_NATIVE_TOKEN_KLOG" ]
+
+  sources = [
+    "src/accesstoken_common_log.cpp",
+    "src/accesstoken_klog.cpp",
+  ]
+
+  external_deps = [ "c_utils:utils" ]
+
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 }
 
 ohos_shared_library("accesstoken_common_cxx") {

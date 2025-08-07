@@ -44,7 +44,6 @@ ohos_unittest("libdatabase_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/dfx/hisysevent_adapter.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
     "unittest/database_test.cpp",
   ]
@@ -56,6 +55,7 @@ ohos_unittest("libdatabase_test") {
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_hisysevent",
     "${access_token_path}/services/common:accesstoken_service_common",
   ]
 

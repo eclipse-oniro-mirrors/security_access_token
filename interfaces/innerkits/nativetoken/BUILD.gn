@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 config("accesstokenlib") {
   visibility = [ ":*" ]
@@ -19,6 +20,11 @@ config("accesstokenlib") {
 }
 
 if (is_standard_system) {
+  nativetoken_soruces = [
+    "src/nativetoken.c",
+    "src/nativetoken_hisysevent.c",
+    "src/nativetoken_json_oper.c",
+  ]
   ohos_static_library("libnativetoken") {
     subsystem_name = "security"
     part_name = "access_token"
@@ -34,18 +40,17 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [ "src" ]
+    include_dirs = [ "${access_token_path}/frameworks/common/include" ]
 
-    sources = [
-      "src/nativetoken.c",
-      "src/nativetoken_json_oper.c",
-      "src/nativetoken_klog.c",
-    ]
+    sources = nativetoken_soruces
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
 
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "cJSON:cjson_static",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
     ]
 
     if (build_selinux) {
@@ -69,18 +74,17 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [ "src" ]
+    include_dirs = [ "${access_token_path}/frameworks/common/include" ]
 
-    sources = [
-      "src/nativetoken.c",
-      "src/nativetoken_json_oper.c",
-      "src/nativetoken_klog.c",
-    ]
+    sources = nativetoken_soruces
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
 
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "cJSON:cjson_static",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
     ]
 
     if (build_selinux) {

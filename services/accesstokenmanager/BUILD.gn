@@ -76,7 +76,6 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_db_operator.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
-      "main/cpp/src/dfx/hisysevent_adapter.cpp",
       "main/cpp/src/form_manager/form_instance.cpp",
       "main/cpp/src/form_manager/form_manager_access_client.cpp",
       "main/cpp/src/form_manager/form_manager_access_proxy.cpp",
@@ -117,6 +116,7 @@ if (is_standard_system) {
     deps = [
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_hisysevent",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
@@ -245,12 +245,14 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_db_util.cpp",
       "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/token_field_const.cpp",
-      "main/cpp/src/dfx/hisysevent_adapter.cpp",
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
 
-    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+    deps = [
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_hisysevent",
+    ]
 
     external_deps = [
       "c_utils:utils",

@@ -12,8 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifdef USE_NATIVE_TOKEN_KLOG
+#include "accesstoken_klog.h"
+#else
 #include "accesstoken_common_log.h"
+#endif
 
 #include <cstdlib>
 #include <cstdio>
@@ -23,13 +26,17 @@
 #include <string>
 #include "securec.h"
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-
-constexpr uint32_t MAX_ERROR_MESSAGE_LEN = 4096;
+static constexpr uint32_t MAX_ERROR_MESSAGE_LEN = 4096;
 static __thread uint32_t g_msgLen = 0;
 static __thread char g_errMsg[MAX_ERROR_MESSAGE_LEN + 1];
+
+#ifdef USE_NATIVE_TOKEN_KLOG
+#define ACCESSTOKEN_COMMON_LOGE(domain, tag, fmt, ...) \
+    ((void)LOGE(fmt, ##__VA_ARGS__))
+#else
+#define ACCESSTOKEN_COMMON_LOGE(domain, tag, fmt, ...) \
+    ((void)LOGE(domain, tag, fmt, ##__VA_ARGS__))
+#endif
 
 uint32_t GetThreadErrorMsgLen(void)
 {
@@ -51,13 +58,13 @@ void AppendThreadErrMsg(unsigned int domain, const char *tag,
     const uint8_t *buff, uint32_t buffLen)
 {
     if (g_msgLen + buffLen >= MAX_ERROR_MESSAGE_LEN) {
-        LOGE(domain, tag, "buff will overflow!"
-            "g_msgLen = %{public}u, buffLen = %{public}u", g_msgLen, buffLen);
+        ACCESSTOKEN_COMMON_LOGE(domain, tag, "Buff will overflow!"
+            "g_msgLen = %" LOG_PUBLIC "u, buffLen = %" LOG_PUBLIC "u", g_msgLen, buffLen);
         return;
     }
     if (memcpy_s(g_errMsg + g_msgLen, MAX_ERROR_MESSAGE_LEN - g_msgLen, buff, buffLen) != EOK) {
-        LOGE(domain, tag, "memcpy_s fail!"
-            "g_msgLen = %{public}u, buffLen = %{public}u", g_msgLen, buffLen);
+        ACCESSTOKEN_COMMON_LOGE(domain, tag, "Failed to memcpy_s!"
+            "g_msgLen = %" LOG_PUBLIC "u, buffLen = %" LOG_PUBLIC "u", g_msgLen, buffLen);
         return;
     }
     g_msgLen += buffLen;
@@ -67,10 +74,12 @@ static bool ReplaceSubstring(unsigned int domain, const char *tag,
     const char *format, char result[MAX_ERROR_MESSAGE_LEN])
 {
     std::string formatString(format);
+#ifndef USE_NATIVE_TOKEN_KLOG
     std::string::size_type pos;
     while ((pos = formatString.find(LOG_PUBLIC)) != std::string::npos) {
         formatString.replace(pos, strlen(LOG_PUBLIC), "");
     }
+#endif
     if (memcpy_s(result, MAX_ERROR_MESSAGE_LEN, formatString.c_str(), formatString.size()) != EOK) {
         return false;
     }
@@ -85,7 +94,7 @@ void AddEventMessage(unsigned int domain, const char *tag,
     if (g_msgLen == 0) {
         char newFormat[MAX_ERROR_MESSAGE_LEN] = {0};
         if (!ReplaceSubstring(domain, tag, format, newFormat)) {
-            LOGE(domain, tag, "skip to add errMsg");
+            ACCESSTOKEN_COMMON_LOGE(domain, tag, "Skip to add errMsg");
             return;
         }
         va_start(ap, format);
@@ -93,17 +102,17 @@ void AddEventMessage(unsigned int domain, const char *tag,
         int32_t buffLen = vsnprintf_s(buff, MAX_ERROR_MESSAGE_LEN, MAX_ERROR_MESSAGE_LEN - 1, newFormat, ap);
         va_end(ap);
         if (buffLen < 0) {
-            LOGE(domain, tag, "vsnprintf_s fail! ret: %{public}d, newFormat:[%{public}s]", buffLen,
-                newFormat);
+            ACCESSTOKEN_COMMON_LOGE(domain, tag,
+                "Failed to vsnprintf_s! Ret: %" LOG_PUBLIC "d, newFormat:[%" LOG_PUBLIC "s]", buffLen, newFormat);
             return;
         }
         if (g_msgLen + static_cast<uint32_t>(buffLen) >= MAX_ERROR_MESSAGE_LEN) {
-            LOGE(domain, tag, "errMsg is almost full!");
+            ACCESSTOKEN_COMMON_LOGE(domain, tag, "ErrMsg is almost full!");
             return;
         }
 
         if (memcpy_s(g_errMsg + g_msgLen, MAX_ERROR_MESSAGE_LEN, buff, buffLen) != EOK) {
-            LOGE(domain, tag, "copy errMsg buff fail!");
+            ACCESSTOKEN_COMMON_LOGE(domain, tag, "Failed to copy errMsg buff!");
             return;
         }
         g_msgLen += static_cast<uint32_t>(buffLen);
@@ -114,19 +123,15 @@ void AddEventMessage(unsigned int domain, const char *tag,
         va_end(ap);
 
         if (funName == nullptr) {
-            LOGE(domain, tag, "Get funName fail!");
+            ACCESSTOKEN_COMMON_LOGE(domain, tag, "Get funName fail!");
             return;
         }
         int32_t offset = sprintf_s(g_errMsg + g_msgLen, MAX_ERROR_MESSAGE_LEN - g_msgLen, " <%s[%u]",
             funName, lineNo);
         if (offset <= 0) {
-            LOGE(domain, tag, "append call chain fail! offset: [%{public}d]", offset);
+            ACCESSTOKEN_COMMON_LOGE(domain, tag, "Failed to append call chain! Offset: [%" LOG_PUBLIC "d]", offset);
             return;
         }
         g_msgLen += static_cast<uint32_t>(offset);
     }
 }
-
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
