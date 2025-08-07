@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 #include "ani_request_permission_on_setting.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -25,7 +25,6 @@ std::map<int32_t, std::vector<std::shared_ptr<RequestPermOnSettingAsyncContext>>
     RequestOnSettingAsyncInstanceControl::instanceIdMap_;
 std::mutex RequestOnSettingAsyncInstanceControl::instanceIdMutex_;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniRequestPermission" };
 constexpr int32_t REQUEST_REALDY_EXIST = 1;
 constexpr int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 constexpr int32_t PERM_IS_NOT_DECLARE = 3;
@@ -40,13 +39,13 @@ const std::string PERMISSION_RESULT_KEY = "ohos.user.setting.permission.result";
 RequestPermOnSettingAsyncContext::~RequestPermOnSettingAsyncContext()
 {
     if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "VM is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return;
     }
     bool isSameThread = IsCurrentThread(threadId);
     ani_env* curEnv = isSameThread ? env : GetCurrentEnv(vm);
     if (curEnv == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetCurrentEnv failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetCurrentEnv.");
         return;
     }
 
@@ -61,7 +60,7 @@ static ani_status GetContext(
 {
     auto context = OHOS::AbilityRuntime::GetStageModeContext(env, aniContext);
     if (context == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetStageModeContext failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetStageModeContext.");
         return ANI_ERROR;
     }
     asyncContext->abilityContext =
@@ -69,7 +68,7 @@ static ani_status GetContext(
     if (asyncContext->abilityContext != nullptr) {
         auto abilityInfo = asyncContext->abilityContext->GetApplicationInfo();
         if (abilityInfo == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetApplicationInfo failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetApplicationInfo.");
             return ANI_ERROR;
         }
         asyncContext->uiAbilityFlag = true;
@@ -78,12 +77,12 @@ static ani_status GetContext(
         asyncContext->uiExtensionContext =
             OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::UIExtensionContext>(context);
         if (asyncContext->uiExtensionContext == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertTo UIExtensionContext failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ConvertTo UIExtensionContext.");
             return ANI_ERROR;
         }
         auto uiExtensionInfo = asyncContext->uiExtensionContext->GetApplicationInfo();
         if (uiExtensionInfo == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetApplicationInfo failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetApplicationInfo.");
             return ANI_ERROR;
         }
         asyncContext->tokenId = uiExtensionInfo->accessTokenId;
@@ -97,7 +96,7 @@ static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext
     ani_vm* vm;
     ani_status status = env->GetVM(&vm);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetVM failed, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetVM, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
     asyncContext->vm = vm;
@@ -133,26 +132,26 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
 {
     ani_class arrayCls = nullptr;
     if (env->FindClass("escompat.Array", &arrayCls) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass name escompat.Array failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array!");
         return nullptr;
     }
 
     ani_method arrayCtor;
     if (env->Class_FindMethod(arrayCls, "<ctor>", "i:", &arrayCtor) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass <ctor> failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass <ctor>!");
         return nullptr;
     }
 
     ani_object arrayObj;
     if (env->Object_New(arrayCls, arrayCtor, &arrayObj, asyncContext->stateList.size()) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object new failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object new failed!");
         return nullptr;
     }
 
     const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
     ani_enum enumType;
     if (env->FindEnum(enumDescriptor, &enumType) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass name %{public}s failed!", enumDescriptor);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name %{public}s!", enumDescriptor);
         return nullptr;
     }
 
@@ -162,12 +161,12 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
         ani_size enumIndex = 0;
         StateToEnumIndex(state, enumIndex);
         if (env->Enum_GetEnumItemByIndex(enumType, enumIndex, &enumItem) != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetEnumItemByIndex value %{public}u failed!", state);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetEnumItemByIndex value %{public}u!", state);
             break;
         }
 
         if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem) != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Void $_set failed!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void $_set!");
             break;
         }
         index++;
@@ -202,7 +201,7 @@ static int32_t TransferToStsErrorCode(int32_t errorCode)
             stsCode = STS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Dialog error(%{public}d) stsCode(%{public}d).", errorCode, stsCode);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Dialog error(%{public}d) stsCode(%{public}d).", errorCode, stsCode);
     return stsCode;
 }
 
@@ -226,7 +225,7 @@ static void PermissionResultsCallbackUI(
     bool isSameThread = IsCurrentThread(data->threadId);
     ani_env* env = isSameThread ? data->env : GetCurrentEnv(data->vm);
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetCurrentEnv failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetCurrentEnv.");
         return;
     }
 
@@ -236,7 +235,7 @@ static void PermissionResultsCallbackUI(
     ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(data->callbackRef), error, result);
 
     if (!isSameThread && data->vm->DetachCurrentThread() != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DetachCurrentThread failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentThread!");
     }
 }
 
@@ -247,12 +246,12 @@ static void CloseSettingModalUIExtensionMainThread(std::shared_ptr<RequestPermOn
         Ace::UIContent* uiContent = GetUIContent(asyncContext->abilityContext,
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
             asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
-        ACCESSTOKEN_LOG_INFO(LABEL, "Close end, sessionId: %{public}d", sessionId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Close end, sessionId: %{public}d.", sessionId);
     };
 #ifdef EVENTHANDLER_ENABLE
     if (asyncContext->handler_ != nullptr) {
@@ -270,7 +269,7 @@ void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
     {
         std::lock_guard<std::mutex> lock(this->reqContext_->lockReleaseFlag);
         if (this->reqContext_->releaseFlag) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Callback has executed.");
+            LOGW(ATM_DOMAIN, ATM_TAG, "Callback has executed.");
             return;
         }
         this->reqContext_->releaseFlag = true;
@@ -291,7 +290,7 @@ void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Wan
 {
     this->reqContext_->result.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->reqContext_->stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
-    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d,  errorCodeis %{public}d, listSize=%{public}zu.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d,  errorCodeis %{public}d, listSize=%{public}zu.",
         resultCode, this->reqContext_->result.errorCode, this->reqContext_->stateList.size());
     ReleaseHandler(0);
 }
@@ -301,7 +300,7 @@ void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Wan
     */
 void PermissonOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called!");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Called!");
 }
 
 /*
@@ -310,7 +309,7 @@ void PermissonOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
     */
 void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
+    LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d.", releaseCode);
 
     ReleaseHandler(-1);
 }
@@ -320,7 +319,7 @@ void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
     */
 void PermissonOnSettingUICallback::OnError(int32_t code, const std::string& name, const std::string& message)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
+    LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s.",
         code, name.c_str(), message.c_str());
 
     ReleaseHandler(-1);
@@ -332,7 +331,7 @@ void PermissonOnSettingUICallback::OnError(int32_t code, const std::string& name
     */
 void PermissonOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>& uiProxy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Connect to UIExtensionAbility successfully.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Connect to UIExtensionAbility successfully.");
 }
 
 /*
@@ -340,7 +339,7 @@ void PermissonOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::Moda
     */
 void PermissonOnSettingUICallback::OnDestroy()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
     ReleaseHandler(-1);
 }
 
@@ -352,7 +351,7 @@ static void CreateSettingUIExtensionMainThread(std::shared_ptr<RequestPermOnSett
         Ace::UIContent* uiContent = GetUIContent(asyncContext->abilityContext,
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
             asyncContext->result.errorCode = RET_FAILED;
             return;
         }
@@ -360,10 +359,10 @@ static void CreateSettingUIExtensionMainThread(std::shared_ptr<RequestPermOnSett
         Ace::ModalUIExtensionConfig config;
         config.isProhibitBack = true;
         int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-        ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Create end, sessionId: %{public}d, tokenId: %{public}d.",
             sessionId, asyncContext->tokenId);
         if (sessionId == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create component, sessionId is 0.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create component, sessionId is 0.");
             asyncContext->result.errorCode = RET_FAILED;
             return;
         }
@@ -411,7 +410,7 @@ static void CreateUIExtension(
 static void StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     AccessTokenKit::GetPermissionManagerInfo(asyncContext->info);
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s, permStateAbilityName: %{public}s.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "BundleName: %{public}s, permStateAbilityName: %{public}s.",
         asyncContext->info.grantBundleName.c_str(), asyncContext->info.permStateAbilityName.c_str());
     OHOS::AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.permStateAbilityName);
@@ -426,7 +425,7 @@ static void GetInstanceId(std::shared_ptr<RequestPermOnSettingAsyncContext>& asy
         Ace::UIContent* uiContent = GetUIContent(asyncContext->abilityContext,
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content!");
             return;
         }
         asyncContext->instanceId = uiContent->GetInstanceId();
@@ -440,19 +439,19 @@ static void GetInstanceId(std::shared_ptr<RequestPermOnSettingAsyncContext>& asy
 #else
     task();
 #endif
-    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", asyncContext->instanceId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d.", asyncContext->instanceId);
 }
 
 void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
     std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InstanceId: %{public}d", asyncContext->instanceId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d.", asyncContext->instanceId);
     {
         std::lock_guard<std::mutex> lock(instanceIdMutex_);
         auto iter = instanceIdMap_.find(asyncContext->instanceId);
         // id is existed mean a pop window is showing, add context to waiting queue
         if (iter != instanceIdMap_.end()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "InstanceId: %{public}d has existed.", asyncContext->instanceId);
+            LOGI(ATM_DOMAIN, ATM_TAG, "InstanceId: %{public}d has existed.", asyncContext->instanceId);
             instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
             return;
         }
@@ -465,8 +464,8 @@ void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
 bool static CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
 {
     if (permList.size() != tmpPermList.size()) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Perm list size not equal, CurrentPermList size: %{public}zu.", tmpPermList.size());
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Perm list size not equal, CurrentPermList size: %{public}zu.", tmpPermList.size());
         return false;
     }
 
@@ -475,7 +474,7 @@ bool static CheckPermList(std::vector<std::string> permList, std::vector<std::st
             return item == perm;
         });
         if (iter == tmpPermList.end()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Different permission lists.");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Different permission lists.");
             return false;
         }
     }
@@ -486,12 +485,12 @@ void RequestOnSettingAsyncInstanceControl::UpdateQueueData(
     const std::shared_ptr<RequestPermOnSettingAsyncContext>& reqContext)
 {
     if (reqContext->result.errorCode != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "The queue data does not need to be updated.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "The queue data does not need to be updated.");
         return;
     }
     for (const int32_t item : reqContext->stateList) {
         if (item != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "The queue data does not need to be updated");
+            LOGI(ATM_DOMAIN, ATM_TAG, "The queue data does not need to be updated.");
             return;
         }
     }
@@ -501,11 +500,11 @@ void RequestOnSettingAsyncInstanceControl::UpdateQueueData(
         int32_t id = reqContext->instanceId;
         auto iter = instanceIdMap_.find(id);
         if (iter == instanceIdMap_.end()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d not existed.", id);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
             return;
         }
         std::vector<std::string> permList = reqContext->permissionList;
-        ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
         for (auto& asyncContext : iter->second) {
             std::vector<std::string> tmpPermList = asyncContext->permissionList;
             if (CheckPermList(permList, tmpPermList)) {
@@ -525,11 +524,11 @@ void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
         std::lock_guard<std::mutex> lock(instanceIdMutex_);
         auto iter = instanceIdMap_.find(id);
         if (iter == instanceIdMap_.end()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d not existed.", id);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d not existed.", id);
             return;
         }
         while (!iter->second.empty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
             iter->second.erase(iter->second.begin());
             CheckDynamicRequest(asyncContext, isDynamic);
@@ -538,7 +537,7 @@ void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
             }
         }
         if (iter->second.empty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map is empty", id);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Id: %{public}d, map is empty.", id);
             instanceIdMap_.erase(id);
         }
     }
@@ -552,7 +551,7 @@ void RequestOnSettingAsyncInstanceControl::CheckDynamicRequest(
 {
     isDynamic = asyncContext->isDynamic;
     if (!isDynamic) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "It does not need to request permission exsion");
+        LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission exsion.");
         PermissionResultsCallbackUI(asyncContext->stateList, asyncContext);
         return;
     }
@@ -562,7 +561,7 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_object aniContext, ani_array_ref permissionList, ani_object callback)
 {
     if (env == nullptr || permissionList == nullptr || callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env or permissionList or callback is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList or callback is null.");
         return;
     }
 
@@ -577,7 +576,7 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     ani_object result = reinterpret_cast<ani_object>(nullRef);
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",
             asyncContext->tokenId, selfTokenID);
         ani_object error =
             BusinessErrorAni::CreateError(env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STS_ERROR_PARAM_INVALID,
@@ -587,14 +586,14 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     }
     GetInstanceId(asyncContext);
     RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Start to pop ui extension dialog");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog.");
 
     if (asyncContext->result.errorCode != RET_SUCCESS) {
         int32_t stsCode = TransferToStsErrorCode(asyncContext->result.errorCode);
         ani_object error = BusinessErrorAni::CreateError(
             env, stsCode, GetErrorMessage(stsCode, asyncContext->result.errorMsg));
         ExecuteAsyncCallback(env, callback, error, result);
-        ACCESSTOKEN_LOG_WARN(LABEL, "Failed to pop uiextension dialog.");
+        LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
 }
 }  // namespace AccessToken
