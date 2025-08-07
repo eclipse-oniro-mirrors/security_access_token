@@ -7300,6 +7300,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ACCESS_DISTRIBUTED_KEY_STORE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1", "wearable", "tv"]
+        },
+        {
             "name": "ohos.permission.SIMULATE_USER_INPUT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
