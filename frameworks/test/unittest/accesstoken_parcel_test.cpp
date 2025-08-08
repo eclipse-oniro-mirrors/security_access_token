@@ -366,7 +366,6 @@ HWTEST_F(AccessTokenParcelTest, PermissionGrantInfoParcel001, TestSize.Level1)
 HWTEST_F(AccessTokenParcelTest, AtmToolsParamInfoParcel001, TestSize.Level1)
 {
     AtmToolsParamInfoParcel atmToolsParamInfoParcel;
-    atmToolsParamInfoParcel.info.type = DUMP_TOKEN;
     atmToolsParamInfoParcel.info.tokenId = INVALID_TOKENID;
     atmToolsParamInfoParcel.info.permissionName = "ohos.permission.CAMERA";
     atmToolsParamInfoParcel.info.bundleName = "com.ohos.parceltest";

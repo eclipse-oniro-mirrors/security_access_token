@@ -17,6 +17,7 @@
 #define TO_STRING_H
 
 #include <string>
+#include "cjson_utils.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
@@ -26,13 +27,9 @@ namespace Security {
 namespace AccessToken {
 class ToString {
 public:
-    static void DetailUsedRecordToString(
-        bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos);
-    static void PermissionUsedRecordToString(
-        const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos);
-    static void BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos);
-    static void PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos);
-    static void PermissionUsedTypeInfoToString(const PermissionUsedTypeInfo& type, std::string& infos);
+    static std::string PermissionUsedResultToString(const PermissionUsedResult& result);
+    static std::string PermissionUsedTypeInfoToString(const std::vector<PermissionUsedTypeInfo>& typeInfos);
+    static std::string DumpPermDefinition(const std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

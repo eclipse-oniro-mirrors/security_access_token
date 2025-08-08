@@ -29,6 +29,53 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr const uint32_t INVALID_ATM_SET_STATUS = 2;
+/**
+ * @brief Atm tools operate type
+ */
+typedef enum TypeOptType {
+    /** default */
+    DEFAULT_OPER = 0,
+    /** dump hap or native token info */
+    DUMP_TOKEN,
+    /** dump permission used records */
+    DUMP_RECORD,
+    /** dump permission used types */
+    DUMP_TYPE,
+    /** dump permission definition info */
+    DUMP_PERM,
+    /** grant permission */
+    PERM_GRANT,
+    /** revoke permission */
+    PERM_REVOKE,
+} OptType;
+
+/**
+ * @brief Atm toggle mode type
+ */
+typedef enum TypeToggleModeType {
+    /** toggle mode is request */
+    TOGGLE_REQUEST = 0,
+    /** toggle mode is record */
+    TOGGLE_RECORD,
+} ToggleModeType;
+
+typedef enum TypeToggleOperateType {
+    /** set toggle request/record status */
+    TOGGLE_SET,
+    /** get toggle request/record status */
+    TOGGLE_GET,
+} ToggleOperateType;
+
+class AtmToggleParamInfo final {
+public:
+    ToggleModeType toggleMode;
+    ToggleOperateType type;
+    int32_t userID;
+    std::string permissionName;
+    uint32_t status = INVALID_ATM_SET_STATUS;
+};
+
 class AtmCommand final {
 public:
     AtmCommand(int32_t argc, char *argv[]);
@@ -40,28 +87,31 @@ private:
     std::string GetCommandErrorMsg() const;
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
-    int32_t RunAsCommandMissingOptionArgument(void);
-    void RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
+    int32_t RunAsCommandMissingOptionArgument(const std::vector<char>& requeredOptions);
+    void RunAsCommandExistentOptionForDump(
+        const int32_t& option, AtmToolsParamInfo& info, OptType& type, std::string& permissionName);
+    void RunAsCommandExistentOptionForPerm(
+        const int32_t& option, bool& isGranted, AccessTokenID& tokenID, std::string& permission);
+    void RunAsCommandExistentOptionForToggle(const int32_t& option, AtmToggleParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
-    int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
-    int32_t RunCommandByOperationType(const AtmToolsParamInfo& info);
-    int32_t HandleComplexCommand(const std::string& shortOption, const struct option longOption[],
-        const std::string& helpMsg);
+    int32_t ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName);
+    int32_t RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName);
+
     int32_t SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status);
     int32_t GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo);
-    void RunToggleCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
-    int32_t HandleToggleCommand(const std::string& shortOption, const struct option longOption[],
-        const std::string& helpMsg);
-    int32_t RunToggleCommandByOperationType(const AtmToolsParamInfo& info);
-    int32_t HandleToggleRequest(const AtmToolsParamInfo& info, std::string& dumpInfo);
-    int32_t HandleToggleRecord(const AtmToolsParamInfo& info, std::string& dumpInfo);
+
+    int32_t RunToggleCommandByOperationType(const AtmToggleParamInfo& info);
+    int32_t HandleToggleRequest(const AtmToggleParamInfo& info, std::string& dumpInfo);
+    int32_t HandleToggleRecord(const AtmToggleParamInfo& info, std::string& dumpInfo);
     int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
     int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
     bool IsNumericString(const char* string);
 
     int32_t RunAsHelpCommand();
-    int32_t RunAsCommonCommand();
+    int32_t RunAsCommonCommandForDump();
+    int32_t RunAsCommonCommandForPerm();
+    int32_t RunAsCommonCommandForToggle();
 
     int32_t argc_;
     char** argv_;

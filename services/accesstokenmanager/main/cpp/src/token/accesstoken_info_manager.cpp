@@ -64,9 +64,7 @@ static constexpr int32_t SYSTEM_APP = 1;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 #endif
-static const char* DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
-constexpr uint64_t FD_TAG = 0xD005A01;
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
@@ -1214,10 +1212,10 @@ void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID token
     if (type == TOKEN_HAP) {
         std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
         if (infoPtr != nullptr) {
-            infoPtr->ToString(dumpInfo);
+            dumpInfo = infoPtr->ToString();
         }
     } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
-        NativeTokenToString(tokenId, dumpInfo);
+        dumpInfo = NativeTokenToString(tokenId);
     } else {
         dumpInfo.append("invalid tokenId");
     }
@@ -1231,8 +1229,7 @@ void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bun
             if (bundleName != iter->second->GetBundleName()) {
                 continue;
             }
-
-            iter->second->ToString(dumpInfo);
+            dumpInfo = iter->second->ToString();
             dumpInfo.append("\n");
         }
     }
@@ -1253,7 +1250,7 @@ void AccessTokenInfoManager::DumpAllHapTokenname(std::string& dumpInfo)
 
 void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
 {
-    NativeTokenToString(GetNativeTokenId(processName), dumpInfo);
+    dumpInfo = NativeTokenToString(GetNativeTokenId(processName));
 }
 
 void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
@@ -1265,37 +1262,6 @@ void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
         dumpInfo += std::to_string(iter->first) + ": " + iter->second.processName;
         dumpInfo.append("\n");
     }
-}
-
-int32_t AccessTokenInfoManager::GetCurDumpTaskNum()
-{
-    return dumpTaskNum_.load();
-}
-
-void AccessTokenInfoManager::AddDumpTaskNum()
-{
-    dumpTaskNum_++;
-}
-
-void AccessTokenInfoManager::ReduceDumpTaskNum()
-{
-    dumpTaskNum_--;
-}
-
-void AccessTokenInfoManager::DumpToken()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "AccessToken Dump");
-    int32_t fd = open(DUMP_JSON_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
-    if (fd < 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Open failed errno %{public}d.", errno);
-        return;
-    }
-    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
-    std::string dumpStr;
-    AtmToolsParamInfoParcel infoParcel;
-    DumpTokenInfo(infoParcel.info, dumpStr);
-    dprintf(fd, "%s\n", dumpStr.c_str());
-    (void)fdsan_close_with_tag(fd, FD_TAG);
 }
 
 void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
@@ -1834,25 +1800,6 @@ int32_t AccessTokenInfoManager::GetPermissionRequestToggleStatus(const std::stri
     return 0;
 }
 
-bool AccessTokenInfoManager::IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
-    const std::vector<std::string>& nativeAcls)
-{
-    PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef)) {
-        return false;
-    }
-
-    if (tokenApl >= briefDef.availableLevel) {
-        return true;
-    }
-
-    auto iter = std::find(nativeAcls.begin(), nativeAcls.end(), permissionName);
-    if (iter != nativeAcls.end()) {
-        return true;
-    }
-    return false;
-}
-
 
 int32_t AccessTokenInfoManager::GetKernelPermissions(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
@@ -1868,50 +1815,19 @@ int32_t AccessTokenInfoManager::GetReqPermissionByName(
         tokenId, permissionName, value, true);
 }
 
-int32_t AccessTokenInfoManager::GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
+std::string AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID)
 {
+    std::vector<NativeTokenInfoBase> tokenInfos;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
-        return RET_FAILED;
+        return "";
     }
-    int ret = policy->GetAllNativeTokenInfo(tokenInfos);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
-        return ret;
-    }
-
-    return RET_SUCCESS;
-}
-
-void AccessTokenInfoManager::NativeTokenStateToString(const NativeTokenInfoBase& native, std::string& info,
-    std::string& invalidPermString)
-{
-    for (auto iter = native.permStateList.begin(); iter != native.permStateList.end(); iter++) {
-        if (!IsPermissionReqValid(native.apl, iter->permissionName, native.nativeAcls)) {
-            invalidPermString.append(R"(      "permissionName": ")" + iter->permissionName + R"(")" + ",\n");
-            continue;
-        }
-        info.append(R"(    {)");
-        info.append("\n");
-        info.append(R"(      "permissionName": ")" + iter->permissionName + R"(")" + ",\n");
-        info.append(R"(      "grantStatus": )" + std::to_string(iter->grantStatus) + ",\n");
-        info.append(R"(      "grantFlag": )" + std::to_string(iter->grantFlag) + ",\n");
-        info.append(R"(    })");
-        if (iter != (native.permStateList.end() - 1)) {
-            info.append(",\n");
-        }
-    }
-}
-
-void AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID, std::string& info)
-{
-    std::vector<NativeTokenInfoBase> tokenInfos;
-    int ret = GetNativeCfgInfo(tokenInfos);
+    int32_t ret = policy->GetAllNativeTokenInfo(tokenInfos);
     if (ret != RET_SUCCESS || tokenInfos.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
-        return;
+        return "";
     }
     auto iter = tokenInfos.begin();
     while (iter != tokenInfos.end()) {
@@ -1922,28 +1838,10 @@ void AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID, std::str
     }
     if (iter == tokenInfos.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
-        return;
+        return "";
     }
     NativeTokenInfoBase native = *iter;
-    std::string invalidPermString = "";
-    info.append(R"({)");
-    info.append("\n");
-    info.append(R"(  "tokenID": )" + std::to_string(native.tokenID) + ",\n");
-    info.append(R"(  "processName": ")" + native.processName + R"(")" + ",\n");
-    info.append(R"(  "apl": )" + std::to_string(native.apl) + ",\n");
-    info.append(R"(  "permStateList": [)");
-    info.append("\n");
-    NativeTokenStateToString(native, info, invalidPermString);
-    info.append("\n  ]\n");
-
-    if (invalidPermString.empty()) {
-        info.append("}");
-        return;
-    }
-
-    info.append(R"(  "invalidPermList": [\n)");
-    info.append(invalidPermString);
-    info.append("\n  ]\n}");
+    return policy->DumpNativeTokenInfo(native);
 }
 } // namespace AccessToken
 } // namespace Security

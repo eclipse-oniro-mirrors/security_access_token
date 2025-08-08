@@ -23,6 +23,7 @@
 #include "data_translator.h"
 #include "data_validator.h"
 #include "hisysevent_adapter.h"
+#include "json_parse_loader.h"
 #include "short_grant_manager.h"
 #include "token_field_const.h"
 #include "permission_map.h"
@@ -450,72 +451,18 @@ bool HapTokenInfoInner::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, co
     return PermissionDataBrief::GetInstance().IsPermissionGrantedWithSecComp(tokenID, permissionName);
 }
 
-void PermDefToString(const PermissionDef& def, std::string& info)
+std::string HapTokenInfoInner::ToString()
 {
-    info.append(R"(    {)");
-    info.append("\n");
-    info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
-    info.append(R"(      "bundleName": ")" + def.bundleName + R"(")" + ",\n");
-    info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
-    info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
-    info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
-    info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");
-    info.append(R"(      "label": ")" + def.label + R"(")" + ",\n");
-    info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
-    info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
-    info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
-    info.append(R"(      "isKernelEffect": )" + std::to_string(def.isKernelEffect) + ",\n");
-    info.append(R"(      "hasValue": )" + std::to_string(def.hasValue) + ",\n");
-    info.append(R"(    })");
-}
-
-void HapTokenInfoInner::PermStateFullToString(const PermissionStatus& state, std::string& info)
-{
-    info.append(R"(    {)");
-    info.append("\n");
-    info.append(R"(      "permissionName": ")" + state.permissionName + R"(")" + ",\n");
-    info.append(R"(      "grantStatus": ")" + std::to_string(state.grantStatus) + R"(")" + ",\n");
-    info.append(R"(      "grantFlag": ")" + std::to_string(state.grantFlag) + R"(")" + ",\n");
-    std::string value;
-    int32_t ret = PermissionDataBrief::GetInstance().GetReqPermissionByName(
-        tokenInfoBasic_.tokenID, state.permissionName, value, false);
-    if (ret == RET_SUCCESS) {
-        info.append(R"(      "value": ")" + value + R"(")" + ",\n");
-    }
-    info.append(R"(    })");
-}
-
-void HapTokenInfoInner::PermToString(const std::vector<PermissionStatus>& permStateList, std::string& info)
-{
-    info.append(R"(  "permStateList": [)");
-    info.append("\n");
-    for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
-        PermStateFullToString(*iter, info);
-        if (iter != (permStateList.end() - 1)) {
-            info.append(",\n");
-        }
-    }
-    info.append("\n  ]\n");
-}
-
-void HapTokenInfoInner::ToString(std::string& info)
-{
-    info.append(R"({)");
-    info.append("\n");
-    info.append(R"(  "tokenID": )" + std::to_string(tokenInfoBasic_.tokenID) + ",\n");
-    info.append(R"(  "tokenAttr": )" + std::to_string(tokenInfoBasic_.tokenAttr) + ",\n");
-    info.append(R"(  "ver": )" + std::to_string(tokenInfoBasic_.ver) + ",\n");
-    info.append(R"(  "userId": )" + std::to_string(tokenInfoBasic_.userID) + ",\n");
-    info.append(R"(  "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")" + ",\n");
-    info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
-    info.append(R"(  "dlpType": )" + std::to_string(tokenInfoBasic_.dlpType) + ",\n");
-    info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
-    info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
-
     std::vector<PermissionStatus> permStateList;
     (void)GetPermissionStateList(permStateList);
-    PermToString(permStateList, info);
-    info.append("}");
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
+        return "";
+    }
+    return policy->DumpHapTokenInfo(tokenInfoBasic_, isRemote_, isPermDialogForbidden_, permStateList);
 }
 } // namespace AccessToken
 } // namespace Security

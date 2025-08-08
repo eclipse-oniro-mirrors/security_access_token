@@ -23,6 +23,46 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+std::string g_testJsonStr = R"(
+{
+    "beginTime": 11,
+    "endTime": 22,
+    "bundleRecords": [
+        {
+            "tokenId": 123,
+            "isRemote": false,
+            "bundleName": "com.ohos.test1",
+            "permissionRecords": [{
+                "permissionName": "ohos.permission.READ_IMAGEVIDEO",
+                "accessCount": 1,
+                "secAccessCount": 1,
+                "rejectCount": 1,
+                "lastAccessTime": 11,
+                "lastRejectTime": 22,
+                "lastAccessDuration": 0,
+                "accessRecords": [{
+                        "status": 1,
+                        "lockScreenStatus": 1,
+                        "timestamp": 11,
+                        "duration": 0,
+                        "count": 2,
+                        "usedType": 0
+                    }
+                ],
+                "rejectRecords": []
+            }]
+        },
+        {
+            "tokenId": 234,
+            "isRemote": true,
+            "bundleName": "com.ohos.test",
+            "permissionRecords": []
+        }
+    ]
+}
+)";
+};
 
 class CJsonUtilsTest : public testing::Test  {
 public:
@@ -46,8 +86,11 @@ void CJsonUtilsTest::TearDown() {}
  */
 HWTEST_F(CJsonUtilsTest, CreateJsonFromStringTest001, TestSize.Level3)
 {
-    std::string test;
-    EXPECT_EQ(nullptr, CreateJsonFromString(test));
+    std::string test1;
+    EXPECT_EQ(nullptr, CreateJsonFromString(test1));
+
+    std::string test2 = "{\"key\":\"value\"}";
+    EXPECT_NE(nullptr, CreateJsonFromString(test2));
 }
 
 /*
@@ -59,7 +102,14 @@ HWTEST_F(CJsonUtilsTest, CreateJsonFromStringTest001, TestSize.Level3)
 HWTEST_F(CJsonUtilsTest, PackJsonToStringTest001, TestSize.Level3)
 {
     std::string res = PackJsonToString(nullptr);
-    EXPECT_EQ(res.size(), 0);
+    EXPECT_TRUE(res.empty());
+
+    std::string test = "{\"key\":\"value\"}";
+    CJsonUnique json = CreateJsonFromString(test);
+    EXPECT_NE(nullptr, json);
+
+    res = PackJsonToString(json);
+    EXPECT_FALSE(res.empty());
 
     FreeJsonString(nullptr);
 }
@@ -138,9 +188,10 @@ HWTEST_F(CJsonUtilsTest, GetStringFromJsonTest001, TestSize.Level3)
 {
     std::string test;
     std::string res;
-    EXPECT_EQ(false, GetStringFromJson(nullptr, test, res));
-
     CJsonUnique jsonInner = CreateJson();
+    EXPECT_EQ(false, GetStringFromJson(jsonInner.get(), "", res));
+    EXPECT_EQ(false, GetStringFromJson(nullptr, "test", res));
+
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "0"));
     EXPECT_EQ(false, GetStringFromJson(jsonInner.get(), test, res));
 
@@ -160,12 +211,12 @@ HWTEST_F(CJsonUtilsTest, GetStringFromJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, GetIntFromJsonTest001, TestSize.Level3)
 {
-    std::string test;
+    std::string test = "test1";
     int32_t res;
+    CJsonUnique jsonInner = CreateJson();
+    EXPECT_EQ(false, GetIntFromJson(jsonInner, "", res));
     EXPECT_EQ(false, GetIntFromJson(nullptr, test, res));
 
-    test = "test1";
-    CJsonUnique jsonInner = CreateJson();
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "abc"));
     EXPECT_EQ(false, GetIntFromJson(jsonInner, test, res));
 
@@ -181,12 +232,12 @@ HWTEST_F(CJsonUtilsTest, GetIntFromJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level3)
 {
-    std::string test;
+    std::string test = "test1";
     uint32_t res;
+    CJsonUnique jsonInner = CreateJson();
+    EXPECT_EQ(false, GetUnsignedIntFromJson(jsonInner, "", res));
     EXPECT_EQ(false, GetUnsignedIntFromJson(nullptr, test, res));
 
-    test = "test1";
-    CJsonUnique jsonInner = CreateJson();
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "abc"));
     EXPECT_EQ(false, GetUnsignedIntFromJson(jsonInner, test, res));
 
@@ -202,12 +253,12 @@ HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest001, TestSize.Level3)
 {
-    std::string test;
+    std::string test = "test1";
     bool res;
+    CJsonUnique jsonInner = CreateJson();
+    EXPECT_EQ(false, GetBoolFromJson(jsonInner, "", res));
     EXPECT_EQ(false, GetBoolFromJson(nullptr, test, res));
 
-    test = "test1";
-    CJsonUnique jsonInner = CreateJson();
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "0"));
     EXPECT_EQ(false, GetBoolFromJson(jsonInner, test, res));
 
@@ -226,6 +277,9 @@ HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest002, TestSize.Level3)
     std::string test = "test1";
     bool res;
     CJsonUnique jsonInner = CreateJson();
+    EXPECT_EQ(false, GetBoolFromJson(jsonInner, "", res));
+    EXPECT_EQ(false, GetBoolFromJson(nullptr, "test1", res));
+
     ASSERT_EQ(true, AddBoolToJson(jsonInner, test, true));
 
     EXPECT_EQ(true, GetBoolFromJson(jsonInner, test, res));
@@ -240,11 +294,11 @@ HWTEST_F(CJsonUtilsTest, GetBoolFromJsonTest002, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, AddObjToJsonTest001, TestSize.Level3)
 {
-    ASSERT_EQ(false, AddObjToJson(nullptr, "", nullptr));
-    std::string test = "test1";
-    ASSERT_EQ(false, AddObjToJson(nullptr, test, nullptr));
-
     CJsonUnique jsonInner = CreateJson();
+    std::string test = "test1";
+    ASSERT_EQ(false, AddObjToJson(jsonInner.get(), "", nullptr));
+    ASSERT_EQ(false, AddObjToJson(nullptr, "test", nullptr));
+
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "0"));
     ASSERT_EQ(true, AddStringToJson(jsonInner, "test1", "1"));
 
@@ -275,13 +329,13 @@ HWTEST_F(CJsonUtilsTest, AddObjToArrayTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, AddStringToJsonTest001, TestSize.Level3)
 {
-    ASSERT_EQ(false, AddStringToJson(nullptr, "", ""));
-    ASSERT_EQ(false, AddStringToJson(nullptr, "test0", "test0"));
-
     CJsonUnique jsonInner = CreateJson();
-    ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "test0"));
+    ASSERT_EQ(false, AddStringToJson(jsonInner, "", ""));
+    ASSERT_EQ(false, AddStringToJson(nullptr, "key_string", "test0"));
+
+    ASSERT_EQ(true, AddStringToJson(jsonInner, "key_string", "test0"));
     // twice
-    ASSERT_EQ(true, AddStringToJson(jsonInner, "test0", "test0"));
+    ASSERT_EQ(true, AddStringToJson(jsonInner, "key_string", "test0"));
 }
 
 /*
@@ -292,13 +346,13 @@ HWTEST_F(CJsonUtilsTest, AddStringToJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, AddBoolToJsonTest001, TestSize.Level3)
 {
-    ASSERT_EQ(false, AddBoolToJson(nullptr, "", true));
-    ASSERT_EQ(false, AddBoolToJson(nullptr, "test0", true));
-
     CJsonUnique jsonInner = CreateJson();
-    ASSERT_EQ(true, AddBoolToJson(jsonInner, "test0", true));
+    ASSERT_EQ(false, AddBoolToJson(jsonInner, "", true));
+    ASSERT_EQ(false, AddBoolToJson(nullptr, "key_bool", true));
+
+    ASSERT_EQ(true, AddBoolToJson(jsonInner, "key_bool", true));
     // twice
-    ASSERT_EQ(true, AddBoolToJson(jsonInner, "test0", true));
+    ASSERT_EQ(true, AddBoolToJson(jsonInner, "key_bool", true));
 }
 
 /*
@@ -309,13 +363,13 @@ HWTEST_F(CJsonUtilsTest, AddBoolToJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, AddIntToJsonTest001, TestSize.Level3)
 {
-    ASSERT_EQ(false, AddIntToJson(nullptr, "", 0));
-    ASSERT_EQ(false, AddIntToJson(nullptr, "test0", 0));
-
     CJsonUnique jsonInner = CreateJson();
-    ASSERT_EQ(true, AddIntToJson(jsonInner, "test0", 0));
+    ASSERT_EQ(false, AddIntToJson(jsonInner, "", 0));
+    ASSERT_EQ(false, AddIntToJson(nullptr, "key_int32", 0));
+
+    ASSERT_EQ(true, AddIntToJson(jsonInner, "key_int32", 0));
     // twice
-    ASSERT_EQ(true, AddIntToJson(jsonInner, "test0", 0));
+    ASSERT_EQ(true, AddIntToJson(jsonInner, "key_int32", 0));
 }
 
 /*
@@ -326,13 +380,60 @@ HWTEST_F(CJsonUtilsTest, AddIntToJsonTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, AddUnsignedIntToJsonTest001, TestSize.Level3)
 {
-    ASSERT_EQ(false, AddUnsignedIntToJson(nullptr, "", 0));
-    ASSERT_EQ(false, AddUnsignedIntToJson(nullptr, "test0", 0));
-
     CJsonUnique jsonInner = CreateJson();
-    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "test0", 0));
+    ASSERT_EQ(false, AddUnsignedIntToJson(jsonInner, "", 0));
+    ASSERT_EQ(false, AddUnsignedIntToJson(nullptr, "key_uint32", 0));
+
+    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "key_uint32", 0));
     // twice
-    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "test0", 0));
+    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "key_uint32", 0));
+}
+
+/*
+ * @tc.name: AddInt64ToJson
+ * @tc.desc: AddInt64ToJson
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, AddInt64ToJsonTest001, TestSize.Level3)
+{
+    CJsonUnique jsonInner = CreateJson();
+    ASSERT_EQ(false, AddInt64ToJson(jsonInner, "", 0));
+    ASSERT_EQ(false, AddInt64ToJson(nullptr, "key_int64", 0));
+
+    ASSERT_EQ(true, AddInt64ToJson(jsonInner, "key_int64", 0));
+    // twice
+    ASSERT_EQ(true, AddInt64ToJson(jsonInner, "key_int64", 0));
+}
+
+/*
+ * @tc.name: JsonToStringFormatted
+ * @tc.desc: JsonToStringFormatted with json is nullptr
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest001, TestSize.Level3)
+{
+    std::string str = JsonToStringFormatted(nullptr);
+    EXPECT_TRUE(str.empty());
+}
+
+/*
+ * @tc.name: JsonToStringFormatted
+ * @tc.desc: JsonToStringFormatted
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest002, TestSize.Level3)
+{
+    CJsonUnique json = CreateJsonFromString(g_testJsonStr);
+    EXPECT_NE(nullptr, json.get());
+
+    std::string str = JsonToStringFormatted(json.get());
+    EXPECT_FALSE(str.empty());
+
+    str = JsonToStringFormatted(json.get(), 501); // 501: level
+    EXPECT_TRUE(str.empty());
 }
 } // namespace AccessToken
 } // namespace Security

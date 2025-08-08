@@ -61,7 +61,6 @@ access_token_deps = [
   "${access_token_path}/services/accesstokenmanager/etc:param_files",
   "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
   "${access_token_path}/services/common:accesstoken_service_common",
-  "${access_token_path}/services/common/json_parse:accesstoken_cjson_utils",
 ]
 
 access_token_external_deps = [

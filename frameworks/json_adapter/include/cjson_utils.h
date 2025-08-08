@@ -35,12 +35,14 @@ CJsonUnique CreateJsonFromString(const std::string& jsonStr);
 CJsonUnique CreateJson(void);
 /* NO Need to call FreeJson to free the returned pointer when it's no longer in use. */
 CJsonUnique CreateJsonArray(void);
+CJsonUnique CreateJsonString(const std::string& value);
 void FreeJson(CJson* jsonObj);
 
 /* NO Need to call FreeJsonString to free the returned pointer when it's no longer in use. */
 std::string PackJsonToString(const CJson* jsonObj);
 std::string PackJsonToString(const CJsonUnique& jsonObj);
 void FreeJsonString(char* jsonStr);
+std::string JsonToStringFormatted(const CJson* jsonObj, int32_t level = 0);
 
 /*
  * Can't release the returned pointer, otherwise, an exception may occur.
@@ -73,10 +75,12 @@ bool AddStringToJson(CJson* jsonObj, const std::string& key, const std::string& 
 bool AddStringToJson(CJsonUnique& jsonObj, const std::string& key, const std::string& value);
 bool AddBoolToJson(CJson* jsonObj, const std::string& key, const bool value);
 bool AddBoolToJson(CJsonUnique& jsonObj, const std::string& key, const bool value);
-bool AddIntToJson(CJson* jsonObj, const std::string& key, const int value);
-bool AddIntToJson(CJsonUnique& jsonObj, const std::string& key, const int value);
+bool AddIntToJson(CJson* jsonObj, const std::string& key, const int32_t value);
+bool AddIntToJson(CJsonUnique& jsonObj, const std::string& key, const int32_t value);
 bool AddUnsignedIntToJson(CJson* jsonObj, const std::string& key, const uint32_t value);
 bool AddUnsignedIntToJson(CJsonUnique& jsonObj, const std::string& key, const uint32_t value);
+bool AddInt64ToJson(CJson* jsonObj, const std::string& key, const int64_t value);
+bool AddInt64ToJson(CJsonUnique& jsonObj, const std::string& key, const int64_t value);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

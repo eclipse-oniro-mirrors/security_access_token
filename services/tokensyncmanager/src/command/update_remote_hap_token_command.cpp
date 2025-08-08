@@ -56,8 +56,8 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
 std::string UpdateRemoteHapTokenCommand::ToJsonPayload()
 {
     CJsonUnique j = BaseRemoteCommand::ToRemoteProtocolJson();
-    CJsonUnique HapTokenInfos = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
-    AddObjToJson(j, "HapTokenInfos", HapTokenInfos);
+    CJsonUnique hapTokenInfos = BaseRemoteCommand::ToHapTokenInfosJson(updateTokenInfo_);
+    AddObjToJson(j, "HapTokenInfos", hapTokenInfos);
     return PackJsonToString(j);
 }
 

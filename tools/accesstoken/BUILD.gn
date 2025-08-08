@@ -20,6 +20,7 @@ ohos_executable("atm") {
   part_name = "access_token"
 
   include_dirs = [
+    "${access_token_path}/frameworks/json_adapter/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
   ]
@@ -32,6 +33,7 @@ ohos_executable("atm") {
 
   deps = [
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]
@@ -47,6 +49,7 @@ ohos_executable("atm") {
   }
 
   external_deps = [
+    "cJSON:cjson",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",

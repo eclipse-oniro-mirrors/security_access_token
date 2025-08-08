@@ -66,7 +66,6 @@ namespace AccessToken {
 namespace {
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int32_t ERROR = -1;
-constexpr int TWO_ARGS = 2;
 const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
@@ -1296,41 +1295,6 @@ int32_t AccessTokenManagerService::ClearUserPolicy()
     }
 
     return AccessTokenInfoManager::GetInstance().ClearUserPolicy();
-}
-
-int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
-{
-    if (fd < 0) {
-        return ERR_INVALID_VALUE;
-    }
-
-    dprintf(fd, "AccessToken Dump:\n");
-    std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
-    if (arg0.compare("-h") == 0) {
-        dprintf(fd, "Usage:\n");
-        dprintf(fd, "       -h: command help\n");
-        dprintf(fd, "       -a: dump all tokens\n");
-        dprintf(fd, "       -t <TOKEN_ID>: dump special token id\n");
-    } else if (arg0.compare("-t") == 0) {
-        if (args.size() < TWO_ARGS) {
-            return ERR_INVALID_VALUE;
-        }
-        long long tokenID = atoll(static_cast<const char *>(Str16ToStr8(args.at(1)).c_str()));
-        if (tokenID <= 0) {
-            return ERR_INVALID_VALUE;
-        }
-        AtmToolsParamInfoParcel infoParcel;
-        infoParcel.info.tokenId = static_cast<AccessTokenID>(tokenID);
-        std::string dumpStr;
-        DumpTokenInfo(infoParcel, dumpStr);
-        dprintf(fd, "%s\n", dumpStr.c_str());
-    }  else if (arg0.compare("-a") == 0 || arg0 == "") {
-        std::string dumpStr;
-        AtmToolsParamInfoParcel infoParcel;
-        DumpTokenInfo(infoParcel, dumpStr);
-        dprintf(fd, "%s\n", dumpStr.c_str());
-    }
-    return ERR_OK;
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const

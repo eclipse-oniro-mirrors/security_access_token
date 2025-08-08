@@ -394,7 +394,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 }
 
 /**
@@ -426,11 +426,11 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level0)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_nativeToken, "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 }
 
 /**
@@ -454,7 +454,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level0)
     BuildQueryRequest(g_nativeToken, "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 }
 
 /**
@@ -723,7 +723,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level0)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 }
 
 /**
@@ -818,14 +818,14 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level0)
     // query by unmatched tokenId, deviceId and bundle Name
     BuildQueryRequest(123, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 
-    // query by invalid permission Name
+    // query by invalid permission Name, results is empty
     permissionList.clear();
     permissionList.emplace_back("invalid permission");
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_TRUE(result.bundleRecords.empty());
 }
 
 /**
@@ -2891,17 +2891,17 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level0)
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
     EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
     int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
-    ASSERT_EQ(res, 0);
+    EXPECT_EQ(res, 0);
 
     EXPECT_EQ(0, SetSelfTokenID(tokenTest));
 
     uint32_t nativeTokenId = 672137215; // 672137215 is a native token
-    ASSERT_EQ(PrivacyKit::SetHapWithFGReminder(nativeTokenId, true), PrivacyError::ERR_PARAM_INVALID);
+    EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(nativeTokenId, true), PrivacyError::ERR_PARAM_INVALID);
 
     uint32_t invalidTokenId = 0;
-    ASSERT_EQ(PrivacyKit::SetHapWithFGReminder(invalidTokenId, true), PrivacyError::ERR_PARAM_INVALID);
+    EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(invalidTokenId, true), PrivacyError::ERR_PARAM_INVALID);
 
-    ASSERT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
+    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
 
     setuid(selfUid);
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
@@ -2947,11 +2947,11 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0
     info.permissionName = "ohos.permission.READ_CONTACTS";
     info.successCount = 1;
     info.failCount = 0;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     permRecordSize++;
 
     info.permissionName = "ohos.permission.WRITE_CONTACTS";
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     permRecordSize++;
 
     PermissionUsedRequest request;
@@ -2960,22 +2960,23 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0
     BuildQueryRequest(g_tokenIdG, g_infoParmsG.bundleName, permissionList, request);
 
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
-    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
+    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false));
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     info.permissionName = "ohos.permission.READ_CONTACTS";
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
 }
 
 /**
@@ -3003,10 +3004,10 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0
     info.permissionName = "ohos.permission.READ_CONTACTS";
     info.successCount = 1;
     info.failCount = 0;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
     info.permissionName = "ohos.permission.WRITE_CONTACTS";
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
 
     PermissionUsedRequest request;
     PermissionUsedResult result;
@@ -3014,21 +3015,23 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0
     BuildQueryRequest(g_tokenIdG, g_infoParmsG.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_TRUE(result.bundleRecords.empty());
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
     EXPECT_TRUE(status);
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     permRecordSize++;
 
     info.permissionName = "ohos.permission.READ_CONTACTS";
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
     permRecordSize++;
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
-    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
+    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
 }
