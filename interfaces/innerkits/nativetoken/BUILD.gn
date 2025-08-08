@@ -50,8 +50,9 @@ if (is_standard_system) {
       "bounds_checking_function:libsec_shared",
       "cJSON:cjson_static",
       "hilog:libhilog",
-      "hisysevent:libhisysevent",
     ]
+
+    public_external_deps = [ "hisysevent:libhisysevent" ]
 
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]
