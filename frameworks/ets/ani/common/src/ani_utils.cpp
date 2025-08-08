@@ -13,25 +13,21 @@
  * limitations under the License.
  */
 #include "ani_utils.h"
-
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAniUtils" };
-} // namespace
 
 bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_namespace& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->FindNamespace(namespaceDescriptor.c_str(), &out) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindNamespace!");
         return false;
     }
     return true;
@@ -40,12 +36,12 @@ bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_
 bool AniFindClass(ani_env* env, const std::string& classDescriptor, ani_class& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->FindClass(classDescriptor.c_str(), &out) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass(%{public}s) failed.", classDescriptor.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass(%{public}s).", classDescriptor.c_str());
         return false;
     }
     return true;
@@ -56,12 +52,12 @@ bool AniClassFindMethod(
     const std::string& signature, ani_method& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->Class_FindMethod(aniClass, methodDescriptor.c_str(), signature.c_str(), &out) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod!");
         return false;
     }
     return true;
@@ -70,12 +66,12 @@ bool AniClassFindMethod(
 bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fieldName, ani_field& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->Class_FindField(aniClass, fieldName, &out) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindField failed!");
         return false;
     }
     return true;
@@ -84,7 +80,7 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fiel
 bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
@@ -92,7 +88,7 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     ani_status status;
     if ((status = env->Object_CallMethodByName_Int(
         static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethodByName_Int failed! %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed! %{public}d.", status);
         return false;
     }
 
@@ -103,20 +99,20 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
 bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_size size;
     if (env->Array_GetLength(array, &size) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength!");
         return false;
     }
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref elementRef;
         if (env->Array_Get_Ref(array, i, &elementRef) != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Array_Get_Ref failed at index %{public}zu!", i);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref at index %{public}zu!", i);
             return false;
         }
         uint32_t value;
@@ -135,19 +131,19 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref&
 {
     std::vector<std::string> out;
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return out;
     }
     ani_size size = 0;
     if (env->Array_GetLength(aniStrArr, &size) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_GetLength failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength!");
         return out;
     }
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref aniRef;
         if (env->Array_Get_Ref(aniStrArr, i, &aniRef) != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Array_Get_Ref failed!");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref!");
             return out;
         }
 
@@ -162,12 +158,12 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref&
 bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->GlobalReference_Create(aniCallback, &out) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create!");
         return false;
     }
     return true;
@@ -176,13 +172,13 @@ bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
 bool AniIsRefUndefined(ani_env* env, const ani_ref& ref)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_boolean isUnd;
     if (env->Reference_IsUndefined(ref, &isUnd) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Reference_IsUndefined failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_IsUndefined!");
         return false;
     }
     return isUnd ? true : false;
@@ -192,12 +188,12 @@ ani_string CreateAniString(ani_env* env, const std::string& str)
 {
     ani_string aniStr = {};
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return aniStr;
     }
 
     if (env->String_NewUTF8(str.c_str(), str.size(), &aniStr) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_NewUTF8 failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_NewUTF8!");
         return aniStr;
     }
     return aniStr;
@@ -212,7 +208,7 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
     bool& isEqual)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
@@ -222,7 +218,7 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
 
     ani_boolean isEq = false;
     if (env->Reference_StrictEquals(compareRef, targetRref, &isEq) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Reference_StrictEquals failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_StrictEquals.");
         return false;
     }
     isEqual = isEq ? true : false;
@@ -232,12 +228,12 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     if (env->FunctionalObject_Call(fn, size, argv, &result) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AniFunctionalObjectCall failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AniFunctionalObjectCall.");
         return false;
     }
     return true;
@@ -246,20 +242,20 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
 std::string ParseAniString(ani_env* env, ani_string aniStr)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return "";
     }
 
     ani_size strSize;
     if (env->String_GetUTF8Size(aniStr, &strSize) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8Size error.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8Size.");
         return "";
     }
     std::vector<char> buffer(strSize + 1);
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
     if (env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "String_GetUTF8 error.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8.");
         return "";
     }
 
@@ -271,7 +267,7 @@ std::string ParseAniString(ani_env* env, ani_string aniStr)
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
@@ -279,16 +275,16 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     ani_array_ref aArrayRef = nullptr;
     ani_class aStringcls = nullptr;
     if (env->FindClass("std.core.String", &aStringcls) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass String failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass String.");
         return nullptr;
     }
     ani_ref undefinedRef = nullptr;
     if (ANI_OK != env->GetUndefined(&undefinedRef)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetUndefined failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined.");
         return nullptr;
     }
     if (env->Array_New_Ref(aStringcls, length, undefinedRef, &aArrayRef) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_New_Ref failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Ref.");
         return nullptr;
     }
     ani_string aString = nullptr;
@@ -298,7 +294,7 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     }
     ani_ref aRef = nullptr;
     if (env->GlobalReference_Create(aArrayRef, &aRef) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
         return nullptr;
     }
     return aRef;
@@ -307,14 +303,14 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
 ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
     ani_size length = cArray.size();
     ani_array_int aArrayInt = nullptr;
     if (env->Array_New_Int(length, &aArrayInt) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_New_Int failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Int.");
         return nullptr;
     }
     for (ani_size i = 0; i < length; ++i) {
@@ -322,7 +318,7 @@ ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
     }
     ani_ref aRef = nullptr;
     if (env->GlobalReference_Create(aArrayInt, &aRef) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
         return nullptr;
     }
     return aRef;
@@ -331,14 +327,14 @@ ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
 ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
     ani_size length = cArray.size();
     ani_array_boolean aArrayBool = nullptr;
     if (env->Array_New_Boolean(length, &aArrayBool) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Array_New_Boolean failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Boolean.");
         return nullptr;
     }
     std::vector<ani_boolean> boolArray(length);
@@ -350,7 +346,7 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
     }
     ani_ref aRef = nullptr;
     if (env->GlobalReference_Create(aArrayBool, &aRef) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GlobalReference_Create failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
         return nullptr;
     }
     return aRef;
@@ -359,7 +355,7 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
 void DeleteReference(ani_env* env, ani_ref& ref)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         ref = nullptr;
         return;
     }
@@ -373,24 +369,24 @@ void DeleteReference(ani_env* env, ani_ref& ref)
 ani_object CreateBooleanObject(ani_env *env, bool value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("std.core.Boolean", &persionCls)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_method personInfoCtor;
     if ((status = env->Class_FindMethod(persionCls, "<ctor>", "z:", &personInfoCtor)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_object personInfoObj;
     if ((status = env->Object_New(persionCls, personInfoCtor, &personInfoObj, value)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     return personInfoObj;
@@ -399,24 +395,24 @@ ani_object CreateBooleanObject(ani_env *env, bool value)
 ani_object CreateIntObject(ani_env *env, int32_t value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("std.core.Int", &persionCls)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_method aniMethod;
     if ((status = env->Class_FindMethod(persionCls, "<ctor>", "i:", &aniMethod)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_object aniObject;
     if ((status = env->Object_New(persionCls, aniMethod, &aniObject, value)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     return aniObject;
@@ -425,26 +421,26 @@ ani_object CreateIntObject(ani_env *env, int32_t value)
 ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
     ani_class aniClass;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass(classDescriptor.c_str(), &aniClass)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass fail, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_method aniMethod;
     status = env->Class_FindMethod(aniClass, "<ctor>", ":", &aniMethod);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed, status: %{public}d!", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, status: %{public}d!", status);
         return nullptr;
     }
     ani_object out;
     status = env->Object_New(aniClass, aniMethod, &out);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New failed, status %{public}d!", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status %{public}d!", status);
         return nullptr;
     }
     return out;
@@ -453,7 +449,7 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 ani_object CreateArrayObject(ani_env* env, uint32_t length)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
 
@@ -464,13 +460,13 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
     ani_method aniMethod;
     ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "i:", &aniMethod);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindMethod failed, status: %{public}d!", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status: %{public}d!", status);
         return nullptr;
     }
     ani_object out;
     status = env->Object_New(aniClass, aniMethod, &out, length);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New failed(size: %{public}d), status %{public}d!", length, status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New(size: %{public}d), status %{public}d!", length, status);
         return nullptr;
     }
     return out;
@@ -479,14 +475,14 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
 bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -496,7 +492,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
 
     ani_boolean boolValue;
     if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(ref), "unboxed", nullptr, &boolValue) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get bool value of property(%{public}s) failed.", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get bool value of property(%{public}s).", property.c_str());
         return false;
     }
     value = static_cast<bool>(boolValue);
@@ -506,26 +502,26 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
 bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d.",
             property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Property(%{public}s) is undefned!", property.c_str());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Property(%{public}s) is undefned!", property.c_str());
         return true;
     }
 
     ani_int intValue;
     status = env->Object_CallMethodByName_Int(static_cast<ani_object>(ref), "unboxed", nullptr, &intValue);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get int value of property(%{public}s) failed, status: %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int value of property(%{public}s), status: %{public}d.",
             property.c_str(), static_cast<int32_t>(status));
         return false;
     }
@@ -536,14 +532,14 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
 bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -553,7 +549,7 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
 
     ani_long longValue;
     if (env->Object_CallMethodByName_Long(static_cast<ani_object>(ref), "unboxed", nullptr, &longValue) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get int64 value of property(%{public}s) failed.", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int64 value of property(%{public}s).", property.c_str());
         return false;
     }
     value = static_cast<int64_t>(longValue);
@@ -563,14 +559,14 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
 bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -584,14 +580,14 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
 bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -601,7 +597,7 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
     ani_enum_item aniEnum = static_cast<ani_enum_item>(ref);
     ani_int aniInt;
     if (env->EnumItem_GetValue_Int(aniEnum, &aniInt) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get enum value of property(%{public}s) failed.", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get enum value of property(%{public}s).", property.c_str());
         return false;
     }
     value = static_cast<int32_t>(aniInt);
@@ -612,14 +608,14 @@ bool GetStringVecProperty(
     ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return false;
     }
 
     ani_ref ref;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -634,12 +630,12 @@ bool GetStringVecProperty(
 bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& property, bool in)
 {
     if ((env == nullptr) || (object == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
     ani_status status = env->Object_SetPropertyByName_Boolean(object, property.c_str(), static_cast<ani_boolean>(in));
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Set property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -649,12 +645,12 @@ bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& proper
 bool SetIntProperty(ani_env* env, ani_object& object, const std::string& property, int32_t in)
 {
     if ((env == nullptr) || (object == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
     ani_status status = env->Object_SetPropertyByName_Int(object, property.c_str(), static_cast<ani_int>(in));
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Set property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -664,12 +660,12 @@ bool SetIntProperty(ani_env* env, ani_object& object, const std::string& propert
 bool SetLongProperty(ani_env* env, ani_object& aniObject, const std::string& property, int64_t in)
 {
     if ((env == nullptr) || (aniObject == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
     ani_status status = env->Object_SetPropertyByName_Long(aniObject, property.c_str(), static_cast<ani_long>(in));
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Set property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -679,12 +675,12 @@ bool SetLongProperty(ani_env* env, ani_object& aniObject, const std::string& pro
 bool SetRefProperty(ani_env* env, ani_object& aniObject, const std::string& property, const ani_ref& in)
 {
     if ((env == nullptr) || (aniObject == nullptr) || (in == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
     ani_status status = env->Object_SetPropertyByName_Ref(aniObject, property.c_str(), in);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Set property(%{public}s) failed, status: %{public}d!",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
             property.c_str(), status);
         return false;
     }
@@ -694,7 +690,7 @@ bool SetRefProperty(ani_env* env, ani_object& aniObject, const std::string& prop
 bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::string& property, int32_t in)
 {
     if ((env == nullptr) || (aniObject == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
     ani_object intObject = CreateIntObject(env, in);
@@ -712,7 +708,7 @@ bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::stri
 bool SetStringProperty(ani_env* env, ani_object& aniObject, const std::string& property, const std::string& in)
 {
     if ((env == nullptr) || (aniObject == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is null, property(%{public}s).", property.c_str());
         return false;
     }
     ani_ref aniString = static_cast<ani_ref>(CreateAniString(env, in));
@@ -726,17 +722,17 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
     const std::string& enumDescription, const std::string& property, uint32_t value)
 {
     if ((env == nullptr) || (aniObject == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param is nullptr, property(%{public}s).", property.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is null, property(%{public}s).", property.c_str());
         return false;
     }
     ani_enum aniEnum;
     if (env->FindEnum(enumDescription.c_str(), &aniEnum) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindEnum failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindEnum!");
         return false;
     }
     ani_enum_item aniEnumItem;
     if (env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(value), &aniEnumItem) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Enum_GetEnumItemByIndex failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Enum_GetEnumItemByIndex!");
         return false;
     }
     if (!SetRefProperty(env, aniObject, property.c_str(), aniEnumItem)) {
@@ -748,7 +744,7 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
 ani_env* GetCurrentEnv(ani_vm* vm)
 {
     if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Vm is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return nullptr;
     }
     ani_env* env = nullptr;

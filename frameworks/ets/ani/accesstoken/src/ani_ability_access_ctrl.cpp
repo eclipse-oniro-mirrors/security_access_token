@@ -20,8 +20,8 @@
 #include <mutex>
 
 #include "access_token_error.h"
+#include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
 #include "ani_request_global_switch_on_setting.h"
 #include "ani_request_permission.h"
 #include "ani_request_permission_on_setting.h"
@@ -35,7 +35,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniAbilityAccessCtrl" };
 constexpr int32_t VALUE_MAX_LEN = 32;
 std::mutex g_lockCache;
 static PermissionParamCache g_paramCache;
@@ -57,13 +56,13 @@ RegisterPermStateChangeScopePtr::RegisterPermStateChangeScopePtr(const PermState
 RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
 {
     if (vm_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return;
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Current env is nulltpr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
         env->GlobalReference_Delete(ref_);
     }
@@ -104,7 +103,7 @@ static bool SetStringProperty(ani_env* env, ani_object& aniObject, const char* p
 {
     ani_string aniString = CreateAniString(env, in);
     if (env->Object_SetPropertyByName_Ref(aniObject, propertyName, aniString) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetPropertyByName_Ref failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetPropertyByName_Ref!");
         return false;
     }
 
@@ -142,7 +141,7 @@ static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& 
 void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInfo& PermStateChangeInfo)
 {
     if (vm_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return;
     }
 
@@ -150,12 +149,12 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     ani_options aniArgs {1, &interopEnabled};
     ani_env* env;
     if (vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AttachCurrentThread failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AttachCurrentThread!");
         return;
     }
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
     if (fnObj == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Reinterpret_cast failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reinterpret_cast!");
         return;
     }
 
@@ -169,7 +168,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
         return;
     }
     if (vm_->DetachCurrentThread() != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DetachCurrentThread failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentThread!");
         return;
     }
 }
@@ -178,25 +177,25 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
 {
     ani_object atManagerObj = {};
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null");
         return atManagerObj;
     }
 
     static const char* className = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", className);
         return atManagerObj;
     }
 
     ani_method ctor;
     if (ANI_OK != env->Class_FindMethod(cls, "<ctor>", nullptr, &ctor)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get ctor Failed %{public}s", className);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ctor %{public}s.", className);
         return atManagerObj;
     }
 
     if (ANI_OK != env->Object_New(cls, ctor, &atManagerObj)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create Object Failed %{public}s", className);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Object %{public}s.", className);
         return atManagerObj;
     }
     return atManagerObj;
@@ -206,14 +205,14 @@ static std::string GetPermParamValue()
 {
     long long sysCommitId = GetSystemCommitId();
     if (sysCommitId == g_paramCache.sysCommitIdCache) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "SysCommitId = %{public}lld", sysCommitId);
+        LOGD(ATM_DOMAIN, ATM_TAG, "SysCommitId = %{public}lld.", sysCommitId);
         return g_paramCache.sysParamCache;
     }
     g_paramCache.sysCommitIdCache = sysCommitId;
     if (g_paramCache.handle == PARAM_DEFAULT_VALUE) {
         int32_t handle = static_cast<int32_t>(FindParameter(PERMISSION_STATUS_CHANGE_KEY));
         if (handle == PARAM_DEFAULT_VALUE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "FindParameter failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindParameter.");
             return "-1";
         }
         g_paramCache.handle = handle;
@@ -224,7 +223,7 @@ static std::string GetPermParamValue()
         char value[VALUE_MAX_LEN] = { 0 };
         auto ret = GetParameterValue(g_paramCache.handle, value, VALUE_MAX_LEN - 1);
         if (ret < 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d.", ret);
             return "-1";
         }
         std::string resStr(value);
@@ -245,7 +244,7 @@ static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
                 AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
             iter->second.status = asyncContext->grantStatus;
             iter->second.paramValue = currPara;
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param changed currPara %{public}s", currPara.c_str());
+            LOGD(ATM_DOMAIN, ATM_TAG, "Param changed currPara %{public}s.", currPara.c_str());
         } else {
             asyncContext->grantStatus = iter->second.status;
         }
@@ -254,8 +253,8 @@ static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
             AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         g_cache[asyncContext->permissionName].status = asyncContext->grantStatus;
         g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
-        ACCESSTOKEN_LOG_DEBUG(
-            LABEL, "G_cacheParam set %{public}s", g_cache[asyncContext->permissionName].paramValue.c_str());
+        LOGD(ATM_DOMAIN, ATM_TAG, "Success to set G_cacheParam(%{public}s).",
+            g_cache[asyncContext->permissionName].paramValue.c_str());
     }
 }
 
@@ -263,21 +262,21 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
     ani_int aniTokenID, ani_string aniPermission)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext();
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to alloc memory for asyncContext.");
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
@@ -289,7 +288,7 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
         return static_cast<ani_int>(asyncContext->grantStatus);
     }
     UpdatePermissionCache(asyncContext);
-    ACCESSTOKEN_LOG_INFO(LABEL, "CheckAccessTokenExecute result : %{public}d", asyncContext->grantStatus);
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckAccessTokenExecute result : %{public}d.", asyncContext->grantStatus);
     return static_cast<ani_int>(asyncContext->grantStatus);
 }
 
@@ -297,6 +296,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
     ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
 {
     if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
@@ -305,7 +305,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
             tokenID, permissionName.c_str(), permissionFlags);
         return;
     }
@@ -328,9 +328,9 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
 static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "RevokeUserGrantedPermission begin.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RevokeUserGrantedPermission begin.");
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
@@ -339,7 +339,7 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
             tokenID, permissionName.c_str(), permissionFlags);
         return;
     }
@@ -361,10 +361,10 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
 
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "getVersionExecute begin.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionExecute begin.");
     uint32_t version = -1;
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return static_cast<ani_int>(version);
     }
 
@@ -380,14 +380,14 @@ static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]]
 static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_array_ref aniPermissionList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionsStatusExecute begin.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionsStatusExecute begin.");
     if ((env == nullptr) || (aniPermissionList == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "aniPermissionList or env null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "AniPermissionList or env is null.");
         return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     if (!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) is invalid.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) is invalid.", tokenID);
         return nullptr;
     }
     std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
@@ -425,21 +425,21 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
 {
     uint32_t flag = PERMISSION_DEFAULT_FLAG;
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return flag;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());
         return flag;
     }
 
     int32_t result = AccessTokenKit::GetPermissionFlag(tokenID, permissionName, flag);
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "result =  %{public}d  errcode = %{public}d",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Result = %{public}d  errcode = %{public}d",
             result, BusinessErrorAni::GetStsErrorCode(result));
         BusinessErrorAni::ThrowError(
             env, BusinessErrorAni::GetStsErrorCode(result), GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
@@ -451,12 +451,12 @@ static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* en
     [[maybe_unused]] ani_object object, ani_string aniPermissionName, ani_int status)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission(%{public}s) is invalid.", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return;
     }
     int32_t result = AccessTokenKit::SetPermissionRequestToggleStatus(permissionName, status, 0);
@@ -472,12 +472,12 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
 {
     uint32_t flag = CLOSED;
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return flag;
     }
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission(%{public}s) is invalid.", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return flag;
     }
 
@@ -493,13 +493,13 @@ static void RequestAppPermOnSettingExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int tokenID)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
 
     int32_t result = AccessTokenKit::RequestAppPermOnSetting(static_cast<AccessTokenID>(tokenID));
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Result = %{public}d, errcode = %{public}d.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, errcode=%{public}d.",
             result, BusinessErrorAni::GetStsErrorCode(result));
         BusinessErrorAni::ThrowError(env, BusinessErrorAni::GetStsErrorCode(result),
             GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
@@ -511,7 +511,7 @@ static bool SetupPermissionSubscriber(
 {
     ani_vm* vm;
     if (context->env->GetVM(&vm) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetVM failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetVM!");
         return false;
     }
 
@@ -642,19 +642,19 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
 
     RegisterPermStateChangeInf* registerPermStateChangeInf = new (std::nothrow) RegisterPermStateChangeInf();
     if (registerPermStateChangeInf == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for RegisterPermStateChangeInf!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to allocate memory for RegisterPermStateChangeInf!");
         return;
     }
     registerPermStateChangeInf->env = env;
     std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {registerPermStateChangeInf};
     if (!ParseInputToRegister(aniType, aniId, aniArray, callback, registerPermStateChangeInf, true)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseInputToRegister false.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ParseInputToRegister.");
         return;
     }
 
     if (IsExistRegister(registerPermStateChangeInf)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Subscribe failed. The current subscriber has existed or Reference_StrictEquals failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Faield to Subscribe. The current subscriber has existed or Reference_StrictEquals failed!");
         if (registerPermStateChangeInf->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
             BusinessErrorAni::ThrowError(
                 env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
@@ -673,7 +673,7 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
         result = AccessTokenKit::RegisterSelfPermStateChangeCallback(registerPermStateChangeInf->subscriber);
     }
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermStateChangeCallback failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to RegisterPermStateChangeCallback.");
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         return;
@@ -682,8 +682,8 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
     {
         std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
         g_permStateChangeRegisters.emplace_back(registerPermStateChangeInf);
-        ACCESSTOKEN_LOG_INFO(
-            LABEL, "Add g_PermStateChangeRegisters.size = %{public}zu", g_permStateChangeRegisters.size());
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "g_PermStateChangeRegisters size = %{public}zu.", g_permStateChangeRegisters.size());
     }
     callbackPtr.release();
     return;
@@ -692,7 +692,7 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
 static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterPermStateChangeInf,
     std::vector<RegisterPermStateChangeInf*>& batchPermStateChangeRegisters)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "FindAndGetSubscriberInVector In.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "FindAndGetSubscriberInVector In.");
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
     std::vector<AccessTokenID> targetTokenIDs = unregisterPermStateChangeInf->scopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = unregisterPermStateChangeInf->scopeInfo.permList;
@@ -703,10 +703,10 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
     for (const auto& item : g_permStateChangeRegisters) {
         if (isUndef) {
             // batch delete currentThread callback
-            ACCESSTOKEN_LOG_INFO(LABEL, "Callback is nullptr.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Compare callback.");
+            LOGI(ATM_DOMAIN, ATM_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
                 unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
                 continue;
@@ -758,7 +758,7 @@ static void DeleteRegisterFromVector(const RegisterPermStateChangeInf* context)
 static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "UnregisterPermStateChangeCallback In.");
+    LOGD(ATM_DOMAIN, ATM_TAG, "UnregisterPermStateChangeCallback In.");
     if (env == nullptr) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
         return;
@@ -766,7 +766,7 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
 
     RegisterPermStateChangeInf* context = new (std::nothrow) RegisterPermStateChangeInf();
     if (context == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for UnRegisterPermStateChangeInf!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to allocate memory for UnRegisterPermStateChangeInf!");
         return;
     }
     context->env = env;
@@ -778,8 +778,8 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
 
     std::vector<RegisterPermStateChangeInf*> batchPermStateChangeRegisters;
     if (!FindAndGetSubscriberInVector(context, batchPermStateChangeRegisters)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Unsubscribe failed. The current subscriber does not exist or Reference_StrictEquals failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to Unsubscribe. The current subscriber does not exist or Reference_StrictEquals failed!");
         if (context->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
             BusinessErrorAni::ThrowError(
                 env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
@@ -802,7 +802,7 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
         if (result == RET_SUCCESS) {
             DeleteRegisterFromVector(item);
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermStateChangeCallback failed");
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UnregisterPermStateChangeCallback");
             int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
             return;
@@ -814,26 +814,26 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
 void InitAbilityCtrlFunction(ani_env *env)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr env");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
     const char* spaceName = "@ohos.abilityAccessCtrl.abilityAccessCtrl";
     ani_namespace spc;
     if (ANI_OK != env->FindNamespace(spaceName, &spc)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", spaceName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", spaceName);
         return;
     }
     std::array methods = {
         ani_native_function { "createAtManager", nullptr, reinterpret_cast<void*>(CreateAtManager) },
     };
     if (ANI_OK != env->Namespace_BindNativeFunctions(spc, methods.data(), methods.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", spaceName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s.", spaceName);
         return;
     };
     const char* className = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class cls;
     if (ANI_OK != env->FindClass(className, &cls)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not found %{public}s", className);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", className);
         return;
     }
     std::array claMethods = {
@@ -863,7 +863,7 @@ void InitAbilityCtrlFunction(ani_env *env)
         ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
     };
     if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind native methods to %{public}s", className);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s", className);
         return;
     };
 }
@@ -871,12 +871,12 @@ extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
     if (vm == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return ANI_INVALID_ARGS;
     }
     ani_env* env;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Unsupported ANI_VERSION_1.");
         return ANI_OUT_OF_MEMORY;
     }
     InitAbilityCtrlFunction(env);

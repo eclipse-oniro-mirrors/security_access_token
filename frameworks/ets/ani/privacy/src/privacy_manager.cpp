@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "ani_error.h"
 #include "ani_utils.h"
 #include "privacy_error.h"
@@ -27,7 +27,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AniPrivacyManager" };
 std::mutex g_mutex;
 std::vector<RegisterPermActiveChangeContext*> g_subScribers;
 static constexpr size_t MAX_CALLBACK_SIZE = 200;
@@ -86,7 +85,7 @@ static int32_t GetStsErrorCode(int32_t errCode)
             stsCode = STS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
+    LOGD(PRI_DOMAIN, PRI_TAG, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
     return stsCode;
 }
 
@@ -100,7 +99,7 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
     std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+        LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
         return;
     }
@@ -130,13 +129,13 @@ PermActiveStatusPtr::PermActiveStatusPtr(const std::vector<std::string>& permLis
 PermActiveStatusPtr::~PermActiveStatusPtr()
 {
     if (vm_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Vm is null.");
         return;
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Current env is nulltpr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
         env->GlobalReference_Delete(ref_);
     }
@@ -201,7 +200,7 @@ static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeRe
 void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activeChangeResponse)
 {
     if (vm_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "vm is nullptr;");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Vm is null.");
         return;
     }
 
@@ -209,19 +208,19 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     ani_options aniArgs {1, &interopEnabled};
     ani_env* env;
     if (vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AttachCurrentThread failed!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to AttachCurrentThread!");
         return;
     }
 
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
     if (fnObj == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Reinterpret_cast failed!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Reinterpret_cast!");
         return;
     }
 
     ani_object aniObject = ConvertActiveChangeResponse(env, activeChangeResponse);
     if (aniObject == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Convert object is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Convert object is null.");
         return;
     }
     std::vector<ani_ref> args;
@@ -232,7 +231,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     }
 
     if (vm_->DetachCurrentThread() != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DetachCurrentThread failed!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to DetachCurrentThread!");
         return;
     }
 }
@@ -260,7 +259,7 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref&
 
     ani_vm* vm;
     if (context->env->GetVM(&vm) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetVM failed!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetVM!");
         return false;
     }
 
@@ -322,7 +321,7 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
 
     RegisterPermActiveChangeContext* context = new (std::nothrow) RegisterPermActiveChangeContext();
     if (context == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to allocate memory for RegisterPermActiveChangeContext!");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to allocate memory for RegisterPermActiveChangeContext!");
         return;
     }
     context->env = env;
@@ -342,7 +341,7 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
 
     int32_t result = PrivacyKit::RegisterPermActiveStatusCallback(context->subscriber);
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermActiveStatusCallback failed, res is %{public}d", result);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to RegisterPermActiveStatusCallback, res is %{public}d.", result);
         int32_t stsCode = GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         return;
@@ -351,7 +350,7 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     {
         std::lock_guard<std::mutex> lock(g_mutex);
         if (g_subScribers.size() >= MAX_CALLBACK_SIZE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribers size has reached the max %{public}zu.", MAX_CALLBACK_SIZE);
+            LOGE(PRI_DOMAIN, PRI_TAG, "Subscribers size has reached the max %{public}zu.", MAX_CALLBACK_SIZE);
             BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_REGISTERS_EXCEED_LIMITATION,
                 GetErrorMessage(STSErrorCode::STS_ERROR_REGISTERS_EXCEED_LIMITATION));
             return;
@@ -360,7 +359,7 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     }
 
     callbackPtr.release();
-    ACCESSTOKEN_LOG_INFO(LABEL, "RegisterPermActiveStatusCallback success!");
+    LOGI(PRI_DOMAIN, PRI_TAG, "RegisterPermActiveStatusCallback success!");
     return;
 }
 
@@ -379,10 +378,10 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
         // targetCallback != nullptr, unregister the subscriber with same permList and callback
         if (isUndef) {
             // batch delete currentThread callback
-            ACCESSTOKEN_LOG_INFO(LABEL, "Callback is nullptr.");
+            LOGI(PRI_DOMAIN, PRI_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Compare callback.");
+            LOGI(PRI_DOMAIN, PRI_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(context->env, item->callbackRef, callbackRef, item->threadId, callbackEqual)) {
                 continue;
             }
@@ -458,21 +457,21 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
         if (result == RET_SUCCESS) {
             DeleteRegisterInVector(item);
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to UnregisterPermActiveChangeCompleted!");
             int32_t stsCode = GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "UnRegisterPermActiveStatusCallback success!");
+    LOGI(PRI_DOMAIN, PRI_TAG, "UnRegisterPermActiveStatusCallback success!");
     return;
 }
 
 static void StopUsingPermissionExecute(
     [[maybe_unused]] ani_env* env, ani_int aniTokenID, ani_string aniPermission, ani_int pid)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "StopUsingPermissionExecute begin.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "StopUsingPermissionExecute begin.");
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return;
     }
 
@@ -480,12 +479,12 @@ static void StopUsingPermissionExecute(
     std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+        LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
+    LOGI(PRI_DOMAIN, PRI_TAG, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d.",
         permission.c_str(), tokenID, pid);
 
     auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid);
@@ -498,21 +497,21 @@ static void StopUsingPermissionExecute(
 static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
     ani_int aniTokenID, ani_string aniPermission, ani_int pid, PermissionUsedType usedType)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "StartUsingPermissionExecute begin.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "StartUsingPermissionExecute begin.");
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env null");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission = ParseAniString(env, aniPermission);
     if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
+        LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d",
+    LOGI(PRI_DOMAIN, PRI_TAG, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d.",
         permission.c_str(), tokenID, pid);
 
     auto retCode = PrivacyKit::StartUsingPermission(tokenID, permission, pid, usedType);
@@ -560,13 +559,13 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
     for (const auto& record: details) {
         ani_ref aniRecord = ConvertSingleUsedRecordDetail(env, record);
         if (aniRecord == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Null aniRecord.");
+            LOGE(PRI_DOMAIN, PRI_TAG, "AniRecord is null.");
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "status : %{public}d", status);
+            LOGE(PRI_DOMAIN, PRI_TAG, "Status : %{public}d.", status);
             break;
         }
         ++index;
@@ -622,8 +621,8 @@ static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<Permissi
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "Set permission record fail, status: %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG,
+                "Failed to Set permission record, status: %{public}d.", static_cast<int32_t>(status));
             break;
         }
         ++index;
@@ -668,13 +667,14 @@ static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<Bundl
     for (const auto& record : bundleRecord) {
         ani_ref aniRecord = ConvertBundleUsedRecord(env, record);
         if (aniRecord == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "aniRecord is null.");
+            LOGE(PRI_DOMAIN, PRI_TAG, "AniRecord is null.");
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG,
+                "Failed to set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
             continue;
         }
         ++index;
@@ -712,7 +712,7 @@ static bool ParseRequest(ani_env* env, const ani_object& aniRequest, PermissionU
         return false;
     }
     if (!isRequestObject) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is not request type.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Object is not request type.");
         return false;
     }
 
@@ -756,8 +756,9 @@ static bool ParseRequest(ani_env* env, const ani_object& aniRequest, PermissionU
 
 static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, ani_object aniRequest)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordExecute Call");
+    LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordExecute Call.");
     if (env == nullptr || aniRequest == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env or aniRequest is null.");
         return nullptr;
     }
 
@@ -783,16 +784,16 @@ static ani_object ConvertPermissionUsedTypeInfo(ani_env *env, const PermissionUs
         return nullptr;
     }
     if (!SetIntProperty(env, aObject, "tokenId", info.tokenId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId set fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to set tokenId.");
         return nullptr;
     }
     if (!SetStringProperty(env, aObject, "permissionName", info.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName set fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to set PermissionName.");
         return nullptr;
     }
     const char* permUsedTypeDes = "@ohos.privacyManager.privacyManager.PermissionUsedType";
     if (!SetEnumProperty(env, aObject, permUsedTypeDes, "usedType", static_cast<uint32_t>(info.type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UsedType set fail.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to set UsedType.");
         return nullptr;
     }
     return aObject;
@@ -808,13 +809,13 @@ static ani_ref ConvertPermissionUsedTypeInfos(ani_env* env, const std::vector<Pe
     for (const auto& type : infos) {
         ani_ref aniType = ConvertPermissionUsedTypeInfo(env, type);
         if (aniType == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "aniType is null.");
+            LOGE(PRI_DOMAIN, PRI_TAG, "AniType is null.");
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "iC{std.core.Object}:", index, aniType);
         if (status != ANI_OK) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Set type fail, status: %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Set type, status: %{public}d.", static_cast<int32_t>(status));
             continue;
         }
         ++index;
@@ -826,7 +827,7 @@ static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
     ani_int aniTokenID, ani_string aniPermission)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
@@ -844,7 +845,7 @@ static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
 static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, ani_boolean status)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return;
     }
     int32_t userID = 0;
@@ -858,7 +859,7 @@ static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env*
 static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return false;
     }
     int32_t userID = 0;
@@ -873,18 +874,18 @@ static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] a
 
 void InitPrivacyFunction(ani_env *env)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitPrivacyFunction call");
+    LOGI(PRI_DOMAIN, PRI_TAG, "InitPrivacyFunction call.");
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Env is null.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return;
     }
     if (env->ResetError() != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ResetError failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to ResetError.");
     }
 
     ani_namespace ns;
     if (ANI_OK != env->FindNamespace("@ohos.privacyManager.privacyManager", &ns)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindNamespace privacyManager failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to FindNamespace privacyManager.");
         return;
     }
 
@@ -909,30 +910,30 @@ void InitPrivacyFunction(ani_env *env)
     };
     ani_status status = env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size());
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Namespace_BindNativeFunctions failed status : %{public}d.", status);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Namespace_BindNativeFunctions status : %{public}d.", status);
     }
     if (env->ResetError() != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ResetError failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to ResetError.");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitPrivacyFunction end");
+    LOGI(PRI_DOMAIN, PRI_TAG, "InitPrivacyFunction end.");
 }
 
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ANI_Constructor begin");
+    LOGI(PRI_DOMAIN, PRI_TAG, "ANI_Constructor begin.");
     if (vm == nullptr || result == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "nullptr vm or result");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Vm or result is null.");
         return ANI_INVALID_ARGS;
     }
     ani_env* env;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsupported ANI_VERSION_1");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Unsupported ANI_VERSION_1.");
         return ANI_OUT_OF_MEMORY;
     }
     InitPrivacyFunction(env);
     *result = ANI_VERSION_1;
-    ACCESSTOKEN_LOG_INFO(LABEL, "ANI_Constructor end");
+    LOGI(PRI_DOMAIN, PRI_TAG, "ANI_Constructor end.");
     return ANI_OK;
 }
 }

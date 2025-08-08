@@ -17,15 +17,12 @@
 #include <unordered_map>
 
 #include "access_token_error.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonAni" };
-} // namespace
 constexpr const char* BUSINESS_ERROR_CLASS = "@ohos.base.BusinessError";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
@@ -62,7 +59,7 @@ void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& 
 ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::string& msg)
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "env is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return nullptr;
     }
     ani_class cls = nullptr;
@@ -72,39 +69,39 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
 
     ani_status status = env->FindClass(BUSINESS_ERROR_CLASS, &cls);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindMethod(cls, "<ctor>", ":", &method);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}d.", status);
         return nullptr;
     }
     status = env->Object_New(cls, method, &obj);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_New : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "code", &field);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", status);
         return nullptr;
     }
     status = env->Object_SetField_Int(obj, field, code);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Int : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Int : %{public}d.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "data", &field);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindField : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", status);
         return nullptr;
     }
     ani_string string = nullptr;
     env->String_NewUTF8(msg.c_str(), msg.size(), &string);
     status = env->Object_SetField_Ref(obj, field, static_cast<ani_ref>(string));
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_SetField_Ref : %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Ref: %{public}d.", status);
         return nullptr;
     }
     return obj;
@@ -138,7 +135,7 @@ void BusinessErrorAni::ThrowParameterTypeError(ani_env* env, int32_t err, const 
 void BusinessErrorAni::ThrowError(ani_env* env, ani_object err)
 {
     if (err == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "err is nullptr");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Err is null.");
         return;
     }
     env->ThrowError(static_cast<ani_error>(err));
@@ -189,7 +186,7 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             stsCode = STS_ERROR_INNER;
             break;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
+    LOGD(ATM_DOMAIN, ATM_TAG, "GetStsErrorCode nativeCode(%{public}d) stsCode(%{public}d).", errCode, stsCode);
     return stsCode;
 }
 

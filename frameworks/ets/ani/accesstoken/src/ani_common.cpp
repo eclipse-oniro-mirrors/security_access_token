@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 #include "ani_common.h"
-#include "accesstoken_log.h"
+#include "accesstoken_common_log.h"
 #include <sstream>
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AniAccessTokenCommon" };
 constexpr const char* WRAPPER_CLASS_NAME = "@ohos.abilityAccessCtrl.AsyncCallbackWrapper";
 constexpr const char* INVOKE_METHOD_NAME = "invoke";
 } // namespace
@@ -27,26 +26,26 @@ constexpr const char* INVOKE_METHOD_NAME = "invoke";
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result)
 {
     if (env == nullptr || callback == nullptr || error == nullptr || result == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid paramter.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid paramter.");
         return false;
     }
     ani_status status = ANI_ERROR;
     ani_class clsCall {};
 
     if ((status = env->FindClass(WRAPPER_CLASS_NAME, &clsCall)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "FindClass failed, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
     ani_method method = {};
     if ((status = env->Class_FindMethod(
         clsCall, INVOKE_METHOD_NAME, "C{@ohos.base.BusinessError}C{std.core.Object}:", &method)) != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Class_FindMethod failed, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
 
     status = env->Object_CallMethod_Void(static_cast<ani_object>(callback), method, error, result);
     if (status != ANI_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Object_CallMethod_Void failed, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethod_Void, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
     return true;
