@@ -7118,6 +7118,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.CLOUD_ROM_UPDATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.MOUNT_HDCDEBUG_PATH",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
