@@ -27,7 +27,7 @@ using namespace OHOS::Security;
 
 extern NativeTokenList *g_tokenListHead;
 extern int32_t g_isNativeTokenInited;
-extern int32_t GetFileBuff(const char *cfg, char **retBuff);
+extern uint32_t GetFileBuff(const char *cfg, char **retBuff);
 
 void TokenLibKitTest::SetUpTestCase()
 {}
@@ -425,7 +425,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level0)
     ASSERT_NE(tokenID, 0);
 
     char *fileBuff = nullptr;
-    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, ATRET_SUCCESS);
     string s = "GetAccessTokenId006";
     char *pos = strstr(fileBuff, s.c_str());
@@ -611,7 +611,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level0)
         ASSERT_NE(tokenId, 0);
     }
     char *fileBuff = nullptr;
-    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, 0);
     for (int32_t i = 0; i < 200; i++) {
         char *pos = strstr(fileBuff, processName[i]);
@@ -635,7 +635,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level0)
     Start("process2");
 
     char *fileBuff = nullptr;
-    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, 0);
     char *pos = strstr(fileBuff, "process1");
     ASSERT_NE(pos, nullptr);

@@ -41,7 +41,7 @@ const uint64_t g_nativeFdTag = 0xD005A01;
         break; \
     }
 
-int32_t GetFileBuff(const char *cfg, char **retBuff)
+uint32_t GetFileBuff(const char *cfg, char **retBuff)
 {
     struct stat fileStat;
 
@@ -107,7 +107,7 @@ static void StrAttrSet(StrArrayAttr *attr, uint32_t maxStrLen, int32_t maxStrNum
     attr->strKey = strKey;
 }
 
-static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+static uint32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     uint32_t ret;
     StrArrayAttr attr;
@@ -196,7 +196,7 @@ static void FreeTokenList(void)
     g_tokenListHead->next = NULL;
 }
 
-static int32_t GetTokenList(const cJSON *object)
+static uint32_t GetTokenList(const cJSON *object)
 {
     NativeTokenList *tmp = NULL;
 
@@ -237,11 +237,11 @@ static int32_t GetTokenList(const cJSON *object)
     return ATRET_SUCCESS;
 }
 
-static int32_t ParseTokenInfo(void)
+static uint32_t ParseTokenInfo(void)
 {
     char *fileBuff = NULL;
     cJSON *record = NULL;
-    int32_t ret;
+    uint32_t ret;
 
     ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
@@ -261,7 +261,7 @@ static int32_t ParseTokenInfo(void)
     return ret;
 }
 
-static int32_t ClearOrCreateCfgFile(void)
+static uint32_t ClearOrCreateCfgFile(void)
 {
     int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
@@ -290,7 +290,7 @@ static int32_t ClearOrCreateCfgFile(void)
     return ATRET_SUCCESS;
 }
 
-int32_t AtlibInit(void)
+uint32_t AtlibInit(void)
 {
     g_tokenListHead = (NativeTokenList *)malloc(sizeof(NativeTokenList));
     if (g_tokenListHead == NULL) {
@@ -333,7 +333,7 @@ int32_t AtlibInit(void)
     return ATRET_SUCCESS;
 }
 
-static int32_t GetRandomTokenId(uint32_t *randNum)
+static uint32_t GetRandomTokenId(uint32_t *randNum)
 {
     uint32_t random;
     ssize_t len;
@@ -460,7 +460,7 @@ static uint32_t SaveTokenIdToCfg(const NativeTokenList *curr)
 {
     char *fileBuff = NULL;
     cJSON *record = NULL;
-    int32_t ret;
+    uint32_t ret;
 
     ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
@@ -869,7 +869,7 @@ uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
         BREAK_IF_TRUE(ret != ATRET_SUCCESS);
 
         if (g_isNativeTokenInited == 0) {
-            ret = (uint32_t)AtlibInit();
+            ret = AtlibInit();
             sceneCode = NATIVE_TOKEN_INIT;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         }

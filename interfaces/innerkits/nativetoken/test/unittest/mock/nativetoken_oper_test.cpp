@@ -441,27 +441,27 @@ HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level0)
 
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
     g_parse = DEFAULT_TIME;
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArrayItemTime = DEFAULT_TIME;
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = DEFAULT_TIME;
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 8; // 8 times
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
     g_getArraySize = 17; // 17 times
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), true);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
 
@@ -524,7 +524,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
     EXPECT_EQ(GetAccessTokenId(&tokenInfo), 0);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
     g_parse = VALID_TIME;
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_EQ(IsFileEmpty(TOKEN_ID_CFG_FILE_PATH), false);
 
     // UpdateInfoInCfgFile failed for SaveTokenIdToCfg
@@ -554,7 +554,7 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList001, TestSize.Level0)
 {
     SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_NE(g_tokenListHead, nullptr);
     g_strcpyTime = 0;
     EXPECT_EQ(Start("foundation"), 0);
@@ -583,7 +583,7 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList002, TestSize.Level0)
 {
     SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
-    AtlibInit();
+    (void)AtlibInit();
     EXPECT_NE(g_tokenListHead, nullptr);
     // add the node
     EXPECT_NE(Start("process3"), 0);

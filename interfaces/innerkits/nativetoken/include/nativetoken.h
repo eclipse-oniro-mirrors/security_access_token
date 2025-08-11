@@ -96,8 +96,8 @@ typedef struct StrArrayAttribute {
     const char *strKey;
 } StrArrayAttr;
 
-extern int32_t GetFileBuff(const char *cfg, char **retBuff);
-extern int32_t AtlibInit(void);
+extern uint32_t GetFileBuff(const char *cfg, char **retBuff);
+extern uint32_t AtlibInit(void);
 #ifdef __cplusplus
 }
 #endif
