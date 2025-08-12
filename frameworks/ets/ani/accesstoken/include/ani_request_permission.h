@@ -80,6 +80,7 @@ public:
 private:
     int32_t sessionId_ = 0;
     std::shared_ptr<RequestAsyncContext> reqContext_ = nullptr;
+    std::atomic<bool> isOnResult_;
 };
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {

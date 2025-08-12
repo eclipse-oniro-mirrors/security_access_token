@@ -22,6 +22,7 @@
 #include "ability_manager_client.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
+#include "ani_hisysevent_adapter.h"
 #include "hisysevent.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -205,6 +206,8 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             asyncContext->result.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             asyncContext->loadlock.unlock();
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", CREATE_MODAL_UI_FAILED);
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -226,6 +229,8 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncCo
         LOGE(ATM_DOMAIN, ATM_TAG, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
@@ -290,6 +295,8 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
             asyncContext->uiExtensionContext, asyncContext->uiAbilityFlag);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ui content failed!");
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
             return;
         }
         asyncContext->uiContentFlag = true;
@@ -463,6 +470,9 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         ani_object result = reinterpret_cast<ani_object>(nullRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
+            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
         ExecuteAsyncCallback(env, callback, error, result);
         return;
     }
@@ -573,6 +583,7 @@ void RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<Reques
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
 {
     this->reqContext_ = reqContext;
+    isOnResult_.exchange(false);
 }
 
 UIExtensionCallback::~UIExtensionCallback() {}
@@ -602,6 +613,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
 
 void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result)
 {
+    isOnResult_.exchange(true);
     LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d.", resultCode);
     this->reqContext_->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     this->reqContext_->permissionsState = result.GetIntArrayParam(RESULT_KEY);
@@ -616,6 +628,8 @@ void UIExtensionCallback::OnReceive(const OHOS::AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d.", releaseCode);
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_RELEASE, "INNER_CODE", releaseCode);
     ReleaseHandler(-1);
 }
 
@@ -624,6 +638,8 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Code is %{public}d, name is %{public}s, message is %{public}s.", code, name.c_str(), message.c_str());
 
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_ONERROR, "INNER_CODE", code);
     ReleaseHandler(-1);
 }
 
@@ -635,6 +651,10 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUI
 void UIExtensionCallback::OnDestroy()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
+    if (!isOnResult_.load()) {
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TRIGGER_DESTROY);
+    }
     ReleaseHandler(-1);
 }
 
