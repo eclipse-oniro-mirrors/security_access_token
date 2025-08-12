@@ -810,32 +810,9 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
     return;
 }
 
-void InitAbilityCtrlFunction(ani_env *env)
+static ani_status AtManagerBindNativeFunction(ani_env *env, ani_class& cls)
 {
-    if (env == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
-        return;
-    }
-    const char* spaceName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
-    ani_namespace spc;
-    if (ANI_OK != env->FindNamespace(spaceName, &spc)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", spaceName);
-        return;
-    }
-    std::array methods = {
-        ani_native_function { "createAtManager", nullptr, reinterpret_cast<void*>(CreateAtManager) },
-    };
-    if (ANI_OK != env->Namespace_BindNativeFunctions(spc, methods.data(), methods.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s.", spaceName);
-        return;
-    };
-    const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
-    ani_class cls;
-    if (ANI_OK != env->FindClass(className, &cls)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", className);
-        return;
-    }
-    std::array claMethods = {
+    std::array clsMethods = {
         ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
         ani_native_function { "requestPermissionsFromUserExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
@@ -861,10 +838,45 @@ void InitAbilityCtrlFunction(ani_env *env)
         ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
         ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
     };
-    if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s", className);
-        return;
+    return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
+}
+
+ani_status InitAbilityCtrlFunction(ani_env *env)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return ANI_OUT_OF_MEMORY;
+    }
+
+    ani_status retStatus = ANI_OK;
+    ani_namespace aniAtNamespace;
+    const char* atNamespace = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
+    retStatus = env->FindNamespace(atNamespace, &aniAtNamespace);
+    if (retStatus != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", atNamespace);
+        return retStatus;
+    }
+    std::array methods = {
+        ani_native_function { "createAtManager", nullptr, reinterpret_cast<void*>(CreateAtManager) },
     };
+    retStatus = env->Namespace_BindNativeFunctions(aniAtNamespace, methods.data(), methods.size());
+    if (retStatus != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s.", atNamespace);
+        return retStatus;
+    };
+    const char* atManagerClassName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
+    ani_class aniAtManagerClassName;
+    retStatus = env->FindClass(atManagerClassName, &aniAtManagerClassName);
+    if (retStatus != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", atManagerClassName);
+        return retStatus;
+    }
+    retStatus = AtManagerBindNativeFunction(env, aniAtManagerClassName);
+    if (retStatus != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s", atManagerClassName);
+        return retStatus;
+    };
+    return retStatus;
 }
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
@@ -878,9 +890,12 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
         LOGE(ATM_DOMAIN, ATM_TAG, "Unsupported ANI_VERSION_1.");
         return ANI_OUT_OF_MEMORY;
     }
-    InitAbilityCtrlFunction(env);
+    ani_status ret = InitAbilityCtrlFunction(env);
     *result = ANI_VERSION_1;
-    return ANI_OK;
+    if (ret != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init atmanger function.");
+    }
+    return ret;
 }
 }
 } // namespace AccessToken
