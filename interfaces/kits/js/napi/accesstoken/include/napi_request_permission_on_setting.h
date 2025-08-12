@@ -108,6 +108,7 @@ private:
         std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext);
     static void RequestPermissionOnSettingExecute(napi_env env, void* data);
     static void RequestPermissionOnSettingComplete(napi_env env, napi_status status, void* data);
+    static bool CheckManualSettingPerm(const std::vector<std::string>& permissionList, std::string& permission);
 };
 } // namespace AccessToken
 } // namespace Security

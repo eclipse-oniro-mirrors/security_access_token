@@ -125,6 +125,8 @@ private:
     static napi_value VerifyAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
+    static napi_value GrantPermission(napi_env env, napi_callback_info info);
+    static napi_value RevokePermission(napi_env env, napi_callback_info info);
     static napi_value CheckAccessToken(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
     static napi_value GetVersion(napi_env env, napi_callback_info info);
@@ -148,11 +150,15 @@ private:
     static void CheckAccessTokenExecute(napi_env env, void* data);
     static void CheckAccessTokenComplete(napi_env env, napi_status status, void* data);
     static bool ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
-        AtManagerAsyncContext& asyncContext);
+        AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
     static void GrantUserGrantedPermissionExecute(napi_env env, void *data);
     static void GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
     static void RevokeUserGrantedPermissionExecute(napi_env env, void *data);
     static void RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
+    static void GrantPermissionExecute(napi_env env, void *data);
+    static void GrantPermissionComplete(napi_env env, napi_status status, void *data);
+    static void RevokePermissionExecute(napi_env env, void *data);
+    static void RevokePermissionComplete(napi_env env, napi_status status, void *data);
     static void GetVersionExecute(napi_env env, void *data);
     static void GetVersionComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionFlagsExecute(napi_env env, void *data);

@@ -1512,6 +1512,42 @@ HWTEST_F(InitHapTokenTest, InitHapTokenAbnormalTest006, TestSize.Level0)
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
 }
+
+/**
+ * @tc.name: InitHapTokenWithManualTest001
+ * @tc.desc: InitHapToken with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenWithManualTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenWithManualTest001");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_NORMAL;
+    TestCommon::TestPrepareManualPermissionStatus(policyParams);
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStateFull> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList, true));
+    EXPECT_EQ(reqPermList.size(), 0);
+
+    std::vector<PermissionStateFull> reqPermList2;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList2, false));
+    EXPECT_EQ(reqPermList2.size(), NUMBER_THREE);
+
+    for (auto permState : reqPermList2) {
+        EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, permState.permissionName));
+    }
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

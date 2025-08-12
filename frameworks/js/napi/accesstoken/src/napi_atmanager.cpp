@@ -21,6 +21,7 @@
 #include "napi_request_permission.h"
 #include "napi_request_permission_on_setting.h"
 #include "parameter.h"
+#include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
 #include "accesstoken_common_log.h"
@@ -229,6 +230,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("verifyAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
+        DECLARE_NAPI_FUNCTION("grantPermission", GrantPermission),
+        DECLARE_NAPI_FUNCTION("revokePermission", RevokePermission),
         DECLARE_NAPI_FUNCTION("checkAccessToken", CheckAccessToken),
         DECLARE_NAPI_FUNCTION("checkAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
@@ -650,7 +653,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 }
 
 bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
-    AtManagerAsyncContext& asyncContext)
+    AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag)
 {
     size_t argc = MAX_PARAMS_FOUR;
     napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
@@ -690,7 +693,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
         return false;
     }
 
-    if (argc == MAX_PARAMS_FOUR) {
+    if (updateFlag < UpdatePermissionFlag::OPERABLE_PERM && argc == MAX_PARAMS_FOUR) {
         // 3: the fourth parameter of argv
         if ((!IsUndefinedOrNull(env, argv[3])) && (!ParseCallback(env, argv[3], asyncContext.callbackRef))) {
             NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
@@ -731,7 +734,8 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void* data)
     if (!IsPermissionFlagValid(asyncContext->flag)) {
         asyncContext->errorCode = ERR_PARAM_INVALID;
     }
-    // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
+    // only user_grant permission can use innerkit class method to grant permission
+    // system_grant or manual_settings return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->errorCode = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
@@ -882,7 +886,8 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void* data)
     if (!IsPermissionFlagValid(asyncContext->flag)) {
         asyncContext->errorCode = ERR_PARAM_INVALID;
     }
-    // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
+    // only user_grant permission can use innerkit class method to grant permission
+    // system_grant or manual_settings return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->errorCode = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
@@ -939,6 +944,161 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
     LOGD(ATM_DOMAIN, ATM_TAG, "RevokeUserGrantedPermission end.");
+    context.release();
+    return result;
+}
+
+void NapiAtManager::GrantPermissionExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
+
+    PermissionBriefDef permissionDef;
+    if (!GetPermissionBriefDef(asyncContext->permissionName, permissionDef)) {
+        asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
+        return;
+    }
+
+    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName = %{public}s, grantmode = %{public}d.",
+        asyncContext->permissionName.c_str(), permissionDef.grantMode);
+
+    if (!IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->errorCode = ERR_PARAM_INVALID;
+        return;
+    }
+    // only user_grant or manual_settings permission can use innerkit class method to grant permission
+    // system_grant return failed
+    if (permissionDef.grantMode == USER_GRANT || permissionDef.grantMode == MANUAL_SETTINGS) {
+        asyncContext->errorCode = AccessTokenKit::GrantPermission(asyncContext->tokenId,
+            asyncContext->permissionName, asyncContext->flag, UpdatePermissionFlag::OPERABLE_PERM);
+    } else {
+        asyncContext->errorCode = ERR_EXPECTED_PERMISSION_TYPE;
+        asyncContext->extErrorMsg = "The specified permission is not a user_grant or manual_settings permission.";
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "grant result = %{public}d.", asyncContext->errorCode);
+}
+
+void NapiAtManager::GrantPermissionComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* context = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (context == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {context};
+    napi_value result = GetNapiNull(env);
+
+    ReturnPromiseResult(env, *context, result);
+}
+
+napi_value NapiAtManager::GrantPermission(napi_env env, napi_callback_info info)
+{
+    auto* context = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
+    if (context == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> contextPtr {context};
+    if (!ParseInputGrantOrRevokePermission(env, info, *context, OPERABLE_PERM)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+
+    NAPI_CALL(env, napi_create_promise(env, &(context->deferred), &result));
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GrantPermission", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        GrantPermissionExecute, GrantPermissionComplete,
+        reinterpret_cast<void *>(context), &(context->work)));
+
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, context->work, napi_qos_default));
+
+    contextPtr.release();
+    return result;
+}
+
+void NapiAtManager::RevokePermissionExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
+
+    PermissionBriefDef permissionDef;
+    if (!GetPermissionBriefDef(asyncContext->permissionName, permissionDef)) {
+        asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
+        return;
+    }
+
+    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName = %{public}s, grantmode = %{public}d.",
+        asyncContext->permissionName.c_str(), permissionDef.grantMode);
+
+    if (!IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->errorCode = ERR_PARAM_INVALID;
+        return;
+    }
+    // only user_grant or manual_settings permission can use innerkit class method to grant permission
+    // system_grant return failed
+    if (permissionDef.grantMode == USER_GRANT || permissionDef.grantMode == MANUAL_SETTINGS) {
+        asyncContext->errorCode = AccessTokenKit::RevokePermission(asyncContext->tokenId,
+            asyncContext->permissionName, asyncContext->flag, UpdatePermissionFlag::OPERABLE_PERM);
+    } else {
+        asyncContext->errorCode = ERR_EXPECTED_PERMISSION_TYPE;
+        asyncContext->extErrorMsg = "The specified permission is not a user_grant or manual_settings permission.";
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "revoke result = %{public}d.", asyncContext->errorCode);
+}
+
+void NapiAtManager::RevokePermissionComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = GetNapiNull(env);
+    ReturnPromiseResult(env, *asyncContext, result);
+}
+
+napi_value NapiAtManager::RevokePermission(napi_env env, napi_callback_info info)
+{
+    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
+    if (asyncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "New struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext, OPERABLE_PERM)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "RevokePermission", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        RevokePermissionExecute, RevokePermissionComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
+
     context.release();
     return result;
 }

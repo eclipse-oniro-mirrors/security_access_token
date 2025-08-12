@@ -39,6 +39,7 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_PERM_REVOKE_BY_USER,
         "The permission list contains the permission that has not been revoked by the user."},
     {JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open."},
+    {JS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type)

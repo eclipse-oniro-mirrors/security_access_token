@@ -328,14 +328,15 @@ int32_t AccessTokenManagerClient::GetPermissionsStatus(
     return result;
 }
 
-int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerClient::GrantPermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->GrantPermission(tokenID, permissionName, flag);
+    int32_t result = proxy->GrantPermission(tokenID, permissionName, flag, updateFlag);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
@@ -343,14 +344,15 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
     return result;
 }
 
-int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerClient::RevokePermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag);
+    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag, updateFlag);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }

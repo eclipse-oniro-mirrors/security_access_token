@@ -61,8 +61,10 @@ public:
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
         PermissionGrantInfo& info);
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
-    int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
-    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    int GrantPermission(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag);
+    int RevokePermission(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag);
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);

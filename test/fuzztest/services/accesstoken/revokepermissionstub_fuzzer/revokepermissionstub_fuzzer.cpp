@@ -43,11 +43,12 @@ namespace OHOS {
         std::string testName = provider.ConsumeRandomLengthString();
         uint32_t flag = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME)));
+        int32_t grantMode = static_cast<bool>(provider.ConsumeIntegralInRange<int32_t>(1, 2));
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId) || !datas.WriteString(testName) ||
-            !datas.WriteInt32(flag)) {
+            !datas.WriteInt32(flag) || !datas.WriteInt32(grantMode)) {
             return false;
         }
         uint32_t code = static_cast<uint32_t>(

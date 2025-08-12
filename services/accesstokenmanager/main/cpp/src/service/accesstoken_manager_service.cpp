@@ -487,7 +487,8 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
         grantBundleName_, applicationSettingAbilityName_);
 }
 
-int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerService::GrantPermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -503,11 +504,13 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
     return ret;
 }
 
-int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerService::RevokePermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -522,7 +525,9 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
+
+    return PermissionManager::GetInstance().RevokePermission(
+        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
 }
 
 int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
@@ -1465,7 +1470,7 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
             continue;
         }
 
-        if (data.grantMode == GrantMode::USER_GRANT) {
+        if (data.grantMode == GrantMode::USER_GRANT || data.grantMode == GrantMode::MANUAL_SETTINGS) {
             grantStatus = PermissionState::PERMISSION_DENIED;
             grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
         } else {

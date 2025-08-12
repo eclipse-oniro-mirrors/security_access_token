@@ -60,6 +60,9 @@ int32_t GetJsErrorCode(int32_t errCode)
         case ERR_MALLOC_FAILED:
             jsCode = JS_ERROR_OUT_OF_MEMORY;
             break;
+        case ERR_EXPECTED_PERMISSION_TYPE:
+            jsCode = JS_ERROR_EXPECTED_PERMISSION_TYPE;
+            break;
         default:
             jsCode = JS_ERROR_INNER;
             break;

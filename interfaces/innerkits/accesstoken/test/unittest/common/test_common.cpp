@@ -230,6 +230,25 @@ void TestCommon::TestPrepareKernelPermissionStatus(HapPolicyParams& policyParams
     policyParams.aclExtendedMap["ohos.permission.CAMERA"] = "789"; // filtered
 }
 
+void TestCommon::TestPrepareManualPermissionStatus(HapPolicyParams& policyParams)
+{
+    PermissionStateFull permissionStatusBasic = {
+        .permissionName = "ohos.permission.test_basic",
+        .isGeneral = false,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {PERMISSION_DEFAULT_FLAG}
+    };
+
+    PermissionStateFull permissionStateFull001 = permissionStatusBasic;
+    permissionStateFull001.permissionName = "ohos.permission.MANUAL_ATM_SELF_USE";
+    PermissionStateFull permissionStateFull002 = permissionStatusBasic;
+    permissionStateFull002.permissionName = "ohos.permission.MICROPHONE";
+    PermissionStateFull permissionStateFull003 = permissionStatusBasic;
+    permissionStateFull003.permissionName = "ohos.permission.CAMERA";
+    policyParams.permStateList = {permissionStateFull001, permissionStateFull002, permissionStateFull003};
+}
+
 void TestCommon::SetTestEvironment(uint64_t shellTokenId)
 {
     std::lock_guard<std::mutex> lock(g_lockSetToken);
