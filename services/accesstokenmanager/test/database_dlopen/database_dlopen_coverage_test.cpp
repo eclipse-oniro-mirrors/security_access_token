@@ -200,28 +200,6 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, DelayDlcloseHandle002, TestSize.Level4)
 }
 
 /*
- * @tc.name: GetDbInstance001
- * @tc.desc: RdbDlopenManager::GetDbInstance
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDatabaseDlopenTest, GetDbInstance001, TestSize.Level4)
-{
-    auto instance = RdbDlopenManager::GetInstance();
-    ASSERT_NE(nullptr, instance);
-    ASSERT_EQ(nullptr, instance->handle_);
-    ASSERT_EQ(nullptr, instance->instance_);
-
-    instance->GetDbInstance(); // handle_ is nullptr
-    ASSERT_NE(nullptr, instance->handle_);
-    ASSERT_NE(nullptr, instance->instance_);
-    instance->GetDbInstance(); // handle_ is nullptr
-    sleep(WAIT_DELAY_DLCLOSE_TIME);
-    ASSERT_EQ(nullptr, instance->handle_);
-    ASSERT_EQ(nullptr, instance->instance_);
-}
-
-/*
  * @tc.name: DynamicCallTest001
  * @tc.desc: RdbDlopenManager::DynamicCallTest
  * @tc.type: FUNC

@@ -934,22 +934,6 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level0)
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 }
 
-/**
- * @tc.name: Dlopen001
- * @tc.desc: Open a not exist lib & not exist func
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level0)
-{
-    LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
-    EXPECT_EQ(nullptr, loader1.handle_);
-
-    LibraryLoader loader2("libaccesstoken_manager_service.z.so"); // is a exist lib without create func
-    EXPECT_EQ(nullptr, loader2.instance_);
-    EXPECT_NE(nullptr, loader2.handle_);
-}
-
 /*
  * @tc.name: AddDataValueToResults001
  * @tc.desc: PermissionRecordManager::AddDataValueToResults function test

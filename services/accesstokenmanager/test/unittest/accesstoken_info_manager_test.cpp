@@ -2295,7 +2295,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level0)
     LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
     EXPECT_EQ(nullptr, loader1.handle_);
 
-    LibraryLoader loader2("libaccesstoken_manager_service.z.so"); // is a exist lib without create func
+    LibraryLoader loader2("libaccesstoken_sdk.z.so"); // is a exist lib without create func
     EXPECT_EQ(nullptr, loader2.instance_);
     EXPECT_NE(nullptr, loader2.handle_);
 }

@@ -518,9 +518,8 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             }
 
         case DATABASE_VERSION_2: // 2->3
-            res = CreatePermissionRequestToggleStatusTable(rdbStore);
+            res = CreateVersionThreeTable(rdbStore);
             if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
                 return res;
             }
 

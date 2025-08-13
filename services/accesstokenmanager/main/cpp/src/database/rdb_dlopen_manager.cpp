@@ -186,9 +186,9 @@ int32_t RdbDlopenManager::Modify(const AtmDataType type, const GenericValues& mo
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    taskNum_++;
+    ++taskNum_;
     int32_t res = instance->Modify(type, modifyValue, conditionValue);
-    taskNum_--;
+    --taskNum_;
     return res;
 }
 
@@ -200,9 +200,9 @@ int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionV
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    taskNum_++;
+    ++taskNum_;
     int32_t res = instance->Find(type, conditionValue, results);
-    taskNum_--;
+    --taskNum_;
     return res;
 }
 
@@ -214,9 +214,9 @@ int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delI
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    taskNum_++;
+    ++taskNum_;
     int32_t res = instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
-    taskNum_--;
+    --taskNum_;
     return res;
 }
 } // namespace AccessToken
