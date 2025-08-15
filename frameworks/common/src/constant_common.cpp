@@ -77,7 +77,6 @@ uint32_t ConstantCommon::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint3
     uint32_t unmaskedFlag = (fullFlag) & (~removedFlag);
     return unmaskedFlag;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -19,30 +19,13 @@
 #include "access_token_error.h"
 #include "data_validator.h"
 #include "random.h"
+#include "tokenid_attributes.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-}
-
-ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
-{
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    return static_cast<ATokenTypeEnum>(idInner->type);
-}
-
-int AccessTokenIDManager::GetTokenIdDlpFlag(AccessTokenID id)
-{
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    return idInner->dlpFlag;
-}
-
-int AccessTokenIDManager::GetTokenIdCloneFlag(AccessTokenID id)
-{
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    return idInner->cloneFlag;
 }
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
@@ -53,7 +36,7 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
             return TOKEN_INVALID;
         }
     }
-    return GetTokenIdTypeEnum(id);
+    return TokenIDAttributes::GetTokenIdTypeEnum(id);
 }
 
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)

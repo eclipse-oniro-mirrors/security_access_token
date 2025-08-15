@@ -45,6 +45,7 @@
 #include "permission_map.h"
 #include "permission_validator.h"
 #include "perm_setproc.h"
+#include "tokenid_attributes.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -105,6 +106,8 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(
             INIT_NATIVE_TOKENINFO_ERROR, "GetAllNativeTokenInfo fail from native json.", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to load native from native json, err=%{public}d.", ret);
+        return;
     }
 
 #ifdef SUPPORT_SANDBOX_APP
@@ -680,7 +683,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
         AccessTokenID tokenId = info.tokenID;
         std::string process = info.processName;
         // add tokenId to cache
-        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
+        ATokenTypeEnum type = TokenIDAttributes::GetTokenIdTypeEnum(tokenId);
         int32_t res = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (res != RET_SUCCESS && res != ERR_TOKENID_HAS_EXISTED) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Token id register fail, res is %{public}d.", res);
@@ -845,7 +848,7 @@ bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, 
         errReason = "respond dlpType error";
     } else if (hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION) {
         errReason = "respond version error";
-    } else if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
+    } else if (TokenIDAttributes::GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
         errReason = "respond token type error";
     } else {
         return true;
@@ -912,7 +915,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
         return ERR_TOKEN_MAP_FAILED;
     }
 
-    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(mapID);
+    ATokenTypeEnum type = TokenIDAttributes::GetTokenIdTypeEnum(mapID);
     if (type == TOKEN_HAP) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(mapID) == 0) {
@@ -937,8 +940,8 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
 AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
     if ((!DataValidator::IsDeviceIdValid(deviceID)) || (tokenID == 0) ||
-        ((AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) &&
-        (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_SHELL))) {
+        ((TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) &&
+        (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_SHELL))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
@@ -1681,7 +1684,7 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
         return PERMISSION_DENIED;
     }
 
-    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID);
+    ATokenTypeEnum tokenType = TokenIDAttributes::GetTokenIdTypeEnum(tokenID);
     if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
         return VerifyNativeAccessToken(tokenID, permissionName);
     }

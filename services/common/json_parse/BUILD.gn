@@ -35,7 +35,7 @@ ohos_shared_library("accesstoken_json_parse") {
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/json_adapter/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     ]
 
     sources = [

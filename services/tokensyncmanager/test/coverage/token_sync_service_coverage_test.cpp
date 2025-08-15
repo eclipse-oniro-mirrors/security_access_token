@@ -135,6 +135,9 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
 {
     std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    if (uuid.empty()) {
+        uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
+    }
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
     LOGI(ATM_DOMAIN, ATM_TAG,

@@ -41,6 +41,7 @@
 #include "permission_map.h"
 #include "permission_validator.h"
 #include "perm_setproc.h"
+#include "tokenid_attributes.h"
 #include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
@@ -123,7 +124,7 @@ PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     if ((tokenID == INVALID_TOKENID) ||
-        (TOKEN_HAP != AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID))) {
+        (TOKEN_HAP != TokenIDAttributes::GetTokenIdTypeEnum(tokenID))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d is invalid.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <iosfwd>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {

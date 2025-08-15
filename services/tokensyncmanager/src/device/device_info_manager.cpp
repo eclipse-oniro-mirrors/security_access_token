@@ -97,16 +97,7 @@ std::string DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch(const std::st
     if (!(DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, DeviceIdType::UNKNOWN, deviceInfo))) {
         return result;
     }
-    std::string universallyUniqueId = deviceInfo.deviceId.universallyUniqueId;
-    if (!universallyUniqueId.empty()) {
-        result = universallyUniqueId;
-        return result;
-    }
-    std::string udid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(nodeId);
-    if (!udid.empty()) {
-        result = udid;
-    }
-    return result;
+    return deviceInfo.deviceId.universallyUniqueId;
 }
 
 std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId) const
