@@ -300,9 +300,9 @@ uint32_t AtlibInit(void)
     g_tokenListHead->next = NULL;
     int32_t isClearOrCreate = 0;
 
-    int32_t ret = ParseTokenInfo();
+    uint32_t ret = ParseTokenInfo();
     if (ret != ATRET_SUCCESS) {
-        ReportNativeTokenExceptionEvent(NATIVE_TOKEN_INIT, ret, GetThreadErrorMsg());
+        ReportNativeTokenExceptionEvent(NATIVE_TOKEN_INIT, (int32_t)ret, GetThreadErrorMsg());
         ClearThreadErrorMsg();
         if (g_tokenListHead->next != NULL) {
             FreeTokenList();
@@ -842,7 +842,7 @@ static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, Na
         if (ret != ATRET_SUCCESS) {
             LOGC("Failed to UpdateTokenInfoInList, ret=%u.", ret);
             RemoveNodeFromList(&tokenNode);
-            ReportNativeTokenExceptionEvent(UPDATE_NODE, ret, GetThreadErrorMsg());
+            ReportNativeTokenExceptionEvent(UPDATE_NODE, (int32_t)ret, GetThreadErrorMsg());
             return ret;
         }
         ret = UpdateInfoInCfgFile(tokenNode);
