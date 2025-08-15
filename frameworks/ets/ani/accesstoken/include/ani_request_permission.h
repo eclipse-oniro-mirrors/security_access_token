@@ -115,7 +115,7 @@ struct ResultCallback {
 };
 
 void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_object aniContext, ani_array_ref permissionList, ani_object callback);
+    ani_object aniContext, ani_array permissionList, ani_object callback);
 
 class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
     public PermStateChangeCallbackCustomize {

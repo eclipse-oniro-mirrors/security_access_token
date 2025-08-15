@@ -236,7 +236,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     }
 }
 
-static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniArray,
+static bool ParseInputToRegister(const ani_string& aniType, const ani_array& aniArray,
     const ani_ref& aniCallback, RegisterPermActiveChangeContext* context, bool isReg)
 {
     std::string type = ParseAniString(context->env, static_cast<ani_string>(aniType));
@@ -313,7 +313,7 @@ static bool IsExistRegister(const RegisterPermActiveChangeContext* context)
 }
 
 static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
-    ani_string aniType, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         return;
@@ -427,7 +427,7 @@ static void DeleteRegisterInVector(const RegisterPermActiveChangeContext* contex
 }
 
 static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
-    ani_string aniType, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         return;

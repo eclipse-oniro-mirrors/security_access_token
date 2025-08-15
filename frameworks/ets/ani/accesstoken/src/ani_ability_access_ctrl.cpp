@@ -388,7 +388,7 @@ static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]]
 }
 
 static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_array_ref aniPermissionList)
+    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_array aniPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionsStatusExecute begin.");
     if ((env == nullptr) || (aniPermissionList == nullptr)) {
@@ -541,7 +541,7 @@ static bool SetupPermissionSubscriber(
     return true;
 }
 
-static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniId, const ani_array_ref& aniArray,
+static bool ParseInputToRegister(const ani_string& aniType, const ani_array& aniId, const ani_array& aniArray,
     const ani_ref& aniCallback, RegisterPermStateChangeInf* context, bool isReg)
 {
     std::string type = ParseAniString(context->env, aniType);
@@ -643,7 +643,7 @@ static bool IsExistRegister(const RegisterPermStateChangeInf* context)
 }
 
 static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniId, ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_INNER, GetErrorMessage(STSErrorCode::STS_ERROR_INNER));
@@ -766,7 +766,7 @@ static void DeleteRegisterFromVector(const RegisterPermStateChangeInf* context)
 }
 
 static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniId, ani_array aniArray, ani_ref callback)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "UnregisterPermStateChangeCallback In.");
     if (env == nullptr) {
