@@ -39,10 +39,6 @@ public:
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
-    int GetTokenIdDlpFlag(AccessTokenID id);
-    int GetTokenIdCloneFlag(AccessTokenID id);
-    static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
-
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);

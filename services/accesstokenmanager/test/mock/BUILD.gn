@@ -33,13 +33,12 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_monitor.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_id_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
 ]
 
 ohos_unittest("libpermission_manager_mock_test") {
@@ -76,7 +75,7 @@ ohos_unittest("libpermission_manager_mock_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
   ]
 
   sources = [
