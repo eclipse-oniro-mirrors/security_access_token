@@ -19,6 +19,7 @@
 #include "ability_context.h"
 #include "ani.h"
 #include "ani_base_context.h"
+#include "ani_request_base.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
 
@@ -26,8 +27,16 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result);
-OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext,
-    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext>& uiExtensionContext, bool uiAbilityFlag);
+OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext);
+void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncContext,
+    const OHOS::AAFwk::Want& want, const OHOS::Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
+    const std::shared_ptr<UIExtensionCallback> uiExtCallback);
+void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncContext, int32_t sessionId);
+void CreateUIExtension(
+    const OHOS::AAFwk::Want& want,
+    std::shared_ptr<RequestAsyncContextBase> asyncContext,
+    std::shared_ptr<RequestInstanceControl> controller
+);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

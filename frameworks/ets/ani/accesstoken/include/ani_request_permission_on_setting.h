@@ -17,75 +17,37 @@
 
 #include "access_token.h"
 #include "ani.h"
-#include "ani_common.h"
 #include "ani_error.h"
+#include "ani_request_base.h"
 #include "ani_utils.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
 #include "event_queue.h"
 #endif
 #include "permission_grant_info.h"
+#include "ui_content.h"
+#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct RequestPermOnSettingAsyncContext {
-    virtual ~RequestPermOnSettingAsyncContext();
-    AccessTokenID tokenId = 0;
-    AtmResult result;
-    PermissionGrantInfo info;
-
-    int32_t instanceId = -1;
+struct RequestPermOnSettingAsyncContext: public RequestAsyncContextBase {
     bool isDynamic = true;
     std::vector<std::string> permissionList;
     ani_object requestResult = nullptr;
     std::vector<int32_t> stateList;
 
-    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext = nullptr;
-    std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> uiExtensionContext = nullptr;
-    bool uiAbilityFlag = false;
-    bool releaseFlag = false;
-    std::mutex lockReleaseFlag;
-
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventHandler> handler_ =
-        std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
-#endif
-    std::thread::id threadId;
-    ani_vm* vm = nullptr;
-    ani_env* env = nullptr;
-    ani_object callback = nullptr;
-    ani_ref callbackRef = nullptr;
-};
-
-class RequestOnSettingAsyncInstanceControl {
-    public:
-        static void AddCallbackByInstanceId(std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext);
-        static void ExecCallback(int32_t id);
-        static void CheckDynamicRequest(
-            std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext, bool& isDynamic);
-        static void UpdateQueueData(const std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext);
-    private:
-        static std::map<int32_t, std::vector<std::shared_ptr<RequestPermOnSettingAsyncContext>>> instanceIdMap_;
-        static std::mutex instanceIdMutex_;
-};
-
-class PermissonOnSettingUICallback {
-public:
-    explicit PermissonOnSettingUICallback(const std::shared_ptr<RequestPermOnSettingAsyncContext>& reqContext);
-    ~PermissonOnSettingUICallback();
-    void SetSessionId(int32_t sessionId);
-    void ReleaseHandler(int32_t code);
-    void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
-    void OnReceive(const OHOS::AAFwk::WantParams& request);
-    void OnError(int32_t code, const std::string& name, const std::string& message);
-    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void OnDestroy();
-
-private:
-    std::shared_ptr<RequestPermOnSettingAsyncContext> reqContext_ = nullptr;
-    int32_t sessionId_ = 0;
+    RequestPermOnSettingAsyncContext(ani_vm* vm_, ani_env* env_);
+    ~RequestPermOnSettingAsyncContext() override;
+    bool IsSameRequest(const std::shared_ptr<RequestAsyncContextBase> other) override;
+    void CopyResult(const std::shared_ptr<RequestAsyncContextBase> other) override;
+    void ProcessFailResult(int32_t code) override;
+    void ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result) override;
+    int32_t ConvertErrorCode(int32_t code) override;
+    ani_object WrapResult(ani_env* env) override;
+    void StartExtensionAbility(std::shared_ptr<RequestAsyncContextBase> asyncContext) override;
+    bool CheckDynamicRequest() override;
+    bool NoNeedUpdate() override;
 };
 
 void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
