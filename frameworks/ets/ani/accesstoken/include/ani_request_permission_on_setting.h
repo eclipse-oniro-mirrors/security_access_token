@@ -32,10 +32,10 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct RequestPermOnSettingAsyncContext: public RequestAsyncContextBase {
-    bool isDynamic = true;
     std::vector<std::string> permissionList;
-    ani_object requestResult = nullptr;
-    std::vector<int32_t> stateList;
+
+    // results after requesting
+    std::vector<int32_t> stateList_;
 
     RequestPermOnSettingAsyncContext(ani_vm* vm_, ani_env* env_);
     ~RequestPermOnSettingAsyncContext() override;

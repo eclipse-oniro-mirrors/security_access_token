@@ -87,7 +87,7 @@ ani_object RequestGlobalSwitchAsyncContext::WrapResult(ani_env* env)
 
 void RequestGlobalSwitchAsyncContext::ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result)
 {
-    this->result.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
+    this->result_.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
     this->switchStatus = result.GetBoolParam(GLOBAL_SWITCH_RESULT_KEY, 0);
 }
 
@@ -120,14 +120,14 @@ void RequestGlobalSwitchAsyncContext::CopyResult(const std::shared_ptr<RequestAs
         return;
     }
     auto ptr = std::static_pointer_cast<RequestGlobalSwitchAsyncContext>(other);
-    this->result.errorCode = ptr->result.errorCode;
+    this->result_.errorCode = ptr->result_.errorCode;
     this->switchStatus = ptr->switchStatus;
-    this->isDynamic = false;
+    this->needDynamicRequest_ = false;
 }
 
 bool RequestGlobalSwitchAsyncContext::CheckDynamicRequest()
 {
-    if (!this->isDynamic) {
+    if (!this->needDynamicRequest_) {
         LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission extension");
         FinishCallback();
         return false;
@@ -137,13 +137,13 @@ bool RequestGlobalSwitchAsyncContext::CheckDynamicRequest()
 
 bool RequestGlobalSwitchAsyncContext::NoNeedUpdate()
 {
-    return result.errorCode != RET_SUCCESS || switchStatus == false;
+    return result_.errorCode != RET_SUCCESS || switchStatus == false;
 }
 
 void RequestGlobalSwitchAsyncContext::ProcessFailResult(int32_t code)
 {
     if (code == -1) {
-        result.errorCode = code;
+        result_.errorCode = code;
     }
 }
 
@@ -152,12 +152,12 @@ static bool ParseRequestGlobalSwitch(ani_env* env, ani_object& aniContext, ani_i
 {
     asyncContext->switchType = static_cast<SwitchType>(type);
 
-    if (!asyncContext->FillInfoFromContext(aniContext) != ANI_OK) {
+    if (!asyncContext->FillInfoFromContext(aniContext)) {
         BusinessErrorAni::ThrowParameterTypeError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef)) {
+    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef_)) {
         return false;
     }
     return true;
@@ -198,7 +198,7 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
     GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
 
-    if (asyncContext->result.errorCode != RET_SUCCESS) {
+    if (asyncContext->result_.errorCode != RET_SUCCESS) {
         asyncContext->FinishCallback();
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }

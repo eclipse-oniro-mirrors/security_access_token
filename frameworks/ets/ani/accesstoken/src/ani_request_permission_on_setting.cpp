@@ -79,7 +79,8 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
     }
 
     ani_object arrayObj;
-    if (env->Object_New(arrayCls, arrayCtor, &arrayObj, this->stateList.size()) != ANI_OK) {
+    if (env->Object_New(arrayCls, arrayCtor, &arrayObj, static_cast<int32_t>(this->stateList_.size()))
+        != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Object new failed!");
         return nullptr;
     }
@@ -92,7 +93,7 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
     }
 
     ani_size index = 0;
-    for (const auto& state: this->stateList) {
+    for (const auto& state: this->stateList_) {
         ani_enum_item enumItem;
         ani_size enumIndex = 0;
         StateToEnumIndex(state, enumIndex);
@@ -143,8 +144,8 @@ int32_t RequestPermOnSettingAsyncContext::ConvertErrorCode(int32_t errorCode)
 
 void RequestPermOnSettingAsyncContext::ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result)
 {
-    this->result.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
-    this->stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
+    this->result_.errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
+    this->stateList_ = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
 }
 
 void RequestPermOnSettingAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncContextBase> asyncContext)
@@ -195,14 +196,14 @@ void RequestPermOnSettingAsyncContext::CopyResult(const std::shared_ptr<RequestA
         return;
     }
     auto ptr = std::static_pointer_cast<RequestPermOnSettingAsyncContext>(other);
-    this->result.errorCode = ptr->result.errorCode;
-    this->stateList = ptr->stateList;
-    this->isDynamic = false;
+    this->result_.errorCode = ptr->result_.errorCode;
+    this->stateList_ = ptr->stateList_;
+    this->needDynamicRequest_ = false;
 }
 
 bool RequestPermOnSettingAsyncContext::CheckDynamicRequest()
 {
-    if (!this->isDynamic) {
+    if (!this->needDynamicRequest_) {
         LOGI(ATM_DOMAIN, ATM_TAG, "It does not need to request permission extension");
         FinishCallback();
         return false;
@@ -213,16 +214,16 @@ bool RequestPermOnSettingAsyncContext::CheckDynamicRequest()
 void RequestPermOnSettingAsyncContext::ProcessFailResult(int32_t code)
 {
     if (code == -1) {
-        this->result.errorCode = code;
+        this->result_.errorCode = code;
     }
 }
 
 bool RequestPermOnSettingAsyncContext::NoNeedUpdate()
 {
-    if (result.errorCode != RET_SUCCESS) {
+    if (result_.errorCode != RET_SUCCESS) {
         return true;
     }
-    for (int32_t item : this->stateList) {
+    for (int32_t item : this->stateList_) {
         if (item != PERMISSION_GRANTED) {
             return true;
         }
@@ -239,7 +240,7 @@ static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext
         return false;
     }
     asyncContext->permissionList = ParseAniStringVector(env, aniPermissionList);
-    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef)) {
+    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef_)) {
         return false;
     }
     return true;
@@ -282,7 +283,7 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog.");
 
-    if (asyncContext->result.errorCode != RET_SUCCESS) {
+    if (asyncContext->result_.errorCode != RET_SUCCESS) {
         asyncContext->FinishCallback();
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");
     }
