@@ -94,7 +94,7 @@ void RequestAsyncContextBase::CopyResult(const std::shared_ptr<RequestAsyncConte
 
 void RequestAsyncContextBase::ProcessFailResult(int32_t code)
 {
-    result.errorCode = code;
+    result_.errorCode = code;
 }
 
 void RequestAsyncContextBase::FinishCallback()
@@ -110,10 +110,10 @@ void RequestAsyncContextBase::FinishCallback()
         return;
     }
 
-    int32_t stsCode = ConvertErrorCode(result.errorCode);
-    ani_object error = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result.errorMsg));
-    ani_object result = WrapResult(env);
-    (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef), error, result);
+    int32_t stsCode = ConvertErrorCode(result_.errorCode);
+    ani_object aniError = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result_.errorMsg));
+    ani_object aniResult = WrapResult(env);
+    (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef_), aniError, aniResult);
 
     if (!isSameThread && vm_->DetachCurrentThread() != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "DetachCurrentThread failed!");
@@ -133,9 +133,9 @@ void RequestAsyncContextBase::Clear()
         return;
     }
 
-    if (callbackRef != nullptr) {
-        curEnv->GlobalReference_Delete(callbackRef);
-        callbackRef = nullptr;
+    if (callbackRef_ != nullptr) {
+        curEnv->GlobalReference_Delete(callbackRef_);
+        callbackRef_ = nullptr;
     }
 }
 
