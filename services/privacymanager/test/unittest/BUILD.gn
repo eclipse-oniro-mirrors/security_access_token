@@ -81,7 +81,10 @@ if (is_standard_system && ability_base_enable == true) {
       "sensitive_manager_test.cpp",
     ]
 
-    cflags_cc = [ "-DHILOG_ENABLE" ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-DMAX_COUNT_TEST",
+    ]
 
     configs = [
       "${access_token_path}/config:coverage_flags",
@@ -146,6 +149,14 @@ if (is_standard_system && ability_base_enable == true) {
     } else {
       include_dirs +=
           [ "${access_token_path}/services/common/ability_manager/include" ]
+    }
+
+    if (ability_runtime_enable) {
+      external_deps += [
+        "ability_runtime:ability_manager",
+        "ability_runtime:app_manager",
+      ]
+      sources += [ "client_code_compare_test.cpp" ]
     }
   }
 }

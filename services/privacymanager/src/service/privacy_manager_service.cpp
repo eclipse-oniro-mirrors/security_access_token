@@ -46,7 +46,6 @@ constexpr const char* PERMISSION_RECORD_TOGGLE = "ohos.permission.PERMISSION_REC
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
-static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 }
 
@@ -468,10 +467,6 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
     int32_t res = PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
     if (res != RET_SUCCESS) {
         return res;
-    }
-
-    if (results.size() > MAX_PERMISSION_USED_TYPE_SIZE) {
-        return PrivacyError::ERR_OVERSIZE;
     }
 
     for (const auto& result : results) {
