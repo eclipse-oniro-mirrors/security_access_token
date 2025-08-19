@@ -32,6 +32,7 @@ access_token_include_dirs = [
   "${access_token_path}/services/tokensyncmanager/include/service",
   "${access_token_path}/frameworks/accesstoken/include",
   "${access_token_path}/frameworks/common/include",
+  "${access_token_path}/frameworks/json_adapter/include",
   "${access_token_path}/frameworks/privacy/include",
   "${access_token_path}/interfaces/innerkits/privacy/include",
   "${access_token_path}/interfaces/innerkits/privacy/src",
@@ -53,6 +54,7 @@ access_token_deps = [
   "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
   "${access_token_path}/frameworks/common:accesstoken_common_cxx",
   "${access_token_path}/frameworks/common:accesstoken_hisysevent",
+  "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
   "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
   "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
@@ -62,7 +64,6 @@ access_token_deps = [
   "${access_token_path}/services/accesstokenmanager/etc:param_files",
   "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
   "${access_token_path}/services/common:accesstoken_service_common",
-  "${access_token_path}/services/common/json_parse:accesstoken_cjson_utils",
 ]
 
 access_token_external_deps = [
@@ -87,9 +88,9 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",

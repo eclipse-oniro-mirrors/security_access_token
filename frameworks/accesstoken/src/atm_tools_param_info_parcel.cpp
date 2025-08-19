@@ -21,7 +21,6 @@ namespace Security {
 namespace AccessToken {
 bool AtmToolsParamInfoParcel::Marshalling(Parcel& out) const
 {
-    RETURN_IF_FALSE(out.WriteInt32(this->info.type));
     RETURN_IF_FALSE(out.WriteUint32(this->info.tokenId));
     RETURN_IF_FALSE(out.WriteString(this->info.permissionName));
     RETURN_IF_FALSE(out.WriteString(this->info.bundleName));
@@ -36,9 +35,6 @@ AtmToolsParamInfoParcel* AtmToolsParamInfoParcel::Unmarshalling(Parcel& in)
         return nullptr;
     }
 
-    int32_t type;
-    RELEASE_IF_FALSE(in.ReadInt32(type), atmToolsParamInfoParcel);
-    atmToolsParamInfoParcel->info.type = OptType(type);
     RELEASE_IF_FALSE(in.ReadUint32(atmToolsParamInfoParcel->info.tokenId), atmToolsParamInfoParcel);
     atmToolsParamInfoParcel->info.permissionName = in.ReadString();
     atmToolsParamInfoParcel->info.bundleName = in.ReadString();

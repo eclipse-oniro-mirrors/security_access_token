@@ -46,8 +46,8 @@ static const std::string HELP_MSG =
 static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
-    "  -d, --definition [-p <permission-name>]                  list all permission definitions in system\n"
     "  -h, --help                                               list available options\n"
+    "  -d, --definition [-p <permission-name>]                  list all permission definitions in system\n"
     "  -t, --all                                                list all name of token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
@@ -93,7 +93,6 @@ static const struct option LONG_OPTIONS_DUMP[] = {
     {"process-name", required_argument, nullptr, 'n'},
     {nullptr, 0, nullptr, 0}
 };
-
 static const std::string SHORT_OPTIONS_PERM = "hg::c::i:p:";
 static const struct option LONG_OPTIONS_PERM[] = {
     {"help", no_argument, nullptr, 'h'},
@@ -103,6 +102,11 @@ static const struct option LONG_OPTIONS_PERM[] = {
     {"permission-name", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0}
 };
+
+// required option
+static const std::vector<char> REQURIED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
+static const std::vector<char> REQURIED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
+static const std::vector<char> REQURIED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
 
 static const std::string SHORT_OPTIONS_TOGGLE = "hr::u::s::o::i:p:k:";
 static const struct option LONG_OPTIONS_TOGGLE[] = {
@@ -117,20 +121,21 @@ static const struct option LONG_OPTIONS_TOGGLE[] = {
     {nullptr, 0, nullptr, 0}
 };
 
-std::map<char, OptType> COMMAND_TYPE = {
+std::map<char, OptType> DUMP_COMMAND_TYPE = {
+    // dump
     {'d', DUMP_PERM},
     {'t', DUMP_TOKEN},
     {'r', DUMP_RECORD},
     {'v', DUMP_TYPE},
-    {'g', PERM_GRANT},
-    {'c', PERM_REVOKE},
-    {'s', TOGGLE_SET},
-    {'o', TOGGLE_GET},
 };
 
 std::map<char, ToggleModeType> TOGGLE_MODE_TYPE = {
     {'r', TOGGLE_REQUEST},
     {'u', TOGGLE_RECORD},
+};
+std::map<char, ToggleOperateType> TOGGLE_OPERATE_TYPE = {
+    {'s', TOGGLE_SET},
+    {'o', TOGGLE_GET},
 };
 }
 
@@ -140,9 +145,11 @@ AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), n
 
     commandMap_ = {
         {"help", [this](){return RunAsHelpCommand();}},
-        {"dump", [this]() {return RunAsCommonCommand();}},
-        {"perm", [this]() {return RunAsCommonCommand();}},
-        {"toggle", [this]() {return RunAsCommonCommand();}},
+        {"dump", [this]() {return RunAsCommonCommandForDump();}},
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+        {"perm", [this]() {return RunAsCommonCommandForPerm();}},
+        {"toggle", [this]() {return RunAsCommonCommandForToggle();}},
+#endif
     };
 
     if ((argc < MIN_ARGUMENT_NUMBER) || (argc > MAX_ARGUMENT_NUMBER)) {
@@ -212,48 +219,34 @@ std::string AtmCommand::GetUnknownOptionMsg() const
         return result;
     }
 
-    result.append("error: unknown option\n.");
+    result.append("error: unknown option.\n");
 
     return result;
 }
 
-int32_t AtmCommand::RunAsCommandMissingOptionArgument(void)
+int32_t AtmCommand::RunAsCommandMissingOptionArgument(const std::vector<char>& requeredOptions)
 {
-    int32_t result = RET_SUCCESS;
-    switch (optopt) {
-        case 'h':
-            // 'atm dump -h'
-            result = ERR_INVALID_VALUE;
-            break;
-        case 'i':
-        case 'p':
-        case 'g':
-        case 'c':
-            resultReceiver_.append("error: option ");
-            resultReceiver_.append("requires a value.\n");
-            result = ERR_INVALID_VALUE;
-            break;
-        default: {
-            std::string unknownOptionMsg = GetUnknownOptionMsg();
-
-            resultReceiver_.append(unknownOptionMsg);
-            result = ERR_INVALID_VALUE;
-            break;
-        }
+    if (optopt == 'h') {
+        return ERR_INVALID_VALUE;
     }
-    return result;
+    auto iter = std::find(requeredOptions.begin(), requeredOptions.end(), optopt);
+    if (iter == requeredOptions.end()) {
+        resultReceiver_.append(GetUnknownOptionMsg());
+        return ERR_INVALID_VALUE;
+    }
+    resultReceiver_.append("error: option requires a value.\n\n");
+    return ERR_INVALID_VALUE;
 }
 
-void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
+void AtmCommand::RunAsCommandExistentOptionForDump(
+    const int32_t& option, AtmToolsParamInfo& info, OptType& type, std::string& permissionName)
 {
     switch (option) {
         case 'd':
         case 't':
         case 'r':
         case 'v':
-        case 'g':
-        case 'c':
-            info.type = COMMAND_TYPE[option];
+            type = DUMP_COMMAND_TYPE[option];
             break;
         case 'i':
             if (optarg != nullptr) {
@@ -262,7 +255,7 @@ void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmTo
             break;
         case 'p':
             if (optarg != nullptr) {
-                info.permissionName = optarg;
+                permissionName = optarg;
             }
             break;
         case 'b':
@@ -280,7 +273,28 @@ void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmTo
     }
 }
 
-void AtmCommand::RunToggleCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
+void AtmCommand::RunAsCommandExistentOptionForPerm(
+    const int32_t& option, bool& isGranted, AccessTokenID& tokenID, std::string& permission)
+{
+    switch (option) {
+        case 'g':
+            isGranted = true;
+            break;
+        case 'c':
+            isGranted = false;
+            break;
+        case 'i':
+            tokenID = (optarg != nullptr) ? static_cast<AccessTokenID>(std::atoi(optarg)) : INVALID_TOKENID;
+            break;
+        case 'p':
+            permission = (optarg != nullptr) ? optarg : "";
+            break;
+        default:
+            break;
+        }
+}
+
+void AtmCommand::RunAsCommandExistentOptionForToggle(const int32_t& option, AtmToggleParamInfo& info)
 {
     switch (option) {
         case 'r':
@@ -289,12 +303,10 @@ void AtmCommand::RunToggleCommandExistentOptionArgument(const int32_t& option, A
             break;
         case 's':
         case 'o':
-            info.type = COMMAND_TYPE[option];
+            info.type = TOGGLE_OPERATE_TYPE[option];
             break;
         case 'p':
-            if (optarg != nullptr) {
-                info.permissionName = optarg;
-            }
+            info.permissionName = (optarg != nullptr) ? optarg : "";;
             break;
         case 'i':
             if (optarg != nullptr) {
@@ -344,9 +356,7 @@ std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& perm
         return "";
     }
 
-    std::string dumpInfo;
-    ToString::PermissionUsedResultToString(result, dumpInfo);
-    return dumpInfo;
+    return ToString::PermissionUsedResultToString(result);
 }
 
 std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName)
@@ -356,27 +366,16 @@ std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& pe
         return "";
     }
 
-    std::string dumpInfo;
-    for (const auto& result : results) {
-        ToString::PermissionUsedTypeInfoToString(result, dumpInfo);
-    }
-
-    return dumpInfo;
+    return ToString::PermissionUsedTypeInfoToString(results);
 }
 
-int32_t AtmCommand::ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName)
+int32_t AtmCommand::ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName)
 {
-    if ((tokenId == 0) || (permissionName.empty())) {
-        return ERR_INVALID_VALUE;
-    }
-
     int32_t result = 0;
-    if (type == PERM_GRANT) {
+    if (isGranted) {
         result = AccessTokenKit::GrantPermission(tokenId, permissionName, PERMISSION_USER_FIXED);
-    } else if (type == PERM_REVOKE) {
-        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_USER_FIXED);
     } else {
-        return ERR_INVALID_VALUE;
+        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_USER_FIXED);
     }
     return result;
 }
@@ -413,31 +412,24 @@ int32_t AtmCommand::GetToggleStatus(int32_t userID, const std::string& permissio
     return result;
 }
 
-int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
+int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName)
 {
     std::string dumpInfo;
     int32_t ret = RET_SUCCESS;
-    switch (info.type) {
+    switch (type) {
         case DUMP_PERM:
-            AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+            dumpInfo = ToString::DumpPermDefinition(permissionName);
             break;
         case DUMP_TOKEN:
             AccessTokenKit::DumpTokenInfo(info, dumpInfo);
             break;
         case DUMP_RECORD:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-            dumpInfo = DumpRecordInfo(info.tokenId, info.permissionName);
+            dumpInfo = DumpRecordInfo(info.tokenId, permissionName);
 #endif
             break;
         case DUMP_TYPE:
-            dumpInfo = DumpUsedTypeInfo(info.tokenId, info.permissionName);
-            break;
-        case PERM_GRANT:
-        case PERM_REVOKE:
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-            ret = ModifyPermission(info.type, info.tokenId, info.permissionName);
-            dumpInfo = (ret == RET_SUCCESS) ? "Success" : "Failure";
-#endif
+            dumpInfo = DumpUsedTypeInfo(info.tokenId, permissionName);
             break;
         default:
             resultReceiver_.append("error: miss option \n");
@@ -482,59 +474,54 @@ int32_t AtmCommand::GetRecordToggleStatus(int32_t userID, std::string& statusInf
     return result;
 }
 
-int32_t AtmCommand::HandleToggleRequest(const AtmToolsParamInfo& info, std::string& dumpInfo)
+int32_t AtmCommand::HandleToggleRequest(const AtmToggleParamInfo& info, std::string& dumpInfo)
 {
     int32_t ret = RET_SUCCESS;
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     switch (info.type) {
         case TOGGLE_SET:
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = SetToggleStatus(info.userID, info.permissionName, info.status);
             dumpInfo = (ret == RET_SUCCESS) ? "Success" : "Failure";
-#endif
             break;
         case TOGGLE_GET:
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = GetToggleStatus(info.userID, info.permissionName, dumpInfo);
             if (ret != RET_SUCCESS) {
                 dumpInfo = "Failure";
             }
-#endif
             break;
         default:
             resultReceiver_.append("error: miss option \n");
             return ERR_INVALID_VALUE;
         }
+#endif
 
     return ret;
 }
 
-int32_t AtmCommand::HandleToggleRecord(const AtmToolsParamInfo& info, std::string& dumpInfo)
+int32_t AtmCommand::HandleToggleRecord(const AtmToggleParamInfo& info, std::string& dumpInfo)
 {
     int32_t ret = RET_SUCCESS;
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     switch (info.type) {
         case TOGGLE_SET:
- #ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = SetRecordToggleStatus(info.userID, info.status, dumpInfo);
             dumpInfo += (ret == RET_SUCCESS) ? "Success" : "Failure";
-#endif
             break;
         case TOGGLE_GET:
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
             ret = GetRecordToggleStatus(info.userID, dumpInfo);
             dumpInfo += (ret == RET_SUCCESS) ? "Success" : "Failure";
-#endif
             break;
         default:
             resultReceiver_.append("error: miss option \n");
             return ERR_INVALID_VALUE;
     }
-
+#endif
     return ret;
 }
 
-int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToolsParamInfo& info)
+int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToggleParamInfo& info)
 {
     std::string dumpInfo;
     int32_t ret = RET_SUCCESS;
@@ -555,16 +542,16 @@ int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToolsParamInfo& inf
     return ret;
 }
 
-int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const struct option longOption[],
-    const std::string& helpMsg)
+int32_t AtmCommand::RunAsCommonCommandForDump()
 {
     int32_t result = RET_SUCCESS;
     AtmToolsParamInfo info;
     int32_t counter = 0;
-
+    OptType type = DEFAULT_OPER;
+    std::string permissionName;
     while (true) {
-        counter++;
-        int32_t option = getopt_long(argc_, argv_, shortOption.c_str(), longOption, nullptr);
+        ++counter;
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
         if ((optind < 0) || (optind > argc_)) {
             return ERR_INVALID_VALUE;
         }
@@ -577,7 +564,7 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument();
+            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_DUMP);
             break;
         }
 
@@ -586,27 +573,68 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
             result = ERR_INVALID_VALUE;
             continue;
         }
-        RunAsCommandExistentOptionArgument(option, info);
+        RunAsCommandExistentOptionForDump(option, info, type, permissionName);
     }
 
     if (result != RET_SUCCESS) {
-        resultReceiver_.append(helpMsg + "\n");
-    } else {
-        result = RunCommandByOperationType(info);
+        resultReceiver_.append(HELP_MSG_DUMP + "\n");
+        return result;
     }
-    return result;
+    return RunCommandByOperationType(info, type, permissionName);
 }
 
-int32_t AtmCommand::HandleToggleCommand(const std::string& shortOption, const struct option longOption[],
-    const std::string& helpMsg)
+int32_t AtmCommand::RunAsCommonCommandForPerm()
 {
     int32_t result = RET_SUCCESS;
-    AtmToolsParamInfo info;
     int32_t counter = 0;
+    AccessTokenID tokenID;
+    std::string permission;
+    bool isGranted = false;
+    while (true) {
+        ++counter;
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
+        if ((optind < 0) || (optind > argc_)) {
+            return ERR_INVALID_VALUE;
+        }
+        if (option == -1) {
+            if (counter == 1) {
+                result = RunAsCommandError();
+            }
+            break;
+        }
 
+        if (option == '?') {
+            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_PERM);
+            break;
+        }
+        if (option == 'h') {
+            // 'atm dump -h'
+            result = ERR_INVALID_VALUE;
+            continue;
+        }
+        RunAsCommandExistentOptionForPerm(option, isGranted, tokenID, permission);
+    }
+    if (result != RET_SUCCESS) {
+        resultReceiver_.append(HELP_MSG_DUMP + "\n");
+        return result;
+    }
+    result = ModifyPermission(isGranted, tokenID, permission);
+    if (result == RET_SUCCESS) {
+        resultReceiver_.append("Success\n");
+    } else {
+        resultReceiver_.append("Failure\n");
+    }
+    return result;
+}
+
+int32_t AtmCommand::RunAsCommonCommandForToggle()
+{
+    int32_t result = RET_SUCCESS;
+    AtmToggleParamInfo info;
+    int32_t counter = 0;
     while (counter < MAX_COUNTER) {
-        counter++;
-        int32_t option = getopt_long(argc_, argv_, shortOption.c_str(), longOption, nullptr);
+        ++counter;
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_TOGGLE.c_str(), LONG_OPTIONS_TOGGLE, nullptr);
         if ((optind < 0) || (optind > argc_)) {
             return ERR_INVALID_VALUE;
         }
@@ -619,37 +647,22 @@ int32_t AtmCommand::HandleToggleCommand(const std::string& shortOption, const st
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument();
+            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_TOGGLE);
             break;
         }
 
         if (option == 'h') {
-            // 'atm dump -h'
             result = ERR_INVALID_VALUE;
             continue;
         }
-        RunToggleCommandExistentOptionArgument(option, info);
+        RunAsCommandExistentOptionForToggle(option, info);
     }
 
     if (result != RET_SUCCESS) {
-        resultReceiver_.append(helpMsg + "\n");
-    } else {
-        result = RunToggleCommandByOperationType(info);
+        resultReceiver_.append(HELP_MSG_TOGGLE + "\n");
+        return result;
     }
-    return result;
-}
-
-int32_t AtmCommand::RunAsCommonCommand()
-{
-    if (cmd_ == "dump") {
-        return HandleComplexCommand(SHORT_OPTIONS_DUMP, LONG_OPTIONS_DUMP, HELP_MSG_DUMP);
-    } else if (cmd_ == "perm") {
-        return HandleComplexCommand(SHORT_OPTIONS_PERM, LONG_OPTIONS_PERM, HELP_MSG_PERM);
-    } else if (cmd_ == "toggle") {
-        return HandleToggleCommand(SHORT_OPTIONS_TOGGLE, LONG_OPTIONS_TOGGLE, HELP_MSG_TOGGLE);
-    }
-
-    return ERR_PARAM_INVALID;
+    return RunToggleCommandByOperationType(info);
 }
 } // namespace AccessToken
 } // namespace Security

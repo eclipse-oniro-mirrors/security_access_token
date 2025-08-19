@@ -131,7 +131,6 @@ public:
     int32_t ClearUserPolicy() override;
     int32_t DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
-    int Dump(int fd, const std::vector<std::u16string>& args) override;
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit(uint32_t code, int32_t result) override;

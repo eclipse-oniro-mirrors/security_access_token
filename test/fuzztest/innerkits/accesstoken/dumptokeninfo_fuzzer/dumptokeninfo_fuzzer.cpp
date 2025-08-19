@@ -24,16 +24,6 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static const vector<OptType> TYPE_LIST = {
-    DEFAULT_OPER,
-    DUMP_TOKEN,
-    DUMP_RECORD,
-    DUMP_TYPE,
-    DUMP_PERM,
-    PERM_GRANT,
-    PERM_REVOKE
-};
-
 namespace OHOS {
 bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
 {
@@ -42,10 +32,7 @@ bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    uint32_t typeIndex = provider.ConsumeIntegral<uint32_t>() % static_cast<uint32_t>(TYPE_LIST.size());
-    OptType type = TYPE_LIST[typeIndex];
     AtmToolsParamInfo info = {
-        .type = type,
         .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
     };
 

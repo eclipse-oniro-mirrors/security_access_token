@@ -59,6 +59,7 @@ if (token_sync_enable == true) {
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+      "${access_token_path}/frameworks/json_adapter/include",
       "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
@@ -101,10 +102,10 @@ if (token_sync_enable == true) {
     deps = [
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/common:accesstoken_service_common",
-      "${access_token_path}/services/common/json_parse:accesstoken_cjson_utils",
       "${access_token_path}/services/tokensyncmanager:token_sync.rc",
     ]
 

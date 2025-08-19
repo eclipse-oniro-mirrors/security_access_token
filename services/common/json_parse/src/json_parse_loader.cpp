@@ -29,6 +29,7 @@
 #include "config_policy_utils.h"
 #endif
 #include "data_validator.h"
+#include "permission_map.h"
 
 namespace OHOS {
 namespace Security {
@@ -447,6 +448,78 @@ int32_t ConfigPolicLoader::GetDlpPermissions(std::vector<PermissionDlpMode>& dlp
         return ERR_PRASE_RAW_DATA_FAILED;
     }
     return RET_SUCCESS;
+}
+
+std::string ConfigPolicLoader::DumpHapTokenInfo(
+    const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden, std::vector<PermissionStatus> permStateList)
+{
+    CJsonUnique j = CreateJson();
+    (void)AddUnsignedIntToJson(j, "tokenID", hapInfo.tokenID);
+    (void)AddUnsignedIntToJson(j, "tokenAttr", hapInfo.tokenAttr);
+    (void)AddIntToJson(j, "ver", static_cast<int>(hapInfo.ver));
+    (void)AddIntToJson(j, "userId", hapInfo.userID);
+    (void)AddStringToJson(j, "bundleName", hapInfo.bundleName);
+    (void)AddIntToJson(j, "instIndex", hapInfo.instIndex);
+    (void)AddIntToJson(j, "dlpType", hapInfo.dlpType);
+    (void)AddBoolToJson(j, "isRemote", isRemote);
+    (void)AddBoolToJson(j, "isPermDialogForbidden", isPermDialogForbidden);
+
+    CJsonUnique permStateListJson = CreateJsonArray();
+    for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
+        CJsonUnique permStateJson = CreateJson();
+        (void)AddStringToJson(permStateJson, "permissionName", iter->permissionName);
+        (void)AddIntToJson(permStateJson, "grantStatus", iter->grantStatus);
+        (void)AddUnsignedIntToJson(permStateJson, "grantFlag", iter->grantFlag);
+        (void)AddObjToArray(permStateListJson, permStateJson);
+    }
+    (void)AddObjToJson(j, "permStateList", permStateListJson);
+    return JsonToStringFormatted(j.get());
+}
+
+static bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
+    const std::vector<std::string>& nativeAcls)
+{
+    PermissionBriefDef briefDef;
+    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+        return false;
+    }
+
+    if (tokenApl >= briefDef.availableLevel) {
+        return true;
+    }
+
+    auto iter = std::find(nativeAcls.begin(), nativeAcls.end(), permissionName);
+    if (iter != nativeAcls.end()) {
+        return true;
+    }
+    return false;
+}
+
+std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& native)
+{
+    CJsonUnique j = CreateJson();
+    (void)AddUnsignedIntToJson(j, "tokenID", native.tokenID);
+    (void)AddStringToJson(j, "processName", native.processName);
+    (void)AddIntToJson(j, "apl", native.apl);
+
+    CJsonUnique permStateListJson = CreateJsonArray();
+    CJsonUnique invalidPermStringJson = CreateJsonArray();
+    for (auto iter = native.permStateList.begin(); iter != native.permStateList.end(); ++iter) {
+        if (!IsPermissionReqValid(native.apl, iter->permissionName, native.nativeAcls)) {
+            CJsonUnique tmpJson = CreateJsonString(iter->permissionName);
+            (void)AddObjToArray(invalidPermStringJson, tmpJson);
+            continue;
+        }
+        CJsonUnique permStateJson = CreateJson();
+        (void)AddStringToJson(permStateJson, "permissionName", iter->permissionName);
+        (void)AddIntToJson(permStateJson, "grantStatus", iter->grantStatus);
+        (void)AddUnsignedIntToJson(permStateJson, "grantFlag", iter->grantFlag);
+        (void)AddObjToArray(permStateListJson, permStateJson);
+    }
+
+    (void)AddObjToJson(j, "permStateList", permStateListJson);
+    (void)AddObjToJson(j, "invalidPermList", invalidPermStringJson);
+    return JsonToStringFormatted(j.get());
 }
 
 extern "C" {
