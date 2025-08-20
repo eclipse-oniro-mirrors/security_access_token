@@ -1778,7 +1778,6 @@ int32_t AccessTokenInfoManager::SetPermissionRequestToggleStatus(const std::stri
 
     int32_t ret = AddPermRequestToggleStatusToDb(userID, permissionName, status);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Status is invalid.");
         return ret;
     }
 

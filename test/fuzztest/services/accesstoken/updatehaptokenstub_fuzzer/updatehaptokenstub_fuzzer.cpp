@@ -108,7 +108,7 @@ namespace OHOS {
         uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN);
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {
             setuid(CONSTANTS_NUMBER_TWO);
         }

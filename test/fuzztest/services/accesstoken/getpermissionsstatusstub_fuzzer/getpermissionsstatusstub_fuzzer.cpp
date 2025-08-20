@@ -69,7 +69,7 @@ size_t g_baseFuzzPos = 0;
             IAccessTokenManagerIpcCode::COMMAND_GET_PERMISSIONS_STATUS);
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {
             setuid(CONSTANTS_NUMBER_TWO);
         }
