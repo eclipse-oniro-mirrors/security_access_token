@@ -106,7 +106,7 @@ static napi_module g_module = {
     .nm_filename = nullptr,
     .nm_register_func = Init,
     .nm_modname = "privacyManager",
-    .nm_priv = ((void *)0),
+    .nm_priv = ((void*)0),
     .reserved = {0}
 };
 

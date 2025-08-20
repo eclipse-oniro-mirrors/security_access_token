@@ -581,7 +581,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "AddPermissionUsedRecord begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -607,7 +607,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         resource,
         AddPermissionUsedRecordExecute,
         AddPermissionUsedRecordComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
@@ -646,7 +646,7 @@ napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "SetPermissionUsedRecordToggleStatus begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -672,7 +672,7 @@ napi_value SetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
         resource,
         SetPermissionUsedRecordToggleStatusExecute,
         SetPermissionUsedRecordToggleStatusComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
@@ -713,7 +713,7 @@ napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecordToggleStatus begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -736,7 +736,7 @@ napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
         resource,
         GetPermissionUsedRecordToggleStatusExecute,
         GetPermissionUsedRecordToggleStatusComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
@@ -777,7 +777,7 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "StartUsingPermission begin.");
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -803,7 +803,7 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         StartUsingPermissionExecute,
         StartUsingPermissionComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
@@ -844,7 +844,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "StopUsingPermission begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -870,7 +870,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         StopUsingPermissionExecute,
         StopUsingPermissionComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
@@ -911,7 +911,7 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedRecords begin.");
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -937,7 +937,7 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         resource,
         GetPermissionUsedRecordsExecute,
         GetPermissionUsedRecordsComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
@@ -948,7 +948,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     RegisterPermActiveChangeContext& registerPermActiveChangeContext)
 {
     size_t argc = ON_OFF_MAX_PARAMS;
-    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
+    napi_value argv[ON_OFF_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
@@ -990,7 +990,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     UnregisterPermActiveChangeContext& unregisterPermActiveChangeContext)
 {
     size_t argc = ON_OFF_MAX_PARAMS;
-    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
+    napi_value argv[ON_OFF_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
@@ -1189,7 +1189,7 @@ static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_i
     PermissionUsedTypeAsyncContext& context)
 {
     size_t argc = GET_PERMISSION_USED_TYPE_MAX_PARAMS;
-    napi_value argv[GET_PERMISSION_USED_TYPE_MAX_PARAMS] = {nullptr};
+    napi_value argv[GET_PERMISSION_USED_TYPE_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
 
@@ -1297,7 +1297,7 @@ napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "GetPermissionUsedTypeInfos begin.");
 
-    auto *asyncContext = new (std::nothrow) PermissionUsedTypeAsyncContext(env);
+    auto* asyncContext = new (std::nothrow) PermissionUsedTypeAsyncContext(env);
     if (asyncContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "New struct fail.");
         return nullptr;
@@ -1319,7 +1319,7 @@ napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
         resource,
         GetPermissionUsedTypeInfosExecute,
         GetPermissionUsedTypeInfosComplete,
-        reinterpret_cast<void *>(asyncContext),
+        reinterpret_cast<void*>(asyncContext),
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();

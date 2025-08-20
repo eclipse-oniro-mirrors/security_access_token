@@ -229,7 +229,7 @@ bool DataValidator::IsNativeCaller(AccessTokenID id)
 
 bool DataValidator::IsHapCaller(AccessTokenID id)
 {
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     ATokenTypeEnum type = static_cast<ATokenTypeEnum>(idInner->type);
     if (type != TOKEN_HAP) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not hap(%{public}d).", id);

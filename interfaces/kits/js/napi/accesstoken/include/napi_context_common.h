@@ -23,18 +23,15 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class NapiContextCommon {
-public:
-    static constexpr int32_t MAX_PARAMS_ONE = 1;
-    static constexpr int32_t MAX_PARAMS_TWO = 2;
-    static constexpr int32_t MAX_PARAMS_THREE = 3;
-    static constexpr int32_t MAX_PARAMS_FOUR = 4;
-    static constexpr int32_t MAX_LENGTH = 256;
-    static constexpr int32_t MAX_WAIT_TIME = 1000;
-    static constexpr int32_t VALUE_MAX_LEN = 32;
+#define MAX_PARAMS_ONE 1
+#define MAX_PARAMS_TWO 2
+#define MAX_PARAMS_THREE 3
+#define MAX_PARAMS_FOUR 4
+#define MAX_LENGTH 256
+#define MAX_WAIT_TIME 1000
+#define VALUE_MAX_LEN 32
 
-    static int32_t GetJsErrorCode(int32_t errCode);
-};
+int32_t GetJsErrorCode(int32_t errCode);
 struct AtManagerAsyncWorkData {
     explicit AtManagerAsyncWorkData(napi_env envValue);
     virtual ~AtManagerAsyncWorkData();

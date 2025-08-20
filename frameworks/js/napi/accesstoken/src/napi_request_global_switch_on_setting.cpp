@@ -514,7 +514,7 @@ napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callb
     NAPI_CALL(env, napi_create_string_utf8(env, "RequestGlobalSwitch", NAPI_AUTO_LENGTH, &resource));
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource, RequestGlobalSwitchExecute, RequestGlobalSwitchComplete,
-        reinterpret_cast<void *>(asyncContextHandle.get()), &(asyncContextHandle->asyncContextPtr->work)));
+        reinterpret_cast<void*>(asyncContextHandle.get()), &(asyncContextHandle->asyncContextPtr->work)));
 
     NAPI_CALL(env,
         napi_queue_async_work_with_qos(env, asyncContextHandle->asyncContextPtr->work, napi_qos_user_initiated));
@@ -527,15 +527,15 @@ napi_value NapiRequestGlobalSwitch::RequestGlobalSwitch(napi_env env, napi_callb
 bool NapiRequestGlobalSwitch::ParseRequestGlobalSwitch(const napi_env& env,
     const napi_callback_info& cbInfo, std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = { nullptr };
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
 
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
         return false;
     }
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -624,7 +624,7 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_sta
     }
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(asyncContextHandle->asyncContextPtr->result.errorCode);
+        int32_t jsCode = GetJsErrorCode(asyncContextHandle->asyncContextPtr->result.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));

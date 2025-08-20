@@ -22,7 +22,7 @@
 #define MAX_LOG_SIZE 1024
 #define MAX_LEVEL_SIZE 3
 
-static const char *g_logLevelStr[] = {"ERROR", "WARNING", "INFO"};
+static const char* g_logLevelStr[] = {"ERROR", "WARNING", "INFO"};
 
 #ifndef UNLIKELY
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -41,7 +41,7 @@ static void NativeTokenOpenLogDevice(void)
     return;
 }
 
-int NativeTokenKmsg(int logLevel, const char *fmt, ...)
+int NativeTokenKmsg(int logLevel, const char* fmt, ...)
 {
     if ((logLevel < 0) || (logLevel >= MAX_LEVEL_SIZE)) {
         return -1;

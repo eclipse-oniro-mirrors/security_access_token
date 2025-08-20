@@ -41,10 +41,10 @@ uint64_t TokenIdKit::GetRenderTokenID(uint64_t tokenId)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return tokenId;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     idInner->renderFlag = 1;
 
-    id = *reinterpret_cast<AccessTokenID *>(idInner);
+    id = *reinterpret_cast<AccessTokenID*>(idInner);
     return static_cast<uint64_t>(id);
 }
 }  // namespace AccessToken

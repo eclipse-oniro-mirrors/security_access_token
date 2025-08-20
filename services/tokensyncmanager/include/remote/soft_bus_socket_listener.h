@@ -29,10 +29,10 @@ class SoftBusSocketListener final {
 public:
     static void OnBind(int32_t socket, PeerSocketInfo info);
     static void OnShutdown(int32_t socket, ShutdownReason reason);
-    static void OnClientBytes(int32_t socket, const void *data, uint32_t dataLen);
-    static void OnServiceBytes(int32_t socket, const void *data, uint32_t dataLen);
+    static void OnClientBytes(int32_t socket, const void* data, uint32_t dataLen);
+    static void OnServiceBytes(int32_t socket, const void* data, uint32_t dataLen);
     // this callback softbus not ready
-    static void OnQos(int32_t socket, QoSEvent eventId, const QosTV *qos, uint32_t qosCount) {};
+    static void OnQos(int32_t socket, QoSEvent eventId, const QosTV* qos, uint32_t qosCount) {};
     static void CleanUpAllBindSocket();
 
 private:

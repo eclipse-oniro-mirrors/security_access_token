@@ -27,7 +27,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct PermissionBriefDef {
-    char *permissionName;
+    char* permissionName;
     GrantMode grantMode;
     ATokenAplEnum availableLevel;
     ATokenAvailableTypeEnum availableType;
