@@ -73,6 +73,11 @@ static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
 static constexpr int32_t MAX_USER_ID = 10736;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+#ifndef MAX_COUNT_TEST
+static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
+#else
+static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 20;
+#endif
 constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
 }
@@ -1723,6 +1728,10 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
 
     for (const auto& valueResult : valueResults) {
         AddDataValueToResults(valueResult, results);
+    }
+
+    if (results.size() > MAX_PERMISSION_USED_TYPE_SIZE) {
+        return PrivacyError::ERR_OVERSIZE;
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "Get %{public}zu permission used type records.", results.size());
