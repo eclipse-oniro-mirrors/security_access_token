@@ -122,7 +122,7 @@ bool InitHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((size % CONSTANTS_NUMBER_TEN) == 0);
+    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) == 0);
     if (enable) {
         setuid(CONSTANTS_NUMBER_TEN);
     }

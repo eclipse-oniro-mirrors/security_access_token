@@ -53,7 +53,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {
             setuid(CONSTANTS_NUMBER_TWO);
         }
