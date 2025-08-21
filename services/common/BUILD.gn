@@ -97,7 +97,6 @@ group("accesstoken_common") {
     deps = [
       ":accesstoken_service_common",
       "ability_manager:accesstoken_ability_manager_adapter",
-      "json_parse:accesstoken_cjson_utils",
       "json_parse:accesstoken_json_parse",
       "screenlock_manager:accesstoken_screenlock_manager",
     ]

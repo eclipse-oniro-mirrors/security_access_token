@@ -57,7 +57,7 @@ public:
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
-    void ToString(std::string& info);
+    std::string ToString();
     bool IsRemote() const;
     void SetRemote(bool isRemote);
     bool IsPermDialogForbidden() const;
@@ -89,8 +89,6 @@ private:
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
     bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList);
-    void PermToString(const std::vector<PermissionStatus>& permStateList, std::string& info);
-    void PermStateFullToString(const PermissionStatus& state, std::string& info);
 
     HapTokenInfo tokenInfoBasic_;
 

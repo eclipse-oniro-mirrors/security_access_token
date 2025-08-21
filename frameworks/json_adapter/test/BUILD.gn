@@ -12,14 +12,14 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("../../../../access_token.gni")
+import("../../../access_token.gni")
 
 config("accesstoken_json_parse_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
 
-ohos_unittest("libjsonparse_test") {
+ohos_unittest("libjson_utils_test") {
   subsystem_name = "accesscontrol"
   module_out_path = module_output_path_unittest_accesstoken
   sanitize = {
@@ -30,16 +30,14 @@ ohos_unittest("libjsonparse_test") {
   branch_protector_ret = "pac_ret"
 
   include_dirs = [
-    "${access_token_path}/frameworks/json_adapter/include",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
-    "${access_token_path}/services/common/json_parse/include",
+    "${access_token_path}/frameworks/json_adapter/include",
   ]
 
   sources = [
-    "${access_token_path}/services/common/json_parse/src/json_parse_loader.cpp",
-    "unittest/json_parse_loader_test.cpp",
+    "${access_token_path}/frameworks/json_adapter/src/cjson_utils.cpp",
+    "unittest/cjson_utils_test.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -49,10 +47,7 @@ ohos_unittest("libjsonparse_test") {
   ]
   public_configs = [ ":accesstoken_json_parse_config" ]
 
-  deps = [
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
-  ]
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
   external_deps = [
     "cJSON:cjson",
@@ -69,5 +64,5 @@ ohos_unittest("libjsonparse_test") {
 
 group("unittest") {
   testonly = true
-  deps = [ ":libjsonparse_test" ]
+  deps = [ ":libjson_utils_test" ]
 }

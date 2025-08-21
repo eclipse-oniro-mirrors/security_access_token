@@ -23,9 +23,10 @@ namespace Security {
 namespace AccessToken {
 namespace  {
 #define RECURSE_FLAG_TRUE 1
+#define PRINT_FORMAT_LEVEL_MAX 500
 }
 
-CJson *GetItemFromArray(const CJson* jsonArr, int32_t index)
+CJson* GetItemFromArray(const CJson* jsonArr, int32_t index)
 {
     if (jsonArr == nullptr) {
         return nullptr;
@@ -54,6 +55,12 @@ CJsonUnique CreateJsonArray(void)
     return aPtr;
 }
 
+CJsonUnique CreateJsonString(const std::string& value)
+{
+    CJsonUnique aPtr(cJSON_CreateString(value.c_str()), FreeJson);
+    return aPtr;
+}
+
 void FreeJson(CJson* jsonObj)
 {
     cJSON_Delete(jsonObj);
@@ -76,6 +83,63 @@ std::string PackJsonToString(const CJsonUnique& jsonObj)
     return PackJsonToString(jsonObj.get());
 }
 
+static std::string GetTabContentString(uint32_t level)
+{
+    std::string str = "";
+    for (uint32_t i = 0; i < level; ++i) {
+        str += " ";
+    }
+    return str;
+}
+
+std::string JsonToStringFormatted(const CJson* jsonObj, uint32_t level)
+{
+    if (jsonObj == nullptr || level > PRINT_FORMAT_LEVEL_MAX) {
+        return "";
+    }
+    std::string str = "";
+    CJson* child = nullptr;
+    switch (jsonObj->type) {
+        case cJSON_Object:
+            str += GetTabContentString(level) + "{\n";
+            child = jsonObj->child;
+            while (child != nullptr) {
+                str += GetTabContentString(level + 2) + "\"" + std::string(child->string) + "\": "; // 2: space
+                str += JsonToStringFormatted(child, level + 2); // 2: space
+                str += (child->next != nullptr) ? ",\n" : "\n";
+                child = child->next;
+            }
+            str += GetTabContentString(level) + "}";
+            break;
+        case cJSON_Array:
+            str += "[\n";
+            child = jsonObj->child;
+            while (child != nullptr) {
+                str += JsonToStringFormatted(child, level + 2); // 2: space
+                str += (child->next != nullptr) ? ",\n" : "\n";
+                child = child->next;
+            }
+            str += GetTabContentString(level) + "]";
+            break;
+        case cJSON_String:
+            str += "\"" + std::string(jsonObj->valuestring) + "\"";
+            break;
+        case cJSON_Number:
+            str += std::to_string(static_cast<int64_t>(jsonObj->valuedouble));
+            break;
+        case cJSON_True:
+            str += "true";
+            break;
+        case cJSON_False:
+            str += "false";
+            break;
+        default:
+            str += "unkown type";
+            break;
+    }
+    return str;
+}
+
 void FreeJsonString(char* jsonStr)
 {
     if (jsonStr != nullptr) {
@@ -85,7 +149,7 @@ void FreeJsonString(char* jsonStr)
 
 CJson* GetObjFromJson(const CJson* jsonObj, const std::string& key)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return nullptr;
     }
 
@@ -103,7 +167,7 @@ CJson* GetObjFromJson(CJsonUnique& jsonObj, const std::string& key)
 
 CJson* GetArrayFromJson(const CJson* jsonObj, const std::string& key)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return nullptr;
     }
 
@@ -145,7 +209,7 @@ bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string
         return false;
     }
 
-    cJSON *jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
+    cJSON* jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
     if (jsonObjTmp != nullptr && cJSON_IsString(jsonObjTmp)) {
         out = cJSON_GetStringValue(jsonObjTmp);
         return true;
@@ -155,7 +219,7 @@ bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string
 
 bool GetIntFromJson(const CJson* jsonObj, const std::string& key, int32_t& value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -174,7 +238,7 @@ bool GetIntFromJson(const CJsonUnique& jsonObj, const std::string& key, int32_t&
 
 bool GetUnsignedIntFromJson(const CJson* jsonObj, const std::string& key, uint32_t& value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -193,7 +257,7 @@ bool GetUnsignedIntFromJson(const CJsonUnique& jsonObj, const std::string& key, 
 
 bool GetBoolFromJson(const CJson* jsonObj, const std::string& key, bool& value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -212,7 +276,7 @@ bool GetBoolFromJson(const CJsonUnique& jsonObj, const std::string& key, bool& v
 
 bool AddObjToJson(CJson* jsonObj, const std::string& key, const CJson* childObj)
 {
-    if (key.empty() || childObj == nullptr) {
+    if ((jsonObj == nullptr) || key.empty() || (childObj == nullptr)) {
         return false;
     }
 
@@ -243,7 +307,7 @@ bool AddObjToJson(CJsonUnique& jsonObj, const std::string& key, CJsonUnique& chi
 
 bool AddObjToArray(CJson* jsonArr, CJson* item)
 {
-    if (item == nullptr) {
+    if ((jsonArr == nullptr) || (item == nullptr)) {
         return false;
     }
 
@@ -267,7 +331,7 @@ bool AddObjToArray(CJsonUnique& jsonArr, CJsonUnique& item)
 
 bool AddStringToJson(CJson* jsonObj, const std::string& key, const std::string& value)
 {
-    if (key.empty() || value.empty()) {
+    if ((jsonObj == nullptr) || key.empty() || value.empty()) {
         return false;
     }
 
@@ -295,9 +359,9 @@ bool AddStringToJson(CJsonUnique& jsonObj, const std::string& key, const std::st
     return AddStringToJson(jsonObj.get(), key, value);
 }
 
-bool AddBoolToJson(CJson* jsonObj, const std::string& key, const bool value)
+bool AddBoolToJson(CJson* jsonObj, const std::string& key, bool value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -320,14 +384,14 @@ bool AddBoolToJson(CJson* jsonObj, const std::string& key, const bool value)
     return true;
 }
 
-bool AddBoolToJson(CJsonUnique& jsonObj, const std::string& key, const bool value)
+bool AddBoolToJson(CJsonUnique& jsonObj, const std::string& key, bool value)
 {
     return AddBoolToJson(jsonObj.get(), key, value);
 }
 
-bool AddIntToJson(CJson* jsonObj, const std::string& key, const int value)
+bool AddIntToJson(CJson* jsonObj, const std::string& key, const int32_t value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -350,14 +414,14 @@ bool AddIntToJson(CJson* jsonObj, const std::string& key, const int value)
     return true;
 }
 
-bool AddIntToJson(CJsonUnique& jsonObj, const std::string& key, const int value)
+bool AddIntToJson(CJsonUnique& jsonObj, const std::string& key, int32_t value)
 {
     return AddIntToJson(jsonObj.get(), key, value);
 }
 
 bool AddUnsignedIntToJson(CJson* jsonObj, const std::string& key, const uint32_t value)
 {
-    if (key.empty()) {
+    if ((jsonObj == nullptr) || key.empty()) {
         return false;
     }
 
@@ -380,9 +444,39 @@ bool AddUnsignedIntToJson(CJson* jsonObj, const std::string& key, const uint32_t
     return true;
 }
 
-bool AddUnsignedIntToJson(CJsonUnique& jsonObj, const std::string& key, const uint32_t value)
+bool AddUnsignedIntToJson(CJsonUnique& jsonObj, const std::string& key, uint32_t value)
 {
     return AddUnsignedIntToJson(jsonObj.get(), key, value);
+}
+
+bool AddInt64ToJson(CJson* jsonObj, const std::string& key, int64_t value)
+{
+    if ((jsonObj == nullptr) || key.empty()) {
+        return false;
+    }
+
+    CJson* objInJson = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
+    double tmpValue = static_cast<double>(value);
+    if (objInJson == nullptr) {
+        if (cJSON_AddNumberToObject(jsonObj, key.c_str(), tmpValue) == nullptr) {
+            return false;
+        }
+    } else {
+        CJson* tmp = cJSON_CreateNumber(tmpValue);
+        if (tmp == nullptr) {
+            return false;
+        }
+        if (!cJSON_ReplaceItemInObjectCaseSensitive(jsonObj, key.c_str(), tmp)) {
+            cJSON_Delete(tmp);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool AddInt64ToJson(CJsonUnique& jsonObj, const std::string& key, int64_t value)
+{
+    return AddInt64ToJson(jsonObj.get(), key, value);
 }
 }  // namespace AccessToken
 }  // namespace Security

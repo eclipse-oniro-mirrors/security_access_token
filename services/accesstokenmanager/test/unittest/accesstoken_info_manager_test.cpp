@@ -200,9 +200,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level0)
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, tokenInfo);
-    std::string infoDes;
-    tokenInfo->ToString(infoDes);
-    GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -237,10 +234,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level0)
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, tokenInfo);
-
-    std::string infoDes;
-    tokenInfo->ToString(infoDes);
-    GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx1.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -877,9 +870,6 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level0)
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, tokenInfo);
-    std::string infoDes;
-    tokenInfo->ToString(infoDes);
-    GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1468,52 +1458,6 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
 #endif
 
 /**
- * @tc.name: Dump001
- * @tc.desc: Dump tokeninfo.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level0)
-{
-    int fd = -1;
-    std::vector<std::u16string> args;
-
-    // fd is 0
-    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    fd = open("/dev/null", O_WRONLY);
-
-    // hidumper
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    // hidumper -h
-    args.emplace_back(Str8ToStr16("-h"));
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    args.clear();
-    // hidumper -a
-    args.emplace_back(Str8ToStr16("-a"));
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    args.clear();
-    // hidumper -t
-    args.emplace_back(Str8ToStr16("-t"));
-    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    args.clear();
-    // hidumper -t
-    args.emplace_back(Str8ToStr16("-t"));
-    args.emplace_back(Str8ToStr16("-1")); // illegal tokenId
-    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
-
-    args.clear();
-    // hidumper -t
-    args.emplace_back(Str8ToStr16("-t"));
-    args.emplace_back(Str8ToStr16("123")); // invalid tokenId
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
-}
-
-/**
  * @tc.name: DumpTokenInfo001
  * @tc.desc: Test DumpTokenInfo with invalid tokenId.
  * @tc.type: FUNC
@@ -2080,9 +2024,6 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level0)
     hapInfo.apiVersion = DEFAULT_API_VERSION;
     hapInfo.isSystemApp = false;
     hap->Update(hapInfo, policy.permStateList, policy); // permPolicySet_ is null
-
-    std::string info;
-    hap->ToString(info); // permPolicySet_ is null
 
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permStateValues;

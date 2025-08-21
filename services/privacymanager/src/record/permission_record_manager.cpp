@@ -683,9 +683,8 @@ static void TransferToOpcode(const std::vector<std::string>& permissionList, std
 {
     for (const auto& permission : permissionList) {
         int32_t opCode = Constant::OP_INVALID;
-        if (Constant::TransferPermissionToOpcode(permission, opCode)) {
-            opCodeList.insert(opCode);
-        }
+        (void)Constant::TransferPermissionToOpcode(permission, opCode);
+        opCodeList.insert(opCode);
     }
 }
 

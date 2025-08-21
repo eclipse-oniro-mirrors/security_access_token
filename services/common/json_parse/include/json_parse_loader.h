@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include "hap_token_info.h"
 #include "permission_def.h"
 #include "native_token_info_base.h"
 #include "permission_dlp_mode.h"
@@ -72,12 +73,18 @@ public:
     virtual bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
     virtual int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
+    virtual std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
+        std::vector<PermissionStatus> permStateList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
     bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
     int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
+    std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
+        std::vector<PermissionStatus> permStateList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
