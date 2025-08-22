@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     OHOS::Security::AccessToken::AtmCommand cmd(argc, argv);
     std::cout << cmd.ExecCommand();

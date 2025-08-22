@@ -222,28 +222,29 @@ HWTEST_F(TokenOperTest, UpdateGoalItemFromRecord001, TestSize.Level0)
     const char *stringJson2 = "[{\"processName_\":\"partitionslot_host\","
         "\"APL\":2,\"version\":1,\"tokenId\":672003577,\"tokenAttr\":0,\"dcaps\":[],"
         "\"permissions\":[],\"nativeAcls\":[]}]";
-    cJSON* jsonroot = cJSON_Parse(stringJson2);
-    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonroot), 0);
-    cJSON_Delete(jsonroot);
+    cJSON* jsonRoot = cJSON_Parse(stringJson2);
+    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    cJSON_Delete(jsonRoot);
 
     std::string stringJson1 = R"()"\
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
         R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]})";
 
-    cJSON* jsonRoot = cJSON_Parse(stringJson1.c_str());
+    jsonRoot = cJSON_Parse(stringJson1.c_str());
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    cJSON_Delete(jsonRoot);
 
     // processName json is not string
     const char *stringJson3 = "[{\"processName\": 1,"
         "\"APL\":1,\"version\":1,\"tokenId\":672003577,\"tokenAttr\":0,\"dcaps\":[],"
         "\"permissions\":[],\"nativeAcls\":[]}]";
-    jsonroot = cJSON_Parse(stringJson3);
-    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonroot), 0);
-    cJSON_Delete(jsonroot);
+    jsonRoot = cJSON_Parse(stringJson3);
+    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    cJSON_Delete(jsonRoot);
 
     const char *stringJson4 = "[]";
-    jsonroot = cJSON_Parse(stringJson4);
-    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonroot), 0);
-    cJSON_Delete(jsonroot);
+    jsonRoot = cJSON_Parse(stringJson4);
+    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    cJSON_Delete(jsonRoot);
 }
 

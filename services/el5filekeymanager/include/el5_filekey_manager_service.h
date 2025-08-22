@@ -78,7 +78,7 @@ private:
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_;
 #endif
-    void *handler_{nullptr};
+    void *handler_{ nullptr };
 
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerService);
 };

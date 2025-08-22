@@ -416,6 +416,10 @@ HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest001, TestSize.Level3)
 {
     std::string str = JsonToStringFormatted(nullptr);
     EXPECT_TRUE(str.empty());
+
+    CJsonUnique jsonInner = CreateJson();
+    str = JsonToStringFormatted(jsonInner.get(), 501); // 501: level
+    EXPECT_TRUE(str.empty());
 }
 
 /*
@@ -426,14 +430,15 @@ HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest001, TestSize.Level3)
  */
 HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest002, TestSize.Level3)
 {
+    CJsonUnique jsonInner = CreateJson();
+    std::string str = JsonToStringFormatted(jsonInner.get());
+    EXPECT_FALSE(str.empty());
+
     CJsonUnique json = CreateJsonFromString(g_testJsonStr);
     EXPECT_NE(nullptr, json.get());
 
-    std::string str = JsonToStringFormatted(json.get());
+    str = JsonToStringFormatted(json.get());
     EXPECT_FALSE(str.empty());
-
-    str = JsonToStringFormatted(json.get(), 501); // 501: level
-    EXPECT_TRUE(str.empty());
 }
 } // namespace AccessToken
 } // namespace Security

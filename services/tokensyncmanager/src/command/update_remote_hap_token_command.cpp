@@ -47,7 +47,7 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject.get());
 
-    CJson *hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfos");
+    CJson* hapTokenJson = GetObjFromJson(jsonObject, "HapTokenInfos");
     if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, updateTokenInfo_);
     }

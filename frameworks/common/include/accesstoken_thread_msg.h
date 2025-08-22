@@ -22,9 +22,9 @@ extern "C" {
 #endif
 
 uint32_t GetThreadErrorMsgLen(void);
-const char *GetThreadErrorMsg(void);
+const char* GetThreadErrorMsg(void);
 void ClearThreadErrorMsg(void);
-void AddEventMessage(uint32_t domain, const char *tag, const char *format, ...);
+void AddEventMessage(uint32_t domain, const char* tag, const char* format, ...);
 
 #ifdef __cplusplus
 }

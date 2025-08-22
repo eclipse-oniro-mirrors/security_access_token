@@ -43,7 +43,7 @@ uint32_t GetThreadErrorMsgLen(void)
     return g_msgLen;
 }
 
-const char *GetThreadErrorMsg(void)
+const char* GetThreadErrorMsg(void)
 {
     return g_errMsg;
 }
@@ -54,8 +54,8 @@ void ClearThreadErrorMsg(void)
     g_msgLen = 0;
 }
 
-void AppendThreadErrMsg(unsigned int domain, const char *tag,
-    const uint8_t *buff, uint32_t buffLen)
+void AppendThreadErrMsg(unsigned int domain, const char* tag,
+    const uint8_t* buff, uint32_t buffLen)
 {
     if (g_msgLen + buffLen >= MAX_ERROR_MESSAGE_LEN) {
         ACCESSTOKEN_COMMON_LOGE(domain, tag, "Buff will overflow!"
@@ -70,8 +70,8 @@ void AppendThreadErrMsg(unsigned int domain, const char *tag,
     g_msgLen += buffLen;
 }
 
-static bool ReplaceSubstring(unsigned int domain, const char *tag,
-    const char *format, char result[MAX_ERROR_MESSAGE_LEN])
+static bool ReplaceSubstring(unsigned int domain, const char* tag,
+    const char* format, char result[MAX_ERROR_MESSAGE_LEN])
 {
     std::string formatString(format);
 #ifndef USE_NATIVE_TOKEN_KLOG
@@ -86,8 +86,8 @@ static bool ReplaceSubstring(unsigned int domain, const char *tag,
     return true;
 }
 
-void AddEventMessage(unsigned int domain, const char *tag,
-    const char *format, ...)
+void AddEventMessage(unsigned int domain, const char* tag,
+    const char* format, ...)
 {
     va_list ap;
 
@@ -118,7 +118,7 @@ void AddEventMessage(unsigned int domain, const char *tag,
         g_msgLen += static_cast<uint32_t>(buffLen);
     } else {
         va_start(ap, format);
-        char *funName = va_arg(ap, char *);
+        char* funName = va_arg(ap, char*);
         uint32_t lineNo = va_arg(ap, uint32_t);
         va_end(ap);
 

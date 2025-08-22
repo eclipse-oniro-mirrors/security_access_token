@@ -83,16 +83,16 @@ std::string PackJsonToString(const CJsonUnique& jsonObj)
     return PackJsonToString(jsonObj.get());
 }
 
-static std::string GetTabContentString(int32_t level)
+static std::string GetTabContentString(uint32_t level)
 {
     std::string str = "";
-    for (int32_t i = 0; i < level; ++i) {
+    for (uint32_t i = 0; i < level; ++i) {
         str += " ";
     }
     return str;
 }
 
-std::string JsonToStringFormatted(const CJson* jsonObj, int32_t level)
+std::string JsonToStringFormatted(const CJson* jsonObj, uint32_t level)
 {
     if (jsonObj == nullptr || level > PRINT_FORMAT_LEVEL_MAX) {
         return "";
@@ -203,7 +203,7 @@ bool GetArrayFromJson(const CJson* jsonObj, const std::string& key, std::vector<
     return false;
 }
 
-bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string& out)
+bool GetStringFromJson(const CJson* jsonObj, const std::string& key, std::string& out)
 {
     if (jsonObj == nullptr || key.empty()) {
         return false;
@@ -319,9 +319,7 @@ bool AddObjToArray(CJson* jsonArr, CJson* item)
     if (tmpObj == nullptr) {
         return false;
     }
-
-    bool ret = cJSON_AddItemToArray(jsonArr, tmpObj);
-    return ret;
+    return cJSON_AddItemToArray(jsonArr, tmpObj);
 }
 
 bool AddObjToArray(CJsonUnique& jsonArr, CJsonUnique& item)

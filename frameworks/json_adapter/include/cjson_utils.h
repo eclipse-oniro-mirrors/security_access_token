@@ -27,7 +27,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 typedef cJSON CJson;
-typedef std::unique_ptr<CJson, std::function<void(CJson *ptr)>> CJsonUnique;
+typedef std::unique_ptr<CJson, std::function<void(CJson* ptr)>> CJsonUnique;
 
 /* NO Need to call FreeJson to free the returned pointer when it's no longer in use. */
 CJsonUnique CreateJsonFromString(const std::string& jsonStr);
@@ -42,7 +42,7 @@ void FreeJson(CJson* jsonObj);
 std::string PackJsonToString(const CJson* jsonObj);
 std::string PackJsonToString(const CJsonUnique& jsonObj);
 void FreeJsonString(char* jsonStr);
-std::string JsonToStringFormatted(const CJson* jsonObj, int32_t level = 0);
+std::string JsonToStringFormatted(const CJson* jsonObj, uint32_t level = 0);
 
 /*
  * Can't release the returned pointer, otherwise, an exception may occur.
@@ -58,7 +58,7 @@ bool GetArrayFromJson(const CJson* jsonObj, const std::string& key, std::vector<
 /*
 * Return a copy of string in jsonObj in std::string
 */
-bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string& out);
+bool GetStringFromJson(const CJson* jsonObj, const std::string& key, std::string& out);
 
 bool GetIntFromJson(const CJson* jsonObj, const std::string& key, int32_t& value);
 bool GetIntFromJson(const CJsonUnique& jsonObj, const std::string& key, int32_t& value);

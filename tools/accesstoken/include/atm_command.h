@@ -78,7 +78,7 @@ public:
 
 class AtmCommand final {
 public:
-    AtmCommand(int32_t argc, char *argv[]);
+    AtmCommand(int32_t argc, char* argv[]);
     virtual ~AtmCommand() = default;
 
     std::string ExecCommand();
@@ -87,7 +87,7 @@ private:
     std::string GetCommandErrorMsg() const;
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
-    int32_t RunAsCommandMissingOptionArgument(const std::vector<char>& requeredOptions);
+    int32_t RunAsCommandMissingOptionArgument(const std::vector<char>& requiredOptions);
     void RunAsCommandExistentOptionForDump(
         const int32_t& option, AtmToolsParamInfo& info, OptType& type, std::string& permissionName);
     void RunAsCommandExistentOptionForPerm(

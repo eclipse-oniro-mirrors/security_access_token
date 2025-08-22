@@ -19,7 +19,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
-int32_t NapiContextCommon::GetJsErrorCode(int32_t errCode)
+int32_t GetJsErrorCode(int32_t errCode)
 {
     int32_t jsCode;
     switch (errCode) {

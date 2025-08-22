@@ -50,7 +50,7 @@ const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
 static void ReturnPromiseResult(napi_env env, const RequestAsyncContext& context, napi_value result)
 {
     if (context.result.errorCode != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.result.errorCode);
+        int32_t jsCode = GetJsErrorCode(context.result.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
@@ -62,7 +62,7 @@ static void ReturnCallbackResult(napi_env env, const RequestAsyncContext& contex
 {
     napi_value businessError = GetNapiNull(env);
     if (context.result.errorCode != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.result.errorCode);
+        int32_t jsCode = GetJsErrorCode(context.result.errorCode);
         businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
@@ -611,7 +611,7 @@ napi_value NapiRequestPermission::RequestPermissionsFromUser(napi_env env, napi_
     NAPI_CALL(env, napi_create_string_utf8(env, "RequestPermissionsFromUser", NAPI_AUTO_LENGTH, &resource));
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource, RequestPermissionsFromUserExecute, RequestPermissionsFromUserComplete,
-        reinterpret_cast<void *>(asyncContextHandle.get()), &(asyncContextHandle->asyncContextPtr->work)));
+        reinterpret_cast<void*>(asyncContextHandle.get()), &(asyncContextHandle->asyncContextPtr->work)));
 
     NAPI_CALL(env,
         napi_queue_async_work_with_qos(env, asyncContextHandle->asyncContextPtr->work, napi_qos_user_initiated));
@@ -624,15 +624,15 @@ napi_value NapiRequestPermission::RequestPermissionsFromUser(napi_env env, napi_
 bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
     const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_THREE;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_THREE] = { nullptr };
+    size_t argc = MAX_PARAMS_THREE;
+    napi_value argv[MAX_PARAMS_THREE] = { nullptr };
     napi_value thisVar = nullptr;
 
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
         return false;
     }
-    if (argc < NapiContextCommon::MAX_PARAMS_THREE - 1) {
+    if (argc < MAX_PARAMS_THREE - 1) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -658,7 +658,7 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
         return false;
     }
 
-    if (argc == NapiContextCommon::MAX_PARAMS_THREE) {
+    if (argc == MAX_PARAMS_THREE) {
         // argv[2] : callback
         if (!IsUndefinedOrNull(env, argv[2]) && !ParseCallback(env, argv[2], asyncContext->callbackRef)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionRequestResult>");
@@ -792,7 +792,7 @@ napi_value NapiRequestPermission::GetPermissionsStatus(napi_env env, napi_callba
 
     napi_create_async_work(
         env, nullptr, resource, GetPermissionsStatusExecute, GetPermissionsStatusComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work));
     // add async work handle to the napi queue and wait for result
     napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
 
@@ -804,14 +804,14 @@ napi_value NapiRequestPermission::GetPermissionsStatus(napi_env env, napi_callba
 bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, const napi_callback_info& info,
     RequestAsyncContext& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = {nullptr};
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thatVar = nullptr;
 
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
     // 1: can request permissions minnum argc
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO - 1) {
+    if (argc < MAX_PARAMS_TWO - 1) {
         NAPI_CALL_BASE(env, napi_throw(env,
             GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -839,7 +839,7 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
     return true;
 }
 
-void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void *data)
+void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void* data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -865,7 +865,7 @@ void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void *data
     }
 }
 
-void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_status status, void *data)
+void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_status status, void* data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
     if (asyncContext == nullptr) {
