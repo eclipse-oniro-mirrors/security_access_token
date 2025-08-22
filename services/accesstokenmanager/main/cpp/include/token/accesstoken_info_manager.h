@@ -75,10 +75,6 @@ public:
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
     int32_t ClearUserPolicy();
     bool GetPermDialogCap(AccessTokenID tokenID);
-    void DumpToken();
-    int32_t GetCurDumpTaskNum();
-    void AddDumpTaskNum();
-    void ReduceDumpTaskNum();
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
@@ -145,16 +141,11 @@ private:
     int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void GetNativePermissionList(const NativeTokenInfoBase& native,
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
-    bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
-        const std::vector<std::string>& nativeAcls);
-    int32_t GetNativeCfgInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
-    void NativeTokenStateToString(const NativeTokenInfoBase& native, std::string& info, std::string& invalidPermString);
-    void NativeTokenToString(AccessTokenID tokenID, std::string& info);
+    std::string NativeTokenToString(AccessTokenID tokenID);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     void UpdateHapToKernel(AccessTokenID tokenID, int32_t userId);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     bool hasInited_;
-    std::atomic_int32_t dumpTaskNum_;
 
     OHOS::Utils::RWLock hapTokenInfoLock_;
     OHOS::Utils::RWLock nativeTokenInfoLock_;

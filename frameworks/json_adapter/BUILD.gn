@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,14 +12,14 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../../access_token.gni")
+import("../../access_token.gni")
 
 config("accesstoken_json_parse_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("accesstoken_json_parse") {
+ohos_shared_library("accesstoken_cjson_utils") {
   if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
@@ -33,14 +33,9 @@ ohos_shared_library("accesstoken_json_parse") {
     include_dirs = [
       "include",
       "${access_token_path}/frameworks/common/include",
-      "${access_token_path}/frameworks/json_adapter/include",
-      "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     ]
 
-    sources = [
-      "src/json_parse_loader.cpp",
-    ]
+    sources = [ "src/cjson_utils.cpp" ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [
@@ -49,20 +44,12 @@ ohos_shared_library("accesstoken_json_parse") {
     ]
     public_configs = [ ":accesstoken_json_parse_config" ]
 
-    deps = [
-      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils"
-      ]
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
     external_deps = [
       "cJSON:cjson",
       "c_utils:utils",
       "hilog:libhilog",
-      "ipc:ipc_single",
     ]
-    if (customization_config_policy_enable) {
-      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
-    }
   }
 }

@@ -346,22 +346,31 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector
         dprintf(fd, "No Record \n");
         return ERR_OK;
     }
-    for (size_t index = 0; index < result.bundleRecords[0].permissionRecords.size(); index++) {
-        infos.append(R"(  "permissionRecord": [)");
-        infos.append("\n");
-        infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
-        infos.append(R"(    "isRemote": )" + std::to_string(result.bundleRecords[0].isRemote) + ",\n");
-        infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
+    size_t size = result.bundleRecords[0].permissionRecords.size();
+    infos.append("{\n");
+    infos.append(R"(  "permissionRecord": [)");
+    infos.append("\n");
+    for (size_t index = 0; index < size; index++) {
+        infos.append("    {\n");
+        infos.append(R"(      "bundleName": ")" + result.bundleRecords[0].bundleName + R"(")" + ",\n");
+        std::string isRemoteStr = (result.bundleRecords[0].isRemote ? "true" : "false");
+        infos.append(R"(      "isRemote": )" + isRemoteStr + ",\n");
+        infos.append(R"(      "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
                     R"(")" + ",\n");
         time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
-        infos.append(R"(    "lastAccessTime": )" + std::to_string(lastAccessTime) + ",\n");
-        infos.append(R"(    "lastAccessDuration": )" +
+        infos.append(R"(      "lastAccessTime": )" + std::to_string(lastAccessTime) + ",\n");
+        infos.append(R"(      "lastAccessDuration": )" +
                     std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
-        infos.append(R"(    "accessCount": ")" +
-                    std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
-        infos.append("  ]");
+        infos.append(R"(      "accessCount": )" +
+            std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + "\n");
+        infos.append("    }");
+        if (index != (size - 1)) {
+            infos.append(",");
+        }
         infos.append("\n");
     }
+    infos.append("  ]\n");
+    infos.append("}");
     dprintf(fd, "%s\n", infos.c_str());
     return ERR_OK;
 }

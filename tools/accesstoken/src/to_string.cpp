@@ -16,104 +16,164 @@
 #include "to_string.h"
 
 #include "constant_common.h"
+#include "permission_map.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-void ToString::DetailUsedRecordToString(
-    bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos)
+static void DetailUsedRecordToJson(const std::vector<UsedRecordDetail>& detailRecord, CJsonUnique& detailsJson)
 {
-    if (isAccessDetail) {
-        infos.append(R"(          "accessRecords": [)");
-    } else {
-        infos.append(R"(          "rejectRecords": [)");
-    }
-    infos.append("\n");
     for (const auto& detail : detailRecord) {
-        infos.append("            {");
-        infos.append("\n");
-        infos.append(R"(              "status": ")" + std::to_string(detail.status) + R"(")" + ",\n");
-        infos.append(R"(              "lockScreenStatus": ")" + std::to_string(
-            detail.lockScreenStatus) + R"(")" + ",\n");
-        infos.append(R"(              "timestamp": ")" + std::to_string(detail.timestamp) + R"(")" + ",\n");
-        infos.append(R"(              "duration": )" + std::to_string(detail.accessDuration) + ",\n");
-        infos.append(R"(              "count": )" + std::to_string(detail.count) + ",\n");
-        infos.append(R"(              "usedType": )" + std::to_string(detail.type) + ",\n");
-        infos.append("            },");
-        infos.append("\n");
-    }
+        CJsonUnique recordJson = CreateJson();
+        (void)AddIntToJson(recordJson, "status", detail.status);
+        (void)AddIntToJson(recordJson, "lockScreenStatus", detail.lockScreenStatus);
+        (void)AddInt64ToJson(recordJson, "timestamp", detail.timestamp);
+        (void)AddInt64ToJson(recordJson, "duration", detail.accessDuration);
+        (void)AddIntToJson(recordJson, "count", detail.count);
+        (void)AddIntToJson(recordJson, "usedType", detail.type);
 
-    infos.append("          ]");
-    infos.append("\n");
-}
-
-void ToString::PermissionUsedRecordToString(
-    const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos)
-{
-    for (const auto& perm : permissionRecords) {
-        infos.append("        {");
-        infos.append("\n");
-        infos.append(R"(          "permissionName": ")" + perm.permissionName + R"(")" + ",\n");
-        infos.append(R"(          "accessCount": ")" + std::to_string(perm.accessCount) + R"(")" + ",\n");
-        infos.append(R"(          "secAccessCount": ")" + std::to_string(perm.secAccessCount) + R"(")" + ",\n");
-        infos.append(R"(          "rejectCount": )" + std::to_string(perm.rejectCount) + ",\n");
-        infos.append(R"(          "lastAccessTime": )" + std::to_string(perm.lastAccessTime) + ",\n");
-        infos.append(R"(          "lastRejectTime": )" + std::to_string(perm.lastRejectTime) + ",\n");
-        infos.append(R"(          "lastAccessDuration": )" + std::to_string(perm.lastAccessDuration) + ",\n");
-        ToString::DetailUsedRecordToString(true, perm.accessRecords, infos);
-        ToString::DetailUsedRecordToString(false, perm.rejectRecords, infos);
-        infos.append("        },");
-        infos.append("\n");
+        (void)AddObjToArray(detailsJson, recordJson);
     }
 }
 
-void ToString::BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos)
+std::string ToString::PermissionUsedResultToString(const PermissionUsedResult& result)
 {
-    infos.append("    {");
-    infos.append("\n");
-    infos.append(R"(      "tokenId": )" + std::to_string(bundleRecord.tokenId) + ",\n");
-    infos.append(R"(      "isRemote": )" + std::to_string(bundleRecord.isRemote) + ",\n");
-    infos.append(R"(      "bundleName": )" + bundleRecord.bundleName + ",\n");
-    infos.append(R"(      "permissionRecords": [)");
-    infos.append("\n");
+    CJsonUnique responeJsion = CreateJson();
+    (void)AddInt64ToJson(responeJsion, "beginTime", result.beginTimeMillis);
+    (void)AddInt64ToJson(responeJsion, "endTime", result.endTimeMillis);
+    
+    CJsonUnique bundleRecordsJson = CreateJsonArray();
+    for (const auto& bundleRecord : result.bundleRecords) {
+        CJsonUnique bundleRecordJson = CreateJson();
+        (void)AddUnsignedIntToJson(bundleRecordJson, "tokenId", bundleRecord.tokenId);
+        (void)AddBoolToJson(bundleRecordJson, "isRemote", bundleRecord.isRemote);
+        (void)AddStringToJson(bundleRecordJson, "bundleName", bundleRecord.bundleName);
 
-    ToString::PermissionUsedRecordToString(bundleRecord.permissionRecords, infos);
+        CJsonUnique permRecordListJson = CreateJsonArray();
+        for (const auto& permRecord : bundleRecord.permissionRecords) {
+            CJsonUnique permRecordJson = CreateJson();
+            (void)AddStringToJson(permRecordJson, "permissionName", permRecord.permissionName);
+            (void)AddIntToJson(permRecordJson, "accessCount", permRecord.accessCount);
+            (void)AddIntToJson(permRecordJson, "secAccessCount", permRecord.secAccessCount);
+            (void)AddIntToJson(permRecordJson, "rejectCount", permRecord.rejectCount);
+            (void)AddInt64ToJson(permRecordJson, "lastAccessTime", permRecord.lastAccessTime);
+            (void)AddInt64ToJson(permRecordJson, "lastRejectTime", permRecord.lastRejectTime);
+            (void)AddInt64ToJson(permRecordJson, "lastAccessDuration", permRecord.lastAccessDuration);
 
-    infos.append("      ]");
-    infos.append("\n");
-    infos.append("    }");
-    infos.append("\n");
+            CJsonUnique accessDetailsJson = CreateJsonArray();
+            DetailUsedRecordToJson(permRecord.accessRecords, accessDetailsJson);
+            (void)AddObjToJson(permRecordJson, "accessRecords", accessDetailsJson);
+
+            CJsonUnique rejectDetailsJson = CreateJsonArray();
+            DetailUsedRecordToJson(permRecord.rejectRecords, rejectDetailsJson);
+            (void)AddObjToJson(permRecordJson, "rejectRecords", rejectDetailsJson);
+
+            (void)AddObjToArray(permRecordListJson, permRecordJson);
+        }
+        (void)AddObjToJson(bundleRecordJson, "permissionRecords", permRecordListJson);
+        (void)AddObjToArray(bundleRecordsJson, bundleRecordJson);
+    }
+    (void)AddObjToJson(responeJsion, "bundleRecords", bundleRecordsJson);
+    return JsonToStringFormatted(responeJsion.get());
 }
 
-void ToString::PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos)
+std::string ToString::PermissionUsedTypeInfoToString(const std::vector<PermissionUsedTypeInfo>& typeInfos)
 {
-    if (result.bundleRecords.empty()) {
-        return;
+    CJsonUnique useTypeInfoJson = CreateJsonArray();
+    for (const auto& type : typeInfos) {
+        CJsonUnique tmpJson = CreateJson();
+        (void)AddUnsignedIntToJson(tmpJson, "tokenId", type.tokenId);
+        (void)AddStringToJson(tmpJson, "permissionName", type.permissionName);
+        (void)AddObjToArray(useTypeInfoJson, tmpJson);
     }
-    infos.append("{");
-    infos.append("\n");
-    infos.append(R"(  "beginTime": )" + std::to_string(result.beginTimeMillis) + ",\n");
-    infos.append(R"(  "endTime": )" + std::to_string(result.endTimeMillis) + ",\n");
-    infos.append(R"(  "bundleRecords": [)");
-    infos.append("\n");
-
-    for (const auto& res : result.bundleRecords) {
-        ToString::BundleUsedRecordToString(res, infos);
-    }
-
-    infos.append("  ]");
-    infos.append("\n");
-    infos.append("}");
-    infos.append("\n");
+    return JsonToStringFormatted(useTypeInfoJson.get());
 }
 
-void ToString::PermissionUsedTypeInfoToString(const PermissionUsedTypeInfo& info, std::string& infos)
+static std::string FormatApl(ATokenAplEnum availableLevel)
 {
-    infos.append("{\n");
-    infos.append(R"(  "tokenId": )" + std::to_string(info.tokenId) + ",\n");
-    infos.append(R"(  "permissionName": )" + info.permissionName + ",\n");
-    infos.append(R"(  "usedType": )" + std::to_string(info.type) + ",\n");
-    infos.append("}\n");
+    std::string apl = "";
+    switch (availableLevel) {
+        case ATokenAplEnum::APL_NORMAL:
+            apl = "NORMAL";
+            break;
+        case ATokenAplEnum::APL_SYSTEM_BASIC:
+            apl = "SYSTEM_BASIC";
+            break;
+        case ATokenAplEnum::APL_SYSTEM_CORE:
+            apl = "SYSTEM_CORE";
+            break;
+        default:
+            apl = "invalid apl";
+            break;
+    }
+    return apl;
+}
+
+static std::string FormatAvailableType(ATokenAvailableTypeEnum availableType)
+{
+    std::string type = "";
+    switch (availableType) {
+        case ATokenAvailableTypeEnum::NORMAL:
+            type = "NORMAL";
+            break;
+        case ATokenAvailableTypeEnum::SYSTEM:
+            type = "SYSTEM";
+            break;
+        case ATokenAvailableTypeEnum::MDM:
+            type = "MDM";
+            break;
+        case ATokenAvailableTypeEnum::SYSTEM_AND_MDM:
+            type = "MDM";
+            break;
+        case ATokenAvailableTypeEnum::SERVICE:
+            type = "SERVICE";
+            break;
+        case ATokenAvailableTypeEnum::ENTERPRISE_NORMAL:
+            type = "ENTERPRISE_NORMAL";
+            break;
+        default:
+            type = "invalid type";
+            break;
+    }
+    return type;
+}
+
+static void PermDefToJson(const PermissionBriefDef& briefDef, CJsonUnique& permDefJson)
+{
+    std::string grantMode = briefDef.grantMode == GrantMode::USER_GRANT ? "USER_GRANT" : "SYSTEM_GRANT";
+    (void)AddStringToJson(permDefJson, "permissionName", briefDef.permissionName);
+    (void)AddStringToJson(permDefJson, "grantMode", grantMode);
+    (void)AddStringToJson(permDefJson, "availableLevel", FormatApl(briefDef.availableLevel));
+    (void)AddStringToJson(permDefJson, "availableType", FormatAvailableType(briefDef.availableType));
+    (void)AddBoolToJson(permDefJson, "distributedSceneEnable", briefDef.distributedSceneEnable);
+    (void)AddBoolToJson(permDefJson, "isKernelEffect", briefDef.isKernelEffect);
+    (void)AddBoolToJson(permDefJson, "hasValue", briefDef.hasValue);
+}
+
+std::string ToString::DumpPermDefinition(const std::string& permissionName)
+{
+    CJsonUnique permDefJson = nullptr;
+    if (permissionName.empty()) {
+        size_t count = GetDefPermissionsSize();
+        permDefJson = CreateJsonArray();
+        for (size_t i = 0; i < count; ++i) {
+            PermissionBriefDef briefDef;
+            GetPermissionBriefDef(i, briefDef);
+            CJsonUnique sinPrmDefJson = CreateJson();
+            PermDefToJson(briefDef, sinPrmDefJson);
+
+            (void)AddObjToArray(permDefJson, sinPrmDefJson);
+        }
+    } else {
+        uint32_t code = 0;
+        if (TransferPermissionToOpcode(permissionName, code)) {
+            PermissionBriefDef briefDef;
+            GetPermissionBriefDef(code, briefDef);
+            permDefJson = CreateJson();
+            PermDefToJson(briefDef, permDefJson);
+        }
+    }
+    return JsonToStringFormatted(permDefJson.get());
 }
 } // namespace AccessToken
 } // namespace Security

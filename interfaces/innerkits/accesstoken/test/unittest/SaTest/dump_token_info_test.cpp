@@ -125,30 +125,30 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest002, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDef001
- * @tc.desc: Get dump permission definitions
+ * @tc.name: DumpTokenInfoFuncTest001
+ * @tc.desc: Get dump token information with valid tokenID
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(DumpTokenInfoTest, DumpPermDef001, TestSize.Level1)
+HWTEST_F(DumpTokenInfoTest, DumpTokenInfoFuncTest001, TestSize.Level1)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "DumpPermDef001");
-    SetSelfTokenID(g_selfTokenId);
-    std::string dumpInfo1;
-    AtmToolsParamInfo info;
-    info.type = DUMP_PERM;
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo1);
-    ASSERT_EQ(false, dumpInfo1.empty());
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoFuncTest001");
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, g_PolicyPrams, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
-    std::string dumpInfo2;
-    info.permissionName = "ohos.permission.READ_MEDIA";
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo2);
-    ASSERT_EQ(false, dumpInfo2.empty());
+    std::string dumpInfo;
+    AtmToolsParamInfo info1;
+    info1.tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenKit::DumpTokenInfo(info1, dumpInfo);
+    EXPECT_NE("", dumpInfo);
 
-    std::string dumpInfo3;
-    info.permissionName = "ohos.permission.INVALID";
-    AccessTokenKit::DumpTokenInfo(info, dumpInfo3);
-    ASSERT_EQ(true, dumpInfo3.empty());
+    AtmToolsParamInfo info2;
+    info2.processName = "hdcd";
+    AccessTokenKit::DumpTokenInfo(info2, dumpInfo);
+    EXPECT_NE("", dumpInfo);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

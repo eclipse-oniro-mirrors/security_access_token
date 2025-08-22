@@ -46,7 +46,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-constexpr const uint32_t INVALID_ATM_SET_STATUS = 2;
 /**
  * @brief Declares atm tools param class
  */
@@ -56,20 +55,10 @@ constexpr const uint32_t INVALID_ATM_SET_STATUS = 2;
  */
 class AtmToolsParamInfo final {
 public:
-    /**
-     * operate type, for details about the valid values,
-     * see the definition of OptType in the access_token.h file.
-     */
-    OptType type = DEFAULT_OPER;
-    union {
-        AccessTokenID tokenId = 0;
-        int32_t userID;
-    };
-    uint32_t status = INVALID_ATM_SET_STATUS;
+    AccessTokenID tokenId = 0;
     std::string permissionName;
     std::string bundleName;
     std::string processName;
-    ToggleModeType toggleMode = TOGGLE_REQUEST;
 };
 } // namespace AccessToken
 } // namespace Security

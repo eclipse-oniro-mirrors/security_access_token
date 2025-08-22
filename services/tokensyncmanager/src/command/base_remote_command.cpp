@@ -81,17 +81,17 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
         ToPermStateJson(permStateJson.get(), permState);
         AddObjToArray(permStatesJson, permStateJson);
     }
-    CJsonUnique DcapsJson = CreateJsonArray();
+    CJsonUnique dcapsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.dcap) {
         cJSON *tmpObj = cJSON_CreateString(item.c_str());
-        AddObjToArray(DcapsJson.get(), tmpObj);
+        AddObjToArray(dcapsJson.get(), tmpObj);
         cJSON_Delete(tmpObj);
         tmpObj = nullptr;
     }
-    CJsonUnique NativeAclsJson = CreateJsonArray();
+    CJsonUnique nativeAclsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.nativeAcls) {
         cJSON *tmpObj = cJSON_CreateString(item.c_str());
-        AddObjToArray(NativeAclsJson.get(), tmpObj);
+        AddObjToArray(nativeAclsJson.get(), tmpObj);
         cJSON_Delete(tmpObj);
         tmpObj = nullptr;
     }
@@ -101,8 +101,8 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
     AddUnsignedIntToJson(nativeTokenJson, "version", tokenInfo.ver);
     AddUnsignedIntToJson(nativeTokenJson, "tokenId", tokenInfo.tokenID);
     AddUnsignedIntToJson(nativeTokenJson, "tokenAttr", tokenInfo.tokenAttr);
-    AddObjToJson(nativeTokenJson, "dcaps", DcapsJson);
-    AddObjToJson(nativeTokenJson, "nativeAcls", NativeAclsJson);
+    AddObjToJson(nativeTokenJson, "dcaps", dcapsJson);
+    AddObjToJson(nativeTokenJson, "nativeAcls", nativeAclsJson);
     AddObjToJson(nativeTokenJson, "permState", permStatesJson);
     return nativeTokenJson;
 }
