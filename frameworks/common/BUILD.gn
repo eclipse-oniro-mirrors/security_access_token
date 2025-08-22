@@ -169,7 +169,9 @@ ohos_shared_library("accesstoken_common_cxx") {
     "src/constant_common.cpp",
     "src/data_validator.cpp",
     "src/permission_map.cpp",
+    "src/permission_validator.cpp",
     "src/time_util.cpp",
+    "src/tokenid_attributes.cpp",
   ]
 
   deps = [

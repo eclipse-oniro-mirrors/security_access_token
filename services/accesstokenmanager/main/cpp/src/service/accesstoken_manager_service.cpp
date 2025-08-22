@@ -51,6 +51,7 @@
 #include "string_ex.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
+#include "tokenid_attributes.h"
 #include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
@@ -191,7 +192,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
     if ((res == PERMISSION_GRANTED) &&
-        (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
+        (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
         res = AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permissionName) ?
             PERMISSION_DENIED : PERMISSION_GRANTED;
     }
