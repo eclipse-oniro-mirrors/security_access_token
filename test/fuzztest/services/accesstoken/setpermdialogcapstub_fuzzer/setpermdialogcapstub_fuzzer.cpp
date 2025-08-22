@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "setpermdialogcap_fuzzer.h"
+#include "setpermdialogcapstub_fuzzer.h"
 
 #include <string>
 #include <thread>
@@ -50,7 +50,7 @@ namespace OHOS {
             .dcaps = nullptr,
             .perms = perms,
             .acls = nullptr,
-            .processName = "setpermdialogcap_fuzzer",
+            .processName = "setpermdialogcapstub_fuzzer",
             .aplStr = "system_core",
         };
 
@@ -60,7 +60,7 @@ namespace OHOS {
         delete[] perms;
     }
 
-    bool SetPermDialogCapFuzzTest(const uint8_t* data, size_t size)
+    bool SetPermDialogCapStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -97,6 +97,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::SetPermDialogCapFuzzTest(data, size);
+    OHOS::SetPermDialogCapStubFuzzTest(data, size);
     return 0;
 }
