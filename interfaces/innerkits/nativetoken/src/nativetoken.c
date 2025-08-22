@@ -347,7 +347,7 @@ static uint32_t GetRandomTokenId(uint32_t *randNum)
     (void)fdsan_close_with_tag(fd, g_nativeFdTag);
 
     if (len != sizeof(random)) {
-        LOGC("Faild to read, len(%" PRIdPTR "", len);
+        LOGC("Failed to read, len(%" PRIdPTR "", len);
         return ATRET_FAILED;
     }
     *randNum = random;

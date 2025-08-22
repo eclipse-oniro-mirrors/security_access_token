@@ -15,11 +15,11 @@ import("//build/test.gni")
 import("../../../../../access_token.gni")
 import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("SetPermDialogCapFuzzTest") {
+ohos_fuzztest("SetPermDialogCapStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [ "setpermdialogcap_fuzzer.cpp" ]
+  sources = [ "setpermdialogcapstub_fuzzer.cpp" ]
 
   cflags = [
     "-g",
