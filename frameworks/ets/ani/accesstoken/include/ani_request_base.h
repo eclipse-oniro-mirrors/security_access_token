@@ -112,6 +112,7 @@ protected:
 
 private:
     int32_t sessionId_ = 0;
+    std::atomic<bool> isOnResult_ = false;
 };
 
 } // namespace AccessToken
