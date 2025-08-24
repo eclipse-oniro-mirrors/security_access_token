@@ -811,7 +811,7 @@ bool NapiRequestPermission::ParseInputToGetQueryResult(const napi_env& env, cons
     void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
     // 1: can request permissions minnum argc
-    if (argc < MAX_PARAMS_TWO - 1) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env,
             GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;

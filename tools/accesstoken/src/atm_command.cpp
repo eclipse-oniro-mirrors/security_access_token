@@ -55,6 +55,8 @@ static const std::string HELP_MSG_DUMP =
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
     "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
+#else
+    "";
 #endif
 
 static const std::string HELP_MSG_PERM =
