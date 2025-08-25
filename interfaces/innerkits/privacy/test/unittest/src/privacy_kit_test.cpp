@@ -46,7 +46,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
-static const uint32_t ACCESS_TOKEN_UID = 3020;
 static AccessTokenID g_nativeToken = 0;
 static AccessTokenID g_shellToken = 0;
 static MockHapToken* g_mock = nullptr;
@@ -1576,39 +1575,22 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
     ASSERT_NE(0, tokenId); // hap MICROPHONE_BACKGROUND permission
     ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName)); // background hap
 
-    info.isSystemApp = true;
-    info.bundleName = "ohos.privacy_test.microphone.sys_app";
-    tokenIdEx = PrivacyTestCommon::AllocTestHapToken(info, policy);
-    AccessTokenID sysApptokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    {
+        MockNativeToken mock("audio_server");
 
-    uint32_t selfUid = getuid();
-    uint64_t selfTokenId = GetSelfTokenID();
-    setuid(ACCESS_TOKEN_UID);
+        // callkit set hap to foreground with MICROPHONE_BACKGROUND
+        EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, true));
+        EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
 
-    uint32_t opCode1 = -1;
-    uint32_t opCode2 = -1;
-    ASSERT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
-    ASSERT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
-    ASSERT_EQ(0, AddPermissionToKernel(sysApptokenId, {opCode1, opCode2}, {1, 1}));
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+        // callkit set g_tokenIdE to foreground without MICROPHONE_BACKGROUND
+        EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
+        EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
 
-    // callkit set hap to foreground with MICROPHONE_BACKGROUND
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, true));
-    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
+        EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, false));
+        EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
+    }
 
-    // callkit set g_tokenIdE to foreground without MICROPHONE_BACKGROUND
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
-    EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
-    
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(tokenId, false));
-    EXPECT_EQ(0, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
-
-    ASSERT_EQ(0, RemovePermissionFromKernel(sysApptokenId));
     ASSERT_EQ(0, PrivacyTestCommon::DeleteTestHapToken(tokenId));
-    ASSERT_EQ(0, PrivacyTestCommon::DeleteTestHapToken(sysApptokenId));
-
-    setuid(selfUid);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
 }
 
 /**
@@ -2765,34 +2747,13 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest005, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level0)
 {
-    uint32_t opCode1;
-    uint32_t opCode2;
-    uint32_t selfUid = getuid();
-    uint64_t selfTokenId = GetSelfTokenID();
-    HapInfoParams infoParmsA = g_infoParmsA;
-    HapPolicyParams policyPramsA = g_policyPramsA;
-    infoParmsA.isSystemApp = true;
-    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(infoParmsA, policyPramsA);
-    uint32_t tokenTest = tokenIdEx.tokenIdExStruct.tokenID;
-    setuid(ACCESS_TOKEN_UID);
-
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
-    EXPECT_EQ(RET_SUCCESS, AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1}));
-
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+    MockNativeToken mock("audio_server");
 
     std::string permissionName = "ohos.permission.MICROPHONE";
     EXPECT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
     EXPECT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false));
-
-    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenIdEx.tokenIDEx));
-    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenTest));
-
-    setuid(selfUid);
-    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
 }
 
 /**
@@ -2803,29 +2764,12 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level0)
 {
-    uint32_t opCode1;
-    uint32_t opCode2;
-    uint32_t tokenTest = 111; /// 111 is a tokenId
-    uint32_t selfUid = getuid();
-    uint64_t selfTokenId = GetSelfTokenID();
-    setuid(ACCESS_TOKEN_UID);
-
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
-    int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
-    EXPECT_EQ(res, 0);
-
-    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    MockNativeToken mock("audio_server");
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true));
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true), PrivacyError::ERR_PARAM_INVALID);
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), 0);
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false), PrivacyError::ERR_PARAM_INVALID);
-
-    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
-
-    setuid(selfUid);
-    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
 }
 
 /**
@@ -2836,30 +2780,13 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level0)
 {
-    uint32_t opCode1;
-    uint32_t opCode2;
-    uint32_t tokenTest = 111; /// 111 is a tokenId
-    uint32_t selfUid = getuid();
-    uint64_t selfTokenId = GetSelfTokenID();
-    setuid(ACCESS_TOKEN_UID);
-
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
-    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
-    int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
-    EXPECT_EQ(res, 0);
-
-    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    MockNativeToken mock("audio_server");
 
     uint32_t nativeTokenId = 672137215; // 672137215 is a native token
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(nativeTokenId, true), PrivacyError::ERR_PARAM_INVALID);
 
     uint32_t invalidTokenId = 0;
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(invalidTokenId, true), PrivacyError::ERR_PARAM_INVALID);
-
-    EXPECT_EQ(RET_SUCCESS, RemovePermissionFromKernel(tokenTest));
-
-    setuid(selfUid);
-    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId));
 }
 
 /**
