@@ -23,6 +23,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_common.h"
+#include "ani_hisysevent_adapter.h"
 #include "hisysevent.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -76,6 +77,8 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
             "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = RET_FAILED;
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
@@ -373,6 +376,9 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         ani_object result = reinterpret_cast<ani_object>(nullRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
+            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
         (void)ExecuteAsyncCallback(env, callback, error, result);
         return;
     }

@@ -19,6 +19,7 @@
 #include "ability_context.h"
 #include "ani.h"
 #include "ani_base_context.h"
+#include "ani_hisysevent_adapter.h"
 #include "ani_request_base.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
@@ -37,6 +38,7 @@ void CreateUIExtension(
     std::shared_ptr<RequestAsyncContextBase> asyncContext,
     std::shared_ptr<RequestInstanceControl> controller
 );
+int32_t GetDifferRequestErrorCode(const ReqPermFromUserErrorCode& errorCode, const AniRequestType& contextType);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
