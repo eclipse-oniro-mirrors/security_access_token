@@ -267,7 +267,7 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());
@@ -302,7 +302,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
@@ -336,7 +336,7 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
@@ -386,7 +386,7 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    if (!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) {
+    if (!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) is invalid.", tokenID);
         return nullptr;
     }
@@ -430,7 +430,7 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());

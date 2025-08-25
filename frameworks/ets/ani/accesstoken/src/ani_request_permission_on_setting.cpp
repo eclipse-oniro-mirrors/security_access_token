@@ -23,7 +23,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr int32_t REQUEST_REALDY_EXIST = 1;
+constexpr int32_t REQUEST_ALREADY_EXIST = 1;
 constexpr int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 constexpr int32_t PERM_IS_NOT_DECLARE = 3;
 constexpr int32_t ALL_PERM_GRANTED = 4;
@@ -118,7 +118,7 @@ int32_t RequestPermOnSettingAsyncContext::ConvertErrorCode(int32_t errorCode)
         case RET_SUCCESS:
             stsCode = STS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             stsCode = STS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:
