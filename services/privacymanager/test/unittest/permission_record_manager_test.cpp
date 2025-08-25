@@ -72,6 +72,7 @@ static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const int32_t PICKER_TYPE_ADD_VALUE = 2;
 static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static const int32_t VALUE_MAX_LEN = 32;
+const static uint32_t TEST_MAX_PERMISSION_USED_TYPE_SIZE = 20;
 static const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 static MockNativeToken* g_mock = nullptr;
 static PermissionStateFull g_testState1 = {
@@ -911,12 +912,12 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestS
 }
 
 /*
- * @tc.name: GetPermissionUsedType001
- * @tc.desc: PermissionRecordManager::GetPermissionUsedType function test
+ * @tc.name: GetPermissionUsedTypeInfos001
+ * @tc.desc: PermissionRecordManager::GetPermissionUsedTypeInfos001 function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedTypeInfos001, TestSize.Level0)
 {
     uint32_t tokenId = RANDOM_TOKENID;
     std::string permissionName = "ohos.permission.PERMISSION_RECORD_MANAGER_TEST";
@@ -932,6 +933,49 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level0)
 
     permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
+}
+
+/*
+ * @tc.name: GetPermissionUsedTypeInfos002
+ * @tc.desc: PrivacyKit::GetPermissionUsedTypeInfos function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType002, TestSize.Level0)
+{
+    MockNativeToken mock("audio_server"); // set self tokenID to audio_service with PERMISSION_USED_STATS
+    // add 21 permission used type record
+    std::vector<AccessTokenID> tokenIdList;
+    uint32_t count = TEST_MAX_PERMISSION_USED_TYPE_SIZE + 1;
+    for (uint32_t i = 0; i < count; i++) {
+        HapInfoParams infoParms = g_InfoParms1;
+        HapPolicyParams policyPrams = g_PolicyPrams1;
+        infoParms.bundleName = infoParms.bundleName + std::to_string(i);
+
+        AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(infoParms, policyPrams);
+        AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+        EXPECT_NE(INVALID_TOKENID, tokenId);
+        tokenIdList.emplace_back(tokenId);
+
+        AddPermParamInfo info;
+        info.tokenId = tokenId;
+        info.permissionName = "ohos.permission.READ_MESSAGES";
+        info.successCount = 1;
+        info.failCount = 0;
+        EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    }
+
+    AccessTokenID tokenId = 0;
+    std::string permissionName = "ohos.permission.READ_MESSAGES";
+    std::vector<PermissionUsedTypeInfo> results;
+    // record over size
+    EXPECT_EQ(PrivacyError::ERR_OVERSIZE,
+        PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
+
+    for (const auto& id : tokenIdList) {
+        EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(id));
+        EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(id));
+    }
 }
 
 /*

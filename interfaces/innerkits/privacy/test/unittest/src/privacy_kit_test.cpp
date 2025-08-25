@@ -62,8 +62,6 @@ static constexpr int32_t THIRD_INDEX = 2;
 static constexpr int32_t RESULT_NUM_ONE = 1;
 static constexpr int32_t RESULT_NUM_TWO = 2;
 static constexpr int32_t RESULT_NUM_THREE = 3;
-// if change this, origin value in privacy_manager_proxy.cpp should change together
-const static uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 const static int32_t NOT_EXSIT_PID = 99999999;
 const static int32_t INVALID_USER_ID = -1;
 const static int32_t USER_ID_2 = 2;
@@ -194,6 +192,14 @@ static BundleUsedRecord g_bundleUsedRecord = {
     .isRemote = false,
     .deviceId = "you guess",
     .bundleName = "com.ohos.test",
+};
+
+PermissionStateFull g_infoManagerTestStateD = {
+    .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
+    .isGeneral = true,
+    .resDeviceID = {"localC"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 
 static AccessTokenID g_selfTokenId = 0;
@@ -1558,19 +1564,11 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
         .appIDDesc = "privacy_test.microphone"
     };
 
-    PermissionStateFull infoManagerTestStateD = {
-        .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
-        .isGeneral = true,
-        .resDeviceID = {"localC"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
-        .permStateList = {infoManagerTestStateD}
+        .permStateList = {g_infoManagerTestStateD}
     };
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(info, policy);
@@ -2682,49 +2680,6 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level0)
         MockHapToken mock("GetPermissionUsedTypeInfos005", reqPerm, true);
         ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedTypeInfos(
             0, permissionName, results));
-    }
-}
-
-/*
- * @tc.name: GetPermissionUsedTypeInfos006
- * @tc.desc: PrivacyKit::GetPermissionUsedTypeInfos function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level0)
-{
-    uint32_t count = MAX_PERMISSION_USED_TYPE_SIZE + 1;
-
-    // add 2001 permission used type record
-    std::vector<AccessTokenID> tokenIdList;
-
-    for (uint32_t i = 0; i < count; i++) {
-        HapInfoParams infoParms = g_infoParmsC;
-        HapPolicyParams policyPrams = g_policyPramsC;
-        infoParms.bundleName = infoParms.bundleName + std::to_string(i);
-
-        AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(infoParms, policyPrams);
-        AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-        EXPECT_NE(INVALID_TOKENID, tokenId);
-        tokenIdList.emplace_back(tokenId);
-
-        AddPermParamInfo info;
-        info.tokenId = tokenId;
-        info.permissionName = "ohos.permission.READ_CONTACTS";
-        info.successCount = 1;
-        info.failCount = 0;
-        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    }
-
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    std::vector<PermissionUsedTypeInfo> results;
-    // record over size
-    EXPECT_EQ(PrivacyError::ERR_OVERSIZE, PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, results));
-
-    for (const auto& id : tokenIdList) {
-        EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(id));
-        EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(id));
     }
 }
 
