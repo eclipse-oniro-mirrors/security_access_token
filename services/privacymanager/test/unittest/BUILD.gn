@@ -156,6 +156,8 @@ if (is_standard_system && ability_base_enable == true) {
         "ability_runtime:ability_manager",
         "ability_runtime:app_manager",
       ]
+      include_dirs +=
+          [ "${access_token_path}/services/common/ability_manager/include" ]
       sources += [ "client_code_compare_test.cpp" ]
     }
   }

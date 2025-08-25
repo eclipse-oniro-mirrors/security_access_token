@@ -309,7 +309,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
     ASSERT_EQ(1, results2.size());
     ASSERT_EQ(static_cast<int32_t>(tokenId), results2[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     // undefine permission change from INVALIDA to INVALIDB
-    ASSERT_EQ(g_state3.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));    
+    ASSERT_EQ(g_state3.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
