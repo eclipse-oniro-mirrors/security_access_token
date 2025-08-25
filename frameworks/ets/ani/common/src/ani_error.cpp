@@ -190,7 +190,7 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
     return stsCode;
 }
 
-bool BusinessErrorAni::ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID)
+bool BusinessErrorAni::ValidateTokenIDWithThrowError(ani_env* env, AccessTokenID tokenID)
 {
     if (!DataValidator::IsTokenIDValid(tokenID)) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, "The tokenID is 0.");
