@@ -24,6 +24,7 @@
 #undef private
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_def_parcel.h"
 #include "accesstoken_kit.h"
@@ -121,7 +122,8 @@ namespace OHOS {
         SetHapTokenInfo();
         AccessTokenFuzzData fuzzData(data, size);
         AccessTokenID tokenId = 0;
-        if (size % CONSTANTS_NUMBER_FIVE == 0) {
+        FuzzedDataProvider provider(data, size);
+        if ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_FIVE) == 0) {
             tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
         } else {
             tokenId = fuzzData.GetData<AccessTokenID>();
@@ -138,7 +140,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {
             setuid(CONSTANTS_NUMBER_TWO);
         }

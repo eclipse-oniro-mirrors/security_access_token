@@ -73,7 +73,7 @@ namespace OHOS {
         MessageParcel reply;
         MessageOption option;
         AccessTokenID tokenIdHap;
-        bool enable2 = ((size % CONSTANTS_NUMBER_THREE) == 0);
+        bool enable2 = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_THREE) == 0);
         if (enable2) {
             AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
             tokenIdHap = tokenIdEx.tokenIDEx;
@@ -85,7 +85,7 @@ namespace OHOS {
             std::map<int32_t, TokenIdInfo> tokenIdAplMap;
             AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
         }
-        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
         if (enable) {
             setuid(CONSTANTS_NUMBER_TWO);
         }
