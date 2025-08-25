@@ -28,6 +28,9 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static const int32_t TIME_500_MS = 1000 * 500; // 0.5 second
+}
 static void SetNativeTokenId(const std::string &process)
 {
     std::string dumpInfo;
@@ -52,21 +55,6 @@ static void SetNativeTokenId(const std::string &process)
     SetSelfTokenID(tokenID);
 }
 
-void TokenSyncKitTest::SetUpTestCase()
-{}
-
-void TokenSyncKitTest::TearDownTestCase()
-{}
-
-void TokenSyncKitTest::SetUp()
-{
-}
-
-void TokenSyncKitTest::TearDown()
-{}
-
-static const int TIME_500_MS = 1000 * 500; // 0.5 second
-
 static void StartOrStopTokenSyncService(bool start)
 {
     pid_t pid = fork();
@@ -84,6 +72,20 @@ static void StartOrStopTokenSyncService(bool start)
     }
     usleep(TIME_500_MS);
 }
+
+void TokenSyncKitTest::SetUpTestCase()
+{}
+
+void TokenSyncKitTest::TearDownTestCase()
+{}
+
+void TokenSyncKitTest::SetUp()
+{
+    StartOrStopTokenSyncService(false);
+}
+
+void TokenSyncKitTest::TearDown()
+{}
 
 /**
  * @tc.name: UpdateRemoteHapTokenInfo001
