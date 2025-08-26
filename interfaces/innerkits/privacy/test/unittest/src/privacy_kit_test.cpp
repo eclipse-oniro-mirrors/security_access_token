@@ -193,6 +193,14 @@ static BundleUsedRecord g_bundleUsedRecord = {
     .bundleName = "com.ohos.test",
 };
 
+PermissionStateFull g_infoManagerTestStateD = {
+    .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
+    .isGeneral = true,
+    .resDeviceID = {"localC"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_tokenIdA = 0;
 static AccessTokenID g_tokenIdB = 0;
@@ -1555,19 +1563,11 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
         .appIDDesc = "privacy_test.microphone"
     };
 
-    PermissionStateFull infoManagerTestStateD = {
-        .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
-        .isGeneral = true,
-        .resDeviceID = {"localC"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
-        .permStateList = {infoManagerTestStateD}
+        .permStateList = {g_infoManagerTestStateD}
     };
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(info, policy);
