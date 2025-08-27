@@ -412,11 +412,6 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         return nullptr;
     }
     std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
-    if (permissionList.empty()) {
-        BusinessErrorAni::ThrowError(
-            env, STS_ERROR_INNER,  GetErrorMessage(STS_ERROR_INNER, "The permissionList is empty."));
-        return nullptr;
-    }
 
     std::vector<PermissionListState> permList;
     for (const auto& permission : permissionList) {
@@ -727,13 +722,16 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
-                unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
+                item->callbackRef, item->threadId, callbackEqual)) {
+                continue;
+            }
+            if (!callbackEqual) {
                 continue;
             }
         }
 
+        LOGI(ATM_DOMAIN, ATM_TAG, "Callback is equal.");
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
