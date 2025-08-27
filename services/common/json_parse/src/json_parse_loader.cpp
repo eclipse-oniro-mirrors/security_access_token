@@ -142,7 +142,7 @@ bool ConfigPolicLoader::IsDirExsit(const std::string& file)
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 void ConfigPolicLoader::GetConfigFilePathList(std::vector<std::string>& pathList)
 {
-    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
+    CfgDir* dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
     if (dirs == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Can't get cfg file path.");
         return;
@@ -228,13 +228,13 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const st
     }
 
     if (type == ServiceType::ACCESSTOKEN_SERVICE) {
-        CJson *atJson = GetObjFromJson(jsonRes, "accesstoken");
+        CJson* atJson = GetObjFromJson(jsonRes, "accesstoken");
         return GetAtCfgFromJson(atJson, config.atConfig);
     } else if (type == ServiceType::PRIVACY_SERVICE) {
-        CJson *prJson = GetObjFromJson(jsonRes, "privacy");
+        CJson* prJson = GetObjFromJson(jsonRes, "privacy");
         return GetPrivacyCfgFromJson(prJson, config.pConfig);
     }
-    CJson *toSyncJson = GetObjFromJson(jsonRes, "tokensync");
+    CJson* toSyncJson = GetObjFromJson(jsonRes, "tokensync");
     return GetTokenSyncCfgFromJson(toSyncJson, config.tsConfig);
 }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
@@ -266,7 +266,7 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
 
 static int32_t NativeReqPermsGet(const CJson* j, std::vector<PermissionStatus>& permStateList)
 {
-    CJson *permJson = GetArrayFromJson(j, JSON_PERMS);
+    CJson* permJson = GetArrayFromJson(j, JSON_PERMS);
     if (permJson == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "JSON_PERMS is invalid.");
         return ERR_PARAM_INVALID;
@@ -294,7 +294,7 @@ static int32_t NativeReqPermsGet(const CJson* j, std::vector<PermissionStatus>& 
 
 static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id)
 {
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner* >(&id);
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
@@ -320,8 +320,8 @@ static void GetSingleNativeTokenFromJson(const CJson* j,  NativeTokenInfoBase& n
     if (!GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr)) {
         return;
     }
-    CJson *dcapsJson = GetArrayFromJson(j, JSON_DCAPS);
-    CJson *aclsJson = GetArrayFromJson(j, JSON_ACLS);
+    CJson* dcapsJson = GetArrayFromJson(j, JSON_DCAPS);
+    CJson* aclsJson = GetArrayFromJson(j, JSON_ACLS);
     if ((dcapsJson == nullptr) || (aclsJson == nullptr)) {
         return;
     }
@@ -361,7 +361,7 @@ bool ConfigPolicLoader::ParserNativeRawData(
     }
     int32_t len = cJSON_GetArraySize(jsonRes.get());
     for (int32_t i = 0; i < len; i++) {
-        cJSON *item = cJSON_GetArrayItem(jsonRes.get(), i);
+        CJson* item = cJSON_GetArrayItem(jsonRes.get(), i);
         NativeTokenInfoBase token;
         GetSingleNativeTokenFromJson(item, token);
         if (!token.processName.empty()) {
@@ -387,7 +387,7 @@ int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase
     return RET_SUCCESS;
 }
 
-static void JsonFromPermissionDlpMode(const CJson *j, PermissionDlpMode& p)
+static void JsonFromPermissionDlpMode(const CJson* j, PermissionDlpMode& p)
 {
     if (!GetStringFromJson(j, "name", p.permissionName)) {
         return;
@@ -421,9 +421,9 @@ bool ConfigPolicLoader::ParserDlpPermsRawData(
         return false;
     }
 
-    cJSON *dlpPermTokenJson = GetArrayFromJson(jsonRes.get(), "dlpPermissions");
+    CJson* dlpPermTokenJson = GetArrayFromJson(jsonRes.get(), "dlpPermissions");
     if ((dlpPermTokenJson != nullptr)) {
-        CJson *j = nullptr;
+        CJson* j = nullptr;
         std::vector<PermissionDlpMode> dlpPermissions;
         cJSON_ArrayForEach(j, dlpPermTokenJson) {
             PermissionDlpMode p;
@@ -450,8 +450,8 @@ int32_t ConfigPolicLoader::GetDlpPermissions(std::vector<PermissionDlpMode>& dlp
     return RET_SUCCESS;
 }
 
-std::string ConfigPolicLoader::DumpHapTokenInfo(
-    const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden, std::vector<PermissionStatus> permStateList)
+std::string ConfigPolicLoader::DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
+    const std::vector<PermissionStatus>& permStateList)
 {
     CJsonUnique j = CreateJson();
     (void)AddUnsignedIntToJson(j, "tokenID", hapInfo.tokenID);

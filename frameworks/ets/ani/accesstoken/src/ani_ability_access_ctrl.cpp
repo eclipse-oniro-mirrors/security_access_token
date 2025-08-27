@@ -810,7 +810,7 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
     return;
 }
 
-static ani_status AtManagerBindNativeFunction(ani_env *env, ani_class& cls)
+static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
 {
     std::array clsMethods = {
         ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
@@ -828,20 +828,20 @@ static ani_status AtManagerBindNativeFunction(ani_env *env, ani_class& cls)
         ani_native_function { "getPermissionsStatusExecute",
             nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
         ani_native_function{ "getPermissionFlagsExecute",
-            nullptr, reinterpret_cast<void *>(GetPermissionFlagsExecute) },
+            nullptr, reinterpret_cast<void*>(GetPermissionFlagsExecute) },
         ani_native_function{ "setPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
+            nullptr, reinterpret_cast<void*>(SetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "getPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
+            nullptr, reinterpret_cast<void*>(GetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "requestAppPermOnSettingExecute",
-            nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
+            nullptr, reinterpret_cast<void*>(RequestAppPermOnSettingExecute) },
         ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
         ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
     };
     return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
 }
 
-ani_status InitAbilityCtrlFunction(ani_env *env)
+ani_status InitAbilityCtrlFunction(ani_env* env)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");

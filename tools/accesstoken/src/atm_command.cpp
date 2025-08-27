@@ -54,8 +54,10 @@ static const std::string HELP_MSG_DUMP =
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
-#endif
     "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
+#else
+    "";
+#endif
 
 static const std::string HELP_MSG_PERM =
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
@@ -104,9 +106,9 @@ static const struct option LONG_OPTIONS_PERM[] = {
 };
 
 // required option
-static const std::vector<char> REQURIED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
-static const std::vector<char> REQURIED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
-static const std::vector<char> REQURIED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
+static const std::vector<char> REQUIRED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
+static const std::vector<char> REQUIRED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
+static const std::vector<char> REQUIRED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
 
 static const std::string SHORT_OPTIONS_TOGGLE = "hr::u::s::o::i:p:k:";
 static const struct option LONG_OPTIONS_TOGGLE[] = {
@@ -139,7 +141,7 @@ std::map<char, ToggleOperateType> TOGGLE_OPERATE_TYPE = {
 };
 }
 
-AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), name_(TOOLS_NAME)
+AtmCommand::AtmCommand(int32_t argc, char* argv[]) : argc_(argc), argv_(argv), name_(TOOLS_NAME)
 {
     opterr = 0;
 
@@ -224,13 +226,13 @@ std::string AtmCommand::GetUnknownOptionMsg() const
     return result;
 }
 
-int32_t AtmCommand::RunAsCommandMissingOptionArgument(const std::vector<char>& requeredOptions)
+int32_t AtmCommand::RunAsCommandMissingOptionArgument(const std::vector<char>& requiredOptions)
 {
     if (optopt == 'h') {
         return ERR_INVALID_VALUE;
     }
-    auto iter = std::find(requeredOptions.begin(), requeredOptions.end(), optopt);
-    if (iter == requeredOptions.end()) {
+    auto iter = std::find(requiredOptions.begin(), requiredOptions.end(), optopt);
+    if (iter == requiredOptions.end()) {
         resultReceiver_.append(GetUnknownOptionMsg());
         return ERR_INVALID_VALUE;
     }
@@ -426,11 +428,11 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
         case DUMP_RECORD:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
             dumpInfo = DumpRecordInfo(info.tokenId, permissionName);
-#endif
             break;
         case DUMP_TYPE:
             dumpInfo = DumpUsedTypeInfo(info.tokenId, permissionName);
             break;
+#endif
         default:
             resultReceiver_.append("error: miss option \n");
             return ERR_INVALID_VALUE;
@@ -564,7 +566,7 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_DUMP);
+            result = RunAsCommandMissingOptionArgument(REQUIRED_OPTIONS_DUMP);
             break;
         }
 
@@ -604,11 +606,10 @@ int32_t AtmCommand::RunAsCommonCommandForPerm()
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_PERM);
+            result = RunAsCommandMissingOptionArgument(REQUIRED_OPTIONS_PERM);
             break;
         }
         if (option == 'h') {
-            // 'atm dump -h'
             result = ERR_INVALID_VALUE;
             continue;
         }
@@ -647,7 +648,7 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument(REQURIED_OPTIONS_TOGGLE);
+            result = RunAsCommandMissingOptionArgument(REQUIRED_OPTIONS_TOGGLE);
             break;
         }
 

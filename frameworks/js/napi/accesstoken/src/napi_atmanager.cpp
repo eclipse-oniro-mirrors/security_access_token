@@ -49,7 +49,7 @@ constexpr uint32_t FORTH_PARAM = 3;
 static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
 {
     if (context.errorCode != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.errorCode);
+        int32_t jsCode = GetJsErrorCode(context.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.extErrorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
@@ -61,7 +61,7 @@ static void ReturnCallbackResult(napi_env env, const AtManagerAsyncContext& cont
 {
     napi_value businessError = GetNapiNull(env);
     if (context.errorCode != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(context.errorCode);
+        int32_t jsCode = GetJsErrorCode(context.errorCode);
         businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.extErrorMsg));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
@@ -93,7 +93,7 @@ static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const Per
 
 static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermStateChangeData)
 {
-    napi_value result = {nullptr};
+    napi_value result = { nullptr };
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
         napi_create_object(registerPermStateChangeData->env, &result));
     if (!ConvertPermStateChangeInfo(registerPermStateChangeData->env,
@@ -208,7 +208,7 @@ void RegisterPermStateChangeScopePtr::DeleteNapiRef()
     }
 }
 
-void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
+void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char* propName)
 {
     napi_value prop = nullptr;
     napi_create_int32(env, objValue, &prop);
@@ -327,14 +327,14 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
 bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
+    size_t argc = MAX_PARAMS_TWO;
 
-    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = { nullptr };
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -364,14 +364,14 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
 bool NapiAtManager::ParseInputVerifyPermissionSync(const napi_env env, const napi_callback_info info,
     AtManagerSyncContext& syncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
+    size_t argc = MAX_PARAMS_TWO;
 
-    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = { nullptr };
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -398,9 +398,9 @@ bool NapiAtManager::ParseInputVerifyPermissionSync(const napi_env env, const nap
     return true;
 }
 
-void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
+void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
@@ -417,9 +417,9 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
 }
 
-void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
         return;
@@ -458,7 +458,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resources,
         VerifyAccessTokenExecute, VerifyAccessTokenComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     LOGD(ATM_DOMAIN, ATM_TAG, "VerifyAccessToken end.");
@@ -466,12 +466,12 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     return result;
 }
 
-void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
+void NapiAtManager::CheckAccessTokenExecute(napi_env env, void* data)
 {
     if (data == nullptr) {
         return;
     }
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
@@ -481,7 +481,7 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         return;
     }
     if ((asyncContext->permissionName.empty()) ||
-        ((asyncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
+        ((asyncContext->permissionName.length() > MAX_LENGTH))) {
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
         asyncContext->extErrorMsg = "The permission name is empty or exceeds 256 characters.";
         return;
@@ -501,10 +501,10 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         asyncContext->permissionName);
 }
 
-void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, void* data)
     __attribute__((no_sanitize("cfi")))
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
         return;
@@ -539,7 +539,7 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource,
         CheckAccessTokenExecute, CheckAccessTokenComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     LOGD(ATM_DOMAIN, ATM_TAG, "CheckAccessToken end.");
@@ -566,8 +566,8 @@ std::string NapiAtManager::GetPermParamValue(PermissionParamCache& paramCache, c
 
     int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(paramCache.handle));
     if (currCommitId != paramCache.commitIdCache) {
-        char value[NapiContextCommon::VALUE_MAX_LEN] = {0};
-        auto ret = GetParameterValue(paramCache.handle, value, NapiContextCommon::VALUE_MAX_LEN - 1);
+        char value[VALUE_MAX_LEN] = {0};
+        auto ret = GetParameterValue(paramCache.handle, value, VALUE_MAX_LEN - 1);
         if (ret < 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d", ret);
             return "-1";
@@ -622,7 +622,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return nullptr;
     }
     if ((syncContext->permissionName.empty()) ||
-        ((syncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
+        ((syncContext->permissionName.length() > MAX_LENGTH))) {
             std::string errMsg = GetErrorMessage(
                 JS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
             NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
@@ -652,14 +652,14 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_FOUR;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_FOUR] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
     napi_value thatVar = nullptr;
 
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
     // 1: grant and revoke required minnum argc
-    if (argc < NapiContextCommon::MAX_PARAMS_FOUR - 1) {
+    if (argc < MAX_PARAMS_FOUR - 1) {
         NAPI_CALL_BASE(env, napi_throw(env,
             GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -690,7 +690,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
         return false;
     }
 
-    if (argc == NapiContextCommon::MAX_PARAMS_FOUR) {
+    if (argc == MAX_PARAMS_FOUR) {
         // 3: the fourth parameter of argv
         if ((!IsUndefinedOrNull(env, argv[3])) && (!ParseCallback(env, argv[3], asyncContext.callbackRef))) {
             NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
@@ -704,9 +704,9 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
     return true;
 }
 
-void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
+void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
@@ -743,7 +743,7 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
-void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* context = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (context == nullptr) {
@@ -778,7 +778,7 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_create_string_utf8(env, "GetVersion", NAPI_AUTO_LENGTH, &resource));
 
     NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetVersionExecute, GetVersionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     context.release();
@@ -786,9 +786,9 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
     return result;
 }
 
-void NapiAtManager::GetVersionExecute(napi_env env, void *data)
+void NapiAtManager::GetVersionExecute(napi_env env, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
@@ -802,9 +802,9 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
     LOGD(ATM_DOMAIN, ATM_TAG, "Version result = %{public}d.", asyncContext->result);
 }
 
-void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
         return;
@@ -846,7 +846,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource,
         GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
-        reinterpret_cast<void *>(context), &(context->work)));
+        reinterpret_cast<void*>(context), &(context->work)));
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, context->work, napi_qos_default));
 
@@ -855,9 +855,9 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     return result;
 }
 
-void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
+void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void* data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
@@ -894,7 +894,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
-void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
@@ -935,7 +935,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource,
         RevokeUserGrantedPermissionExecute, RevokeUserGrantedPermissionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
     LOGD(ATM_DOMAIN, ATM_TAG, "RevokeUserGrantedPermission end.");
@@ -943,7 +943,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
     return result;
 }
 
-void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
+void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -955,7 +955,7 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
         asyncContext->permissionName, asyncContext->flag);
 }
 
-void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -993,7 +993,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     // define work
     napi_create_async_work(
         env, nullptr, resource, GetPermissionFlagsExecute, GetPermissionFlagsComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work));
     // add async work handle to the napi queue and wait for result
     napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
 
@@ -1005,14 +1005,14 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_TWO;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_TWO] = { nullptr };
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
-    void *data = nullptr;
+    void* data = nullptr;
     std::string errMsg;
 
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_TWO) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -1040,14 +1040,14 @@ bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_cal
 bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_ONE;
+    size_t argc = MAX_PARAMS_ONE;
 
-    napi_value argv[NapiContextCommon::MAX_PARAMS_ONE] = { nullptr };
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_ONE) {
+    if (argc < MAX_PARAMS_ONE) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -1064,7 +1064,7 @@ bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_cal
     return true;
 }
 
-void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *data)
+void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1076,7 +1076,7 @@ void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *
         asyncContext->status, 0);
 }
 
-void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1091,7 +1091,7 @@ void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_
     ReturnPromiseResult(env, *asyncContext, result);
 }
 
-void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *data)
+void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1103,7 +1103,7 @@ void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *
         asyncContext->status, 0);
 }
 
-void NapiAtManager::GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1141,7 +1141,7 @@ napi_value NapiAtManager::SetPermissionRequestToggleStatus(napi_env env, napi_ca
 
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource, SetPermissionRequestToggleStatusExecute, SetPermissionRequestToggleStatusComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     // add async work handle to the napi queue and wait for result
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
@@ -1173,7 +1173,7 @@ napi_value NapiAtManager::GetPermissionRequestToggleStatus(napi_env env, napi_ca
 
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource, GetPermissionRequestToggleStatusExecute, GetPermissionRequestToggleStatusComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     // add async work handle to the napi queue and wait for result
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
@@ -1225,7 +1225,7 @@ bool NapiAtManager::FillPermStateChangeScope(const napi_env env, const napi_valu
     return true;
 }
 
-void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void *data)
+void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1234,7 +1234,7 @@ void NapiAtManager::RequestAppPermOnSettingExecute(napi_env env, void *data)
     asyncContext->errorCode = AccessTokenKit::RequestAppPermOnSetting(asyncContext->tokenId);
 }
 
-void NapiAtManager::RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data)
+void NapiAtManager::RequestAppPermOnSettingComplete(napi_env env, napi_status status, void* data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -1258,13 +1258,13 @@ napi_value NapiAtManager::RequestAppPermOnSetting(napi_env env, napi_callback_in
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
 
-    size_t argc = NapiContextCommon::MAX_PARAMS_ONE;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_ONE] = {nullptr};
+    size_t argc = MAX_PARAMS_ONE;
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
     napi_value thatVar = nullptr;
 
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data));
-    if (argc < NapiContextCommon::MAX_PARAMS_ONE) {
+    if (argc < MAX_PARAMS_ONE) {
         NAPI_CALL(env, napi_throw(env,
             GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")));
         return nullptr;
@@ -1286,7 +1286,7 @@ napi_value NapiAtManager::RequestAppPermOnSetting(napi_env env, napi_callback_in
 
     NAPI_CALL(env, napi_create_async_work(env, nullptr, resource,
         RequestAppPermOnSettingExecute, RequestAppPermOnSettingComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
 
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
@@ -1298,13 +1298,13 @@ napi_value NapiAtManager::RequestAppPermOnSetting(napi_env env, napi_callback_in
 bool NapiAtManager::ParseInputGetPermStatus(const napi_env env, const napi_callback_info info,
     AtManagerSyncContext& syncContext)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_ONE;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_ONE] = {nullptr};
+    size_t argc = MAX_PARAMS_ONE;
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
     napi_value thisVar = nullptr;
 
-    void *data = nullptr;
+    void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < NapiContextCommon::MAX_PARAMS_ONE) {
+    if (argc < MAX_PARAMS_ONE) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -1334,7 +1334,7 @@ napi_value NapiAtManager::GetSelfPermissionStatusSync(napi_env env, napi_callbac
     }
 
     if ((syncContext->permissionName.empty()) ||
-        ((syncContext->permissionName.length() > NapiContextCommon::MAX_LENGTH))) {
+        ((syncContext->permissionName.length() > MAX_LENGTH))) {
         std::string errMsg = GetErrorMessage(
             JS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
@@ -1365,7 +1365,7 @@ napi_value NapiAtManager::GetSelfPermissionStatusSync(napi_env env, napi_callbac
     }
 
     if (syncContext->result != RET_SUCCESS) {
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(syncContext->result);
+        int32_t jsCode = GetJsErrorCode(syncContext->result);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode))));
         return nullptr;
     }
@@ -1409,7 +1409,7 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
         return false;
     }
     napi_status status = napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber),
-        [](napi_env nev, void *data, void *hint) {
+        [](napi_env nev, void* data, void* hint) {
         std::shared_ptr<RegisterPermStateChangeScopePtr>* subscriber =
             static_cast<std::shared_ptr<RegisterPermStateChangeScopePtr>*>(data);
         if (subscriber != nullptr && *subscriber != nullptr) {
@@ -1430,8 +1430,8 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
 bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_FOUR;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_FOUR] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
     napi_value thisVar = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
     if (thisVar == nullptr) {
@@ -1448,11 +1448,11 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     if (!GetPermStateChangeType(env, argc, argv, type)) {
         return false;
     }
-    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_THREE)) {
+    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < MAX_PARAMS_THREE)) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
-    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_FOUR)) {
+    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < MAX_PARAMS_FOUR)) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
@@ -1498,7 +1498,7 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     if (result != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallback failed");
         registerPermStateChangeInfo->errCode = result;
-        int32_t jsCode = NapiContextCommon::GetJsErrorCode(result);
+        int32_t jsCode = GetJsErrorCode(result);
         std::string errMsg = GetErrorMessage(jsCode);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
         return nullptr;
@@ -1516,8 +1516,8 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
 bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
     UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo)
 {
-    size_t argc = NapiContextCommon::MAX_PARAMS_FOUR;
-    napi_value argv[NapiContextCommon::MAX_PARAMS_FOUR] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     std::string errMsg;
@@ -1534,11 +1534,11 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     if (!GetPermStateChangeType(env, argc, argv, type)) {
         return false;
     }
-    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_THREE - 1)) {
+    if ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc < MAX_PARAMS_THREE - 1)) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
-    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < NapiContextCommon::MAX_PARAMS_FOUR - 1)) {
+    if ((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc < MAX_PARAMS_FOUR - 1)) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
@@ -1546,8 +1546,8 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     if (!FillPermStateChangeScope(env, argv, type, scopeInfo)) {
         return false;
     }
-    if (((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc == NapiContextCommon::MAX_PARAMS_FOUR)) ||
-        ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc == NapiContextCommon::MAX_PARAMS_THREE))) {
+    if (((type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) && (argc == MAX_PARAMS_FOUR)) ||
+        ((type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (argc == MAX_PARAMS_THREE))) {
         int callbackIndex = (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) ? FORTH_PARAM : THIRD_PARAM;
         if (!ParseCallback(env, argv[callbackIndex], callback)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");
@@ -1605,7 +1605,7 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
             DeleteRegisterFromVector(scopeInfo, env, item->callbackRef);
         } else {
             LOGE(ATM_DOMAIN, ATM_TAG, "Batch UnregisterPermActiveChangeCompleted failed");
-            int32_t jsCode = NapiContextCommon::GetJsErrorCode(result);
+            int32_t jsCode = GetJsErrorCode(result);
             std::string errMsg = GetErrorMessage(jsCode);
             NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
         }
@@ -1745,7 +1745,7 @@ static napi_module g_module = {
     .nm_filename = nullptr,
     .nm_register_func = Init,
     .nm_modname = "abilityAccessCtrl",
-    .nm_priv = static_cast<void *>(nullptr),
+    .nm_priv = static_cast<void*>(nullptr),
     .reserved = {nullptr}
 };
 

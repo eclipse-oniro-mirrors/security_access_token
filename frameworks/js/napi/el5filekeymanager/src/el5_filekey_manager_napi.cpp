@@ -92,7 +92,7 @@ bool CheckDataType(napi_env env, int32_t dataLockType)
 napi_value AcquireAccess(napi_env env, napi_callback_info info)
 {
     size_t argc = MAX_PARAM_SIZE;
-    napi_value argv[MAX_PARAM_SIZE] = {nullptr};
+    napi_value argv[MAX_PARAM_SIZE] = { nullptr };
     if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok) {
         LOG_ERROR("napi_get_cb_info failed.");
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
@@ -123,7 +123,7 @@ napi_value AcquireAccess(napi_env env, napi_callback_info info)
 napi_value ReleaseAccess(napi_env env, napi_callback_info info)
 {
     size_t argc = MAX_PARAM_SIZE;
-    napi_value argv[MAX_PARAM_SIZE] = {nullptr};
+    napi_value argv[MAX_PARAM_SIZE] = { nullptr };
     if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok) {
         LOG_ERROR("napi_get_cb_info failed.");
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
@@ -154,7 +154,7 @@ napi_value ReleaseAccess(napi_env env, napi_callback_info info)
 napi_value QueryAppKeyState(napi_env env, napi_callback_info info)
 {
     size_t argc = MAX_PARAM_SIZE;
-    napi_value argv[MAX_PARAM_SIZE] = {nullptr};
+    napi_value argv[MAX_PARAM_SIZE] = { nullptr };
     if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok) {
         LOG_ERROR("napi_get_cb_info failed.");
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
@@ -193,7 +193,7 @@ napi_value QueryAppKeyState(napi_env env, napi_callback_info info)
     return result;
 }
 
-static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
+static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char* propName)
 {
     napi_value prop = nullptr;
     napi_create_int32(env, objValue, &prop);
@@ -256,7 +256,7 @@ static napi_module g_module = {
     .nm_filename = nullptr,
     .nm_register_func = Init,
     .nm_modname = "ability.screenLockFileManager",
-    .nm_priv = static_cast<void *>(nullptr),
+    .nm_priv = static_cast<void*>(nullptr),
     .reserved = {nullptr}
 };
 

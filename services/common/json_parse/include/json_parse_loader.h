@@ -75,7 +75,7 @@ public:
     virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
     virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     virtual std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
-        std::vector<PermissionStatus> permStateList);
+        const std::vector<PermissionStatus>& permStateList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
@@ -84,7 +84,7 @@ class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
     int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
     std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
-        std::vector<PermissionStatus> permStateList);
+        const std::vector<PermissionStatus>& permStateList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);

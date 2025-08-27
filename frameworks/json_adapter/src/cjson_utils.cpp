@@ -203,7 +203,7 @@ bool GetArrayFromJson(const CJson* jsonObj, const std::string& key, std::vector<
     return false;
 }
 
-bool GetStringFromJson(const CJson *jsonObj, const std::string& key, std::string& out)
+bool GetStringFromJson(const CJson* jsonObj, const std::string& key, std::string& out)
 {
     if (jsonObj == nullptr || key.empty()) {
         return false;
@@ -319,9 +319,7 @@ bool AddObjToArray(CJson* jsonArr, CJson* item)
     if (tmpObj == nullptr) {
         return false;
     }
-
-    bool ret = cJSON_AddItemToArray(jsonArr, tmpObj);
-    return ret;
+    return cJSON_AddItemToArray(jsonArr, tmpObj);
 }
 
 bool AddObjToArray(CJsonUnique& jsonArr, CJsonUnique& item)

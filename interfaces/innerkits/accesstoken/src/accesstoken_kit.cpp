@@ -72,7 +72,7 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
 
 static bool IsRenderToken(AccessTokenID tokenID)
 {
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
     return idInner->renderFlag;
 }
 
@@ -204,7 +204,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return TOKEN_INVALID;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
@@ -227,7 +227,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return TOKEN_INVALID;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
@@ -625,7 +625,7 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return INVALID_DLP_TOKEN_FLAG;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
     return static_cast<int32_t>(idInner->dlpFlag);
 }
 
@@ -769,10 +769,10 @@ uint64_t AccessTokenKit::GetRenderTokenID(uint64_t tokenId)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return tokenId;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     idInner->renderFlag = 1;
 
-    id = *reinterpret_cast<AccessTokenID *>(idInner);
+    id = *reinterpret_cast<AccessTokenID*>(idInner);
     return static_cast<uint64_t>(id);
 }
 
