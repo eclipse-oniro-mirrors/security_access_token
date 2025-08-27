@@ -7488,6 +7488,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+		{
+            "name": "ohos.permission.ENTERPRISE_DATA_IDENTIFY_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "MDM",
+            "since": 21,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
