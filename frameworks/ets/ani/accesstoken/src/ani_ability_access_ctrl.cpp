@@ -715,13 +715,16 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
-                unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
+                item->callbackRef, item->threadId, callbackEqual)) {
+                continue;
+            }
+            if (!callbackEqual) {
                 continue;
             }
         }
 
+        LOGI(ATM_DOMAIN, ATM_TAG, "Callback is equal.");
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
