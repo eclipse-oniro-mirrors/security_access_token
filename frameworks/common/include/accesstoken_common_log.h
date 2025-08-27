@@ -30,25 +30,25 @@
 
 #define LOGF(domain, tag, fmt, ...)            \
     ((void)HILOG_IMPL(LOG_CORE, LOG_FATAL, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__))
 #define LOGE(domain, tag, fmt, ...)            \
     ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__))
 #define LOGW(domain, tag, fmt, ...)            \
     ((void)HILOG_IMPL(LOG_CORE, LOG_WARN, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__))
 #define LOGI(domain, tag, fmt, ...)            \
     ((void)HILOG_IMPL(LOG_CORE, LOG_INFO, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__))
 #define LOGD(domain, tag, fmt, ...)            \
     ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__))
 
 // LOGC is used for critical errors that should be logged and reported.
 #define LOGC(domain, tag, fmt, ...)            \
 do { \
     ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, \
-    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)); \
+    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__)); \
     AddEventMessage(domain, tag, \
         "%" LOG_PUBLIC "s[%" LOG_PUBLIC "u]: " fmt, __func__, __LINE__, ##__VA_ARGS__); \
 } while (0)
