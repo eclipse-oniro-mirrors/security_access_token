@@ -29,8 +29,8 @@ static std::mutex g_lockPermMap;
 class CharArrayCompare {
 public:
     CharArrayCompare() {};
-    
-    bool operator() (const char *str1, const char *str2) const
+
+    bool operator() (const char* str1, const char* str2) const
     {
         if (str1 == str2) {
             return false;

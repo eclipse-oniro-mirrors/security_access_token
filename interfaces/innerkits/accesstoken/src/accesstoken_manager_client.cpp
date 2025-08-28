@@ -121,7 +121,7 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
         LOGE(ATM_DOMAIN, ATM_TAG, "At service has been started, ret=%{public}d.", ret);
         return PERMISSION_DENIED;
     }
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
     if (static_cast<ATokenTypeEnum>(idInner->type) == TOKEN_NATIVE) {
         LOGI(ATM_DOMAIN, ATM_TAG, "At service has not been started.");
         return PERMISSION_GRANTED;

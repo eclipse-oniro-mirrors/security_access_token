@@ -38,9 +38,9 @@ static void DetailUsedRecordToJson(const std::vector<UsedRecordDetail>& detailRe
 
 std::string ToString::PermissionUsedResultToString(const PermissionUsedResult& result)
 {
-    CJsonUnique responeJsion = CreateJson();
-    (void)AddInt64ToJson(responeJsion, "beginTime", result.beginTimeMillis);
-    (void)AddInt64ToJson(responeJsion, "endTime", result.endTimeMillis);
+    CJsonUnique responseJsion = CreateJson();
+    (void)AddInt64ToJson(responseJsion, "beginTime", result.beginTimeMillis);
+    (void)AddInt64ToJson(responseJsion, "endTime", result.endTimeMillis);
     
     CJsonUnique bundleRecordsJson = CreateJsonArray();
     for (const auto& bundleRecord : result.bundleRecords) {
@@ -73,17 +73,18 @@ std::string ToString::PermissionUsedResultToString(const PermissionUsedResult& r
         (void)AddObjToJson(bundleRecordJson, "permissionRecords", permRecordListJson);
         (void)AddObjToArray(bundleRecordsJson, bundleRecordJson);
     }
-    (void)AddObjToJson(responeJsion, "bundleRecords", bundleRecordsJson);
-    return JsonToStringFormatted(responeJsion.get());
+    (void)AddObjToJson(responseJsion, "bundleRecords", bundleRecordsJson);
+    return JsonToStringFormatted(responseJsion.get());
 }
 
 std::string ToString::PermissionUsedTypeInfoToString(const std::vector<PermissionUsedTypeInfo>& typeInfos)
 {
     CJsonUnique useTypeInfoJson = CreateJsonArray();
-    for (const auto& type : typeInfos) {
+    for (const auto& usedType : typeInfos) {
         CJsonUnique tmpJson = CreateJson();
-        (void)AddUnsignedIntToJson(tmpJson, "tokenId", type.tokenId);
-        (void)AddStringToJson(tmpJson, "permissionName", type.permissionName);
+        (void)AddUnsignedIntToJson(tmpJson, "tokenId", usedType.tokenId);
+        (void)AddStringToJson(tmpJson, "permissionName", usedType.permissionName);
+        (void)AddIntToJson(tmpJson, "type", usedType.type);
         (void)AddObjToArray(useTypeInfoJson, tmpJson);
     }
     return JsonToStringFormatted(useTypeInfoJson.get());

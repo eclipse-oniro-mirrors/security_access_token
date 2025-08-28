@@ -95,7 +95,7 @@ bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::stri
     return false;
 }
 
-void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint32_t dataLen)
+void SoftBusSocketListener::OnClientBytes(int32_t socket, const void* data, uint32_t dataLen)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
@@ -117,10 +117,10 @@ void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint
         LOGE(ATM_DOMAIN, ATM_TAG, "GetExecutorChannel failed");
         return;
     }
-    channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
+    channel->HandleDataReceived(socket, static_cast<unsigned char*>(const_cast<void*>(data)), dataLen);
 }
 
-void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uint32_t dataLen)
+void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void* data, uint32_t dataLen)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
@@ -138,7 +138,7 @@ void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uin
             LOGE(ATM_DOMAIN, ATM_TAG, "GetExecutorChannel failed");
             return;
         }
-        channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
+        channel->HandleDataReceived(socket, static_cast<unsigned char*>(const_cast<void*>(data)), dataLen);
     } else {
         LOGE(ATM_DOMAIN, ATM_TAG, "Unkonow socket.");
     }

@@ -184,7 +184,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     std::string uuid = GetUuid();
 
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
-    unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
+    unsigned char* buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory: %{public}d", len);
         return "";
@@ -222,7 +222,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     return responseResult_;
 }
 
-void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, int length)
+void SoftBusChannel::HandleDataReceived(int socket, const unsigned char* bytes, int length)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "HandleDataReceived");
 #ifdef DEBUG_API_PERFORMANCE
@@ -281,7 +281,7 @@ int SoftBusChannel::PrepareBytes(const std::string &type, const std::string &id,
     return Compress(json, info.bytes, info.bytesLength);
 }
 
-int SoftBusChannel::Compress(const std::string &json, const unsigned char *compressedBytes, int &compressedLength)
+int SoftBusChannel::Compress(const std::string &json, const unsigned char* compressedBytes, int &compressedLength)
 {
     uLong len = compressBound(json.size());
     // length will not so that long
@@ -292,8 +292,8 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
         return Constant::FAILURE;
     }
 
-    int result = compress(const_cast<Byte *>(compressedBytes), &len,
-        reinterpret_cast<unsigned char *>(const_cast<char *>(json.c_str())), json.size() + 1);
+    int result = compress(const_cast<Byte*>(compressedBytes), &len,
+        reinterpret_cast<unsigned char*>(const_cast<char*>(json.c_str())), json.size() + 1);
     if (result != Z_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Compress failed! error code: %{public}d", result);
         return result;
@@ -304,17 +304,17 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
     return Constant::SUCCESS;
 }
 
-std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int length)
+std::string SoftBusChannel::Decompress(const unsigned char* bytes, const int length)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Input length: %{public}d", length);
     uLong len = RPC_TRANSFER_BYTES_MAX_LENGTH;
-    unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
+    unsigned char* buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory!");
         return "";
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
-    int result = uncompress(buf, &len, const_cast<unsigned char *>(bytes), length);
+    int result = uncompress(buf, &len, const_cast<unsigned char*>(bytes), length);
     if (result != Z_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
@@ -323,12 +323,12 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
         return "";
     }
     buf[len] = '\0';
-    std::string str(reinterpret_cast<char *>(buf));
+    std::string str(reinterpret_cast<char*>(buf));
     delete[] buf;
     return str;
 }
 
-int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytesLength)
+int SoftBusChannel::SendRequestBytes(const unsigned char* bytes, const int bytesLength)
 {
     if (bytesLength == 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Bytes data is invalid.");
@@ -395,7 +395,7 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
         LOGW(ATM_DOMAIN, ATM_TAG, "Command %{public}s cannot get from json", commandName.c_str());
 
         int sendlen = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
-        unsigned char *sendbuf = new (std::nothrow) unsigned char[sendlen + 1];
+        unsigned char* sendbuf = new (std::nothrow) unsigned char[sendlen + 1];
         if (sendbuf == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory: %{public}d", sendlen);
             return;
@@ -424,7 +424,7 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
     // send result back
     std::string resultJsonPayload = command->ToJsonPayload();
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length());
-    unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
+    unsigned char* buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory: %{public}d", len);
         return;
@@ -453,7 +453,7 @@ void SoftBusChannel::HandleResponse(const std::string &id, const std::string &js
     }
 }
 
-int SoftBusChannel::SendResponseBytes(int socket, const unsigned char *bytes, const int bytesLength)
+int SoftBusChannel::SendResponseBytes(int socket, const unsigned char* bytes, const int bytesLength)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Send len (after compress len)= %{public}d", bytesLength);
     int result = ::SendBytes(socket, bytes, bytesLength);

@@ -83,17 +83,13 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
     }
     CJsonUnique dcapsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.dcap) {
-        cJSON *tmpObj = cJSON_CreateString(item.c_str());
-        AddObjToArray(dcapsJson.get(), tmpObj);
-        cJSON_Delete(tmpObj);
-        tmpObj = nullptr;
+        CJsonUnique dcapJson = CreateJsonString(item.c_str());
+        AddObjToArray(dcapsJson.get(), dcapJson.get());
     }
     CJsonUnique nativeAclsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.nativeAcls) {
-        cJSON *tmpObj = cJSON_CreateString(item.c_str());
-        AddObjToArray(nativeAclsJson.get(), tmpObj);
-        cJSON_Delete(tmpObj);
-        tmpObj = nullptr;
+        CJsonUnique nativeAclJson = CreateJsonString(item.c_str());
+        AddObjToArray(nativeAclsJson.get(), nativeAclJson.get());
     }
     CJsonUnique nativeTokenJson = CreateJson();
     AddStringToJson(nativeTokenJson, "processName", tokenInfo.processName);
@@ -107,7 +103,7 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
     return nativeTokenJson;
 }
 
-void BaseRemoteCommand::ToPermStateJson(cJSON* permStateJson, const PermissionStatus& state)
+void BaseRemoteCommand::ToPermStateJson(CJson* permStateJson, const PermissionStatus& state)
 {
     AddStringToJson(permStateJson, "permissionName", state.permissionName);
     AddIntToJson(permStateJson, "grantStatus", state.grantStatus);
@@ -134,7 +130,7 @@ CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& to
     return hapTokensJson;
 }
 
-void BaseRemoteCommand::FromHapTokenBasicInfoJson(const cJSON* hapTokenJson,
+void BaseRemoteCommand::FromHapTokenBasicInfoJson(const CJson* hapTokenJson,
     HapTokenInfo& hapTokenBasicInfo)
 {
     int32_t ver;
@@ -148,14 +144,14 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const cJSON* hapTokenJson,
     GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
 }
 
-void BaseRemoteCommand::FromPermStateListJson(const cJSON* hapTokenJson,
+void BaseRemoteCommand::FromPermStateListJson(const CJson* hapTokenJson,
     std::vector<PermissionStatus>& permStateList)
 {
-    cJSON *jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
+    CJson* jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
     if (jsonObjTmp != nullptr) {
         int len = cJSON_GetArraySize(jsonObjTmp);
         for (int i = 0; i < len; i++) {
-            cJSON *permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
+            CJson* permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
             PermissionStatus permission;
             if (!GetStringFromJson(permissionJson, "permissionName", permission.permissionName)) {
                 continue;
@@ -171,7 +167,7 @@ void BaseRemoteCommand::FromPermStateListJson(const cJSON* hapTokenJson,
     }
 }
 
-void BaseRemoteCommand::FromHapTokenInfoJson(const cJSON* hapTokenJson,
+void BaseRemoteCommand::FromHapTokenInfoJson(const CJson* hapTokenJson,
     HapTokenInfoForSync& hapTokenInfo)
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
@@ -182,7 +178,7 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const cJSON* hapTokenJson,
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);
 }
 
-void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
+void BaseRemoteCommand::FromNativeTokenInfoJson(const CJson* nativeTokenJson,
     NativeTokenInfoBase& nativeTokenInfo)
 {
     GetStringFromJson(nativeTokenJson, "processName", nativeTokenInfo.processName);
@@ -197,9 +193,9 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
     GetUnsignedIntFromJson(nativeTokenJson, "tokenId", nativeTokenInfo.tokenID);
     GetUnsignedIntFromJson(nativeTokenJson, "tokenAttr", nativeTokenInfo.tokenAttr);
 
-    cJSON *dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
+    CJson* dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
     if (dcapsJson != nullptr) {
-        CJson *dcap = nullptr;
+        CJson* dcap = nullptr;
         std::vector<std::string> dcaps;
         cJSON_ArrayForEach(dcap, dcapsJson) {
             std::string item = cJSON_GetStringValue(dcap);
@@ -207,9 +203,9 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
         }
         nativeTokenInfo.dcap = dcaps;
     }
-    cJSON *nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
+    CJson* nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
     if (nativeAclsJson != nullptr) {
-        CJson *acl = nullptr;
+        CJson* acl = nullptr;
         std::vector<std::string> nativeAcls;
         cJSON_ArrayForEach(acl, nativeAclsJson) {
             std::string item = cJSON_GetStringValue(acl);
