@@ -90,18 +90,17 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    int32_t res = RET_SUCCESS;
     if (!FindAndInsertRecord(info)) {
-        int32_t ret = PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
-        if (ret == PrivacyError::PRIVACY_TOGGELE_RESTRICTED) {
+        res = PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
+        if (res != RET_SUCCESS) {
             std::lock_guard<std::mutex> lock(g_lockCache);
             std::string recordStr = GetRecordUniqueStr(info);
             g_recordMap.erase(recordStr);
-            return RET_SUCCESS;
         }
-        return ret;
     }
 
-    return RET_SUCCESS;
+    return (res == PrivacyError::PRIVACY_TOGGELE_RESTRICTED) ? RET_SUCCESS : res;
 }
 
 int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
