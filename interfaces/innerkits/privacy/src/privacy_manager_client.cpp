@@ -68,7 +68,6 @@ static int32_t ConvertResult(int32_t ret)
         default:
             return ret;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Request result is %{public}d.", ret);
     return ret;
 }
 
@@ -87,7 +86,9 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     } else {
         ret = proxy->AddPermissionUsedRecord(infoParcel);
     }
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
@@ -99,7 +100,9 @@ int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID
     }
 
     int32_t ret = proxy->SetPermissionUsedRecordToggleStatus(userID, status);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
@@ -111,7 +114,9 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID
     }
 
     int32_t ret = proxy->GetPermissionUsedRecordToggleStatus(userID, status);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(
@@ -135,7 +140,9 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         return PrivacyError::ERR_MALLOC_FAILED;
     }
     int32_t ret = proxy->StartUsingPermission(parcel, anonyStub->AsObject());
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
@@ -191,8 +198,11 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+    } else {
+        result = ConvertResult(result);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
     }
-    return ConvertResult(result);
+    return result;
 }
 
 int32_t PrivacyManagerClient::StopUsingPermission(
@@ -213,7 +223,9 @@ int32_t PrivacyManagerClient::StopUsingPermission(
     }
 
     int32_t ret = proxy->StopUsingPermission(tokenID, pid, permissionName);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
@@ -224,7 +236,9 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     int32_t ret = proxy->RemovePermissionUsedRecords(tokenID);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(
@@ -240,8 +254,13 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
     PermissionUsedResultParcel resultParcel;
     requestParcel.request = request;
     int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, resultParcel);
-    result = resultParcel.result;
-    return ConvertResult(ret);
+    if (ret == RET_SUCCESS) {
+        result = resultParcel.result;
+    } else {
+        ret = ConvertResult(ret);
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request,
@@ -256,7 +275,9 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     PermissionUsedRequestParcel requestParcel;
     requestParcel.request = request;
     int32_t ret = proxy->GetPermissionUsedRecordsAsync(requestParcel, callback);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
@@ -312,8 +333,11 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
         activeCbkMap_[callback] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+    } else {
+        result = ConvertResult(result);
     }
-    return ConvertResult(result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    return result;
 }
 
 int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
@@ -339,8 +363,11 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
     if (result == RET_SUCCESS) {
         activeCbkMap_.erase(goalCallback);
+    } else {
+        result = ConvertResult(result);
     }
-    return ConvertResult(result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    return result;
 }
 
 bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
@@ -369,7 +396,9 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
     std::vector<PermissionUsedTypeInfoParcel> resultsParcel;
     int32_t res = proxy->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
     if (res != RET_SUCCESS) {
-        return ConvertResult(res);
+        res = ConvertResult(res);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", res);
+        return res;
     }
 
     std::transform(resultsParcel.begin(), resultsParcel.end(), std::back_inserter(results),
@@ -386,7 +415,9 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     int32_t ret = proxy->SetMutePolicy(policyType, callerType, isMute, tokenID);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
@@ -397,7 +428,9 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     int32_t ret = proxy->SetHapWithFGReminder(tokenId, isAllowed);
-    return ConvertResult(ret);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
 }
 
 uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const
