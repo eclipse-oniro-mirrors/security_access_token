@@ -302,6 +302,9 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList size %{public}d is invalid", size);
         return INVALID_OPER;
     }
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "Bundle: %{public}s, uiExAbility: %{public}s, serExAbility: %{public}s.",
+        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str());
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;

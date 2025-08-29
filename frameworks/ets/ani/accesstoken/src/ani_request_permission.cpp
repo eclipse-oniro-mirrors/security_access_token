@@ -236,10 +236,6 @@ bool RequestAsyncContext::IsDynamicRequest()
         permList.emplace_back(permState);
     }
     auto ret = AccessToken::AccessTokenKit::GetSelfPermissionsState(permList, this->info);
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "TokenID: %{public}d, bundle: %{public}s, uiExAbility: %{public}s, serExAbility: %{public}s.",
-        this->tokenId, this->info.grantBundleName.c_str(), this->info.grantAbilityName.c_str(),
-        this->info.grantServiceAbilityName.c_str());
     if (ret == AccessToken::FORBIDDEN_OPER) {
         LOGE(ATM_DOMAIN, ATM_TAG, "FORBIDDEN_OPER");
         for (auto& perm : permList) {
