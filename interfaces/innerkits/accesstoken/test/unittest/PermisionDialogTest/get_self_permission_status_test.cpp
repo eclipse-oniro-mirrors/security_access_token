@@ -555,6 +555,54 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatus009, TestSize.Level
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PASS_OPER, status);
 }
+
+/**
+ * @tc.name: GetSelfPermissionStatusWithManualTest001
+ * @tc.desc: GetSelfPermissionStatus with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatusWithManualTest001, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+    AccessTokenID tokenID;
+    {
+        MockNativeToken mock("foundation");
+
+        HapInfoParams infoParams;
+        HapPolicyParams policyParams;
+        TestCommon::GetHapParams(infoParams, policyParams);
+        policyParams.apl = APL_NORMAL;
+        TestCommon::TestPrepareManualPermissionStatus(policyParams);
+
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+        tokenID = fullTokenId.tokenIdExStruct.tokenID;
+        ASSERT_NE(INVALID_TOKENID, tokenID);
+    }
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    PermissionOper status;
+    int32_t ret = AccessTokenKit::GetSelfPermissionStatus("ohos.permission.MANUAL_ATM_SELF_USE", status);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(SETTING_OPER, status);
+
+    {
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("GetSelfPermissionStatusWithManualTest0012", reqPerm, true);
+
+        // grant MANUAL_SETTINGS permission
+        ASSERT_EQ(0, AccessTokenKit::GrantPermission(
+            tokenID, "ohos.permission.MANUAL_ATM_SELF_USE", PERMISSION_USER_SET, OPERABLE_PERM));
+    }
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    ret = AccessTokenKit::GetSelfPermissionStatus("ohos.permission.MANUAL_ATM_SELF_USE", status);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PASS_OPER, status);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

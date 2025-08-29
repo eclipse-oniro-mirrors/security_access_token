@@ -553,6 +553,53 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState009, TestSize.Level0
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));  // set self hap token
 }
+
+/**
+ * @tc.name: GetSelfPermissionsStateWithManualTest001
+ * @tc.desc: GetSelfPermissionsState with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsStateWithManualTest001, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+    AccessTokenID tokenID;
+    {
+        MockNativeToken mock("foundation");
+
+        HapInfoParams infoParams;
+        HapPolicyParams policyParams;
+        TestCommon::GetHapParams(infoParams, policyParams);
+        policyParams.apl = APL_NORMAL;
+        TestCommon::TestPrepareManualPermissionStatus(policyParams);
+        
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+        tokenID = fullTokenId.tokenIdExStruct.tokenID;
+        ASSERT_NE(INVALID_TOKENID, tokenID);
+    }
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
+    std::vector<PermissionListState> permsList;
+    PermissionListState manualState = {
+        .permissionName = "ohos.permission.MANUAL_ATM_SELF_USE",
+        .state = FORBIDDEN_OPER
+    };
+    permsList.emplace_back(manualState);
+    PermissionGrantInfo info;
+    EXPECT_NE(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    EXPECT_EQ(permsList[0].state, SETTING_OPER);
+    EXPECT_EQ(permsList[0].errorReason, MANUAL_SETTING_PERM);
+
+    PermissionListState userState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .state = FORBIDDEN_OPER
+    };
+    permsList.emplace_back(userState);
+    EXPECT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

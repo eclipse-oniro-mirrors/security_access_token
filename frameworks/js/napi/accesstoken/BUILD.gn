@@ -39,6 +39,7 @@ ohos_shared_library("libabilityaccessctrl") {
   ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_callback:libtoken_callback_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",

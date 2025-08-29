@@ -82,6 +82,7 @@ PERMISSION_BRIEF_DEFINE_PATTERN = '''
 JSON_VALUE_CONVERT_TO_CPP_DICT = {
     "user_grant": "USER_GRANT",
     "system_grant": "SYSTEM_GRANT",
+    "manual_settings": "MANUAL_SETTINGS",
     "normal": "APL_NORMAL",
     "system_basic": "APL_SYSTEM_BASIC",
     "system_core": "APL_SYSTEM_CORE",
@@ -177,6 +178,19 @@ def parse_json(path, platform):
         'hasValue' : True
     }
 
+    manual_perm = {
+        'name' : 'ohos.permission.MANUAL_ATM_SELF_USE',
+        'grantMode' : 'manual_settings',
+        'availableLevel' : 'normal',
+        'availableType' : 'NORMAL',
+        'since' : 19,
+        'deprecated' : '',
+        'provisionEnable' : True,
+        'distributedSceneEnable' : False,
+        'isKernelEffect' : False,
+        'hasValue' : False
+    }
+
     def_list = []
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -188,6 +202,8 @@ def parse_json(path, platform):
             def_list.append(perm_def)
             index += 1
         def_list.append(PermissionDef(extend_perm, index))
+        index += 1
+        def_list.append(PermissionDef(manual_perm, index))
     return def_list
 
 

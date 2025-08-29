@@ -45,6 +45,7 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERM_NOT_REVOKE_BY_USER,
         "The permission list contains the permission that has not been revoked by the user." },
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
+    { STS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
 };
 
 void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)

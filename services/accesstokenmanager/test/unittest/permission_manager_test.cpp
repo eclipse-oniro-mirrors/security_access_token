@@ -1962,6 +1962,52 @@ HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackCall001, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, BackgroundTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(list));
 }
 #endif
+
+/**
+ * @tc.name: HandlePermissionDeniedCaseWithInvalidAndManualPermTest001
+ * @tc.desc: HandlePermissionDeniedCase invalid and manual permission test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, HandlePermissionDeniedCaseWithInvalidAndManualPermTest001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+
+    PermissionListState state;
+    state.permissionName = "ohos.permission.TEST123";
+    state.state = DYNAMIC_OPER;
+    state.errorReason = REQ_SUCCESS;
+    EXPECT_EQ(true, PermissionManager::GetInstance().HandlePermissionDeniedCase(PERMISSION_ALLOW_THIS_TIME, state));
+    
+    state.permissionName = "ohos.permission.MANUAL_ATM_SELF_USE";
+    state.state = DYNAMIC_OPER;
+    state.errorReason = REQ_SUCCESS;
+    EXPECT_EQ(true, PermissionManager::GetInstance().HandlePermissionDeniedCase(PERMISSION_USER_FIXED, state));
+}
+
+/**
+ * @tc.name: UpdatePermissionWithInvalidPermTest001
+ * @tc.desc: GrantPermission & RevokePermission with MANUAL_SETTINGS & invalid permission test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdatePermissionWithInvalidPermTest001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+
+    EXPECT_NE(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(
+        tokenID, "ohos.permission.TEST123", PERMISSION_USER_FIXED, OPERABLE_PERM));
+
+    EXPECT_NE(RET_SUCCESS, PermissionManager::GetInstance().RevokePermission(
+        tokenID, "ohos.permission.TEST123", PERMISSION_USER_FIXED, OPERABLE_PERM));
+
+    PermissionManager::GetInstance().ParamUpdate("ohos.permission.TEST123", 0, false);
+
+    EXPECT_EQ(false, IsOperablePermission("ohos.permission.TEST123"));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

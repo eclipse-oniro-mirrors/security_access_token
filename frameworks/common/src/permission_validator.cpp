@@ -27,7 +27,8 @@ namespace AccessToken {
 
 bool PermissionValidator::IsGrantModeValid(int grantMode)
 {
-    return grantMode == GrantMode::SYSTEM_GRANT || grantMode == GrantMode::USER_GRANT;
+    return grantMode == GrantMode::SYSTEM_GRANT || grantMode == GrantMode::USER_GRANT ||
+        grantMode == GrantMode::MANUAL_SETTINGS;
 }
 
 bool PermissionValidator::IsGrantStatusValid(int grantStatus)

@@ -49,6 +49,7 @@ static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
+static constexpr int32_t INVALID_GRANT_MODE = 1000;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -1680,7 +1681,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level0)
     PermissionDef permDef = {
         .permissionName = "ohos.permission.TEST",
         .bundleName = "com.ohos.test",
-        .grantMode = static_cast<GrantMode>(2),
+        .grantMode = static_cast<GrantMode>(INVALID_GRANT_MODE),
         .availableLevel = ATokenAplEnum::APL_NORMAL,
         .provisionEnable = false,
         .distributedSceneEnable = false,
