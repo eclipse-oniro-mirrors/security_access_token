@@ -16,6 +16,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_common.h"
+#include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -23,7 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr int32_t REQUEST_REALDY_EXIST = 1;
+constexpr int32_t REQUEST_ALREADY_EXIST = 1;
 constexpr int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 constexpr int32_t PERM_IS_NOT_DECLARE = 3;
 constexpr int32_t ALL_PERM_GRANTED = 4;
@@ -119,7 +120,7 @@ int32_t RequestPermOnSettingAsyncContext::ConvertErrorCode(int32_t errorCode)
         case RET_SUCCESS:
             stsCode = STS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             stsCode = STS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:
@@ -246,6 +247,20 @@ static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext
     return true;
 }
 
+static bool CheckManualSettingPerm(const std::vector<std::string>& permissionList, std::string& permission)
+{
+    for (const auto& perm : permissionList) {
+        PermissionBriefDef permissionBriefDef;
+        if (GetPermissionBriefDef(perm, permissionBriefDef)) {
+            if (permissionBriefDef.grantMode == MANUAL_SETTINGS) {
+                permission = perm;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_object aniContext, ani_array_ref permissionList, ani_object callback)
 {
@@ -269,6 +284,16 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     ani_ref nullRef = nullptr;
     env->GetNull(&nullRef);
     ani_object result = reinterpret_cast<ani_object>(nullRef);
+
+    std::string permission;
+    if (CheckManualSettingPerm(asyncContext->permissionList, permission)) {
+        ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_EXPECTED_PERMISSION_TYPE,
+            GetErrorMessage(STS_ERROR_EXPECTED_PERMISSION_TYPE,
+            "The specified permission " + permission + " cannot be requested from the user."));
+        ExecuteAsyncCallback(env, callback, error, result);
+        return;
+    }
+
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",

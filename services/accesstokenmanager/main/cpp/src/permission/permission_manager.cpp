@@ -143,7 +143,6 @@ int PermissionManager::GetReqPermissions(
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
     std::vector<PermissionStatus> tmpList;
     int32_t ret = infoPtr->GetPermissionStateList(tmpList);
     if (ret != RET_SUCCESS) {
@@ -156,7 +155,8 @@ int PermissionManager::GetReqPermissions(
             continue;
         }
 
-        if (briefDef.grantMode == mode) {
+        if ((isSystemGrant && briefDef.grantMode == SYSTEM_GRANT) ||
+            (!isSystemGrant && briefDef.grantMode != SYSTEM_GRANT)) {
             reqPermList.emplace_back(perm);
         }
     }
@@ -214,6 +214,12 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
 
 bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState)
 {
+    PermissionBriefDef briefDef;
+    if (GetPermissionBriefDef(permState.permissionName, briefDef) && briefDef.grantMode == MANUAL_SETTINGS) {
+        permState.state = SETTING_OPER;
+        permState.errorReason = MANUAL_SETTING_PERM;
+        return true;
+    }
     if ((goalGrantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
         permState.state = FORBIDDEN_OPER;
         permState.errorReason = FIXED_BY_POLICY;
@@ -340,7 +346,7 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
-    if (filtered || (IsUserGrantPermission(permissionName) &&
+    if (filtered || (IsOperablePermission(permissionName) &&
         ((flag != PERMISSION_PRE_AUTHORIZED_CANCELABLE) && (flag != PERMISSION_SYSTEM_FIXED)))) {
         paramValue_++;
         LOGD(ATM_DOMAIN, ATM_TAG,
@@ -729,17 +735,35 @@ int32_t PermissionManager::CheckAndUpdateMultiPermissionStatus(
     return RET_SUCCESS;
 }
 
-int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int32_t PermissionManager::GrantPermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
+    
+    if (updateFlag < OPERABLE_PERM) {
+        PermissionBriefDef briefDef;
+        if (GetPermissionBriefDef(permissionName, briefDef) && briefDef.grantMode == MANUAL_SETTINGS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "MANUAL_SETTINGS %{public}s can't be grant.", permissionName.c_str());
+            return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        }
+    }
     return CheckAndUpdatePermissionInner(tokenID, permissionName, true, flag);
 }
 
-int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int32_t PermissionManager::RevokePermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
+    
+    if (updateFlag < OPERABLE_PERM) {
+        PermissionBriefDef briefDef;
+        if (GetPermissionBriefDef(permissionName, briefDef) && briefDef.grantMode == MANUAL_SETTINGS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "MANUAL_SETTINGS %{public}s can't be revoke.", permissionName.c_str());
+            return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        }
+    }
     return CheckAndUpdatePermissionInner(tokenID, permissionName, false, flag);
 }
 

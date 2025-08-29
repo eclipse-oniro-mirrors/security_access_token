@@ -492,7 +492,8 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
-int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenKit::GrantPermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
         tokenID, permissionName.c_str(), flag);
@@ -512,10 +513,11 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
         LOGE(ATM_DOMAIN, ATM_TAG, "Flag is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GrantPermission(tokenID, permissionName, flag);
+    return AccessTokenManagerClient::GetInstance().GrantPermission(tokenID, permissionName, flag, updateFlag);
 }
 
-int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenKit::RevokePermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
         tokenID, permissionName.c_str(), flag);
@@ -535,7 +537,7 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag);
+    return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag, updateFlag);
 }
 
 int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)

@@ -32,7 +32,7 @@ std::shared_ptr<RequestInstanceControl> g_requestInstanceControl = nullptr;
 std::mutex g_requestInstanceControlLock;
 
 // error code from dialog
-constexpr int32_t REQUEST_REALDY_EXIST = 1;
+constexpr int32_t REQUEST_ALREADY_EXIST = 1;
 constexpr int32_t GLOBAL_TYPE_IS_NOT_SUPPORT = 2;
 constexpr int32_t SWITCH_IS_ALREADY_OPEN = 3;
 }
@@ -62,7 +62,7 @@ int32_t RequestGlobalSwitchAsyncContext::ConvertErrorCode(int32_t errCode)
         case RET_SUCCESS:
             stsCode = STS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             stsCode = STS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case GLOBAL_TYPE_IS_NOT_SUPPORT:

@@ -40,6 +40,7 @@ struct PermissionBriefDef {
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
 bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
 bool IsUserGrantPermission(const std::string& permission);
+bool IsOperablePermission(const std::string& permission);
 bool IsDefinedPermission(const std::string& permission);
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &permissionBriefDef);
 void GetPermissionBriefDef(uint32_t code, PermissionBriefDef &permissionBriefDef);

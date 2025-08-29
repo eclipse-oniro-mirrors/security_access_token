@@ -170,7 +170,26 @@ typedef enum TypeGrantMode {
      * the permission is decleared and app is installed
      */
     SYSTEM_GRANT = 1,
+    /**
+     * manual setting permission
+     * can only be set by the user in the settings
+     */
+    MANUAL_SETTINGS = 2,
 } GrantMode;
+
+/**
+ * @brief Update permission flag
+ */
+typedef enum TypeUpdatePermissionFlag {
+    /**
+     * the flag can update USER_GRANT permission
+     */
+    USER_GRANTED_PERM = 0,
+    /**
+     * the flag can update USER_GRANT & MANUAL_SETTINGS permission
+     */
+    OPERABLE_PERM = 1,
+} UpdatePermissionFlag;
 
 /**
  * @brief Permission flag
@@ -261,6 +280,8 @@ typedef enum TypePermissionErrorReason {
     UNABLE_POP_UP = 5,
     /** The permission is fixed by policy */
     FIXED_BY_POLICY = 6,
+    /* The permission is manual setting */
+    MANUAL_SETTING_PERM = 7,
     /** The service is abnormal */
     SERVICE_ABNORMAL = 12,
 } PermissionErrorReason;

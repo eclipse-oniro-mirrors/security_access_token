@@ -325,17 +325,21 @@ public:
      * @param tokenID token id
      * @param permissionName permission name quote
      * @param flag enum PermissionFlag, see access_token.h
+     * @param grantMode the final grantable type
      * @return error code, see access_token_error.h
      */
-    static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    static int GrantPermission(AccessTokenID tokenID,
+        const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
     /**
      * @brief Revoke input permission to input tokenID with input flag.
      * @param tokenID token id
      * @param permissionName permission name quote
      * @param flag enum PermissionFlag, see access_token.h
+     * @param grantMode the final revocable type
      * @return error code, see access_token_error.h
      */
-    static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    static int RevokePermission(AccessTokenID tokenID,
+        const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
     /**
      * @brief Clear all user granted permissions state in input tokenID.
      * @param tokenID token id

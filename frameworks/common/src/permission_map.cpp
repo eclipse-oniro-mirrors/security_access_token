@@ -84,6 +84,15 @@ bool IsUserGrantPermission(const std::string& permission)
     return g_permList[opCode].grantMode == USER_GRANT;
 }
 
+bool IsOperablePermission(const std::string& permission)
+{
+    uint32_t opCode;
+    if (!TransferPermissionToOpcode(permission, opCode)) {
+        return false; // default is false
+    }
+    return g_permList[opCode].grantMode == USER_GRANT || g_permList[opCode].grantMode == MANUAL_SETTINGS;
+}
+
 bool IsDefinedPermission(const std::string& permission)
 {
     if (!g_initedPermMap) {

@@ -79,8 +79,10 @@ public:
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     int32_t UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, bool needKill);
-    int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
-    int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+        UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
+    int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+        UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
     int32_t GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int32_t SetPermissionStatusWithPolicy(

@@ -193,6 +193,14 @@ static BundleUsedRecord g_bundleUsedRecord = {
     .bundleName = "com.ohos.test",
 };
 
+PermissionStateFull g_infoManagerTestStateD = {
+    .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
+    .isGeneral = true,
+    .resDeviceID = {"localC"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_tokenIdA = 0;
 static AccessTokenID g_tokenIdB = 0;
@@ -547,38 +555,48 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level0)
 
 /**
  * @tc.name: AddPermissionUsedRecord006
- * @tc.desc: AddPermissionUsedRecord permission combine records.
+ * @tc.desc: AddPermissionUsedRecord permission combine and not combine records.
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
 {
-    SleepUtilMinuteEnd();
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_CONTACTS";
     info.successCount = 1;
     info.failCount = 0;
-
-    // <200ms, record is dropped
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    usleep(200000); // 200000us = 200ms
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    usleep(200000); // 200000us = 200ms
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record1
+    SleepUtilMinuteEnd();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record2 not combine with record1
 
     PermissionUsedRequest request;
-    PermissionUsedResult result;
+    PermissionUsedResult result1;
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result1));
+    ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords[0].permissionRecords.size());
+    // record cross minute not combine
+    ASSERT_EQ(static_cast<uint32_t>(2), result1.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    CheckPermissionUsedResult(request, result1, 1, 2, 0);
 
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
-    CheckPermissionUsedResult(request, result, 1, 3, 0); // records in the same minute combine to one
+    // <200ms, record is dropped
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record3 drop
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record4 drop
+    usleep(200000); // 200000us = 200ms
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record5 combine with record2
+    usleep(200000); // 200000us = 200ms
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record6 combine with record2
+
+    PermissionUsedResult result2;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result2));
+    ASSERT_EQ(static_cast<uint32_t>(1), result2.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result2.bundleRecords[0].permissionRecords.size());
+    // records in the same minute combine to one
+    ASSERT_EQ(static_cast<uint32_t>(2), result2.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    CheckPermissionUsedResult(request, result2, 1, 4, 0);
 }
 
 /**
@@ -657,35 +675,6 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
             ASSERT_EQ(3, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
         }
     }
-}
-
-/**
- * @tc.name: AddPermissionUsedRecord009
- * @tc.desc: test record cross minute not merge.
- * @tc.type: FUNC
- * @tc.require: issueI5P4IU
- */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level0)
-{
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    info.successCount = 1;
-    info.failCount = 0;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    SleepUtilMinuteEnd();
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(static_cast<uint32_t>(2), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
 }
 
 /**
@@ -1555,19 +1544,11 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
         .appIDDesc = "privacy_test.microphone"
     };
 
-    PermissionStateFull infoManagerTestStateD = {
-        .permissionName = "ohos.permission.MICROPHONE_BACKGROUND",
-        .isGeneral = true,
-        .resDeviceID = {"localC"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
-        .permStateList = {infoManagerTestStateD}
+        .permStateList = {g_infoManagerTestStateD}
     };
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(info, policy);
@@ -2470,6 +2451,24 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord019, TestSize.Level0)
 
     info.tokenId = g_shellToken;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord020
+ * @tc.desc: Test AddPermissionUsedRecord failed twice in 200ms
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord020, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service"); // accesstoken_service without PERMISSION_USED_STATS
+    AddPermParamInfo info;
+    info.tokenId = g_nativeToken;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
 }
 
 /**

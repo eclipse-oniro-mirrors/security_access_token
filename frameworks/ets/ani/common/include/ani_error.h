@@ -45,6 +45,7 @@ typedef enum {
     STS_ERROR_ALL_PERM_GRANTED = 12100011,
     STS_ERROR_PERM_NOT_REVOKE_BY_USER = 12100012,
     STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
+    STS_ERROR_EXPECTED_PERMISSION_TYPE = 12100014,
 } STSErrorCode;
 
 struct AtmResult {
@@ -60,7 +61,7 @@ public:
     static void ThrowParameterTypeError(ani_env* env, int32_t err, const std::string& errMsg);
     static void ThrowError(ani_env* env, int32_t err, const std::string& errMsg = "");
     static int32_t GetStsErrorCode(int32_t errCode);
-    static bool ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID);
+    static bool ValidateTokenIDWithThrowError(ani_env* env, AccessTokenID tokenID);
     static bool ValidatePermissionWithThrowError(ani_env* env, const std::string& permission);
     static bool ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag);
 

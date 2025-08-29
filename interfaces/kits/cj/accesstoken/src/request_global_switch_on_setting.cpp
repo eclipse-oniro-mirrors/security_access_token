@@ -33,7 +33,7 @@ const std::string GLOBAL_SWITCH_RESULT_KEY = "ohos.user.setting.global_switch.re
 
 // error code from dialog of global switch
 const int32_t RET_SUCCESS = 0;
-const int32_t REQUEST_REALDY_EXIST = 1;
+const int32_t REQUEST_ALREADY_EXIST = 1;
 const int32_t GLOBAL_TYPE_IS_NOT_SUPPORT = 2;
 const int32_t SWITCH_IS_ALREADY_OPEN = 3;
 
@@ -48,7 +48,7 @@ static int32_t TransferToCJErrorCode(int32_t errCode)
         case RET_SUCCESS:
             cjCode = CJ_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             cjCode = CJ_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case GLOBAL_TYPE_IS_NOT_SUPPORT:

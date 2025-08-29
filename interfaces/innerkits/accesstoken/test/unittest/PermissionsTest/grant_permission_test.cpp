@@ -51,6 +51,7 @@ void GrantPermissionTest::SetUpTestCase()
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    reqPerm.emplace_back("ohos.permission.MANAGE_HAP_TOKENID");
     g_mock = new (std::nothrow) MockHapToken("GrantPermissionTest", reqPerm);
 
     // clean up test cases
@@ -323,6 +324,41 @@ HWTEST_F(GrantPermissionTest, GrantPermissionWithRenderTest001, TestSize.Level0)
     EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: GrantPermissionWithManualTest001
+ * @tc.desc: GrantPermission with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GrantPermissionTest, GrantPermissionWithManualTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionWithManualTest001");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_NORMAL;
+    TestCommon::TestPrepareManualPermissionStatus(policyParams);
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MANUAL_ATM_SELF_USE"));
+    // old grant function can't grant MANUAL_SETTINGS
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, AccessTokenKit::GrantPermission(
+        tokenID, "ohos.permission.MANUAL_ATM_SELF_USE", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MANUAL_ATM_SELF_USE"));
+
+    // new grant function can grant MANUAL_SETTINGS
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+        tokenID, "ohos.permission.MANUAL_ATM_SELF_USE", PERMISSION_USER_FIXED, OPERABLE_PERM));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MANUAL_ATM_SELF_USE"));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

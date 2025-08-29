@@ -514,7 +514,7 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Property(%{public}s) is undefned!", property.c_str());
+        LOGI(ATM_DOMAIN, ATM_TAG, "Property(%{public}s) is undefined!", property.c_str());
         return true;
     }
 

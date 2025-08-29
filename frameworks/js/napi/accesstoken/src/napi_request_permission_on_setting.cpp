@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "napi_base_context.h"
+#include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -35,7 +36,7 @@ const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 
 // error code from dialog
-const int32_t REQUEST_REALDY_EXIST = 1;
+const int32_t REQUEST_ALREADY_EXIST = 1;
 const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
@@ -50,7 +51,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
         case RET_SUCCESS:
             jsCode = JS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:
@@ -617,12 +618,34 @@ bool NapiRequestPermissionOnSetting::ParseRequestPermissionOnSetting(const napi_
     return true;
 }
 
+bool NapiRequestPermissionOnSetting::CheckManualSettingPerm(
+    const std::vector<std::string>& permissionList, std::string& permission)
+{
+    for (const auto& perm : permissionList) {
+        PermissionBriefDef permissionBriefDef;
+        if (GetPermissionBriefDef(perm, permissionBriefDef)) {
+            if (permissionBriefDef.grantMode == MANUAL_SETTINGS) {
+                permission = perm;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void NapiRequestPermissionOnSetting::RequestPermissionOnSettingExecute(napi_env env, void* data)
 {
     // asyncContext release in complete
     RequestOnSettingAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestOnSettingAsyncContextHandle*>(data);
     if ((asyncContextHandle == nullptr) || (asyncContextHandle->asyncContextPtr == nullptr)) {
+        return;
+    }
+    std::string permission;
+    if (CheckManualSettingPerm(asyncContextHandle->asyncContextPtr->permissionList, permission)) {
+        asyncContextHandle->asyncContextPtr->result.errorCode = ERR_EXPECTED_PERMISSION_TYPE;
+        asyncContextHandle->asyncContextPtr->result.errorMsg =
+            "The specified permission " + permission + " cannot be requested from the user.";
         return;
     }
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
@@ -677,7 +700,8 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
     // return error
     if (asyncContextHandle->asyncContextPtr->deferred != nullptr) {
         int32_t jsCode = GetJsErrorCode(asyncContextHandle->asyncContextPtr->result.errorCode);
-        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
+        napi_value businessError = GenerateBusinessError(env, jsCode,
+            GetErrorMessage(jsCode, asyncContextHandle->asyncContextPtr->result.errorMsg));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));
     }

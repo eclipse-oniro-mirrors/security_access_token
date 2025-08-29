@@ -43,6 +43,7 @@ static const int THREAD_NUM = 3;
 static constexpr int32_t CYCLE_TIMES = 100;
 static const int INVALID_APPIDDESC_LEN = 10244;
 static const int32_t INDEX_ZERO = 0;
+static const int32_t INDEX_THREE = 3;
 static uint64_t g_selfTokenId = 0;
 static constexpr int32_t API_VERSION_EIGHT = 8;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
@@ -1872,6 +1873,106 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenAbnormalTest006, TestSize.Level0)
     int ret = AccessTokenKit::UpdateHapToken(
         tokenIdEx, info, g_testPolicyParams);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithManualTest001
+ * @tc.desc: UpdateHapToken with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithManualTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenWithManualTest001");
+    
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_NORMAL;
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStateFull> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList, true));
+    EXPECT_EQ(reqPermList.size(), 0);
+
+    std::vector<PermissionStateFull> reqPermList2;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList2, false));
+    EXPECT_EQ(reqPermList2.size(), 0);
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = ""
+    };
+    TestCommon::TestPrepareManualPermissionStatus(policyParams);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams));
+
+    std::vector<PermissionStateFull> reqPermList3;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList3, false));
+    EXPECT_EQ(reqPermList3.size(), INDEX_THREE);
+
+    for (auto permState : reqPermList3) {
+        EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, permState.permissionName));
+    }
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithManualTest002
+ * @tc.desc: UpdateHapToken with MANUAL_SETTINGS permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithManualTest002, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenWithManualTest002");
+    
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    policyParams.apl = APL_NORMAL;
+    TestCommon::TestPrepareManualPermissionStatus(policyParams);
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStateFull> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList, true));
+    EXPECT_EQ(reqPermList.size(), 0);
+
+    std::vector<PermissionStateFull> reqPermList2;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList2, false));
+    EXPECT_EQ(reqPermList2.size(), INDEX_THREE);
+
+    for (auto permState : reqPermList2) {
+        EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, permState.permissionName));
+    }
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = ""
+    };
+
+    HapPolicyParams policyParams2;
+    TestCommon::GetHapParams(infoParams, policyParams2);
+    policyParams2.apl = APL_NORMAL;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams2));
+
+    std::vector<PermissionStateFull> reqPermList3;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, reqPermList3, false));
+    EXPECT_EQ(reqPermList3.size(), 0);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -141,7 +141,16 @@ static std::string FormatAvailableType(ATokenAvailableTypeEnum availableType)
 
 static void PermDefToJson(const PermissionBriefDef& briefDef, CJsonUnique& permDefJson)
 {
-    std::string grantMode = briefDef.grantMode == GrantMode::USER_GRANT ? "USER_GRANT" : "SYSTEM_GRANT";
+    std::string grantMode;
+    if (briefDef.grantMode == GrantMode::USER_GRANT) {
+        grantMode = "USER_GRANT";
+    } else if (briefDef.grantMode == GrantMode::SYSTEM_GRANT) {
+        grantMode = "SYSTEM_GRANT";
+    } else if (briefDef.grantMode == GrantMode::MANUAL_SETTINGS) {
+        grantMode = "MANUAL_SETTINGS";
+    } else {
+        grantMode = "UNDEFINED";
+    }
     (void)AddStringToJson(permDefJson, "permissionName", briefDef.permissionName);
     (void)AddStringToJson(permDefJson, "grantMode", grantMode);
     (void)AddStringToJson(permDefJson, "availableLevel", FormatApl(briefDef.availableLevel));

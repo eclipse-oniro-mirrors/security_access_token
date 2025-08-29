@@ -351,9 +351,14 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID); // tokenID invalid
     value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_MEDIA");
     value2.Put(TokenFiledConst::FIELD_ACL, 0);
+    GenericValues value3;
+    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID); // tokenID invalid
+    value3.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.MANUAL_ATM_SELF_USE");
+    value3.Put(TokenFiledConst::FIELD_ACL, 0);
     std::vector<GenericValues> validValueList;
     validValueList.emplace_back(value1);
     validValueList.emplace_back(value2);
+    validValueList.emplace_back(value3);
 
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(RANDOM_TOKENID);
     std::shared_ptr<AccessTokenManagerService> atManagerService_ =

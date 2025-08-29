@@ -210,7 +210,7 @@ int AccessTokenManagerClient::GetPermissionFlag(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, flag=%{public}d).", result, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, flag is %{public}d.", result, flag);
     return result;
 }
 
@@ -228,7 +228,7 @@ int32_t AccessTokenManagerClient::GetSelfPermissionStatus(const std::string& per
         result = ConvertResult(result);
     }
     status = static_cast<PermissionOper>(retStatus);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, retStatus);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, status is %{public}d.", result, retStatus);
     return result;
 }
 
@@ -328,33 +328,35 @@ int32_t AccessTokenManagerClient::GetPermissionsStatus(
     return result;
 }
 
-int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerClient::GrantPermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->GrantPermission(tokenID, permissionName, flag);
+    int32_t result = proxy->GrantPermission(tokenID, permissionName, flag, updateFlag);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
-int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
+int AccessTokenManagerClient::RevokePermission(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag);
+    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag, updateFlag);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -370,7 +372,7 @@ int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -385,7 +387,7 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -401,7 +403,7 @@ int32_t AccessTokenManagerClient::SetPermissionStatusWithPolicy(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -417,7 +419,7 @@ int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::st
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -433,7 +435,7 @@ int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::st
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, status=%{public}d).", result, status);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, status is %{public}d.", result, status);
     return result;
 }
 
@@ -448,7 +450,7 @@ int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -522,7 +524,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -557,7 +559,7 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     return result;
 }
 
@@ -582,7 +584,7 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
         return tokenIdEx;
     }
     tokenIdEx.tokenIDEx = fullTokenId;
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}llu).", tokenIdEx.tokenIDEx);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result tokenId is %{public}llu.", tokenIdEx.tokenIDEx);
     return tokenIdEx;
 }
 
@@ -614,8 +616,7 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}llu).",
-        res, fullTokenId.tokenIDEx);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}llu.", res, fullTokenId.tokenIDEx);
     return res;
 }
 
@@ -630,7 +631,7 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, id=%{public}u).", result, tokenID);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}u.", result, tokenID);
     return result;
 }
 
@@ -645,7 +646,7 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
     int32_t result = proxy->GetTokenType(tokenID, tokenType);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
     }
     return static_cast<ATokenTypeEnum>(tokenType);
 }
@@ -685,7 +686,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
         return INVALID_TOKENID;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", tokenId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result tokenId is %{public}u.", tokenId);
     return tokenId;
 }
 
@@ -721,7 +722,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 
@@ -869,7 +870,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 
@@ -885,7 +886,7 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 
@@ -904,7 +905,7 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
         return INVALID_TOKENID;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (id=%{public}d).", tokenId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result tokenId is %{public}u.", tokenId);
     return tokenId;
 }
 
@@ -920,7 +921,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 
@@ -953,7 +954,7 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 
@@ -973,7 +974,7 @@ int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
     return res;
 }
 #endif

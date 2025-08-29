@@ -270,7 +270,7 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());
@@ -302,8 +302,8 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
     return static_cast<ani_int>(asyncContext->grantStatus);
 }
 
-static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
-    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+static void GrantPermissionInner([[maybe_unused]] ani_env *env,
+    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags, UpdatePermissionFlag updateFlag)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -312,33 +312,49 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    LOGI(ATM_DOMAIN, ATM_TAG, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        tokenID, permissionName.c_str(), permissionFlags);
+
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) or flags(%{public}u)is invalid.",
             tokenID, permissionName.c_str(), permissionFlags);
         return;
     }
 
     PermissionBriefDef def;
-    if (!GetPermissionBriefDef(permissionName, def) || def.grantMode != USER_GRANT) {
+    if (!GetPermissionBriefDef(permissionName, def)) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
-            "The specified permission does not exist or is not a user_grant permission.");
+            "The specified permission does not exist.");
         BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
         return;
     }
 
-    int32_t res = AccessTokenKit::GrantPermission(tokenID, permissionName, permissionFlags);
+    if (updateFlag == USER_GRANTED_PERM && def.grantMode != USER_GRANT) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
+            "The specified permission is not a user_grant permission.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
+        return;
+    }
+
+    if (updateFlag == OPERABLE_PERM && def.grantMode != USER_GRANT && def.grantMode != MANUAL_SETTINGS) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_EXPECTED_PERMISSION_TYPE,
+            "The specified permission is not a user_grant or manual_settings permission.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_EXPECTED_PERMISSION_TYPE, errMsg);
+        return;
+    }
+
+    int32_t res = AccessTokenKit::GrantPermission(tokenID, permissionName, permissionFlags, updateFlag);
     if (res != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(res);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
-static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+static void RevokePermissionInner(ani_env *env,
+    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags, UpdatePermissionFlag updateFlag)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "RevokeUserGrantedPermission begin.");
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
@@ -346,27 +362,68 @@ static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    LOGI(ATM_DOMAIN, ATM_TAG, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        tokenID, permissionName.c_str(), permissionFlags);
+
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) ||
         (!BusinessErrorAni::ValidatePermissionFlagWithThrowError(env, permissionFlags))) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s)  or flags(%{public}u)is invalid.",
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) or flags(%{public}u)is invalid.",
             tokenID, permissionName.c_str(), permissionFlags);
         return;
     }
 
     PermissionBriefDef def;
-    if (!GetPermissionBriefDef(permissionName, def) || def.grantMode != USER_GRANT) {
+    if (!GetPermissionBriefDef(permissionName, def)) {
         std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
-            "The specified permission does not exist or is not a user_grant permission.");
+            "The specified permission does not exist.");
         BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
         return;
     }
 
-    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, permissionFlags);
+    if (updateFlag == USER_GRANTED_PERM && def.grantMode != USER_GRANT) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
+            "The specified permission is not a user_grant permission.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
+        return;
+    }
+
+    if (updateFlag == OPERABLE_PERM && def.grantMode != USER_GRANT && def.grantMode != MANUAL_SETTINGS) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_EXPECTED_PERMISSION_TYPE,
+            "The specified permission is not a user_grant or manual_settings permission.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_EXPECTED_PERMISSION_TYPE, errMsg);
+        return;
+    }
+
+    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, permissionFlags, updateFlag);
     if (ret != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(ret);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
+}
+
+static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
+    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+{
+    GrantPermissionInner(env, aniTokenID, aniPermission, aniFlags, USER_GRANTED_PERM);
+}
+
+static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+{
+    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, USER_GRANTED_PERM);
+}
+
+static void GrantPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
+    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+{
+    GrantPermissionInner(env, aniTokenID, aniPermission, aniFlags, OPERABLE_PERM);
+}
+
+static void RevokePermissionExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+{
+    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, OPERABLE_PERM);
 }
 
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
@@ -396,7 +453,7 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    if (!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) {
+    if (!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) is invalid.", tokenID);
         return nullptr;
     }
@@ -440,7 +497,7 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permissionName.c_str());
@@ -715,13 +772,16 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
-                unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
+                item->callbackRef, item->threadId, callbackEqual)) {
+                continue;
+            }
+            if (!callbackEqual) {
                 continue;
             }
         }
 
+        LOGI(ATM_DOMAIN, ATM_TAG, "Callback is equal.");
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
@@ -834,6 +894,10 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
         ani_native_function { "revokeUserGrantedPermissionExecute",
             nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
+        ani_native_function { "grantPermissionExecute", nullptr,
+            reinterpret_cast<void*>(GrantPermissionExecute) },
+        ani_native_function { "revokePermissionExecute",
+            nullptr, reinterpret_cast<void*>(RevokePermissionExecute) },
         ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
         ani_native_function { "getPermissionsStatusExecute",
             nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
