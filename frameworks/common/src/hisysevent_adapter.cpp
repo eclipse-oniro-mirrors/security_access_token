@@ -39,12 +39,15 @@ void ReportSysEventPerformance()
     }
 }
 
-void ReportSysEventServiceStart(const AccessTokenDfxInfo& info)
+void ReportSysEventServiceStart(const InitDfxInfo& info)
 {
     int32_t ret = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "PID", info.pid, "HAP_SIZE", info.hapSize, "NATIVE_SIZE", info.nativeSize,
-        "PERM_DEFINITION_SIZE", info.permDefSize, "DLP_PERMISSION_SIZE", info.dlpSize,
+        "PID", info.pid,
+        "HAP_SIZE", info.hapSize,
+        "NATIVE_SIZE", info.nativeSize,
+        "PERM_DEFINITION_SIZE", info.permDefSize,
+        "DLP_PERMISSION_SIZE", info.dlpSize,
         "PARSE_CONFIG_FLAG", info.parseConfigFlag);
     if (ret != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
@@ -74,26 +77,70 @@ void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode)
     ClearThreadErrorMsg();
 }
 
-void ReportSysEventAddHap(const AccessTokenDfxInfo& info)
+void ReportSysEventAddHap(int32_t errorCode, const HapDfxInfo& info, bool needReportFault)
 {
-    if ((info.sceneCode != AddHapSceneCode::INSTALL_START) &&
-        (info.sceneCode != AddHapSceneCode::TOKEN_ID_CHANGE) &&
-        (info.sceneCode != AddHapSceneCode::INIT) &&
-        (info.sceneCode != AddHapSceneCode::MAP) &&
-        (info.sceneCode != AddHapSceneCode::INSTALL_FINISH)) {
-        return;
-    }
     int32_t res = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "SCENE_CODE", info.sceneCode, "TOKENID", info.tokenId, "ORI_TOKENID", info.oriTokenId,
-        "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx), "USERID", info.userId,
-        "BUNDLENAME", info.bundleName, "INSTINDEX", info.instIndex, "DLP_TYPE", info.dlpType,
-        "IS_RESTORE", info.isRestore, "PERM_INFO", info.permInfo, "ACL_INFO", info.aclInfo,
-        "PREAUTH_INFO", info.preauthInfo, "EXTEND_INFO", info.extendInfo, "DURATION", info.duration,
-        "ERROR_CODE", info.errorCode);
+        "SCENE_CODE", info.sceneCode,
+        "TOKENID", info.tokenId,
+        "ORI_TOKENID", info.oriTokenId,
+        "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx),
+        "USERID", info.userID,
+        "BUNDLENAME", info.bundleName,
+        "INSTINDEX", info.instIndex,
+        "DLP_TYPE", info.dlpType,
+        "IS_RESTORE", info.isRestore,
+        "PERM_INFO", info.permInfo,
+        "ACL_INFO", info.aclInfo,
+        "PREAUTH_INFO", info.preauthInfo,
+        "EXTEND_INFO", info.extendInfo,
+        "DURATION", info.duration,
+        "ERROR_CODE", errorCode);
     if (res != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", res);
     }
+    if (needReportFault) {
+        ReportSysCommonEventError(info.ipcCode, errorCode);
+    }
+}
+
+void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
+{
+    int32_t res = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "TOKENID", info.tokenId,
+        "USERID", info.userID,
+        "BUNDLENAME", info.bundleName,
+        "INSTINDEX", info.instIndex,
+        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "ERROR_CODE", errorCode,
+        "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx),
+        "PERM_INFO", info.permInfo,
+        "ACL_INFO", info.aclInfo,
+        "PREAUTH_INFO", info.preauthInfo,
+        "EXTEND_INFO", info.extendInfo,
+        "DURATION", info.duration);
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", res);
+    }
+    ReportSysCommonEventError(info.ipcCode, errorCode);
+}
+
+void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info)
+{
+    int32_t res = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "TOKENID", info.tokenId,
+        "USERID", info.userID,
+        "BUNDLENAME", info.bundleName,
+        "INSTINDEX", info.instIndex,
+        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "ERROR_CODE", errorCode,
+        "DURATION", info.duration);
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", res);
+    }
+    ReportSysCommonEventError(info.ipcCode, errorCode);
 }
 
 void ReportSysEventDbException(AccessTokenDbSceneCode sceneCode, int32_t errCode, const std::string& tableName)
