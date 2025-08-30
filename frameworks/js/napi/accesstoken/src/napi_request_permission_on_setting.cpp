@@ -35,7 +35,7 @@ const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 
 // error code from dialog
-const int32_t REQUEST_REALDY_EXIST = 1;
+const int32_t REQUEST_ALREADY_EXIST = 1;
 const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
@@ -50,7 +50,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
         case RET_SUCCESS:
             jsCode = JS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:

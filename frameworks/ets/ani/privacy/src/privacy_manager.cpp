@@ -97,7 +97,7 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission = ParseAniString(env, aniPermission);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
@@ -477,7 +477,7 @@ static void StopUsingPermissionExecute(
 
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission = ParseAniString(env, aniPermission);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
@@ -504,7 +504,7 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission = ParseAniString(env, aniPermission);
-    if ((!BusinessErrorAni::ValidateTokenIDdWithThrowError(env, tokenID)) ||
+    if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
             tokenID, permission.c_str());
