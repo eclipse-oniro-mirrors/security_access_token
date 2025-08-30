@@ -147,11 +147,10 @@ private:
     bool isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
-    int32_t UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const std::string& bundleName,
-        const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl);
-    void ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy);
-    void ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info, int64_t beginTime,
-        int32_t errorCode);
+    void ReportAddHap(AccessTokenIDEx fullTokenId, const HapInfoParams& hapInfo,
+        const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
+    void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
+        const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
     void FilterInvalidData(const std::vector<GenericValues>& results,
         const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);

@@ -40,9 +40,9 @@ static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static const int TEST_USER_ID_INVALID = -1;
 static MockNativeToken* g_mock;
-HapInfoParams g_infoManagerTestSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
-HapInfoParams g_infoManagerTestNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
-HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
+HapInfoParams g_testSystemInfoParms = TestCommon::GetInfoManagerTestSystemInfoParms();
+HapInfoParams g_testNormalInfoParms = TestCommon::GetInfoManagerTestNormalInfoParms();
+HapPolicyParams g_testPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
 }
 
 void GetHapTokenTest::SetUpTestCase()
@@ -176,16 +176,15 @@ HWTEST_F(GetHapTokenTest, GetHapTokenIDExFuncTest001, TestSize.Level0)
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenIDExFuncTest001");
 
     AccessTokenIDEx tokenIdEx;
-    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_infoManagerTestSystemInfoParms.userID,
-                                                                 g_infoManagerTestSystemInfoParms.bundleName,
-                                                                 g_infoManagerTestSystemInfoParms.instIndex);
+    TestCommon::AllocTestHapToken(g_testSystemInfoParms, g_testPolicyPrams, tokenIdEx);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
 
     EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     HapTokenInfo hapTokenInfoRes;
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
-    EXPECT_EQ(hapTokenInfoRes.bundleName, g_infoManagerTestSystemInfoParms.bundleName);
+    EXPECT_EQ(hapTokenInfoRes.bundleName, g_testSystemInfoParms.bundleName);
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
@@ -305,18 +304,21 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     AccessTokenIDEx tokenIdEx = {0};
-    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    TestCommon::AllocTestHapToken(g_testSystemInfoParms, g_testPolicyPrams, tokenIdEx);
     ASSERT_EQ(true, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
+
     EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
     UpdateHapInfoParams info;
-    info.appIDDesc = g_infoManagerTestSystemInfoParms.appIDDesc;
-    info.apiVersion = g_infoManagerTestSystemInfoParms.apiVersion;
+    info.appIDDesc = g_testSystemInfoParms.appIDDesc;
+    info.apiVersion = g_testSystemInfoParms.apiVersion;
     info.isSystemApp = false;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
-    tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyPrams));
+    tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
     EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
     EXPECT_EQ(false, TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
@@ -332,17 +334,19 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest001, TestSize.Level0)
 HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    TestCommon::AllocTestHapToken(g_testSystemInfoParms, g_testPolicyPrams, tokenIdEx);
     EXPECT_TRUE(TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
 
-    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
     EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     UpdateHapInfoParams info;
-    info.appIDDesc = g_infoManagerTestNormalInfoParms.appIDDesc;
-    info.apiVersion = g_infoManagerTestNormalInfoParms.apiVersion;
+    info.appIDDesc = g_testNormalInfoParms.appIDDesc;
+    info.apiVersion = g_testNormalInfoParms.apiVersion;
     info.isSystemApp = true;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
-    tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_testPolicyPrams));
+    tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
     EXPECT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
 
     EXPECT_EQ(true,  TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx));
@@ -358,8 +362,9 @@ HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest002, TestSize.Level0)
 HWTEST_F(GetHapTokenTest, IsSystemAppByFullTokenIDTest003, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    TestCommon::AllocTestHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
+    TestCommon::AllocTestHapToken(g_testSystemInfoParms, g_testPolicyPrams, tokenIdEx);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(g_testSystemInfoParms.userID,
+        g_testSystemInfoParms.bundleName, g_testSystemInfoParms.instIndex);
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     bool res = AccessTokenKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
     ASSERT_TRUE(res);
