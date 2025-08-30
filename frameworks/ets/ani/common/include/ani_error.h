@@ -60,7 +60,7 @@ public:
     static void ThrowParameterTypeError(ani_env* env, int32_t err, const std::string& errMsg);
     static void ThrowError(ani_env* env, int32_t err, const std::string& errMsg = "");
     static int32_t GetStsErrorCode(int32_t errCode);
-    static bool ValidateTokenIDdWithThrowError(ani_env* env, AccessTokenID tokenID);
+    static bool ValidateTokenIDWithThrowError(ani_env* env, AccessTokenID tokenID);
     static bool ValidatePermissionWithThrowError(ani_env* env, const std::string& permission);
     static bool ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag);
 

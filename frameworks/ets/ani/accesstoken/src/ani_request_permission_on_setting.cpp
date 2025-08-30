@@ -25,7 +25,7 @@ std::map<int32_t, std::vector<std::shared_ptr<RequestPermOnSettingAsyncContext>>
     RequestOnSettingAsyncInstanceControl::instanceIdMap_;
 std::mutex RequestOnSettingAsyncInstanceControl::instanceIdMutex_;
 namespace {
-constexpr int32_t REQUEST_REALDY_EXIST = 1;
+constexpr int32_t REQUEST_ALREADY_EXIST = 1;
 constexpr int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 constexpr int32_t PERM_IS_NOT_DECLARE = 3;
 constexpr int32_t ALL_PERM_GRANTED = 4;
@@ -182,7 +182,7 @@ static int32_t TransferToStsErrorCode(int32_t errorCode)
         case RET_SUCCESS:
             stsCode = STS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             stsCode = STS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case PERM_NOT_BELONG_TO_SAME_GROUP:

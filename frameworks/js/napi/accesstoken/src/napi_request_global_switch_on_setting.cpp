@@ -35,7 +35,7 @@ const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 
 // error code from dialog
-const int32_t REQUEST_REALDY_EXIST = 1;
+const int32_t REQUEST_ALREADY_EXIST = 1;
 const int32_t GLOBAL_TYPE_IS_NOT_SUPPORT = 2;
 const int32_t SWITCH_IS_ALREADY_OPEN = 3;
 std::mutex g_lockFlag;
@@ -47,7 +47,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
         case RET_SUCCESS:
             jsCode = JS_OK;
             break;
-        case REQUEST_REALDY_EXIST:
+        case REQUEST_ALREADY_EXIST:
             jsCode = JS_ERROR_REQUEST_IS_ALREADY_EXIST;
             break;
         case GLOBAL_TYPE_IS_NOT_SUPPORT:
