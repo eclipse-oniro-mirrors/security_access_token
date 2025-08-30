@@ -1436,8 +1436,7 @@ bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
 
 void PermissionRecordManager::PermListToString(const std::vector<std::string>& permList)
 {
-    std::string permStr;
-    permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
+    std::string permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
     LOGI(PRI_DOMAIN, PRI_TAG, "PermStr =%{public}s.", permStr.c_str());
 }

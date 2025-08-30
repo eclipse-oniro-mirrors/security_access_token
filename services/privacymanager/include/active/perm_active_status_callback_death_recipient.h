@@ -25,9 +25,9 @@ namespace AccessToken {
 class PermActiveStatusCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     PermActiveStatusCallbackDeathRecipient() = default;
-    virtual ~PermActiveStatusCallbackDeathRecipient() override = default;
+    ~PermActiveStatusCallbackDeathRecipient() override = default;
 
-    virtual void OnRemoteDied(const wptr<IRemoteObject> &remote) override;
+    void OnRemoteDied(const wptr<IRemoteObject> &remote) override;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -24,18 +24,18 @@ namespace AccessToken {
 class PermStateCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     PermStateCallbackDeathRecipient() = default;
-    virtual ~PermStateCallbackDeathRecipient() override = default;
+    ~PermStateCallbackDeathRecipient() override = default;
 
-    virtual void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
+    void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
 };
 
 #ifdef TOKEN_SYNC_ENABLE
 class TokenSyncCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     TokenSyncCallbackDeathRecipient() = default;
-    virtual ~TokenSyncCallbackDeathRecipient() override = default;
+    ~TokenSyncCallbackDeathRecipient() override = default;
 
-    virtual void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
+    void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
 };
 #endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken

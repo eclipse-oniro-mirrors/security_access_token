@@ -26,12 +26,12 @@ namespace AccessToken {
 class FormStateObserverStub : public IRemoteStub<IJsFormStateObserver> {
 public:
     FormStateObserverStub();
-    virtual ~FormStateObserverStub() override;
+    ~FormStateObserverStub() override;
 
-    virtual int OnRemoteRequest(
+    int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
-    virtual int32_t NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
+    int32_t NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
         const std::string &bundleName, std::vector<FormInstance> &formInstances) override
     {
         return 0;

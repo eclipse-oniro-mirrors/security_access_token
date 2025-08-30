@@ -27,7 +27,7 @@ namespace AccessToken {
 class AccessEventHandler : public AppExecFwk::EventHandler {
 public:
     explicit AccessEventHandler(const std::shared_ptr<AppExecFwk::EventRunner>& runner);
-    virtual ~AccessEventHandler() override;
+    ~AccessEventHandler() override;
 
     bool ProxyPostTask(const Callback &callback, int64_t delayTime);
 

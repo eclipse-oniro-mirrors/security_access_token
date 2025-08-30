@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
+#ifndef NATIVETOKEN_JSON_OPER_H
+#define NATIVETOKEN_JSON_OPER_H
+
 #include <stdint.h>
 #include "cJSON.h"
 #include "nativetoken.h"
-
-#ifndef NATIVETOKEN_JSON_OPER_H
-#define NATIVETOKEN_JSON_OPER_H
 
 #ifdef __cplusplus
 extern "C" {

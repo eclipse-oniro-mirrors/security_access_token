@@ -37,7 +37,7 @@ public:
     explicit DeleteRemoteTokenCommand(const std::string &json);
     DeleteRemoteTokenCommand(const std::string &srcDeviceId, const std::string &dstDeviceId,
         AccessTokenID deleteID);
-    virtual ~DeleteRemoteTokenCommand() override = default;
+    ~DeleteRemoteTokenCommand() override = default;
 
 private:
     /**

@@ -28,7 +28,7 @@ namespace AccessToken {
 class ProxyDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     ProxyDeathRecipient(ProxyDeathHandler* handler);
-    virtual ~ProxyDeathRecipient() override = default;
+    ~ProxyDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 private:
     ProxyDeathHandler* handler_ = nullptr;
