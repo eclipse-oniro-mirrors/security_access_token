@@ -400,7 +400,7 @@ int32_t El5FilekeyManagerService::CheckReqLockPermission(DataLockType type, bool
 {
     int32_t ret = EFM_ERR_NO_PERMISSION;
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    isApp = AccessTokenKit::GetTokenType(callingTokenID) == ATokenTypeEnum::TOKEN_HAP;
+    isApp = AccessTokenKit::GetTokenTypeFlag(callingTokenID) == ATokenTypeEnum::TOKEN_HAP;
     switch (type) {
         case DataLockType::DEFAULT_DATA:
             if (!isApp || (AccessTokenKit::VerifyAccessToken(callingTokenID, PROTECT_DATA_PERMISSION) !=
