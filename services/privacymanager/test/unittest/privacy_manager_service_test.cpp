@@ -46,6 +46,7 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
+static constexpr int32_t ACCESS_TOKEN_MANAGER_SERVICE_ID = 3503;
 static constexpr int32_t COMMON_EVENT_SERVICE_ID = 3299;
 static constexpr int32_t SCREENLOCK_SERVICE_ID = 3704;
 static constexpr int32_t INVALID_CODE = 999;
@@ -1240,6 +1241,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level0)
     auto handler2 = privacyManagerService_->GetProxyDeathHandler();
     ASSERT_NE(nullptr, handler2);
 
+    privacyManagerService_->OnAddSystemAbility(ACCESS_TOKEN_MANAGER_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(COMMON_EVENT_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(INVALID_CODE, "123");
