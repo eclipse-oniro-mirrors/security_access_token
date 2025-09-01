@@ -782,8 +782,7 @@ void PermissionManager::ScopeToString(
     copy(tokenIDs.begin(), tokenIDs.end(), std::ostream_iterator<uint32_t>(str, ", "));
     std::string tokenidStr = str.str();
 
-    std::string permStr;
-    permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
+    std::string permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenidStr = %{public}s permStr =%{public}s",
         tokenidStr.c_str(), permStr.c_str());

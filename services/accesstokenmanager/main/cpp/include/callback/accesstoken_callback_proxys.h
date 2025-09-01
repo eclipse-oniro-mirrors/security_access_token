@@ -32,7 +32,7 @@ class PermissionStateChangeCallbackProxy : public IRemoteProxy<IPermissionStateC
 public:
     explicit PermissionStateChangeCallbackProxy(const sptr<IRemoteObject>& impl);
     ~PermissionStateChangeCallbackProxy() override;
-    virtual void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
 
 private:
     static inline BrokerDelegator<PermissionStateChangeCallbackProxy> delegator_;

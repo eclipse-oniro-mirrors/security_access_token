@@ -30,7 +30,7 @@ public:
     explicit OnPermissionUsedRecordCallbackProxy(const sptr<IRemoteObject>& impl);
     ~OnPermissionUsedRecordCallbackProxy() override;
 
-    virtual void OnQueried(ErrCode code, PermissionUsedResult& result) override;
+    void OnQueried(ErrCode code, PermissionUsedResult& result) override;
 private:
     static inline BrokerDelegator<OnPermissionUsedRecordCallbackProxy> delegator_;
 };

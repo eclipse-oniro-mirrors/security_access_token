@@ -29,7 +29,7 @@ public:
     explicit StateChangeCallbackProxy(const sptr<IRemoteObject>& impl);
     ~StateChangeCallbackProxy() override;
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;
+    void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;
 private:
     static inline BrokerDelegator<StateChangeCallbackProxy> delegator_;
 };

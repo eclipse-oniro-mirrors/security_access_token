@@ -30,7 +30,7 @@ public:
     explicit PermActiveStatusChangeCallbackProxy(const sptr<IRemoteObject>& impl);
     ~PermActiveStatusChangeCallbackProxy() override;
 
-    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
 private:
     static inline BrokerDelegator<PermActiveStatusChangeCallbackProxy> delegator_;
 };

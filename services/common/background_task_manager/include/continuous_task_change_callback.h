@@ -26,15 +26,15 @@ namespace AccessToken {
 class BackgroundTaskSubscriberStub : public IRemoteStub<IBackgroundTaskSubscriber> {
 public:
     BackgroundTaskSubscriberStub();
-    virtual ~BackgroundTaskSubscriberStub() override;
+    ~BackgroundTaskSubscriberStub() override;
 
-    virtual int OnRemoteRequest(
+    int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
-    virtual void OnContinuousTaskStart(
+    void OnContinuousTaskStart(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override {}
 
-    virtual void OnContinuousTaskStop(
+    void OnContinuousTaskStop(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override {}
 
     DISALLOW_COPY_AND_MOVE(BackgroundTaskSubscriberStub);

@@ -54,7 +54,7 @@ struct ProcessData : public Parcelable {
      *
      * @param outParcel Indicates the Parcel object to which the Sequenceable object will be marshaled.
      */
-    virtual bool Marshalling(Parcel &parcel) const override;
+    bool Marshalling(Parcel &parcel) const override;
 
     /**
      * @brief Unmarshals this Sequenceable object from a Parcel.

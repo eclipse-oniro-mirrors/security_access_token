@@ -59,11 +59,11 @@ struct RequestAsyncContext : public RequestAsyncContextBase {
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
     AuthorizationResult(std::shared_ptr<RequestAsyncContext> data);
-    virtual ~AuthorizationResult() override;
+    ~AuthorizationResult() override;
 
-    virtual void GrantResultsCallback(
+    void GrantResultsCallback(
         const std::vector<std::string>& permissionList, const std::vector<int32_t>& grantResults) override;
-    virtual void WindowShownCallback() override;
+    void WindowShownCallback() override;
 
 private:
     std::shared_ptr<RequestAsyncContext> data_ = nullptr;

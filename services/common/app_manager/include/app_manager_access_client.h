@@ -50,7 +50,7 @@ private:
     class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
         AppMgrDeathRecipient() {}
-        virtual ~AppMgrDeathRecipient() override = default;
+        ~AppMgrDeathRecipient() override = default;
         void OnRemoteDied(const wptr<IRemoteObject>& object) override;
     };
 

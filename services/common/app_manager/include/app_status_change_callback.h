@@ -59,16 +59,16 @@ public:
 class ApplicationStateObserverStub : public IRemoteStub<IApplicationStateObserver> {
 public:
     ApplicationStateObserverStub();
-    virtual ~ApplicationStateObserverStub() override;
+    ~ApplicationStateObserverStub() override;
 
-    virtual int OnRemoteRequest(
+    int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
-    virtual void OnProcessStateChanged(const ProcessData &processData) override {}
-    virtual void OnProcessDied(const ProcessData &processData) override {}
-    virtual void OnAppStateChanged(const AppStateData &appStateData) override {}
-    virtual void OnAppStopped(const AppStateData &appStateData) override {}
-    virtual void OnAppCacheStateChanged(const AppStateData &appStateData) override {}
+    void OnProcessStateChanged(const ProcessData &processData) override {}
+    void OnProcessDied(const ProcessData &processData) override {}
+    void OnAppStateChanged(const AppStateData &appStateData) override {}
+    void OnAppStopped(const AppStateData &appStateData) override {}
+    void OnAppCacheStateChanged(const AppStateData &appStateData) override {}
 
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
