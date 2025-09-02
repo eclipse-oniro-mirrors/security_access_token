@@ -957,7 +957,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 }
 
 int32_t PermissionRecordManager::AddRecordToStartList(
-    const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid, bool isCamera)
+    const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid)
 {
     int32_t opCode;
     int ret = Constant::SUCCESS;
@@ -971,7 +971,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         .tokenId = info.tokenId,
         .opCode = opCode,
         .status = status,
-        .pid = (isCamera ? -1 : info.pid),
+        .pid = info.pid,
         .callerPid = callerPid,
     };
 
@@ -997,9 +997,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     std::set<ContinusPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        if ((it->tokenId == tokenId) && // tokenId
-            ((it->pid == -1) || (it->pid == pid)) && // pid
-            ((it->status != PERM_INACTIVE) && (it->status != status))) { // status
+        if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
             if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
@@ -1300,16 +1298,15 @@ void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
     this->cameraCallbackMap_.Iterate(it);
 }
 
-void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t callbackPid)
+void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackTokenId, int32_t pid)
 {
     LOGD(PRI_DOMAIN, PRI_TAG, "Entry.");
-    auto task = [tokenId, callbackPid, this]() {
-        uint64_t uniqueId = GetUniqueId(tokenId, callbackPid);
+    auto task = [callbackTokenId, pid, this]() {
         LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCameraCallbackAsync task called.");
         auto it = [&](uint64_t id, sptr<IRemoteObject> cameraCallback) {
+            AccessTokenID tokenId = static_cast<AccessTokenID>(id & 0x00000000FFFFFFFF);
             auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
-            int32_t pid = static_cast<int32_t>(id >> 32);
-            if (((pid == 0) || (uniqueId == id)) && (callback != nullptr)) {
+            if ((callbackTokenId == tokenId) && (callback != nullptr)) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "CameraCallback tokenId(%{public}u) pid( %{public}d) changeType %{public}d",
                     tokenId, pid, PERM_INACTIVE);
                 callback->StateChangeNotify(tokenId, false);
@@ -1398,9 +1395,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
-    uint64_t id = GetUniqueId(tokenId, -1);
+    uint64_t id = GetUniqueId(tokenId, info.pid);
     cameraCallbackMap_.EnsureInsert(id, callback);
-    int32_t ret = AddRecordToStartList(info, status, callerPid, true);
+    int32_t ret = AddRecordToStartList(info, status, callerPid);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }
