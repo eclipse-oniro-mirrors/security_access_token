@@ -77,17 +77,9 @@ void PrivacyManagerService::OnStart()
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to initialize");
         return;
     }
-
+    AddSystemAbilityListener(ACCESS_TOKEN_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
-
-    state_ = ServiceRunningState::STATE_RUNNING;
-    bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
-    if (!ret) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service!");
-        return;
-    }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Congratulations, PrivacyManagerService start successfully!");
 }
 
 void PrivacyManagerService::OnStop()
@@ -500,6 +492,18 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
     if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
         int32_t lockScreenStatus = PermissionRecordManager::GetInstance().GetLockScreenStatus(true);
         PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(stateMutex_);
+    if (systemAbilityId == ACCESS_TOKEN_MANAGER_SERVICE_ID && state_ != ServiceRunningState::STATE_RUNNING) {
+        bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
+        if (!ret) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service!");
+            return;
+        }
+        state_ = ServiceRunningState::STATE_RUNNING;
+        LOGI(PRI_DOMAIN, PRI_TAG, "Congratulations, PrivacyManagerService start successfully!");
         return;
     }
 }

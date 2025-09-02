@@ -88,6 +88,7 @@ private:
 #endif
     std::mutex deathHandlerMutex_;
     std::shared_ptr<ProxyDeathHandler> proxyDeathHandler_;
+    std::mutex stateMutex_;
 };
 } // namespace AccessToken
 } // namespace Security
