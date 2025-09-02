@@ -16,36 +16,36 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include "accesstoken_kit.h"
-#include "nativetoken_kit.h"
 #include "privacy_kit.h"
 #include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
-static void NativeTokenGet()
+AccessTokenID GetNativeTokenIdFromProcess(const std::string &process)
 {
-    uint64_t tokenID;
-    const char **perms = new (std::nothrow) const char *[1]; // size of array
-    perms[0] = "ohos.permission.PERMISSION_USED_STATS"; // 0: index
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.processName = process;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    size_t pos = dumpInfo.find("\"tokenID\": ");
+    if (pos == std::string::npos) {
+        return 0;
+    }
+    pos += std::string("\"tokenID\": ").length();
+    std::string numStr;
+    while (pos < dumpInfo.length() && std::isdigit(dumpInfo[pos])) {
+        numStr += dumpInfo[pos];
+        ++pos;
+    }
 
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 1, // size of permission list
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .aplStr = "system_core",
-    };
-
-    infoInstance.processName = "AddPermissionUsedRecord";
-    tokenID = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenID);
-    AccessTokenKit::ReloadNativeTokenInfo();
-    delete[] perms;
+    std::istringstream iss(numStr);
+    AccessTokenID tokenID;
+    iss >> tokenID;
+    return tokenID;
 }
 
 int32_t main(int argc, char *argv[])
@@ -55,7 +55,9 @@ int32_t main(int argc, char *argv[])
         return 0;
     }
 
-    NativeTokenGet();
+    AccessTokenID mockTokenID = GetNativeTokenIdFromProcess("camera_service");
+    SetSelfTokenID(mockTokenID);
+    std::cout << "#SelfTokenID: " << GetSelfTokenID() << std::endl;
 
     uint32_t tokenId = static_cast<uint32_t>(atoi(argv[1])); // 1: index
     std::string permisisionName = argv[2]; // 2: index
