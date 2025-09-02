@@ -20,6 +20,7 @@
 #include "device_info_manager.h"
 #include "device_manager.h"
 #include "iservice_registry.h"
+#include "soft_bus_manager.h"
 #include "soft_bus_socket_listener.h"
 #include "system_ability_definition.h"
 #include "constant_common.h"
@@ -85,11 +86,8 @@ void SoftBusDeviceConnectionListener::UnloadTokensyncService()
 void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = std::string(info.networkId);
-    std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
-    if (uuid.empty()) {
-        uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
-    }
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
+    std::string uuid = SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    std::string udid = SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
     if ((uuid == "") || (udid == "")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Uuid or udid is empty, offline failed.");
         return;

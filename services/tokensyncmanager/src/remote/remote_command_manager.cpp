@@ -20,6 +20,7 @@
 #endif
 #include "device_info_manager.h"
 #include "remote_command_factory.h"
+#include "soft_bus_manager.h"
 #include "token_sync_manager_service.h"
 #include "accesstoken_kit.h"
 #include "constant_common.h"
@@ -265,7 +266,7 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Convert udid start, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
+    std::string udid = SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
     if (!DataValidator::IsDeviceIdValid(udid)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Converted udid is invalid, nodeId:%{public}s",
             ConstantCommon::EncryptDevId(nodeId).c_str());

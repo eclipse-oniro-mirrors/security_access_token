@@ -45,6 +45,7 @@
 #undef private
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
+#include "soft_bus_manager.h"
 #include "soft_bus_socket_listener.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -143,11 +144,8 @@ void TokenSyncServiceTest::TearDown()
 void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
-    std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
-    if (uuid.empty()) {
-        uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
-    }
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
+    std::string uuid = SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    std::string udid = SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
     LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
@@ -1020,18 +1018,18 @@ HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level0)
 
 /**
  * @tc.name: ConvertToUniversallyUniqueIdOrFetch001
- * @tc.desc: DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch function test
+ * @tc.desc: SoftBusManager::ConvertToUniversallyUniqueIdOrFetch function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
-    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId)); // nodeId invalid
+    ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId)); // nodeId invalid
 
     nodeId = "123";
     // FindDeviceInfo false
-    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId));
+    ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId));
 
     std::string networkId = "123";
     std::string universallyUniqueId = "123";
@@ -1043,7 +1041,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.
 
     nodeId = "123";
     // FindDeviceInfo true + universallyUniqueId is not empty
-    DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId);
+    SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId);
 
     nodeId = uniqueDeviceId;
     // FindDeviceInfo true + uniqueDeviceId != localDevice false
@@ -1057,18 +1055,18 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.
 
 /**
  * @tc.name: ConvertToUniqueDeviceIdOrFetch001
- * @tc.desc: DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch function test
+ * @tc.desc: SoftBusManager::ConvertToUniqueDeviceIdOrFetch function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
-    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId)); // nodeId invalid
+    ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId)); // nodeId invalid
 
     nodeId = "123";
     // FindDeviceInfo false
-    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId));
+    ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId));
 
     std::string networkId = "123";
     std::string universallyUniqueId = "123";
@@ -1080,7 +1078,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level
 
     nodeId = "123";
     // FindDeviceInfo true + universallyUniqueId is not empty
-    DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
+    SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
 
     nodeId = uniqueDeviceId;
     // FindDeviceInfo true + uniqueDeviceId != localDevice false
