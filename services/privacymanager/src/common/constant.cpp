@@ -79,6 +79,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.CAMERA_BACKGROUND", Constant::CAMERA_BACKGROUND),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.CUSTOM_SCREEN_CAPTURE", Constant::OP_CUSTOM_SCREEN_CAPTURE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.HOOK_KEY_EVENT", Constant::OP_HOOK_KEY_EVENT),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ",
         Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE",

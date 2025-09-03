@@ -7531,7 +7531,8 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["tablet", "2in1"]
+            "label": "$string:ohos_lab_hook_key_event",
+            "description": "$string:ohos_desc_hook_key_event"
         }
     ]
 }
