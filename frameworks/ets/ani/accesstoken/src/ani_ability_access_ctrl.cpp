@@ -458,11 +458,6 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         return nullptr;
     }
     std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
-    if (permissionList.empty()) {
-        BusinessErrorAni::ThrowError(
-            env, STS_ERROR_INNER,  GetErrorMessage(STS_ERROR_INNER, "Empty permissionList."));
-        return nullptr;
-    }
 
     std::vector<PermissionListState> permList;
     for (const auto& permission : permissionList) {
