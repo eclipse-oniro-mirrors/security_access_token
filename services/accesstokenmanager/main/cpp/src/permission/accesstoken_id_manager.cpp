@@ -94,9 +94,9 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Reigster tokenId failed(error=%{public}d), maybe repeat, retry.", ret);
+            LOGW(ATM_DOMAIN, ATM_TAG, "Register tokenId failed(error=%{public}d), maybe repeat, retry.", ret);
         } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Reigster tokenId finally failed(error=%{public}d).", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Register tokenId finally failed(error=%{public}d).", ret);
             tokenId = INVALID_TOKENID;
         }
     }

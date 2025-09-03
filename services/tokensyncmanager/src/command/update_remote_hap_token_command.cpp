@@ -100,7 +100,7 @@ void UpdateRemoteHapTokenCommand::Execute()
 void UpdateRemoteHapTokenCommand::Finish()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
-    LOGI(ATM_DOMAIN, ATM_TAG, "Finish: end as: DeleteUidPermissionCommand");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Finish: end as: UpdateRemoteHapTokenCommand");
 }
 }  // namespace AccessToken
 }  // namespace Security
