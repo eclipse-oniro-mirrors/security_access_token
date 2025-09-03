@@ -7531,8 +7531,18 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "label": "$string:ohos_lab_hook_key_event",
-            "description": "$string:ohos_desc_hook_key_event"
+            "deviceTypes": ["tablet", "2in1"]
+        },
+        {
+            "name": "ohos.permission.READ_DIAGNOSTIC_LOGS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 21,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
