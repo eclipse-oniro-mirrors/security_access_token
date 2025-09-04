@@ -250,5 +250,11 @@ if (is_standard_system && ability_base_enable == true) {
       include_dirs +=
           [ "${access_token_path}/services/common/ability_manager/include" ]
     }
+
+    if (hiviewdfx_hitrace_native_enable == true) {
+      cflags_cc += [ "-DHITRACE_NATIVE_ENABLE" ]
+
+      external_deps += [ "hitrace:hitrace_meter" ]
+    }
   }
 }
