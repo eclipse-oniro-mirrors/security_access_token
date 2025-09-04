@@ -44,6 +44,7 @@
 #include "remote_command_manager.h"
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
+#include "soft_bus_manager.h"
 #include "soft_bus_socket_listener.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -134,11 +135,8 @@ void TokenSyncServiceTest::TearDown()
 void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
-    std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
-    if (uuid.empty()) {
-        uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
-    }
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
+    std::string uuid = SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    std::string udid = SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
     LOGI(ATM_DOMAIN, ATM_TAG,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",

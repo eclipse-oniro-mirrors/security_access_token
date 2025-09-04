@@ -79,17 +79,17 @@ public:
      * Convert nodeId to deviceId(UUID) if possible.
      *
      * @param nodeId which is considered as indefinite id, maybe deviceId(UUID) or networkId.
-     * @return The deviceId if local or device online, otherwise return empty string.
+     * @return The deviceId if device online, otherwise return empty string.
      */
-    std::string ConvertToUniversallyUniqueIdOrFetch(const std::string &nodeId) const;
+    std::string ConvertToUniversallyUniqueId(const std::string &nodeId) const;
 
     /**
      * Convert nodeId to deviceId(UDID) if possible.
      *
      * @param nodeId which is considered as indefinite id, maybe deviceId(UDID) or networkId.
-     * @return The deviceId if local or device online, otherwise return empty string.
+     * @return The deviceId if device online, otherwise return empty string.
      */
-    std::string ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId) const;
+    std::string ConvertToUniqueDeviceId(const std::string &nodeId, bool& isFoundDevice) const;
 
     /**
      * Check nodeId is uuid or not.

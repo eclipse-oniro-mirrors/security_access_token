@@ -28,6 +28,7 @@
 #include "libraryloader.h"
 #include "remote_command_manager.h"
 #include "soft_bus_device_connection_listener.h"
+#include "soft_bus_manager.h"
 #include "soft_bus_socket_listener.h"
 #include "token_setproc.h"
 
@@ -542,6 +543,34 @@ int SoftBusManager::FulfillLocalDeviceInfo()
 
     fulfillMutex_.unlock();
     return Constant::SUCCESS;
+}
+
+std::string SoftBusManager::ConvertToUniversallyUniqueIdOrFetch(const std::string& nodeId)
+{
+    std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueId(nodeId);
+    if (uuid.empty()) {
+        uuid = GetUniversallyUniqueIdByNodeId(nodeId);
+    }
+    return uuid;
+}
+
+std::string SoftBusManager::ConvertToUniqueDeviceIdOrFetch(const std::string& nodeId)
+{
+    bool isFoundDevice = false;
+    std::string uniqueDeviceId = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceId(nodeId, isFoundDevice);
+    LOGE(ATM_DOMAIN, ATM_TAG, "nodeId %{public}d", isFoundDevice);
+    if (uniqueDeviceId.empty() && isFoundDevice) {
+        std::string udid = GetUniqueDeviceIdByNodeId(nodeId);
+        if (!udid.empty()) {
+            uniqueDeviceId = udid;
+            LOGD(ATM_DOMAIN, ATM_TAG,
+                "udid is empty, use local udid, nodeId(%{public}s)", ConstantCommon::EncryptDevId(nodeId).c_str());
+        } else {
+            LOGD(ATM_DOMAIN, ATM_TAG,
+                "Udid and local udid is empty, nodeId(%{public}s)", ConstantCommon::EncryptDevId(nodeId).c_str());
+        }
+    }
+    return uniqueDeviceId;
 }
 } // namespace AccessToken
 } // namespace Security

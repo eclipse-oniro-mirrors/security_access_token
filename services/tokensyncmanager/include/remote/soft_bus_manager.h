@@ -100,6 +100,22 @@ public:
      */
     std::string GetUniqueDeviceIdByNodeId(const std::string &networkId);
 
+    /**
+     * Convert nodeId to deviceId(UUID) if possible.
+     *
+     * @param nodeId which is considered as indefinite id, maybe deviceId(UUID) or networkId.
+     * @return The deviceId if local or device online, otherwise return empty string.
+     */
+    std::string ConvertToUniversallyUniqueIdOrFetch(const std::string &nodeId);
+
+    /**
+     * Convert nodeId to deviceId(UDID) if possible.
+     *
+     * @param nodeId which is considered as indefinite id, maybe deviceId(UDID) or networkId.
+     * @return The deviceId if local or device online, otherwise return empty string.
+     */
+    std::string ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId);
+
     bool GetNetworkIdBySocket(const int32_t socket, std::string& networkId);
 
     int32_t GetRepeatTimes();
