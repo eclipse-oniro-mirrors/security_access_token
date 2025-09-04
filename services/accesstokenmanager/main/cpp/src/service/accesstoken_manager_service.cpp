@@ -679,76 +679,84 @@ static void TransferHapPolicy(const HapPolicy& policyIn, HapPolicy& policyOut)
     policyOut.aclExtendedMap = policyIn.aclExtendedMap;
 }
 
-void AccessTokenManagerService::ReportAddHap(const HapInfoParcel& info, const HapPolicyParcel& policy)
+static void DumpEventInfo(const HapPolicy& policy, HapDfxInfo& dfxInfo)
 {
-    AccessTokenDfxInfo dfxInfo;
-    dfxInfo.sceneCode = AddHapSceneCode::INSTALL_START;
-    dfxInfo.tokenId = info.hapInfoParameter.tokenID;
-    dfxInfo.userId = info.hapInfoParameter.userID;
-    dfxInfo.bundleName = info.hapInfoParameter.bundleName;
-    dfxInfo.instIndex = info.hapInfoParameter.instIndex;
-    dfxInfo.dlpType = static_cast<HapDlpType>(info.hapInfoParameter.dlpType);
-    dfxInfo.isRestore = info.hapInfoParameter.isRestore;
-
-    dfxInfo.permInfo = std::to_string(policy.hapPolicy.permStateList.size()) + " : [";
-    for (const auto& permState : policy.hapPolicy.permStateList) {
+    dfxInfo.permInfo = std::to_string(policy.permStateList.size()) + " : [";
+    for (const auto& permState : policy.permStateList) {
         dfxInfo.permInfo.append(permState.permissionName + ", ");
     }
     dfxInfo.permInfo.append("]");
 
-    dfxInfo.aclInfo = std::to_string(policy.hapPolicy.aclRequestedList.size()) + " : [";
-    for (const auto& perm : policy.hapPolicy.aclRequestedList) {
+    dfxInfo.aclInfo = std::to_string(policy.aclRequestedList.size()) + " : [";
+    for (const auto& perm : policy.aclRequestedList) {
         dfxInfo.aclInfo.append(perm + ", ");
     }
     dfxInfo.aclInfo.append("]");
 
-    dfxInfo.preauthInfo = std::to_string(policy.hapPolicy.preAuthorizationInfo.size()) + " : [";
-    for (const auto& preAuthInfo : policy.hapPolicy.preAuthorizationInfo) {
+    dfxInfo.preauthInfo = std::to_string(policy.preAuthorizationInfo.size()) + " : [";
+    for (const auto& preAuthInfo : policy.preAuthorizationInfo) {
         dfxInfo.preauthInfo.append(preAuthInfo.permissionName + ", ");
     }
     dfxInfo.preauthInfo.append("]");
 
-    dfxInfo.extendInfo = std::to_string(policy.hapPolicy.aclExtendedMap.size()) + " : {";
-    for (const auto& aclExtend : policy.hapPolicy.aclExtendedMap) {
+    dfxInfo.extendInfo = std::to_string(policy.aclExtendedMap.size()) + " : {";
+    for (const auto& aclExtend : policy.aclExtendedMap) {
         dfxInfo.extendInfo.append(aclExtend.first + ": " + aclExtend.second + ", ");
     }
     dfxInfo.extendInfo.append("}");
-
-    ReportSysEventAddHap(dfxInfo);
 }
 
-void AccessTokenManagerService::ReportAddHapFinish(AccessTokenIDEx fullTokenId, const HapInfoParcel& info,
-    int64_t beginTime, int32_t errorCode)
+void AccessTokenManagerService::ReportAddHap(AccessTokenIDEx fullTokenId, const HapInfoParams& info,
+    const HapPolicy& policy, int64_t beginTime, int32_t errorCode)
 {
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    AccessTokenDfxInfo dfxInfo;
-    dfxInfo.sceneCode = AddHapSceneCode::INSTALL_FINISH;
+    HapDfxInfo dfxInfo;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_INIT_HAP_TOKEN);
     dfxInfo.tokenId = fullTokenId.tokenIdExStruct.tokenID;
     dfxInfo.tokenIdEx = fullTokenId;
-    dfxInfo.userId = info.hapInfoParameter.userID;
-    dfxInfo.bundleName = info.hapInfoParameter.bundleName;
-    dfxInfo.instIndex = info.hapInfoParameter.instIndex;
-    dfxInfo.duration = endTime - beginTime;
-    dfxInfo.errorCode = errorCode;
-    ReportSysEventAddHap(dfxInfo);
+    dfxInfo.userID = info.userID;
+    dfxInfo.bundleName = info.bundleName;
+    dfxInfo.instIndex = info.instIndex;
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+
+    // add
+    dfxInfo.sceneCode = static_cast<int32_t>(AddHapSceneCode::INSTALL_FINISH);
+    dfxInfo.dlpType = static_cast<HapDlpType>(info.dlpType);
+    dfxInfo.isRestore = info.isRestore;
+
+    DumpEventInfo(policy, dfxInfo);
+    ReportSysEventAddHap(errorCode, dfxInfo, true);
+}
+
+void AccessTokenManagerService::ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
+    const HapPolicy& policy, int64_t beginTime, int32_t errorCode)
+{
+    HapDfxInfo dfxInfo;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN);
+    dfxInfo.tokenId = fullTokenId.tokenIdExStruct.tokenID;
+    dfxInfo.tokenIdEx = fullTokenId;
+    dfxInfo.userID = info.userID;
+    dfxInfo.bundleName = info.bundleName;
+    dfxInfo.instIndex = info.instIndex;
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+
+    DumpEventInfo(policy, dfxInfo);
+    ReportSysEventUpdateHap(errorCode, dfxInfo);
 }
 
 int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy,
     uint64_t& fullTokenId, HapInfoCheckResultIdl& resultInfoIdl)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    ReportAddHap(info, policy);
-
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", tokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    HapPolicyParcel policyCopy;
-    TransferHapPolicy(policy.hapPolicy, policyCopy.hapPolicy);
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    HapPolicy policyCopy;
+    TransferHapPolicy(policy.hapPolicy, policyCopy);
 
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
@@ -757,7 +765,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         HapInfoCheckResult permCheckResult;
         HapInitInfo initInfo;
         initInfo.installInfo = info.hapInfoParameter;
-        initInfo.policy = policyCopy.hapPolicy;
+        initInfo.policy = policyCopy;
         initInfo.bundleName = info.hapInfoParameter.bundleName;
         if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult,
             undefValues)) {
@@ -765,24 +773,23 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
             resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
             int32_t rule = permCheckResult.permCheckResult.rule;
             resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(rule);
-            ReportAddHapFinish({0}, info, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
+            ReportAddHap({0}, info.hapInfoParameter, policyCopy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_OK;
         }
     } else {
         if (!PermissionManager::GetInstance().InitDlpPermissionList(
             info.hapInfoParameter.bundleName, info.hapInfoParameter.userID, initializedList, undefValues)) {
-            ReportAddHapFinish({0}, info, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
+            ReportAddHap({0}, info.hapInfoParameter, policyCopy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     }
-    policyCopy.hapPolicy.permStateList = initializedList;
+    policyCopy.permStateList = initializedList;
 
     AccessTokenIDEx tokenIdEx;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policyCopy.hapPolicy, tokenIdEx, undefValues);
+        info.hapInfoParameter, policyCopy, tokenIdEx, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
-    ReportAddHapFinish(tokenIdEx, info, beginTime, ret);
-
+    ReportAddHap(tokenIdEx, info.hapInfoParameter, policyCopy, beginTime, ret);
     return ret;
 }
 
@@ -796,27 +803,32 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     if (this->GetTokenType(tokenID) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
+    HapDfxInfo dfxInfo = {};
+    dfxInfo.tokenId = tokenID;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_TOKEN);
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-
     HapTokenInfo hapInfo;
-    (void)AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
-    ClearThreadErrorMsg();
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
-        "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex);
+    int32_t errorCode = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (errorCode != ERR_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err=%{public}d.", errorCode);
+        dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+        ReportSysEventDelHap(errorCode, dfxInfo);
+        return errorCode;
+    }
 
     // only support hap token deletion
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    errorCode = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
-        "TOKENID", tokenID, "DURATION", endTime - beginTime, "ERROR_CODE", ret);
-    ReportSysCommonEventError(static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_TOKEN), ret);
-    return ret;
+    dfxInfo.userID = hapInfo.userID;
+    dfxInfo.bundleName = hapInfo.bundleName;
+    dfxInfo.instIndex = hapInfo.instIndex;
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    ReportSysEventDelHap(errorCode, dfxInfo);
+    return errorCode;
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
@@ -864,62 +876,6 @@ int32_t AccessTokenManagerService::AllocLocalTokenID(
     return ERR_OK;
 }
 
-int32_t AccessTokenManagerService::UpdateHapTokenCore(AccessTokenIDEx& tokenIdEx, const std::string& bundleName,
-    const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl)
-{
-    std::vector<PermissionStatus> InitializedList;
-    resultInfoIdl.realResult = ERR_OK;
-    HapInfoCheckResult permCheckResult;
-    std::vector<GenericValues> undefValues;
-    HapInitInfo initInfo;
-    initInfo.updateInfo = info;
-    initInfo.policy = policyParcel.hapPolicy;
-    initInfo.isUpdate = true;
-    initInfo.bundleName = bundleName;
-    initInfo.tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    if (!PermissionManager::GetInstance().InitPermissionList(initInfo, InitializedList, permCheckResult, undefValues)) {
-        resultInfoIdl.realResult = ERROR;
-        resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
-        int32_t rule = permCheckResult.permCheckResult.rule;
-        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(rule);
-        LOGC(ATM_DOMAIN, ATM_TAG, "InitPermissionList failed, tokenId=%{public}u.", tokenIdEx.tokenIdExStruct.tokenID);
-        ReportSysCommonEventError(static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN),
-            ERR_PERM_REQUEST_CFG_FAILED);
-        return ERR_OK;
-    }
-
-    int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
-        InitializedList, policyParcel.hapPolicy, undefValues);
-    return ret;
-}
-
-static void DumpEventInfo(const HapPolicy& policy, AccessTokenDfxInfo& dfxInfo)
-{
-    dfxInfo.permInfo = std::to_string(policy.permStateList.size()) + " : [";
-    for (const auto& permState : policy.permStateList) {
-        dfxInfo.permInfo.append(permState.permissionName + ", ");
-    }
-    dfxInfo.permInfo.append("]");
-
-    dfxInfo.aclInfo = std::to_string(policy.aclRequestedList.size()) + " : [";
-    for (const auto& perm : policy.aclRequestedList) {
-        dfxInfo.aclInfo.append(perm + ", ");
-    }
-    dfxInfo.aclInfo.append("]");
-
-    dfxInfo.preauthInfo = std::to_string(policy.preAuthorizationInfo.size()) + " : [";
-    for (const auto& preAuthInfo : policy.preAuthorizationInfo) {
-        dfxInfo.preauthInfo.append(preAuthInfo.permissionName + ", ");
-    }
-    dfxInfo.preauthInfo.append("]");
-
-    dfxInfo.extendInfo = std::to_string(policy.aclExtendedMap.size()) + " : {";
-    for (const auto& aclExtend : policy.aclExtendedMap) {
-        dfxInfo.extendInfo.append(aclExtend.first + ": " + aclExtend.second + ", ");
-    }
-    dfxInfo.extendInfo.append("}");
-}
-
 int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
     const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl)
 {
@@ -932,6 +888,15 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    HapTokenInfo hapInfo = { 0 };
+    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
+    if (error != ERR_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err=%{public}d.", error);
+        ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
+        return error;
+    }
+
     UpdateHapInfoParams info;
     info.appIDDesc = infoIdl.appIDDesc;
     info.apiVersion = infoIdl.apiVersion;
@@ -940,30 +905,30 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     info.isAtomicService = infoIdl.isAtomicService;
     info.dataRefresh = infoIdl.dataRefresh;
 
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    HapTokenInfo hapInfo;
-    (void)AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
-    ClearThreadErrorMsg();
+    resultInfoIdl.realResult = ERR_OK;
+    HapInfoCheckResult permCheckResult;
+    std::vector<GenericValues> undefValues;
+    std::vector<PermissionStatus> initializedList;
+    HapInitInfo initInfo;
+    initInfo.updateInfo = info;
+    initInfo.policy = policyParcel.hapPolicy;
+    initInfo.isUpdate = true;
+    initInfo.bundleName = hapInfo.bundleName;
+    initInfo.tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult, undefValues)) {
+        resultInfoIdl.realResult = ERROR;
+        resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
+        int32_t rule = permCheckResult.permCheckResult.rule;
+        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(rule);
+        ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
+        return ERR_OK;
+    }
 
-    AccessTokenDfxInfo dfxInfo;
-    DumpEventInfo(policyParcel.hapPolicy, dfxInfo);
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
-        "TOKENID", tokenIdEx.tokenIdExStruct.tokenID, "TOKENIDEX", tokenIdEx.tokenIDEx,
-        "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
-        "PERM_INFO", dfxInfo.permInfo, "ACL_INFO", dfxInfo.aclInfo, "PREAUTH_INFO", dfxInfo.preauthInfo,
-        "EXTEND_INFO", dfxInfo.extendInfo);
-
-    int32_t ret = UpdateHapTokenCore(tokenIdEx, hapInfo.bundleName, info, policyParcel, resultInfoIdl);
+    error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
+        initializedList, policyParcel.hapPolicy, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
-
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
-        "TOKENID", tokenIdEx.tokenIdExStruct.tokenID, "TOKENIDEX", tokenIdEx.tokenIDEx,
-        "DURATION", endTime - beginTime, "ERROR_CODE", ret);
-    ReportSysCommonEventError(static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN), ret);
-    return ret;
+    ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
+    return error;
 }
 
 int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::vector<AccessTokenID>& tokenIds)
@@ -1638,7 +1603,7 @@ bool AccessTokenManagerService::Initialize()
     TempPermissionObserver::GetInstance().InitEventHandler();
     ShortGrantManager::GetInstance().InitEventHandler();
 #endif
-    AccessTokenDfxInfo dfxInfo;
+    InitDfxInfo dfxInfo;
     dfxInfo.pid = getpid();
     dfxInfo.hapSize = hapSize;
     dfxInfo.nativeSize = nativeSize;
