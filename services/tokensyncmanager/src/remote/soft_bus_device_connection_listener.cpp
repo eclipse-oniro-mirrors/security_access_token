@@ -86,6 +86,9 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware:
 {
     std::string networkId = std::string(info.networkId);
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    if (uuid.empty()) {
+        uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
+    }
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
     if ((uuid == "") || (udid == "")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Uuid or udid is empty, offline failed.");

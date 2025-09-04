@@ -28,6 +28,7 @@
 #include "permission_validator.h"
 #include "accesstoken_id_manager.h"
 #include "data_validator.h"
+#include "tokenid_attributes.h"
 #include "token_field_const.h"
 #include "data_translator.h"
 
@@ -245,7 +246,7 @@ void PermissionDataBrief::AddPermToBriefPermission(
     AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
     const std::map<std::string, std::string>& aclExtendedMap, bool defCheck)
 {
-    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
+    ATokenTypeEnum tokenType = TokenIDAttributes::GetTokenIdTypeEnum(tokenId);
     std::vector<PermissionStatus> permStateListRes;
     if (defCheck) {
         PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, permStateListRes);

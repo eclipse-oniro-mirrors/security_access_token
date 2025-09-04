@@ -20,6 +20,8 @@
 #include "access_token_error.h"
 #include "data_validator.h"
 #include "constant_common.h"
+#include "tokenid_attributes.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -54,13 +56,13 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return 0;
     }
-    ATokenTypeEnum tokeType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(remoteID);
+    ATokenTypeEnum tokeType = TokenIDAttributes::GetTokenIdTypeEnum(remoteID);
     if ((tokeType <= TOKEN_INVALID) || (tokeType >= TOKEN_TYPE_BUTT)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}x type is invalid.", remoteID);
         return 0;
     }
-    int32_t dlpFlag = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(remoteID);
-    int32_t cloneFlag = AccessTokenIDManager::GetInstance().GetTokenIdCloneFlag(remoteID);
+    int32_t dlpFlag = TokenIDAttributes::GetTokenIdDlpFlag(remoteID);
+    int32_t cloneFlag = TokenIDAttributes::GetTokenIdCloneFlag(remoteID);
 
     AccessTokenID mapID = 0;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);

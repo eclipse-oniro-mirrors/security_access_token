@@ -58,7 +58,7 @@ if (token_sync_enable == true) {
       "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/tokensync/include",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
       "${access_token_path}/frameworks/json_adapter/include",
       "${access_token_path}/services/common/json_parse/include",
       "${access_token_path}/services/common/handler/include",
