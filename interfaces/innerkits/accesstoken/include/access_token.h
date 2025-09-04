@@ -278,10 +278,8 @@ typedef enum TypePermissionErrorReason {
     PRIVACY_STATEMENT_NOT_AGREED = 4,
     /** The permission cannot be requested in a pop-up window */
     UNABLE_POP_UP = 5,
-    /** The permission is fixed by policy */
-    FIXED_BY_POLICY = 6,
     /* The permission is manual setting */
-    MANUAL_SETTING_PERM = 7,
+    MANUAL_SETTING_PERM = 6,
     /** The service is abnormal */
     SERVICE_ABNORMAL = 12,
 } PermissionErrorReason;
