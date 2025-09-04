@@ -56,6 +56,10 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
+    void SetErrorCode(int32_t errcode)
+    {
+        result.errorCode = errcode;
+    }
 };
 
 struct RequestAsyncContextHandle {

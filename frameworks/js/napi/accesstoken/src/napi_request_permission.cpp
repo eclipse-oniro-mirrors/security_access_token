@@ -858,7 +858,8 @@ void NapiRequestPermission::GetPermissionsStatusExecute(napi_env env, void* data
     LOGD(ATM_DOMAIN, ATM_TAG, "PermList size: %{public}zu, asyncContext->permissionList size: %{public}zu.",
         permList.size(), asyncContext->permissionList.size());
 
-    asyncContext->result.errorCode = AccessTokenKit::GetPermissionsStatus(asyncContext->tokenId, permList);
+    asyncContext->SetErrorCode(AccessTokenKit::GetPermissionsStatus(asyncContext->tokenId, permList));
+
     for (const auto& permState : permList) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Permission: %{public}s", permState.permissionName.c_str());
         asyncContext->permissionQueryResults.emplace_back(permState.state);

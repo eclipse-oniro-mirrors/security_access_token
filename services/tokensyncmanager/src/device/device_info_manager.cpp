@@ -86,11 +86,11 @@ void DeviceInfoManager::RemoveRemoteDeviceInfo(const std::string &nodeId, Device
     }
 }
 
-std::string DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch(const std::string &nodeId) const
+std::string DeviceInfoManager::ConvertToUniversallyUniqueId(const std::string &nodeId) const
 {
     std::string result;
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ConvertToUniversallyUniqueIdOrFetch: nodeId is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ConvertToUniversallyUniqueId: nodeId is invalid.");
         return result;
     }
     DeviceInfo deviceInfo;
@@ -100,31 +100,19 @@ std::string DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch(const std::st
     return deviceInfo.deviceId.universallyUniqueId;
 }
 
-std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId) const
+std::string DeviceInfoManager::ConvertToUniqueDeviceId(const std::string &nodeId, bool& isFoundDevice) const
 {
+    isFoundDevice = false;
     std::string result;
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ConvertToUniqueDeviceIdOrFetch: nodeId is invalid.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "ConvertToUniqueDeviceId: nodeId is invalid.");
         return result;
     }
     DeviceInfo deviceInfo;
     if (DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, DeviceIdType::UNKNOWN, deviceInfo)) {
-        std::string uniqueDeviceId = deviceInfo.deviceId.uniqueDeviceId;
-        if (uniqueDeviceId.empty()) {
-            std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(nodeId);
-            if (!udid.empty()) {
-                result = udid;
-            } else {
-                LOGD(ATM_DOMAIN, ATM_TAG,
-                    "FindDeviceInfo succeed, udid and local udid is empty, nodeId(%{public}s)",
-                    ConstantCommon::EncryptDevId(nodeId).c_str());
-            }
-        } else {
-            LOGD(ATM_DOMAIN, ATM_TAG,
-                "FindDeviceInfo succeed, udid is empty, nodeId(%{public}s) ",
-                ConstantCommon::EncryptDevId(nodeId).c_str());
-            result = uniqueDeviceId;
-        }
+        LOGD(ATM_DOMAIN, ATM_TAG, "FindDeviceInfo succeed, nodeId(%{public}s)", nodeId.c_str());
+        isFoundDevice = true;
+        return deviceInfo.deviceId.uniqueDeviceId;
     } else {
         LOGD(ATM_DOMAIN, ATM_TAG, "FindDeviceInfo failed, nodeId(%{public}s)",
             ConstantCommon::EncryptDevId(nodeId).c_str());

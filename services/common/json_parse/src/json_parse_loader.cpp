@@ -495,15 +495,16 @@ static bool IsPermissionReqValid(int32_t tokenApl, const std::string& permission
     return false;
 }
 
-std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& native)
+static void AddNativeTokenInfo(CJsonUnique& j, const NativeTokenInfoBase& native)
 {
-    CJsonUnique j = CreateJson();
     (void)AddUnsignedIntToJson(j, "tokenID", native.tokenID);
     (void)AddStringToJson(j, "processName", native.processName);
     (void)AddIntToJson(j, "apl", native.apl);
+}
 
-    CJsonUnique permStateListJson = CreateJsonArray();
-    CJsonUnique invalidPermStringJson = CreateJsonArray();
+static void AddPermStateListInNativeTokenInfo(const NativeTokenInfoBase& native,
+    CJsonUnique& permStateListJson, CJsonUnique& invalidPermStringJson)
+{
     for (auto iter = native.permStateList.begin(); iter != native.permStateList.end(); ++iter) {
         if (!IsPermissionReqValid(native.apl, iter->permissionName, native.nativeAcls)) {
             CJsonUnique tmpJson = CreateJsonString(iter->permissionName);
@@ -516,6 +517,16 @@ std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& na
         (void)AddUnsignedIntToJson(permStateJson, "grantFlag", iter->grantFlag);
         (void)AddObjToArray(permStateListJson, permStateJson);
     }
+}
+
+std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& native)
+{
+    CJsonUnique j = CreateJson();
+    AddNativeTokenInfo(j, native);
+
+    CJsonUnique permStateListJson = CreateJsonArray();
+    CJsonUnique invalidPermStringJson = CreateJsonArray();
+    AddPermStateListInNativeTokenInfo(native, permStateListJson, invalidPermStringJson);
 
     (void)AddObjToJson(j, "permStateList", permStateListJson);
     (void)AddObjToJson(j, "invalidPermList", invalidPermStringJson);
