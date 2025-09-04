@@ -23,22 +23,33 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct AccessTokenDfxInfo {
-    AddHapSceneCode sceneCode;
-    AccessTokenID tokenId;
-    AccessTokenID oriTokenId;
-    AccessTokenIDEx tokenIdEx;
-    int32_t userId;
+// base info
+struct BaseDfxInfo {
+    AccessTokenID tokenId = 0;
+    int32_t userID = 0;
     std::string bundleName;
     int32_t instIndex;
-    HapDlpType dlpType;
-    bool isRestore;
+    int64_t duration = 0;
+    int32_t ipcCode = -1;
+};
+
+// add or update or delete
+struct HapDfxInfo : public BaseDfxInfo {
+    AccessTokenID oriTokenId;
+    AccessTokenIDEx tokenIdEx;
     std::string permInfo;
     std::string aclInfo;
     std::string preauthInfo;
     std::string extendInfo;
-    int64_t duration;
-    int32_t errorCode;
+
+    // only for add
+    int32_t sceneCode;
+    HapDlpType dlpType;
+    bool isRestore;
+};
+
+// init
+struct InitDfxInfo {
     int32_t pid;
     uint32_t hapSize;
     uint32_t nativeSize;
@@ -46,13 +57,15 @@ struct AccessTokenDfxInfo {
     uint32_t dlpSize;
     uint32_t parseConfigFlag;
 };
+
 void ReportSysEventPerformance();
-void ReportSysEventServiceStart(const AccessTokenDfxInfo& info);
+void ReportSysEventServiceStart(const InitDfxInfo& info);
 void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg, int32_t errCode);
 void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode);
-void ReportSysEventAddHap(const AccessTokenDfxInfo& info);
+void ReportSysEventAddHap(int32_t errorCode, const HapDfxInfo& info, bool needReportFault);
+void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info);
+void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info);
 void ReportSysEventDbException(AccessTokenDbSceneCode sceneCode, int32_t errCode, const std::string& tableName);
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
