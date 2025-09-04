@@ -2782,8 +2782,7 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet", "tv"]
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
