@@ -1466,7 +1466,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
     // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, appStatus %{public}d(1-foreground 2-background).", tokenId, status);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d, status %{public}d(1-fore 2-back).", tokenId, pid, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
@@ -1477,7 +1477,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
 {
     int32_t status = GetAppStatus(tokenId, pid);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, status is %{public}d(1-foreground 2-background).", tokenId, status);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d, status %{public}d(1-fore 2-back).", tokenId, pid, status);
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }

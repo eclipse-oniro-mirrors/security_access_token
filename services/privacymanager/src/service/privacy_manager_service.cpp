@@ -37,6 +37,11 @@
 #include "string_ex.h"
 #include "tokenid_kit.h"
 
+#ifdef HITRACE_NATIVE_ENABLE
+#include "hitrace_meter.h"
+#define PRIVACY_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ACCESS_CONTROL, __PRETTY_FUNCTION__)
+#endif
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -90,6 +95,11 @@ void PrivacyManagerService::OnStop()
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel)
 {
+#ifdef HITRACE_NATIVE_ENABLE
+    PRIVACY_SYNC_TRACE;
+#endif
+    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
+
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return PrivacyError::ERR_NOT_SYSTEM_APP;
@@ -98,11 +108,10 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s, succCnt: %{public}d,"
-        " failCnt: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
-        infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
     AddPermParamInfo info = infoParcel.info;
-    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
+    int32_t res = PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
+    return res;
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecordAsync(const AddPermParamInfoParcel& infoParcel)
@@ -201,6 +210,10 @@ int32_t PrivacyManagerService::StartUsingPermission(
 int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsedTypeInfoParcel &infoParcel,
     const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub)
 {
+#ifdef HITRACE_NATIVE_ENABLE
+    PRIVACY_SYNC_TRACE;
+#endif
+    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return PrivacyError::ERR_NOT_SYSTEM_APP;
@@ -210,9 +223,10 @@ int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsed
     }
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
-    return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
+    int32_t res = PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
+    return res;
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(
@@ -408,6 +422,10 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
 int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     int32_t pid, bool& isAllowed)
 {
+#ifdef HITRACE_NATIVE_ENABLE
+    PRIVACY_SYNC_TRACE;
+#endif
+    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -417,9 +435,8 @@ int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, c
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, perm: %{public}s, pid: %{public}d.",
-        tokenId, permissionName.c_str(), pid);
     isAllowed = PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
     return ERR_OK;
 }
 
