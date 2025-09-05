@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -34,8 +35,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::ClearUserGrantedPermissionState(
-            provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        return AccessTokenKit::ClearUserGrantedPermissionState(tokenId) == RET_SUCCESS;
     }
 }
 

@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "permission_used_request.h"
@@ -38,11 +39,11 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         PermissionUsedRequest request = {
-            .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+            .tokenId = ConsumeTokenId(provider),
             .isRemote = provider.ConsumeBool(),
             .deviceId = provider.ConsumeRandomLengthString(),
             .bundleName = provider.ConsumeRandomLengthString(),
-            .permissionList = {provider.ConsumeRandomLengthString()},
+            .permissionList = {ConsumePermissionName(provider)},
             .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
             .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
             .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(

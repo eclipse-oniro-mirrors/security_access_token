@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_fuzzdata.h"
+#include "fuzzer/FuzzedDataProvider.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -32,10 +32,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenFuzzData fuzzData(data, size);
-        std::vector<std::string> permList = {fuzzData.GenerateStochasticString()};
+        FuzzedDataProvider provider(data, size);
+        std::vector<std::string> permList = {provider.ConsumeRandomLengthString()};
         int32_t result = AccessTokenKit::SetPermissionStatusWithPolicy(
-            fuzzData.GetData<AccessTokenID>(), permList, 0, 128);
+            provider.ConsumeIntegral<AccessTokenID>(), permList, 0, 128);
         return result == RET_SUCCESS;
     }
 }

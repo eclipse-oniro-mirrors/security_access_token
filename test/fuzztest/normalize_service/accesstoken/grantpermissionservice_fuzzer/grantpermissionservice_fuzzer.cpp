@@ -23,12 +23,14 @@
 
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "token_setproc.h"
+
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -68,8 +70,8 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
-    std::string permissionName = provider.ConsumeRandomLengthString();
+    AccessTokenID tokenId = ConsumeTokenId(provider);
+    std::string permissionName = ConsumePermissionName(provider);
     uint32_t flagIndex = provider.ConsumeIntegral<uint32_t>() % FLAG_LIST_SIZE;
     PermissionFlag flag = FLAG_LIST[flagIndex];
 

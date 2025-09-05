@@ -22,6 +22,7 @@
 #include <vector>
 #undef private
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
@@ -39,7 +40,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         int32_t userID = provider.ConsumeIntegral<int32_t>();
         MessageParcel sendData;
         if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor()) ||

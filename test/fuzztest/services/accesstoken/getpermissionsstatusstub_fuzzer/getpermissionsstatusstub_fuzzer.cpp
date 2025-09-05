@@ -22,6 +22,7 @@
 #include <vector>
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -47,8 +48,8 @@ size_t g_baseFuzzPos = 0;
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
         PermissionListState perm = {
             .permissionName = permissionName,
             .state = static_cast<PermissionOper>(provider.ConsumeIntegralInRange<uint32_t>(

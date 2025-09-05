@@ -19,6 +19,7 @@ ohos_fuzztest("GetPermissionUsedTypeInfosFuzzTest") {
   module_out_path = module_output_path_interface_privacy
   fuzz_config_file = "."
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/test/fuzztest/common",
   ]
@@ -30,7 +31,11 @@ ohos_fuzztest("GetPermissionUsedTypeInfosFuzzTest") {
   ]
   sources = [ "getpermissionusedtypeinfos_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+  ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 

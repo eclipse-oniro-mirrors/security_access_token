@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
@@ -37,7 +38,7 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         PermissionListState perm = {
-            .permissionName = provider.ConsumeRandomLengthString(),
+            .permissionName = ConsumePermissionName(provider),
             .state = static_cast<PermissionOper>(provider.ConsumeIntegralInRange<uint32_t>(
                 0, static_cast<uint32_t>(PermissionOper::BUTT_OPER))),
         };

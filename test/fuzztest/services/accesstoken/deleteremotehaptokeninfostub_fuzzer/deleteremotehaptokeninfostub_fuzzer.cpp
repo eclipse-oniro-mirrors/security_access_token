@@ -15,6 +15,7 @@
 
 #include "deleteremotehaptokeninfostub_fuzzer.h"
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "i_token_sync_manager.h"
@@ -49,7 +50,7 @@ bool DeleteRemoteHapTokenInfoStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    AccessTokenID tokenID = provider.ConsumeIntegral<AccessTokenID>();
+    AccessTokenID tokenID = ConsumeTokenId(provider);
     
     UpdateRemoteHapTokenInfo();
 

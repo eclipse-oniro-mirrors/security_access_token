@@ -22,6 +22,7 @@
 #undef private
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+const static int32_t STATUS_SIZE = 3;
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -35,7 +36,7 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         return AccessTokenKit::SetPermissionRequestToggleStatus(provider.ConsumeRandomLengthString(),
-            provider.ConsumeIntegral<uint32_t>(), provider.ConsumeIntegral<int32_t>()) == RET_SUCCESS;
+            provider.ConsumeIntegral<uint32_t>() % STATUS_SIZE, provider.ConsumeIntegral<int32_t>()) == RET_SUCCESS;
     }
 }
 

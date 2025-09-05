@@ -18,6 +18,7 @@
 #include <string>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
@@ -27,6 +28,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
+const static int32_t FLAG_SIZE = 16;
 
 namespace OHOS {
     void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams& param)
@@ -41,7 +43,7 @@ namespace OHOS {
         param.isSystemApp = provider.ConsumeBool();
         param.appDistributionType = provider.ConsumeRandomLengthString();
         param.isRestore = provider.ConsumeBool();
-        param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+        param.tokenID = ConsumeTokenId(provider);
         param.isAtomicService = provider.ConsumeBool();
     }
 
@@ -71,8 +73,7 @@ namespace OHOS {
             .permissionName = permissionName,
             .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
                 0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
-            .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
-                0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME)),
+            .grantFlag = 1 << (provider.ConsumeIntegral<uint32_t>() % FLAG_SIZE),
         };
 
         PreAuthorizationInfo info = {
@@ -85,7 +86,7 @@ namespace OHOS {
         policy.domain = provider.ConsumeRandomLengthString();
         policy.permList = { def };
         policy.permStateList = { state };
-        policy.aclRequestedList = {provider.ConsumeRandomLengthString()};
+        policy.aclRequestedList = {ConsumePermissionName(provider)};
         policy.preAuthorizationInfo = { info };
         policy.checkIgnore = static_cast<HapPolicyCheckIgnore>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(HapPolicyCheckIgnore::ACL_IGNORE_CHECK)));
@@ -100,7 +101,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         std::string bundleName = provider.ConsumeRandomLengthString();
 
         HapInfoParcel hapInfoParcel;

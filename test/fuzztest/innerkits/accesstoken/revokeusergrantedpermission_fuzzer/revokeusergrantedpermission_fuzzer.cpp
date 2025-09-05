@@ -25,6 +25,7 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const static int32_t FLAG_SIZE = 16;
 
 namespace OHOS {
     bool RevokeUserGrantedPermissionFuzzTest(const uint8_t* data, size_t size)
@@ -34,8 +35,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        uint32_t flag = provider.ConsumeIntegralInRange<uint32_t>(
-            0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME));
+        uint32_t flag = 1 << (provider.ConsumeIntegral<uint32_t>() % FLAG_SIZE);
         return AccessTokenKit::RevokePermission(provider.ConsumeIntegral<AccessTokenID>(),
             provider.ConsumeRandomLengthString(), flag) == RET_SUCCESS;
     }

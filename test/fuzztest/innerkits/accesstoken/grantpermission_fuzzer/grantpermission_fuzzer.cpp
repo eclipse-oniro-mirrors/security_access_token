@@ -23,6 +23,8 @@
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
+const static int32_t FLAG_SIZE = 16;
+
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
@@ -35,7 +37,8 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         return AccessTokenKit::GrantPermission(provider.ConsumeIntegral<AccessTokenID>(),
-            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<uint32_t>()) == RET_SUCCESS;
+            provider.ConsumeRandomLengthString(),
+            1 << (provider.ConsumeIntegral<uint32_t>() % FLAG_SIZE)) == RET_SUCCESS;
     }
 }
 

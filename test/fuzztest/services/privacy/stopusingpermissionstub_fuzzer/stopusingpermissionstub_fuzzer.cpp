@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
@@ -37,11 +38,13 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
 
         MessageParcel datas;
+        AccessTokenID tokenID = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteUint32(provider.ConsumeIntegral<AccessTokenID>())) {
+        if (!datas.WriteUint32(tokenID)) {
             return false;
         }
-        if (!datas.WriteString(provider.ConsumeRandomLengthString())) {
+        if (!datas.WriteString(permissionName)) {
             return false;
         }
         if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {

@@ -23,6 +23,7 @@
 
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
@@ -48,6 +49,17 @@ static HapPolicyParams g_PolicyPrams = {
 const int CONSTANTS_NUMBER_TWO = 2;
 const int CONSTANTS_NUMBER_THREE = 3;
 static const int32_t ROOT_UID = 0;
+static const vector<PermissionFlag> FLAG_LIST = {
+    PERMISSION_DEFAULT_FLAG,
+    PERMISSION_USER_SET,
+    PERMISSION_USER_FIXED,
+    PERMISSION_SYSTEM_FIXED,
+    PERMISSION_PRE_AUTHORIZED_CANCELABLE,
+    PERMISSION_COMPONENT_SET,
+    PERMISSION_FIXED_FOR_SECURITY_POLICY,
+    PERMISSION_ALLOW_THIS_TIME
+};
+static const uint32_t FLAG_LIST_SIZE = 8;
 
 namespace OHOS {
     bool GrantPermissionStubFuzzTest(const uint8_t* data, size_t size)
@@ -57,10 +69,10 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
-        std::string permissionName = provider.ConsumeRandomLengthString();
-        uint32_t flag = provider.ConsumeIntegralInRange<uint32_t>(
-            0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME));
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
+        uint32_t flagIndex = provider.ConsumeIntegral<uint32_t>() % FLAG_LIST_SIZE;
+        uint32_t flag = FLAG_LIST[flagIndex];
         int32_t grantMode = static_cast<bool>(provider.ConsumeIntegralInRange<int32_t>(1, 2));
 
         MessageParcel datas;

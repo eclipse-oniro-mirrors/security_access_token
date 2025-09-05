@@ -20,6 +20,7 @@
 #include <vector>
 #undef private
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "i_token_sync_manager.h"
 #include "token_sync_manager_service.h"
@@ -36,7 +37,7 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         std::string deviceID = provider.ConsumeRandomLengthString();
-        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        AccessTokenID tokenId = ConsumeTokenId(provider);
         
         MessageParcel datas;
         datas.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());

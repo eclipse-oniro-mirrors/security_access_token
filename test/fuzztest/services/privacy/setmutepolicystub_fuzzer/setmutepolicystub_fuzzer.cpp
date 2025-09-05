@@ -31,6 +31,8 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
+static const uint32_t ACTIVE_CHANGE_CHANGE_TYPE_MAX = 4;
+static const uint32_t CALLER_TYPE_MAX = 2;
 
 namespace OHOS {
 const uint8_t* g_baseFuzzData = nullptr;
@@ -73,8 +75,8 @@ size_t g_baseFuzzPos = 0;
         GetNativeToken();
 
         if (size > sizeof(uint32_t) + sizeof(bool) + sizeof(uint32_t)) {
-            uint32_t policyType = provider.ConsumeIntegral<uint32_t>();
-            uint32_t callerType = provider.ConsumeIntegral<uint32_t>();
+            uint32_t policyType = provider.ConsumeIntegralInRange<uint32_t>(0, ACTIVE_CHANGE_CHANGE_TYPE_MAX);
+            uint32_t callerType = provider.ConsumeIntegralInRange<uint32_t>(0, CALLER_TYPE_MAX);
             bool isMute = provider.ConsumeBool();
             uint32_t tokenID = provider.ConsumeIntegral<uint32_t>();
 

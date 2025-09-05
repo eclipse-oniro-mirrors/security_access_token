@@ -20,6 +20,7 @@ ohos_fuzztest("AccessTokenKitCoverageFuzzTest") {
   fuzz_config_file = "."
 
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/test/fuzztest/common",
   ]
