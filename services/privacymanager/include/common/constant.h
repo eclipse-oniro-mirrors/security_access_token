@@ -72,6 +72,7 @@ public:
         CAMERA_BACKGROUND = 43,
         OP_CUSTOM_SCREEN_CAPTURE = 44,
         OP_CUSTOM_SCREEN_RECORDING = 45,
+        OP_HOOK_KEY_EVENT = 46,
         // 以下声明仅用于下载 桌面 文档文件夹权限的访问记录使用,需要和普通权限做区分
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ = 100,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE = 101,
