@@ -222,7 +222,7 @@ bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, Permi
     }
     if ((goalGrantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
         permState.state = FORBIDDEN_OPER;
-        permState.errorReason = FIXED_BY_POLICY;
+        permState.errorReason = UNABLE_POP_UP;
         return true;
     }
     if ((goalGrantFlag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0) {

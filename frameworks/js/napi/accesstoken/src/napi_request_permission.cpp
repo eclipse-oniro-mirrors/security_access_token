@@ -428,12 +428,6 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
         permList.emplace_back(permState);
     }
     auto ret = AccessTokenKit::GetSelfPermissionsState(permList, asyncContext->info);
-    if (ret == FORBIDDEN_OPER) { // if app is under control, change state from default -1 to 2
-        for (auto& perm : permList) {
-            perm.state = INVALID_OPER;
-            perm.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
-        }
-    }
     LOGI(ATM_DOMAIN, ATM_TAG,
         "TokenID: %{public}d, bundle: %{public}s, uiExAbility: %{public}s, serExAbility: %{public}s.",
         asyncContext->tokenId, asyncContext->info.grantBundleName.c_str(),

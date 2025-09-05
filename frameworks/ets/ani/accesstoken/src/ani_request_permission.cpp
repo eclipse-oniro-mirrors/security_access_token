@@ -236,13 +236,6 @@ bool RequestAsyncContext::IsDynamicRequest()
         permList.emplace_back(permState);
     }
     auto ret = AccessToken::AccessTokenKit::GetSelfPermissionsState(permList, this->info);
-    if (ret == AccessToken::FORBIDDEN_OPER) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "FORBIDDEN_OPER");
-        for (auto& perm : permList) {
-            perm.state = AccessToken::INVALID_OPER;
-            perm.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
-        }
-    }
     for (const auto& permState : permList) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Permission: %{public}s: state: %{public}d, errorReason: %{public}d",
             permState.permissionName.c_str(), permState.state, permState.errorReason);
