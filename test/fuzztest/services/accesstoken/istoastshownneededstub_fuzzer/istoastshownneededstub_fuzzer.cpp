@@ -15,7 +15,9 @@
 
 #include "istoastshownneededstub_fuzzer.h"
 
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
@@ -47,7 +49,18 @@ bool IsToastShownNeededStubFuzzTest(const uint8_t* data, size_t size)
 
     return true;
 }
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
 } // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

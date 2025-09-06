@@ -24,7 +24,9 @@
 #include "access_token.h"
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "nativetoken_kit.h"
@@ -78,6 +80,11 @@ size_t g_baseFuzzPos = 0;
         setuid(ROOT_UID);
         return true;
     }
+
+    void Initialize()
+    {
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    }
 }
 
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
@@ -106,6 +113,7 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 
+    OHOS::Initialize();
     return 0;
 }
 

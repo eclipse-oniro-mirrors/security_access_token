@@ -18,7 +18,9 @@
 #include <string>
 
 #include "fuzzer/FuzzedDataProvider.h"
-#include "service/accesstoken_manager_service.h"
+#define private public
+#include "accesstoken_manager_service.h"
+#undef private
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -116,6 +118,17 @@ namespace OHOS {
         setuid(ROOT_UID);
         return true;
     }
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
+} // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
 }
 
 /* Fuzzer entry point */

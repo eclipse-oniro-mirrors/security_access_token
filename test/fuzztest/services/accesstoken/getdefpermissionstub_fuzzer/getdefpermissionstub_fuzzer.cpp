@@ -19,9 +19,10 @@
 #include <thread>
 #include <vector>
 
-#undef private
 #include "accesstoken_fuzzdata.h"
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_def_parcel.h"
@@ -31,30 +32,43 @@ using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetDefPermissionStubFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        std::string permissionName = ConsumePermissionName(provider);
-        
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(permissionName)) {
-            return false;
-        }
-
-        uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManagerIpcCode::COMMAND_GET_DEF_PERMISSION);
-
-        MessageParcel reply;
-        MessageOption option;
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-
-        return true;
+bool GetDefPermissionStubFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    std::string permissionName = ConsumePermissionName(provider);
+    
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return false;
+    }
+    if (!datas.WriteString(permissionName)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(
+        IAccessTokenManagerIpcCode::COMMAND_GET_DEF_PERMISSION);
+
+    MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+
+    return true;
+}
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
+} // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
 }
 
 /* Fuzzer entry point */
