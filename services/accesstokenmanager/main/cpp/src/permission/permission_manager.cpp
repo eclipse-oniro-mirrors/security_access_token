@@ -1176,11 +1176,11 @@ void PermissionManager::GetMasterAppUndValues(AccessTokenID tokenId, std::vector
     }
 }
 
-bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int32_t userId,
+bool PermissionManager::InitDlpPermissionList(const HapInfoParams& info,
     std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues)
 {
-    // get dlp original app
-    AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(userId, bundleName, 0);
+    // get dlp original app, index is 0
+    AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(info.userID, info.bundleName, 0);
     std::shared_ptr<HapTokenInfoInner> infoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId.tokenIdExStruct.tokenID);
     if (infoPtr == nullptr) {

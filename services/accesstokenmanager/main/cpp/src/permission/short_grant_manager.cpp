@@ -142,7 +142,6 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         shortGrantData_.begin(), shortGrantData_.end(), [tokenID, permission](const PermTimerData& data) {
         return data.tokenID == tokenID && data.permissionName == permission;
     });
-
     if (iter == shortGrantData_.end()) {
         auto iterator = std::find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permission);
         if (iterator == g_shortGrantPermission.end()) {
@@ -251,7 +250,7 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Token: %{public}d, permission: %{public}s, delay revoke permission end.", tokenID, permission.c_str());
     });
-    LOGI(ATM_DOMAIN, ATM_TAG, "cancelTimes %{public}d", cancelTimes);
+    LOGI(ATM_DOMAIN, ATM_TAG, "CancelTimes %{public}d.", cancelTimes);
     eventHandler->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
     return;
 #else

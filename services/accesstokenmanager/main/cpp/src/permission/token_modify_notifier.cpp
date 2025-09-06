@@ -175,11 +175,8 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
 int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->notifyLock_);
-    tokenSyncCallbackObject_ = new (std::nothrow) TokenSyncCallbackProxy(callback);
+    tokenSyncCallbackObject_ = new TokenSyncCallbackProxy(callback);
     tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
-    if (tokenSyncCallbackDeathRecipient_ == nullptr) {
-        return RET_FAILED;
-    }
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
     LOGI(ATM_DOMAIN, ATM_TAG, "Register token sync callback successful.");
     return ERR_OK;

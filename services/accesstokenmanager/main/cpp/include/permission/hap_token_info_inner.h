@@ -31,6 +31,19 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Declares hap Init info class
+ */
+class HapInitInfo final {
+public:
+    HapInfoParams installInfo;
+    UpdateHapInfoParams updateInfo;
+    HapPolicy policy;
+    std::string bundleName = "";
+    AccessTokenID tokenID = 0;
+    bool isUpdate = false;
+};
+
 class HapTokenInfoInner final {
 public:
     HapTokenInfoInner();
