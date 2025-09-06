@@ -18,6 +18,7 @@
 #include <string>
 
 #include "accesstoken_manager_service.h"
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
 #include "iaccess_token_manager.h"
@@ -26,6 +27,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TEN = 10;
 static const int32_t ROOT_UID = 0;
+const static int32_t FLAG_SIZE = 16;
 
 namespace OHOS {
 void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams& param)
@@ -40,7 +42,7 @@ void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provid
     param.isSystemApp = provider.ConsumeBool();
     param.appDistributionType = provider.ConsumeRandomLengthString();
     param.isRestore = provider.ConsumeBool();
-    param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+    param.tokenID = ConsumeTokenId(provider);
     param.isAtomicService = provider.ConsumeBool();
 }
 
@@ -70,8 +72,7 @@ void InitHapPolicy(const std::string& permissionName, const std::string& bundleN
         .permissionName = permissionName,
         .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
-        .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
-            0, static_cast<uint32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME)),
+        .grantFlag = 1 << (provider.ConsumeIntegral<uint32_t>() % FLAG_SIZE),
     };
 
     PreAuthorizationInfo info = {
@@ -84,7 +85,8 @@ void InitHapPolicy(const std::string& permissionName, const std::string& bundleN
     policy.domain = provider.ConsumeRandomLengthString();
     policy.permList = { def };
     policy.permStateList = { state };
-    policy.aclRequestedList = {provider.ConsumeRandomLengthString()};
+    std::string aclPermissionName = ConsumePermissionName(provider);
+    policy.aclRequestedList = {aclPermissionName};
     policy.preAuthorizationInfo = { info };
     policy.checkIgnore = static_cast<HapPolicyCheckIgnore>(provider.ConsumeIntegralInRange<uint32_t>(
         0, static_cast<uint32_t>(HapPolicyCheckIgnore::ACL_IGNORE_CHECK)));
@@ -99,7 +101,7 @@ bool AllocHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permissionName = provider.ConsumeRandomLengthString();
+    std::string permissionName = ConsumePermissionName(provider);
     std::string bundleName = provider.ConsumeRandomLengthString();
 
     HapInfoParcel hapInfoParcel;

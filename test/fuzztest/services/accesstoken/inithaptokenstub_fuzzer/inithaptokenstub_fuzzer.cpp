@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
@@ -40,7 +41,7 @@ namespace OHOS {
         param.isSystemApp = provider.ConsumeBool();
         param.appDistributionType = provider.ConsumeRandomLengthString();
         param.isRestore = provider.ConsumeBool();
-        param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+        param.tokenID = ConsumeTokenId(provider);
         param.isAtomicService = provider.ConsumeBool();
     }
 
@@ -99,7 +100,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         std::string bundleName = provider.ConsumeRandomLengthString();
 
         HapInfoParcel hapInfoParcel;

@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
@@ -70,7 +71,7 @@ namespace OHOS {
         GetNativeToken();
 
         if (size > sizeof(uint32_t) + sizeof(bool)) {
-            AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+            AccessTokenID tokenId = ConsumeTokenId(provider);
             bool isAllowed = provider.ConsumeBool();
 
             MessageParcel datas;

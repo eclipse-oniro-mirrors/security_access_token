@@ -15,6 +15,7 @@
 
 #include "startusingpermissionstub_fuzzer.h"
 
+#include "accesstoken_fuzzdata.h"
 #include "constant.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
@@ -83,7 +84,7 @@ bool StartUsingPermissionStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    AccessTokenID tokenID = provider.ConsumeIntegral<AccessTokenID>();
+    AccessTokenID tokenID = ConsumeTokenId(provider);
     int32_t pid = provider.ConsumeIntegral<int32_t>();
     std::string permissionName;
     int32_t opCode = provider.ConsumeIntegral<int32_t>() % g_permSize;

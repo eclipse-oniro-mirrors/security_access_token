@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_client.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -54,8 +55,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
 
         PermStateChangeScope scopeInfo;
         scopeInfo.permList = { permissionName };

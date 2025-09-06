@@ -79,6 +79,7 @@
             <filefilter name="readmeOpenSourcefileNamePolicyFilter" desc="Filters for README.OpenSource file policies">
             </filefilter>
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies">
+                <filteritem type="filename" name="init0" desc="corpus of fuzztest"/>
             </filefilter>
         </filefilterlist>
     </oatconfig>

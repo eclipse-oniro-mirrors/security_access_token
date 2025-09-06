@@ -22,6 +22,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
@@ -30,6 +31,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
+static const int STATUS_MAX = 2;
 
 namespace OHOS {
     bool SetPermissionRequestToggleStatusStubFuzzTest(const uint8_t* data, size_t size)
@@ -39,8 +41,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
-        uint32_t status = provider.ConsumeIntegral<uint32_t>();
+        std::string permissionName = ConsumePermissionName(provider);
+        uint32_t status = provider.ConsumeIntegral<uint32_t>() % STATUS_MAX;
         int32_t userID = provider.ConsumeIntegral<int32_t>();
         MessageParcel sendData;
         if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor()) ||

@@ -26,6 +26,8 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static const uint32_t ACTIVE_CHANGE_CHANGE_TYPE_MAX = 4;
+static const uint32_t CALLER_TYPE_MAX = 2;
 
 namespace OHOS {
     bool SetMutePolicyFuzzTest(const uint8_t* data, size_t size)
@@ -35,7 +37,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return PrivacyKit::SetMutePolicy(provider.ConsumeIntegral<uint32_t>(), provider.ConsumeIntegral<uint32_t>(),
+        return PrivacyKit::SetMutePolicy(provider.ConsumeIntegralInRange<uint32_t>(0, ACTIVE_CHANGE_CHANGE_TYPE_MAX),
+            provider.ConsumeIntegralInRange<uint32_t>(0, CALLER_TYPE_MAX),
             provider.ConsumeBool(), provider.ConsumeIntegral<AccessTokenID>()) == 0;
     }
 }

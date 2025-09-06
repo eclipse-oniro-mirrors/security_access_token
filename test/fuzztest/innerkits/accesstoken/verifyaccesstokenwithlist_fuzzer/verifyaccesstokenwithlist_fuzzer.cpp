@@ -20,12 +20,12 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-const int32_t MAX_PERMISSION_SIZE = 1100;
 
 namespace OHOS {
     bool VerifyAccessTokenWithListFuzzTest(const uint8_t* data, size_t size)
@@ -35,14 +35,16 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        int32_t permSize = provider.ConsumeIntegral<int32_t>() % MAX_PERMISSION_SIZE;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        int32_t permSize = provider.ConsumeIntegral<int32_t>() %
+            (static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1);
         std::vector<std::string> permissionList;
         for (int32_t i = 0; i < permSize; ++i) {
-            permissionList.emplace_back(provider.ConsumeRandomLengthString());
+            permissionList.emplace_back(ConsumePermissionName(provider));
         }
 
         std::vector<int32_t> permStateList;
-        return AccessTokenKit::VerifyAccessToken(provider.ConsumeIntegral<AccessTokenID>(), permissionList,
+        return AccessTokenKit::VerifyAccessToken(tokenId, permissionList,
             permStateList, provider.ConsumeBool()) == RET_SUCCESS;
     }
 }

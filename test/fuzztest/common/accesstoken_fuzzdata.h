@@ -17,9 +17,82 @@
 #define ACCESSTOKEN_FUZZDATA_TEMPLATE_H
 
 #include <cstdio>
+#include <iostream>
+#include <sstream>
 #include <string>
 
+#include "fuzzer/FuzzedDataProvider.h"
+#include "accesstoken_kit.h"
+#include "permission_map.h"
 #include "securec.h"
+
+static OHOS::Security::AccessToken::AccessTokenID TransfterStrToAccesstokenID(const std::string& numStr)
+{
+    size_t index = 0;
+    while (index < numStr.length()) {
+        if (!std::isdigit(numStr[index])) {
+            break;
+        }
+        ++index;
+    }
+    if (index != numStr.length()) {
+        return 0;
+    }
+    OHOS::Security::AccessToken::AccessTokenID id =
+        static_cast<OHOS::Security::AccessToken::AccessTokenID>(std::stoi(numStr));
+    return id;
+}
+
+void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenID> &tokenIdList)
+{
+    std::string dumpInfo;
+    OHOS::Security::AccessToken::AtmToolsParamInfo info;
+    OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    std::istringstream iss(dumpInfo);
+    std::string line;
+    while (std::getline(iss, line)) {
+        size_t pos = line.find(':');
+        if (pos != std::string::npos) {
+            std::string numStr = line.substr(0, pos);
+            OHOS::Security::AccessToken::AccessTokenID id = TransfterStrToAccesstokenID(numStr);
+            if (id != OHOS::Security::AccessToken::INVALID_TOKENID) {
+                tokenIdList.push_back(id);
+            }
+        }
+    }
+}
+
+OHOS::Security::AccessToken::AccessTokenID ConsumeTokenId(FuzzedDataProvider &provider)
+{
+    static std::vector<OHOS::Security::AccessToken::AccessTokenID> tokenIdList;
+    static bool isIntialize = false;
+    if (!isIntialize) {
+        GetTokenIdList(tokenIdList);
+        isIntialize = true;
+    }
+    OHOS::Security::AccessToken::AccessTokenID tokenId = 0;
+    if (provider.ConsumeBool() || tokenIdList.empty()) {
+        tokenId = provider.ConsumeIntegral<OHOS::Security::AccessToken::AccessTokenID>();
+    } else {
+        tokenId = tokenIdList[
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(tokenIdList.size() - 1))];
+    }
+
+    return tokenId;
+}
+
+std::string ConsumePermissionName(FuzzedDataProvider &provider)
+{
+    std::string permissionName;
+    if (provider.ConsumeBool()) {
+        permissionName = provider.ConsumeRandomLengthString();
+    } else {
+        permissionName = OHOS::Security::AccessToken::TransferOpcodeToPermission(
+            provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1), permissionName);
+    }
+    return permissionName;
+}
 
 namespace OHOS {
 namespace Security {

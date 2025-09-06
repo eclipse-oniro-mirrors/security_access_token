@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -35,8 +36,8 @@ namespace OHOS {
 
 #ifdef TOKEN_SYNC_ENABLE
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::DeleteRemoteToken(provider.ConsumeRandomLengthString(),
-            provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        return AccessTokenKit::DeleteRemoteToken(provider.ConsumeRandomLengthString(), tokenId) == RET_SUCCESS;
 #else
         return true;
 #endif

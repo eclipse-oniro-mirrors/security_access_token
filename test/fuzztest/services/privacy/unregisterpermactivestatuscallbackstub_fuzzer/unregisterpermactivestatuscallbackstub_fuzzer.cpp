@@ -20,6 +20,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "perm_active_status_change_callback.h"
@@ -59,7 +60,7 @@ namespace OHOS {
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
-        std::vector<std::string> permList = {provider.ConsumeRandomLengthString()};
+        std::vector<std::string> permList = {ConsumePermissionName(provider)};
         auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
 

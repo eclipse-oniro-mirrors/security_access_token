@@ -22,6 +22,7 @@
 #include <vector>
 #undef private
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
@@ -39,7 +40,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        AccessTokenID tokenId = ConsumeTokenId(provider);
         MessageParcel inData;
         inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!inData.WriteUint32(tokenId)) {

@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -34,8 +35,9 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::VerifyAccessToken(provider.ConsumeIntegral<AccessTokenID>(),
-            provider.ConsumeRandomLengthString(), provider.ConsumeBool()) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
+        return AccessTokenKit::VerifyAccessToken(tokenId, permissionName, provider.ConsumeBool()) == RET_SUCCESS;
     }
 }
 
