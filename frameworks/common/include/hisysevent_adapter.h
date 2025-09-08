@@ -23,20 +23,16 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-// base info
-struct BaseDfxInfo {
+// add, update or delete
+struct HapDfxInfo {
     AccessTokenID tokenId = 0;
+    AccessTokenIDEx tokenIdEx;
+    AccessTokenID oriTokenId;
     int32_t userID = 0;
-    std::string bundleName;
     int32_t instIndex;
+    std::string bundleName;
     int64_t duration = 0;
     int32_t ipcCode = -1;
-};
-
-// add or update or delete
-struct HapDfxInfo : public BaseDfxInfo {
-    AccessTokenID oriTokenId;
-    AccessTokenIDEx tokenIdEx;
     std::string permInfo;
     std::string aclInfo;
     std::string preauthInfo;

@@ -88,7 +88,7 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     ani_status status;
     if ((status = env->Object_CallMethodByName_Int(
         static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed! %{public}d", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed! %{public}d", static_cast<int32_t>(status));
         return false;
     }
 
@@ -460,13 +460,14 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
     ani_method aniMethod;
     ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "I:V", &aniMethod);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status: %{public}d!", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status: %{public}d!", static_cast<int32_t>(status));
         return nullptr;
     }
     ani_object out;
     status = env->Object_New(aniClass, aniMethod, &out, length);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New(size: %{public}d), status %{public}d!", length, status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New(size: %{public}d), status %{public}d!",
+            length, static_cast<int32_t>(status));
         return nullptr;
     }
     return out;
@@ -483,7 +484,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -540,7 +541,7 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -567,7 +568,7 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -588,7 +589,7 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -616,7 +617,7 @@ bool GetStringVecProperty(
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -636,7 +637,7 @@ bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& proper
     ani_status status = env->Object_SetPropertyByName_Boolean(object, property.c_str(), static_cast<ani_boolean>(in));
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     return true;
@@ -651,7 +652,7 @@ bool SetIntProperty(ani_env* env, ani_object& object, const std::string& propert
     ani_status status = env->Object_SetPropertyByName_Int(object, property.c_str(), static_cast<ani_int>(in));
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     return true;
@@ -666,7 +667,7 @@ bool SetLongProperty(ani_env* env, ani_object& aniObject, const std::string& pro
     ani_status status = env->Object_SetPropertyByName_Long(aniObject, property.c_str(), static_cast<ani_long>(in));
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     return true;
@@ -681,7 +682,7 @@ bool SetRefProperty(ani_env* env, ani_object& aniObject, const std::string& prop
     ani_status status = env->Object_SetPropertyByName_Ref(aniObject, property.c_str(), in);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+            property.c_str(), static_cast<int32_t>(status));
         return false;
     }
     return true;

@@ -1025,11 +1025,14 @@ HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level0)
 HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueId(nodeId));
     ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId)); // nodeId invalid
 
     nodeId = "123";
     // FindDeviceInfo false
-    ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId));
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueId(nodeId));
+    // GetUuidByNetworkId success
+    ASSERT_EQ("123:uuid-001", SoftBusManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId));
 
     std::string networkId = "123";
     std::string universallyUniqueId = "123";
@@ -1062,10 +1065,15 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.
 HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level0)
 {
     std::string nodeId;
+    bool isFound;
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceId(nodeId, isFound));
+    ASSERT_EQ(false, isFound);
     ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId)); // nodeId invalid
 
     nodeId = "123";
     // FindDeviceInfo false
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceId(nodeId, isFound));
+    ASSERT_EQ(false, isFound);
     ASSERT_EQ("", SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId));
 
     std::string networkId = "123";
@@ -1078,6 +1086,8 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level
 
     nodeId = "123";
     // FindDeviceInfo true + universallyUniqueId is not empty
+    DeviceInfoManager::GetInstance().ConvertToUniqueDeviceId(nodeId, isFound);
+    ASSERT_EQ(true, isFound);
     SoftBusManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
 
     nodeId = uniqueDeviceId;

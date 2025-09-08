@@ -107,7 +107,7 @@ public:
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
         HapInfoCheckResult& result, std::vector<GenericValues>& undefValues);
-    bool InitDlpPermissionList(const std::string& bundleName, int32_t userId,
+    bool InitDlpPermissionList(const HapInfoParams& initInfo,
         std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);

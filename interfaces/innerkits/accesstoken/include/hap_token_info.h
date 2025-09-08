@@ -214,19 +214,6 @@ public:
 };
 
 /**
- * @brief Declares hap Init info class
- */
-class HapInitInfo final {
-public:
-    HapInfoParams installInfo;
-    UpdateHapInfoParams updateInfo;
-    HapPolicy policy;
-    std::string bundleName = "";
-    AccessTokenID tokenID = 0;
-    bool isUpdate = false;
-};
-
-/**
  * @brief Declares permission with value
  */
 class PermissionWithValue final {
