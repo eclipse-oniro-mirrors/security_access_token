@@ -21,7 +21,9 @@
 
 #undef private
 #include "accesstoken_fuzzdata.h"
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
@@ -51,6 +53,17 @@ namespace OHOS {
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         return true;
     }
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
+} // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
 }
 
 /* Fuzzer entry point */

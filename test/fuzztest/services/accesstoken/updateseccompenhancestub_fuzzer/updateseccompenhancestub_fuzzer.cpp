@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 
+#define private public
 #include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
@@ -58,7 +59,18 @@ namespace OHOS {
 
         return true;
     }
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
 } // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

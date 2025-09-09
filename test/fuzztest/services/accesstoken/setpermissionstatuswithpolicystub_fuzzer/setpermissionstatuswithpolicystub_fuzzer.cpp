@@ -18,7 +18,9 @@
 #include <vector>
 
 #include "access_token.h"
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
@@ -70,7 +72,18 @@ bool SetPermissionStatusWithPolicyStubFuzzTest(const uint8_t* data, size_t size)
     setuid(ROOT_UID);
     return true;
 }
+
+void Initialize()
+{
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
 } // namespace OHOS
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
