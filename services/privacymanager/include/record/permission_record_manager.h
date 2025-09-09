@@ -160,15 +160,14 @@ private:
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
         const std::string& permissionName, int32_t callerPid);
-    int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid,
-        bool isCamera = false);
+    int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);
     bool GetMuteStatus(const std::string& permissionName, int32_t index);
 
-    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, int32_t callbackPid);
+    void ExecuteCameraCallbackAsync(AccessTokenID callbackTokenId, int32_t pid);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,

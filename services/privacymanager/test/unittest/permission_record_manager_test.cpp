@@ -581,6 +581,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
 }
 
+#ifdef CAMERA_FRAMEWORK_ENABLE
 /*
  * @tc.name: StartUsingPermissionTest009
  * @tc.desc: Test multiple process start using permission
@@ -589,6 +590,10 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
  */
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Level0)
 {
+    auto cameraCallbackMap = PermissionRecordManager::GetInstance().cameraCallbackMap_; // backup
+    PermissionRecordManager::GetInstance().cameraCallbackMap_.EnsureInsert(
+        PermissionRecordManager::GetInstance().GetUniqueId(RANDOM_TOKENID, -1), nullptr);
+
     auto callbackPtr1 = std::make_shared<PermissionRecordManagerTestCb1>();
     auto callbackWrap1 = new (std::nothrow) StateChangeCallback(callbackPtr1);
     ASSERT_NE(nullptr, callbackPtr1);
@@ -604,13 +609,41 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Leve
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     std::string permissionName = "ohos.permission.CAMERA";
+    PermissionRecordManager::GetInstance().cameraCallbackMap_.EnsureInsert(
+        PermissionRecordManager::GetInstance().GetUniqueId(tokenId, -1), nullptr);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, TEST_PID_1, permissionName), callbackWrap1->AsObject(), CALLER_PID));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
-        PermissionRecordManager::GetInstance().StartUsingPermission(MakeInfo(tokenId, TEST_PID_2, permissionName),
-        callbackWrap2->AsObject(), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_2, permissionName), callbackWrap2->AsObject(), CALLER_PID));
+
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    AppStateData appStateData;
+    appStateData.accessTokenId = tokenId;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    appStateData.pid = TEST_PID_1;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    appStateData.pid = TEST_PID_2;
+    appStateObserver_->OnAppStateChanged(appStateData);
+
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.pid = TEST_PID_1;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(callbackPtr1->isShow_);
+    ASSERT_FALSE(callbackPtr2->isShow_);
+
+    callbackPtr1->isShow_ = true;
+    callbackPtr2->isShow_ = true;
+    appStateData.pid = TEST_PID_2;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(callbackPtr1->isShow_);
+    ASSERT_FALSE(callbackPtr2->isShow_);
+#endif
+    PermissionRecordManager::GetInstance().cameraCallbackMap_ = cameraCallbackMap; // recovery
 }
+#endif
 
 /*
  * @tc.name: StartUsingPermissionTest010

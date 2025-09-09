@@ -28,7 +28,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const int32_t WAIT_EVENTHANDLE_TIME = 2;
-constexpr const int32_t WAIT_DELAY_DLCLOSE_TIME = 7;
 }
 class AccessTokenDatabaseDlopenTest : public testing::Test {
 public:
