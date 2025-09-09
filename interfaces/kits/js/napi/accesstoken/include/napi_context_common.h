@@ -27,7 +27,6 @@ namespace AccessToken {
 #define MAX_PARAMS_TWO 2
 #define MAX_PARAMS_THREE 3
 #define MAX_PARAMS_FOUR 4
-#define MAX_LENGTH 256
 #define MAX_WAIT_TIME 1000
 #define VALUE_MAX_LEN 32
 
