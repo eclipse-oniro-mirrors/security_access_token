@@ -417,7 +417,7 @@ static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContex
     }
 }
 
-static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, ani_array_ref aniPermissionList,
+static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, ani_array aniPermissionList,
     ani_object callback, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     ani_vm* vm;
@@ -449,7 +449,7 @@ static bool ParseRequestPermissionFromUser(ani_env* env, ani_object aniContext, 
 }
 
 void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_object aniContext, ani_array_ref aniPermissionList, ani_object callback)
+    ani_object aniContext, ani_array aniPermissionList, ani_object callback)
 {
     if (env == nullptr || aniPermissionList == nullptr || callback == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env or aniPermissionList or callback is null.");

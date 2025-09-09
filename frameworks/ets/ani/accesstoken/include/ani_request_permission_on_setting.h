@@ -89,7 +89,7 @@ private:
 };
 
 void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array_ref permissionList, ani_object callback);
+    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array permissionList, ani_object callback);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

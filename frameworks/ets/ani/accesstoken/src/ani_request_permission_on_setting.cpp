@@ -90,7 +90,7 @@ static ani_status GetContext(
     return ANI_OK;
 }
 
-static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array_ref& aniPermissionList,
+static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array& aniPermissionList,
     ani_object callback, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     ani_vm* vm;
@@ -558,7 +558,7 @@ void RequestOnSettingAsyncInstanceControl::CheckDynamicRequest(
 }
 
 void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array_ref permissionList, ani_object callback)
+    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array permissionList, ani_object callback)
 {
     if (env == nullptr || permissionList == nullptr || callback == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList or callback is null.");
