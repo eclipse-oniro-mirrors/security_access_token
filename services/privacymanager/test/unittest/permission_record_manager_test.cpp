@@ -99,6 +99,14 @@ static PermissionStateFull g_testState3 = {
     .grantFlags = {1}
 };
 
+static PermissionStateFull g_testState4 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {4}
+};
+
 static HapPolicyParams g_PolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
@@ -125,6 +133,26 @@ static HapInfoParams g_InfoParms2 = {
     .bundleName = "ohos.privacy_test.bundleB",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleB"
+};
+
+static PreAuthorizationInfo g_preAuthInfo1 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .userCancelable = false
+};
+
+static HapPolicyParams g_PolicyPrams3 = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.C",
+    .permList = {},
+    .permStateList = {g_testState4},
+    .preAuthorizationInfo = {g_preAuthInfo1}
+};
+
+static HapInfoParams g_InfoParms3 = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleC",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleC"
 };
 }
 class PermissionRecordManagerTest : public testing::Test {
@@ -1384,6 +1412,70 @@ HWTEST_F(PermissionRecordManagerTest, HasCallerInStartList001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId1, TEST_PID_1, permissionName, CALLER_PID));
     ASSERT_FALSE(PermissionRecordManager::GetInstance().HasCallerInStartList(CALLER_PID));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest001
+ * @tc.desc: AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 0;
+    info.failCount = 1;
+    info.type = NORMAL_TYPE;
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    info.tokenId = RANDOM_TOKENID;
+    ASSERT_NE(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest002
+ * @tc.desc: AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(g_InfoParms3, g_PolicyPrams3);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    std::vector<std::string> permissionList;
+    permissionList.push_back("ohos.permission.CAMERA");
+    PermissionUsedRequest request;
+    request.tokenId = tokenId;
+    request.isRemote = false;
+    request.deviceId = "";
+    request.bundleName = g_InfoParms3.bundleName;
+    request.permissionList = permissionList;
+    request.beginTimeMillis = 0;
+    request.endTimeMillis = 0;
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
+
+    PermissionUsedResult result;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(0, result.bundleRecords.size());
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
 } // namespace AccessToken
 } // namespace Security

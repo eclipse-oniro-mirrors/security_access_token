@@ -446,6 +446,15 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
         return VerifyNativeRecordPermission(
             info.permissionName, info.tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
     }
+
+    uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
+    if (info.permissionName == CAMERA_PERMISSION_NAME &&
+        AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS &&
+        flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, don't add used record.");
+        return Constant::SUCCESS;
+    }
+
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid tokenId(%{public}d).", info.tokenId);
