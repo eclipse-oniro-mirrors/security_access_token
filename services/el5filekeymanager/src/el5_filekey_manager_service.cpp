@@ -492,7 +492,6 @@ int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& ar
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
         dprintf(fd, "       -a: dump all el5 data information \n");
-        dprintf(fd, "       -t [time]: use arguments time to set screen lock timeout minutes only in deleloper mode\n");
         return EFM_SUCCESS;
     }
 
