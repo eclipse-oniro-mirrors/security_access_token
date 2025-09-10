@@ -251,7 +251,7 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Token: %{public}d, permission: %{public}s, delay revoke permission end.", tokenID, permission.c_str());
     });
-    LOGI(ATM_DOMAIN, ATM_TAG, "cancelTimes %{public}d", cancelTimes);
+    LOGI(ATM_DOMAIN, ATM_TAG, "CancelTimes %{public}d.", cancelTimes);
     eventHandler->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
     return;
 #else
