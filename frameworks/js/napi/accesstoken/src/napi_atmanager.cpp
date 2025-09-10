@@ -15,6 +15,7 @@
 #include "napi_atmanager.h"
 
 #include "access_token.h"
+#include "data_validator.h"
 #include "hisysevent.h"
 #include "napi_hisysevent_adapter.h"
 #include "napi_request_global_switch_on_setting.h"
@@ -39,6 +40,7 @@ static PermissionParamCache g_paramCache;
 static PermissionParamCache g_paramFlagCache;
 static std::atomic<int32_t> g_cnt = 0;
 constexpr uint32_t REPORT_CNT = 10;
+constexpr int32_t MAX_LENGTH = 256;
 namespace {
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
@@ -959,6 +961,13 @@ void NapiAtManager::GrantPermissionExecute(napi_env env, void *data)
         "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
 
+    if (!DataValidator::IsTokenIDValid(asyncContext->tokenId) ||
+        !DataValidator::IsPermissionNameValid(asyncContext->permissionName) ||
+        !IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->errorCode = ERR_PARAM_INVALID;
+        return;
+    }
+
     PermissionBriefDef permissionDef;
     if (!GetPermissionBriefDef(asyncContext->permissionName, permissionDef)) {
         asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
@@ -968,10 +977,6 @@ void NapiAtManager::GrantPermissionExecute(napi_env env, void *data)
     LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
-    if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->errorCode = ERR_PARAM_INVALID;
-        return;
-    }
     // only user_grant or manual_settings permission can use innerkit class method to grant permission
     // system_grant return failed
     if (permissionDef.grantMode == USER_GRANT || permissionDef.grantMode == MANUAL_SETTINGS) {
@@ -1039,6 +1044,13 @@ void NapiAtManager::RevokePermissionExecute(napi_env env, void *data)
         "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
 
+    if (!DataValidator::IsTokenIDValid(asyncContext->tokenId) ||
+        !DataValidator::IsPermissionNameValid(asyncContext->permissionName) ||
+        !IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->errorCode = ERR_PARAM_INVALID;
+        return;
+    }
+
     PermissionBriefDef permissionDef;
     if (!GetPermissionBriefDef(asyncContext->permissionName, permissionDef)) {
         asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
@@ -1048,10 +1060,6 @@ void NapiAtManager::RevokePermissionExecute(napi_env env, void *data)
     LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
-    if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->errorCode = ERR_PARAM_INVALID;
-        return;
-    }
     // only user_grant or manual_settings permission can use innerkit class method to grant permission
     // system_grant return failed
     if (permissionDef.grantMode == USER_GRANT || permissionDef.grantMode == MANUAL_SETTINGS) {
