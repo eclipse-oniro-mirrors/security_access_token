@@ -7567,6 +7567,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.CONNECT_FAULT_LOG_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 21,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.CUSTOM_SCREEN_RECORDING",
             "grantMode": "manual_settings",
             "availableLevel": "system_basic",
