@@ -298,7 +298,7 @@ static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
-static void GetSingleNativeTokenFromJson(const CJson* j,  NativeTokenInfoBase& native)
+static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeTokenInfoBase>& tokenInfos)
 {
     NativeTokenInfoBase info;
     int32_t aplNum = 0;
@@ -345,10 +345,10 @@ static void GetSingleNativeTokenFromJson(const CJson* j,  NativeTokenInfoBase& n
     }
 
     if (!GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
-        !DataValidator::IsProcessNameValid(info.processName)) {
+        !DataValidator::IsProcessNameValid(info.processName) || info.processName.empty()) {
         return;
     }
-    native = info;
+    tokenInfos.emplace_back(info);
 }
 
 bool ConfigPolicLoader::ParserNativeRawData(
@@ -362,11 +362,7 @@ bool ConfigPolicLoader::ParserNativeRawData(
     int32_t len = cJSON_GetArraySize(jsonRes.get());
     for (int32_t i = 0; i < len; i++) {
         CJson* item = cJSON_GetArrayItem(jsonRes.get(), i);
-        NativeTokenInfoBase token;
-        GetSingleNativeTokenFromJson(item, token);
-        if (!token.processName.empty()) {
-            tokenInfos.emplace_back(token);
-        }
+        GetSingleNativeTokenFromJson(item, tokenInfos);
     }
     return true;
 }
