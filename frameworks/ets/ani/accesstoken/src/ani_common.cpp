@@ -14,6 +14,7 @@
  */
 #include "ani_common.h"
 #include "accesstoken_common_log.h"
+#include "hisysevent.h"
 #include <sstream>
 namespace OHOS {
 namespace Security {
@@ -21,7 +22,13 @@ namespace AccessToken {
 namespace {
 constexpr const char* WRAPPER_CLASS_NAME = "L@ohos/abilityAccessCtrl/AsyncCallbackWrapper;";
 constexpr const char* INVOKE_METHOD_NAME = "invoke";
+static const int32_t NUM_TWENTY_FOUR = 24;
 } // namespace
+
+int32_t GetDifferRequestErrorCode(const ReqPermFromUserErrorCode& errorCode, const AniRequestType& contextType)
+{
+    return static_cast<int32_t>(errorCode | (contextType << NUM_TWENTY_FOUR));
+}
 
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result)
 {
@@ -86,7 +93,7 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
         OHOS::Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->result_.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -98,8 +105,11 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
             sessionId, asyncContext->tokenId);
         if (sessionId <= 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is invalid");
-            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->result_.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
+                GetDifferRequestErrorCode(CREATE_MODAL_UI_FAILED, asyncContext->contextType_));
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -125,7 +135,7 @@ void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> as
         Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = RET_FAILED;
+            asyncContext->result_.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);

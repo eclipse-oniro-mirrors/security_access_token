@@ -22,6 +22,7 @@
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
+#include "ani_hisysevent_adapter.h"
 #include "ani_request_global_switch_on_setting.h"
 #include "ani_request_permission.h"
 #include "ani_request_permission_on_setting.h"
@@ -39,6 +40,8 @@ constexpr int32_t VALUE_MAX_LEN = 32;
 std::mutex g_lockCache;
 static PermissionParamCache g_paramCache;
 std::map<std::string, PermissionStatusCache> g_cache;
+static std::atomic<int32_t> g_tokenIdOtherCount = 0;
+constexpr uint32_t REPORT_TIMES_REDUCE_FACTOR = 10;
 static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 }
 constexpr const char* PERM_STATE_CHANGE_FIELD_TOKEN_ID = "tokenID";
@@ -284,6 +287,13 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
     asyncContext->permissionName = permissionName;
     static uint64_t selfTokenId = GetSelfTokenID();
     if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
+        int32_t cnt = g_tokenIdOtherCount.fetch_add(1);
+        if (!AccessTokenKit::IsSystemAppByFullTokenID(selfTokenId) && cnt % REPORT_TIMES_REDUCE_FACTOR == 0) {
+            AccessTokenID selfToken = static_cast<AccessTokenID>(selfTokenId);
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "VERIFY_ACCESS_TOKEN_EVENT",
+                HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_CODE", VERIFY_TOKENID_INCONSISTENCY,
+                "SELF_TOKENID", selfToken, "CONTEXT_TOKENID", asyncContext->tokenId);
+        }
         asyncContext->grantStatus = AccessToken::AccessTokenKit::VerifyAccessToken(tokenID, permissionName);
         return static_cast<ani_int>(asyncContext->grantStatus);
     }
@@ -705,13 +715,16 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Compare callback.");
             if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
-                unregisterPermStateChangeInf->callbackRef, item->threadId, callbackEqual)) {
+                item->callbackRef, item->threadId, callbackEqual)) {
+                continue;
+            }
+            if (!callbackEqual) {
                 continue;
             }
         }
 
+        LOGI(ATM_DOMAIN, ATM_TAG, "Callback is equal.");
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {

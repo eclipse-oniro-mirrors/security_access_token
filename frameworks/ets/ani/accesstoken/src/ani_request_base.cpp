@@ -17,6 +17,8 @@
 #include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
 #include "ani_common.h"
+#include "ani_hisysevent_adapter.h"
+#include "hisysevent.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -62,6 +64,9 @@ void RequestAsyncContextBase::GetInstanceId()
         Ace::UIContent* uiContent = GetUIContent(this->stageContext_);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
+                GetDifferRequestErrorCode(GET_UI_CONTENT_FAILED, contextType_));
             return;
         }
         this->uiContentFlag = true;
@@ -94,7 +99,7 @@ void RequestAsyncContextBase::CopyResult(const std::shared_ptr<RequestAsyncConte
 
 void RequestAsyncContextBase::ProcessFailResult(int32_t code)
 {
-    result.errorCode = code;
+    result_.errorCode = code;
 }
 
 void RequestAsyncContextBase::FinishCallback()
@@ -110,10 +115,10 @@ void RequestAsyncContextBase::FinishCallback()
         return;
     }
 
-    int32_t stsCode = ConvertErrorCode(result.errorCode);
-    ani_object error = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result.errorMsg));
-    ani_object result = WrapResult(env);
-    (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef), error, result);
+    int32_t stsCode = ConvertErrorCode(result_.errorCode);
+    ani_object aniError = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result_.errorMsg));
+    ani_object aniResult = WrapResult(env);
+    (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef_), aniError, aniResult);
 
     if (!isSameThread && vm_->DetachCurrentThread() != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "DetachCurrentThread failed!");
@@ -133,9 +138,9 @@ void RequestAsyncContextBase::Clear()
         return;
     }
 
-    if (callbackRef != nullptr) {
-        curEnv->GlobalReference_Delete(callbackRef);
-        callbackRef = nullptr;
+    if (callbackRef_ != nullptr) {
+        curEnv->GlobalReference_Delete(callbackRef_);
+        callbackRef_ = nullptr;
     }
 }
 
@@ -146,7 +151,9 @@ AniRequestType RequestAsyncContextBase::GetType()
 
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContextBase> reqContext)
     :reqContext_(reqContext)
-{}
+{
+    isOnResult_.exchange(false);
+}
 
 UIExtensionCallback::~UIExtensionCallback()
 {}
@@ -175,6 +182,7 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
 
 void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result)
 {
+    isOnResult_.exchange(true);
     LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d", resultCode);
     reqContext_->ProcessUIExtensionCallback(result);
     ReleaseHandler(0);
@@ -196,6 +204,9 @@ void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
 
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
+        GetDifferRequestErrorCode(TRIGGER_RELEASE, reqContext_->contextType_), "INNER_CODE", releaseCode);
     ReleaseHandler(-1);
 }
 
@@ -207,6 +218,9 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
     LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
+        GetDifferRequestErrorCode(TRIGGER_ONERROR, reqContext_->contextType_), "INNER_CODE", code);
     ReleaseHandler(-1);
 }
 
@@ -225,6 +239,11 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
+    if (!isOnResult_.load()) {
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
+            GetDifferRequestErrorCode(TRIGGER_DESTROY, reqContext_->contextType_));
+    }
     ReleaseHandler(-1);
 }
 

@@ -40,7 +40,6 @@ enum AniRequestType {
 struct RequestAsyncContextBase {
     AccessTokenID tokenId = 0;
     std::string bundleName;
-    AtmResult result;
     PermissionGrantInfo info;
     int32_t instanceId = -1;
     std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext_ = nullptr;
@@ -49,13 +48,17 @@ struct RequestAsyncContextBase {
     bool uiContentFlag = false;
     std::mutex lockReleaseFlag;
 
+    // result after requesting
+    AtmResult result_;
+    std::atomic<bool> needDynamicRequest_ = true;
+
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
     std::thread::id threadId_;
     ani_vm* vm_ = nullptr;
     ani_env* env_ = nullptr;
-    ani_ref callbackRef = nullptr;
+    ani_ref callbackRef_ = nullptr;
     AniRequestType contextType_;
 
     RequestAsyncContextBase(ani_vm* vm, ani_env* env, AniRequestType type);
@@ -109,6 +112,7 @@ protected:
 
 private:
     int32_t sessionId_ = 0;
+    std::atomic<bool> isOnResult_ = false;
 };
 
 } // namespace AccessToken

@@ -23,6 +23,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_common.h"
+#include "ani_hisysevent_adapter.h"
 #include "hisysevent.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -74,15 +75,17 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     if (abilityContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Convert to AbilityContext failed. " \
             "UIExtension ability can not pop service ablility window!");
-        asyncContext->needDynamicRequest = false;
-        asyncContext->result.errorCode = RET_FAILED;
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
-        asyncContext->needDynamicRequest = false;
-        asyncContext->result.errorCode = RET_FAILED;
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
         return;
     }
     OHOS::AAFwk::Want want;
@@ -104,6 +107,11 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     want.SetParam(REQUEST_TOKEN_KEY, abilityContext->GetToken());
     int32_t ret = OHOS::AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
         want, abilityContext->GetToken());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+    }
     LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu", ret,
         asyncContext->tokenId, asyncContext->permissionList.size());
 }
@@ -172,7 +180,7 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
         LOGE(ATM_DOMAIN, ATM_TAG, "Object_New status %{public}d ", static_cast<int32_t>(status));
         return nullptr;
     }
-    auto state = this->needDynamicRequest ? this->grantResults : this->permissionsState;
+    auto state = this->needDynamicRequest_ ? this->grantResults : this->permissionsState;
     ani_ref aniPerms = CreateAniArrayString(env, permissionList);
     ani_ref aniAuthRes = CreateAniArrayInt(env, state);
     ani_ref aniDiasShownRes = CreateAniArrayBool(env, dialogShownResults);
@@ -191,15 +199,20 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
     return aObject;
 }
 
-void RequestAsyncContext::HandleResult(const std::vector<std::string>& permissionList,
-    const std::vector<int32_t>& grantResults)
+void RequestAsyncContext::HandleResult(const std::vector<int32_t>& grantResults)
 {
+    if (permissionsState.size() != grantResults.size()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size of permissionsState(%{public}zu) and " \
+            "grantResults(%{public}zu) is not euqal",
+            permissionsState.size(), grantResults.size());
+        return;
+    }
     std::vector<int32_t> newGrantResults;
-    size_t size = permissionList.size();
+    size_t size = grantResults.size();
     for (size_t i = 0; i < size; i++) {
         int32_t result = static_cast<int32_t>(this->permissionsState[i]);
         if (this->permissionsState[i] == AccessToken::DYNAMIC_OPER) {
-            result = this->result.errorCode == AccessToken::RET_SUCCESS ?
+            result = this->result_.errorCode == AccessToken::RET_SUCCESS ?
                 grantResults[i] : AccessToken::INVALID_OPER;
         }
         newGrantResults.emplace_back(result);
@@ -207,7 +220,7 @@ void RequestAsyncContext::HandleResult(const std::vector<std::string>& permissio
 
     if (newGrantResults.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantResults empty");
-        result.errorCode = RET_FAILED;
+        result_.errorCode = RET_FAILED;
     }
     this->grantResults.assign(newGrantResults.begin(), newGrantResults.end());
 }
@@ -254,7 +267,7 @@ bool RequestAsyncContext::CheckDynamicRequest()
     permissionsState.clear();
     dialogShownResults.clear();
     if (!IsDynamicRequest()) {
-        HandleResult(this->permissionList, this->permissionsState);
+        HandleResult(this->permissionsState);
         FinishCallback();
         return false;
     }
@@ -265,12 +278,12 @@ void RequestAsyncContext::ProcessUIExtensionCallback(const OHOS::AAFwk::Want& re
 {
     this->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     this->permissionsState = result.GetIntArrayParam(RESULT_KEY);
-    HandleResult(permissionList, permissionsState);
+    HandleResult(this->permissionsState);
 }
 
 int32_t RequestAsyncContext::ConvertErrorCode(int32_t code)
 {
-    return BusinessErrorAni::GetStsErrorCode(result.errorCode);
+    return BusinessErrorAni::GetStsErrorCode(result_.errorCode);
 }
 
 bool RequestAsyncContext::NoNeedUpdate()
@@ -278,14 +291,14 @@ bool RequestAsyncContext::NoNeedUpdate()
     return true;
 }
 
-static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContext>& asyncContext)
+static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (!asyncContext->IsDynamicRequest()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "It does not need to request permission");
-        asyncContext->needDynamicRequest = false;
-        if ((asyncContext->permissionsState.empty()) && (asyncContext->result.errorCode == RET_SUCCESS)) {
+        asyncContext->needDynamicRequest_ = false;
+        if ((asyncContext->permissionsState.empty()) && (asyncContext->result_.errorCode == RET_SUCCESS)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "GrantResults empty");
-            asyncContext->result.errorCode = RET_FAILED;
+            asyncContext->result_.errorCode = RET_FAILED;
         }
         return;
     }
@@ -320,7 +333,7 @@ static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContex
 }
 
 static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array_ref aniPermissionList,
-    ani_object callback, std::shared_ptr<RequestAsyncContext>& asyncContext)
+    ani_object callback, std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (!asyncContext->FillInfoFromContext(aniContext)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "FillInfoFromContext failed.");
@@ -329,7 +342,7 @@ static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array_ref an
         return false;
     }
     asyncContext->permissionList = ParseAniStringVector(env, aniPermissionList);
-    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef)) {
+    if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef_)) {
         return false;
     }
     return true;
@@ -363,11 +376,14 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         ani_object result = reinterpret_cast<ani_object>(nullRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
+            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
         (void)ExecuteAsyncCallback(env, callback, error, result);
         return;
     }
     RequestPermissionsFromUserProcess(asyncContext);
-    if (asyncContext->needDynamicRequest) {
+    if (asyncContext->needDynamicRequest_) {
         return;
     }
     asyncContext->FinishCallback();
@@ -376,7 +392,7 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
 }
 
 
-AuthorizationResult::AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data) : data_(data)
+AuthorizationResult::AuthorizationResult(std::shared_ptr<RequestAsyncContext> data) : data_(data)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "AuthorizationResult");
 }
@@ -394,7 +410,7 @@ void AuthorizationResult::GrantResultsCallback(
         return;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantResultsCallback");
-    asyncContext->HandleResult(permissionList, grantResults);
+    asyncContext->HandleResult(grantResults);
     asyncContext->FinishCallback();
 }
 
