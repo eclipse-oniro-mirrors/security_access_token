@@ -38,9 +38,11 @@ typedef enum {
 } SwitchType;
 
 struct RequestGlobalSwitchAsyncContext : public RequestAsyncContextBase {
-    bool isDynamic = true;
-    bool switchStatus = false;
     int32_t switchType = -1;
+
+    // results after requesting
+    bool switchStatus = false;
+
     RequestGlobalSwitchAsyncContext(ani_vm* vm, ani_env* env);
     ~RequestGlobalSwitchAsyncContext() override;
     int32_t ConvertErrorCode(int32_t errCode) override;

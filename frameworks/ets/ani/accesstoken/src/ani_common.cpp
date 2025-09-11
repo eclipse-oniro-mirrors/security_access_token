@@ -86,7 +86,7 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
         OHOS::Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->result_.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -98,7 +98,7 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
             sessionId, asyncContext->tokenId);
         if (sessionId <= 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is invalid");
-            asyncContext->result.errorCode = AccessToken::RET_FAILED;
+            asyncContext->result_.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -125,7 +125,7 @@ void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> as
         Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = RET_FAILED;
+            asyncContext->result_.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);

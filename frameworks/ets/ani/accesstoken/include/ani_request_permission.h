@@ -44,11 +44,12 @@ struct RequestAsyncContext : public RequestAsyncContextBase {
     int32_t ConvertErrorCode(int32_t code) override;
     ani_object WrapResult(ani_env* env) override;
     bool CheckDynamicRequest() override;
-    void HandleResult(const std::vector<std::string>& permissionList, const std::vector<int32_t>& grantResults);
+    void HandleResult(const std::vector<int32_t>& grantResults);
     bool NoNeedUpdate() override;
 
-    bool needDynamicRequest = true;
     std::vector<std::string> permissionList;
+
+    // results after requesting
     std::vector<int32_t> grantResults;
     std::vector<int32_t> permissionsState;
     std::vector<bool> dialogShownResults;
@@ -57,7 +58,7 @@ struct RequestAsyncContext : public RequestAsyncContextBase {
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data);
+    AuthorizationResult(std::shared_ptr<RequestAsyncContext> data);
     virtual ~AuthorizationResult() override;
 
     virtual void GrantResultsCallback(
