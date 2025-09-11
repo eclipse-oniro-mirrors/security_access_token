@@ -586,7 +586,7 @@ bool NapiRequestPermissionOnSetting::ParseRequestPermissionOnSetting(const napi_
         LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
         return false;
     }
-    if (argc < MAX_PARAMS_TWO) {
+    if (argc < MAX_PARAMS_TWO - 1) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;

@@ -142,7 +142,6 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         shortGrantData_.begin(), shortGrantData_.end(), [tokenID, permission](const PermTimerData& data) {
         return data.tokenID == tokenID && data.permissionName == permission;
     });
-
     if (iter == shortGrantData_.end()) {
         auto iterator = std::find(g_shortGrantPermission.begin(), g_shortGrantPermission.end(), permission);
         if (iterator == g_shortGrantPermission.end()) {
