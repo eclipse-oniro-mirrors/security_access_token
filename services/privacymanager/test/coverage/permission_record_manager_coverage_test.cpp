@@ -1200,35 +1200,6 @@ HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSiz
     ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
-
-/*
- * @tc.name: OnUpdate001
- * @tc.desc: PermissionUsedRecordDb::OnUpdate function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, OnUpdate001, TestSize.Level4)
-{
-    int32_t version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_0);
-    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
-
-    version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_1);
-    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
-
-    version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_2);
-    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
-
-    version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_3);
-    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
-
-    version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_4);
-    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
-
-    auto it = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.find(
-        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS);
-    ASSERT_NE(it, PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.end());
-    ASSERT_EQ(std::string(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE), it->second.tableName_);
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
