@@ -558,7 +558,6 @@ std::string SoftBusManager::ConvertToUniqueDeviceIdOrFetch(const std::string& no
 {
     bool isFoundDevice = false;
     std::string uniqueDeviceId = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceId(nodeId, isFoundDevice);
-    LOGE(ATM_DOMAIN, ATM_TAG, "nodeId %{public}d", isFoundDevice);
     if (uniqueDeviceId.empty() && isFoundDevice) {
         std::string udid = GetUniqueDeviceIdByNodeId(nodeId);
         if (!udid.empty()) {
