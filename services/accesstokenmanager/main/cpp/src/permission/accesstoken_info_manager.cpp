@@ -969,7 +969,7 @@ int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID
         ret = DeleteRemoteToken(deviceID, remoteID);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "delete remote token failed! deviceId=%{public}s, remoteId=%{public}d.", \
-                deviceID.c_str(), remoteID);
+                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         }
     }
     return ret;
