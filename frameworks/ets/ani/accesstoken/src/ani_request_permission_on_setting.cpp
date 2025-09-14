@@ -149,11 +149,26 @@ void RequestPermOnSettingAsyncContext::ProcessUIExtensionCallback(const OHOS::AA
     this->stateList_ = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
 }
 
+static std::string JoinStrings(const std::vector<std::string>& permissionList)
+{
+    std::ostringstream perms;
+    perms << "permList:[";
+    for (size_t i = 0; i < permissionList.size(); ++i) {
+        perms << permissionList[i];
+        if (i != permissionList.size() - 1) {
+            perms << ", ";
+        }
+    }
+    perms << "]";
+    return perms.str();
+}
+
 void RequestPermOnSettingAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncContextBase> asyncContext)
 {
     AccessTokenKit::GetPermissionManagerInfo(this->info);
-    LOGI(ATM_DOMAIN, ATM_TAG, "BundleName: %{public}s, permStateAbilityName: %{public}s.",
-        this->info.grantBundleName.c_str(), this->info.permStateAbilityName.c_str());
+    std::string perms = JoinStrings(this->permissionList);
+    LOGI(ATM_DOMAIN, ATM_TAG, "BundleName: %{public}s, permStateAbilityName: %{public}s, permissionList: %{public}s.",
+        this->info.grantBundleName.c_str(), this->info.permStateAbilityName.c_str(), perms.c_str());
     OHOS::AAFwk::Want want;
     want.SetElementName(this->info.grantBundleName, this->info.permStateAbilityName);
     want.SetParam(PERMISSION_SETTING_KEY, this->permissionList);
