@@ -64,7 +64,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_ALL_PERM_GRANTED;
             break;
         case PERM_REVOKE_BY_USER:
-            jsCode = JS_ERROR_PERM_REVOKE_BY_USER;
+            jsCode = JS_ERROR_PERM_NOT_REVOKE_BY_USER;
             break;
         default:
             jsCode = JS_ERROR_INNER;
@@ -382,12 +382,27 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOn
     return RET_SUCCESS;
 }
 
+static std::string JoinStrings(const std::vector<std::string>& permissionList)
+{
+    std::ostringstream perms;
+    perms << "permList:[";
+    for (size_t i = 0; i < permissionList.size(); ++i) {
+        perms << permissionList[i];
+        if (i != permissionList.size() - 1) {
+            perms << ", ";
+        }
+    }
+    perms << "]";
+    return perms.str();
+}
+
 static int32_t StartUIExtension(std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
 {
     AAFwk::Want want;
     AccessTokenKit::GetPermissionManagerInfo(asyncContext->info);
-    LOGI(ATM_DOMAIN, ATM_TAG, "bundleName: %{public}s, permStateAbilityName: %{public}s.",
-        asyncContext->info.grantBundleName.c_str(), asyncContext->info.permStateAbilityName.c_str());
+    std::string perms = JoinStrings(asyncContext->permissionList);
+    LOGI(ATM_DOMAIN, ATM_TAG, "bundleName: %{public}s, permStateAbilityName: %{public}s, permissionList: %{public}s.",
+        asyncContext->info.grantBundleName.c_str(), asyncContext->info.permStateAbilityName.c_str(), perms.c_str());
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.permStateAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
