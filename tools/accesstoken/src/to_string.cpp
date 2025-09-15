@@ -155,6 +155,7 @@ static void PermDefToJson(const PermissionBriefDef& briefDef, CJsonUnique& permD
     (void)AddStringToJson(permDefJson, "grantMode", grantMode);
     (void)AddStringToJson(permDefJson, "availableLevel", FormatApl(briefDef.availableLevel));
     (void)AddStringToJson(permDefJson, "availableType", FormatAvailableType(briefDef.availableType));
+    (void)AddBoolToJson(permDefJson, "provisionEnable", briefDef.provisionEnable);
     (void)AddBoolToJson(permDefJson, "distributedSceneEnable", briefDef.distributedSceneEnable);
     (void)AddBoolToJson(permDefJson, "isKernelEffect", briefDef.isKernelEffect);
     (void)AddBoolToJson(permDefJson, "hasValue", briefDef.hasValue);
