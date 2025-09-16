@@ -54,12 +54,8 @@ int32_t AddPermissionToKernel(
         return ACCESS_TOKEN_PARAM_INVALID;
     }
     size_t size = opCodeList.size();
-    if (size == 0) {
-        return RemovePermissionFromKernel(tokenID);
-    }
     struct IoctlAddPermData data;
     data.token = tokenID;
-
     for (uint32_t i = 0; i < size; ++i) {
         uint32_t opCode = opCodeList[i];
         uint32_t idx = opCode / UINT32_T_BITS;
