@@ -16,7 +16,6 @@
 #include "soft_bus_device_connection_listener.h"
 
 #include "remote_command_manager.h"
-#include "soft_bus_manager.h"
 #include "device_info_manager.h"
 #include "device_manager.h"
 #include "iservice_registry.h"
