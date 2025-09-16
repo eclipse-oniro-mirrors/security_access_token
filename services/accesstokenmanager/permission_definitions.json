@@ -6634,7 +6634,7 @@
             "name": "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SYSTEM",
+            "availableType": "MDM",
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
