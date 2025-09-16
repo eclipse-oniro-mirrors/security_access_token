@@ -410,6 +410,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
 bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID)
 {
+    std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
     auto it = permUsedRecToggleStatusMap_.find(userID);
     if (it != permUsedRecToggleStatusMap_.end()) {
         LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
@@ -587,6 +588,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t use
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
     auto it = permUsedRecToggleStatusMap_.find(userID);
     if (it == permUsedRecToggleStatusMap_.end()) {
         status = true;
