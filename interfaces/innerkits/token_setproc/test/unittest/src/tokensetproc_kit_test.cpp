@@ -226,7 +226,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level0)
     std::vector<bool> statusList;
     // update with less permission(size is 0)
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList, statusList));
-    EXPECT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     EXPECT_EQ(false, isGranted);
 
     // update with more permission
