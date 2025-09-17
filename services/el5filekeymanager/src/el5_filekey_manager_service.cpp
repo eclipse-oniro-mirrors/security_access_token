@@ -403,6 +403,7 @@ int32_t El5FilekeyManagerService::CheckReqLockPermission(DataLockType type, bool
     isApp = AccessTokenKit::GetTokenTypeFlag(callingTokenID) == ATokenTypeEnum::TOKEN_HAP;
     switch (type) {
         case DataLockType::DEFAULT_DATA:
+        case DataLockType::GROUP_ID_DATA:
             if (!isApp || (AccessTokenKit::VerifyAccessToken(callingTokenID, PROTECT_DATA_PERMISSION) !=
                 PermissionState::PERMISSION_GRANTED)) {
                 LOG_ERROR("Data protection is not enabled.");
@@ -494,7 +495,6 @@ int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& ar
         dprintf(fd, "       -a: dump all el5 data information \n");
         return EFM_SUCCESS;
     }
-
     if (service_ == nullptr) {
         LOG_ERROR("Failed to get policy.");
         PostDelayedUnloadTask(API_DELAY_TIME);
