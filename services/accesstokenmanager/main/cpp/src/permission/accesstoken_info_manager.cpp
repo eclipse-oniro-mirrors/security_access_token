@@ -89,7 +89,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
     std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
 {
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lk(this->managerLock_);
+    std::unique_lock<std::shared_mutex> lk(this->managerLock_);
     if (hasInited_) {
         return;
     }
@@ -265,7 +265,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     AccessTokenID id = info->GetTokenID();
     AccessTokenID idRemoved = INVALID_TOKENID;
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) > 0) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u info has exist.", id);
             return AccessTokenError::ERR_TOKENID_HAS_EXISTED;
@@ -289,7 +289,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     // add hap to kernel
     int32_t userId = info->GetUserID();
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
@@ -339,7 +339,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
         return nullptr;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
@@ -353,7 +353,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
 std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
 {
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         auto iter = hapTokenInfoMap_.find(id);
         if (iter != hapTokenInfoMap_.end()) {
             return iter->second;
@@ -364,7 +364,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
 
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     auto iter = hapTokenInfoMap_.find(id);
     if ((iter != hapTokenInfoMap_.end()) && (iter->second != nullptr)) {
         return iter->second->GetDlpType();
@@ -376,13 +376,13 @@ int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
 bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
 {
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) != 0) {
             return true;
         }
     }
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) != 0) {
             return true;
         }
@@ -426,7 +426,7 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
 
 int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
     auto iter = nativeTokenInfoMap_.find(tokenID);
     if (iter == nativeTokenInfoMap_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
@@ -446,7 +446,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     }
     std::shared_ptr<HapTokenInfoInner> info;
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         // remove hap to kernel
         PermissionManager::GetInstance().RemovePermFromKernel(id);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
@@ -495,7 +495,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     }
 
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", id);
             return ERR_TOKENID_NOT_EXIST;
@@ -644,7 +644,7 @@ int AccessTokenInfoManager::AllocAccessTokenIDEx(
 
 AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     std::string HapUniqueKey = GetHapUniqueStr(userID, bundleName, instIndex);
     AccessTokenIDEx tokenIdEx = {0};
     auto iter = hapTokenIdMap_.find(HapUniqueKey);
@@ -696,7 +696,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
         std::vector<bool> statusList;
         GetNativePermissionList(info, opCodeList, statusList);
         // add native token info to cache
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
         NativeTokenInfoCache cache;
         cache.processName = process;
         cache.apl = static_cast<ATokenAplEnum>(info.apl);
@@ -741,7 +741,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         infoPtr->Update(info, permStateList, hapPolicy);
     }
 
@@ -766,7 +766,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 void AccessTokenInfoManager::UpdateHapToKernel(AccessTokenID tokenID, int32_t userId)
 {
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
@@ -804,7 +804,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
         LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is null or not remote, can not update!", mapID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     infoPtr->UpdateRemoteHapTokenInfo(mapID, hapSync.baseInfo, hapSync.permStateList);
     // update remote hap to kernel
     PermissionManager::GetInstance().AddHapPermToKernel(mapID, std::vector<std::string>());
@@ -919,14 +919,14 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
 
     ATokenTypeEnum type = TokenIDAttributes::GetTokenIdTypeEnum(mapID);
     if (type == TOKEN_HAP) {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(mapID) == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", mapID);
             return ERR_TOKEN_INVALID;
         }
         hapTokenInfoMap_.erase(mapID);
     } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(mapID) == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", mapID);
             return ERR_TOKEN_INVALID;
@@ -1154,7 +1154,7 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
     std::vector<std::string> permissionList;
     int32_t userId = info->GetUserID();
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Execute user policy.");
@@ -1201,7 +1201,7 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
 AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)
 {
     AccessTokenID tokenID = INVALID_TOKENID;
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); ++iter) {
         if (iter->second.processName == processName) {
             tokenID = iter->first;
@@ -1228,7 +1228,7 @@ void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID token
 
 void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
             if (bundleName != iter->second->GetBundleName()) {
@@ -1244,7 +1244,7 @@ void AccessTokenInfoManager::DumpAllHapTokenname(std::string& dumpInfo)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Get all hap token name.");
 
-    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
             dumpInfo += std::to_string(iter->second->GetTokenID()) + ": " + iter->second->GetBundleName();
@@ -1262,7 +1262,7 @@ void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Get all native token name.");
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         dumpInfo += std::to_string(iter->first) + ": " + iter->second.processName;
         dumpInfo.append("\n");
@@ -1333,7 +1333,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
 
     {
         int32_t userId = infoPtr->GetUserID();
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         if (!permPolicyList_.empty() &&
             (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
             PermissionManager::GetInstance().AddHapPermToKernel(id, permPolicyList_);
@@ -1357,7 +1357,7 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
         return true;
     }
     int32_t userId = infoPtr->GetUserID();
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     if ((std::find(permPolicyList_.begin(), permPolicyList_.end(), permissionName) != permPolicyList_.end()) &&
         (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
         LOGI(ATM_DOMAIN, ATM_TAG, "id %{public}u perm %{public}s.", id, permissionName.c_str());
@@ -1368,7 +1368,7 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
 
 void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
 
     auto infoIter = hapTokenInfoMap_.find(tokenId);
     if (infoIter == hapTokenInfoMap_.end()) {
@@ -1403,7 +1403,7 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
 
 int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool enable)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "HapTokenInfoInner is nullptr.");
@@ -1481,7 +1481,7 @@ int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>
 void AccessTokenInfoManager::GetGoalHapList(std::map<AccessTokenID, bool>& tokenIdList,
     std::map<int32_t, bool>& changedUserList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); ++iter) {
         AccessTokenID tokenId = iter->first;
         std::shared_ptr<HapTokenInfoInner> infoPtr = iter->second;
@@ -1505,7 +1505,7 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::map<Acc
         bool isActive = iter->second;
         // refresh under userPolicyLock_
         {
-            Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+            std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
             std::map<std::string, bool> refreshedPermList;
             HapTokenInfoInner::RefreshPermStateToKernel(permPolicyList_, isActive, tokenId, refreshedPermList);
 
@@ -1550,7 +1550,7 @@ int32_t AccessTokenInfoManager::InitUserPolicy(
 {
     std::map<AccessTokenID, bool> tokenIdList;
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         std::map<int32_t, bool> changedUserList;
         int32_t ret = ParseUserPolicyInfo(userList, permList, changedUserList);
         if (ret != RET_SUCCESS) {
@@ -1570,7 +1570,7 @@ int32_t AccessTokenInfoManager::UpdateUserPolicy(const std::vector<UserState>& u
     std::map<AccessTokenID, bool> tokenIdList;
     {
         std::map<int32_t, bool> changedUserList;
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
         int32_t ret = ParseUserPolicyInfo(userList, changedUserList);
         if (ret != RET_SUCCESS) {
             return ret;
@@ -1588,7 +1588,7 @@ int32_t AccessTokenInfoManager::ClearUserPolicy()
 {
     std::map<AccessTokenID, bool> tokenIdList;
     std::vector<std::string> permList;
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     if (permPolicyList_.empty()) {
         LOGW(ATM_DOMAIN, ATM_TAG, "UserPolicy has been cleared.");
         return RET_SUCCESS;
@@ -1615,7 +1615,7 @@ bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenId.");
         return true;
     }
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId is not exist in map.");
@@ -1654,7 +1654,7 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
         return PERMISSION_DENIED;
     }
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
     auto iter = nativeTokenInfoMap_.find(tokenID);
     if (iter == nativeTokenInfoMap_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);

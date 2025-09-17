@@ -108,7 +108,7 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     } else {
         tokenInfoBasic_.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
 }
 
@@ -168,7 +168,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes, extendedPermRes);
     return RET_SUCCESS;
 }
@@ -194,7 +194,7 @@ void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permSt
         LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return;
     }
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->policySetLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     (void)PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
 }
 
@@ -292,7 +292,7 @@ void HapTokenInfoInner::UpdateRemoteHapTokenInfo(AccessTokenID mapID,
 int32_t HapTokenInfoInner::UpdatePermissionStatus(
     const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     int32_t ret = PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenInfoBasic_.tokenID,
         permissionName, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
@@ -369,7 +369,7 @@ bool HapTokenInfoInner::UpdateStatesToDB(AccessTokenID tokenID, std::vector<Perm
 
 int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->policySetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
 
     int32_t ret = PermissionDataBrief::GetInstance().ResetUserGrantPermissionStatus(tokenInfoBasic_.tokenID);
     if (ret != RET_SUCCESS) {

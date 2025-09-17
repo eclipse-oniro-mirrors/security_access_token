@@ -21,14 +21,15 @@
 #include <memory>
 #include <mutex>
 #include <map>
+#include <shared_mutex>
 #include <string>
 #include <vector>
+
 #include "access_token.h"
 #include "permission_status.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
-
-#include "rwlock.h"
+#include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
@@ -111,7 +112,7 @@ private:
     void DeleteExtendedValue(AccessTokenID tokenID);
     PermissionDataBrief() = default;
     DISALLOW_COPY_AND_MOVE(PermissionDataBrief);
-    OHOS::Utils::RWLock permissionStateDataLock_;
+    std::shared_mutex permissionStateDataLock_;
     std::map<uint32_t, std::vector<BriefPermData>> requestedPermData_;
     std::map<uint64_t, std::string> extendedValue_;
     std::list<BriefSecCompData> secCompList_;

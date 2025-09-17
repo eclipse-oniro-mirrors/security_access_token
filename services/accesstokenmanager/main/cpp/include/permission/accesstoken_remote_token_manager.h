@@ -18,13 +18,13 @@
 
 #include <map>
 #include <memory>
+#include <shared_mutex>
 #include <vector>
 
 #include "access_token.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "nocopyable.h"
-#include "rwlock.h"
 
 namespace OHOS {
 namespace Security {
@@ -48,7 +48,7 @@ private:
     AccessTokenRemoteTokenManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenRemoteTokenManager);
 
-    OHOS::Utils::RWLock remoteDeviceLock_;
+    std::shared_mutex remoteDeviceLock_;
     std::map<std::string, AccessTokenRemoteDevice> remoteDeviceMap_;
 };
 } // namespace AccessToken
