@@ -230,7 +230,7 @@ export default namespace privacyManager {
     }
 
     export function getPermissionUsedTypeInfos(
-        tokenId?: int, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>> {
+        tokenId?: int | null, permissionName?: Permissions): Promise<Array<PermissionUsedTypeInfo>> {
         let tokenIdIn = tokenId ?? 0;
         let permissionNameIn = permissionName ?? "";
         return new Promise<Array<PermissionUsedTypeInfo>> ((
