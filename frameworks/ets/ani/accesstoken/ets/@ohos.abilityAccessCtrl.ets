@@ -38,7 +38,7 @@ class AsyncCallbackWrapper<T> {
 }
 
 export default namespace abilityAccessCtrl {
-    loadLibrary("accesstoken_ani.z");
+    loadLibraryWithPermissionCheck("accesstoken_ani.z", "@ohos.abilityAccessCtrl");
     export enum GrantStatus {
         PERMISSION_DENIED = -1,
         PERMISSION_GRANTED = 0

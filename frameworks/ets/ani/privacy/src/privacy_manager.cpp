@@ -565,7 +565,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
         if (status != ANI_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "status : %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Object_CallMethodByName_Void: %{public}u.", status);
             break;
         }
         ++index;
@@ -622,7 +622,7 @@ static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<Permissi
             arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
         if (status != ANI_OK) {
             LOGE(PRI_DOMAIN, PRI_TAG,
-                "Failed to Set permission record, status: %{public}d.", static_cast<int32_t>(status));
+                "Failed to Set permission record, status: %{public}u.", status);
             break;
         }
         ++index;
@@ -673,7 +673,7 @@ static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<Bundl
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "ILstd/core/Object;:V", index, aniRecord);
         if (status != ANI_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG, "Set bundle record fail, status: %{public}u.", status);
             continue;
         }
         ++index;
@@ -814,7 +814,7 @@ static ani_ref ConvertPermissionUsedTypeInfos(ani_env* env, const std::vector<Pe
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "ILstd/core/Object;:V", index, aniType);
         if (status != ANI_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Set type, status: %{public}d.", static_cast<int32_t>(status));
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Set type, status: %{public}u.", status);
             continue;
         }
         ++index;
@@ -909,8 +909,7 @@ void InitPrivacyFunction(ani_env *env)
     };
     ani_status status = env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size());
     if (status != ANI_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Namespace_BindNativeFunctions status : %{public}d.",
-            static_cast<int32_t>(status));
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Namespace_BindNativeFunctions status : %{public}u.", status);
     }
     if (env->ResetError() != ANI_OK) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to ResetError.");

@@ -174,7 +174,7 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
     ani_vm* vm;
     ani_status status = env->GetVM(&vm);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetVM, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetVM, error=%{public}u.", status);
         return;
     }
     std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext =

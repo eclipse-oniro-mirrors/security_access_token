@@ -40,19 +40,19 @@ bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, a
     ani_class clsCall {};
 
     if ((status = env->FindClass(WRAPPER_CLASS_NAME, &clsCall)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, error=%{public}u.", status);
         return false;
     }
     ani_method method = {};
     if ((status = env->Class_FindMethod(
         clsCall, INVOKE_METHOD_NAME, "L@ohos/base/BusinessError;Lstd/core/Object;:V", &method)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, error=%{public}u.", status);
         return false;
     }
 
     status = env->Object_CallMethod_Void(static_cast<ani_object>(callback), method, error, result);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethod_Void, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethod_Void, error=%{public}u.", status);
         return false;
     }
     return true;

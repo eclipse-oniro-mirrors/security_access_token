@@ -23,7 +23,7 @@ function PARAM_ERROR_MSG(param: string, type: string): string {
 export { Permissions }
 
 export default namespace privacyManager {
-    loadLibrary("privacy_ani.z");
+    loadLibraryWithPermissionCheck("privacy_ani.z", "@ohos.privacyManager");
 
     native function addPermissionUsedRecordExecute(
         tokenID: int, permissionName: Permissions, successCount: int, failCount: int,
