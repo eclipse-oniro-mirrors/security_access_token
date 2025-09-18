@@ -18,14 +18,14 @@
 
 #include <atomic>
 #include <set>
+#include <shared_mutex>
 #include <vector>
 
 #include "access_token.h"
+#include "callback_death_recipients.h"
 #include "i_token_sync_callback.h"
 #include "nocopyable.h"
-#include "rwlock.h"
 #include "thread_pool.h"
-#include "callback_death_recipients.h"
 
 namespace OHOS {
 namespace Security {
@@ -48,9 +48,9 @@ private:
     DISALLOW_COPY_AND_MOVE(TokenModifyNotifier);
 
     bool hasInited_;
-    OHOS::Utils::RWLock initLock_;
-    OHOS::Utils::RWLock listLock_;
-    OHOS::Utils::RWLock notifyLock_;
+    std::shared_mutex initLock_;
+    std::shared_mutex listLock_;
+    std::shared_mutex notifyLock_;
     OHOS::ThreadPool notifyTokenWorker_;
     std::set<AccessTokenID> observationSet_;
     std::vector<AccessTokenID> deleteTokenList_;

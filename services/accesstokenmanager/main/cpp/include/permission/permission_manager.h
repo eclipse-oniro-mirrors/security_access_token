@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <vector>
+#include <shared_mutex>
 #include <string>
 
 #include "ability_manager_access_loader.h"
@@ -26,6 +27,7 @@
 #include "hap_token_info_inner.h"
 #include "iremote_broker.h"
 #include "libraryloader.h"
+#include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_event.h"
 #include "permission_list_state.h"
@@ -34,9 +36,6 @@
 #include "permission_state_change_info.h"
 #include "permission_status.h"
 #include "temp_permission_observer.h"
-
-#include "rwlock.h"
-#include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
@@ -146,13 +145,12 @@ private:
     static std::recursive_mutex mutex_;
     static PermissionManager* implInstance_;
 
-    OHOS::Utils::RWLock permParamSetLock_;
+    std::shared_mutex permParamSetLock_;
     uint64_t paramValue_ = 0;
 
-    OHOS::Utils::RWLock permFlagParamSetLock_;
+    std::shared_mutex permFlagParamSetLock_;
     uint64_t paramFlagValue_ = 0;
 
-    OHOS::Utils::RWLock permToggleStateLock_;
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 
     std::mutex abilityManagerMutex_;

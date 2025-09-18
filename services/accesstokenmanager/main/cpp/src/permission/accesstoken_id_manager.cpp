@@ -31,7 +31,7 @@ std::recursive_mutex g_instanceMutex;
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 {
     {
-        Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
+        std::shared_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
         if (tokenIdSet_.count(id) == 0) {
             return TOKEN_INVALID;
         }
@@ -46,7 +46,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
         return ERR_PARAM_INVALID;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
         AccessTokenID tokenId = *it;
@@ -105,7 +105,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
 
 void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
     if (tokenIdSet_.count(id) == 0) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}x is not exist", id);
         return;

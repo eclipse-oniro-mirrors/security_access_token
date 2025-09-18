@@ -17,6 +17,7 @@
 #define ACCESSTOKEN_HAP_TOKEN_INFO_INNER_H
 
 #include <memory>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -26,7 +27,6 @@
 #include "permission_data_brief.h"
 #include "permission_def.h"
 #include "permission_status.h"
-#include "rwlock.h"
 
 namespace OHOS {
 namespace Security {
@@ -110,7 +110,7 @@ private:
     /** permission dialog is forbidden */
     bool isPermDialogForbidden_ = false;
 
-    OHOS::Utils::RWLock policySetLock_;
+    std::shared_mutex policySetLock_;
 };
 } // namespace AccessToken
 } // namespace Security

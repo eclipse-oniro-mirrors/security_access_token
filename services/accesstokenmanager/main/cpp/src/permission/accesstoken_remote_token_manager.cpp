@@ -65,7 +65,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
     int32_t cloneFlag = TokenIDAttributes::GetTokenIdCloneFlag(remoteID);
 
     AccessTokenID mapID = 0;
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->remoteDeviceLock_);
     std::map<AccessTokenID, AccessTokenID>* mapPtr = nullptr;
     if (remoteDeviceMap_.count(deviceID) > 0) {
         AccessTokenRemoteDevice& device = remoteDeviceMap_[deviceID];
@@ -101,7 +101,7 @@ int AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID(const std::string& 
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s is valid.", ConstantCommon::EncryptDevId(deviceID).c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
@@ -125,7 +125,7 @@ AccessTokenID AccessTokenRemoteTokenManager::GetDeviceMappingTokenID(const std::
         return 0;
     }
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1 ||
         remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.count(remoteID) < 1) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s has not mapping.",
@@ -145,7 +145,7 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
         return ERR_PARAM_INVALID;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1 ||
         remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.count(remoteID) < 1) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s has not mapping.",
