@@ -26,8 +26,9 @@ bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_
         return false;
     }
 
-    if (env->FindNamespace(namespaceDescriptor.c_str(), &out) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindNamespace!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindNamespace(namespaceDescriptor.c_str(), &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindNamespace: %{public}u.", status);
         return false;
     }
     return true;
@@ -40,8 +41,10 @@ bool AniFindClass(ani_env* env, const std::string& classDescriptor, ani_class& o
         return false;
     }
 
-    if (env->FindClass(classDescriptor.c_str(), &out) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass(%{public}s).", classDescriptor.c_str());
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass(classDescriptor.c_str(), &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass(%{public}s): %{public}u.",
+            classDescriptor.c_str(), status);
         return false;
     }
     return true;
@@ -56,8 +59,9 @@ bool AniClassFindMethod(
         return false;
     }
 
-    if (env->Class_FindMethod(aniClass, methodDescriptor.c_str(), signature.c_str(), &out) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Class_FindMethod(aniClass, methodDescriptor.c_str(), signature.c_str(), &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return false;
     }
     return true;
@@ -70,8 +74,9 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char *fiel
         return false;
     }
 
-    if (env->Class_FindField(aniClass, fieldName, &out) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindField failed!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Class_FindField(aniClass, fieldName, &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindField failed: %{public}u.", status);
         return false;
     }
     return true;
@@ -85,10 +90,10 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     }
 
     ani_int tmp;
-    ani_status status;
+    ani_status status = ANI_ERROR;
     if ((status = env->Object_CallMethodByName_Int(
         static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed! %{public}d.", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed: %{public}u.", status);
         return false;
     }
 
@@ -104,15 +109,16 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vecto
     }
 
     ani_size size;
-    if (env->Array_GetLength(array, &size) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Array_GetLength(array, &size)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength: %{public}u.", status);
         return false;
     }
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref elementRef;
-        if (env->Array_Get(array, i, &elementRef) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref at index %{public}zu!", i);
+        if ((status = env->Array_Get(array, i, &elementRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref at index %{public}zu: %{public}u.", i, status);
             return false;
         }
         uint32_t value;
@@ -135,15 +141,16 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& ani
         return out;
     }
     ani_size size = 0;
-    if (env->Array_GetLength(aniStrArr, &size) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Array_GetLength(aniStrArr, &size)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength: %{public}u.", status);
         return out;
     }
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref aniRef;
-        if (env->Array_Get(aniStrArr, i, &aniRef) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref!");
+        if ((status = env->Array_Get(aniStrArr, i, &aniRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref: %{public}u.", status);
             return out;
         }
 
@@ -162,8 +169,9 @@ bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
         return false;
     }
 
-    if (env->GlobalReference_Create(aniCallback, &out) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->GlobalReference_Create(aniCallback, &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create: %{public}u.", status);
         return false;
     }
     return true;
@@ -177,8 +185,9 @@ bool AniIsRefUndefined(ani_env* env, const ani_ref& ref)
     }
 
     ani_boolean isUnd;
-    if (env->Reference_IsUndefined(ref, &isUnd) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_IsUndefined!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Reference_IsUndefined(ref, &isUnd)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_IsUndefined: %{public}u.", status);
         return false;
     }
     return isUnd ? true : false;
@@ -192,8 +201,9 @@ ani_string CreateAniString(ani_env* env, const std::string& str)
         return aniStr;
     }
 
-    if (env->String_NewUTF8(str.c_str(), str.size(), &aniStr) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_NewUTF8!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->String_NewUTF8(str.c_str(), str.size(), &aniStr)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_NewUTF8: %{public}u.", status);
         return aniStr;
     }
     return aniStr;
@@ -217,8 +227,9 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
     }
 
     ani_boolean isEq = false;
-    if (env->Reference_StrictEquals(compareRef, targetRref, &isEq) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_StrictEquals.");
+    ani_status status = ANI_ERROR;
+    if ((status = env->Reference_StrictEquals(compareRef, targetRref, &isEq)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reference_StrictEquals: %{public}u.", status);
         return false;
     }
     isEqual = isEq ? true : false;
@@ -232,8 +243,9 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
         return false;
     }
 
-    if (env->FunctionalObject_Call(fn, size, argv, &result) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AniFunctionalObjectCall.");
+    ani_status status = ANI_ERROR;
+    if ((status = env->FunctionalObject_Call(fn, size, argv, &result)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AniFunctionalObjectCall: %{public}u.", status);
         return false;
     }
     return true;
@@ -247,15 +259,16 @@ std::string ParseAniString(ani_env* env, ani_string aniStr)
     }
 
     ani_size strSize;
-    if (env->String_GetUTF8Size(aniStr, &strSize) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8Size.");
+    ani_status status = ANI_ERROR;
+    if ((status = env->String_GetUTF8Size(aniStr, &strSize)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8Size: %{public}u.", status);
         return "";
     }
     std::vector<char> buffer(strSize + 1);
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
-    if (env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8.");
+    if ((status = env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8: %{public}u.", status);
         return "";
     }
 
@@ -274,12 +287,13 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     ani_size length = cArray.size();
     ani_array aArrayRef = nullptr;
     ani_ref undefinedRef = nullptr;
-    if (ANI_OK != env->GetUndefined(&undefinedRef)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined.");
+    ani_status status = ANI_ERROR;
+    if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
         return nullptr;
     }
-    if (env->Array_New(length, undefinedRef, &aArrayRef) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Ref.");
+    if ((status = env->Array_New(length, undefinedRef, &aArrayRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Ref: %{public}u.", status);
         return nullptr;
     }
     ani_string aString = nullptr;
@@ -288,8 +302,8 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
         env->Array_Set(aArrayRef, i, aString);
     }
     ani_ref aRef = nullptr;
-    if (env->GlobalReference_Create(aArrayRef, &aRef) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
+    if ((status = env->GlobalReference_Create(aArrayRef, &aRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create: %{public}u.", status);
         return nullptr;
     }
     return aRef;
@@ -305,39 +319,38 @@ ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
     ani_size length = cArray.size();
     ani_array aArrayInt = nullptr;
     ani_ref undefinedRef = nullptr;
-    if (ANI_OK != env->GetUndefined(&undefinedRef)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined.");
+    ani_status status = ANI_ERROR;
+    if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
         return nullptr;
     }
-    if (env->Array_New(length, undefinedRef, &aArrayInt) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New.");
+    if ((status = env->Array_New(length, undefinedRef, &aArrayInt)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New: %{public}u.", status);
         return nullptr;
     }
     ani_class intClass {};
     ani_method intCtor {};
-    if (ANI_OK != env->FindClass("std.core.Int", &intClass)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Int.");
+    if ((status = env->FindClass("std.core.Int", &intClass)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Int: %{public}u.", status);
         return nullptr;
     }
-    if (ANI_OK != env->Class_FindMethod(intClass, "<ctor>", "i:", &intCtor)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor.");
+    if ((status = env->Class_FindMethod(intClass, "<ctor>", "i:", &intCtor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor: %{public}u.", status);
         return nullptr;
     }
 
     for (ani_size i = 0; i < length; ++i) {
         ani_object intObj {};
-        auto status = env->Object_New(intClass, intCtor, &intObj, static_cast<ani_int>(cArray[i]));
-        if (status != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Int.");
+        if ((status = env->Object_New(intClass, intCtor, &intObj, static_cast<ani_int>(cArray[i]))) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Int: %{public}u.", status);
         }
-        status = env->Array_Set(aArrayInt, i, intObj);
-        if (status != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array.");
+        if ((status = env->Array_Set(aArrayInt, i, intObj)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array: %{public}u.", status);
         }
     }
     ani_ref aRef = nullptr;
-    if (env->GlobalReference_Create(aArrayInt, &aRef) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
+    if ((status = env->GlobalReference_Create(aArrayInt, &aRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create: %{public}u.", status);
         return nullptr;
     }
     return aRef;
@@ -350,45 +363,46 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
         return nullptr;
     }
 
+    ani_status status = ANI_ERROR;
+    ani_ref undefinedRef = nullptr;
+    if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return nullptr;
+    }
+
     ani_size length = cArray.size();
     ani_array aArrayBool = nullptr;
-    ani_ref undefinedRef = nullptr;
-    if (ANI_OK != env->GetUndefined(&undefinedRef)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined.");
+    if ((status = env->Array_New(length, undefinedRef, &aArrayBool)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_int: %{public}u.", status);
         return nullptr;
     }
-    if (env->Array_New(length, undefinedRef, &aArrayBool) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_int.");
-        return nullptr;
-    }
+    
     std::vector<ani_boolean> boolArray(length);
     for (ani_size i = 0; i < length; ++i) {
         boolArray[i] = cArray[i];
     }
     ani_class booleanClass {};
     ani_method booleanCtor {};
-    if (ANI_OK != env->FindClass("std.core.Boolean", &booleanClass)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Boolean.");
+    if ((status = env->FindClass("std.core.Boolean", &booleanClass))!= ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Boolean: %{public}u.", status);
         return nullptr;
     }
-    if (ANI_OK != env->Class_FindMethod(booleanClass, "<ctor>", "z:", &booleanCtor)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor.");
+    if ((status = env->Class_FindMethod(booleanClass, "<ctor>", "z:", &booleanCtor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor: %{public}u.", status);
         return nullptr;
     }
     for (ani_size i = 0; i < length; ++i) {
         ani_object booleanObj {};
-        auto status = env->Object_New(booleanClass, booleanCtor, &booleanObj, boolArray[i]);
-        if (status != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Boolean.");
+        if ((status = env->Object_New(booleanClass, booleanCtor, &booleanObj, boolArray[i])) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Boolean: %{public}u.", status);
         }
-        status = env->Array_Set(aArrayBool, i, booleanObj);
-        if (status != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array.");
+        if ((status = env->Array_Set(aArrayBool, i, booleanObj)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array: %{public}u.", status);
         }
     }
     ani_ref aRef = nullptr;
-    if (env->GlobalReference_Create(aArrayBool, &aRef) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create.");
+    if ((status = env->GlobalReference_Create(aArrayBool, &aRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Create: %{public}u.", status);
         return nullptr;
     }
     return aRef;
@@ -418,17 +432,17 @@ ani_object CreateBooleanObject(ani_env *env, bool value)
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("std.core.Boolean", &persionCls)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
     ani_method personInfoCtor;
     if ((status = env->Class_FindMethod(persionCls, "<ctor>", "z:", &personInfoCtor)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod: %{public}u.", status);
         return nullptr;
     }
     ani_object personInfoObj;
     if ((status = env->Object_New(persionCls, personInfoCtor, &personInfoObj, value)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
         return nullptr;
     }
     return personInfoObj;
@@ -444,17 +458,17 @@ ani_object CreateIntObject(ani_env *env, int32_t value)
     ani_class persionCls;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass("std.core.Int", &persionCls)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
     ani_method aniMethod;
     if ((status = env->Class_FindMethod(persionCls, "<ctor>", "i:", &aniMethod)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod: %{public}u.", status);
         return nullptr;
     }
     ani_object aniObject;
     if ((status = env->Object_New(persionCls, aniMethod, &aniObject, value)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
         return nullptr;
     }
     return aniObject;
@@ -470,19 +484,17 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
     ani_class aniClass;
     ani_status status = ANI_ERROR;
     if ((status = env->FindClass(classDescriptor.c_str(), &aniClass)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
     ani_method aniMethod;
-    status = env->Class_FindMethod(aniClass, "<ctor>", ":", &aniMethod);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, status: %{public}d!", status);
+    if ((status = env->Class_FindMethod(aniClass, "<ctor>", ":", &aniMethod)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return nullptr;
     }
     ani_object out;
-    status = env->Object_New(aniClass, aniMethod, &out);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status %{public}d!", status);
+    if ((status = env->Object_New(aniClass, aniMethod, &out)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
         return nullptr;
     }
     return out;
@@ -500,15 +512,14 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
         return nullptr;
     }
     ani_method aniMethod;
-    ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "i:", &aniMethod);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status: %{public}d!", status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Class_FindMethod(aniClass, "<ctor>", "i:", &aniMethod)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod: %{public}u.", status);
         return nullptr;
     }
     ani_object out;
-    status = env->Object_New(aniClass, aniMethod, &out, length);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New(size: %{public}d), status %{public}d!", length, status);
+    if ((status = env->Object_New(aniClass, aniMethod, &out, length)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New(size: %{public}d): %{public}u.", length, status);
         return nullptr;
     }
     return out;
@@ -522,10 +533,9 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -533,8 +543,10 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_boolean boolValue;
-    if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(ref), "unboxed", nullptr, &boolValue) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get bool value of property(%{public}s).", property.c_str());
+    if ((status = env->Object_CallMethodByName_Boolean(
+        static_cast<ani_object>(ref), "unboxed", nullptr, &boolValue)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get bool value of property(%{public}s): %{public}u.",
+            property.c_str(), status);
         return false;
     }
     value = static_cast<bool>(boolValue);
@@ -549,10 +561,9 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d.",
-            property.c_str(), static_cast<int32_t>(status));
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -561,10 +572,10 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     }
 
     ani_int intValue;
-    status = env->Object_CallMethodByName_Int(static_cast<ani_object>(ref), "unboxed", nullptr, &intValue);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int value of property(%{public}s), status: %{public}d.",
-            property.c_str(), static_cast<int32_t>(status));
+    if ((status = env->Object_CallMethodByName_Int(
+        static_cast<ani_object>(ref), "unboxed", nullptr, &intValue)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int value of property(%{public}s): %{public}u.",
+            property.c_str(), status);
         return false;
     }
     value = static_cast<int32_t>(intValue);
@@ -579,10 +590,9 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -590,8 +600,10 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_long longValue;
-    if (env->Object_CallMethodByName_Long(static_cast<ani_object>(ref), "unboxed", nullptr, &longValue) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int64 value of property(%{public}s).", property.c_str());
+    if ((status = env->Object_CallMethodByName_Long(
+        static_cast<ani_object>(ref), "unboxed", nullptr, &longValue)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int64 value of property(%{public}s): %{public}u.",
+            property.c_str(), status);
         return false;
     }
     value = static_cast<int64_t>(longValue);
@@ -606,10 +618,9 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -627,10 +638,9 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -638,8 +648,9 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
     }
     ani_enum_item aniEnum = static_cast<ani_enum_item>(ref);
     ani_int aniInt;
-    if (env->EnumItem_GetValue_Int(aniEnum, &aniInt) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get enum value of property(%{public}s).", property.c_str());
+    if ((status = env->EnumItem_GetValue_Int(aniEnum, &aniInt)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get enum value of property(%{public}s): %{public}u.",
+            property.c_str(), status);
         return false;
     }
     value = static_cast<int32_t>(aniInt);
@@ -655,10 +666,9 @@ bool GetStringVecProperty(
     }
 
     ani_ref ref;
-    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s), status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get property(%{public}s): %{public}u.", property.c_str(), status);
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
@@ -675,10 +685,10 @@ bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& proper
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
-    ani_status status = env->Object_SetPropertyByName_Boolean(object, property.c_str(), static_cast<ani_boolean>(in));
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_SetPropertyByName_Boolean(
+        object, property.c_str(), static_cast<ani_boolean>(in))) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed: %{public}u.", property.c_str(), status);
         return false;
     }
     return true;
@@ -690,10 +700,9 @@ bool SetIntProperty(ani_env* env, ani_object& object, const std::string& propert
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
-    ani_status status = env->Object_SetPropertyByName_Int(object, property.c_str(), static_cast<ani_int>(in));
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_SetPropertyByName_Int(object, property.c_str(), static_cast<ani_int>(in))) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed: %{public}u.", property.c_str(), status);
         return false;
     }
     return true;
@@ -705,10 +714,10 @@ bool SetLongProperty(ani_env* env, ani_object& aniObject, const std::string& pro
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
-    ani_status status = env->Object_SetPropertyByName_Long(aniObject, property.c_str(), static_cast<ani_long>(in));
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_SetPropertyByName_Long(
+        aniObject, property.c_str(), static_cast<ani_long>(in))) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed: %{public}u.", property.c_str(), status);
         return false;
     }
     return true;
@@ -720,10 +729,9 @@ bool SetRefProperty(ani_env* env, ani_object& aniObject, const std::string& prop
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
         return false;
     }
-    ani_status status = env->Object_SetPropertyByName_Ref(aniObject, property.c_str(), in);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed, status: %{public}d!",
-            property.c_str(), status);
+    ani_status status = ANI_ERROR;
+    if ((status = env->Object_SetPropertyByName_Ref(aniObject, property.c_str(), in)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set property(%{public}s) failed: %{public}u.", property.c_str(), status);
         return false;
     }
     return true;
@@ -768,13 +776,14 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
         return false;
     }
     ani_enum aniEnum;
-    if (env->FindEnum(enumDescription.c_str(), &aniEnum) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindEnum!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindEnum(enumDescription.c_str(), &aniEnum)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindEnum: %{public}u.", status);
         return false;
     }
     ani_enum_item aniEnumItem;
-    if (env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(value), &aniEnumItem) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Enum_GetEnumItemByIndex!");
+    if ((status = env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(value), &aniEnumItem)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Enum_GetEnumItemByIndex: %{public}u.", status);
         return false;
     }
     if (!SetRefProperty(env, aniObject, property.c_str(), aniEnumItem)) {

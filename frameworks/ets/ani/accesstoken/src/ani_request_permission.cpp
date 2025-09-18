@@ -73,7 +73,7 @@ static inline bool CallSetter(ani_env* env, ani_class cls, ani_object object, co
 {
     ani_status status = ANI_ERROR;
     ani_field fieldValue;
-    if (env->Class_FindField(cls, setterName, &fieldValue) != ANI_OK) {
+    if ((status = env->Class_FindField(cls, setterName, &fieldValue)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField %{public}d, name: %{public}s.",
             static_cast<int32_t>(status), setterName);
         return false;

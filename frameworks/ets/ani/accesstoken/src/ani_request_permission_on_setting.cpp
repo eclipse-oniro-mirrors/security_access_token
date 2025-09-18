@@ -131,27 +131,28 @@ static void StateToEnumIndex(int32_t state, ani_size& enumIndex)
 static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     ani_class arrayCls = nullptr;
-    if (env->FindClass("escompat.Array", &arrayCls) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array!");
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass("escompat.Array", &arrayCls)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array: %{public}u!", status);
         return nullptr;
     }
 
     ani_method arrayCtor;
-    if (env->Class_FindMethod(arrayCls, "<ctor>", "i:", &arrayCtor) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass <ctor>!");
+    if ((status = env->Class_FindMethod(arrayCls, "<ctor>", "i:", &arrayCtor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass <ctor>: %{public}u!", status);
         return nullptr;
     }
 
     ani_object arrayObj;
-    if (env->Object_New(arrayCls, arrayCtor, &arrayObj, asyncContext->stateList.size()) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Object new failed!");
+    if ((status = env->Object_New(arrayCls, arrayCtor, &arrayObj, asyncContext->stateList.size())) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object new failed: %{public}u!", status);
         return nullptr;
     }
 
     const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
     ani_enum enumType;
-    if (env->FindEnum(enumDescriptor, &enumType) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name %{public}s!", enumDescriptor);
+    if ((status = env->FindEnum(enumDescriptor, &enumType)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name %{public}s: %{public}u!", enumDescriptor, status);
         return nullptr;
     }
 
@@ -160,13 +161,14 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
         ani_enum_item enumItem;
         ani_size enumIndex = 0;
         StateToEnumIndex(state, enumIndex);
-        if (env->Enum_GetEnumItemByIndex(enumType, enumIndex, &enumItem) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetEnumItemByIndex value %{public}u!", state);
+        if ((status = env->Enum_GetEnumItemByIndex(enumType, enumIndex, &enumItem)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetEnumItemByIndex value %{public}u: %{public}u!", state, status);
             break;
         }
 
-        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void $_set!");
+        if ((status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void $_set: %{public}u!", status);
             break;
         }
         index++;

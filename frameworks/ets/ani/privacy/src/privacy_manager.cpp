@@ -565,7 +565,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
         ani_status status = env->Object_CallMethodByName_Void(
             arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
         if (status != ANI_OK) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Status : %{public}d.", status);
+            LOGE(PRI_DOMAIN, PRI_TAG, "Status : %{public}u.", status);
             break;
         }
         ++index;
@@ -910,7 +910,7 @@ void InitPrivacyFunction(ani_env *env)
     };
     ani_status status = env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size());
     if (status != ANI_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Namespace_BindNativeFunctions status : %{public}d.", status);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Namespace_BindNativeFunctions status : %{public}u.", status);
     }
     if (env->ResetError() != ANI_OK) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to ResetError.");
