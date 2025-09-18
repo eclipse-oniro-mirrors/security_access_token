@@ -105,8 +105,9 @@ void RegisterPermStateChangeScopePtr::SetThreadId(const std::thread::id threadId
 static bool SetStringProperty(ani_env* env, ani_object& aniObject, const char* propertyName, const std::string& in)
 {
     ani_string aniString = CreateAniString(env, in);
-    if (env->Object_SetPropertyByName_Ref(aniObject, propertyName, aniString) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetPropertyByName_Ref!");
+    ani_status status;
+    if ((status = env->Object_SetPropertyByName_Ref(aniObject, propertyName, aniString)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetPropertyByName_Ref: %{public}u.", status);
         return false;
     }
 
@@ -186,19 +187,20 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
 
     static const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
     ani_class cls;
-    if (ANI_OK != env->FindClass(className, &cls)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", className);
+    ani_status status;
+    if ((status = env->FindClass(className, &cls)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s, status: %{public}u.", className, status);
         return atManagerObj;
     }
 
     ani_method ctor;
-    if (ANI_OK != env->Class_FindMethod(cls, "<ctor>", nullptr, &ctor)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ctor %{public}s.", className);
+    if ((status = env->Class_FindMethod(cls, "<ctor>", nullptr, &ctor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ctor %{public}s, status: %{public}u.", className, status);
         return atManagerObj;
     }
 
-    if (ANI_OK != env->Object_New(cls, ctor, &atManagerObj)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Object %{public}s.", className);
+    if ((status = env->Object_New(cls, ctor, &atManagerObj)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Object %{public}s, status: %{public}u.", className, status);
         return atManagerObj;
     }
     return atManagerObj;
@@ -922,7 +924,7 @@ ani_status InitAbilityCtrlFunction(ani_env* env)
     const char* atNamespace = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
     retStatus = env->FindNamespace(atNamespace, &aniAtNamespace);
     if (retStatus != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", atNamespace);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s, status: %{public}u.", atNamespace, retStatus);
         return retStatus;
     }
     std::array methods = {
@@ -930,19 +932,21 @@ ani_status InitAbilityCtrlFunction(ani_env* env)
     };
     retStatus = env->Namespace_BindNativeFunctions(aniAtNamespace, methods.data(), methods.size());
     if (retStatus != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s.", atNamespace);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s, status: %{public}u.",
+            atNamespace, retStatus);
         return retStatus;
     };
     const char* atManagerClassName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
     ani_class aniAtManagerClassName;
     retStatus = env->FindClass(atManagerClassName, &aniAtManagerClassName);
     if (retStatus != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", atManagerClassName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s, status: %{public}u.", atManagerClassName, retStatus);
         return retStatus;
     }
     retStatus = AtManagerBindNativeFunction(env, aniAtManagerClassName);
     if (retStatus != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s", atManagerClassName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s, status: %{public}u.",
+            atManagerClassName, retStatus);
         return retStatus;
     };
     return retStatus;

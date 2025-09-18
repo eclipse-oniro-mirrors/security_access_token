@@ -142,13 +142,11 @@ static inline bool CallSetter(ani_env* env, ani_class cls, ani_object object, co
     ani_status status = ANI_ERROR;
     ani_field fieldValue;
     if ((status = env->Class_FindField(cls, setterName, &fieldValue)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindField Fail %{public}d, name: %{public}s.",
-            static_cast<int32_t>(status), setterName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindField Fail %{public}u, name: %{public}s.", status, setterName);
         return false;
     }
     if ((status = env->Object_SetField_Ref(object, fieldValue, value)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Object_SetField_Ref Fail %{public}d, name: %{public}s.",
-            static_cast<int32_t>(status), setterName);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object_SetField_Ref Fail %{public}u, name: %{public}s.", status, setterName);
         return false;
     }
     return true;
@@ -163,7 +161,7 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
         return nullptr;
     }
     if ((status = env->FindClass("Lsecurity/PermissionRequestResult/PermissionRequestResult;", &cls)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "FindClass status %{public}d ", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "FindClass status %{public}u.", status);
         return nullptr;
     }
     if (cls == nullptr) {
@@ -172,12 +170,12 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
     }
     ani_method method = nullptr;
     if ((status = env->Class_FindMethod(cls, "<ctor>", ":V", &method)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindMethod status %{public}d ", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindMethod status %{public}u.", status);
         return nullptr;
     }
     ani_object aObject = nullptr;
     if ((status = env->Object_New(cls, method, &aObject)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Object_New status %{public}d ", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Object_New status %{public}u ", status);
         return nullptr;
     }
     auto state = this->needDynamicRequest_ ? this->grantResults : this->permissionsState;
@@ -347,7 +345,7 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
     ani_vm* vm;
     ani_status status = env->GetVM(&vm);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetVM failed, error=%{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetVM failed, error=%{public}u.", status);
         return;
     }
     std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>(vm, env);

@@ -70,39 +70,39 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
 
     ani_status status = env->FindClass(BUSINESS_ERROR_CLASS, &cls);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
     status = env->Class_FindMethod(cls, "<ctor>", ":V", &method);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return nullptr;
     }
     status = env->Object_New(cls, method, &obj);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "code", &field);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}u.", status);
         return nullptr;
     }
-    status = env->Object_SetField_Double(obj, field, code);
+    status = env->Object_SetField_Int(obj, field, code);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Double: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Int: %{public}u.", status);
         return nullptr;
     }
     status = env->Class_FindField(cls, "data", &field);
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}u.", status);
         return nullptr;
     }
     ani_string string = nullptr;
     env->String_NewUTF8(msg.c_str(), msg.size(), &string);
     status = env->Object_SetField_Ref(obj, field, static_cast<ani_ref>(string));
     if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Ref: %{public}d.", static_cast<int32_t>(status));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Ref: %{public}u.", status);
         return nullptr;
     }
     return obj;
