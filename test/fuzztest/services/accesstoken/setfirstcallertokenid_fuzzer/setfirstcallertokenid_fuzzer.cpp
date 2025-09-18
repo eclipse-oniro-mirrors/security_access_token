@@ -15,28 +15,24 @@
 
 #include "setfirstcallertokenid_fuzzer.h"
 
-#include <string>
-#include <thread>
-#include <vector>
-
-#undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "token_setproc.h"
 
 using namespace std;
 
 namespace OHOS {
-    bool SetFirstCallerTokenIDFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        SetSelfTokenID(provider.ConsumeIntegral<uint64_t>());
-
-        return true;
+bool SetFirstCallerTokenIDFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    (void)SetSelfTokenID(provider.ConsumeIntegral<uint64_t>());
+    (void)SetFirstCallerTokenID(provider.ConsumeIntegral<uint64_t>());
+    (void)GetFirstCallerTokenID();
+    return true;
+}
 } // namespace OHOS
 
 /* Fuzzer entry point */
