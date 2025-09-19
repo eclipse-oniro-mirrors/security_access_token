@@ -537,7 +537,8 @@ bool PrivacyManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
 #endif
-    ReportPrivacyUserData();
+    std::thread reportUserData(ReportPrivacyUserData);
+    reportUserData.detach();
     return true;
 }
 
