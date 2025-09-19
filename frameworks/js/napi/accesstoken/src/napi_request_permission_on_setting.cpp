@@ -40,7 +40,7 @@ const int32_t REQUEST_ALREADY_EXIST = 1;
 const int32_t PERM_NOT_BELONG_TO_SAME_GROUP = 2;
 const int32_t PERM_IS_NOT_DECLARE = 3;
 const int32_t ALL_PERM_GRANTED = 4;
-const int32_t PERM_REVOKE_BY_USER = 5;
+const int32_t PERM_NOT_REVOKE_BY_USER = 5;
 std::mutex g_lockFlag;
 } // namespace
 
@@ -63,7 +63,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
         case ALL_PERM_GRANTED:
             jsCode = JS_ERROR_ALL_PERM_GRANTED;
             break;
-        case PERM_REVOKE_BY_USER:
+        case PERM_NOT_REVOKE_BY_USER:
             jsCode = JS_ERROR_PERM_NOT_REVOKE_BY_USER;
             break;
         default:
