@@ -63,7 +63,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
     return jsCode;
 }
 
-static void ReturnPromiseResult(napi_env env, const RequestGlobalSwitchAsyncContext& context, napi_value result)
+static void ReturnPromiseResult(napi_env env, RequestGlobalSwitchAsyncContext& context, napi_value result)
 {
     if (context.result.errorCode != RET_SUCCESS) {
         int32_t jsCode = TransferToJsErrorCode(context.result.errorCode);
@@ -72,6 +72,7 @@ static void ReturnPromiseResult(napi_env env, const RequestGlobalSwitchAsyncCont
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static napi_value WrapVoidToJS(napi_env env)
@@ -610,7 +611,7 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
 
 void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_status status, void* data)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "RequestGlobalSwitchComplete begin.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "RequestGlobalSwitchComplete begin.");
     RequestGlobalSwitchAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestGlobalSwitchAsyncContextHandle*>(data);
     if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
@@ -628,6 +629,9 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_sta
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));
+        asyncContextHandle->asyncContextPtr->deferred = nullptr;
+    } else {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Process completed, no need to return repeatedly.");
     }
 }
 }  // namespace AccessToken
