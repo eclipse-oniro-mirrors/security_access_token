@@ -7567,6 +7567,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.INJECT_PLAYBACK_TO_AUDIO_CAPTURE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 22,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.CONNECT_FAULT_LOG_EXTENSION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
