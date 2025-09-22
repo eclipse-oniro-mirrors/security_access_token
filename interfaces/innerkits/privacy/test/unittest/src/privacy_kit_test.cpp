@@ -1310,6 +1310,8 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level0)
 {
     std::vector<std::string> permList = {
+        "ohos.permission.INVALID",
+        "ohos.permission.CAMERA",
         "ohos.permission.CAMERA",
         "ohos.permission.MICROPHONE",
         "ohos.permission.LOCATION"

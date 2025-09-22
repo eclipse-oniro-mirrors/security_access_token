@@ -40,6 +40,7 @@
 #include "libraryloader.h"
 #include "parameter.h"
 #include "parcel_utils.h"
+#include "permission_map.h"
 #include "permission_record_set.h"
 #include "permission_used_record_db.h"
 #include "privacy_error.h"
@@ -1456,8 +1457,7 @@ int32_t PermissionRecordManager::PermissionListFilter(
     PermissionDef permissionDef;
     std::set<std::string> permSet;
     for (const auto& perm : listSrc) {
-        if (AccessTokenKit::GetDefPermission(perm, permissionDef) == Constant::SUCCESS &&
-            permSet.count(perm) == 0) {
+        if (IsDefinedPermission(perm) && (permSet.count(perm) == 0)) {
             listRes.emplace_back(perm);
             permSet.insert(perm);
             continue;
