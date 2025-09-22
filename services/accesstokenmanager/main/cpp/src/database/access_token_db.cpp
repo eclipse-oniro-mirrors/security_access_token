@@ -256,7 +256,7 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
 
     int32_t changedRows = 0;
     {
-        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        std::unique_lock<std::shared_mutex> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
@@ -334,7 +334,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     std::vector<std::string> columns; // empty columns means query all columns
     int count = 0;
     {
-        OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        std::shared_lock<std::shared_mutex> lock(this->rwLock_);
         auto db = GetRdb();
         if (db == nullptr) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
@@ -403,7 +403,7 @@ int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfo
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
     {
-        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        std::unique_lock<std::shared_mutex> lock(this->rwLock_);
         std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
         if (db == nullptr) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");

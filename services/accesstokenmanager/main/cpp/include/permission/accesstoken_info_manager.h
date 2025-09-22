@@ -20,6 +20,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <shared_mutex>
 #include <unordered_set>
 #include <vector>
 
@@ -147,16 +148,16 @@ private:
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     bool hasInited_;
 
-    OHOS::Utils::RWLock hapTokenInfoLock_;
-    OHOS::Utils::RWLock nativeTokenInfoLock_;
-    OHOS::Utils::RWLock managerLock_;
-    OHOS::Utils::RWLock modifyLock_;
+    std::shared_mutex hapTokenInfoLock_;
+    std::shared_mutex nativeTokenInfoLock_;
+    std::shared_mutex managerLock_;
+    std::shared_mutex modifyLock_;
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 
-    OHOS::Utils::RWLock userPolicyLock_;
+    std::shared_mutex userPolicyLock_;
     std::vector<int32_t> inactiveUserList_;
     std::vector<std::string> permPolicyList_;
 };

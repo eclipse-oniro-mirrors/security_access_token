@@ -339,7 +339,7 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
 
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permParamSetLock_);
     if (filtered || (IsUserGrantPermission(permissionName) &&
         ((flag != PERMISSION_PRE_AUTHORIZED_CANCELABLE) && (flag != PERMISSION_SYSTEM_FIXED)))) {
         paramValue_++;
@@ -354,7 +354,7 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
 
 void PermissionManager::ParamFlagUpdate()
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permFlagParamSetLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permFlagParamSetLock_);
     paramFlagValue_++;
     LOGD(ATM_DOMAIN, ATM_TAG,
         "paramFlagValue_ change %{public}llu", static_cast<unsigned long long>(paramFlagValue_));
