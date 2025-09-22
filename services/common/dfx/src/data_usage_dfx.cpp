@@ -54,12 +54,14 @@ uint64_t GetFileSize(const char* filePath)
     return fileInfo.st_size;
 }
 
-void GetDatabaseFileSize(const std::string& name, std::vector<std::string>& filePath, std::vector<uint64_t>& fileSize)
+void GetDatabaseFileSize(const std::vector<std::string>& nameList, std::vector<std::string>& filePath,
+    std::vector<uint64_t>& fileSize)
 {
     std::vector<std::string> files;
     GetDirFiles(DATABASE_DIR_PATH, files);
     for (const std::string& file : files) {
-        if (file.find(name) != std::string::npos) {
+        if (std::any_of(nameList.begin(), nameList.end(),
+            [&file](const std::string& name) { return file.find(name) != std::string::npos; })) {
             fileSize.emplace_back(GetFileSize(file.c_str()));
             filePath.emplace_back(file);
         }
@@ -68,25 +70,30 @@ void GetDatabaseFileSize(const std::string& name, std::vector<std::string>& file
 
 void ReportAccessTokenUserData()
 {
+    LOGI(ATM_DOMAIN, ATM_TAG, "Report accesstoken_service userdata start.");
     std::vector<std::string> filePath = { NATIVE_CFG_FILE_PATH };
     std::vector<uint64_t> fileSize = { GetFileSize(NATIVE_CFG_FILE_PATH) };
-    GetDatabaseFileSize(ACCESSTOKEN_DATABASE_NAME, filePath, fileSize);
-    GetDatabaseFileSize(ACCESSTOKEN_DATABASE_NAME_BACK, filePath, fileSize);
+    std::vector<std::string> nameList = { ACCESSTOKEN_DATABASE_NAME, ACCESSTOKEN_DATABASE_NAME_BACK };
+    GetDatabaseFileSize(nameList, filePath, fileSize);
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "COMPONENT_NAME", ACCESSTOKEN_NAME, "PARTITION_NAME", DATA_FOLDER,
         "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Report accesstoken_service userdata end.");
 }
 
 void ReportPrivacyUserData()
 {
+    LOGI(PRI_DOMAIN, PRI_TAG, "Report privacy_service userdata start.");
     std::vector<std::string> filePath;
     std::vector<uint64_t> fileSize;
-    GetDatabaseFileSize(PRIVACY_DATABASE_NAME, filePath, fileSize);
+    std::vector<std::string> nameList = { PRIVACY_DATABASE_NAME };
+    GetDatabaseFileSize(nameList, filePath, fileSize);
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "COMPONENT_NAME", ACCESSTOKEN_NAME, "PARTITION_NAME", DATA_FOLDER,
         "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Report privacy_service userdata end.");
 }
 } // namespace AccessToken
 } // namespace Security

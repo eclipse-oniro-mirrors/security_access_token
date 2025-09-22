@@ -90,14 +90,16 @@ HWTEST_F(DfxTest, GetDatabaseFileSizeTest001, TestSize.Level1)
 {
     std::vector<std::string> filePath;
     std::vector<uint64_t> fileSize;
-    GetDatabaseFileSize(ACCESSTOKEN_DATABASE_NAME, filePath, fileSize);
+    std::vector<std::string> nameList = { ACCESSTOKEN_DATABASE_NAME };
+    GetDatabaseFileSize(nameList, filePath, fileSize);
     EXPECT_GT(filePath.size(), 0);
     EXPECT_GT(fileSize.size(), 0);
     EXPECT_EQ(filePath.size(), fileSize.size());
 
     std::vector<std::string> invalidFilePath;
     std::vector<uint64_t> invalidFileSize;
-    GetDatabaseFileSize(INVALID_FILE, invalidFilePath, invalidFileSize);
+    std::vector<std::string> nameListInvalid = { INVALID_FILE };
+    GetDatabaseFileSize(nameListInvalid, invalidFilePath, invalidFileSize);
     EXPECT_EQ(invalidFilePath.size(), 0);
     EXPECT_EQ(invalidFileSize.size(), 0);
 }
