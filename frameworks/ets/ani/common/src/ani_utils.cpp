@@ -77,7 +77,7 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const char* fiel
 
     ani_status status;
     if ((status = env->Class_FindField(aniClass, fieldName, &out)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindField(%{public}s), status: %{public}du.", fieldName, status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindField(%{public}s), status: %{public}u.", fieldName, status);
         return false;
     }
     return true;
@@ -270,6 +270,7 @@ std::string ParseAniString(ani_env* env, const ani_string& aniStr)
     ani_size bytesWritten = 0;
     if ((status = env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8: %{public}u.", status);
+        return "";
     }
 
     utf8Buffer[bytesWritten] = '\0';
