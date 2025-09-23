@@ -47,7 +47,7 @@ const std::string WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.hei
 const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
 const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
 
-static void ReturnPromiseResult(napi_env env, const RequestAsyncContext& context, napi_value result)
+static void ReturnPromiseResult(napi_env env, RequestAsyncContext& context, napi_value result)
 {
     if (context.result.errorCode != RET_SUCCESS) {
         int32_t jsCode = GetJsErrorCode(context.result.errorCode);
@@ -56,6 +56,7 @@ static void ReturnPromiseResult(napi_env env, const RequestAsyncContext& context
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static void ReturnCallbackResult(napi_env env, const RequestAsyncContext& context, napi_value result)
