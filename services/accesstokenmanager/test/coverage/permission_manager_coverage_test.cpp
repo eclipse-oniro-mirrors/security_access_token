@@ -47,6 +47,7 @@ static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int INVALID_IPC_CODE = 0;
+static constexpr int32_t DELAY_TIME = 10;
 
 static PermissionStatus g_permState = {
     .permissionName = "ohos.permission.CAMERA",
@@ -594,6 +595,41 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
     system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
     ASSERT_TRUE(PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
         briefDef, appDistributionType, isSystemApp, rule, initInfo));
+}
+
+/**
+ * @tc.name: SetFlagIfNeedTest001
+ * @tc.desc: AccessTokenManagerService::SetFlagIfNeed function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest001, TestSize.Level4)
+{
+    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService_);
+
+    AccessTokenServiceConfig config;
+    int32_t cancelTime = 0;
+    uint32_t parseConfigFlag = 0;
+    atManagerService_->SetFlagIfNeed(config, cancelTime, parseConfigFlag);
+    EXPECT_EQ(parseConfigFlag, 0);
+
+    config.grantBundleName = "ability";
+    config.grantAbilityName = "ability";
+    config.grantServiceAbilityName = "ability";
+    config.permStateAbilityName = "ability";
+    config.globalSwitchAbilityName = "ability";
+    config.cancelTime = DELAY_TIME;
+    config.applicationSettingAbilityName = "ability";
+    config.openSettingAbilityName = "ability";
+
+    int32_t cancelTime2 = 10;
+    uint32_t parseConfigFlag2 = 0;
+    atManagerService_->SetFlagIfNeed(config, cancelTime2, parseConfigFlag2);
+    EXPECT_NE(parseConfigFlag2, 0);
+
+    atManagerService_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

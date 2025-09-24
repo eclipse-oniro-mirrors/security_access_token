@@ -70,6 +70,10 @@ public:
      * global switch sheet ability name
      */
     std::string globalSwitchAbilityName;
+    /**
+     * open setting ability name
+     */
+    std::string openSettingAbilityName;
 };
 } // namespace AccessToken
 } // namespace Security

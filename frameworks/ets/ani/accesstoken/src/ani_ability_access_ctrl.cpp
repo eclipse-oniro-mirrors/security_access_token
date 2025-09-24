@@ -23,6 +23,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_hisysevent_adapter.h"
+#include "ani_open_permission_on_setting.h"
 #include "ani_request_global_switch_on_setting.h"
 #include "ani_request_permission.h"
 #include "ani_request_permission_on_setting.h"
@@ -885,6 +886,8 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
         ani_native_function { "requestPermissionOnSettingExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
+        ani_native_function { "openPermissionOnSettingExecute",
+            nullptr, reinterpret_cast<void*>(OpenPermissionOnSettingExecute) },
         ani_native_function {"requestGlobalSwitchExecute",
             nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
         ani_native_function { "grantUserGrantedPermissionExecute", nullptr,

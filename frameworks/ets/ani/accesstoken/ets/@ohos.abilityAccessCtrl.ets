@@ -44,6 +44,12 @@ export default namespace abilityAccessCtrl {
         PERMISSION_GRANTED = 0
     }
 
+    export enum SelectedResult {
+        REJECTED = -1,
+        OPENED = 0,
+        GRANTED = 1
+    }
+
     export enum PermissionRequestToggleStatus {
         CLOSED = 0,
         OPEN = 1,
@@ -103,6 +109,21 @@ export default namespace abilityAccessCtrl {
         }
     }
 
+    function openPermRequestParams(context: Context, permission: Permissions): void {
+        if ((typeof context === "undefined") || (context == null)) {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            throw err;
+        }
+        if (typeof permission !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.data = PARAM_ERROR_MSG("permission", "Permissions");
+            throw err;
+        }
+    }
+
     native function createAtManager(): AtManager;
     interface AtManager {
         checkAccessTokenExecute(tokenID: int, permissionName: Permissions): int;
@@ -110,6 +131,8 @@ export default namespace abilityAccessCtrl {
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
+        openPermissionOnSettingExecute(context: Context,
+            permission: Permissions, callback: AsyncCallbackWrapper<SelectedResult>): void;
         requestGlobalSwitchExecute(
             context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         revokeUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -136,6 +159,7 @@ export default namespace abilityAccessCtrl {
             context: Context, permissionList: Array<Permissions>): Promise<PermissionRequestResult>;
         requestPermissionOnSetting(
             context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
+        openPermissionOnSetting(context: Context, permission: Permissions): Promise<SelectedResult>;
         requestGlobalSwitch(context: Context, type: SwitchType): Promise<boolean>;
         grantUserGrantedPermission(
             tokenID: int,
@@ -178,6 +202,8 @@ export default namespace abilityAccessCtrl {
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         native requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
+        native openPermissionOnSettingExecute(context: Context,
+            permission: Permissions, callback: AsyncCallbackWrapper<SelectedResult>): void;
         native requestGlobalSwitchExecute(
             context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -285,6 +311,27 @@ export default namespace abilityAccessCtrl {
                 });
                 taskpool.execute((): void => {
                     new AtManagerInner().requestPermissionOnSettingExecute(context, permissionList, callbackWrap);
+                });
+            });
+            return p;
+        }
+
+        openPermissionOnSetting(context: Context, permission: Permissions): Promise<SelectedResult> {
+            openPermRequestParams(context, permission);
+            let p: Promise<SelectedResult> = new Promise<SelectedResult>((
+                resolve: (v: SelectedResult) => void, reject: (error: BusinessError) => void) => {
+                let callbackWrap = new AsyncCallbackWrapper<SelectedResult>((
+                    err: BusinessError<void> | null, data: SelectedResult | undefined) => {
+                    if (err?.code == 0) {
+                        if (data !== undefined) {
+                            resolve(data);
+                        }
+                    } else {
+                        reject(err as BusinessError);
+                    }
+                });
+                taskpool.execute((): void => {
+                    new AtManagerInner().openPermissionOnSettingExecute(context, permission, callbackWrap);
                 });
             });
             return p;

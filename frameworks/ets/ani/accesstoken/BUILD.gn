@@ -35,6 +35,7 @@ ohos_shared_library("accesstoken_ani") {
   sources = [
     "src/ani_ability_access_ctrl.cpp",
     "src/ani_common.cpp",
+    "src/ani_open_permission_on_setting.cpp",
     "src/ani_request_base.cpp",
     "src/ani_request_global_switch_on_setting.cpp",
     "src/ani_request_permission.cpp",

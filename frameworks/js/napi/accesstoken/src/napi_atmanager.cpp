@@ -18,6 +18,7 @@
 #include "data_validator.h"
 #include "hisysevent.h"
 #include "napi_hisysevent_adapter.h"
+#include "napi_open_permission_on_setting.h"
 #include "napi_request_global_switch_on_setting.h"
 #include "napi_request_permission.h"
 #include "napi_request_permission_on_setting.h"
@@ -248,6 +249,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),
         DECLARE_NAPI_FUNCTION("requestPermissionOnApplicationSetting", RequestAppPermOnSetting),
         DECLARE_NAPI_FUNCTION("getSelfPermissionStatus", GetSelfPermissionStatusSync),
+        DECLARE_NAPI_FUNCTION("openPermissionOnSetting", NapiOpenPermissionOnSetting::OpenPermissionOnSetting),
     };
 
     napi_value cons = nullptr;

@@ -26,6 +26,7 @@ bool PermissionGrantInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->info.grantServiceAbilityName));
     RETURN_IF_FALSE(out.WriteString(this->info.permStateAbilityName));
     RETURN_IF_FALSE(out.WriteString(this->info.globalSwitchAbilityName));
+    RETURN_IF_FALSE(out.WriteString(this->info.openSettingAbilityName));
     return true;
 }
 
@@ -40,6 +41,7 @@ PermissionGrantInfoParcel* PermissionGrantInfoParcel::Unmarshalling(Parcel& in)
     permissionGrantInfoParcel->info.grantServiceAbilityName = in.ReadString();
     permissionGrantInfoParcel->info.permStateAbilityName = in.ReadString();
     permissionGrantInfoParcel->info.globalSwitchAbilityName = in.ReadString();
+    permissionGrantInfoParcel->info.openSettingAbilityName = in.ReadString();
     return permissionGrantInfoParcel;
 }
 } // namespace AccessToken
