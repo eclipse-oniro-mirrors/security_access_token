@@ -16,6 +16,7 @@
 #ifndef ACCESS_TOKEN_DB_H
 #define ACCESS_TOKEN_DB_H
 
+#include <shared_mutex>
 #include <vector>
 
 #include "access_token.h"
@@ -24,7 +25,6 @@
 #include "generic_values.h"
 #include "rdb_predicates.h"
 #include "rdb_store.h"
-#include "rwlock.h"
 #include "singleton.h"
 
 namespace OHOS {
@@ -61,7 +61,7 @@ private:
 
     int32_t RestoreAndCommitIfCorrupt(const int32_t resultCode, const std::shared_ptr<NativeRdb::RdbStore>& db);
 
-    OHOS::Utils::RWLock rwLock_;
+    std::shared_mutex rwLock_;
     std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;
     std::mutex dbLock_;
 };

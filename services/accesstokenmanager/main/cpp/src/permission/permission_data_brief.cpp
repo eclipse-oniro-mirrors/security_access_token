@@ -97,7 +97,7 @@ bool PermissionDataBrief::GetPermissionBriefData(
 void PermissionDataBrief::GetExtendedValueList(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     return GetExtendedValueListInner(tokenId, extendedPermList);
 }
 
@@ -126,7 +126,7 @@ void PermissionDataBrief::GetExtendedValueListInner(
 int32_t PermissionDataBrief::GetKernelPermissions(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
 
     std::vector<BriefPermData> list;
     int32_t ret = GetBriefPermDataByTokenIdInner(tokenId, list);
@@ -171,7 +171,7 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
     AccessTokenID tokenId, const std::string& permissionName,
     std::string& value, bool tokenIdCheck)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     if (tokenIdCheck) {
         auto iter = requestedPermData_.find(tokenId);
         if (iter == requestedPermData_.end()) {
@@ -255,7 +255,7 @@ void PermissionDataBrief::AddPermToBriefPermission(
     }
 
     std::vector<BriefPermData> list;
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     GetPermissionBriefDataList(tokenId, permStateListRes, aclExtendedMap, list);
     AddBriefPermDataByTokenId(tokenId, list);
 }
@@ -298,7 +298,7 @@ void PermissionDataBrief::Update(
     AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
     const std::map<std::string, std::string>& aclExtendedMap)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     std::vector<PermissionStatus> permStateFilterList;
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
     LOGI(ATM_DOMAIN, ATM_TAG, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
@@ -346,7 +346,7 @@ int32_t PermissionDataBrief::TranslationIntoAclExtendedMap(
 void PermissionDataBrief::RestorePermissionBriefData(AccessTokenID tokenId,
     const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     std::vector<BriefPermData> list;
     std::map<std::string, std::string> aclExtendedMap;
     int result = TranslationIntoAclExtendedMap(tokenId, extendedPermRes, aclExtendedMap);
@@ -394,7 +394,7 @@ int32_t PermissionDataBrief::StorePermissionBriefData(AccessTokenID tokenId,
 {
     std::vector<BriefPermData> permBriefDatalist;
     {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+        std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
         int32_t ret = GetBriefPermDataByTokenIdInner(tokenId, permBriefDatalist);
         if (ret != RET_SUCCESS) {
             return ret;
@@ -447,6 +447,7 @@ bool PermissionDataBrief::isRestrictedPermission(uint32_t oldFlag, uint32_t newF
 int32_t PermissionDataBrief::UpdatePermStateList(
     AccessTokenID tokenId, uint32_t opCode, bool isGranted, uint32_t flag)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iterPermData = requestedPermData_.find(tokenId);
     if (iterPermData == requestedPermData_.end()) {
         LOGC(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
@@ -530,7 +531,6 @@ int32_t PermissionDataBrief::UpdatePermissionStatus(AccessTokenID tokenId,
     }
     int32_t ret;
     int32_t oldStatus = VerifyPermissionStatus(tokenId, opCode);
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     if (!ConstantCommon::IsPermGrantedBySecComp(flag)) {
         ret = UpdatePermStateList(tokenId, opCode, isGranted, flag);
     } else {
@@ -544,7 +544,7 @@ int32_t PermissionDataBrief::UpdatePermissionStatus(AccessTokenID tokenId,
 
 int32_t PermissionDataBrief::ResetUserGrantPermissionStatus(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
@@ -588,7 +588,7 @@ void PermissionDataBrief::DeleteExtendedValue(AccessTokenID tokenID)
 
 int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
@@ -622,14 +622,14 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenIdInner(AccessTokenID tokenI
 
 int32_t PermissionDataBrief::GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& list)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     return GetBriefPermDataByTokenIdInner(tokenID, list);
 }
 
 void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
@@ -661,7 +661,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
 void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
     const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
@@ -698,7 +698,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
 
 PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
@@ -727,6 +727,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
 }
 int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, uint32_t permCode)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
@@ -762,7 +763,6 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permission.c_str());
         return PERMISSION_DENIED;
     }
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
     return VerifyPermissionStatus(tokenID, opCode);
 }
 
@@ -774,7 +774,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
         return false;
     }
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
@@ -807,7 +807,7 @@ int32_t PermissionDataBrief::QueryPermissionFlag(AccessTokenID tokenID, const st
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid %{public}u.", tokenID);
@@ -833,7 +833,7 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
         return;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid %{public}u.", tokenID);
@@ -873,7 +873,7 @@ void PermissionDataBrief::SecCompGrantedPermListUpdated(
 
 void PermissionDataBrief::ClearAllSecCompGrantedPerm()
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     std::list<BriefSecCompData>::iterator secCompData;
     for (secCompData = secCompList_.begin(); secCompData != secCompList_.end();) {
         secCompData = secCompList_.erase(secCompData);
@@ -910,7 +910,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         return RET_SUCCESS;
     }
 
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenId);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist in requestedPermData_ %{public}u.", tokenId);
@@ -958,7 +958,7 @@ int32_t PermissionDataBrief::AddBriefPermData(AccessTokenID tokenID, const std::
     std::map<std::string, std::string> aclExtendedMap;
     aclExtendedMap[permissionName] = value;
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permissionStateDataLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     BriefPermData data;
     if (!GetPermissionBriefData(tokenID, status, aclExtendedMap, data)) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;

@@ -17,11 +17,11 @@
 #define ACCESSTOKEN_TOKEN_ID_MANAGER_H
 
 #include <set>
+#include <shared_mutex>
 #include <vector>
 
 #include "access_token.h"
 #include "nocopyable.h"
-#include "rwlock.h"
 
 namespace OHOS {
 namespace Security {
@@ -44,7 +44,7 @@ private:
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
     AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag) const;
 
-    OHOS::Utils::RWLock tokenIdLock_;
+    std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;
 };
 } // namespace AccessToken
