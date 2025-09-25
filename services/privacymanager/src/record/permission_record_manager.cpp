@@ -230,7 +230,7 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
         return Constant::SUCCESS;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
     int32_t res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_RECORD,
         insertRecords);
     if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
@@ -260,7 +260,7 @@ bool PermissionRecordManager::UpdatePermissionUsedRecordToDb(const PermissionRec
     conditionValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, record.type);
 
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
         return (PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_RECORD,
             modifyValue, conditionValue) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
     }
@@ -659,7 +659,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
     conditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     {
         // remove from database
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
         PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_RECORD, conditions);
         PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
             conditions);

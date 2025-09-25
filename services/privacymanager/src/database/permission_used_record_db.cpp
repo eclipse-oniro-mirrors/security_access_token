@@ -139,7 +139,7 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
@@ -180,7 +180,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     if (prepareSql.empty()) {
@@ -206,7 +206,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::shared_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     int32_t tokenId = andConditions.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(tokenId, type, opCodeList, andColumns,
@@ -247,7 +247,7 @@ int32_t PermissionUsedRecordDb::Count(DataType type)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::shared_lock<std::shared_mutex> lock(this->rwLock_);
     GenericValues countValue;
     std::string countSql = CreateCountPrepareSqlCmd(type);
     LOGD(PRI_DOMAIN, PRI_TAG, "Count sql is %{public}s.", countSql.c_str());
@@ -268,7 +268,7 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     if (!andColumns.empty()) {
         std::string deleteExpireSql = CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns);
@@ -293,7 +293,7 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataTyp
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     BeginTransaction();
     for (const auto& type : dateTypes) {
         std::string deleteHistorySql = CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList);
@@ -319,7 +319,7 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t e
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);
     LOGD(PRI_DOMAIN, PRI_TAG, "DeleteExcessiveRecords sql is %{public}s.", deleteExcessiveSql.c_str());
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
@@ -341,7 +341,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
     std::vector<std::string> modifyNames = modifyValue.GetAllKeys();
     std::vector<std::string> conditionNames = conditionValue.GetAllKeys();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
@@ -380,7 +380,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
 
     std::vector<std::string> conditionColumns = conditionValue.GetAllKeys();
 
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::shared_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid.", type);

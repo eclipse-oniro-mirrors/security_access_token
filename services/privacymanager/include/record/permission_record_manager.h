@@ -17,6 +17,7 @@
 #define PERMISSION_RECORD_MANAGER_H
 
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -39,7 +40,6 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "privacy_param.h"
-#include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
 
@@ -193,7 +193,7 @@ private:
 
 private:
     bool hasInited_ = false;
-    OHOS::Utils::RWLock rwLock_;
+    std::shared_mutex rwLock_;
     std::mutex startRecordListMutex_;
     std::set<ContinusPermissionRecord> startRecordList_;
     SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
