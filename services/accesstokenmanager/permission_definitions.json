@@ -7589,6 +7589,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.TIMEOUT_SCREENOFF_DISABLE_LOCK",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 22,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.CUSTOM_SCREEN_RECORDING",
             "grantMode": "manual_settings",
             "availableLevel": "system_basic",
