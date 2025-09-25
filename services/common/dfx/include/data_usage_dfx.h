@@ -25,7 +25,8 @@ namespace Security {
 namespace AccessToken {
 uint64_t GetUserDataRemainSize();
 uint64_t GetFileSize(const char* filePath);
-void GetDatabaseFileSize(const std::string& name, std::vector<std::string>& filePath, std::vector<uint64_t>& fileSize);
+void GetDatabaseFileSize(const std::vector<std::string>& nameList, std::vector<std::string>& filePath,
+    std::vector<uint64_t>& fileSize);
 void ReportAccessTokenUserData();
 void ReportPrivacyUserData();
 } // namespace AccessToken

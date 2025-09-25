@@ -1613,7 +1613,8 @@ bool AccessTokenManagerService::Initialize()
     GetConfigValue(dfxInfo.parseConfigFlag);
 
     ReportSysEventServiceStart(dfxInfo);
-    ReportAccessTokenUserData();
+    std::thread reportUserData(ReportAccessTokenUserData);
+    reportUserData.detach();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success");
     return true;
 }
