@@ -582,7 +582,7 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array& ani
         hasCallback = !(AniIsRefUndefined(context->env, aniCallback));
     }
 
-    ani_ref callback = nullptr;
+    ani_ref callback = aniCallback;
     if (hasCallback) {
         if (!AniParseCallback(context->env, aniCallback, callback)) {
             BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg(
