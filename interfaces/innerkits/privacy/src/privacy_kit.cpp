@@ -100,7 +100,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         }
     }
 
-    return (res == PrivacyError::PRIVACY_TOGGELE_RESTRICTED) ? RET_SUCCESS : res;
+    return (res == PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED) ? RET_SUCCESS : res;
 }
 
 int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
@@ -243,6 +243,40 @@ int32_t PrivacyKit::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
+}
+
+int32_t PrivacyKit::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+{
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().SetDisablePolicy(permissionName, isDisable);
+}
+
+int32_t PrivacyKit::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+{
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().GetDisablePolicy(permissionName, isDisable);
+}
+
+int32_t PrivacyKit::RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback)
+{
+    if (callback == nullptr) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    
+    return PrivacyManagerClient::GetInstance().RegisterPermDisablePolicyCallback(callback);
+}
+
+int32_t PrivacyKit::UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback)
+{
+    if (callback == nullptr) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    
+    return PrivacyManagerClient::GetInstance().UnRegisterPermDisablePolicyCallback(callback);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -165,7 +165,7 @@ void SqliteHelper::SetWal() const
         return;
     }
     auto statement = Prepare(PRAGMA_WAL_COMMAND);
-    if (statement.Step() != Statement::State::DONE) {
+    if (statement.Step() != Statement::State::ROW) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Set wal mode failed, errorMsg: %{public}s", SpitError().c_str());
     } else {
         LOGI(ATM_DOMAIN, ATM_TAG, "Set wal mode success!");

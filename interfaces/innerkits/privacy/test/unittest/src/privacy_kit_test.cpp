@@ -61,6 +61,8 @@ static constexpr int32_t THIRD_INDEX = 2;
 static constexpr int32_t RESULT_NUM_ONE = 1;
 static constexpr int32_t RESULT_NUM_TWO = 2;
 static constexpr int32_t RESULT_NUM_THREE = 3;
+static constexpr int32_t MAX_DISABLE_CALLBACK_TEST_SIZE = 20;
+static constexpr int32_t MAX_PERM_LIST_TEST_SIZE = 1024;
 const static int32_t NOT_EXSIT_PID = 99999999;
 const static int32_t INVALID_USER_ID = -1;
 const static int32_t USER_ID_2 = 2;
@@ -2917,4 +2919,433 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0
     EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
+}
+
+int32_t PrivacyKitTest::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+{
+    MockNativeToken mock("edm");
+
+    return PrivacyKit::SetDisablePolicy(permissionName, isDisable);
+}
+
+/**
+ * @tc.name: SetDisablePolicy001
+ * @tc.desc: PrivacyKit::SetDisablePolicy test invalid perm and no MANAGE_EDM_POLICY permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetDisablePolicy001, TestSize.Level0)
+{
+    bool isDisable = false;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::SetDisablePolicy("", isDisable)); // perm empty
+
+    std::string permissionName (257, 'x');
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::SetDisablePolicy(permissionName, isDisable)); // perm 257
+    
+    // perm deny
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::SetDisablePolicy("ohos.permission.INVALID", isDisable));
+
+    // perm not exsit
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, SetDisablePolicy("ohos.permission.INVALID", isDisable));
+
+    // perm not support
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT, SetDisablePolicy("ohos.permission.LOCATION", isDisable));
+}
+
+/**
+ * @tc.name: SetDisablePolicy002
+ * @tc.desc: PrivacyKit::SetDisablePolicy test get correct disable policy after set.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetDisablePolicy002, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    // backup origin disable policy
+    bool camDisable = false;
+    bool micDisable = false;
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", camDisable));
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+
+    // set cam + micro disable
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", true));
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", true));
+
+    // get cam + micro policy to compare
+    bool isCamDisable = false;
+    bool isMicDisable = false;
+    EXPECT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", isCamDisable));
+    EXPECT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", isMicDisable));
+    EXPECT_EQ(true, isCamDisable);
+    EXPECT_EQ(true, isMicDisable);
+
+    // set cam + micro enable
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", false));
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", false));
+
+    // get cam + micro policy to compare
+    isCamDisable = true;
+    isMicDisable = true;
+    EXPECT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", isCamDisable));
+    EXPECT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", isMicDisable));
+    EXPECT_EQ(false, isCamDisable);
+    EXPECT_EQ(false, isMicDisable);
+
+    // recovery origin disable policy
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", camDisable));
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+}
+
+/**
+ * @tc.name: GetDisablePolicy001
+ * @tc.desc: PrivacyKit::GetDisablePolicy test invalid perm and no GET_PERMISSION_POLICY permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetDisablePolicy001, TestSize.Level0)
+{
+    bool isDisable = false;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::GetDisablePolicy("", isDisable)); // perm empty
+
+    std::string permissionName (257, 'x');
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::GetDisablePolicy(permissionName, isDisable)); // perm 257
+
+    // perm deny
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetDisablePolicy("ohos.permission.INVALID", isDisable));
+
+    MockNativeToken mock("accesstoken_service");
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PrivacyKit::GetDisablePolicy("ohos.permission.INVALID",
+        isDisable)); // perm not exsit
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT, PrivacyKit::GetDisablePolicy("ohos.permission.LOCATION",
+        isDisable)); // perm not support
+}
+
+class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {
+public:
+    explicit DisablePolicyChangeCallbackTest(const std::vector<std::string> &permList)
+        : DisablePolicyChangeCallback(permList)
+    {
+        GTEST_LOG_(INFO) << "DisablePolicyChangeCallbackTest create";
+    }
+
+    ~DisablePolicyChangeCallbackTest()
+    {}
+
+    virtual void PermDisablePolicyCallback(const PermDisablePolicyInfo& info)
+    {
+        permissionName_ = info.permissionName;
+        isDisable_ = info.isDisable;
+
+        GTEST_LOG_(INFO) << "Receive callback: " << permissionName_ << " set to " << (isDisable_? "true" : "false");
+    }
+
+    std::string permissionName_ = "ohos.permission.INVALID";
+    bool isDisable_ = true;
+};
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback001
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback test perm oversize and no GET_PERMISSION_POLICY permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    std::shared_ptr<DisablePolicyChangeCallbackTest> callback1 = nullptr;
+    OHOS::sptr<PermDisablePolicyChangeCallback> callbackWrap = nullptr;
+
+    // callback nullptr
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermDisablePolicyCallback(callback1));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyManagerClient::GetInstance().RegisterPermDisablePolicyCallback(callback1));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyManagerClient::GetInstance().CreatePermDisablePolicyCbk(callback1, callbackWrap));
+
+    std::vector<std::string> permList1;
+    for (int32_t i = 0; i <= MAX_PERM_LIST_TEST_SIZE; ++i) {
+        permList1.emplace_back("ohos.permission.CAMERA");
+    }
+    callback1 = std::make_shared<DisablePolicyChangeCallbackTest>(permList1);
+    ASSERT_EQ(PrivacyError::ERR_OVERSIZE, PrivacyKit::RegisterPermDisablePolicyCallback(callback1)); // perm oversize
+
+    std::vector<std::string> permList2 = { "ohos.permission.CAMERA" };
+    auto callback2 = std::make_shared<DisablePolicyChangeCallbackTest>(permList2);
+    // perm deny
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermDisablePolicyCallback(callback2));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback002
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback test permList has invalid perm.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback002, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    std::vector<std::string> permList1;
+    permList1.emplace_back("ohos.permission.INVALIDA");
+    permList1.emplace_back("ohos.permission.INVALIDB");
+
+    auto callback1 = std::make_shared<DisablePolicyChangeCallbackTest>(permList1);
+    // permList with only invalid perm
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermDisablePolicyCallback(callback1));
+
+    permList1.emplace_back("ohos.permission.CAMERA");
+    auto callback2 = std::make_shared<DisablePolicyChangeCallbackTest>(permList1);
+    // permList with invalid perm and valid perm
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermDisablePolicyCallback(callback2));
+
+    std::vector<std::string> permList2;
+    permList2.emplace_back("ohos.permission.LOCATION");
+    auto callback3 = std::make_shared<DisablePolicyChangeCallbackTest>(permList2);
+    // perm not support
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT, PrivacyKit::RegisterPermDisablePolicyCallback(callback3));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback003
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback test client callback oversize and callback register twice.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback003, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<std::shared_ptr<DisablePolicyChangeCallbackTest>> callbackList;
+
+    for (int32_t i = 0; i <= MAX_DISABLE_CALLBACK_TEST_SIZE; ++i) {
+        auto callbackPtr = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+
+        if (i == MAX_DISABLE_CALLBACK_TEST_SIZE) { // 20 is the max size
+            EXPECT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
+                PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr)); // over 20 limit
+            break;
+        }
+
+        EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
+        callbackList.emplace_back(callbackPtr);
+    }
+
+    for (int32_t i = 0; i < MAX_DISABLE_CALLBACK_TEST_SIZE; ++i) { // release 20 callback
+        auto callbackPtr = callbackList[i];
+        EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+    }
+
+    auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    ASSERT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback));
+    // callback repeat register
+    EXPECT_EQ(PrivacyError::ERR_CALLBACK_ALREADY_EXIST, PrivacyKit::RegisterPermDisablePolicyCallback(callback));
+
+    ASSERT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback004
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback permList empty receive cam and micro callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback004, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    // backup origin disable policy
+    bool camDisable = false;
+    bool micDisable = false;
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", camDisable));
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+
+    std::vector<std::string> permList;
+    auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", false)); // set camera enable
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", false)); // set micro enable
+    EXPECT_EQ("ohos.permission.INVALID", callback->permissionName_); // can't receive callback without register
+    EXPECT_EQ(true, callback->isDisable_);
+
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback));
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", false)); // set camera enable
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", false)); // set micro enable
+    EXPECT_EQ("ohos.permission.INVALID", callback->permissionName_); // not send callback when set the same policy
+    EXPECT_EQ(true, callback->isDisable_);
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", true)); // set camera disable
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ("ohos.permission.CAMERA", callback->permissionName_); // receive camera disable callback
+    EXPECT_EQ(true, callback->isDisable_);
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", true)); // set micro disable
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ("ohos.permission.MICROPHONE", callback->permissionName_);
+    EXPECT_EQ(true, callback->isDisable_);
+
+    // unregister callback
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    // recovery origin disable policy
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", camDisable));
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback005
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback register or unregister cam can or can't receive cam callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback005, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    // backup origin disable policy
+    bool camDisable = false;
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", camDisable));
+
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", true)); // set camera disable
+    
+    std::vector<std::string> permList = { "ohos.permission.CAMERA" };
+    auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback));
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", false)); // set camera enable
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ("ohos.permission.CAMERA", callback->permissionName_);
+    EXPECT_EQ(false, callback->isDisable_);
+
+    // unregister callback
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", true)); // set camera disable
+    EXPECT_EQ("ohos.permission.CAMERA", callback->permissionName_);
+    EXPECT_EQ(false, callback->isDisable_);
+
+    // recovery origin disable policy
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", camDisable));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback006
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback register cam can't receive micro callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback006, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    // backup origin disable policy
+    bool micDisable = false;
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", true)); // set micro disable
+    
+    std::vector<std::string> permList = { "ohos.permission.CAMERA" };
+    auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback));
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", false)); // set micro enable
+    EXPECT_EQ("ohos.permission.INVALID", callback->permissionName_); // can't receive micro callback
+    EXPECT_EQ(true, callback->isDisable_);
+
+    // unregister callback
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    // recovery origin disable policy
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+}
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback007
+ * @tc.desc: PrivacyKit::RegisterPermDisablePolicyCallback multy register only receive own callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback007, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+
+    // backup origin disable policy
+    bool camDisable = false;
+    bool micDisable = false;
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.CAMERA", camDisable));
+    ASSERT_EQ(0, PrivacyKit::GetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", true)); // set camera disable
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", true)); // set micro disable
+    
+    std::vector<std::string> permList1 = { "ohos.permission.CAMERA" };
+    auto callback1 = std::make_shared<DisablePolicyChangeCallbackTest>(permList1);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback1));
+
+    std::vector<std::string> permList2 = { "ohos.permission.MICROPHONE" };
+    auto callback2 = std::make_shared<DisablePolicyChangeCallbackTest>(permList2);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callback2));
+
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", false)); // set camera enable
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ("ohos.permission.CAMERA", callback1->permissionName_); // callback1 receive camera callback
+    EXPECT_EQ(false, callback1->isDisable_);
+    EXPECT_EQ("ohos.permission.INVALID", callback2->permissionName_); // callback2 can't receive camera callback
+    EXPECT_EQ(true, callback2->isDisable_);
+
+    callback1->permissionName_ = "ohos.permission.INVALID";
+    callback1->isDisable_ = true;
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", false)); // set micro enable
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ("ohos.permission.INVALID", callback1->permissionName_); // callback1 can't receive micro callback
+    EXPECT_EQ(true, callback1->isDisable_);
+    EXPECT_EQ("ohos.permission.MICROPHONE", callback2->permissionName_); // callback2 receive micro callback
+    EXPECT_EQ(false, callback2->isDisable_);
+
+    // unregister callback
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback1));
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback2));
+
+    // recovery origin disable policy
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", camDisable));
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+}
+
+/**
+ * @tc.name: UnRegisterPermDisablePolicyCallback001
+ * @tc.desc: PrivacyKit::UnRegisterPermDisablePolicyCallback test perm oversize and no GET_PERMISSION_POLICY permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, UnRegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    auto disableCbkMap = PrivacyManagerClient::GetInstance().disableCbkMap_;
+
+    std::shared_ptr<DisablePolicyChangeCallbackTest> callback = nullptr;
+
+    auto permCallback = std::make_shared<PermDisablePolicyChangeCallback>(callback);
+    PermDisablePolicyInfo info;
+    permCallback->PermDisablePolicyCallback(info); // customizedCallback_ nullptr
+
+    // callback nullptr
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyManagerClient::GetInstance().UnRegisterPermDisablePolicyCallback(callback));
+
+    std::vector<std::string> permList = { "ohos.permission.CAMERA" };
+    callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    ASSERT_EQ(PrivacyError::ERR_CALLBACK_NOT_EXIST, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    OHOS::sptr<PermDisablePolicyChangeCallback> callbackWrap = nullptr;
+    PrivacyManagerClient::GetInstance().disableCbkMap_[callback] = callbackWrap;
+    ASSERT_EQ(PrivacyError::ERR_CALLBACK_NOT_EXIST, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    callbackWrap = new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+    ASSERT_NE(nullptr, callbackWrap);
+    PrivacyManagerClient::GetInstance().disableCbkMap_[callback] = callbackWrap;
+    // perm deny
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback));
+
+    PrivacyManagerClient::GetInstance().disableCbkMap_ = disableCbkMap;
 }

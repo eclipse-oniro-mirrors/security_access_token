@@ -1244,6 +1244,47 @@ HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level0)
     privacyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(INVALID_CODE, "123");
 }
+
+/**
+ * @tc.name: VerifyPermission001
+ * @tc.desc: service verify permission test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, VerifyPermission001, TestSize.Level0)
+{
+    bool isDisable = false;
+    std::vector<std::string> permList;
+    sptr<IRemoteObject> callback = nullptr;
+
+    {
+        MockNativeToken mock("edm");
+
+        ASSERT_EQ(0, privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false));
+        ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+            privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable));
+        ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+            privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback));
+        ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+            privacyManagerService_->UnRegisterPermDisablePolicyCallback(callback));
+    }
+
+    MockNativeToken mock("accesstoken_service");
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false));
+    ASSERT_EQ(0, privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback)); // callback is nullptr
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->UnRegisterPermDisablePolicyCallback(callback)); // callback is nullptr
+
+    for (uint32_t i = 0; i <= PERM_LIST_SIZE_MAX; ++i) {
+        permList.emplace_back("ohos.permission.CAMERA");
+    }
+    ASSERT_EQ(PrivacyError::ERR_OVERSIZE,
+        privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback)); // over size
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

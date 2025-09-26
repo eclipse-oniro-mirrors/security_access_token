@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -62,6 +62,7 @@ void PermissionUsedRecordDb::OnCreate()
     CreatePermissionRecordTable();
     CreatePermissionUsedTypeTable();
     CreatePermissionUsedRecordToggleStatusTable();
+    CreatePermissionDisablePolicyTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
@@ -83,12 +84,13 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
         CreatePermissionUsedRecordToggleStatusTable();
     } else if (version == DataBaseVersion::VERISION_4) {
         CreatePermissionUsedRecordToggleStatusTable();
+    } else if (version == DataBaseVersion::VERISION_5) {
+        CreatePermissionDisablePolicyTable();
     }
 }
 
-PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+void PermissionUsedRecordDb::InitPermRecordTableInfo(SqliteTable& permissionRecordTable)
 {
-    SqliteTable permissionRecordTable;
     permissionRecordTable.tableName_ = PERMISSION_RECORD_TABLE;
     permissionRecordTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_TOKEN_ID,
@@ -101,8 +103,10 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS,
         PrivacyFiledConst::FIELD_USED_TYPE
     };
+}
 
-    SqliteTable permissionUsedTypeTable;
+void PermissionUsedRecordDb::InitPermUsedTypeTableInfo(SqliteTable& permissionUsedTypeTable)
+{
     permissionUsedTypeTable.tableName_ = PERMISSION_USED_TYPE_TABLE;
     permissionUsedTypeTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_TOKEN_ID,
@@ -119,18 +123,45 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
          */
         PrivacyFiledConst::FIELD_USED_TYPE
     };
+}
 
-    SqliteTable permissionUsedRecordToggleStatusTable;
+void PermissionUsedRecordDb::InitPermUsedRecordToggleStatusTableInfo(SqliteTable& permissionUsedRecordToggleStatusTable)
+{
     permissionUsedRecordToggleStatusTable.tableName_ = PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE;
     permissionUsedRecordToggleStatusTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_USER_ID,
         PrivacyFiledConst::FIELD_STATUS
     };
+}
+
+void PermissionUsedRecordDb::InitPermDisablePolicyTableInfo(SqliteTable& permissionDisablePolicyTable)
+{
+    permissionDisablePolicyTable.tableName_ = PERMISSION_DISABLE_POLICY_TABLE;
+    permissionDisablePolicyTable.tableColumnNames_ = {
+        PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        PrivacyFiledConst::FIELD_DISABLE_POLICY
+    };
+}
+
+PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+{
+    SqliteTable permissionRecordTable;
+    InitPermRecordTableInfo(permissionRecordTable);
+
+    SqliteTable permissionUsedTypeTable;
+    InitPermUsedTypeTableInfo(permissionUsedTypeTable);
+
+    SqliteTable permissionUsedRecordToggleStatusTable;
+    InitPermUsedRecordToggleStatusTableInfo(permissionUsedRecordToggleStatusTable);
+
+    SqliteTable permissionDisablePolicyTable;
+    InitPermDisablePolicyTableInfo(permissionDisablePolicyTable);
 
     dataTypeToSqlTable_ = {
         {PERMISSION_RECORD, permissionRecordTable},
         {PERMISSION_USED_TYPE, permissionUsedTypeTable},
         {PERMISSION_USED_RECORD_TOGGLE_STATUS, permissionUsedRecordToggleStatusTable},
+        {PERMISSION_DISABLE_POLICY, permissionDisablePolicyTable},
     };
     Open();
 }
@@ -698,6 +729,24 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedRecordToggleStatusTable() co
         .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_USER_ID)
+        .append("))");
+    return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_DISABLE_POLICY);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = CREATE_TABLE_STR;
+    sql.append(it->second.tableName_ + " (")
+        .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_DISABLE_POLICY)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
         .append("))");
     return ExecuteSql(sql);
 }

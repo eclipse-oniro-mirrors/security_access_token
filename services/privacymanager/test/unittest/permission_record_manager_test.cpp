@@ -35,6 +35,7 @@
 #undef private
 #include "parameter.h"
 #include "perm_active_status_change_callback_stub.h"
+#include "perm_disable_policy_change_callback.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_kit.h"
@@ -66,6 +67,7 @@ static constexpr int32_t TEST_USER_ID_10 = 10;
 static constexpr int32_t TEST_INVALID_USER_ID = -1;
 static constexpr int32_t TEST_INVALID_USER_ID_20000 = 20000;
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
+static constexpr uint32_t MAX_CALLBACK_SIZE_TEST = 20;
 static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
 static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
@@ -1007,8 +1009,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType002, TestSize.Level0)
     MockNativeToken mock("audio_server"); // set self tokenID to audio_service with PERMISSION_USED_STATS
     // add 21 permission used type record
     std::vector<AccessTokenID> tokenIdList;
-    uint32_t count = TEST_MAX_PERMISSION_USED_TYPE_SIZE + 1;
-    for (uint32_t i = 0; i < count; i++) {
+    for (uint32_t i = 0; i <= TEST_MAX_PERMISSION_USED_TYPE_SIZE; i++) {
         HapInfoParams infoParms = g_InfoParms1;
         HapPolicyParams policyPrams = g_PolicyPrams1;
         infoParms.bundleName = infoParms.bundleName + std::to_string(i);
@@ -1484,6 +1485,65 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest002, TestSize.L
 
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
+
+#ifdef MAX_COUNT_TEST
+class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {
+public:
+    explicit DisablePolicyChangeCallbackTest(const std::vector<std::string> &permList)
+        : DisablePolicyChangeCallback(permList) {}
+
+    ~DisablePolicyChangeCallbackTest() {}
+
+    virtual void PermDisablePolicyCallback(const PermDisablePolicyInfo& info)
+    {
+        permissionName = info.permissionName;
+        isDisable = info.isDisable;
+
+        GTEST_LOG_(INFO) << "Receive callback: " << permissionName << " set to " << (isDisable? "true" : "false");
+    }
+
+    std::string permissionName = "ohos.permission.INVALID";
+    bool isDisable = false;
+};
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback001
+ * @tc.desc: RegisterPermDisablePolicyCallback with exceed limitation.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PermissionRecordManagerTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    std::vector<std::string> permList = { "ohos.permission.CAMERA" };
+    std::vector<sptr<PermDisablePolicyChangeCallback>> callbacks;
+
+    for (size_t i = 0; i < MAX_CALLBACK_SIZE_TEST; ++i) {
+        auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+        EXPECT_NE(nullptr, callback);
+
+        sptr<PermDisablePolicyChangeCallback> callbackWrap =
+            new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+        EXPECT_NE(nullptr, callbackWrap);
+
+        EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(
+            GetSelfTokenID(), permList, callbackWrap->AsObject()));
+        callbacks.emplace_back(callbackWrap);
+    }
+
+    auto callback = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    EXPECT_NE(nullptr, callback);
+    sptr<PermDisablePolicyChangeCallback> callbackWrap = new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+    EXPECT_NE(nullptr, callbackWrap);
+    EXPECT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
+        PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(
+            GetSelfTokenID(), permList, callbackWrap->AsObject()));
+
+    for (size_t i = 0; i < callbacks.size(); ++i) {
+        EXPECT_EQ(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callbacks[i]->AsObject()));
+    }
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

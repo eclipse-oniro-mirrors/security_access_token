@@ -27,6 +27,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 const static int32_t MAX_CALLBACK_SIZE = 200;
+const static int32_t MAX_DISABLE_CALLBACK_SIZE = 20;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
@@ -431,6 +432,132 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;
+}
+
+int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
+}
+
+int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
+}
+
+int32_t PrivacyManagerClient::CreatePermDisablePolicyCbk(
+    const std::shared_ptr<DisablePolicyChangeCallback>& callback,
+    sptr<PermDisablePolicyChangeCallback>& callbackWrap)
+{
+    if (callback == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr!");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    std::lock_guard<std::mutex> lock(disableCbkMutex_);
+    if (disableCbkMap_.size() >= MAX_DISABLE_CALLBACK_SIZE) {
+        return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
+    }
+
+    auto goalCallback = disableCbkMap_.find(callback);
+    if (goalCallback != disableCbkMap_.end()) {
+        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+    } else {
+        callbackWrap = new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+        if (callbackWrap == nullptr) {
+            return PrivacyError::ERR_MALLOC_FAILED;
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PrivacyManagerClient::RegisterPermDisablePolicyCallback(
+    const std::shared_ptr<DisablePolicyChangeCallback>& callback)
+{
+    if (callback == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr!");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    std::vector<std::string> permList;
+    callback->GetPermList(permList);
+    if (permList.size() > MAX_PERM_LIST_SIZE) {
+        return PrivacyError::ERR_OVERSIZE;
+    }
+
+    sptr<PermDisablePolicyChangeCallback> callbackWrap = nullptr;
+    int32_t result = CreatePermDisablePolicyCbk(callback, callbackWrap);
+    if (result != RET_SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
+        return result;
+    }
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    
+    result = proxy->RegisterPermDisablePolicyCallback(permList, callbackWrap->AsObject());
+    if (result == RET_SUCCESS) {
+        std::lock_guard<std::mutex> lock(disableCbkMutex_);
+        disableCbkMap_[callback] = callbackWrap;
+        LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+    } else {
+        result = ConvertResult(result);
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    return result;
+}
+
+int32_t PrivacyManagerClient::UnRegisterPermDisablePolicyCallback(
+    const std::shared_ptr<DisablePolicyChangeCallback>& callback)
+{
+    if (callback == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr!");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::lock_guard<std::mutex> lock(disableCbkMutex_);
+    auto it = disableCbkMap_.find(callback);
+    if (it == disableCbkMap_.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback has not register.");
+        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+    }
+    if (it->second == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is null.");
+        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+    }
+
+    int32_t result = proxy->UnRegisterPermDisablePolicyCallback(it->second->AsObject());
+    if (result == RET_SUCCESS) {
+        disableCbkMap_.erase(it);
+    } else {
+        result = ConvertResult(result);
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    return result;
 }
 
 uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const

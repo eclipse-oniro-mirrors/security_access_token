@@ -40,6 +40,7 @@ public:
         PERMISSION_RECORD,
         PERMISSION_USED_TYPE,
         PERMISSION_USED_RECORD_TOGGLE_STATUS,
+        PERMISSION_DISABLE_POLICY,
     };
     enum ExecuteResult { FAILURE = -1, SUCCESS };
     static PermissionUsedRecordDb& GetInstance();
@@ -62,6 +63,11 @@ public:
     void OnUpdate(int32_t version) override;
 
 private:
+    void InitPermRecordTableInfo(SqliteTable& permissionRecordTable);
+    void InitPermUsedTypeTableInfo(SqliteTable& permissionRecordTable);
+    void InitPermUsedRecordToggleStatusTableInfo(SqliteTable& permissionRecordTable);
+    void InitPermDisablePolicyTableInfo(SqliteTable& permissionRecordTable);
+
     PermissionUsedRecordDb();
     DISALLOW_COPY_AND_MOVE(PermissionUsedRecordDb);
 
@@ -74,6 +80,7 @@ private:
     int32_t InsertLockScreenStatusColumn() const;
     int32_t InsertPermissionUsedTypeColumn() const;
     int32_t UpdatePermissionRecordTablePrimaryKey() const;
+    int32_t CreatePermissionDisablePolicyTable() const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
         const std::unordered_set<AccessTokenID>& tokenIDList) const;
@@ -96,9 +103,10 @@ private:
     inline static constexpr const char* PERMISSION_USED_TYPE_TABLE = "permission_used_type_table";
     inline static constexpr const char* PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE =
         "permission_used_record_toggle_status_table";
+    inline static constexpr const char* PERMISSION_DISABLE_POLICY_TABLE = "permission_disable_policy_table";
     inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 5;
+    static const int32_t DATABASE_VERSION = 6;
 };
 } // namespace AccessToken
 } // namespace Security

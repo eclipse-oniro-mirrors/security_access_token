@@ -17,7 +17,9 @@
 #define PERMISSION_RECORD_MANAGER_H
 
 #include <set>
+#include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -102,6 +104,11 @@ public:
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
+        const sptr<IRemoteObject>& callback);
+    int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback);
 
     void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
@@ -191,6 +198,13 @@ private:
     bool ToRemoveRecord(const ContinusPermissionRecord& targetRecord,
         const IsEqualFunc& isEqualFunc, bool needClearCamera = true);
 
+    void InitDisablePolicyFromDb();
+    int32_t IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode);
+    int32_t InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable);
+    bool GetCacheDisablePolicy(int32_t opCode);
+    void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
+    int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
+
 private:
     bool hasInited_ = false;
     OHOS::Utils::RWLock rwLock_;
@@ -244,6 +258,9 @@ private:
 
     std::mutex permUsedRecToggleStatusMutex_;
     std::map<int32_t, bool> permUsedRecToggleStatusMap_;
+
+    std::shared_mutex diablePolicyMutex_;
+    std::unordered_map<int32_t, bool> disablePolicyMap_;
 };
 } // namespace AccessToken
 } // namespace Security
