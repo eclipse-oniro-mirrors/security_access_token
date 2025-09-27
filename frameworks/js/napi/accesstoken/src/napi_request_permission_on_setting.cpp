@@ -73,7 +73,7 @@ static int32_t TransferToJsErrorCode(int32_t errCode)
     return jsCode;
 }
 
-static void ReturnPromiseResult(napi_env env, const RequestPermOnSettingAsyncContext& context, napi_value result)
+static void ReturnPromiseResult(napi_env env, RequestPermOnSettingAsyncContext& context, napi_value result)
 {
     if (context.result.errorCode != RET_SUCCESS) {
         int32_t jsCode = TransferToJsErrorCode(context.result.errorCode);
@@ -82,6 +82,7 @@ static void ReturnPromiseResult(napi_env env, const RequestPermOnSettingAsyncCon
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static napi_value WrapVoidToJS(napi_env env)
@@ -680,6 +681,7 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env,
             napi_reject_deferred(env, asyncContextHandle->asyncContextPtr->deferred, businessError));
+        asyncContextHandle->asyncContextPtr->deferred = nullptr;
     }
 }
 }  // namespace AccessToken
