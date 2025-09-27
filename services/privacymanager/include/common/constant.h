@@ -74,7 +74,7 @@ public:
         OP_CUSTOM_SCREEN_RECORDING = 45,
         OP_HOOK_KEY_EVENT = 46,
         OP_ACCESS_USER_FULL_DISK = 47,
-        // 以下声明仅用于下载 桌面 文档文件夹权限的访问记录使用,需要和普通权限做区分
+        // 以下声明仅用于文件夹权限的访问记录使用,需要和普通权限做区分
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ = 100,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE = 101,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_OTHER_READ = 102,
@@ -87,6 +87,8 @@ public:
         OP_READ_WRITE_DESKTOP_DIRECTORY_MEDIA_WRITE = 109,
         OP_READ_WRITE_DESKTOP_DIRECTORY_OTHER_READ = 110,
         OP_READ_WRITE_DESKTOP_DIRECTORY_OTHER_WRITE = 111,
+        OP_ACCESS_USER_FULL_DISK_READ = 112,
+        OP_ACCESS_USER_FULL_DISK_WRITE = 113,
     };
 
     enum ErrorCode {

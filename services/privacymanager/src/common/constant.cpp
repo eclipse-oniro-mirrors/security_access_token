@@ -108,6 +108,10 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_CUSTOM_SCREEN_RECORDING),
     std::map<std::string, int32_t>::value_type("ohos.permission.ACCESS_USER_FULL_DISK",
         Constant::OP_ACCESS_USER_FULL_DISK),
+    std::map<std::string, int32_t>::value_type("ohos.permission.ACCESS_USER_FULL_DISK_READ",
+        Constant::OP_ACCESS_USER_FULL_DISK_READ),
+    std::map<std::string, int32_t>::value_type("ohos.permission.ACCESS_USER_FULL_DISK_WRITE",
+        Constant::OP_ACCESS_USER_FULL_DISK_WRITE),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
