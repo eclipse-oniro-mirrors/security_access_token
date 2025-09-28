@@ -727,6 +727,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
 }
 int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, uint32_t permCode)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
@@ -762,7 +763,6 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permission.c_str());
         return PERMISSION_DENIED;
     }
-    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     return VerifyPermissionStatus(tokenID, opCode);
 }
 
