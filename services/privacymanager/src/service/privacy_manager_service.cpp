@@ -22,6 +22,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "active_status_callback_manager.h"
+#include "disable_policy_cbk_manager.h"
 #include "ipc_skeleton.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "privacy_common_event_subscriber.h"
@@ -50,6 +51,8 @@ constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_S
 constexpr const char* PERMISSION_RECORD_TOGGLE = "ohos.permission.PERMISSION_RECORD_TOGGLE";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
+constexpr const char* MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
+constexpr const char* GET_PERMISSION_POLICY = "ohos.permission.GET_PERMISSION_POLICY";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 }
@@ -496,6 +499,58 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
     return RET_SUCCESS;
 }
 
+int32_t PrivacyManagerService::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s, isDisable %{public}d.", permissionName.c_str(), isDisable);
+
+    if (!VerifyPermission(MANAGE_EDM_POLICY)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.MANAGE_EDM_POLICY!");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    return PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, isDisable);
+}
+
+int32_t PrivacyManagerService::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s.", permissionName.c_str());
+
+    if (!VerifyPermission(GET_PERMISSION_POLICY)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.GET_PERMISSION_POLICY!");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    return PermissionRecordManager::GetInstance().GetDisablePolicy(permissionName, isDisable);
+}
+
+int32_t PrivacyManagerService::RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,
+    const sptr<IRemoteObject>& callback)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+
+    if (!VerifyPermission(GET_PERMISSION_POLICY)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.GET_PERMISSION_POLICY!");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    if (permList.size() > PERM_LIST_SIZE_MAX) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "permList oversize");
+        return PrivacyError::ERR_OVERSIZE;
+    }
+
+    return PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(callingTokenID, permList, callback);
+}
+
+int32_t PrivacyManagerService::UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback)
+{
+    if (!VerifyPermission(GET_PERMISSION_POLICY)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.GET_PERMISSION_POLICY!");
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    return PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callback);
+}
+
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "saId is %{public}d", systemAbilityId);
@@ -536,6 +591,7 @@ bool PrivacyManagerService::Initialize()
     }
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
+    DisablePolicyCbkManager::GetInstance()->InitEventHandler(eventHandler_);
 #endif
     std::thread reportUserData(ReportPrivacyUserData);
     reportUserData.detach();

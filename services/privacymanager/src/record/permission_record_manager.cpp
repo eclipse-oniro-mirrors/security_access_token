@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,6 +33,7 @@
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
+#include "disable_policy_cbk_manager.h"
 #include "i_state_change_callback.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
@@ -465,7 +466,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 
     if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID)) {
         LOGI(PRI_DOMAIN, PRI_TAG, "The permission used record toggle status is false.");
-        return PrivacyError::PRIVACY_TOGGELE_RESTRICTED;
+        return PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED;
     }
 
     if ((info.successCount == 0) && (info.failCount == 0)) {
@@ -1746,6 +1747,170 @@ int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenI
     return Constant::SUCCESS;
 }
 
+static bool IsCamOrMicroPerm(const std::string& permissionName)
+{
+    return ((permissionName == std::string(CAMERA_PERMISSION_NAME)) ||
+        (permissionName == std::string(MICROPHONE_PERMISSION_NAME)));
+}
+
+int32_t PermissionRecordManager::IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode)
+{
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid Perm %{public}s!", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    if (!IsCamOrMicroPerm(permissionName)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Only support camera or microphone perm!");
+        return PrivacyError::ERR_PERMISSION_NOT_SUPPORT;
+    }
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+
+    std::vector<GenericValues> results;
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue, results);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    if (results.empty()) {
+        GenericValues value;
+        value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+        value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
+
+        std::vector<GenericValues> values;
+        values.emplace_back(value);
+        res = PermissionUsedRecordDb::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, values);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+        }
+    } else {
+        GenericValues modifyValue;
+        modifyValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+        modifyValue.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
+
+        res = PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY,
+            modifyValue, conditionValue);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+        }
+    }
+
+    return Constant::SUCCESS;
+}
+
+bool PermissionRecordManager::GetCacheDisablePolicy(int32_t opCode)
+{
+    std::shared_lock<std::shared_mutex> lock(diablePolicyMutex_);
+    auto it = disablePolicyMap_.find(opCode);
+    if (it != disablePolicyMap_.end()) {
+        return it->second;
+    }
+    return false; // default false
+}
+
+void PermissionRecordManager::UpdateDisablePolicyCache(int32_t opCode, bool isDisable)
+{
+    std::unique_lock<std::shared_mutex> lock(diablePolicyMutex_);
+    auto it = disablePolicyMap_.find(opCode);
+    if (it != disablePolicyMap_.end()) {
+        it->second = isDisable;
+        return;
+    }
+
+    disablePolicyMap_.insert(std::pair<int32_t, bool>(opCode, isDisable));
+}
+
+int32_t PermissionRecordManager::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+{
+    int32_t opCode = -1;
+    int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    res = InsertOrUpdateDisablePolicy(opCode, isDisable);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    bool needCallback = (isDisable != GetCacheDisablePolicy(opCode));
+
+    UpdateDisablePolicyCache(opCode, isDisable);
+
+    if (!needCallback) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "No need to send callback!");
+        return Constant::SUCCESS;
+    }
+
+    LOGI(PRI_DOMAIN, PRI_TAG, "Need to send callback!");
+
+    PermDisablePolicyInfo info(permissionName, isDisable);
+    DisablePolicyCbkManager::GetInstance()->ExecuteCallbackAsync(info);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+{
+    int32_t opCode = -1;
+    int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    isDisable = GetCacheDisablePolicy(opCode);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::PermListFilter(
+    const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
+{
+    std::set<std::string> permSet;
+    for (const auto& perm : listSrc) {
+        if (!IsDefinedPermission(perm)) {
+            return PrivacyError::ERR_PARAM_INVALID;
+        }
+
+        if (!IsCamOrMicroPerm(perm)) {
+            return PrivacyError::ERR_PERMISSION_NOT_SUPPORT;
+        }
+
+        if (permSet.count(perm) == 0) {
+            listRes.emplace_back(perm);
+            permSet.insert(perm);
+            continue;
+        }
+    }
+
+    PermListToString(listRes);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId,
+    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    std::vector<std::string> permListRes;
+    int32_t res = PermListFilter(permList, permListRes);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    return DisablePolicyCbkManager::GetInstance()->AddCallback(regiterTokenId, permListRes, callback);
+}
+
+int32_t PermissionRecordManager::UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback)
+{
+    return DisablePolicyCbkManager::GetInstance()->RemoveCallback(callback);
+}
+
 int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId, int32_t pid)
 {
     int32_t status = PERM_ACTIVE_IN_BACKGROUND;
@@ -1884,6 +2049,31 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
     }
 }
 
+void PermissionRecordManager::InitDisablePolicyFromDb()
+{
+    GenericValues conditionValue;
+    std::vector<GenericValues> results;
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue, results);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        return;
+    }
+
+    if (results.empty()) {
+        return;
+    }
+
+    int32_t opCode = -1;
+    bool isDisable = false;
+
+    std::unique_lock<std::shared_mutex> lock(diablePolicyMutex_);
+    for (const auto& result : results) {
+        opCode = result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE);
+        isDisable = result.GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY) == 1;
+        disablePolicyMap_.insert(std::pair<int32_t, bool>(opCode, isDisable));
+    }
+}
+
 void PermissionRecordManager::SetDefaultConfigValue()
 {
     recordSizeMaximum_ = DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM;
@@ -1943,6 +2133,7 @@ void PermissionRecordManager::Init()
     hasInited_ = true;
 
     UpdatePermUsedRecToggleStatusMapFromDb();
+    InitDisablePolicyFromDb();
 
     GetConfigValue();
 }

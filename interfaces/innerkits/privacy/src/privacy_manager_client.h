@@ -21,9 +21,11 @@
 #include <string>
 #include <vector>
 
+#include "disable_policy_change_callback.h"
 #include "iprivacy_manager.h"
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
+#include "perm_disable_policy_change_callback.h"
 #include "privacy_death_recipient.h"
 #include "proxy_death_callback.h"
 #include "state_change_callback.h"
@@ -63,6 +65,10 @@ public:
         std::vector<PermissionUsedTypeInfo>& results);
     int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID);
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
+    int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
 
 private:
     PrivacyManagerClient();
@@ -76,10 +82,15 @@ private:
     void ReleaseProxy();
     uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
     sptr<ProxyDeathCallBack> GetAnonyStub();
+    int32_t CreatePermDisablePolicyCbk(
+        const std::shared_ptr<DisablePolicyChangeCallback>& callback,
+        sptr<PermDisablePolicyChangeCallback>& callbackWrap);
 
 private:
     std::mutex activeCbkMutex_;
     std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
+    std::mutex disableCbkMutex_;
+    std::map<std::shared_ptr<DisablePolicyChangeCallback>, sptr<PermDisablePolicyChangeCallback>> disableCbkMap_;
     std::mutex stateCbkMutex_;
     std::map<uint64_t, sptr<StateChangeCallback>> stateChangeCallbackMap_;
     std::mutex stubMutex_;

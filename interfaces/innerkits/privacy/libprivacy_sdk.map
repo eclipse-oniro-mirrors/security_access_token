@@ -43,6 +43,16 @@
       "OHOS::Security::AccessToken::PrivacyKit::SetHapWithFGReminder(unsigned int, bool)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedTypeInfos(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::PermissionUsedTypeInfo, std::__h::allocator<OHOS::Security::AccessToken::PermissionUsedTypeInfo>>&)";
       "OHOS::Security::AccessToken::PrivacyKit::SetMutePolicy(unsigned int, unsigned int, bool, unsigned int)";
+      "OHOS::Security::AccessToken::PrivacyKit::UnRegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
+      "OHOS::Security::AccessToken::PrivacyManagerClient::UnRegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
+      "OHOS::Security::AccessToken::DisablePolicyChangeCallback::DisablePolicyChangeCallback(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&)";
+      "OHOS::Security::AccessToken::PermDisablePolicyChangeCallback::PermDisablePolicyChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
+      "OHOS::Security::AccessToken::DisablePolicyChangeCallback::~DisablePolicyChangeCallback()";
+      "OHOS::Security::AccessToken::PrivacyKit::GetDisablePolicy(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool&)";
+      "OHOS::Security::AccessToken::PrivacyKit::SetDisablePolicy(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
+      "OHOS::Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
+      "OHOS::Security::AccessToken::PrivacyManagerClient::RegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
+      "OHOS::Security::AccessToken::PrivacyManagerClient::CreatePermDisablePolicyCbk(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&, OHOS::sptr<OHOS::Security::AccessToken::PermDisablePolicyChangeCallback>&)";
       "";
     };
   local:

@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 
+#include "disable_policy_change_callback.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
@@ -51,6 +52,7 @@ public:
         const std::vector<std::string>& permissionList, PermissionUsedRequest& request);
     void CheckPermissionUsedResult(const PermissionUsedRequest& request, const PermissionUsedResult& result,
         int32_t permRecordSize, int32_t totalSuccessCount, int32_t totalFailCount);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
 };
 } // namespace AccessToken
 } // namespace Security

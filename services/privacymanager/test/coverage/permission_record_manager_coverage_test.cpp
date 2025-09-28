@@ -1224,10 +1224,71 @@ HWTEST_F(PermissionRecordManagerTest, OnUpdate001, TestSize.Level4)
     version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_4);
     PermissionUsedRecordDb::GetInstance().OnUpdate(version);
 
+    version = static_cast<int32_t>(PermissionUsedRecordDb::DataBaseVersion::VERISION_5);
+    PermissionUsedRecordDb::GetInstance().OnUpdate(version);
+
     auto it = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.find(
         PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS);
     ASSERT_NE(it, PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.end());
     ASSERT_EQ(std::string(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE), it->second.tableName_);
+}
+
+/*
+ * @tc.name: PermListFilter001
+ * @tc.desc: PermissionUsedRecordDb::PermListFilter function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, PermListFilter001, TestSize.Level4)
+{
+    std::vector<std::string> listSrc;
+    listSrc.emplace_back("ohos.permission.CAMERA");
+    listSrc.emplace_back("ohos.permission.CAMERA");
+    std::vector<std::string> listRes;
+
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().PermListFilter(listSrc, listRes));
+}
+
+/*
+ * @tc.name: SetDisablePolicy001
+ * @tc.desc: PermissionRecordManager::SetDisablePolicy function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy001, TestSize.Level4)
+{
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable =
+        PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    // can't find type
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false));
+    PermissionRecordManager::GetInstance().InitDisablePolicyFromDb();
+
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+
+    GenericValues conditionValue;
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue, results)); // back up ori data
+
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue)); // remove ori data
+
+    PermissionRecordManager::GetInstance().InitDisablePolicyFromDb();
+
+    // add test data
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false));
+    PermissionRecordManager::GetInstance().InitDisablePolicyFromDb();
+
+    EXPECT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue)); // remove test data
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, results)); // recovery ori data
 }
 } // namespace AccessToken
 } // namespace Security

@@ -39,6 +39,7 @@
 
 #include "access_token.h"
 #include "add_perm_param_info.h"
+#include "disable_policy_change_callback.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
@@ -182,6 +183,36 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
+
+    /**
+     * @brief Set permission disable policy.
+     * @param permission permission name
+     * @param isDisable true means set permission disable
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
+
+    /**
+     * @brief Get permission disable policy.
+     * @param permission permission name
+     * @param isDisable permission disable policy
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+
+    /**
+     * @brief Register permission disable policy change callback.
+     * @param callback DisablePolicyChangeCallback smark pointer quote
+     * @return error code, see privacy_error.h
+     */
+    static int32_t RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
+
+    /**
+     * @brief UnRegister permission disable policy change callback.
+     * @param callback DisablePolicyChangeCallback smark pointer quote
+     * @return error code, see privacy_error.h
+     */
+    static int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -21,6 +21,7 @@
 #include "parcel.h"
 #include "parcel_utils.h"
 #include "perm_active_response_parcel.h"
+#include "perm_disable_policy_parcel.h"
 #include "permission_used_record_parcel.h"
 #include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
@@ -524,6 +525,29 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedResultParcel002, TestSize.Level1)
     EXPECT_EQ(true, permissionUsedResultParcel.Marshalling(parcel2));
     std::shared_ptr<PermissionUsedResultParcel> readedData1(PermissionUsedResultParcel::Unmarshalling(parcel2));
     EXPECT_EQ(readedData1, nullptr);
+}
+
+/**
+ * @tc.name: PermDisablePolicyParcel001
+ * @tc.desc: Verify the PermDisablePolicyParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWP4
+ */
+HWTEST_F(PrivacyParcelTest, PermDisablePolicyParcel001, TestSize.Level1)
+{
+    PermDisablePolicyParcel permDisablePolicyParcel;
+
+    PermDisablePolicyInfo info("ohos.permission.CAMERA", false);
+    permDisablePolicyParcel.info = info;
+
+    Parcel parcel;
+    EXPECT_EQ(true, permDisablePolicyParcel.Marshalling(parcel));
+
+    std::shared_ptr<PermDisablePolicyParcel> readedData(PermDisablePolicyParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    EXPECT_EQ(permDisablePolicyParcel.info.permissionName, readedData->info.permissionName);
+    EXPECT_EQ(permDisablePolicyParcel.info.isDisable, readedData->info.isDisable);
 }
 } // namespace AccessToken
 } // namespace Security

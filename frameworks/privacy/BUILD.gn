@@ -42,6 +42,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/add_perm_param_info_parcel.cpp",
     "src/bundle_used_record_parcel.cpp",
     "src/perm_active_response_parcel.cpp",
+    "src/perm_disable_policy_parcel.cpp",
     "src/permission_used_record_parcel.cpp",
     "src/permission_used_request_parcel.cpp",
     "src/permission_used_result_parcel.cpp",

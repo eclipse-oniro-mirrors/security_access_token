@@ -64,6 +64,11 @@ public:
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
     int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID) override;
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) override;
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable) override;
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable) override;
+    int32_t RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,
+        const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback) override;
 private:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     bool Initialize();

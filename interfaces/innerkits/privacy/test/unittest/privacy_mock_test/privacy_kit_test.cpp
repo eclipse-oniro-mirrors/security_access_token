@@ -245,6 +245,60 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level0
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
+/**
+ * @tc.name: SetDisablePolicy001
+ * @tc.desc: SetDisablePolicy proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetDisablePolicy001, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool isDisable = true;
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::SetDisablePolicy(permissionName, isDisable));
+}
+
+/**
+ * @tc.name: GetDisablePolicy001
+ * @tc.desc: GetDisablePolicy proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetDisablePolicy001, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool isDisable = false;
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::GetDisablePolicy(permissionName, isDisable));
+}
+
+class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {
+public:
+    explicit DisablePolicyChangeCallbackTest(const std::vector<std::string> &permList)
+        : DisablePolicyChangeCallback(permList)
+    {
+        GTEST_LOG_(INFO) << "DisablePolicyChangeCallbackTest create";
+    }
+
+    ~DisablePolicyChangeCallbackTest()
+    {}
+
+    virtual void PermDisablePolicyCallback(const PermDisablePolicyInfo& info)
+    {}
+};
+
+/**
+ * @tc.name: RegisterPermDisablePolicyCallback001
+ * @tc.desc: RegisterPermDisablePolicyCallback proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
