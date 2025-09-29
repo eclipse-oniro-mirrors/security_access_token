@@ -248,7 +248,7 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array& ani
         hasCallback = !AniIsRefUndefined(context->env, aniCallback);
     }
 
-    ani_ref callback = nullptr; // callback: the third parameter is function
+    ani_ref callback = aniCallback; // callback: the third parameter is function
     if (hasCallback) {
         if (!AniParseCallback(context->env, aniCallback, callback)) {
             BusinessErrorAni::ThrowParameterTypeError(
