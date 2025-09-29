@@ -92,7 +92,7 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     ani_int tmp;
     ani_status status = ANI_ERROR;
     if ((status = env->Object_CallMethodByName_Int(
-        static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
+        static_cast<ani_object>(aniInt), "toInt", nullptr, &tmp)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed: %{public}u.", status);
         return false;
     }
@@ -544,7 +544,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
 
     ani_boolean boolValue;
     if ((status = env->Object_CallMethodByName_Boolean(
-        static_cast<ani_object>(ref), "unboxed", nullptr, &boolValue)) != ANI_OK) {
+        static_cast<ani_object>(ref), "toBoolean", nullptr, &boolValue)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get bool value of property(%{public}s): %{public}u.",
             property.c_str(), status);
         return false;
@@ -573,7 +573,7 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
 
     ani_int intValue;
     if ((status = env->Object_CallMethodByName_Int(
-        static_cast<ani_object>(ref), "unboxed", nullptr, &intValue)) != ANI_OK) {
+        static_cast<ani_object>(ref), "toInt", nullptr, &intValue)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int value of property(%{public}s): %{public}u.",
             property.c_str(), status);
         return false;
@@ -601,7 +601,7 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
 
     ani_long longValue;
     if ((status = env->Object_CallMethodByName_Long(
-        static_cast<ani_object>(ref), "unboxed", nullptr, &longValue)) != ANI_OK) {
+        static_cast<ani_object>(ref), "toLong", nullptr, &longValue)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int64 value of property(%{public}s): %{public}u.",
             property.c_str(), status);
         return false;
