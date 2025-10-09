@@ -39,10 +39,15 @@ namespace {
 constexpr int32_t VALUE_MAX_LEN = 32;
 std::mutex g_lockCache;
 static PermissionParamCache g_paramCache;
-std::map<std::string, PermissionStatusCache> g_cache;
+std::map<std::string, GrantStatusCache> g_cache;
+static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+std::mutex g_lockStatusCache;
+static PermissionParamCache g_paramFlagCache;
+std::map<std::string, PermStatusCache> g_statusCache;
+static constexpr const char* PERMISSION_STATUS_FLAG_CHANGE_KEY = "accesstoken.permission.flagchange";
+
 static std::atomic<int32_t> g_tokenIdOtherCount = 0;
 constexpr uint32_t REPORT_TIMES_REDUCE_FACTOR = 10;
-static constexpr const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 }
 constexpr const char* PERM_STATE_CHANGE_FIELD_TOKEN_ID = "tokenID";
 constexpr const char* PERM_STATE_CHANGE_FIELD_PERMISSION_NAME = "permissionName";
@@ -206,44 +211,48 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
     return atManagerObj;
 }
 
-static std::string GetPermParamValue()
+static std::string GetPermParamValue(PermissionParamCache& paramCache, const char* paramKey)
 {
     long long sysCommitId = GetSystemCommitId();
-    if (sysCommitId == g_paramCache.sysCommitIdCache) {
+    if (sysCommitId == paramCache.sysCommitIdCache) {
         LOGD(ATM_DOMAIN, ATM_TAG, "SysCommitId = %{public}lld.", sysCommitId);
-        return g_paramCache.sysParamCache;
+        return paramCache.sysParamCache;
     }
-    g_paramCache.sysCommitIdCache = sysCommitId;
-    if (g_paramCache.handle == PARAM_DEFAULT_VALUE) {
+    paramCache.sysCommitIdCache = sysCommitId;
+    if (paramCache.handle == PARAM_DEFAULT_VALUE) {
         int32_t handle = static_cast<int32_t>(FindParameter(PERMISSION_STATUS_CHANGE_KEY));
         if (handle == PARAM_DEFAULT_VALUE) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindParameter.");
             return "-1";
         }
-        g_paramCache.handle = handle;
+        paramCache.handle = handle;
     }
 
-    int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(g_paramCache.handle));
-    if (currCommitId != g_paramCache.commitIdCache) {
+    int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(paramCache.handle));
+    if (currCommitId != paramCache.commitIdCache) {
         char value[VALUE_MAX_LEN] = { 0 };
-        auto ret = GetParameterValue(g_paramCache.handle, value, VALUE_MAX_LEN - 1);
+        auto ret = GetParameterValue(paramCache.handle, value, VALUE_MAX_LEN - 1);
         if (ret < 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Return default value, ret=%{public}d.", ret);
             return "-1";
         }
         std::string resStr(value);
-        g_paramCache.sysParamCache = resStr;
-        g_paramCache.commitIdCache = currCommitId;
+        paramCache.sysParamCache = resStr;
+        paramCache.commitIdCache = currCommitId;
     }
-    return g_paramCache.sysParamCache;
+    return paramCache.sysParamCache;
 }
 
-static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
+static void UpdateGrantStatusCache(AtManagerAsyncContext* asyncContext)
 {
+    if (asyncContext == nullptr) {
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_cache.find(asyncContext->permissionName);
     if (iter != g_cache.end()) {
-        std::string currPara = GetPermParamValue();
+        std::string currPara = GetPermParamValue(g_paramCache, PERMISSION_STATUS_CHANGE_KEY);
         if (currPara != iter->second.paramValue) {
             asyncContext->grantStatus =
                 AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
@@ -257,7 +266,8 @@ static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
         asyncContext->grantStatus =
             AccessToken::AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         g_cache[asyncContext->permissionName].status = asyncContext->grantStatus;
-        g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
+        g_cache[asyncContext->permissionName].paramValue = GetPermParamValue(g_paramCache,
+            PERMISSION_STATUS_CHANGE_KEY);
         LOGD(ATM_DOMAIN, ATM_TAG, "Success to set G_cacheParam(%{public}s).",
             g_cache[asyncContext->permissionName].paramValue.c_str());
     }
@@ -299,7 +309,7 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
         asyncContext->grantStatus = AccessToken::AccessTokenKit::VerifyAccessToken(tokenID, permissionName);
         return static_cast<ani_int>(asyncContext->grantStatus);
     }
-    UpdatePermissionCache(asyncContext);
+    UpdateGrantStatusCache(asyncContext);
     LOGI(ATM_DOMAIN, ATM_TAG, "CheckAccessTokenExecute result : %{public}d.", asyncContext->grantStatus);
     return static_cast<ani_int>(asyncContext->grantStatus);
 }
@@ -877,6 +887,66 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
     return;
 }
 
+static void UpdatePermStatusCache(AtManagerSyncContext* syncContext)
+{
+    std::lock_guard<std::mutex> lock(g_lockStatusCache);
+    auto iter = g_statusCache.find(syncContext->permissionName);
+    if (iter != g_statusCache.end()) {
+        std::string currPara = GetPermParamValue(g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
+        if (currPara != iter->second.paramValue) {
+            syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
+                syncContext->permissionsStatus);
+            iter->second.status = syncContext->permissionsStatus;
+            iter->second.paramValue = currPara;
+        } else {
+            syncContext->result = RET_SUCCESS;
+            syncContext->permissionsStatus = iter->second.status;
+        }
+    } else {
+        syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
+            syncContext->permissionsStatus);
+        g_statusCache[syncContext->permissionName].status = syncContext->permissionsStatus;
+        g_statusCache[syncContext->permissionName].paramValue = GetPermParamValue(
+            g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
+        }
+}
+
+static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_string aniPermissionName)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return static_cast<ani_int>(PermissionOper::INVALID_OPER);
+    }
+
+    std::string permissionName = ParseAniString(env, aniPermissionName);
+    if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
+        return static_cast<ani_int>(PermissionOper::INVALID_OPER);
+    }
+
+    auto* syncContext = new (std::nothrow) AtManagerSyncContext();
+    if (syncContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to alloc memory for syncContext.");
+
+        return static_cast<ani_int>(PermissionOper::INVALID_OPER);
+    }
+
+    std::unique_ptr<AtManagerSyncContext> context { syncContext };
+    syncContext->permissionName = permissionName;
+
+    UpdatePermStatusCache(syncContext);
+
+    if (syncContext->result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(syncContext->result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return static_cast<ani_int>(PermissionOper::INVALID_OPER);
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "PermissionName %{public}s self status is %{public}d.", permissionName.c_str(),
+        static_cast<int32_t>(syncContext->permissionsStatus));
+    return static_cast<ani_int>(syncContext->permissionsStatus);
+}
+
 static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
 {
     std::array clsMethods = {
@@ -908,6 +978,8 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(RequestAppPermOnSettingExecute) },
         ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
         ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
+        ani_native_function { "getSelfPermissionStatusExecute",
+            nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
     };
     return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
 }

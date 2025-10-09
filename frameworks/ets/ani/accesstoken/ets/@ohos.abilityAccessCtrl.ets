@@ -170,6 +170,7 @@ export default namespace abilityAccessCtrl {
             callback?: Callback<PermissionStateChangeInfo>): void;
         off(type: 'permissionStateChange', tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
+        getSelfPermissionStatus(permissionName: Permissions): PermissionStatus;
     }
 
     class AtManagerInner implements AtManager {
@@ -197,6 +198,7 @@ export default namespace abilityAccessCtrl {
         native offExcute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback?: Callback<PermissionStateChangeInfo>): void;
         native requestAppPermOnSettingExecute(tokenID: int): void;
+        native getSelfPermissionStatusExecute(permissionName: Permissions): int;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -506,5 +508,10 @@ export default namespace abilityAccessCtrl {
             callback?: Callback<PermissionStateChangeInfo>): void {
                 new AtManagerInner().offExcute('permissionStateChange', tokenIDList, permissionList, callback);
             }
+
+        getSelfPermissionStatus(permissionName: Permissions): PermissionStatus {
+            let status = this.getSelfPermissionStatusExecute(permissionName);
+            return status as PermissionStatus;
+        }
     }
 }
