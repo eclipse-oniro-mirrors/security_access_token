@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "permission_grant_info.h"
 #include "nativetoken_kit.h"
+#include "sec_comp_raw_data.h"
 #include "test_common.h"
 #include "token_setproc.h"
 
@@ -613,5 +614,158 @@ HWTEST_F(SecurityComponentGrantTest, RegisterSecCompEnhance001, TestSize.Level0)
     EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetSecCompEnhance(0, data1));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateSecCompEnhance(getpid(), 1));
     EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateSecCompEnhance(0, 1));
+}
+
+/**
+ * @tc.name: CreateSecCompEnhanceKey001
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, CreateSecCompEnhanceKey001, TestSize.Level0)
+{
+    MockNativeToken mock("security_component_service");
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CreateSecCompEnhanceKey());
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CreateSecCompEnhanceKey());
+    usleep(500000); // 500000us = 0.5s
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey001
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey001, TestSize.Level0)
+{
+    MockNativeToken mock("security_component_service");
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CreateSecCompEnhanceKey());
+    usleep(500000); // 500000us = 0.5s
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(0, enhanceKey, &sizeOut);
+    EXPECT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey002
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey002, TestSize.Level0)
+{
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, nullptr, &sizeOut);
+    EXPECT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey003
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey003, TestSize.Level0)
+{
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, nullptr);
+    EXPECT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey004
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey004, TestSize.Level0)
+{
+    MockNativeToken mock("security_component_service");
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey005
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey005, TestSize.Level0)
+{
+    MockNativeToken mock("security_component_service");
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CreateSecCompEnhanceKey());
+    usleep(500000); // 500000us = 0.5s
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey006
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey006, TestSize.Level0)
+{
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, res);
+}
+
+/**
+ * @tc.name: CreateSecCompEnhanceKey003
+ * @tc.desc: AccessTokenKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, CreateSecCompEnhanceKey003, TestSize.Level0)
+{
+    EXPECT_EQ(0, AccessTokenKit::CreateSecCompEnhanceKey());
+}
+
+#else
+/**
+ * @tc.name: CreateSecCompEnhanceKey001
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, CreateSecCompEnhanceKey001, TestSize.Level0)
+{
+    EXPECT_EQ(0, AccessTokenKit::CreateSecCompEnhanceKey());
+}
+
+/**
+ * @tc.name: GetAndClearSecCompEnhanceKey001
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, GetAndClearSecCompEnhanceKey001, TestSize.Level0)
+{
+    uint32_t sizeIn = MAX_RAW_DATA_SIZE;
+    uint8_t enhanceKey[MAX_RAW_DATA_SIZE] = { 0 };
+    uint32_t sizeOut = 0;
+    int32_t res = AccessTokenKit::GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, &sizeOut);
+    EXPECT_EQ(0, res);
 }
 #endif

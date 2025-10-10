@@ -534,6 +534,7 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
+
     /**
      * @brief update security component enhance data
      * @param pid process id
@@ -541,6 +542,7 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
+
     /**
      * @brief get security component enhance data
      * @param pid process id
@@ -549,6 +551,19 @@ public:
      */
     static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
 #endif
+
+    /**
+     * @brief Create security component enhance key.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CreateSecCompEnhanceKey(void);
+
+    /**
+     * @brief Get security component enhance key and clear it.
+     * @param enhanceKey security component enhance key
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetAndClearSecCompEnhanceKey(uint32_t sizeIn, uint8_t* enhanceKey, uint32_t* sizeOut);
 
     /**
      * Whether it is a atomic service

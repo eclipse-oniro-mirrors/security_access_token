@@ -14,6 +14,8 @@
  */
 #include "sec_comp_enhance_agent.h"
 
+#include <dlfcn.h>
+
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
@@ -28,7 +30,10 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+static const std::string SET_ENHANCE_KEY_LIB = "libsecurity_component_set_enhance_key.z.so";
+typedef int32_t (*FUNC_CREATE) (uint32_t, uint8_t*, uint32_t*);
 }
+
 SecCompEnhanceAgent& SecCompEnhanceAgent::GetInstance()
 {
     static SecCompEnhanceAgent* instance = nullptr;
@@ -151,6 +156,62 @@ int32_t SecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& 
     }
     return ERR_PARAM_INVALID;
 }
+
+int32_t SecCompEnhanceAgent::CreateSecCompEnhanceKey(void)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
+    std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+    if (isSecCompEnhanceKeySet_) {
+        return RET_SUCCESS;
+    }
+    void* handler = dlopen(SET_ENHANCE_KEY_LIB.c_str(), RTLD_LAZY);
+    if (handler == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Init enhance lib %{public}s failed, error %{public}s",
+            SET_ENHANCE_KEY_LIB.c_str(), dlerror());
+        return AccessTokenError::ERR_UTIL_OPER_FAILED;
+    }
+    int32_t (*CreateAndSetEnhanceKey)(uint32_t, uint8_t*, uint32_t*) =
+        reinterpret_cast<FUNC_CREATE>(dlsym(handler, "CreateAndSetEnhanceKey"));
+    if (CreateAndSetEnhanceKey == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "CreateAndSetEnhanceKey dlsym failed, error %{public}s", dlerror());
+        (void)dlclose(handler);
+        return AccessTokenError::ERR_UTIL_OPER_FAILED;
+    }
+    int32_t res = CreateAndSetEnhanceKey(MAC_KEY_SIZE, secCompEnhanceKey_.data, &(secCompEnhanceKey_.size));
+    if (res != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "CreateAndSetEnhanceKey failed, error %{public}d", res);
+        (void)dlclose(handler);
+        return AccessTokenError::ERR_CREATE_KEY_FAILED;
+    }
+    isSecCompEnhanceKeySet_ = true;
+    LOGI(ATM_DOMAIN, ATM_TAG, "End.");
+    (void)dlclose(handler);
+    return res;
+}
+
+int32_t SecCompEnhanceAgent::GetAndClearSecCompEnhanceKey(SecCompRawData& key)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
+    std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+    if (!isSecCompEnhanceKeySet_) {
+        return AccessTokenError::ERR_RESOURCE_IS_NOT_READY;
+    }
+    if (secCompEnhanceKey_.size == 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "secCompEnhanceKey_.size is invalid %{public}u", secCompEnhanceKey_.size);
+        return AccessTokenError::ERR_CREATE_KEY_FAILED;
+    }
+    key.size = secCompEnhanceKey_.size;
+
+    if (key.RawDataCpy(secCompEnhanceKey_.data) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Memcpy_s failed.");
+        return AccessTokenError::ERR_UTIL_OPER_FAILED;
+    }
+    (void)memset_s(secCompEnhanceKey_.data, MAC_KEY_SIZE, 0, MAC_KEY_SIZE);
+    secCompEnhanceKey_.size = 0;
+    isSecCompEnhanceKeySet_ = false;
+    return RET_SUCCESS;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
