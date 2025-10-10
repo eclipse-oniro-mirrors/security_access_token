@@ -45,6 +45,7 @@
 #include "permission_validator.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
+#include "sec_comp_raw_data.h"
 #endif
 #include "sec_comp_monitor.h"
 #include "short_grant_manager.h"
@@ -1754,6 +1755,20 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
 
     enhanceParcel.enhanceData = enhanceData;
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::CreateSecCompEnhanceKey(void)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Caller: %{public}d.", IPCSkeleton::GetCallingTokenID());
+    return SecCompEnhanceAgent::GetInstance().CreateSecCompEnhanceKey();
+}
+
+int32_t AccessTokenManagerService::GetAndClearSecCompEnhanceKey(SecCompRawData& key)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().GetAndClearSecCompEnhanceKey(key);
 }
 #endif
 

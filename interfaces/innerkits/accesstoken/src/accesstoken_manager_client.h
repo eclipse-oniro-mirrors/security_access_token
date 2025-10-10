@@ -118,6 +118,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+    int32_t CreateSecCompEnhanceKey(void);
+    int32_t GetAndClearSecCompEnhanceKey(uint32_t sizeIn, uint8_t* enhanceKey, uint32_t* sizeOut);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
     bool IsToastShownNeeded(int32_t pid);
 

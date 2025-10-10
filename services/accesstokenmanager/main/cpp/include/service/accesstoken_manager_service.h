@@ -109,6 +109,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
+    int32_t CreateSecCompEnhanceKey(void) override;
+    int32_t GetAndClearSecCompEnhanceKey(SecCompRawData& key) override;
 #endif
     int32_t IsToastShownNeeded(int32_t pid, bool& needToShow) override;
 
