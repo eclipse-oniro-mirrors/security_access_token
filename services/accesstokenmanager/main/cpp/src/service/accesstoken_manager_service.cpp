@@ -72,6 +72,7 @@ const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbilit
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
 const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
 const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainAbility";
+const char* OPEN_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.OpenSettingAbility";
 const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
@@ -97,6 +98,7 @@ constexpr uint32_t BITMAP_INDEX_3 = 3;
 constexpr uint32_t BITMAP_INDEX_4 = 4;
 constexpr uint32_t BITMAP_INDEX_5 = 5;
 constexpr uint32_t BITMAP_INDEX_6 = 6;
+constexpr uint32_t BITMAP_INDEX_7 = 7;
 }
 
 const bool REGISTER_RESULT =
@@ -1220,6 +1222,7 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     infoParcel.info.permStateAbilityName = permStateAbilityName_;
     infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
+    infoParcel.info.openSettingAbilityName = openSettingAbilityName_;
     return ERR_OK;
 }
 
@@ -1335,6 +1338,10 @@ void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& at
         applicationSettingAbilityName_ = atConfig.applicationSettingAbilityName;
         parseConfigFlag |= 0x1 << BITMAP_INDEX_6;
     }
+    if (!atConfig.openSettingAbilityName.empty()) {
+        openSettingAbilityName_ = atConfig.openSettingAbilityName;
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_7;
+    }
 }
 
 void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
@@ -1346,6 +1353,7 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
     globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
     int32_t cancelTime = 0;
     applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
+    openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
@@ -1359,9 +1367,11 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
     TempPermissionObserver::GetInstance().SetCancelTime(cancelTime);
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
         "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
-        "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s.",
+        "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
+        "openSettingAbilityName_ is %{public}s.",
         grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
-        permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str());
+        permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
+        openSettingAbilityName_.c_str());
 }
 
 int32_t AccessTokenManagerService::GetKernelPermissions(

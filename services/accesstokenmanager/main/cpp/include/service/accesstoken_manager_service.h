@@ -168,6 +168,7 @@ private:
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
     std::string applicationSettingAbilityName_;
+    std::string openSettingAbilityName_;
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

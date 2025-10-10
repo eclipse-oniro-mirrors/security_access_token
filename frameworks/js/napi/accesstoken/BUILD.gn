@@ -33,6 +33,7 @@ ohos_shared_library("libabilityaccessctrl") {
   sources = [
     "src/napi_atmanager.cpp",
     "src/napi_context_common.cpp",
+    "src/napi_open_permission_on_setting.cpp",
     "src/napi_request_global_switch_on_setting.cpp",
     "src/napi_request_permission.cpp",
     "src/napi_request_permission_on_setting.cpp",
