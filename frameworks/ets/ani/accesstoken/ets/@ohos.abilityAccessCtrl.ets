@@ -132,7 +132,7 @@ export default namespace abilityAccessCtrl {
         requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
         openPermissionOnSettingExecute(context: Context,
-            permission: Permissions, callback: AsyncCallbackWrapper<SelectedResult>): void;
+            permission: Permissions, callback: AsyncCallbackWrapper<int>): void;
         requestGlobalSwitchExecute(
             context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         revokeUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -203,7 +203,7 @@ export default namespace abilityAccessCtrl {
         native requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
         native openPermissionOnSettingExecute(context: Context,
-            permission: Permissions, callback: AsyncCallbackWrapper<SelectedResult>): void;
+            permission: Permissions, callback: AsyncCallbackWrapper<int>): void;
         native requestGlobalSwitchExecute(
             context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
         native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -320,11 +320,11 @@ export default namespace abilityAccessCtrl {
             openPermRequestParams(context, permission);
             let p: Promise<SelectedResult> = new Promise<SelectedResult>((
                 resolve: (v: SelectedResult) => void, reject: (error: BusinessError) => void) => {
-                let callbackWrap = new AsyncCallbackWrapper<SelectedResult>((
-                    err: BusinessError<void> | null, data: SelectedResult | undefined) => {
+                let callbackWrap = new AsyncCallbackWrapper<int>((
+                    err: BusinessError<void> | null, data: int | undefined) => {
                     if (err?.code == 0) {
                         if (data !== undefined) {
-                            resolve(data);
+                            resolve(data as SelectedResult);
                         }
                     } else {
                         reject(err as BusinessError);

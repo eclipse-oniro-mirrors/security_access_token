@@ -222,9 +222,9 @@ void OpenPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     if (!ParseOpenPermissionOnSetting(env, aniContext, aniPermission, callback, asyncContext)) {
         return;
     }
-    ani_ref nullRef = nullptr;
-    env->GetNull(&nullRef);
-    ani_object result = reinterpret_cast<ani_object>(nullRef);
+    ani_ref undefRef = nullptr;
+    env->GetUndefined(&undefRef);
+    ani_object result = reinterpret_cast<ani_object>(undefRef);
     ani_object error;
 
     if (CheckManualSettingPerm(env, asyncContext->permissionName, error)) {
