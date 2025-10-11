@@ -17,13 +17,13 @@
 #define PERMISSION_USED_RECORD_DB_H
 
 #include <set>
-#include <shared_mutex>
 #include <unordered_set>
 
 #include "generic_values.h"
 #include "permission_record.h"
 
 #include "nocopyable.h"
+#include "rwlock.h"
 #include "sqlite_helper.h"
 
 namespace OHOS {
@@ -72,7 +72,7 @@ private:
     DISALLOW_COPY_AND_MOVE(PermissionUsedRecordDb);
 
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
-    std::shared_mutex rwLock_;
+    OHOS::Utils::RWLock rwLock_;
 
     int32_t CreatePermissionRecordTable() const;
     int32_t CreatePermissionUsedTypeTable() const;
