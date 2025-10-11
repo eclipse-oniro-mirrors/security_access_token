@@ -675,7 +675,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
             bool status = data.status == PERMISSION_GRANTED ? true : false;
             statusList.emplace_back(status);
         } else {
-        /* The permission is constrained by user policy which is in constrainedList. */
+            /* The permission is constrained by user policy which is in constrainedList. */
             opCodeList.emplace_back(data.permCode);
             statusList.emplace_back(false);
         }
@@ -906,7 +906,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         }
     }
     if (constrainedCodeList.empty()) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "constrainedCodeList is null.");
+        LOGI(ATM_DOMAIN, ATM_TAG, "constrainedCodeList is empty.");
         return RET_SUCCESS;
     }
 

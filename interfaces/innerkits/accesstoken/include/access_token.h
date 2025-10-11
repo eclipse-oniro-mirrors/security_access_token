@@ -298,10 +298,8 @@ typedef enum DlpType {
  * @brief User permission policy status.
  */
 typedef struct {
-    /** user id */
-    int32_t userId;
-    /** active status */
-    bool isActive;
+    std::vector<int32_t> userIdList;
+    std::vector<bool> isUnderControlList;
 } UserState;
 
 /**

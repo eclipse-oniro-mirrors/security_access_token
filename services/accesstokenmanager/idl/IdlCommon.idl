@@ -16,10 +16,8 @@
 package OHOS.Security.AccessToken;
 
 struct UserStateIdl {
-    /** user id */
-    int userId;
-    /** active status */
-    boolean isActive;
+    List<int> userIdList;
+    List<boolean> isUnderControlList;
 };
 
 struct PermissionWithValueIdl {

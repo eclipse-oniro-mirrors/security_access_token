@@ -129,10 +129,9 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value) override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
-    int32_t InitUserPolicy(
-        const std::vector<UserStateIdl>& userIdlList, const std::vector<std::string>& permList) override;
-    int32_t UpdateUserPolicy(const std::vector<UserStateIdl>& userIdlList) override;
-    int32_t ClearUserPolicy() override;
+    int32_t SetUserPolicy(
+        const std::vector<std::string>& permList, const std::vector<UserStateIdl>& userIdlList) override;
+    int32_t ClearUserPolicy(const std::vector<std::string>& permList) override;
     int32_t DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
 

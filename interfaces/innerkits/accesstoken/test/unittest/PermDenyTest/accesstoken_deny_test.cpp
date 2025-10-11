@@ -95,32 +95,19 @@ void AccessTokenDenyTest::TearDown()
 }
 
 /**
- * @tc.name: InitUserPolicy001
- * @tc.desc: InitUserPolicy without authorized.
+ * @tc.name: SetUserPolicy001
+ * @tc.desc: SetUserPolicy without authorized.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
 {
-    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    UserState user;
+    user.userIdList.emplace_back(100); // 100 is userId
+    user.isUnderControlList.emplace_back(true);
     const std::vector<UserState> userList = { user };
     const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
-    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
-    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
-}
-
-
-/**
- * @tc.name: UpdateUserPolicy001
- * @tc.desc: UpdateUserPolicy without authorized.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level0)
-{
-    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
-    const std::vector<UserState> userList = { user };
-    int32_t ret = AccessTokenKit::UpdateUserPolicy(userList);
+    int32_t ret = AccessTokenKit::SetUserPolicy(permList, userList);
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
 }
 

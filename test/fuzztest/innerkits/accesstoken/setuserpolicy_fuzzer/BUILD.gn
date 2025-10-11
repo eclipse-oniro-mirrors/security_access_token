@@ -14,34 +14,31 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
-import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("UpdateUserPolicyStubFuzzTest") {
-  module_out_path = module_output_path_service_access_token
+ohos_fuzztest("SetUserPolicyFuzzTest") {
+  module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
 
-  sources = [ "updateuserpolicystub_fuzzer.cpp" ]
-
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/test/fuzztest/common",
+  ]
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
+  sources = [ "setuserpolicy_fuzzer.cpp" ]
 
-  include_dirs = access_token_include_dirs
-
-  deps = access_token_deps
-  deps += [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
-
-  configs = [
-    "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   ]
 
-  external_deps = access_token_external_deps
+  configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  cflags_cc = access_token_cflags_cc
-
-  sources += access_token_sources
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
 }

@@ -1227,8 +1227,8 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     return ERR_OK;
 }
 
-int32_t AccessTokenManagerService::InitUserPolicy(
-    const std::vector<UserStateIdl>& userIdlList, const std::vector<std::string>& permList)
+int32_t AccessTokenManagerService::SetUserPolicy(
+    const std::vector<std::string>& permList, const std::vector<UserStateIdl>& userIdlList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1237,49 +1237,24 @@ int32_t AccessTokenManagerService::InitUserPolicy(
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    uint32_t userSize = userIdlList.size();
     uint32_t permSize = permList.size();
-    if ((userSize > MAX_USER_POLICY_SIZE) || (permSize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size %{public}u is invalid.", userSize);
-        return AccessTokenError::ERR_OVERSIZE;
-    }
-
-    std::vector<UserState> userList;
-    for (const auto& item : userIdlList) {
-        UserState tmp;
-        tmp.userId = item.userId;
-        tmp.isActive = item.isActive;
-        userList.emplace_back(tmp);
-    }
-    return AccessTokenInfoManager::GetInstance().InitUserPolicy(userList, permList);
-}
-
-int32_t AccessTokenManagerService::UpdateUserPolicy(const std::vector<UserStateIdl>& userIdlList)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
     uint32_t userSize = userIdlList.size();
-    if (userSize > MAX_USER_POLICY_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size %{public}u is invalid.", userSize);
-        return AccessTokenError::ERR_OVERSIZE;
+    if ((permSize != userSize) || (permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "UserSize %{public}zu or permSize %{public}zu is invalid.", userSize, permSize);
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     std::vector<UserState> userList;
     for (const auto& item : userIdlList) {
         UserState tmp;
-        tmp.userId = item.userId;
-        tmp.isActive = item.isActive;
+        tmp.userIdList.assign(item.userIdList.begin(), item.userIdList.end());
+        tmp.isUnderControlList.assign(item.isUnderControlList.begin(), item.isUnderControlList.end());
         userList.emplace_back(tmp);
     }
-    return AccessTokenInfoManager::GetInstance().UpdateUserPolicy(userList);
+    return AccessTokenInfoManager::GetInstance().SetUserPolicy(permList, userList);
 }
 
-int32_t AccessTokenManagerService::ClearUserPolicy()
+int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1287,8 +1262,13 @@ int32_t AccessTokenManagerService::ClearUserPolicy()
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    uint32_t permSize = permList.size();
+    if ((permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermSize %{public}zu is invalid.", permSize);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
 
-    return AccessTokenInfoManager::GetInstance().ClearUserPolicy();
+    return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permList);
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
