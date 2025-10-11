@@ -7689,6 +7689,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ACCESS_XR_GLASSES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 22,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["phone"]
+        },
+        {
             "name": "ohos.permission.LOCK_WINDOW_CURSOR",
             "grantMode": "system_grant",
             "availableLevel": "normal",
