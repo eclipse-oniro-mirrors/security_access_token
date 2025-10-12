@@ -116,8 +116,20 @@ void RequestAsyncContextBase::FinishCallback()
     }
 
     int32_t stsCode = ConvertErrorCode(result_.errorCode);
-    ani_object aniError = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result_.errorMsg));
-    ani_object aniResult = WrapResult(env);
+    ani_ref undefRef = nullptr;
+    env->GetUndefined(&undefRef);
+    ani_object aniResult = reinterpret_cast<ani_object>(undefRef);
+
+    ani_ref nullRef = nullptr;
+    env->GetNull(&nullRef);
+    ani_object aniError = reinterpret_cast<ani_object>(nullRef);
+
+    if (stsCode == STS_OK) {
+        aniResult = WrapResult(env);
+    } else {
+        aniError = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, result_.errorMsg));
+    }
+
     (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef_), aniError, aniResult);
 
     if (!isSameThread && vm_->DetachCurrentThread() != ANI_OK) {
@@ -329,6 +341,25 @@ void RequestInstanceControl::ExecCallback(int32_t id)
     }
 }
 
+ani_int CheckContextExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object, ani_object aniContext)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return STS_ERROR_PARAM_ILLEGAL;
+    }
+    auto context = OHOS::AbilityRuntime::GetStageModeContext(env, aniContext);
+    if (context == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetStageModeContext failed.");
+        return STS_ERROR_PARAM_ILLEGAL;
+    }
+    auto abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+    auto uiExtensionContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+    if (abilityContext == nullptr && uiExtensionContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to convert to ability context or ui extension context.");
+        return STS_ERROR_PARAM_ILLEGAL;
+    }
+    return STS_OK;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

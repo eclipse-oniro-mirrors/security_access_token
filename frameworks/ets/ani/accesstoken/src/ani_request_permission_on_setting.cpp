@@ -296,9 +296,9 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     if (!ParseRequestPermissionOnSetting(env, aniContext, permissionList, callback, asyncContext)) {
         return;
     }
-    ani_ref nullRef = nullptr;
-    env->GetNull(&nullRef);
-    ani_object result = reinterpret_cast<ani_object>(nullRef);
+    ani_ref undefRef = nullptr;
+    env->GetUndefined(&undefRef);
+    ani_object result = reinterpret_cast<ani_object>(undefRef);
 
     std::string permission;
     if (CheckManualSettingPerm(asyncContext->permissionList, permission)) {

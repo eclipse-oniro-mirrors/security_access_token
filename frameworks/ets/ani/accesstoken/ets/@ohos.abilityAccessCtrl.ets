@@ -124,9 +124,20 @@ export default namespace abilityAccessCtrl {
         }
     }
 
+    function checkContext(context: Context): void {
+        let result: int = new AtManagerInner().checkContextExecute(context);
+        if (result != (STSErrorCode.STS_OK as int)) {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            throw err;
+        }
+    }
+
     native function createAtManager(): AtManager;
     interface AtManager {
         checkAccessTokenExecute(tokenID: int, permissionName: Permissions): int;
+        checkContextExecute(context: Context): int;
         requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         requestPermissionOnSettingExecute(context: Context,
@@ -198,6 +209,7 @@ export default namespace abilityAccessCtrl {
 
     class AtManagerInner implements AtManager {
         native checkAccessTokenExecute(tokenID: int, permissionName: Permissions): int;
+        native checkContextExecute(context: Context): int;
         native requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         native requestPermissionOnSettingExecute(context: Context,
@@ -267,6 +279,7 @@ export default namespace abilityAccessCtrl {
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>,
             requestCallback: AsyncCallback<PermissionRequestResult, void>): void {
             validateRequestParams(context, permissionList);
+            checkContext(context);
             let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>(requestCallback);
             taskpool.execute((): void => {
                 new AtManagerInner().requestPermissionsFromUserExecute(context, permissionList, callbackWrap);
@@ -276,11 +289,12 @@ export default namespace abilityAccessCtrl {
         requestPermissionsFromUser(context: Context, permissionList: Array<Permissions>):
             Promise<PermissionRequestResult> {
             validateRequestParams(context, permissionList);
+            checkContext(context);
             let p: Promise<PermissionRequestResult> = new Promise<PermissionRequestResult>((
                 resolve: (v: PermissionRequestResult) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>((
                     err: BusinessError<void> | null, data: PermissionRequestResult | undefined) => {
-                    if (err?.code == 0) {
+                    if (err === null) {
                         if (data !== undefined) {
                             resolve(data);
                         }
@@ -297,11 +311,12 @@ export default namespace abilityAccessCtrl {
 
         requestPermissionOnSetting(context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>> {
             validateRequestParams(context, permissionList);
+            checkContext(context);
             let p: Promise<Array<GrantStatus>> = new Promise<Array<GrantStatus>>((
                 resolve: (v: Array<GrantStatus>) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<Array<GrantStatus>>((
                     err: BusinessError<void> | null, data: Array<GrantStatus> | undefined) => {
-                    if (err?.code == 0) {
+                    if (err === null) {
                         if (data !== undefined) {
                             resolve(data);
                         }
@@ -318,11 +333,12 @@ export default namespace abilityAccessCtrl {
 
         openPermissionOnSetting(context: Context, permission: Permissions): Promise<SelectedResult> {
             openPermRequestParams(context, permission);
+            checkContext(context);
             let p: Promise<SelectedResult> = new Promise<SelectedResult>((
                 resolve: (v: SelectedResult) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<int>((
                     err: BusinessError<void> | null, data: int | undefined) => {
-                    if (err?.code == 0) {
+                    if (err === null) {
                         if (data !== undefined) {
                             resolve(data as SelectedResult);
                         }
@@ -344,11 +360,12 @@ export default namespace abilityAccessCtrl {
                 err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
                 throw err;
             }
+            checkContext(context);
             let p: Promise<boolean> = new Promise<boolean>((
                 resolve: (v: boolean) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<boolean>((
                     err: BusinessError<void> | null, data: boolean | undefined) => {
-                    if (err?.code == 0) {
+                    if (err === null) {
                         if (data !== undefined) {
                             resolve(data);
                         }

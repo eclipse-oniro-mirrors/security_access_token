@@ -882,6 +882,8 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
 {
     std::array clsMethods = {
         ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
+        ani_native_function { "checkContextExecute",
+            nullptr, reinterpret_cast<void*>(CheckContextExecute) },
         ani_native_function { "requestPermissionsFromUserExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
         ani_native_function { "requestPermissionOnSettingExecute",
