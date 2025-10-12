@@ -401,11 +401,10 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
-    bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList)
+void HapTokenInfoInner::RefreshPermStateToKernel(AccessTokenID tokenId,
+    const std::map<uint32_t, bool>& changedPermList, std::map<std::string, bool>& refreshedPermList)
 {
-    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        constrainedList, hapUserIsActive, tokenId, refreshedPermList);
+    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(tokenId, changedPermList, refreshedPermList);
 }
 
 int32_t HapTokenInfoInner::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName)
@@ -436,7 +435,7 @@ void HapTokenInfoInner::GetPermStatusListByTokenId(AccessTokenID tokenID,
 }
 
 void HapTokenInfoInner::GetGrantedPermByTokenId(AccessTokenID tokenID,
-    const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList)
+    const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList)
 {
     return PermissionDataBrief::GetInstance().GetGrantedPermByTokenId(tokenID, constrainedList, permissionList);
 }

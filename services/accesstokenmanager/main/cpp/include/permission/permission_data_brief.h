@@ -64,11 +64,11 @@ public:
     int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     void ClearAllSecCompGrantedPerm();
     void GetGrantedPermByTokenId(AccessTokenID tokenID,
-        const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList);
+        const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
     void GetPermStatusListByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
-    int32_t RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
-        bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
+    int32_t RefreshPermStateToKernel(AccessTokenID tokenId,
+        const std::map<uint32_t, bool>& changedPermList, std::map<std::string, bool>& refreshedPermList);
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList, bool defCheck);
     void AddPermToBriefPermission(

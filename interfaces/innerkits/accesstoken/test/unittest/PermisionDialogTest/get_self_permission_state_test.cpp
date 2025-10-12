@@ -591,11 +591,11 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsStateWithManualTest001, T
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
     EXPECT_EQ(permsList[0].errorReason, MANUAL_SETTING_PERM);
 
-    PermissionListState userState = {
+    PermissionListState state = {
         .permissionName = "ohos.permission.CAMERA",
         .state = FORBIDDEN_OPER
     };
-    permsList.emplace_back(userState);
+    permsList.emplace_back(state);
     EXPECT_EQ(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));

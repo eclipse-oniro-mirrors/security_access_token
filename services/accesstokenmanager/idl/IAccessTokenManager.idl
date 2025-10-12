@@ -79,8 +79,8 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 58] void GetVersion([out] unsigned int version);
     [ipccode 59] void GetPermissionManagerInfo([out] PermissionGrantInfoParcel infoParcel);
 
-    [ipccode 61] void SetUserPolicy([in] List<String> permList, [in] List<UserStateIdl> userIdlList);
-    [ipccode 63] void ClearUserPolicy([in] List<String> permList);
+    [ipccode 61] void SetUserPolicy([in] List<int> userList, [in] List<PermissionPolicyIdl> permPolicyList);
+    [ipccode 63] void ClearUserPolicy([in] List<int> userList);
     [ipccode 64] void GetHapTokenInfoExtension([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes, [out] String appID);
     [ipccode 65] void RegisterSelfPermStateChangeCallback([in] PermStateChangeScopeParcel scope, [in] IRemoteObject cb);
     [ipccode 66] void UnRegisterSelfPermStateChangeCallback([in] IRemoteObject cb);

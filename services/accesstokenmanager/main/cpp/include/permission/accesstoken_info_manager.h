@@ -73,8 +73,8 @@ public:
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     int32_t SetUserPolicy(
-        const std::vector<std::string>& permList, const std::vector<UserState>& userList);
-    int32_t ClearUserPolicy(const std::vector<std::string>& permList);
+        const std::vector<int32_t>& userList, const std::vector<PermissionPolicy>& permPolicyList);
+    int32_t ClearUserPolicy(const std::vector<int32_t>& userList);
     bool GetPermDialogCap(AccessTokenID tokenID);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
@@ -123,29 +123,22 @@ private:
     int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
-    void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
     void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
     void DumpAllHapTokenname(std::string& dumpInfo);
     void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
     void DumpAllNativeTokenName(std::string& dumpInfo);
-    int32_t ParseUserPolicyInfo(const std::vector<std::string>& permList, const std::vector<UserState>& userList,
-        std::map<int32_t, bool>& changedUserList);
-    int32_t UpdatePermissionStateToKernel(const std::vector<std::string>& permCodeList,
-        const std::map<AccessTokenID, bool>& tokenIdList);
-    int32_t UpdatePermissionStateToKernel(const std::map<AccessTokenID, bool>& tokenIdList);
-    void GetGoalHapList(const std::map<int32_t, bool>& changedUserList, std::map<AccessTokenID, bool>& tokenIdList);
+    void UpdatePermissionStateToKernel(int32_t userId, const std::map<uint32_t, bool>& changedPermList);
     int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
     int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void GetNativePermissionList(const NativeTokenInfoBase& native,
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     std::string NativeTokenToString(AccessTokenID tokenID);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
-    void UpdateHapToKernel(AccessTokenID tokenID, int32_t userId);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
-    std::vector<std::string> GetConstraintPermList(int32_t userId);
-    int32_t AddPermPolicyToCache(
-        const std::string& permission, const UserState& userState, std::map<int32_t, bool>& changedUserList);
+    std::vector<uint32_t> GetConstraintPermList(int32_t userId);
+    bool AddPermPolicyToCache(
+        int32_t userId, const PermissionPolicy& policy, std::map<uint32_t, bool>& changedPermList);
 
     bool hasInited_;
 
@@ -159,7 +152,7 @@ private:
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 
     std::shared_mutex userPolicyLock_;
-    std::map<std::string, std::vector<int32_t>> permPolicyList_;
+    std::map<int32_t, std::vector<uint32_t>> userPolicyList_;
 };
 } // namespace AccessToken
 } // namespace Security

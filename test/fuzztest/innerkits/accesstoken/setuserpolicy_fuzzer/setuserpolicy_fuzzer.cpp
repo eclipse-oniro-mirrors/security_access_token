@@ -34,14 +34,14 @@ bool SetUserPolicyFuzzTest(const uint8_t* data, size_t size)
 
     FuzzedDataProvider provider(data, size);
 
-    std::string permissionName = provider.ConsumeRandomLengthString();
-    const std::vector<std::string> permList = { permissionName };
-    UserState state;
-    state.userIdList.emplace_back(provider.ConsumeIntegral<int32_t>());
-    state.isUnderControlList.emplace_back(provider.ConsumeBool());
-    std::vector<UserState> userList = { state };
-    AccessTokenKit::SetUserPolicy(permList, userList);
-    AccessTokenKit::ClearUserPolicy(permList);
+    int32_t userId = provider.ConsumeIntegral<int32_t>();
+    const std::vector<int32_t> userList = { userId };
+    PermissionPolicy policy;
+    policy.permList.emplace_back(provider.ConsumeRandomLengthString());
+    policy.grantList.emplace_back(provider.ConsumeBool());
+    std::vector<PermissionPolicy> permPolicyList = { policy };
+    AccessTokenKit::SetUserPolicy(userList, permPolicyList);
+    AccessTokenKit::ClearUserPolicy(userList);
 
     return true;
 }

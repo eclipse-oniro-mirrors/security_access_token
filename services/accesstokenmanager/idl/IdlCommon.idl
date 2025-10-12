@@ -15,9 +15,9 @@
 
 package OHOS.Security.AccessToken;
 
-struct UserStateIdl {
-    List<int> userIdList;
-    List<boolean> isUnderControlList;
+struct PermissionPolicyIdl {
+    List<String> permList;
+    List<boolean> grantList;
 };
 
 struct PermissionWithValueIdl {

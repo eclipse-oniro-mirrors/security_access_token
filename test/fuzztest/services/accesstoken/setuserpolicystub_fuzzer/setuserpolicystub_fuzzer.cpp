@@ -96,11 +96,11 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permissionName = provider.ConsumeRandomLengthString();
+    int32_t userId = provider.ConsumeIntegral<int32_t>();
 
-    UserStateIdl dataBlock;
-    dataBlock.userIdList.emplace_back(provider.ConsumeIntegral<int32_t>());
-    dataBlock.isUnderControlList.emplace_back(provider.ConsumeBool());
+    PermissionPolicyIdl dataBlock;
+    dataBlock.permList.emplace_back(provider.ConsumeRandomLengthString());
+    dataBlock.grantList.emplace_back(provider.ConsumeBool());
 
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -109,13 +109,13 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteUint32(1)) {
         return false;
     }
-    if (!datas.WriteString(permissionName)) {
+    if (!datas.WriteInt32(userId)) {
         return false;
     }
     if (!datas.WriteUint32(1)) {
         return false;
     }
-    if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
+    if (PermissionPolicyIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
         return false;
     }
 

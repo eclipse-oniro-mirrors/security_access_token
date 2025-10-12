@@ -112,8 +112,8 @@ public:
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
     int32_t SetUserPolicy(
-        const std::vector<std::string>& permList, const std::vector<UserState>& userList);
-    int32_t ClearUserPolicy(const std::vector<std::string>& permList);
+        const std::vector<int32_t>& userList, const std::vector<PermissionPolicy>& permPolicyList);
+    int32_t ClearUserPolicy(const std::vector<int32_t>& userList);
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
