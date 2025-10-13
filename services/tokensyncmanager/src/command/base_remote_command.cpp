@@ -39,6 +39,10 @@ static const std::string JSON_USERID = "userID";
 static const std::string JSON_BUNDLE_NAME = "bundleName";
 static const std::string JSON_INST_INDEX = "instIndex";
 static const std::string JSON_DLP_TYPE = "dlpType";
+static const std::string JSON_APPID = "appID";
+static const std::string JSON_DEVICEID = "deviceID";
+static const std::string JSON_APL = "apl";
+static const std::string DEFAULT_VALUE = "0";
 }
 
 void BaseRemoteCommand::FromRemoteProtocolJson(const CJson* jsonObject)
@@ -108,6 +112,16 @@ void BaseRemoteCommand::ToPermStateJson(CJson* permStateJson, const PermissionSt
     AddStringToJson(permStateJson, "permissionName", state.permissionName);
     AddIntToJson(permStateJson, "grantStatus", state.grantStatus);
     AddUnsignedIntToJson(permStateJson, "grantFlag", state.grantFlag);
+
+    // Compatible with old version data formats
+    AddBoolToJson(permStateJson, "isGeneral", true);
+    CJsonUnique grantConfigJson = CreateJsonArray();
+    CJsonUnique grantConfigJsonItem = CreateJson();
+    AddStringToJson(grantConfigJsonItem, "resDeviceID", "0");
+    AddIntToJson(grantConfigJsonItem, "grantStatus", state.grantStatus);
+    AddUnsignedIntToJson(grantConfigJsonItem, "grantFlags", state.grantFlag);
+    AddObjToArray(grantConfigJson, grantConfigJsonItem);
+    AddObjToJson(permStateJson, "grantConfig", grantConfigJson.get());
 }
 
 CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
@@ -127,6 +141,9 @@ CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& to
     AddIntToJson(hapTokensJson, JSON_INST_INDEX, tokenInfo.baseInfo.instIndex);
     AddIntToJson(hapTokensJson, JSON_DLP_TYPE, tokenInfo.baseInfo.dlpType);
     AddObjToJson(hapTokensJson, "permState", permStatesJson);
+    AddStringToJson(hapTokensJson, JSON_DEVICEID, DEFAULT_VALUE);
+    AddStringToJson(hapTokensJson, JSON_APPID, DEFAULT_VALUE);
+    AddIntToJson(hapTokensJson, JSON_APL, APL_NORMAL);
     return hapTokensJson;
 }
 
@@ -144,6 +161,35 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const CJson* hapTokenJson,
     GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
 }
 
+bool BaseRemoteCommand::FromPermStateJson(const CJson* permStateJson, PermissionStatus& permission)
+{
+    if (!GetStringFromJson(permStateJson, "permissionName", permission.permissionName)) {
+        return false;
+    }
+    CJson* grantConfig = GetArrayFromJson(permStateJson, "grantConfig");
+    if (grantConfig != nullptr) {
+        // Compatible with old version data formats
+        CJson* grantConfigItem = cJSON_GetArrayItem(grantConfig, 0);
+        if (grantConfigItem == nullptr) {
+            return false;
+        }
+        if (!GetIntFromJson(grantConfigItem, "grantStatus", permission.grantStatus)) {
+            return false;
+        }
+        if (!GetUnsignedIntFromJson(grantConfigItem, "grantFlags", permission.grantFlag)) {
+            return false;
+        }
+        return true;
+    }
+    if (!GetIntFromJson(permStateJson, "grantStatus", permission.grantStatus)) {
+        return false;
+    }
+    if (!GetUnsignedIntFromJson(permStateJson, "grantFlag", permission.grantFlag)) {
+        return false;
+    }
+    return true;
+}
+
 void BaseRemoteCommand::FromPermStateListJson(const CJson* hapTokenJson,
     std::vector<PermissionStatus>& permStateList)
 {
@@ -153,13 +199,7 @@ void BaseRemoteCommand::FromPermStateListJson(const CJson* hapTokenJson,
         for (int i = 0; i < len; i++) {
             CJson* permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
             PermissionStatus permission;
-            if (!GetStringFromJson(permissionJson, "permissionName", permission.permissionName)) {
-                continue;
-            }
-            if (!GetIntFromJson(permissionJson, "grantStatus", permission.grantStatus)) {
-                continue;
-            }
-            if (!GetUnsignedIntFromJson(permissionJson, "grantFlag", permission.grantFlag)) {
+            if (!FromPermStateJson(permissionJson, permission)) {
                 continue;
             }
             permStateList.emplace_back(permission);
