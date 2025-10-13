@@ -39,6 +39,10 @@ static const std::string JSON_USERID = "userID";
 static const std::string JSON_BUNDLE_NAME = "bundleName";
 static const std::string JSON_INST_INDEX = "instIndex";
 static const std::string JSON_DLP_TYPE = "dlpType";
+static const std::string JSON_APPID = "appID";
+static const std::string JSON_DEVICEID = "deviceID";
+static const std::string JSON_APL = "apl";
+static const std::string DEFAULT_VALUE = "0";
 }
 
 void BaseRemoteCommand::FromRemoteProtocolJson(const CJson* jsonObject)
@@ -127,6 +131,9 @@ CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& to
     AddIntToJson(hapTokensJson, JSON_INST_INDEX, tokenInfo.baseInfo.instIndex);
     AddIntToJson(hapTokensJson, JSON_DLP_TYPE, tokenInfo.baseInfo.dlpType);
     AddObjToJson(hapTokensJson, "permState", permStatesJson);
+    AddStringToJson(hapTokensJson, JSON_DEVICEID, DEFAULT_VALUE);
+    AddStringToJson(hapTokensJson, JSON_APPID, DEFAULT_VALUE);
+    AddIntToJson(hapTokensJson, JSON_APL, APL_NORMAL);
     return hapTokensJson;
 }
 
