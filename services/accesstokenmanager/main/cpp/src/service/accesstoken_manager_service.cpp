@@ -1227,8 +1227,7 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     return ERR_OK;
 }
 
-int32_t AccessTokenManagerService::SetUserPolicy(
-    const std::vector<int32_t>& userList, const std::vector<PermissionPolicyIdl>& permPolicyList)
+int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1237,25 +1236,28 @@ int32_t AccessTokenManagerService::SetUserPolicy(
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    size_t userSize = userList.size();
-    size_t permPolicySize = permPolicyList.size();
-    if ((userSize != permPolicySize) || (userSize == 0) || (userSize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "UserSize %{public}zu or permPolicySize %{public}zu is invalid.", userSize, permPolicySize);
+    size_t policySize = userPermissionList.size();
+    if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    std::vector<PermissionPolicy> policyList;
-    for (const auto& item : permPolicyList) {
-        PermissionPolicy policy;
-        policy.permList.assign(item.permList.begin(), item.permList.end());
-        policy.grantList.assign(item.grantList.begin(), item.grantList.end());
-        policyList.emplace_back(policy);
+    std::vector<UserPermissionPolicy> policyList;
+    for (const auto& permPolicyIdl : userPermissionList) {
+        UserPermissionPolicy permPolicy;
+        permPolicy.permissionName = permPolicyIdl.permissionName;
+        for (const auto& userPolicyIdl : permPolicyIdl.userPolicyList) {
+            UserPolicy policy;
+            policy.userId = userPolicyIdl.userId;
+            policy.isRestricted = userPolicyIdl.isRestricted;
+            permPolicy.userPolicyList.emplace_back(policy);
+        }
+        policyList.emplace_back(permPolicy);
     }
-    return AccessTokenInfoManager::GetInstance().SetUserPolicy(userList, policyList);
+    return AccessTokenInfoManager::GetInstance().SetUserPolicy(policyList);
 }
 
-int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<int32_t>& userList)
+int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1263,13 +1265,13 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<int32_t>& u
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    size_t userSize = userList.size();
-    if ((userSize == 0) || (userSize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserSize %{public}zu is invalid.", userSize);
+    size_t permSize = permissionList.size();
+    if ((permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermSize %{public}zu is invalid.", permSize);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    return AccessTokenInfoManager::GetInstance().ClearUserPolicy(userList);
+    return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const

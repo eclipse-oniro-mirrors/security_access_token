@@ -401,10 +401,11 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::RefreshPermStateToKernel(AccessTokenID tokenId,
-    const std::map<uint32_t, bool>& changedPermList, std::map<std::string, bool>& refreshedPermList)
+void HapTokenInfoInner::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
+    std::map<std::string, bool>& refreshedPermList)
 {
-    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(tokenId, changedPermList, refreshedPermList);
+    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
+        tokenId, permCode, hapUserIsActive, refreshedPermList);
 }
 
 int32_t HapTokenInfoInner::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName)

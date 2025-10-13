@@ -1098,13 +1098,11 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
     info = infoParcel.info;
 }
 
-int32_t AccessTokenManagerClient::SetUserPolicy(
-    const std::vector<int32_t>& userList, const std::vector<PermissionPolicy>& permPolicyList)
+int32_t AccessTokenManagerClient::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
-    size_t userLen = userList.size();
-    size_t permLen = permPolicyList.size();
-    if ((userLen != permLen) || (userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu or permLen %{public}zu is invalid.", userLen, permLen);
+    size_t policySize = userPermissionList.size();
+    if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     auto proxy = GetProxy();
@@ -1113,14 +1111,19 @@ int32_t AccessTokenManagerClient::SetUserPolicy(
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::vector<PermissionPolicyIdl> permPolicylIdlList;
-    for (const auto& policy : permPolicyList) {
-        PermissionPolicyIdl policyIdl;
-        policyIdl.permList.assign(policy.permList.begin(), policy.permList.end());
-        policyIdl.grantList.assign(policy.grantList.begin(), policy.grantList.end());
-        permPolicylIdlList.emplace_back(policyIdl);
+    std::vector<UserPermissionPolicyIdl> userPermissionListIdl;
+    for (const auto& permPolicy : userPermissionList) {
+        UserPermissionPolicyIdl permPolicyIdl;
+        permPolicyIdl.permissionName = permPolicy.permissionName;
+        for (const auto& userPolicy : permPolicy.userPolicyList) {
+            UserPolicyIdl policyIdl;
+            policyIdl.userId = userPolicy.userId;
+            policyIdl.isRestricted = userPolicy.isRestricted;
+            permPolicyIdl.userPolicyList.emplace_back(policyIdl);
+        }
+        userPermissionListIdl.emplace_back(permPolicyIdl);
     }
-    int32_t errCode = proxy->SetUserPolicy(userList, permPolicylIdlList);
+    int32_t errCode = proxy->SetUserPolicy(userPermissionListIdl);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);
@@ -1128,11 +1131,11 @@ int32_t AccessTokenManagerClient::SetUserPolicy(
     return errCode;
 }
 
-int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<int32_t>& userList)
+int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
-    size_t userLen = userList.size();
-    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu is invalid.", userLen);
+    size_t permLen = permissionList.size();
+    if ((permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermLen %{public}zu is invalid.", permLen);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     auto proxy = GetProxy();
@@ -1140,7 +1143,7 @@ int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<int32_t>& us
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t errCode = proxy->ClearUserPolicy(userList);
+    int32_t errCode = proxy->ClearUserPolicy(permissionList);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);

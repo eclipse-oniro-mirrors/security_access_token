@@ -70,7 +70,7 @@ void GetNativeToken()
     (void)SetSelfTokenID(g_mockTokenId);
 }
 
-void ClearUserPolicy(FuzzedDataProvider& provider)
+void ClearUserPolicy(const string& permission)
 {
     MessageParcel reply;
     MessageOption option;
@@ -78,11 +78,10 @@ void ClearUserPolicy(FuzzedDataProvider& provider)
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
         return;
     }
-    std::string permissionName = provider.ConsumeRandomLengthString();
     if (!datas.WriteUint32(1)) {
         return;
     }
-    if (!datas.WriteString(permissionName)) {
+    if (!datas.WriteString(permission)) {
         return;
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
@@ -96,11 +95,15 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    int32_t userId = provider.ConsumeIntegral<int32_t>();
+    std::string permission = provider.ConsumeRandomLengthString();
+    std::vector<std::string> permList = { permission };
 
-    PermissionPolicyIdl dataBlock;
-    dataBlock.permList.emplace_back(provider.ConsumeRandomLengthString());
-    dataBlock.grantList.emplace_back(provider.ConsumeBool());
+    UserPermissionPolicyIdl dataBlock;
+    dataBlock.permissionName = permission;
+    UserPolicyIdl userPolicyIdl;
+    userPolicyIdl.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicyIdl.isRestricted = provider.ConsumeBool();
+    dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -109,13 +112,7 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteUint32(1)) {
         return false;
     }
-    if (!datas.WriteInt32(userId)) {
-        return false;
-    }
-    if (!datas.WriteUint32(1)) {
-        return false;
-    }
-    if (PermissionPolicyIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
+    if (UserPermissionPolicyIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
         return false;
     }
 
@@ -131,7 +128,7 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
         (void)SetSelfTokenID(g_selfTokenId);
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    ClearUserPolicy(provider);
+    ClearUserPolicy(permission);
 
     return true;
 }

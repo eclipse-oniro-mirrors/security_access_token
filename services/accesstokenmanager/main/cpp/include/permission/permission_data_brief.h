@@ -67,8 +67,8 @@ public:
         const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
     void GetPermStatusListByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
-    int32_t RefreshPermStateToKernel(AccessTokenID tokenId,
-        const std::map<uint32_t, bool>& changedPermList, std::map<std::string, bool>& refreshedPermList);
+    int32_t RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
+        std::map<std::string, bool>& refreshedPermList);
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList, bool defCheck);
     void AddPermToBriefPermission(

@@ -111,9 +111,8 @@ public:
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
-    int32_t SetUserPolicy(
-        const std::vector<int32_t>& userList, const std::vector<PermissionPolicy>& permPolicyList);
-    int32_t ClearUserPolicy(const std::vector<int32_t>& userList);
+    int32_t SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList);
+    int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);

@@ -637,10 +637,9 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     }
     for (const auto& data : iter->second) {
         if (data.status == PERMISSION_GRANTED) {
-            std::string permission;
-            (void)TransferOpcodeToPermission(data.permCode, permission);
-            if (constrainedList.empty() ||
-                (std::find(constrainedList.begin(), constrainedList.end(), data.permCode) == constrainedList.end())) {
+            if (std::find(constrainedList.begin(), constrainedList.end(), data.permCode) == constrainedList.end()) {
+                std::string permission;
+                (void)TransferOpcodeToPermission(data.permCode, permission);
                 permissionList.emplace_back(permission);
                 LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is granted.", permission.c_str());
             }
@@ -893,14 +892,9 @@ void PermissionDataBrief::ClearAllSecCompGrantedPermById(AccessTokenID tokenID)
     }
 }
 
-int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId,
-    const std::map<uint32_t, bool>& changedPermList, std::map<std::string, bool>& refreshedPermList)
+int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
+    std::map<std::string, bool>& refreshedPermList)
 {
-    if (changedPermList.empty()) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Empty changedPermList.");
-        return RET_SUCCESS;
-    }
-
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenId);
     if (iter == requestedPermData_.end()) {
@@ -909,21 +903,19 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId,
     }
 
     for (const auto& data : iter->second) {
-        auto changePermIter = changedPermList.find(data.permCode);
-        if (changePermIter == changedPermList.end()) {
+        if (data.permCode != permCode) {
             continue;
         }
-        bool isChangeGranted = changePermIter->second;
         bool isGrantedCurr;
         int32_t ret = GetPermissionFromKernel(tokenId, data.permCode, isGrantedCurr);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionToKernel err=%{public}d", ret);
             continue;
         }
-        bool isGrantedToBe = (data.status == PERMISSION_GRANTED) && isChangeGranted;
+        bool isGrantedToBe = (data.status == PERMISSION_GRANTED) && hapUserIsActive;
         LOGI(ATM_DOMAIN, ATM_TAG,
-            "id=%{public}u, opCode=%{public}u, isGranted=%{public}d, isChangeGranted=%{public}d",
-            tokenId, data.permCode, isGrantedToBe, isChangeGranted);
+            "Id=%{public}u, opCode=%{public}u, isGrantedToBe=%{public}d, hapUserIsActive=%{public}d",
+            tokenId, data.permCode, isGrantedToBe, hapUserIsActive);
         if (isGrantedCurr == isGrantedToBe) {
             continue;
         }
@@ -935,6 +927,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId,
         std::string permission;
         (void)TransferOpcodeToPermission(data.permCode, permission);
         refreshedPermList[permission] = isGrantedToBe;
+        break;
     }
     return RET_SUCCESS;
 }

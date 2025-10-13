@@ -102,12 +102,14 @@ void AccessTokenDenyTest::TearDown()
  */
 HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
 {
-    const std::vector<int32_t> userList = { 100 }; // 100 is userId
-    PermissionPolicy policy;
-    policy.permList.emplace_back("ohos.permission.INTERNET");
-    policy.grantList.emplace_back(true);
-    const std::vector<PermissionPolicy> policyList = { policy };
-    int32_t ret = AccessTokenKit::SetUserPolicy(userList, policyList);
+    UserPermissionPolicy policy;
+    policy.permissionName = "ohos.permission.INTERNET";
+    UserPolicy userPolicy;
+    userPolicy.userId = 100; // 100 is userId
+    userPolicy.isRestricted = true;
+    policy.userPolicyList.emplace_back(userPolicy);
+    std::vector<UserPermissionPolicy> permPolicyList = { policy };
+    int32_t ret = AccessTokenKit::SetUserPolicy(permPolicyList);
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
 }
 

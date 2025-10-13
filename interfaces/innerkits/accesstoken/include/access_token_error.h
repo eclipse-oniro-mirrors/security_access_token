@@ -84,7 +84,9 @@ enum AccessTokenError {
     ERR_EXPECTED_PERMISSION_TYPE,
     ERR_UTIL_OPER_FAILED,
     ERR_RESOURCE_IS_NOT_READY,
-    ERR_CREATE_KEY_FAILED
+    ERR_CREATE_KEY_FAILED,
+    ERR_PERM_POLICY_ALREADY_SET_BY_OTHER,
+    ERR_PERM_POLICY_NOT_SET
 };
 } // namespace AccessToken
 } // namespace Security

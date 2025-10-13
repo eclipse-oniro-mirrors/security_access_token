@@ -740,17 +740,16 @@ void AccessTokenKit::GetPermissionManagerInfo(PermissionGrantInfo& info)
     AccessTokenManagerClient::GetInstance().GetPermissionManagerInfo(info);
 }
 
-int32_t AccessTokenKit::SetUserPolicy(
-    const std::vector<int32_t>& userList, const std::vector<PermissionPolicy>& permPolicyList)
+int32_t AccessTokenKit::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
-    return AccessTokenManagerClient::GetInstance().SetUserPolicy(userList, permPolicyList);
+    return AccessTokenManagerClient::GetInstance().SetUserPolicy(userPermissionList);
 }
 
-int32_t AccessTokenKit::ClearUserPolicy(const std::vector<int32_t>& userList)
+int32_t AccessTokenKit::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
-    return AccessTokenManagerClient::GetInstance().ClearUserPolicy(userList);
+    return AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList);
 }
 
 bool AccessTokenKit::IsSystemAppByFullTokenID(uint64_t tokenId)
