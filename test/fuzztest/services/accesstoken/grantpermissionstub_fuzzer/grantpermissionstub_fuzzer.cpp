@@ -75,7 +75,7 @@ namespace OHOS {
         std::string permissionName = ConsumePermissionName(provider);
         uint32_t flagIndex = provider.ConsumeIntegral<uint32_t>() % FLAG_LIST_SIZE;
         uint32_t flag = FLAG_LIST[flagIndex];
-        int32_t grantMode = static_cast<bool>(provider.ConsumeIntegralInRange<int32_t>(1, 2));
+        int32_t grantMode = static_cast<int32_t>(provider.ConsumeIntegralInRange<int32_t>(0, 1));
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
