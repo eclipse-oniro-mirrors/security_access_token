@@ -39,6 +39,10 @@ static const std::string JSON_USERID = "userID";
 static const std::string JSON_BUNDLE_NAME = "bundleName";
 static const std::string JSON_INST_INDEX = "instIndex";
 static const std::string JSON_DLP_TYPE = "dlpType";
+static const std::string JSON_APPID = "appID";
+static const std::string JSON_DEVICEID = "deviceID";
+static const std::string JSON_APL = "apl";
+static const std::string DEFAULT_VALUE = "0";
 }
 
 void BaseRemoteCommand::FromRemoteProtocolJson(const CJson* jsonObject)
@@ -83,14 +87,14 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
     }
     CJsonUnique DcapsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.dcap) {
-        cJSON *tmpObj = cJSON_CreateString(item.c_str());
+        CJson *tmpObj = cJSON_CreateString(item.c_str());
         AddObjToArray(DcapsJson.get(), tmpObj);
         cJSON_Delete(tmpObj);
         tmpObj = nullptr;
     }
     CJsonUnique NativeAclsJson = CreateJsonArray();
     for (const auto& item : tokenInfo.nativeAcls) {
-        cJSON *tmpObj = cJSON_CreateString(item.c_str());
+        CJson *tmpObj = cJSON_CreateString(item.c_str());
         AddObjToArray(NativeAclsJson.get(), tmpObj);
         cJSON_Delete(tmpObj);
         tmpObj = nullptr;
@@ -107,11 +111,21 @@ CJsonUnique BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoBase& 
     return nativeTokenJson;
 }
 
-void BaseRemoteCommand::ToPermStateJson(cJSON* permStateJson, const PermissionStatus& state)
+void BaseRemoteCommand::ToPermStateJson(CJson* permStateJson, const PermissionStatus& state)
 {
     AddStringToJson(permStateJson, "permissionName", state.permissionName);
     AddIntToJson(permStateJson, "grantStatus", state.grantStatus);
     AddUnsignedIntToJson(permStateJson, "grantFlag", state.grantFlag);
+
+    // Compatible with old version data formats
+    AddBoolToJson(permStateJson, "isGeneral", true);
+    CJsonUnique grantConfigJson = CreateJsonArray();
+    CJsonUnique grantConfigJsonItem = CreateJson();
+    AddStringToJson(grantConfigJsonItem, "resDeviceID", "0");
+    AddIntToJson(grantConfigJsonItem, "grantStatus", state.grantStatus);
+    AddUnsignedIntToJson(grantConfigJsonItem, "grantFlags", state.grantFlag);
+    AddObjToArray(grantConfigJson, grantConfigJsonItem);
+    AddObjToJson(permStateJson, "grantConfig", grantConfigJson.get());
 }
 
 CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
@@ -131,10 +145,13 @@ CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& to
     AddIntToJson(hapTokensJson, JSON_INST_INDEX, tokenInfo.baseInfo.instIndex);
     AddIntToJson(hapTokensJson, JSON_DLP_TYPE, tokenInfo.baseInfo.dlpType);
     AddObjToJson(hapTokensJson, "permState", permStatesJson);
+    AddStringToJson(hapTokensJson, JSON_DEVICEID, DEFAULT_VALUE);
+    AddStringToJson(hapTokensJson, JSON_APPID, DEFAULT_VALUE);
+    AddIntToJson(hapTokensJson, JSON_APL, APL_NORMAL);
     return hapTokensJson;
 }
 
-void BaseRemoteCommand::FromHapTokenBasicInfoJson(const cJSON* hapTokenJson,
+void BaseRemoteCommand::FromHapTokenBasicInfoJson(const CJson* hapTokenJson,
     HapTokenInfo& hapTokenBasicInfo)
 {
     int32_t ver;
@@ -148,22 +165,45 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const cJSON* hapTokenJson,
     GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
 }
 
-void BaseRemoteCommand::FromPermStateListJson(const cJSON* hapTokenJson,
+bool BaseRemoteCommand::FromPermStateJson(const CJson* permStateJson, PermissionStatus& permission)
+{
+    if (!GetStringFromJson(permStateJson, "permissionName", permission.permissionName)) {
+        return false;
+    }
+    CJson* grantConfig = GetArrayFromJson(permStateJson, "grantConfig");
+    if (grantConfig != nullptr) {
+        // Compatible with old version data formats
+        CJson* grantConfigItem = cJSON_GetArrayItem(grantConfig, 0);
+        if (grantConfigItem == nullptr) {
+            return false;
+        }
+        if (!GetIntFromJson(grantConfigItem, "grantStatus", permission.grantStatus)) {
+            return false;
+        }
+        if (!GetUnsignedIntFromJson(grantConfigItem, "grantFlags", permission.grantFlag)) {
+            return false;
+        }
+        return true;
+    }
+    if (!GetIntFromJson(permStateJson, "grantStatus", permission.grantStatus)) {
+        return false;
+    }
+    if (!GetUnsignedIntFromJson(permStateJson, "grantFlag", permission.grantFlag)) {
+        return false;
+    }
+    return true;
+}
+
+void BaseRemoteCommand::FromPermStateListJson(const CJson* hapTokenJson,
     std::vector<PermissionStatus>& permStateList)
 {
-    cJSON *jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
+    CJson *jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
     if (jsonObjTmp != nullptr) {
         int len = cJSON_GetArraySize(jsonObjTmp);
         for (int i = 0; i < len; i++) {
-            cJSON *permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
+            CJson *permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
             PermissionStatus permission;
-            if (!GetStringFromJson(permissionJson, "permissionName", permission.permissionName)) {
-                continue;
-            }
-            if (!GetIntFromJson(permissionJson, "grantStatus", permission.grantStatus)) {
-                continue;
-            }
-            if (!GetUnsignedIntFromJson(permissionJson, "grantFlag", permission.grantFlag)) {
+            if (!FromPermStateJson(permissionJson, permission)) {
                 continue;
             }
             permStateList.emplace_back(permission);
@@ -171,7 +211,7 @@ void BaseRemoteCommand::FromPermStateListJson(const cJSON* hapTokenJson,
     }
 }
 
-void BaseRemoteCommand::FromHapTokenInfoJson(const cJSON* hapTokenJson,
+void BaseRemoteCommand::FromHapTokenInfoJson(const CJson* hapTokenJson,
     HapTokenInfoForSync& hapTokenInfo)
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
@@ -182,7 +222,7 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const cJSON* hapTokenJson,
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);
 }
 
-void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
+void BaseRemoteCommand::FromNativeTokenInfoJson(const CJson* nativeTokenJson,
     NativeTokenInfoBase& nativeTokenInfo)
 {
     GetStringFromJson(nativeTokenJson, "processName", nativeTokenInfo.processName);
@@ -197,7 +237,7 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
     GetUnsignedIntFromJson(nativeTokenJson, "tokenId", nativeTokenInfo.tokenID);
     GetUnsignedIntFromJson(nativeTokenJson, "tokenAttr", nativeTokenInfo.tokenAttr);
 
-    cJSON *dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
+    CJson *dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
     if (dcapsJson != nullptr) {
         CJson *dcap = nullptr;
         std::vector<std::string> dcaps;
@@ -207,7 +247,7 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const cJSON* nativeTokenJson,
         }
         nativeTokenInfo.dcap = dcaps;
     }
-    cJSON *nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
+    CJson *nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
     if (nativeAclsJson != nullptr) {
         CJson *acl = nullptr;
         std::vector<std::string> nativeAcls;
