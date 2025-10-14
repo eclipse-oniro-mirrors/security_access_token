@@ -153,10 +153,61 @@ ohos_unittest("libprivacy_mock_test") {
   }
 }
 
+ohos_unittest("libprivacy_multi_thread_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_privacy
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "../src",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/frameworks/privacy/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  sources = [
+    "unittest/src/privacy_multi_thread_test.cpp",
+    "unittest/src/privacy_test_common.cpp"
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
+  ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
 group("unittest") {
   testonly = true
   deps = [
     ":libprivacy_mock_test",
+    ":libprivacy_multi_thread_test",
     ":libprivacy_sdk_test",
   ]
 }

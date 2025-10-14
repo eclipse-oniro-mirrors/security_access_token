@@ -42,7 +42,7 @@ void PrintCurrentTime()
 int32_t main(int argc, char *argv[])
 {
     if (argc < 4) { // 4: size
-        std::cout << "Help: ./VerifyAccessToken tokenid permisisionName\n" << std::endl;
+        std::cout << "Help: ./VerifyAccessToken tokenid permisisionName duration(s)\n" << std::endl;
         return 0;
     }
 
