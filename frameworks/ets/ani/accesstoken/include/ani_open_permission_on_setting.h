@@ -35,7 +35,7 @@ struct OpenPermOnSettingAsyncContext: public RequestAsyncContextBase {
     std::string permissionName;
 
     // result after requesting
-    int32_t resultCode;
+    int32_t resultCode = 0;
 
     OpenPermOnSettingAsyncContext(ani_vm* vm_, ani_env* env_);
     ~OpenPermOnSettingAsyncContext() override;

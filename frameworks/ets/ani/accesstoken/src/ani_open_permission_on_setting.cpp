@@ -49,7 +49,7 @@ static std::shared_ptr<RequestInstanceControl> GetRequestInstanceControl()
 }
 
 OpenPermOnSettingAsyncContext::OpenPermOnSettingAsyncContext(ani_vm* vm, ani_env* env)
-    : RequestAsyncContextBase(vm, env, REQUEST_PERMISSION_ON_SETTING)
+    : RequestAsyncContextBase(vm, env, OPEN_PERMISSION_ON_SETTING)
 {}
 
 OpenPermOnSettingAsyncContext::~OpenPermOnSettingAsyncContext()
