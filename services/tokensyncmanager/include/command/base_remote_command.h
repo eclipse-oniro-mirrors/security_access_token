@@ -49,6 +49,7 @@ public:
     void FromRemoteProtocolJson(const CJson* jsonObject);
 
     void ToPermStateJson(CJson* permStateJson, const PermissionStatus& state);
+    bool FromPermStateJson(const CJson* permStateJson, PermissionStatus& permission);
     void FromPermStateListJson(const CJson* hapTokenJson,
         std::vector<PermissionStatus>& permStateList);
 
