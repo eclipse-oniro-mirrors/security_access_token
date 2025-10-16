@@ -8,7 +8,10 @@
             "since": 22,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": false,
+            "hasValue": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.CRYPTO_EXTENSION_CONNECT",
@@ -18,7 +21,10 @@
             "since": 22,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "isKernelEffect": false,
+            "hasValue": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.ACCESS_BIOMETRIC",
