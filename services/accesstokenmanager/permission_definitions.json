@@ -7720,6 +7720,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_DYNAMIC_UTD_TYPE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 22,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         }
     ]
 }
