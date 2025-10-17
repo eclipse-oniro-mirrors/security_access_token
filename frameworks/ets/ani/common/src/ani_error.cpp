@@ -83,7 +83,7 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
         return nullptr;
     }
-    status = env->Class_FindField(cls, "code", &field);
+    status = env->Class_FindField(cls, "code_", &field);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}u.", status);
         return nullptr;

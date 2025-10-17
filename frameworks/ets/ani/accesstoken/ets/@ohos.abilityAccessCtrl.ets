@@ -324,7 +324,7 @@ export default namespace abilityAccessCtrl {
                     err: BusinessError<void> | null, data: int | undefined) => {
                     if (err?.code == 0) {
                         if (data !== undefined) {
-                            resolve(data as SelectedResult);
+                            resolve(data as int as SelectedResult);
                         }
                     } else {
                         reject(err as BusinessError);
