@@ -395,7 +395,7 @@ export default namespace abilityAccessCtrl {
 
         getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int> {
             let p = new Promise<int>(
-                (resolve: (v: int) => void, reject: (err: BusinessError) => void): int => {
+                (resolve: (v: int) => void, reject: (err: Error) => void): void => {
                 let p1 = taskpool.execute((): int => {
                     return new AtManagerInner().getPermissionFlagsExecute(tokenID, permissionName);
                 });
@@ -426,7 +426,7 @@ export default namespace abilityAccessCtrl {
         getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus> {
             let p =  new Promise<PermissionRequestToggleStatus>(
                 (resolve: (v: PermissionRequestToggleStatus) => void,
-                    reject: (err: BusinessError) => void): PermissionRequestToggleStatus => {
+                    reject: (err: Error) => void): void => {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
                         return new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName) as PermissionRequestToggleStatus;
                     });

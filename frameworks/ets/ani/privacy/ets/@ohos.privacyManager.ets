@@ -206,7 +206,7 @@ export default namespace privacyManager {
     export function getPermissionUsedRecord(request: PermissionUsedRequest): Promise<PermissionUsedResponse> {
         return new Promise<PermissionUsedResponse>((
             resolve: (data: PermissionUsedResponse) => void,
-            reject: (error: BusinessError) => void): PermissionUsedResponse => {
+            reject: (error: Error) => void): void => {
             let p1 = taskpool.execute((): PermissionUsedResponse => {
                 return getPermissionUsedRecordExecute(request);
             });
@@ -235,7 +235,7 @@ export default namespace privacyManager {
         let permissionNameIn = permissionName ?? "";
         return new Promise<Array<PermissionUsedTypeInfo>> ((
             resolve: (v: Array<PermissionUsedTypeInfo>) => void,
-            reject: (err: BusinessError) => void): Array<PermissionUsedTypeInfo> => {
+            reject: (err: Error) => void): void => {
             let p1 = taskpool.execute((): Array<PermissionUsedTypeInfo> => {
                 return getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
             });
