@@ -7731,6 +7731,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ALLOW_EXTERNAL_NATIVE_CODE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 22,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
