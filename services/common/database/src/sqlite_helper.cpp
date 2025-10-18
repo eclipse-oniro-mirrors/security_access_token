@@ -32,6 +32,7 @@ SqliteHelper::~SqliteHelper()
 
 void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
 {
+    LOGE(ATM_DOMAIN, ATM_TAG, "Open db enter.");
     if (db_ != nullptr) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Db s already open");
         return;
@@ -45,12 +46,12 @@ void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
     const int32_t heapLimit = 10 * 1024;
     sqlite3_soft_heap_limit64(heapLimit);
     std::string fileName = dbPath_ + dbName_;
-    int32_t res = sqlite3_open(fileName.c_str(), &db_);
+    const uint32_t flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    int32_t res = sqlite3_open_v2(fileName.c_str(), &db_, flags, NULL);
     if (res != SQLITE_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db: %{public}s", sqlite3_errmsg(db_));
         return;
     }
-
     SetWal();
 
     int32_t version = GetVersion();
@@ -166,7 +167,7 @@ void SqliteHelper::SetWal() const
     }
     auto statement = Prepare(PRAGMA_WAL_COMMAND);
     if (statement.Step() != Statement::State::ROW) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set wal mode failed, errorMsg: %{public}s", SpitError().c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set wal mode failed, errorMsg: %{public}s.", SpitError().c_str());
     } else {
         LOGI(ATM_DOMAIN, ATM_TAG, "Set wal mode success!");
     }

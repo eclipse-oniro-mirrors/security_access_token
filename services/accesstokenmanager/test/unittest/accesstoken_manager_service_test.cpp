@@ -39,7 +39,6 @@ static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
-static constexpr int32_t MULTIPLE_COUNT = 10;
 
 static PermissionStatus g_state1 = { // kernel permission
     .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
@@ -978,7 +977,7 @@ HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy001, TestSi
  * @tc.type: FUNC
  * @tc.require:
  */
-HWMTEST_F(AccessTokenManagerServiceTest, OnRemoteRequestTest001, TestSize.Level1, MULTIPLE_COUNT)
+HWTEST_F(AccessTokenManagerServiceTest, OnRemoteRequestTest001, TestSize.Level1)
 {
     uint32_t code = 0;
     MessageParcel data;
