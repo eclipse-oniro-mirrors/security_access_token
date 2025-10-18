@@ -67,6 +67,10 @@ static const int32_t OUT_OF_MAP_SOCKET = 2;
 static const std::string TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
 static const std::string TOKEN_SYNC_SOCKET_NAME = "ohos.security.atm_channel.";
 static const uint32_t SOCKET_NAME_MAX_LEN = 256;
+static const std::string JSON_APPID = "appID";
+static const std::string JSON_DEVICEID = "deviceID";
+static const std::string JSON_APL = "apl";
+static const std::string DEFAULT_VALUE = "0";
 
 class TokenSyncServiceTest : public testing::Test {
 public:
@@ -552,31 +556,38 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level0)
 {
     auto cmd = std::make_shared<TestBaseRemoteCommand>();
 
-    CJsonUnique hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
-
     std::vector<PermissionStatus> permStateListNull;
+    // lack grantStatus and grantFlag
+    CJsonUnique hapTokenJsonNull = CreateJsonFromString("{\"bundleName\":\"\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\"}],"
+        "\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
     cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
-        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    permStateListNull.clear();
+    // grantFlag
+    hapTokenJsonNull = CreateJsonFromString("{\"bundleName\":\"\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", \"grantStatus\":0}],"
+        "\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
     cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\"}],"
-        "\\\"tokenAttr\\\":0,\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+
+    permStateListNull.clear();
+    // lack grantStatus and grantFlags in grantConfig
+    hapTokenJsonNull = CreateJsonFromString("{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", "
+        "\"isGeneral\":true,\"grantConfig\":[{\"resDeviceID\":\"0\"}]}],"
+        "\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
     cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 
-    hapTokenJsonNull = CreateJsonFromString("{\\\"bundleName\\\":\\\"\\\","
-        "\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
-        "\\\"grantStatus\\\":0, \\\"grantFlag\\\":0}],\\\"tokenAttr\\\":0,"
-        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}");
+    permStateListNull.clear();
+    // lack grantFlags in grantConfig
+    hapTokenJsonNull = CreateJsonFromString("{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", "
+        "\"isGeneral\":true,\"grantConfig\":[{\"resDeviceID\":\"0\",\"grantStatus\":-1}]}],"
+        "\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
     cmd->FromPermStateListJson(hapTokenJsonNull.get(), permStateListNull);
     EXPECT_EQ(permStateListNull.size(), 0);
 }
@@ -1535,6 +1546,119 @@ HapTokenInfoForSync g_remoteHapInfo = {
     .baseInfo = g_remoteHapInfoBasic,
     .permStateList = {g_infoManagerTestUpdateState1, g_infoManagerTestUpdateState2}
 };
+
+/**
+ * @tc.name: CompatibleOldVersionHapTokenInfo001
+ * @tc.desc: test the info when filling the new hap token info
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, CompatibleOldVersionHapTokenInfo001, TestSize.Level0)
+{
+    HapTokenInfo baseInfo = {
+        .ver = 1,
+        .userID = 1,
+        .bundleName = "com.ohos.access_token",
+        .instIndex = 1,
+        .tokenID = 0x20100000,
+        .tokenAttr = 0
+    };
+
+    PermissionStatus infoManagerTestState = {
+        .permissionName = "ohos.permission.test1",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+    std::vector<PermissionStatus> permStateList;
+    permStateList.emplace_back(infoManagerTestState);
+
+    HapTokenInfoForSync remoteTokenInfo = {
+        .baseInfo = baseInfo,
+        .permStateList = permStateList
+    };
+
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    CJsonUnique hapTokenJsonUnique = cmd->ToHapTokenInfosJson(remoteTokenInfo);
+    // test appID, deviceID, apl equal defaut value
+    EXPECT_NE(hapTokenJsonUnique, nullptr);
+    CJson* hapTokenJson = hapTokenJsonUnique.get();
+    std::string  appID = "";
+    EXPECT_EQ(GetStringFromJson(hapTokenJson, JSON_APPID, appID), true);
+    EXPECT_EQ(appID, DEFAULT_VALUE);
+    std::string  deviceID = "";
+    EXPECT_EQ(GetStringFromJson(hapTokenJson, JSON_DEVICEID, deviceID), true);
+    EXPECT_EQ(deviceID, DEFAULT_VALUE);
+    int32_t apl = 0;
+    EXPECT_EQ(GetIntFromJson(hapTokenJson, JSON_APL, apl), true);
+    EXPECT_EQ(apl, static_cast<int32_t>(APL_NORMAL));
+
+    CJson* jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
+    ASSERT_NE(jsonObjTmp, nullptr);
+    int32_t len = cJSON_GetArraySize(jsonObjTmp);
+    ASSERT_EQ(len, 1);
+    CJson* permissionJson = cJSON_GetArrayItem(jsonObjTmp, 0);
+    bool isGeneral = false;
+    EXPECT_EQ(GetBoolFromJson(permissionJson, "isGeneral", isGeneral), true);
+    EXPECT_EQ(isGeneral, true);
+    CJson* grantConfig = GetArrayFromJson(permissionJson, "grantConfig");
+    ASSERT_NE(grantConfig, nullptr);
+    int32_t configLen = cJSON_GetArraySize(grantConfig);
+    ASSERT_EQ(configLen, 1);
+
+    CJson* grantConfigItem = cJSON_GetArrayItem(grantConfig, 0);
+    ASSERT_NE(grantConfigItem, nullptr);
+    std::string resDeviceID = "";
+    EXPECT_EQ(GetStringFromJson(grantConfigItem, "resDeviceID", resDeviceID), true);
+    EXPECT_EQ(resDeviceID, DEFAULT_VALUE);
+}
+
+/**
+ * @tc.name: CompatibleOldVersionHapTokenInfo002
+ * @tc.desc: test the info when read old version hap token info
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, CompatibleOldVersionHapTokenInfo002, TestSize.Level0)
+{
+    // current version json string
+    CJsonUnique hapTokenJson = CreateJsonFromString("{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", "
+        "\"grantStatus\":0, \"grantFlag\":0,\"isGeneral\":true,\"grantConfig\":"
+        "[{\"resDeviceID\":\"0\",\"grantStatus\":-1, \"grantFlags\":0}]}],\"tokenAttr\":0,"
+        "\"tokenID\":111,\"userID\":0,\"version\":1}");
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+
+    std::vector<PermissionStatus> permStateList;
+    cmd->FromPermStateListJson(hapTokenJson.get(), permStateList);
+    ASSERT_EQ(permStateList.size(), 1);
+    EXPECT_EQ(permStateList[0].permissionName, "TEST");
+    EXPECT_EQ(permStateList[0].grantStatus, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED));
+    EXPECT_EQ(permStateList[0].grantFlag, 0);
+    permStateList.clear();
+
+    // old version 1 json string
+    hapTokenJson = CreateJsonFromString("{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", "
+        "\"grantStatus\":0, \"grantFlag\":0}],\"tokenAttr\":0,"
+        "\"tokenID\":111,\"userID\":0,\"version\":1}");
+    cmd->FromPermStateListJson(hapTokenJson.get(), permStateList);
+    ASSERT_EQ(permStateList.size(), 1);
+    EXPECT_EQ(permStateList[0].permissionName, "TEST");
+    EXPECT_EQ(permStateList[0].grantStatus, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED));
+    EXPECT_EQ(permStateList[0].grantFlag, 0);
+    permStateList.clear();
+
+    // old version 2 json string
+    hapTokenJson = CreateJsonFromString("{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[{\"permissionName\":\"TEST\", "
+        "\"isGeneral\":true,\"grantConfig\":[{\"resDeviceID\":\"0\",\"grantStatus\":-1,"
+        "\"grantFlags\":0}]}],\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
+    cmd->FromPermStateListJson(hapTokenJson.get(), permStateList);
+    ASSERT_EQ(permStateList.size(), 1);
+    EXPECT_EQ(permStateList[0].permissionName, "TEST");
+    EXPECT_EQ(permStateList[0].grantStatus, static_cast<int32_t>(PermissionState::PERMISSION_DENIED));
+    EXPECT_EQ(permStateList[0].grantFlag, 0);
+    permStateList.clear();
+}
 }
 }  // namespace AccessToken
 }  // namespace Security

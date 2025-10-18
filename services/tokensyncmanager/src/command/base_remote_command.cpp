@@ -115,13 +115,13 @@ void BaseRemoteCommand::ToPermStateJson(CJson* permStateJson, const PermissionSt
 
     // Compatible with old version data formats
     AddBoolToJson(permStateJson, "isGeneral", true);
-    CJsonUnique gramtConfigJson = CreateJsonArray();
-    CJsonUnique gramtConfigJsonItem = CreateJson();
-    AddStringToJson(gramtConfigJsonItem, "resDeviceID", "0");
-    AddIntToJson(gramtConfigJsonItem, "grantStatus", state.grantStatus);
-    AddUnsignedIntToJson(gramtConfigJsonItem, "grantFlags", state.grantFlag);
-    AddObjToArray(gramtConfigJson, gramtConfigJsonItem);
-    AddObjToJson(permStateJson, "grantConfig", gramtConfigJson.get());
+    CJsonUnique grantConfigJson = CreateJsonArray();
+    CJsonUnique grantConfigJsonItem = CreateJson();
+    AddStringToJson(grantConfigJsonItem, "resDeviceID", DEFAULT_VALUE);
+    AddIntToJson(grantConfigJsonItem, "grantStatus", state.grantStatus);
+    AddUnsignedIntToJson(grantConfigJsonItem, "grantFlags", state.grantFlag);
+    AddObjToArray(grantConfigJson, grantConfigJsonItem);
+    AddObjToJson(permStateJson, "grantConfig", grantConfigJson.get());
 }
 
 CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
@@ -166,25 +166,31 @@ bool BaseRemoteCommand::FromPermStateJson(const CJson* permStateJson, Permission
     if (!GetStringFromJson(permStateJson, "permissionName", permission.permissionName)) {
         return false;
     }
-    CJson* grantConfig = GetArrayFromJson(permStateJson, "grantConfig");
-    if (grantConfig != nullptr) {
-        // Compatible with old version data formats
-        CJson* grantConfigItem = cJSON_GetArrayItem(grantConfig, 0);
-        if (grantConfigItem == nullptr) {
+
+    CJson* jsonObjTmp = cJSON_GetObjectItemCaseSensitive(permStateJson, "grantStatus");
+    if (jsonObjTmp != nullptr) {
+        if (!GetIntFromJson(permStateJson, "grantStatus", permission.grantStatus)) {
             return false;
         }
-        if (!GetIntFromJson(grantConfigItem, "grantStatus", permission.grantStatus)) {
-            return false;
-        }
-        if (!GetUnsignedIntFromJson(grantConfigItem, "grantFlags", permission.grantFlag)) {
+        if (!GetUnsignedIntFromJson(permStateJson, "grantFlag", permission.grantFlag)) {
             return false;
         }
         return true;
     }
-    if (!GetIntFromJson(permStateJson, "grantStatus", permission.grantStatus)) {
+
+    // Compatible with old version data formats
+    CJson* grantConfig = GetArrayFromJson(permStateJson, "grantConfig");
+    if (grantConfig == nullptr) {
         return false;
     }
-    if (!GetUnsignedIntFromJson(permStateJson, "grantFlag", permission.grantFlag)) {
+    CJson* grantConfigItem = cJSON_GetArrayItem(grantConfig, 0);
+    if (grantConfigItem == nullptr) {
+        return false;
+    }
+    if (!GetIntFromJson(grantConfigItem, "grantStatus", permission.grantStatus)) {
+        return false;
+    }
+    if (!GetUnsignedIntFromJson(grantConfigItem, "grantFlags", permission.grantFlag)) {
         return false;
     }
     return true;
