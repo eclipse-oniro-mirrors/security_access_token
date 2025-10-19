@@ -3308,7 +3308,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback007, TestSize.Level0)
     EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callback2));
 
     // recovery origin disable policy
-    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", camDisable));
+    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", camDisable));
     EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
 }
 

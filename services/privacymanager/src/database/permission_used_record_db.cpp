@@ -68,24 +68,25 @@ void PermissionUsedRecordDb::OnCreate()
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
-    if (version == DataBaseVersion::VERISION_1) {
-        InsertLockScreenStatusColumn();
-        InsertPermissionUsedTypeColumn();
-        CreatePermissionUsedTypeTable();
-        UpdatePermissionRecordTablePrimaryKey();
-        CreatePermissionUsedRecordToggleStatusTable();
-    } else if (version == DataBaseVersion::VERISION_2) {
-        InsertPermissionUsedTypeColumn();
-        CreatePermissionUsedTypeTable();
-        UpdatePermissionRecordTablePrimaryKey();
-        CreatePermissionUsedRecordToggleStatusTable();
-    } else if (version == DataBaseVersion::VERISION_3) {
-        UpdatePermissionRecordTablePrimaryKey();
-        CreatePermissionUsedRecordToggleStatusTable();
-    } else if (version == DataBaseVersion::VERISION_4) {
-        CreatePermissionUsedRecordToggleStatusTable();
-    } else if (version == DataBaseVersion::VERISION_5) {
-        CreatePermissionDisablePolicyTable();
+    switch (version) {
+        case DataBaseVersion::VERISION_1: // 1->2
+            InsertLockScreenStatusColumn();
+
+        case DataBaseVersion::VERISION_2: // 2->3
+            InsertPermissionUsedTypeColumn();
+            CreatePermissionUsedTypeTable();
+
+        case DataBaseVersion::VERISION_3: // 3->4
+            UpdatePermissionRecordTablePrimaryKey();
+
+        case DataBaseVersion::VERISION_4: // 4->5
+            CreatePermissionUsedRecordToggleStatusTable();
+
+        case DataBaseVersion::VERISION_5: // 5->6
+            CreatePermissionDisablePolicyTable();
+
+        default:
+            return;
     }
 }
 
