@@ -7183,7 +7183,8 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["phone", "2in1", "tablet"],
+            "hasValue": true
         },
         {
             "name": "ohos.permission.TRIGGER_LOCAL_WANTAGENT",
