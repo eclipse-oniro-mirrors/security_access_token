@@ -312,6 +312,11 @@ void PermissionRecordManager::UpdatePermRecImmediately()
     }
 }
 
+bool PermissionRecordManager::IsEdmMuteOrDisable(const std::string& permissionName)
+{
+    return (GetMuteStatus(permissionName, EDM) || (GetCacheDisablePolicy(permissionName)));
+}
+
 int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
 {
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
@@ -323,7 +328,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", info.permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (GetMuteStatus(info.permissionName, EDM)) {
+    if (IsEdmMuteOrDisable(info.permissionName)) {
         record.status = PERM_INACTIVE;
     } else {
         record.status = GetAppStatus(info.tokenId);
@@ -1351,7 +1356,7 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
     }
 
     InitializeMuteState(permissionName);
-    if (GetMuteStatus(permissionName, EDM)) {
+    if (IsEdmMuteOrDisable(permissionName)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
         return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
     }
@@ -1391,7 +1396,7 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
     }
 
     InitializeMuteState(permissionName);
-    if (GetMuteStatus(permissionName, EDM)) {
+    if (IsEdmMuteOrDisable(permissionName)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
         return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
     }
@@ -1815,6 +1820,17 @@ bool PermissionRecordManager::GetCacheDisablePolicy(int32_t opCode)
         return it->second;
     }
     return false; // default false
+}
+
+bool PermissionRecordManager::GetCacheDisablePolicy(const std::string& permissionName)
+{
+    int32_t opCode = -1;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid Perm %{public}s!", permissionName.c_str());
+        return false;
+    }
+
+    return GetCacheDisablePolicy(opCode);
 }
 
 void PermissionRecordManager::UpdateDisablePolicyCache(int32_t opCode, bool isDisable)

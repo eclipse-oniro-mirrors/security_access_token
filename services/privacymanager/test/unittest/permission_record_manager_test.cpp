@@ -76,6 +76,7 @@ static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static const int32_t VALUE_MAX_LEN = 32;
 const static uint32_t TEST_MAX_PERMISSION_USED_TYPE_SIZE = 20;
 static const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
+static const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 static MockNativeToken* g_mock = nullptr;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
@@ -712,6 +713,77 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Leve
         tokenId, TEST_PID_1, "ohos.permission.CAMERA", CALLER_PID));
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
+}
+
+static void CheckResult(const int32_t startResult1, const int32_t startResult2, sptr<StateChangeCallback> wap,
+    const AddPermParamInfo& info, const ActiveChangeType type)
+{
+    EXPECT_EQ(startResult1, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(info.tokenId, PID, info.permissionName), CALLER_PID));
+    EXPECT_EQ(startResult2, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(info.tokenId, PID, info.permissionName), wap->AsObject(), CALLER_PID));
+
+    PermissionRecord record;
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionRecord(info, record));
+    EXPECT_EQ(type, record.status);
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest012
+ * @tc.desc: Test edm disallow
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Level0)
+{
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_CAMERA_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool isMicDisable = false;
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetDisablePolicy(permissionName, isMicDisable)); // backup
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+    auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
+    EXPECT_NE(nullptr, callbackPtr);
+    sptr<StateChangeCallback> callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
+    EXPECT_NE(nullptr, callbackWrap);
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = permissionName;
+    info.successCount = 1;
+    info.failCount = 0;
+
+    SetParameter(EDM_CAMERA_MUTE_KEY, "true"); // set camera mute
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, true)); // set camera disable
+    // camera is disable and mute
+    CheckResult(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, callbackWrap,
+        info, PERM_INACTIVE);
+
+    SetParameter(EDM_CAMERA_MUTE_KEY, "false"); // set camera not mute
+    // camera is disable and not mute
+    CheckResult(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, callbackWrap,
+        info, PERM_INACTIVE);
+
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, false)); // set camera enable
+    // camera is enable and not mute
+    CheckResult(0, PrivacyError::ERR_PERMISSION_ALREADY_START_USING, callbackWrap, info, PERM_ACTIVE_IN_BACKGROUND);
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, permissionName, CALLER_PID));
+
+    SetParameter(EDM_CAMERA_MUTE_KEY, "true"); // set camera mute
+    // camera is enable and mute
+    CheckResult(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, callbackWrap,
+        info, PERM_INACTIVE);
+
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, isMicDisable)); // recovery
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
 
 /*

@@ -201,6 +201,8 @@ private:
     int32_t IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode);
     int32_t InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable);
     bool GetCacheDisablePolicy(int32_t opCode);
+    bool GetCacheDisablePolicy(const std::string& permissionName);
+    bool IsEdmMuteOrDisable(const std::string& permissionName);
     void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
     int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 
