@@ -295,12 +295,19 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
     SetNamedProperty(env, globalSwitchType, MICROPHONE, "MICROPHONE");
     SetNamedProperty(env, globalSwitchType, LOCATION, "LOCATION");
 
+    napi_value selectedResult = nullptr;
+    napi_create_object(env, &selectedResult);
+    SetNamedProperty(env, selectedResult, SELECTED_REJECTED, "REJECTED");
+    SetNamedProperty(env, selectedResult, SELECTED_OPENED, "OPENED");
+    SetNamedProperty(env, selectedResult, SELECTED_GRANTED, "GRANTED");
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
         DECLARE_NAPI_PROPERTY("PermissionStatus", permissionStatus),
         DECLARE_NAPI_PROPERTY("PermissionRequestToggleStatus", permissionRequestToggleStatus),
         DECLARE_NAPI_PROPERTY("SwitchType", globalSwitchType),
+        DECLARE_NAPI_PROPERTY("SelectedResult", selectedResult),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 }
