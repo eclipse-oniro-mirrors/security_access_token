@@ -29,6 +29,12 @@ enum PermissionStateChangeType {
     PERMISSION_GRANTED_OPER = 1,
 };
 
+enum SelectedResult {
+    SELECTED_REJECTED = -1,
+    SELECTED_OPENED = 0,
+    SELECTED_GRANTED = 1
+};
+
 static thread_local napi_ref g_atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
 class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
