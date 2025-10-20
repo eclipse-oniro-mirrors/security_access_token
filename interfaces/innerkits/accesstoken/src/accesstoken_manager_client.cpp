@@ -127,7 +127,7 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
         LOGI(ATM_DOMAIN, ATM_TAG, "At service has not been started.");
         return PERMISSION_GRANTED;
     }
-    LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+    LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
     return PERMISSION_DENIED;
 }
 
@@ -136,7 +136,7 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID,
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t errCode = proxy->VerifyAccessToken(tokenID, permissionList, permStateList);
@@ -152,7 +152,7 @@ int AccessTokenManagerClient::GetDefPermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     PermissionDefParcel permissionDefParcel;
@@ -170,7 +170,7 @@ int AccessTokenManagerClient::GetReqPermissions(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionStatusParcel> parcelList;
@@ -204,7 +204,7 @@ int AccessTokenManagerClient::GetPermissionFlag(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->GetPermissionFlag(tokenID, permissionName, flag);
@@ -334,7 +334,7 @@ int AccessTokenManagerClient::GrantPermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->GrantPermission(tokenID, permissionName, flag, updateFlag);
@@ -350,7 +350,7 @@ int AccessTokenManagerClient::RevokePermission(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->RevokePermission(tokenID, permissionName, flag, updateFlag);
@@ -366,7 +366,7 @@ int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
@@ -381,7 +381,7 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->ClearUserGrantedPermissionState(tokenID);
@@ -494,7 +494,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -534,7 +534,7 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -569,7 +569,7 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     AccessTokenIDEx tokenIdEx = { 0 };
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return tokenIdEx;
     }
     HapInfoParcel hapInfoParcel;
@@ -625,7 +625,7 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = proxy->DeleteToken(tokenID);
@@ -640,7 +640,7 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return TOKEN_INVALID;
     }
     int32_t tokenType = static_cast<int32_t>(TOKEN_INVALID);
@@ -658,7 +658,7 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     AccessTokenIDEx result = {0};
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return result;
     }
     uint64_t fullTokenId;
@@ -677,7 +677,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return INVALID_TOKENID;
     }
     uint32_t tokenId;
@@ -696,7 +696,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapPolicyParcel hapPolicyParcel;
@@ -731,7 +731,7 @@ int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unorde
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<uint32_t> tokenIds;
@@ -749,7 +749,7 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
@@ -768,7 +768,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     NativeTokenInfoParcel nativeTokenInfoParcel;
@@ -787,7 +787,7 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t res = proxy->ReloadNativeTokenInfo();
@@ -823,7 +823,7 @@ AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& proc
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return INVALID_TOKENID;
     }
     uint32_t tokenID;
@@ -841,7 +841,7 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -860,7 +860,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -879,7 +879,7 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -895,7 +895,7 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return INVALID_TOKENID;
     }
 
@@ -914,7 +914,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -984,7 +984,7 @@ void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std:
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return;
     }
 
@@ -1068,7 +1068,7 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapBaseInfoParcel hapBaseInfoParcel;
@@ -1085,7 +1085,7 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return;
     }
     PermissionGrantInfoParcel infoParcel;
@@ -1098,77 +1098,55 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
     info = infoParcel.info;
 }
 
-int32_t AccessTokenManagerClient::InitUserPolicy(
-    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+int32_t AccessTokenManagerClient::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
+    size_t policySize = userPermissionList.size();
+    if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    size_t userLen = userList.size();
-    size_t permLen = permList.size();
-    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE) || (permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu or permLen %{public}zu is invalid", userLen, permLen);
-        return AccessTokenError::ERR_PARAM_INVALID;
+    std::vector<UserPermissionPolicyIdl> userPermissionListIdl;
+    for (const auto& permPolicy : userPermissionList) {
+        UserPermissionPolicyIdl permPolicyIdl;
+        permPolicyIdl.permissionName = permPolicy.permissionName;
+        for (const auto& userPolicy : permPolicy.userPolicyList) {
+            UserPolicyIdl policyIdl;
+            policyIdl.userId = userPolicy.userId;
+            policyIdl.isRestricted = userPolicy.isRestricted;
+            permPolicyIdl.userPolicyList.emplace_back(policyIdl);
+        }
+        userPermissionListIdl.emplace_back(permPolicyIdl);
     }
-
-    std::vector<UserStateIdl> userIdlList;
-    for (const auto& userSate : userList) {
-        UserStateIdl userIdl;
-        userIdl.userId = userSate.userId;
-        userIdl.isActive = userSate.isActive;
-        userIdlList.emplace_back(userIdl);
-    }
-    int32_t errCode = proxy->InitUserPolicy(userIdlList, permList);
+    int32_t errCode = proxy->SetUserPolicy(userPermissionListIdl);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);
     }
     return errCode;
 }
 
-int32_t AccessTokenManagerClient::ClearUserPolicy()
+int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    int32_t errCode = proxy->ClearUserPolicy();
-    if (errCode != RET_SUCCESS) {
-        errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-    }
-    return errCode;
-}
-
-int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>& userList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    size_t userLen = userList.size();
-    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserLen %{public}zu is invalid.", userLen);
+    size_t permLen = permissionList.size();
+    if ((permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermLen %{public}zu is invalid.", permLen);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-
-    std::vector<UserStateIdl> userIdlList;
-    for (const auto& userSate : userList) {
-        UserStateIdl userIdl;
-        userIdl.userId = userSate.userId;
-        userIdl.isActive = userSate.isActive;
-        userIdlList.emplace_back(userIdl);
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t errCode = proxy->UpdateUserPolicy(userIdlList);
+    int32_t errCode = proxy->ClearUserPolicy(permissionList);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);
     }
     return errCode;
 }
@@ -1187,7 +1165,7 @@ int32_t AccessTokenManagerClient::GetKernelPermissions(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
@@ -1220,7 +1198,7 @@ int32_t AccessTokenManagerClient::GetReqPermissionByName(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t errCode = proxy->GetReqPermissionByName(tokenId, permissionName, value);

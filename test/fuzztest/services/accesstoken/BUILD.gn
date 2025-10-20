@@ -46,7 +46,7 @@ group("fuzztest") {
     "grantpermissionforspecifiedtimestub_fuzzer:GrantPermissionForSpecifiedTimeStubFuzzTest",
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "inithaptokenstub_fuzzer:InitHapTokenStubFuzzTest",
-    "inituserpolicystub_fuzzer:InitUserPolicyStubFuzzTest",
+    "setuserpolicystub_fuzzer:SetUserPolicyStubFuzzTest",
     "istoastshownneededstub_fuzzer:IsToastShownNeededStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "registerselfpermstatechangecallbackstub_fuzzer:RegisterSelfPermStateChangeCallbackStubFuzzTest",
@@ -57,7 +57,6 @@ group("fuzztest") {
     "setpermissionstatuswithpolicystub_fuzzer:SetPermissionStatusWithPolicyStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
-    "updateuserpolicystub_fuzzer:UpdateUserPolicyStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
   ]

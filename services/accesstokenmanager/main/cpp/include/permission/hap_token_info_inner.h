@@ -83,15 +83,15 @@ public:
     void UpdateRemoteHapTokenInfo(AccessTokenID mapID,
         const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList);
 
-    static void RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
-        bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
+    static void RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
+        std::map<std::string, bool>& refreshedPermList);
     static int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName);
     static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     static int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     static void GetPermStatusListByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     static void GetGrantedPermByTokenId(AccessTokenID tokenID,
-        const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList);
+        const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
     static void ClearAllSecCompGrantedPerm();
     static bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
 

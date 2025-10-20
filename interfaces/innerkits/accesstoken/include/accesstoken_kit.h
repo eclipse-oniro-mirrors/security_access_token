@@ -477,24 +477,17 @@ public:
 
     /**
      * @brief Set user permission policy
-     * @param userList list of user id.
-     * @param permList list of permission
+     * @param userPermissionList list of permission polcy.
      * @return error code, see access_token_error.h
      */
-    static int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
-
-    /**
-     * @brief Update user permission policy
-     * @param userList list of user id.
-     * @return error code, see access_token_error.h
-     */
-    static int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+    static int32_t SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList);
 
     /**
      * @brief Clear user permission policy
+     * @param permissionList list of permission.
      * @return error code, see access_token_error.h
      */
-    static int32_t ClearUserPolicy();
+    static int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
 
     /**
      * @brief Whether it is a system application

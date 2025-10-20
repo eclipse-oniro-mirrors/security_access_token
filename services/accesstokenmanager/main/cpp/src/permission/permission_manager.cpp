@@ -1026,20 +1026,11 @@ void PermissionManager::AddNativePermToKernel(AccessTokenID tokenID,
     }
 }
 
-void PermissionManager::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList)
+void PermissionManager::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList)
 {
-    std::vector<uint32_t> permCodeList;
-    for (const auto &permission : permList) {
-        uint32_t code;
-        if (!TransferPermissionToOpcode(permission, code)) {
-            continue;
-        }
-        permCodeList.emplace_back(code);
-    }
-
     std::vector<uint32_t> opCodeList;
     std::vector<bool> statusList;
-    HapTokenInfoInner::GetPermStatusListByTokenId(tokenID, permCodeList, opCodeList, statusList);
+    HapTokenInfoInner::GetPermStatusListByTokenId(tokenID, constrainedPermList, opCodeList, statusList);
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
     if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",

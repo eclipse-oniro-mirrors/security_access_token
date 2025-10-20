@@ -105,7 +105,7 @@ bool IsDefinedPermission(const std::string& permission)
     return true;
 }
 
-bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &permissionBriefDef)
+bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef)
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permission, opCode)) {
@@ -115,12 +115,21 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef &pe
     return true;
 }
 
-void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef &permissionBriefDef)
+bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef, uint32_t& opCode)
+{
+    if (!TransferPermissionToOpcode(permission, opCode)) {
+        return false; // default is false
+    }
+    permissionBriefDef = g_permList[opCode];
+    return true;
+}
+
+void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefDef)
 {
     permissionBriefDef = g_permList[opCode];
 }
 
-void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef &def)
+void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef& def)
 {
     def.permissionName = std::string(briefDef.permissionName);
     def.grantMode = static_cast<int>(briefDef.grantMode);

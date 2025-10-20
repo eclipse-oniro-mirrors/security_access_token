@@ -16,11 +16,11 @@ import("//build/test.gni")
 import("../../../../../access_token.gni")
 import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("InitUserPolicyStubFuzzTest") {
+ohos_fuzztest("SetUserPolicyStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [ "inituserpolicystub_fuzzer.cpp" ]
+  sources = [ "setuserpolicystub_fuzzer.cpp" ]
 
   cflags = [
     "-g",

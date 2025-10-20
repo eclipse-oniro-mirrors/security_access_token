@@ -295,14 +295,20 @@ typedef enum DlpType {
 } HapDlpType;
 
 /**
- * @brief User permission policy status.
+ * @brief User policy status.
  */
 typedef struct {
-    /** user id */
     int32_t userId;
-    /** active status */
-    bool isActive;
-} UserState;
+    bool isRestricted;
+} UserPolicy;
+
+/**
+ * @brief User permission policy.
+ */
+typedef struct {
+    std::string permissionName;
+    std::vector<UserPolicy> userPolicyList;
+} UserPermissionPolicy;
 
 /**
  * @brief Dlp permission type

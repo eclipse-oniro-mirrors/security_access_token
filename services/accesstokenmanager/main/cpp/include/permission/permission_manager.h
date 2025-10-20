@@ -101,7 +101,7 @@ public:
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     void AddNativePermToKernel(
         AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
-    void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<std::string>& permList);
+    void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,

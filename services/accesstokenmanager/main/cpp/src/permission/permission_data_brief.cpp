@@ -627,7 +627,7 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenId(AccessTokenID tokenID, st
 }
 
 void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
-    const std::vector<std::string>& constrainedList, std::vector<std::string>& permissionList)
+    const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList)
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
@@ -637,10 +637,9 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     }
     for (const auto& data : iter->second) {
         if (data.status == PERMISSION_GRANTED) {
-            std::string permission;
-            (void)TransferOpcodeToPermission(data.permCode, permission);
-            if (constrainedList.empty() ||
-                (std::find(constrainedList.begin(), constrainedList.end(), permission) == constrainedList.end())) {
+            if (std::find(constrainedList.begin(), constrainedList.end(), data.permCode) == constrainedList.end()) {
+                std::string permission;
+                (void)TransferOpcodeToPermission(data.permCode, permission);
                 permissionList.emplace_back(permission);
                 LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is granted.", permission.c_str());
             }
@@ -675,7 +674,7 @@ void PermissionDataBrief::GetPermStatusListByTokenId(AccessTokenID tokenID,
             bool status = data.status == PERMISSION_GRANTED ? true : false;
             statusList.emplace_back(status);
         } else {
-        /* The permission is constrained by user policy which is in constrainedList. */
+            /* The permission is constrained by user policy which is in constrainedList. */
             opCodeList.emplace_back(data.permCode);
             statusList.emplace_back(false);
         }
@@ -893,33 +892,18 @@ void PermissionDataBrief::ClearAllSecCompGrantedPermById(AccessTokenID tokenID)
     }
 }
 
-int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::string>& constrainedList,
-    bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList)
+int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
+    std::map<std::string, bool>& refreshedPermList)
 {
-    std::vector<uint32_t> constrainedCodeList;
-    for (const auto& perm : constrainedList) {
-        uint32_t code;
-        if (TransferPermissionToOpcode(perm, code)) {
-            constrainedCodeList.emplace_back(code);
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Perm %{public}s is not exist.", perm.c_str());
-        }
-    }
-    if (constrainedCodeList.empty()) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "constrainedCodeList is null.");
-        return RET_SUCCESS;
-    }
-
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenId);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist in requestedPermData_ %{public}u.", tokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID(%{public}u) is not exist in requestedPermData_.", tokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     for (const auto& data : iter->second) {
-        if (std::find(constrainedCodeList.begin(), constrainedCodeList.end(), data.permCode) ==
-            constrainedCodeList.end()) {
+        if (data.permCode != permCode) {
             continue;
         }
         bool isGrantedCurr;
@@ -930,7 +914,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         }
         bool isGrantedToBe = (data.status == PERMISSION_GRANTED) && hapUserIsActive;
         LOGI(ATM_DOMAIN, ATM_TAG,
-            "id=%{public}u, opCode=%{public}u, isGranted=%{public}d, hapUserIsActive=%{public}d",
+            "Id=%{public}u, opCode=%{public}u, isGrantedToBe=%{public}d, hapUserIsActive=%{public}d",
             tokenId, data.permCode, isGrantedToBe, hapUserIsActive);
         if (isGrantedCurr == isGrantedToBe) {
             continue;
@@ -943,6 +927,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(const std::vector<std::str
         std::string permission;
         (void)TransferOpcodeToPermission(data.permCode, permission);
         refreshedPermList[permission] = isGrantedToBe;
+        break;
     }
     return RET_SUCCESS;
 }

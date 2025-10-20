@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "inituserpolicy_fuzzer.h"
+#include "setuserpolicy_fuzzer.h"
 
 #include <string>
 #include <vector>
@@ -26,23 +26,25 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-bool InitUserPolicyFuzzTest(const uint8_t* data, size_t size)
+bool SetUserPolicyFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
 
     FuzzedDataProvider provider(data, size);
+    std::string permission = provider.ConsumeRandomLengthString();
 
-    std::string permissionName = provider.ConsumeRandomLengthString();
-    const std::vector<std::string> permList = { permissionName };
-    UserState state;
-    state.userId = provider.ConsumeIntegral<int32_t>();
-    state.isActive = provider.ConsumeBool();
-    std::vector<UserState> userList = { state };
-    AccessTokenKit::InitUserPolicy(userList, permList);
-    AccessTokenKit::UpdateUserPolicy(userList);
-    AccessTokenKit::ClearUserPolicy();
+    std::vector<std::string> permList = { permission };
+    UserPermissionPolicy policy;
+    policy.permissionName = permission;
+    UserPolicy userPolicy;
+    userPolicy.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicy.isRestricted = provider.ConsumeBool();
+    policy.userPolicyList.emplace_back(userPolicy);
+    std::vector<UserPermissionPolicy> permPolicyList = { policy };
+    AccessTokenKit::SetUserPolicy(permPolicyList);
+    AccessTokenKit::ClearUserPolicy(permList);
 
     return true;
 }
@@ -52,6 +54,6 @@ bool InitUserPolicyFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::InitUserPolicyFuzzTest(data, size);
+    OHOS::SetUserPolicyFuzzTest(data, size);
     return 0;
 }

@@ -1227,8 +1227,7 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     return ERR_OK;
 }
 
-int32_t AccessTokenManagerService::InitUserPolicy(
-    const std::vector<UserStateIdl>& userIdlList, const std::vector<std::string>& permList)
+int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1237,24 +1236,28 @@ int32_t AccessTokenManagerService::InitUserPolicy(
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    uint32_t userSize = userIdlList.size();
-    uint32_t permSize = permList.size();
-    if ((userSize > MAX_USER_POLICY_SIZE) || (permSize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size %{public}u is invalid.", userSize);
-        return AccessTokenError::ERR_OVERSIZE;
+    size_t policySize = userPermissionList.size();
+    if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    std::vector<UserState> userList;
-    for (const auto& item : userIdlList) {
-        UserState tmp;
-        tmp.userId = item.userId;
-        tmp.isActive = item.isActive;
-        userList.emplace_back(tmp);
+    std::vector<UserPermissionPolicy> policyList;
+    for (const auto& permPolicyIdl : userPermissionList) {
+        UserPermissionPolicy permPolicy;
+        permPolicy.permissionName = permPolicyIdl.permissionName;
+        for (const auto& userPolicyIdl : permPolicyIdl.userPolicyList) {
+            UserPolicy policy;
+            policy.userId = userPolicyIdl.userId;
+            policy.isRestricted = userPolicyIdl.isRestricted;
+            permPolicy.userPolicyList.emplace_back(policy);
+        }
+        policyList.emplace_back(permPolicy);
     }
-    return AccessTokenInfoManager::GetInstance().InitUserPolicy(userList, permList);
+    return AccessTokenInfoManager::GetInstance().SetUserPolicy(policyList);
 }
 
-int32_t AccessTokenManagerService::UpdateUserPolicy(const std::vector<UserStateIdl>& userIdlList)
+int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -1262,33 +1265,13 @@ int32_t AccessTokenManagerService::UpdateUserPolicy(const std::vector<UserStateI
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-
-    uint32_t userSize = userIdlList.size();
-    if (userSize > MAX_USER_POLICY_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size %{public}u is invalid.", userSize);
-        return AccessTokenError::ERR_OVERSIZE;
+    size_t permSize = permissionList.size();
+    if ((permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermSize %{public}zu is invalid.", permSize);
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    std::vector<UserState> userList;
-    for (const auto& item : userIdlList) {
-        UserState tmp;
-        tmp.userId = item.userId;
-        tmp.isActive = item.isActive;
-        userList.emplace_back(tmp);
-    }
-    return AccessTokenInfoManager::GetInstance().UpdateUserPolicy(userList);
-}
-
-int32_t AccessTokenManagerService::ClearUserPolicy()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
-    return AccessTokenInfoManager::GetInstance().ClearUserPolicy();
+    return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const

@@ -15,11 +15,14 @@
 
 package OHOS.Security.AccessToken;
 
-struct UserStateIdl {
-    /** user id */
+struct UserPolicyIdl {
     int userId;
-    /** active status */
-    boolean isActive;
+    boolean isRestricted;
+};
+
+struct UserPermissionPolicyIdl {
+    String permissionName;
+    List<UserPolicyIdl> userPolicyList;
 };
 
 struct PermissionWithValueIdl {

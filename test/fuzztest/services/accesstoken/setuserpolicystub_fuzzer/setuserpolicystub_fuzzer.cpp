@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "inituserpolicystub_fuzzer.h"
+#include "setuserpolicystub_fuzzer.h"
 
 #include <string>
 #include <thread>
@@ -70,53 +70,40 @@ void GetNativeToken()
     (void)SetSelfTokenID(g_mockTokenId);
 }
 
-void ClearUserPolicy()
+void ClearUserPolicy(const string& permission)
 {
     MessageParcel reply;
     MessageOption option;
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return;
+    }
+    if (!datas.WriteUint32(1)) {
+        return;
+    }
+    if (!datas.WriteString(permission)) {
         return;
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
         static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CLEAR_USER_POLICY), datas, reply, option);
 }
 
-void UpdateUserPolicy(FuzzedDataProvider& provider)
-{
-    UserStateIdl dataBlock;
-    dataBlock.userId = provider.ConsumeIntegral<int32_t>();
-    dataBlock.isActive = provider.ConsumeBool();
-
-    MessageParcel datas;
-    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        return;
-    }
-    if (!datas.WriteUint32(1)) {
-        return;
-    }
-    if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
-        return;
-    }
-
-    MessageParcel reply;
-    MessageOption option;
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
-        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_USER_POLICY), datas, reply, option);
-}
-
-bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
+bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permissionName = provider.ConsumeRandomLengthString();
+    std::string permission = provider.ConsumeRandomLengthString();
+    std::vector<std::string> permList = { permission };
 
-    UserStateIdl dataBlock;
-    dataBlock.userId = provider.ConsumeIntegral<int32_t>();
-    dataBlock.isActive = provider.ConsumeBool();
+    UserPermissionPolicyIdl dataBlock;
+    dataBlock.permissionName = permission;
+    UserPolicyIdl userPolicyIdl;
+    userPolicyIdl.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicyIdl.isRestricted = provider.ConsumeBool();
+    dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
@@ -125,18 +112,12 @@ bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteUint32(1)) {
         return false;
     }
-    if (UserStateIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
-        return false;
-    }
-    if (!datas.WriteUint32(1)) {
-        return false;
-    }
-    if (!datas.WriteString(permissionName)) {
+    if (UserPermissionPolicyIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
         return false;
     }
 
     uint32_t code = static_cast<uint32_t>(
-        IAccessTokenManagerIpcCode::COMMAND_INIT_USER_POLICY);
+        IAccessTokenManagerIpcCode::COMMAND_SET_USER_POLICY);
 
     MessageParcel reply;
     MessageOption option;
@@ -147,8 +128,7 @@ bool InitUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
         (void)SetSelfTokenID(g_selfTokenId);
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    UpdateUserPolicy(provider);
-    ClearUserPolicy();
+    ClearUserPolicy(permission);
 
     return true;
 }
@@ -169,6 +149,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::InitUserPolicyStubFuzzTest(data, size);
+    OHOS::SetUserPolicyStubFuzzTest(data, size);
     return 0;
 }
