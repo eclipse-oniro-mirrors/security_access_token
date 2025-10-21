@@ -26,8 +26,9 @@
 #include "tokenid_kit.h"
 
 using namespace testing::ext;
-using namespace OHOS::Security::AccessToken;
-
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
 namespace {
 static const uint32_t MOCK_USER_ID_10001 = 10001;
 static const uint32_t MOCK_USER_ID_10002 = 10002;
@@ -1009,23 +1010,25 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForUpdateHap, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
 }
 
-class CbCustomizeTest : public PermStateChangeCallbackCustomize {
+class CbCustomizeTestForEdm : public PermStateChangeCallbackCustomize {
 public:
-    explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
+    explicit CbCustomizeTestForEdm(const PermStateChangeScope &scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo)
     {
     }
 
-    ~CbCustomizeTest()
+    ~CbCustomizeTestForEdm()
     {}
 
     virtual void PermStateChangeCallback(PermStateChangeInfo& result)
     {
+        GTEST_LOG_(INFO) << "PermStateChangeCallback permissionName: " << result.permissionName;
+        GTEST_LOG_(INFO) << "PermStateChangeCallback permStateChangeType: " << result.permStateChangeType;
         ready_ = true;
         changeCnt_++;
     }
 
-    bool ready_;
+    bool ready_ = false;
     uint32_t changeCnt_ = 0;
 };
 
@@ -1059,8 +1062,8 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForRemove, TestSize.Level0)
 
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = { INTERNET, GET_NETWORK_STATS };
-    scopeInfo.tokenIDs = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    scopeInfo.tokenIDs = { tokenId };
+    auto callbackPtr = std::make_shared<CbCustomizeTestForEdm>(scopeInfo);
     callbackPtr->ready_ = false;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
@@ -2069,4 +2072,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken003, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+}
+}
 }
