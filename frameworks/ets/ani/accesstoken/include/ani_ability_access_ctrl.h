@@ -40,8 +40,19 @@ struct PermissionParamCache {
     std::string sysParamCache;
 };
 
-struct PermissionStatusCache {
+struct GrantStatusCache {
     int32_t status;
+    std::string paramValue;
+};
+
+struct AtManagerSyncContext {
+    std::string permissionName;
+    PermissionOper permissionsStatus = PermissionOper::INVALID_OPER;
+    int32_t result = RET_FAILED;
+};
+
+struct PermStatusCache {
+    PermissionOper status;
     std::string paramValue;
 };
 } // namespace AccessToken
