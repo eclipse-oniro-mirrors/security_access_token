@@ -129,7 +129,7 @@ static void transPermStateChangeTypeToAniInt(const int32_t permStateChangeType, 
 static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& result, ani_object& aniObject)
 {
     // class implements from interface should use property, independent class use field
-    aniObject = CreateClassObject(env, "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeInfoInner;");
+    aniObject = CreateClassObject(env, "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStateChangeInfoInner");
     if (aniObject == nullptr) {
         return;
     }
@@ -143,7 +143,7 @@ static void ConvertPermStateChangeInfo(ani_env* env, const PermStateChangeInfo& 
     // set permStateChangeType: int32_t
     ani_size index;
     transPermStateChangeTypeToAniInt(result.permStateChangeType, index);
-    const char* activeStatusDes = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/PermissionStateChangeType;";
+    const char* activeStatusDes = "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStateChangeType";
     SetEnumProperty(
         env, aniObject, activeStatusDes, PERM_STATE_CHANGE_FIELD_CHANGE, static_cast<int32_t>(index));
 }
@@ -191,7 +191,7 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
         return atManagerObj;
     }
 
-    static const char* className = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
+    static const char* className = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class cls;
     ani_status status;
     if ((status = env->FindClass(className, &cls)) != ANI_OK) {
@@ -458,7 +458,7 @@ static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]]
 }
 
 static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_array_ref aniPermissionList)
+    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_array aniPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionsStatusExecute begin.");
     if ((env == nullptr) || (aniPermissionList == nullptr)) {
@@ -606,10 +606,10 @@ static bool SetupPermissionSubscriber(
     return true;
 }
 
-static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref& aniId, const ani_array_ref& aniArray,
-    const ani_ref& aniCallback, RegisterPermStateChangeInf* context, bool isReg)
+static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
+    RegisterPermStateChangeInf* context, bool isReg)
 {
-    std::string type = ParseAniString(context->env, aniType);
+    std::string type = ParseAniString(context->env, aniInputInfo.aniType);
     if (type.empty()) {
         BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
             "type", "permissionStateChange or selfPermissionStateChange"));
@@ -627,7 +627,7 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref&
     PermStateChangeScope scopeInfo;
     std::string errMsg;
     if (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
-        if (!AniParseAccessTokenIDArray(context->env, aniId, scopeInfo.tokenIDs)) {
+        if (!AniParseAccessTokenIDArray(context->env, aniInputInfo.aniTokenIds, scopeInfo.tokenIDs)) {
             BusinessErrorAni::ThrowError(
                 context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("tokenIDList", "Array<int>"));
             return false;
@@ -635,15 +635,15 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array_ref&
     } else if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
         scopeInfo.tokenIDs = {GetSelfTokenID()};
     }
-    scopeInfo.permList = ParseAniStringVector(context->env, aniArray);
+    scopeInfo.permList = ParseAniStringVector(context->env, aniInputInfo.aniPermissionNames);
     bool hasCallback = true;
     if (!isReg) {
-        hasCallback = !(AniIsRefUndefined(context->env, aniCallback));
+        hasCallback = !(AniIsRefUndefined(context->env, aniInputInfo.aniCallback));
     }
 
-    ani_ref callback = aniCallback;
+    ani_ref callback = aniInputInfo.aniCallback;
     if (hasCallback) {
-        if (!AniParseCallback(context->env, aniCallback, callback)) {
+        if (!AniParseCallback(context->env, aniInputInfo.aniCallback, callback)) {
             BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg(
                 "callback", "Callback<PermissionStateChangeInfo>"));
             return false;
@@ -706,8 +706,17 @@ static bool IsExistRegister(const RegisterPermStateChangeInf* context)
     return false;
 }
 
+static void FillRegisterInfo(const ani_string& aniType, const ani_array& aniId, const ani_array& aniArray,
+    const ani_ref& callback, RegisterInputInfoAni& aniInputInfo)
+{
+    aniInputInfo.aniType = aniType;
+    aniInputInfo.aniTokenIds = aniId;
+    aniInputInfo.aniPermissionNames = aniArray;
+    aniInputInfo.aniCallback = callback;
+}
+
 static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniId, ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -721,14 +730,15 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
     }
     registerPermStateChangeInf->env = env;
     std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {registerPermStateChangeInf};
-    if (!ParseInputToRegister(aniType, aniId, aniArray, callback, registerPermStateChangeInf, true)) {
+    RegisterInputInfoAni aniInputInfo;
+    FillRegisterInfo(aniType, aniId, aniArray, callback, aniInputInfo);
+    if (!ParseInputToRegister(aniInputInfo, registerPermStateChangeInf, true)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ParseInputToRegister.");
         return;
     }
 
     if (IsExistRegister(registerPermStateChangeInf)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Faield to Subscribe. The current subscriber has existed or Reference_StrictEquals failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Subscribe. The subscriber has existed or Reference_StrictEquals failed!");
         std::string errMsg = "The API reuses the same input. The subscriber already exists.";
         if (registerPermStateChangeInf->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
             BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
@@ -756,8 +766,7 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
     {
         std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
         g_permStateChangeRegisters.emplace_back(registerPermStateChangeInf);
-        LOGI(ATM_DOMAIN, ATM_TAG,
-            "g_PermStateChangeRegisters size = %{public}zu.", g_permStateChangeRegisters.size());
+        LOGI(ATM_DOMAIN, ATM_TAG, "g_PermStateChangeRegisters size = %{public}zu.", g_permStateChangeRegisters.size());
     }
     callbackPtr.release();
     return;
@@ -833,7 +842,7 @@ static void DeleteRegisterFromVector(const RegisterPermStateChangeInf* context)
 }
 
 static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_string aniType, ani_array_ref aniId, ani_array_ref aniArray, ani_ref callback)
+    ani_string aniType, ani_array aniId, ani_array aniArray, ani_ref callback)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "UnregisterPermStateChangeCallback In.");
     if (env == nullptr) {
@@ -848,18 +857,19 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
     }
     context->env = env;
     std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {context};
+    RegisterInputInfoAni aniInputInfo;
+    FillRegisterInfo(aniType, aniId, aniArray, callback, aniInputInfo);
 
-    if (!ParseInputToRegister(aniType, aniId, aniArray, callback, context, false)) {
+    if (!ParseInputToRegister(aniInputInfo, context, false)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ParseInputToRegister.");
         return;
     }
 
     std::vector<RegisterPermStateChangeInf*> batchPermStateChangeRegisters;
     if (!FindAndGetSubscriberInVector(context, batchPermStateChangeRegisters)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to Unsubscribe. The current subscriber does not exist or Reference_StrictEquals failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Unsubscribe. The subscriber does not exist or reference equals failed!");
         if (context->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
-            BusinessErrorAni::ThrowError(
-                env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
+            BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_NOT_USE_TOGETHER,
                 GetErrorMessage(STSErrorCode::STS_ERROR_NOT_USE_TOGETHER));
         } else {
             BusinessErrorAni::ThrowError(
@@ -876,14 +886,13 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
         } else {
             result = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(item->subscriber);
         }
-        if (result == RET_SUCCESS) {
-            DeleteRegisterFromVector(item);
-        } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UnregisterPermStateChangeCallback");
+        if (result != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UnregisterPermStateChangeCallback.");
             int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
             return;
         }
+        DeleteRegisterFromVector(item);
     }
     return;
 }
@@ -996,7 +1005,7 @@ ani_status InitAbilityCtrlFunction(ani_env* env)
 
     ani_status retStatus = ANI_OK;
     ani_namespace aniAtNamespace;
-    const char* atNamespace = "L@ohos/abilityAccessCtrl/abilityAccessCtrl;";
+    const char* atNamespace = "@ohos.abilityAccessCtrl.abilityAccessCtrl";
     retStatus = env->FindNamespace(atNamespace, &aniAtNamespace);
     if (retStatus != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s, status: %{public}u.", atNamespace, retStatus);
@@ -1011,7 +1020,7 @@ ani_status InitAbilityCtrlFunction(ani_env* env)
             atNamespace, retStatus);
         return retStatus;
     };
-    const char* atManagerClassName = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/AtManagerInner;";
+    const char* atManagerClassName = "@ohos.abilityAccessCtrl.abilityAccessCtrl.AtManagerInner";
     ani_class aniAtManagerClassName;
     retStatus = env->FindClass(atManagerClassName, &aniAtManagerClassName);
     if (retStatus != ANI_OK) {

@@ -23,7 +23,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-constexpr const char* BUSINESS_ERROR_CLASS = "L@ohos/base/BusinessError;";
+constexpr const char* BUSINESS_ERROR_CLASS = "@ohos.base.BusinessError";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
@@ -73,7 +73,7 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
-    status = env->Class_FindMethod(cls, "<ctor>", ":V", &method);
+    status = env->Class_FindMethod(cls, "<ctor>", ":", &method);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return nullptr;

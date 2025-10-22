@@ -35,7 +35,7 @@ bool AniClassFindField(ani_env* env, const ani_class& aniClass, const std::strin
 bool AniParseCallback(ani_env* env, const ani_ref& ani_callback, ani_ref& out);
 bool AniIsRefUndefined(ani_env* env, const ani_ref& ref);
 bool AniParseUint32(ani_env* env, const ani_int& aniInt, uint32_t& out);
-bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out);
+bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vector<uint32_t>& out);
 
 bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value);
 bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
@@ -62,7 +62,7 @@ bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size siz
 
 // ani to naitive
 std::string ParseAniString(ani_env* env, const ani_string& aniStr);
-std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref& aniStrArr);
+std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& aniStrArr);
 
 // native to ani
 ani_string CreateAniString(ani_env *env, const std::string& str);
