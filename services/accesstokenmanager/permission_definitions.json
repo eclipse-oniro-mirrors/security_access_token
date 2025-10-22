@@ -671,6 +671,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.FORCE_FACTORY_RESET",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ASSIST_DEVICE_UPDATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
