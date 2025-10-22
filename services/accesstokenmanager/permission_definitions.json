@@ -678,7 +678,8 @@
             "since": 23,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.ASSIST_DEVICE_UPDATE",
@@ -1432,7 +1433,8 @@
             "since": 9,
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.MANAGE_MEDIA_RESOURCES",
