@@ -679,7 +679,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone"]
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.ASSIST_DEVICE_UPDATE",
