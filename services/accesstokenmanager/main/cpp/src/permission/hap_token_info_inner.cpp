@@ -97,6 +97,7 @@ HapTokenInfoInner::~HapTokenInfoInner()
 void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
     const HapPolicy& hapPolicy)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     if (info.isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
@@ -108,7 +109,6 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     } else {
         tokenInfoBasic_.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
-    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
 }
 

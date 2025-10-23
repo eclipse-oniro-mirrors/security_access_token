@@ -155,8 +155,8 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
 
 int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->notifyLock_);
     if (tokenSyncCallbackObject_ != nullptr) {
-        std::shared_lock<std::shared_mutex> infoGuard(this->notifyLock_);
         int32_t ret = tokenSyncCallbackObject_->GetRemoteHapTokenInfo(deviceID, tokenID);
         if (ret != TOKEN_SYNC_OPENSOURCE_DEVICE) {
             return ret;
