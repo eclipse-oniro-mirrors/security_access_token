@@ -138,8 +138,8 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
 {
     ani_class arrayCls = nullptr;
     ani_status status = ANI_ERROR;
-    if ((status = env->FindClass("escompat.Array", &arrayCls)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array: %{public}u!", status);
+    if ((status = env->FindClass("std.core.Array", &arrayCls)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name std.core.Array: %{public}u!", status);
         return nullptr;
     }
 
