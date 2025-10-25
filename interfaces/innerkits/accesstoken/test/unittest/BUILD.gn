@@ -182,3 +182,62 @@ ohos_unittest("accesstoken_mock_test") {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }
 }
+
+ohos_unittest("libaccesstoken_muti_thread_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_innerkit_path}/include",
+    "common",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  sources = [
+    "MutiThreadTest/multi_thread_test.cpp",
+    "common/test_common.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  ]
+
+  deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gmock",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "ipc:libdbinder",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+}

@@ -26,6 +26,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr int32_t RANDOM_USERID = 10001;
 static uint64_t g_selfTokenId = 0;
 static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
@@ -149,7 +151,7 @@ HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
 {
     std::string remoteDevice = "remote device";
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     AccessTokenID localTokenId = AccessTokenKit::AllocLocalTokenID(remoteDevice, tokenId);
     ASSERT_EQ(INVALID_TOKENID, localTokenId);
 }
@@ -163,7 +165,7 @@ HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level0)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx.tokenIdExStruct.tokenID = 123;
+    tokenIdEx.tokenIdExStruct.tokenID = RANDOM_TOKENID;
     UpdateHapInfoParams info;
     info.appIDDesc = "appId desc";
     info.apiVersion = 9;
@@ -180,7 +182,7 @@ HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToken(tokenId));
 }
 
@@ -207,7 +209,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     HapTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo));
 }
@@ -234,7 +236,7 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level0)
 {
     std::vector<PermissionStateFull> permStatList;
-    AccessTokenID tokenID = 123; // 123: tokenid
+    AccessTokenID tokenID = RANDOM_TOKENID;
 
     // no permission
     ASSERT_EQ(
@@ -249,7 +251,7 @@ HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
     uint32_t flag;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionFlag(tokenId, permission, flag));
@@ -263,7 +265,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
-    int32_t userID = 123;
+    int32_t userID = RANDOM_USERID;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permission = "ohos.permission.CAMERA";
 
@@ -279,7 +281,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Leve
  */
 HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
 {
-    int32_t userID = 123;
+    int32_t userID = RANDOM_USERID;
     uint32_t status;
     std::string permission = "ohos.permission.CAMERA";
 
@@ -295,7 +297,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Leve
  */
 HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123; // 123: tokenid
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GrantPermission(tokenId, permission, PERMISSION_USER_FIXED));
@@ -309,7 +311,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::RevokePermission(tokenId, permission, PERMISSION_USER_FIXED));
@@ -323,7 +325,7 @@ HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
 }
 
@@ -423,7 +425,7 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
-    info.tokenId = 123;
+    info.tokenId = RANDOM_TOKENID;
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
     ASSERT_EQ("", dumpInfo);
 }
@@ -437,7 +439,7 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync));
 }
@@ -464,7 +466,7 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level0)
 {
     std::string device = "device";
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteToken(device, tokenId));
 }
 
@@ -477,7 +479,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level0)
 {
     std::string device = "device";
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(INVALID_TOKENID, AccessTokenKit::GetRemoteNativeTokenID(device, tokenId));
 }
 
@@ -521,7 +523,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "permission";
     uint32_t onceTime = 1;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
@@ -536,7 +538,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level
  */
 HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = RANDOM_TOKENID;
     std::vector<PermissionWithValue> kernelPermList;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetKernelPermissions(tokenId, kernelPermList));
 }

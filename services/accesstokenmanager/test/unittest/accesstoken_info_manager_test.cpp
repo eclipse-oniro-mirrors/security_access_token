@@ -44,6 +44,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
@@ -1179,7 +1180,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123; // 123 is random input
+    AccessTokenID tokenId = RANDOM_TOKENID;
 
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
     ASSERT_NE(nullptr, hap);
@@ -1201,7 +1202,7 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level0)
     std::vector<AccessTokenID> modifiedTokenList = TokenModifyNotifier::GetInstance().modifiedTokenList_; // backup
     TokenModifyNotifier::GetInstance().modifiedTokenList_.clear();
 
-    AccessTokenID tokenId = 123; // 123 is random input
+    AccessTokenID tokenId = RANDOM_TOKENID;
 
     TokenModifyNotifier::GetInstance().modifiedTokenList_.emplace_back(tokenId);
     ASSERT_EQ(true, TokenModifyNotifier::GetInstance().modifiedTokenList_.size() > 0);
@@ -1280,7 +1281,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
     TokenModifyNotifier::GetInstance().deleteTokenList_.clear();
 
     // add a hap token
-    AccessTokenIDEx tokenIdEx = {123};
+    AccessTokenIDEx tokenIdEx = { RANDOM_TOKENID };
     std::vector<GenericValues> undefValues;
     int32_t result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
@@ -1353,7 +1354,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
     // infoPtr is null
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
 
-    mapID = 123; // 123 is random input
+    mapID = RANDOM_TOKENID;
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->SetRemote(true);
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
@@ -1372,17 +1373,17 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level0)
 {
-    AccessTokenID mapID = 123; // 123 is random input
+    AccessTokenID mapID = RANDOM_TOKENID;
     HapTokenInfoForSync hapSync;
 
-    hapSync.baseInfo.tokenID = 123; // 123 is random input
+    hapSync.baseInfo.tokenID = RANDOM_TOKENID;
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[123] = info;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[RANDOM_TOKENID] = info;
 
     // count(id) exsit
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateRemoteHapTokenInfo(mapID, hapSync));
 
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(123);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(RANDOM_TOKENID);
 }
 
 /**
@@ -1394,7 +1395,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level
 HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
 {
     std::string deviceID = "dev-001";
-    AccessTokenID tokenID = 123; // 123 is random input
+    AccessTokenID tokenID = RANDOM_TOKENID;
 
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenInfoManager::GetInstance().DeleteRemoteToken("", tokenID));
@@ -1473,7 +1474,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level0)
     EXPECT_EQ(false, dumpInfo.empty());
 
     dumpInfo.clear();
-    info.tokenId = static_cast<AccessTokenID>(123);
+    info.tokenId = static_cast<AccessTokenID>(RANDOM_TOKENID);
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ("invalid tokenId", dumpInfo);
 }
@@ -1968,7 +1969,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Lev
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, remoteID));
 
     deviceID = "dev-001";
-    remoteID = 123; // 123 is random input
+    remoteID = RANDOM_TOKENID;
 
     // count < 1
     ASSERT_NE(RET_SUCCESS,
@@ -1988,7 +1989,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level0)
     std::set<AccessTokenID> observationSet = TokenModifyNotifier::GetInstance().observationSet_; // backup
     TokenModifyNotifier::GetInstance().observationSet_.clear();
 
-    AccessTokenID tokenId = 123; // 123 is random input
+    AccessTokenID tokenId = RANDOM_TOKENID;
 
     TokenModifyNotifier::GetInstance().observationSet_.insert(tokenId);
     ASSERT_EQ(true, TokenModifyNotifier::GetInstance().observationSet_.count(tokenId) > 0);
@@ -2108,7 +2109,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Lev
  */
 HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap001, TestSize.Level0)
 {
-    AccessTokenID tokenId = 123; // 123: invalid tokenid
+    AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenId, true));
 }
 
@@ -2163,7 +2164,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level0)
     ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(INVALID_TOKENID));
 
     // nonexist token
-    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(123)); // 123: tokenid
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(RANDOM_TOKENID));
 
     // tokeninfo is nullptr
     HapBaseInfo baseInfo = {
@@ -2179,7 +2180,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level0)
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     std::shared_ptr<HapTokenInfoInner> back = AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId];
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
-    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(123)); // 123: tokenid
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(RANDOM_TOKENID));
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = back;
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
@@ -2357,7 +2358,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSi
         permissionName, status, userID));
 
     // Permission name is invalid.
-    userID = 123;
+    userID = RANDOM_TOKENID;
     ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
         "", status, userID));
 
@@ -2386,7 +2387,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSi
  */
 HWTEST_F(AccessTokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
 {
-    int32_t userID = 123;
+    int32_t userID = RANDOM_TOKENID;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permissionName = "ohos.permission.CAMERA";
 
@@ -2416,7 +2417,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSi
         permissionName, status, userID));
 
     // PermissionName is invalid.
-    userID = 123;
+    userID = 123; // 123: invalid userId
     ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
         "", status, userID));
 

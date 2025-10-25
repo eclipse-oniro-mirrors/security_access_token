@@ -60,7 +60,7 @@ void GetPermissionFlagTest::SetUpTestCase()
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back(GRANT_SENSITIVE_PERMISSION);
-    g_mock = new (std::nothrow) MockHapToken("GetPermissionFlagTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("GetPermissionFlagMockTest", reqPerm, true);
 }
 
 void GetPermissionFlagTest::TearDownTestCase()

@@ -36,7 +36,7 @@
 #include "privacy_manager_proxy_death_param.h"
 #include "system_ability_definition.h"
 #include "string_ex.h"
-#include "tokenid_kit.h"
+#include "tokenid_attributes.h"
 
 #ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
@@ -618,7 +618,7 @@ bool PrivacyManagerService::IsAccessTokenCalling() const
 bool PrivacyManagerService::IsSystemAppCalling() const
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
-    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    return TokenIDAttributes::IsSystemApp(fullTokenId);
 }
 
 bool PrivacyManagerService::VerifyPermission(const std::string& permission) const

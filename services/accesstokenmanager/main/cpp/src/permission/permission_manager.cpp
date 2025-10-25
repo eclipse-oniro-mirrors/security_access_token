@@ -176,7 +176,7 @@ static bool IsPermissionRequestedInHap(const std::vector<PermissionStatus>& perm
         return permission == perm.permissionName;
     });
     if (iter == permsList.end()) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Can not find permission: %{public}s define!", permission.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "Can not find permission: %{public}s from request permission!", permission.c_str());
         permState.errorReason = PERM_NOT_DECLEARED;
         return false;
     }
@@ -193,7 +193,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     // Specified apps can get the permission by pre-authorization instead of Pop-ups.
     auto iterator = std::find(g_notDisplayedPerms.begin(), g_notDisplayedPerms.end(), permission);
     if (iterator != g_notDisplayedPerms.end()) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Permission is not available to common apps: %{public}s!", permission.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "Permission(%{public}s) is not available to common apps!", permission.c_str());
         return true;
     }
 
@@ -204,7 +204,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     if ((dlpType != DLP_COMMON) &&
         !DlpPermissionSetManager::GetInstance().IsPermissionAvailableToDlpHap(dlpType, permission)) {
         LOGW(ATM_DOMAIN, ATM_TAG,
-            "callingTokenId is not allowed to grant dlp permission: %{public}s!", permission.c_str());
+            "Id(%{public}u) is not allowed to grant dlp permission: %{public}s!", callingTokenId, permission.c_str());
         return true;
     }
 #endif

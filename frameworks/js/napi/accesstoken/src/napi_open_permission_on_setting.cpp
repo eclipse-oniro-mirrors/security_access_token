@@ -165,7 +165,7 @@ static void PermissionResultsCallbackUI(std::shared_ptr<OpenPermOnSettingAsyncCo
         napi_close_handle_scope(asyncContext->env, scope);
         delete retCB;
     };
-    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate, "PermissionResultsCallbackUI")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionResultsCallbackUI: Failed to SendEvent");
     } else {
         callbackPtr.release();

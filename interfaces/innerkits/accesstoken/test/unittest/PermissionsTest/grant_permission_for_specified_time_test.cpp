@@ -63,7 +63,7 @@ void GrantPermissionForSpecifiedTimeTest::SetUpTestCase()
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO");
-    g_mock = new (std::nothrow) MockHapToken("GrantPermissionForSpecifiedTimeTest", reqPerm);
+    g_mock = new (std::nothrow) MockHapToken("GrantPermissionForSpecifiedTimeMockTest", reqPerm);
 }
 
 void GrantPermissionForSpecifiedTimeTest::TearDownTestCase()

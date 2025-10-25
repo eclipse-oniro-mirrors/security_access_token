@@ -57,7 +57,7 @@ void ClearUserGrantedPermissionStateTest::SetUpTestCase()
     TestCommon::SetTestEvironment(g_selfTokenId);
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
-    g_mock = new (std::nothrow) MockHapToken("ClearUserGrantedPermissionStateTest", reqPerm);
+    g_mock = new (std::nothrow) MockHapToken("ClearUserGrantedPermissionStateMockTest", reqPerm);
 }
 
 void ClearUserGrantedPermissionStateTest::TearDownTestCase()

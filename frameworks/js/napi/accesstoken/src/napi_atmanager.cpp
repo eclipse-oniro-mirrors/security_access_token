@@ -165,7 +165,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
         napi_close_handle_scope(registerPermStateChangeWorker->env, scope);
         delete registerPermStateChangeWorker;
     };
-    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high, "PermStateChangeCallback")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermStateChangeCallback: Failed to SendEvent");
     } else {
         workPtr.release();
@@ -205,7 +205,7 @@ void RegisterPermStateChangeScopePtr::DeleteNapiRef()
         napi_delete_reference(registerPermStateChangeWorker->env, registerPermStateChangeWorker->ref);
         delete registerPermStateChangeWorker;
     };
-    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high, "DeleteNapiRefForPermStateChange")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "DeleteNapiRef: Failed to SendEvent");
     } else {
         workPtr.release();

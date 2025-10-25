@@ -90,7 +90,7 @@ PermissionStateFull g_infoManagerTestStateMdm = {
 
 HapInfoParams g_testHapInfoParams = {
     .userID = 1,
-    .bundleName = "testName",
+    .bundleName = "AppInstallationOptimizedTest",
     .instIndex = 0,
     .appIDDesc = "test2",
     .apiVersion = 11 // api version is 11
@@ -335,6 +335,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level0)
     AccessTokenIDEx fullTokenId;
     int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
     EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -431,6 +432,9 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level0)
     EXPECT_EQ(permStatList2[1].grantStatus[0], PERMISSION_DENIED);
     EXPECT_EQ(permStatList2[1].grantFlags[0], PERMISSION_USER_SET);
     EXPECT_EQ(RET_SUCCESS, res);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(dlpFullTokenId1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(dlpFullTokenId2.tokenIdExStruct.tokenID));
 }
 #endif
 
@@ -1080,8 +1084,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
     testPolicyParam.aclRequestedList.emplace_back("ohos.permission.CAMERA");
 
-    res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    ASSERT_EQ(ERR_WRITE_PARCEL_FAILED, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId));
 }
 
 /**
@@ -1106,13 +1109,11 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal002, TestSize.Level0)
         testPolicyParam.preAuthorizationInfo.emplace_back(info);
     }
     AccessTokenIDEx fullTokenId;
-    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
     testPolicyParam.preAuthorizationInfo.emplace_back(info);
 
-    res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
-    EXPECT_NE(RET_SUCCESS, res);
+    EXPECT_EQ(ERR_WRITE_PARCEL_FAILED, AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId));
 }
 
 /**
@@ -1186,7 +1187,6 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal004, TestSize.Level0)
     EXPECT_NE(RET_SUCCESS, res);
     testPolicyParam.domain = g_testPolicyParams.domain;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -63,7 +63,10 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_status_parcel.cpp",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
+  ]
 
   if (security_component_enhance_enable) {
     sources += [ "src/sec_comp_enhance_data_parcel.cpp" ]

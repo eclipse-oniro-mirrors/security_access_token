@@ -116,7 +116,7 @@ void SensitiveManagerServiceTest::SetUpTestCase()
     reqPerm.emplace_back("ohos.permission.GET_RUNNING_INFO");
     reqPerm.emplace_back("ohos.permission.MANAGE_AUDIO_CONFIG");
     reqPerm.emplace_back("ohos.permission.MICROPHONE_CONTROL");
-    g_mock = new (std::nothrow) MockHapToken("SensitiveManagerServiceTest", reqPerm);
+    g_mock = new (std::nothrow) MockHapToken("SensitiveManagerServiceMockTest", reqPerm);
 }
 
 void SensitiveManagerServiceTest::TearDownTestCase()
