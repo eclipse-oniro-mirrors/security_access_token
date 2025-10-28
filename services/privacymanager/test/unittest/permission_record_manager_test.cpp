@@ -729,12 +729,12 @@ static void CheckResult(const int32_t startResult1, const int32_t startResult2, 
 }
 
 /*
- * @tc.name: StartUsingPermissionTest012
+ * @tc.name: StartUsingPermissionTest011
  * @tc.desc: Test edm disallow
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Level0)
 {
     char value[VALUE_MAX_LEN] = {0};
     GetParameter(EDM_CAMERA_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
@@ -783,16 +783,16 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Leve
 
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, isMicDisable)); // recovery
     std::string str = isMute ? "true" : "false";
-    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
+    SetParameter(EDM_CAMERA_MUTE_KEY, str.c_str());
 }
 
 /*
- * @tc.name: StartUsingPermissionTest011
+ * @tc.name: StartUsingPermissionTest012
  * @tc.desc: Test default pid -1 start using permission and OnProcessDied
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest011, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Level0)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
