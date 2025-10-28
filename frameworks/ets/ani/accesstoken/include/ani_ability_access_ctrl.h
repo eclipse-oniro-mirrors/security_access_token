@@ -55,6 +55,13 @@ struct PermStatusCache {
     PermissionOper status;
     std::string paramValue;
 };
+
+struct RegisterInputInfoAni {
+    ani_string aniType = nullptr;
+    ani_array aniTokenIds = nullptr;
+    ani_array aniPermissionNames = nullptr;
+    ani_ref aniCallback = nullptr;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -160,7 +160,7 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
         LOGE(ATM_DOMAIN, ATM_TAG, "env is nullptr");
         return nullptr;
     }
-    if ((status = env->FindClass("Lsecurity/PermissionRequestResult/PermissionRequestResult;", &cls)) != ANI_OK) {
+    if ((status = env->FindClass("security.PermissionRequestResult.PermissionRequestResult", &cls)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "FindClass status %{public}u.", status);
         return nullptr;
     }
@@ -169,7 +169,7 @@ ani_object RequestAsyncContext::WrapResult(ani_env* env)
         return nullptr;
     }
     ani_method method = nullptr;
-    if ((status = env->Class_FindMethod(cls, "<ctor>", ":V", &method)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(cls, "<ctor>", ":", &method)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Class_FindMethod status %{public}u.", status);
         return nullptr;
     }
@@ -319,7 +319,7 @@ static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContex
     }
 }
 
-static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array_ref aniPermissionList,
+static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array aniPermissionList,
     ani_object callback, std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (!asyncContext->FillInfoFromContext(aniContext)) {
@@ -336,7 +336,7 @@ static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array_ref an
 }
 
 void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
-    ani_object aniContext, ani_array_ref aniPermissionList, ani_object callback)
+    ani_object aniContext, ani_array aniPermissionList, ani_object callback)
 {
     if (env == nullptr || aniPermissionList == nullptr || callback == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "env or aniPermissionList or callback is null.");

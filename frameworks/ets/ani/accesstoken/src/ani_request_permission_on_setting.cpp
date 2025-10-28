@@ -68,13 +68,13 @@ static void StateToEnumIndex(int32_t state, ani_size& enumIndex)
 ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
 {
     ani_class arrayCls = nullptr;
-    if (env->FindClass("Lescompat/Array;", &arrayCls) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name Lescompat/Array!");
+    if (env->FindClass("escompat.Array", &arrayCls) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array!");
         return nullptr;
     }
 
     ani_method arrayCtor;
-    if (env->Class_FindMethod(arrayCls, "<ctor>", "I:V", &arrayCtor) != ANI_OK) {
+    if (env->Class_FindMethod(arrayCls, "<ctor>", "i:", &arrayCtor) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass <ctor>!");
         return nullptr;
     }
@@ -86,7 +86,7 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
         return nullptr;
     }
 
-    const char* enumDescriptor = "L@ohos/abilityAccessCtrl/abilityAccessCtrl/GrantStatus;";
+    const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
     ani_enum enumType;
     if (env->FindEnum(enumDescriptor, &enumType) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name %{public}s!", enumDescriptor);
@@ -103,7 +103,7 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
             break;
         }
 
-        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "ILstd/core/Object;:V", index, enumItem) != ANI_OK) {
+        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void set!");
             break;
         }
@@ -247,7 +247,7 @@ bool RequestPermOnSettingAsyncContext::NoNeedUpdate()
     return false;
 }
 
-static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array_ref& aniPermissionList,
+static bool ParseRequestPermissionOnSetting(ani_env* env, ani_object& aniContext, ani_array& aniPermissionList,
     ani_object callback, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
     if (!asyncContext->FillInfoFromContext(aniContext)) {
@@ -277,7 +277,7 @@ static bool CheckManualSettingPerm(const std::vector<std::string>& permissionLis
 }
 
 void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array_ref permissionList, ani_object callback)
+    [[maybe_unused]] ani_object object, ani_object aniContext, ani_array permissionList, ani_object callback)
 {
     if (env == nullptr || permissionList == nullptr || callback == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList or callback is null.");

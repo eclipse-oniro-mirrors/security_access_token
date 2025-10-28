@@ -93,7 +93,7 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     ani_int tmp;
     ani_status status;
     if ((status = env->Object_CallMethodByName_Int(
-        static_cast<ani_object>(aniInt), "unboxed", nullptr, &tmp)) != ANI_OK) {
+        static_cast<ani_object>(aniInt), "toInt", nullptr, &tmp)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Object_CallMethodByName_Int failed! %{public}u.", status);
         return false;
     }
@@ -102,7 +102,7 @@ bool AniParseUint32(ani_env* env, const ani_ref& aniInt, uint32_t& out)
     return true;
 }
 
-bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::vector<uint32_t>& out)
+bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vector<uint32_t>& out)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -118,8 +118,8 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::v
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref elementRef;
-        if ((status = env->Array_Get_Ref(array, i, &elementRef)) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref at index %{public}zu, status: %{public}u.", i, status);
+        if ((status = env->Array_Get(array, i, &elementRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get at index %{public}zu, status: %{public}u.", i, status);
             return false;
         }
         uint32_t value;
@@ -134,7 +134,7 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array_ref& array, std::v
     return true;
 }
 
-std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref& aniStrArr)
+std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& aniStrArr)
 {
     std::vector<std::string> out;
     if (env == nullptr) {
@@ -150,8 +150,8 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array_ref&
 
     for (ani_size i = 0; i < size; ++i) {
         ani_ref aniRef;
-        if ((status = env->Array_Get_Ref(aniStrArr, i, &aniRef)) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get_Ref: %{public}u.", status);
+        if ((status = env->Array_Get(aniStrArr, i, &aniRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get: %{public}u.", status);
             return out;
         }
 
@@ -286,26 +286,21 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     }
 
     ani_size length = cArray.size();
-    ani_array_ref aArrayRef = nullptr;
-    ani_class aStringcls = nullptr;
-    ani_status status;
-    if ((status = env->FindClass("Lstd/core/String;", &aStringcls)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass String: %{public}u.", status);
-        return nullptr;
-    }
+    ani_array aArrayRef = nullptr;
     ani_ref undefinedRef = nullptr;
+    ani_status status;
     if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
         return nullptr;
     }
-    if ((status = env->Array_New_Ref(aStringcls, length, undefinedRef, &aArrayRef)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Ref: %{public}u.", status);
+    if ((status = env->Array_New(length, undefinedRef, &aArrayRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New: %{public}u.", status);
         return nullptr;
     }
     ani_string aString = nullptr;
     for (ani_size i = 0; i < length; ++i) {
         env->String_NewUTF8(cArray[i].c_str(), cArray[i].size(), &aString);
-        env->Array_Set_Ref(aArrayRef, i, aString);
+        env->Array_Set(aArrayRef, i, aString);
     }
     ani_ref aRef = nullptr;
     if ((status = env->GlobalReference_Create(aArrayRef, &aRef)) != ANI_OK) {
@@ -323,14 +318,37 @@ ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray)
     }
 
     ani_size length = cArray.size();
-    ani_array_int aArrayInt = nullptr;
+    ani_array aArrayInt = nullptr;
+    ani_ref undefinedRef = nullptr;
     ani_status status;
-    if ((status = env->Array_New_Int(length, &aArrayInt)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Int: %{public}u.", status);
+    if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return nullptr;
+    }
+    if ((status = env->Array_New(length, undefinedRef, &aArrayInt)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New: %{public}u.", status);
+        return nullptr;
+    }
+    ani_class intClass {};
+    ani_method intCtor {};
+    if ((status = env->FindClass("std.core.Int", &intClass)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Int: %{public}u.", status);
+        return nullptr;
+    }
+    if ((status = env->Class_FindMethod(intClass, "<ctor>", "i:", &intCtor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor: %{public}u.", status);
         return nullptr;
     }
     for (ani_size i = 0; i < length; ++i) {
-        env->Array_SetRegion_Int(aArrayInt, i, length, &cArray[i]);
+        ani_object intObj {};
+        if ((status = env->Object_New(intClass, intCtor, &intObj, static_cast<ani_int>(cArray[i]))) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Int: %{public}u.", status);
+            return nullptr;
+        }
+        if ((status = env->Array_Set(aArrayInt, i, intObj)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array: %{public}u.", status);
+            return nullptr;
+        }
     }
     ani_ref aRef = nullptr;
     if ((status = env->GlobalReference_Create(aArrayInt, &aRef)) != ANI_OK) {
@@ -348,18 +366,41 @@ ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray)
     }
 
     ani_size length = cArray.size();
-    ani_array_boolean aArrayBool = nullptr;
+    ani_array aArrayBool = nullptr;
+    ani_ref undefinedRef = nullptr;
     ani_status status;
-    if ((status = env->Array_New_Boolean(length, &aArrayBool)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New_Boolean: %{public}u.", status);
+    if ((status = env->GetUndefined(&undefinedRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return nullptr;
+    }
+    if ((status = env->Array_New(length, undefinedRef, &aArrayBool)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_New: %{public}u.", status);
         return nullptr;
     }
     std::vector<ani_boolean> boolArray(length);
     for (ani_size i = 0; i < length; ++i) {
         boolArray[i] = cArray[i];
     }
+    ani_class booleanClass {};
+    ani_method booleanCtor {};
+    if ((status = env->FindClass("std.core.Boolean", &booleanClass)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass std.core.Boolean: %{public}u.", status);
+        return nullptr;
+    }
+    if ((status = env->Class_FindMethod(booleanClass, "<ctor>", "z:", &booleanCtor)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Find constructor: %{public}u.", status);
+        return nullptr;
+    }
     for (ani_size i = 0; i < length; ++i) {
-        env->Array_SetRegion_Boolean(aArrayBool, i, length, &boolArray[i]);
+        ani_object booleanObj {};
+        if ((status = env->Object_New(booleanClass, booleanCtor, &booleanObj, boolArray[i])) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create Boolean: %{public}u.", status);
+            return nullptr;
+        }
+        if ((status = env->Array_Set(aArrayBool, i, booleanObj)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array: %{public}u.", status);
+            return nullptr;
+        }
     }
     ani_ref aRef = nullptr;
     if ((status = env->GlobalReference_Create(aArrayBool, &aRef)) != ANI_OK) {
@@ -392,12 +433,12 @@ ani_object CreateBooleanObject(ani_env* env, bool value)
 
     ani_class persionCls;
     ani_status status = ANI_ERROR;
-    if ((status = env->FindClass("Lstd/core/Boolean;", &persionCls)) != ANI_OK) {
+    if ((status = env->FindClass("std.core.Boolean", &persionCls)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}u.", status);
         return nullptr;
     }
     ani_method personInfoCtor;
-    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "Z:V", &personInfoCtor)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "z:", &personInfoCtor)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}u.", status);
         return nullptr;
     }
@@ -418,12 +459,12 @@ ani_object CreateIntObject(ani_env* env, int32_t value)
 
     ani_class persionCls;
     ani_status status = ANI_ERROR;
-    if ((status = env->FindClass("Lstd/core/Int;", &persionCls)) != ANI_OK) {
+    if ((status = env->FindClass("std.core.Int", &persionCls)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}u.", status);
         return nullptr;
     }
     ani_method aniMethod;
-    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "I:V", &aniMethod)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(persionCls, "<ctor>", "i:", &aniMethod)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}u.", status);
         return nullptr;
     }
@@ -449,7 +490,7 @@ ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
         return nullptr;
     }
     ani_method aniMethod;
-    status = env->Class_FindMethod(aniClass, "<ctor>", ":V", &aniMethod);
+    status = env->Class_FindMethod(aniClass, "<ctor>", ":", &aniMethod);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, status: %{public}u.", status);
         return nullptr;
@@ -471,11 +512,11 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
     }
 
     ani_class aniClass;
-    if (!AniFindClass(env, "Lescompat/Array;", aniClass)) {
+    if (!AniFindClass(env, "escompat.Array", aniClass)) {
         return nullptr;
     }
     ani_method aniMethod;
-    ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "I:V", &aniMethod);
+    ani_status status = env->Class_FindMethod(aniClass, "<ctor>", "i:", &aniMethod);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status: %{public}u.", status);
         return nullptr;
@@ -508,7 +549,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_boolean boolValue;
-    status = env->Object_CallMethodByName_Boolean(static_cast<ani_object>(ref), "unboxed", nullptr, &boolValue);
+    status = env->Object_CallMethodByName_Boolean(static_cast<ani_object>(ref), "toBoolean", nullptr, &boolValue);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get bool value of property(%{public}s), status: %{public}u.",
             property.c_str(), status);
@@ -538,7 +579,7 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     }
 
     ani_int intValue;
-    status = env->Object_CallMethodByName_Int(static_cast<ani_object>(ref), "unboxed", nullptr, &intValue);
+    status = env->Object_CallMethodByName_Int(static_cast<ani_object>(ref), "toInt", nullptr, &intValue);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int value of property(%{public}s), status: %{public}u.",
             property.c_str(), status);
@@ -566,7 +607,7 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
     }
 
     ani_long longValue;
-    status = env->Object_CallMethodByName_Long(static_cast<ani_object>(ref), "unboxed", nullptr, &longValue);
+    status = env->Object_CallMethodByName_Long(static_cast<ani_object>(ref), "toLong", nullptr, &longValue);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int64 value of property(%{public}s), status: %{public}u.",
             property.c_str(), status);
@@ -640,7 +681,7 @@ bool GetStringVecProperty(
     if (AniIsRefUndefined(env, ref)) {
         return true;
     }
-    ani_array_ref anirefArray = static_cast<ani_array_ref>(ref);
+    ani_array anirefArray = static_cast<ani_array>(ref);
     value = ParseAniStringVector(env, anirefArray);
     return true;
 }
