@@ -167,7 +167,7 @@ static ani_object ReturnResult(ani_env* env, std::shared_ptr<RequestPermOnSettin
         }
 
         if ((status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem)) != ANI_OK) {
+            arrayObj, "$_set", "iY:", index, enumItem)) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void $_set: %{public}u!", status);
             break;
         }
