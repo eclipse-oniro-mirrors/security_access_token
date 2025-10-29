@@ -505,6 +505,27 @@ HWTEST_F(AccessTokenCoverageTest, TokenSyncCallbackTest001, TestSize.Level4)
     HapTokenInfoForSync info;
     EXPECT_EQ(FAKE_SYNC_RET, callbackImpl->UpdateRemoteHapTokenInfo(info)); // test input
 }
+
+/**
+ * @tc.name: ReregisterTokenSyncCallback001
+ * @tc.desc: AccessTokenManagerClient::ReregisterTokenSyncCallback function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenCoverageTest, ReregisterTokenSyncCallback001, TestSize.Level4)
+{
+    MockNativeToken mock("token_sync_service");
+    LOGI(ATM_DOMAIN, ATM_TAG, "ReregisterTokenSyncCallback001 start.");
+    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterTokenSyncCallback(callback));
+    EXPECT_NE(AccessTokenManagerClient::GetInstance().tokenSyncCallback_, nullptr);
+    EXPECT_NE(AccessTokenManagerClient::GetInstance().syncCallbackImpl_, nullptr);
+    AccessTokenManagerClient::GetInstance().serviceDeathObserver_->OnRemoteDied(nullptr);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterTokenSyncCallback());
+    EXPECT_EQ(AccessTokenManagerClient::GetInstance().tokenSyncCallback_, nullptr);
+    EXPECT_EQ(AccessTokenManagerClient::GetInstance().syncCallbackImpl_, nullptr);
+    AccessTokenManagerClient::GetInstance().serviceDeathObserver_->OnRemoteDied(nullptr);
+}
 #endif // TOKEN_SYNC_ENABLE
 
 /**
