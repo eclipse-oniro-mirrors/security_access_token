@@ -3309,7 +3309,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback007, TestSize.Level0)
 
     // recovery origin disable policy
     EXPECT_EQ(0, SetDisablePolicy("ohos.permission.CAMERA", camDisable));
-    EXPECT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
+    ASSERT_EQ(0, SetDisablePolicy("ohos.permission.MICROPHONE", micDisable));
 }
 
 /**
