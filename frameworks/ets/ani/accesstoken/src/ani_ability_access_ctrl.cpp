@@ -889,7 +889,42 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
     return static_cast<ani_int>(syncContext->permissionsStatus);
 }
 
-void InitAbilityCtrlFunction(ani_env *env)
+static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
+{
+    std::array methods = {
+        ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
+        ani_native_function { "requestPermissionsFromUserExecute",
+            nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
+        ani_native_function { "requestPermissionOnSettingExecute",
+            nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
+        ani_native_function {"requestGlobalSwitchExecute",
+            nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
+        ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
+            reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
+        ani_native_function { "revokeUserGrantedPermissionExecute",
+            nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
+        ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
+        ani_native_function { "getPermissionsStatusExecute",
+            nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
+        ani_native_function { "getPermissionFlagsExecute",
+            nullptr, reinterpret_cast<void *>(GetPermissionFlagsExecute) },
+        ani_native_function { "setPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
+        ani_native_function { "getPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
+        ani_native_function { "requestAppPermOnSettingExecute",
+            nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
+        ani_native_function { "onPermissionStateChangeExecute", nullptr,
+            reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
+        ani_native_function { "offPermissionStateChangeExecute", nullptr,
+            reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
+        ani_native_function { "getSelfPermissionStatusExecute",
+            nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
+    };
+    return env->Class_BindNativeMethods(cls, methods.data(), methods.size());
+}
+
+static void InitAbilityCtrlFunction(ani_env *env)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -914,39 +949,13 @@ void InitAbilityCtrlFunction(ani_env *env)
         LOGE(ATM_DOMAIN, ATM_TAG, "Not found %{public}s.", className);
         return;
     }
-    std::array claMethods = {
-        ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
-        ani_native_function { "requestPermissionsFromUserExecute",
-            nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
-        ani_native_function { "requestPermissionOnSettingExecute",
-            nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
-        ani_native_function {"requestGlobalSwitchExecute",
-            nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
-        ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
-            reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
-        ani_native_function { "revokeUserGrantedPermissionExecute",
-            nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
-        ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
-        ani_native_function { "getPermissionsStatusExecute",
-            nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
-        ani_native_function{ "getPermissionFlagsExecute",
-            nullptr, reinterpret_cast<void *>(GetPermissionFlagsExecute) },
-        ani_native_function{ "setPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void *>(SetPermissionRequestToggleStatusExecute) },
-        ani_native_function{ "getPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void *>(GetPermissionRequestToggleStatusExecute) },
-        ani_native_function{ "requestAppPermOnSettingExecute",
-            nullptr, reinterpret_cast<void *>(RequestAppPermOnSettingExecute) },
-        ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
-        ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
-        ani_native_function { "getSelfPermissionStatusExecute",
-            nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
-    };
-    if (ANI_OK != env->Class_BindNativeMethods(cls, claMethods.data(), claMethods.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s", className);
+    ani_status status = AtManagerBindNativeFunction(env, cls);
+    if (ANI_OK != status) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind native methods to %{public}s, status: %{public}u", className, status);
         return;
     };
 }
+
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {
