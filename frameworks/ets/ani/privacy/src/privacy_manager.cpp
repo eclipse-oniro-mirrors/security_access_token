@@ -563,7 +563,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
+            arrayObj, "$_set", "iY:", index, aniRecord);
         if (status != ANI_OK) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Status : %{public}u.", status);
             break;
@@ -619,7 +619,7 @@ static ani_ref ConvertPermissionRecords(ani_env* env, const std::vector<Permissi
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
+            arrayObj, "$_set", "iY:", index, aniRecord);
         if (status != ANI_OK) {
             LOGE(PRI_DOMAIN, PRI_TAG,
                 "Failed to Set permission record, status: %{public}d.", static_cast<int32_t>(status));
@@ -671,7 +671,7 @@ static ani_object ConvertBundleUsedRecords(ani_env* env, const std::vector<Bundl
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, aniRecord);
+            arrayObj, "$_set", "iY:", index, aniRecord);
         if (status != ANI_OK) {
             LOGE(PRI_DOMAIN, PRI_TAG,
                 "Failed to set bundle record fail, status: %{public}d.", static_cast<int32_t>(status));
@@ -813,7 +813,7 @@ static ani_ref ConvertPermissionUsedTypeInfos(ani_env* env, const std::vector<Pe
             continue;
         }
         ani_status status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, aniType);
+            arrayObj, "$_set", "iY:", index, aniType);
         if (status != ANI_OK) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Failed to Set type, status: %{public}d.", static_cast<int32_t>(status));
             continue;
