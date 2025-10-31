@@ -959,6 +959,27 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
     return res;
 }
 
+void AccessTokenManagerClient::ReregisterTokenSyncCallback()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+    if (tokenSyncCallback_ == nullptr || syncCallbackImpl_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input callback is null.");
+        return;
+    }
+
+    int32_t res = proxy->RegisterTokenSyncCallback(tokenSyncCallback_->AsObject());
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", res);
+    return;
+}
+
 int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
 {
     auto proxy = GetProxy();
@@ -1049,9 +1070,7 @@ void AccessTokenManagerClient::OnRemoteDiedHandle()
     }
 
 #ifdef TOKEN_SYNC_ENABLE
-    if (syncCallbackImpl_ != nullptr) {
-        RegisterTokenSyncCallback(syncCallbackImpl_); // re-register callback when AT crashes
-    }
+    ReregisterTokenSyncCallback();
 #endif // TOKEN_SYNC_ENABLE
 }
 

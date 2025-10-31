@@ -127,6 +127,7 @@ private:
     int32_t CreatePermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
         sptr<PermissionStateChangeCallback>& callback);
+    void ReregisterTokenSyncCallback();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
