@@ -1268,54 +1268,6 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
     enhance = parcel.enhanceData;
     return RET_SUCCESS;
 }
-
-int32_t AccessTokenManagerClient::CreateSecCompEnhanceKey(void)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t res = proxy->CreateSecCompEnhanceKey();
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetAndClearSecCompEnhanceKey(uint32_t sizeIn, uint8_t* enhanceKey, uint32_t* sizeOut)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    if ((enhanceKey == nullptr) || (sizeOut == nullptr)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "EnhanceKey is null or sizeOut is null.");
-        return ERR_PARAM_INVALID;
-    }
-
-    SecCompRawData key;
-    int32_t res = proxy->GetAndClearSecCompEnhanceKey(key);
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-
-    if (key.size == 0 || key.size > sizeIn) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "SizeIn is invalid %{public}u or key.size is invalid %{public}u.", sizeIn, key.size);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    *sizeOut = key.size;
-    errno_t ret = memcpy_s(enhanceKey, sizeIn, key.data, key.size);
-    if (ret != 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Memcpy_s FAILED.");
-        return AccessTokenError::ERR_UTIL_OPER_FAILED;
-    }
-    return ret;
-}
 #endif
 
 bool AccessTokenManagerClient::IsToastShownNeeded(int32_t pid)
