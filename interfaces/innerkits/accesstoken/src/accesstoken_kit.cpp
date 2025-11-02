@@ -807,27 +807,6 @@ int32_t AccessTokenKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhan
 }
 #endif
 
-
-int32_t AccessTokenKit::CreateSecCompEnhanceKey(void)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    return AccessTokenManagerClient::GetInstance().CreateSecCompEnhanceKey();
-#else
-    return 0;
-#endif
-}
-
-int32_t AccessTokenKit::GetAndClearSecCompEnhanceKey(uint32_t sizeIn, uint8_t* enhanceKey, uint32_t* sizeOut)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    return AccessTokenManagerClient::GetInstance().GetAndClearSecCompEnhanceKey(sizeIn, enhanceKey, sizeOut);
-#else
-    return 0;
-#endif
-}
-
 bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Called, tokenId=%{public}" PRId64, tokenId);

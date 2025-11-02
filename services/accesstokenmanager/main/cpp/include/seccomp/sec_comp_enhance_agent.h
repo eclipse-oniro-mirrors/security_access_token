@@ -42,8 +42,6 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
-    int32_t CreateSecCompEnhanceKey(void);
-    int32_t GetAndClearSecCompEnhanceKey(SecCompRawData& key);
     void RemoveSecCompEnhance(int pid);
     void OnAppMgrRemoteDiedHandle();
 
@@ -57,9 +55,6 @@ private:
     std::shared_ptr<SecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
-    std::mutex secCompEnhanceKeyMutex_;
-    EnhanceKey secCompEnhanceKey_;
-    bool isSecCompEnhanceKeySet_ = false;
 };
 #endif
 } // namespace AccessToken

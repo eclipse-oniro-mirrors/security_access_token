@@ -93,6 +93,4 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 104] void IsToastShownNeeded([in] int pid, [out] boolean needToShow);
     [ipccode 105] void SetPermissionStatusWithPolicy([in] unsigned int tokenID, [in] List<String> permissionList, [in] int status, [in] unsigned int flag);
-    [ipccode 106, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void CreateSecCompEnhanceKey();
-    [ipccode 107, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetAndClearSecCompEnhanceKey([out] SecCompRawData key);
 }
