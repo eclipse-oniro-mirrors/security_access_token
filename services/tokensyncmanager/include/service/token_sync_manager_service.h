@@ -60,6 +60,7 @@ private:
     std::shared_ptr<AccessEventHandler> recvHandler_;
 #endif
     ServiceRunningState state_;
+    std::mutex stateMutex_;
 };
 } // namespace AccessToken
 } // namespace Security

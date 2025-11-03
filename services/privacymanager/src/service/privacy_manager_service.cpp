@@ -76,15 +76,19 @@ PrivacyManagerService::~PrivacyManagerService()
 
 void PrivacyManagerService::OnStart()
 {
-    if (state_ == ServiceRunningState::STATE_RUNNING) {
+    std::lock_guard<std::mutex> lock(stateMutex_);
+    if (state_ == ServiceRunningState::STATE_INITIALIZED || state_ == ServiceRunningState::STATE_RUNNING) {
         LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService has already started!");
         return;
     }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService is starting");
     if (!Initialize()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to initialize");
         return;
     }
+    state_ = ServiceRunningState::STATE_INITIALIZED;
+
     AddSystemAbilityListener(ACCESS_TOKEN_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
@@ -92,6 +96,7 @@ void PrivacyManagerService::OnStart()
 
 void PrivacyManagerService::OnStop()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     LOGI(PRI_DOMAIN, PRI_TAG, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
 }

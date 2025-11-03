@@ -31,7 +31,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
+enum class ServiceRunningState { STATE_NOT_START, STATE_INITIALIZED, STATE_RUNNING };
 class PrivacyManagerService final : public SystemAbility, public PrivacyManagerStub {
     DECLARE_DELAYED_SINGLETON(PrivacyManagerService);
     DECLEAR_SYSTEM_ABILITY(PrivacyManagerService);
