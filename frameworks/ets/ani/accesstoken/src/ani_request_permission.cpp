@@ -358,9 +358,9 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         LOGE(ATM_DOMAIN, ATM_TAG,
             "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
 
-        ani_ref nullRef = nullptr;
-        env->GetNull(&nullRef);
-        ani_object result = reinterpret_cast<ani_object>(nullRef);
+        ani_ref undefRef = nullptr;
+        env->GetUndefined(&undefRef);
+        ani_object result = reinterpret_cast<ani_object>(undefRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",

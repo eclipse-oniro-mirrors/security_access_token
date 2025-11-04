@@ -183,7 +183,9 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
         return;
     }
 
-    ani_object result = CreateBooleanObject(env, false);
+    ani_ref undefRef = nullptr;
+    env->GetUndefined(&undefRef);
+    ani_object result = reinterpret_cast<ani_object>(undefRef);
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",

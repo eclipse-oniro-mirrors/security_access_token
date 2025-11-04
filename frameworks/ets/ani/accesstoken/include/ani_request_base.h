@@ -116,6 +116,7 @@ private:
     std::atomic<bool> isOnResult_ = false;
 };
 
+ani_int CheckContextExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object, ani_object aniContext);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
