@@ -552,13 +552,6 @@ public:
     static bool IsAtomicServiceByFullTokenID(uint64_t tokenId);
 
     /**
-     * @brief whether the process need to show the toast
-     * @param pid process id
-     * @return bool
-     */
-    static bool IsToastShownNeeded(int32_t pid);
-
-    /**
      * @brief Set multiple permissions status and flag with policy.
      * @param tokenID token id
      * @param permissionList permission list to be set

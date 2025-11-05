@@ -34,6 +34,19 @@ static const std::string SET_ENHANCE_KEY_LIB = "libsecurity_component_set_enhanc
 typedef int32_t (*FUNC_CREATE) (uint32_t, uint8_t*, uint32_t*);
 }
 
+void SecCompUsageObserver::OnProcessDied(const ProcessData &processData)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "OnProcessDied pid %{public}d", processData.pid);
+    SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
+}
+
+void SecCompAppManagerDeathCallback::NotifyAppManagerDeath()
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "AppManagerDeath called");
+
+    SecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
+}
+
 SecCompEnhanceAgent& SecCompEnhanceAgent::GetInstance()
 {
     static SecCompEnhanceAgent* instance = nullptr;

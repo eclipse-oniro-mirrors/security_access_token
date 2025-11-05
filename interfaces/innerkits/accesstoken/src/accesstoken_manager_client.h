@@ -118,7 +118,6 @@ public:
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
-    bool IsToastShownNeeded(int32_t pid);
 
 private:
     AccessTokenManagerClient();
