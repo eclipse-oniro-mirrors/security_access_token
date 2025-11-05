@@ -118,10 +118,12 @@ AccessTokenManagerService::~AccessTokenManagerService()
 
 void AccessTokenManagerService::OnStart()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     if (state_ == ServiceRunningState::STATE_RUNNING) {
         LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
         return;
     }
+
     LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
     if (!Initialize()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
@@ -144,6 +146,7 @@ void AccessTokenManagerService::OnStart()
 
 void AccessTokenManagerService::OnStop()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     LOGI(ATM_DOMAIN, ATM_TAG, "Stop service.");
     state_ = ServiceRunningState::STATE_NOT_START;
 }
@@ -1652,7 +1655,10 @@ bool AccessTokenManagerService::IsAccessTokenCalling()
 {
     uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (tokenSyncId_ == 0) {
-        this->GetNativeTokenId("token_sync_service", tokenSyncId_);
+        std::lock_guard<std::mutex> lock(tokenSyncIdMutex_);
+        if (tokenSyncId_ == 0) {
+            this->GetNativeTokenId("token_sync_service", tokenSyncId_);
+        }
     }
     return tokenCaller == tokenSyncId_;
 }
@@ -1679,7 +1685,10 @@ bool AccessTokenManagerService::IsSecCompServiceCalling()
 {
     uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (secCompTokenId_ == 0) {
-        this->GetNativeTokenId("security_component_service", secCompTokenId_);
+        std::lock_guard<std::mutex> lock(secCompTokenIdMutex_);
+        if (secCompTokenId_ == 0) {
+            this->GetNativeTokenId("security_component_service", secCompTokenId_);
+        }
     }
     return tokenCaller == secCompTokenId_;
 }

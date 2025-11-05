@@ -159,6 +159,7 @@ private:
     void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
 
+    std::mutex stateMutex_;
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
@@ -179,7 +180,9 @@ private:
 #endif
     static const int32_t ACCESSTOKEN_UID = 3020;
 
+    std::mutex tokenSyncIdMutex_;
     AccessTokenID tokenSyncId_ = 0;
+    std::mutex secCompTokenIdMutex_;
     AccessTokenID secCompTokenId_ = 0;
 };
 } // namespace AccessToken
