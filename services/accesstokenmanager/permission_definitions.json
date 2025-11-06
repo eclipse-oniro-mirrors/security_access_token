@@ -1433,8 +1433,7 @@
             "since": 9,
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["phone"]
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.MANAGE_MEDIA_RESOURCES",
