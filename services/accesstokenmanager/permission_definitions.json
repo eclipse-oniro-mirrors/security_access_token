@@ -678,7 +678,7 @@
             "since": 23,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false,
+            "distributedSceneEnable": true,
             "deviceTypes": ["general"]
         },
         {
