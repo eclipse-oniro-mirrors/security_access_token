@@ -17,6 +17,7 @@ group("unittest") {
   testonly = true
   deps = [
     "unittest:accesstoken_mock_test",
+    "unittest:libaccesstoken_muti_thread_test",
     "unittest:libaccesstoken_sdk_test",
   ]
 }

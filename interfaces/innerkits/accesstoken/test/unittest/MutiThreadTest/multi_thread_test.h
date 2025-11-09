@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_ID_ATTRIBUTES_H
-#define TOKEN_ID_ATTRIBUTES_H
+#ifndef ACCESSTOKEN_KIT_MULTI_THREAD_TEST_H
+#define ACCESSTOKEN_KIT_MULTI_THREAD_TEST_H
 
-#include "access_token.h"
+#include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class TokenIDAttributes final {
+class AccessTokenMultiThreadTest : public testing::Test {
 public:
-    static int GetTokenIdDlpFlag(AccessTokenID id);
-    static int GetTokenIdCloneFlag(AccessTokenID id);
-    static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
-    static bool IsSystemApp(uint64_t id);
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // TOKEN_ID_ATTRIBUTES_H
+#endif // ACCESSTOKEN_KIT_MULTI_THREAD_TEST_H

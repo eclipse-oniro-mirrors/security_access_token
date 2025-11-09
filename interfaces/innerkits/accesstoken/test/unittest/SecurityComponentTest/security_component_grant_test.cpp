@@ -65,7 +65,7 @@ void SecurityComponentGrantTest::SetUpTestCase()
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    g_mock = new (std::nothrow) MockHapToken("SecurityComponentGrantTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("SecurityComponentGrantMockTest", reqPerm, true);
 
     GTEST_LOG_(INFO) << "SecurityComponentGrantTest,  tokenID is " << g_selfShellTokenId;
     GTEST_LOG_(INFO) << "SecurityComponentGrantTest,  sel is " << GetSelfTokenID();

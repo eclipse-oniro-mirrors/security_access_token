@@ -337,7 +337,7 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
         napi_close_handle_scope(retCB->data->env, scope);
         delete retCB;
     };
-    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate, "RequestResultsHandler")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "RequestResultsHandler: Failed to SendEvent");
     } else {
         callbackPtr.release();

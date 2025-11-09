@@ -77,12 +77,12 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
-class CbCustomizeTest4 : public StateCustomizedCbk {
+class CbCustomizeForMockTest : public StateCustomizedCbk {
 public:
-    CbCustomizeTest4()
+    CbCustomizeForMockTest()
     {}
 
-    ~CbCustomizeTest4()
+    ~CbCustomizeForMockTest()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -97,7 +97,7 @@ public:
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
 {
-    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    auto callbackPtr = std::make_shared<CbCustomizeForMockTest>();
     AccessTokenID g_TokenId_A = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
@@ -298,6 +298,45 @@ HWTEST_F(PrivacyKitTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
     auto callbackPtr = std::make_shared<DisablePolicyChangeCallbackTest>(permList);
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: GetPermissionUsedTypeInfos001
+ * @tc.desc: GetPermissionUsedTypeInfos proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level0)
+{
+    std::vector<PermissionUsedTypeInfo> results;
+    AccessTokenID tokenId = 0xff;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PrivacyKit::GetPermissionUsedTypeInfos(tokenId, "ohos.permission.CAMERA", results));
+}
+
+/**
+ * @tc.name: SetMutePolicy001
+ * @tc.desc: SetMutePolicy proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicy001, TestSize.Level0)
+{
+    AccessTokenID tokenId = 0xff;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, tokenId));
+}
+
+/**
+ * @tc.name: SetHapWithFGReminder001
+ * @tc.desc: SetHapWithFGReminder proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder001, TestSize.Level0)
+{
+    AccessTokenID tokenId = 0xff;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::SetHapWithFGReminder(tokenId, true));
 }
 } // namespace AccessToken
 } // namespace Security

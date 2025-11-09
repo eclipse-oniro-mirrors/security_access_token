@@ -52,7 +52,7 @@ void GrantPermissionTest::SetUpTestCase()
     reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.MANAGE_HAP_TOKENID");
-    g_mock = new (std::nothrow) MockHapToken("GrantPermissionTest", reqPerm);
+    g_mock = new (std::nothrow) MockHapToken("GrantPermissionMockTest", reqPerm);
 
     // clean up test cases
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);

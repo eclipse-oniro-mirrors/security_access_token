@@ -55,6 +55,7 @@ TokenSyncManagerService::~TokenSyncManagerService()
 
 void TokenSyncManagerService::OnStart()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     if (state_ == ServiceRunningState::STATE_RUNNING) {
         LOGI(ATM_DOMAIN, ATM_TAG, "TokenSyncManagerService has already started!");
         return;
@@ -82,6 +83,7 @@ void TokenSyncManagerService::OnStart()
 void TokenSyncManagerService::OnStop()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Stop service");
+    std::lock_guard<std::mutex> lock(stateMutex_);
     state_ = ServiceRunningState::STATE_NOT_START;
     SoftBusManager::GetInstance().Destroy();
 #ifdef MEMORY_MANAGER_ENABLE

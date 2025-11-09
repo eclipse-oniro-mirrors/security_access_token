@@ -100,7 +100,7 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
         }
         delete workDataRel;
     };
-    if (napi_status::napi_ok != napi_send_event(env, task, napi_eprio_high)) {
+    if (napi_status::napi_ok != napi_send_event(env, task, napi_eprio_high, "AtManagerAsyncWorkDataDestructor")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AtManagerAsyncWorkData: Failed to SendEvent");
     } else {
         workDataRelPtr.release();

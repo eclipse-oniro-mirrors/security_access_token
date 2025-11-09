@@ -54,7 +54,7 @@ void GetPermissionsStatusTest::SetUpTestCase()
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    g_mock = new (std::nothrow) MockHapToken("GetPermissionsStatusTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("GetPermissionsStatusMockTest", reqPerm, true);
 }
 
 void GetPermissionsStatusTest::TearDownTestCase()

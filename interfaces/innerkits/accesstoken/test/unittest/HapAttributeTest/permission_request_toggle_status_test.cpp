@@ -57,7 +57,7 @@ void PermissionRequestToggleStatusTest::SetUpTestCase()
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    g_mock = new (std::nothrow) MockHapToken("PermissionRequestToggleStatusTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("PermissionRequestToggleStatusMockTest", reqPerm, true);
 }
 
 void PermissionRequestToggleStatusTest::TearDownTestCase()

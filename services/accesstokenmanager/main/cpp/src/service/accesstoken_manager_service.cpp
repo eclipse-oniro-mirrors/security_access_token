@@ -56,7 +56,6 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
-#include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
 #include "xcollie/xcollie.h"
 #endif // HICOLLIE_ENABLE
@@ -117,10 +116,12 @@ AccessTokenManagerService::~AccessTokenManagerService()
 
 void AccessTokenManagerService::OnStart()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     if (state_ == ServiceRunningState::STATE_RUNNING) {
         LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
         return;
     }
+
     LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
     if (!Initialize()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
@@ -143,6 +144,7 @@ void AccessTokenManagerService::OnStart()
 
 void AccessTokenManagerService::OnStop()
 {
+    std::lock_guard<std::mutex> lock(stateMutex_);
     LOGI(ATM_DOMAIN, ATM_TAG, "Stop service.");
     state_ = ServiceRunningState::STATE_NOT_START;
 }
@@ -401,8 +403,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
             fixedByPolicyRes = true;
         }
-        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d.",
-            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
+        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d, errorReason %{public}d.",
+            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state,
+            reqPermList[i].permsState.errorReason);
     }
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d is under control.", tokenID);
@@ -1651,7 +1654,10 @@ bool AccessTokenManagerService::IsAccessTokenCalling()
 {
     uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (tokenSyncId_ == 0) {
-        this->GetNativeTokenId("token_sync_service", tokenSyncId_);
+        std::lock_guard<std::mutex> lock(tokenSyncIdMutex_);
+        if (tokenSyncId_ == 0) {
+            this->GetNativeTokenId("token_sync_service", tokenSyncId_);
+        }
     }
     return tokenCaller == tokenSyncId_;
 }
@@ -1671,7 +1677,7 @@ bool AccessTokenManagerService::IsShellProcessCalling()
 bool AccessTokenManagerService::IsSystemAppCalling() const
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
-    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    return TokenIDAttributes::IsSystemApp(fullTokenId);
 }
 
 int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)

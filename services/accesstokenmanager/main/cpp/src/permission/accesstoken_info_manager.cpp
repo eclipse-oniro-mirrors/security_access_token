@@ -1441,7 +1441,7 @@ int32_t AccessTokenInfoManager::SetUserPolicy(const std::vector<UserPermissionPo
 {
     AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     std::vector<UserPolicyInner> userPolist;
-    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     for (const auto& policy : userPermissionList) {
         PermissionBriefDef briefDef;
         uint32_t code;
@@ -1492,7 +1492,7 @@ int32_t AccessTokenInfoManager::SetUserPolicy(const std::vector<UserPermissionPo
 int32_t AccessTokenInfoManager::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
     AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     std::vector<uint32_t> permCodeList;
     for (const auto& permission : permissionList) {
         uint32_t permCode;
