@@ -57,7 +57,6 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
-#include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
 #include "xcollie/xcollie.h"
 #endif // HICOLLIE_ENABLE
@@ -405,8 +404,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
             fixedByPolicyRes = true;
         }
-        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d.",
-            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
+        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d, errorReason %{public}d.",
+            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state,
+            reqPermList[i].permsState.errorReason);
     }
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d is under control.", tokenID);
@@ -1678,7 +1678,7 @@ bool AccessTokenManagerService::IsShellProcessCalling()
 bool AccessTokenManagerService::IsSystemAppCalling() const
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
-    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    return TokenIDAttributes::IsSystemApp(fullTokenId);
 }
 
 bool AccessTokenManagerService::IsSecCompServiceCalling()

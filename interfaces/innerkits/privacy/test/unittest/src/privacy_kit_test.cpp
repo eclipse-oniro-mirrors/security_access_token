@@ -251,7 +251,7 @@ void PrivacyKitTest::SetUpTestCase()
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    g_mock = new (std::nothrow) MockHapToken("PrivacyKitTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("PrivacyKitMockTest", reqPerm, true);
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     g_shellToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("hdcd");
@@ -1576,6 +1576,22 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission006, TestSize.Level0)
     }
 
     EXPECT_EQ(0, PrivacyTestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermission007
+ * @tc.desc: IsAllowedUsingPermission with not system app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission007, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("SetPermissionUsedRecordToggleStatus004", reqPerm, false);
+
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    EXPECT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
 }
 
 /**
@@ -2919,6 +2935,23 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0
     EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatus004
+ * @tc.desc: SetPermissionUsedRecordToggleStatus with not system app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus004, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("SetPermissionUsedRecordToggleStatus004", reqPerm, false);
+
+    bool status = true;
+    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
+    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
 }
 
 int32_t PrivacyKitTest::SetDisablePolicy(const std::string& permissionName, bool isDisable)

@@ -96,7 +96,7 @@ PermissionStateFull g_infoManagerCustomScreenCaptureState = {
 // Permission set
 HapInfoParams g_testHapInfoParams = {
     .userID = 0,
-    .bundleName = "testName",
+    .bundleName = "EdmPolicySetTest",
     .instIndex = 0,
     .appIDDesc = "test2",
     .apiVersion = 11 // api version is 11
@@ -254,10 +254,9 @@ void EdmPolicySetTest::SetUpTestCase()
     TestCommon::SetTestEvironment(g_selfShellTokenId);
 
     std::vector<std::string> reqPerm;
-    reqPerm.emplace_back(MANAGE_HAP_TOKEN_ID_PERMISSION);
     reqPerm.emplace_back(GET_SENSITIVE_PERMISSIONS);
     reqPerm.emplace_back(REVOKE_SENSITIVE_PERMISSIONS);
-    g_mock = new (std::nothrow) MockHapToken("EdmPolicySetTest", reqPerm);
+    g_mock = new (std::nothrow) MockHapToken("EdmPolicySetMockTest", reqPerm);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
 }
 
@@ -1007,7 +1006,7 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForUpdateHap, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, GET_NETWORK_STATS));
 
-    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
 }
 
 class CbCustomizeTestForEdm : public PermStateChangeCallbackCustomize {
@@ -1072,7 +1071,7 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForRemove, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, GET_NETWORK_STATS));
     EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, GET_NETWORK_STATS));
 
-    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(fullIdUser1.tokenIdExStruct.tokenID));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
 
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
@@ -1965,6 +1964,8 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken001, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, CUSTOM_SCREEN_CAPTURE, flag));
     EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, CUSTOM_SCREEN_CAPTURE, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 
 

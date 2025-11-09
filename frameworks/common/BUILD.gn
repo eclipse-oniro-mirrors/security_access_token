@@ -134,7 +134,10 @@ ohos_static_library("accesstoken_static_log_for_nativetoken") {
     "src/accesstoken_klog.cpp",
   ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "c_utils:utils",
+  ]
 
   configs = [
     "${access_token_path}/config:access_token_compile_flags",

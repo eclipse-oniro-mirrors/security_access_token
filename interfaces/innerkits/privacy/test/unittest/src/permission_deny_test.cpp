@@ -208,7 +208,121 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level0)
 */
 HWTEST_F(PermDenyTest, IsAllowedUsingPermission001, TestSize.Level0)
 {
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(123, "ohos.permission.CAMERA"));
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(123, "ohos.permission.CAMERA")); // 123: tokenId
+}
+
+/**
+* @tc.name: SetPermissionUsedRecordToggleStatus001
+* @tc.desc: Test SetPermissionUsedRecordToggleStatus with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
+{
+    int32_t userId = 100; // 100: userId
+    bool status = false;
+    uint32_t selfUid = getuid();
+    setuid(123); // 123: uid
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, true));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::GetPermissionUsedRecordToggleStatus(100, status)); // 100: userId
+    ASSERT_FALSE(status);
+    setuid(selfUid);
+}
+
+/**
+* @tc.name: SetMutePolicy001
+* @tc.desc: Test SetMutePolicy with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, SetMutePolicy001, TestSize.Level0)
+{
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true, 123)); // 123: tokenId
+}
+
+/**
+* @tc.name: SetHapWithFGReminder001
+* @tc.desc: Test SetHapWithFGReminder with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, SetHapWithFGReminder001, TestSize.Level0)
+{
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::SetHapWithFGReminder(123, true)); // 123: tokenId
+}
+
+/**
+* @tc.name: GetPermissionUsedTypeInfos001
+* @tc.desc: Test GetPermissionUsedTypeInfos with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, GetPermissionUsedTypeInfos001, TestSize.Level0)
+{
+    std::vector<PermissionUsedTypeInfo> results;
+    AccessTokenID tokenId = 0xff;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::GetPermissionUsedTypeInfos(tokenId, "ohos.permission.CAMERA", results));
+}
+
+/**
+* @tc.name: SetDisablePolicy001
+* @tc.desc: Test SetDisablePolicy with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, SetDisablePolicy001, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool isDisable = false;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::SetDisablePolicy(permissionName, true));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetDisablePolicy(permissionName, isDisable));
+    EXPECT_FALSE(isDisable);
+}
+
+class DisablePolicyChangeCallbackForDenyTest : public DisablePolicyChangeCallback {
+public:
+    explicit DisablePolicyChangeCallbackForDenyTest(const std::vector<std::string> &permList)
+        : DisablePolicyChangeCallback(permList) {}
+
+    ~DisablePolicyChangeCallbackForDenyTest() {}
+
+    virtual void PermDisablePolicyCallback(const PermDisablePolicyInfo& info)
+    {
+    }
+};
+
+/**
+* @tc.name: RegisterPermDisablePolicyCallback001
+* @tc.desc: Test RegisterPermDisablePolicyCallback with no permssion.
+* @tc.type: FUNC
+* @tc.require: issueI5SRUO
+*/
+HWTEST_F(PermDenyTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<DisablePolicyChangeCallbackForDenyTest>(permList);
+
+    // register success with no permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
+
+    // register success with permission
+    {
+        MockNativeToken mock("camera_service");
+        EXPECT_EQ(NO_ERROR, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
+    }
+
+    // unregister fail with no permission
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+
+    // unregister success with permission
+    {
+        MockNativeToken mock("camera_service");
+        EXPECT_EQ(NO_ERROR, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+    }
 }
 } // namespace AccessToken
 } // namespace Security

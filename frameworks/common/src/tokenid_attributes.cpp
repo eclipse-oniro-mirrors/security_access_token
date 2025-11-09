@@ -18,6 +18,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+}
 ATokenTypeEnum TokenIDAttributes::GetTokenIdTypeEnum(AccessTokenID id)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
@@ -34,6 +37,11 @@ int TokenIDAttributes::GetTokenIdCloneFlag(AccessTokenID id)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     return idInner->cloneFlag;
+}
+
+bool TokenIDAttributes::IsSystemApp(uint64_t id)
+{
+    return (id & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
 }
 } // namespace AccessToken
 } // namespace Security

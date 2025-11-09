@@ -159,7 +159,8 @@ static void GlobalSwitchResultsCallbackUI(int32_t errorCode,
         ReturnPromiseResult(asyncContext->env, *asyncContext, requestResult);
         napi_close_handle_scope(asyncContext->env, scope);
     };
-    if (napi_status::napi_ok != napi_send_event(data->env, task, napi_eprio_immediate)) {
+    if (napi_status::napi_ok !=
+        napi_send_event(data->env, task, napi_eprio_immediate, "GlobalSwitchResultsCallbackUI")) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GlobalSwitchResultsCallbackUI: Failed to SendEvent");
     } else {
         callbackPtr.release();

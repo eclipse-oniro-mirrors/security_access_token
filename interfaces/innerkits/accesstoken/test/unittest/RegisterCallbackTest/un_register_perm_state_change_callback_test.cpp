@@ -47,7 +47,7 @@ void UnRegisterPermStateChangeCallbackTest::SetUpTestCase()
     TestCommon::SetTestEvironment(g_selfShellTokenId);
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
-    g_mock = new (std::nothrow) MockHapToken("UnRegisterPermStateChangeCallbackTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("UnRegisterPermStateChangeCallbackMockTest", reqPerm, true);
 }
 
 void UnRegisterPermStateChangeCallbackTest::TearDownTestCase()

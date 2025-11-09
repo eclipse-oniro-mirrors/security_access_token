@@ -52,13 +52,13 @@ static void CreateHapTokenList(int32_t hapSize, std::vector<AccessTokenID>& toke
 {
     HapPolicyParams policyPrams = {
         .apl = APL_NORMAL,
-        .domain = "AddPermissionRecordMultiThreadTest001",
+        .domain = "PrivacyMultiThreadTest",
     };
     HapInfoParams infoParms = {
         .userID = 100, // 100: uerId
-        .bundleName = "AddPermissionRecordMultiThreadTest001",
+        .bundleName = "PrivacyMultiThreadTest",
         .instIndex = 0,
-        .appIDDesc = "AddPermissionRecordMultiThreadTest001"
+        .appIDDesc = "PrivacyMultiThreadTest"
     };
     for (const auto& permission : g_permList) {
         static PermissionStateFull permState = {
@@ -79,7 +79,7 @@ static void CreateHapTokenList(int32_t hapSize, std::vector<AccessTokenID>& toke
     }
 }
 
-static void DeletHapTokenList(const std::vector<AccessTokenID>& tokenIdList)
+static void DeleteHapTokenList(const std::vector<AccessTokenID>& tokenIdList)
 {
     for (auto tokenId : tokenIdList) {
         EXPECT_EQ(0, PrivacyTestCommon::DeleteTestHapToken(tokenId));
@@ -93,7 +93,7 @@ void PrivacyMultiThreadTest::SetUpTestCase()
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    g_mock = new (std::nothrow) MockHapToken("PrivacyMultiThreadTest", reqPerm, true);
+    g_mock = new (std::nothrow) MockHapToken("PrivacyMultiThreadMockTest", reqPerm, true);
 
     CreateHapTokenList(MAX_HAP_NUM, g_tokenIdList);
 }
@@ -107,7 +107,7 @@ void PrivacyMultiThreadTest::TearDownTestCase()
     SetSelfTokenID(g_selfTokenId);
     PrivacyTestCommon::ResetTestEvironment();
 
-    DeletHapTokenList(g_tokenIdList);
+    DeleteHapTokenList(g_tokenIdList);
 }
 
 void PrivacyMultiThreadTest::SetUp()
@@ -134,6 +134,59 @@ HWMTEST_F(PrivacyMultiThreadTest, AddPermissionRecordMultiThreadTest001, TestSiz
         for (const auto& permission : g_permList) {
             EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(tokenId, permission, 1, 0));
         }
+    }
+}
+
+/**
+ * @tc.name: StartAndStopPermissionMultiThreadTest001
+ * @tc.desc: test StartUsingPermission and StopUsingPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWMTEST_F(PrivacyMultiThreadTest, StartAndStopPermissionMultiThreadTest001, TestSize.Level1, MULTIPLE_COUNT)
+{
+    GTEST_LOG_(INFO) << "tid: " << gettid();
+    int32_t pid = gettid(); // transfer tid to pid
+    for (auto tokenId : g_tokenIdList) {
+        for (const auto& permission : g_permList) {
+            EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(tokenId, permission, pid));
+        }
+    }
+    for (auto tokenId : g_tokenIdList) {
+        for (const auto& permission : g_permList) {
+            EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(tokenId, permission, pid));
+        }
+    }
+}
+
+class CbCustomizeForMutiThreadTest : public StateCustomizedCbk {
+public:
+    CbCustomizeForMutiThreadTest()
+    {}
+
+    ~CbCustomizeForMutiThreadTest()
+    {}
+
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {}
+};
+
+/**
+ * @tc.name: StartUsingPermissionMultiThreadTest001
+ * @tc.desc: test StartUsingPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWMTEST_F(PrivacyMultiThreadTest, StartUsingPermissionCallbackMultiThreadTest001, TestSize.Level1, MULTIPLE_COUNT)
+{
+    GTEST_LOG_(INFO) << "tid: " << gettid();
+    int32_t pid = gettid(); // transfer tid to pid
+    for (auto tokenId : g_tokenIdList) {
+        auto callbackPtr = std::make_shared<CbCustomizeForMutiThreadTest>();
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.CAMERA", callbackPtr, pid));
+    }
+    for (auto tokenId : g_tokenIdList) {
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA", pid));
     }
 }
 }  // namespace SecurityComponent

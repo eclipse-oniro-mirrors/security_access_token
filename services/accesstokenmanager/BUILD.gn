@@ -46,10 +46,8 @@ if (is_standard_system) {
     include_dirs = [
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/common/include",
-      "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
       "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
@@ -116,7 +114,6 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/frameworks/common:accesstoken_hisysevent",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",

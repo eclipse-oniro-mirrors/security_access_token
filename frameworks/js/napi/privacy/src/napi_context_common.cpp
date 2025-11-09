@@ -65,7 +65,7 @@ void PermActiveStatusPtr::DeleteNapiRef()
         napi_delete_reference(permActiveStatusWorker->env, permActiveStatusWorker->ref);
         delete permActiveStatusWorker;
     };
-    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high, "DeleteNapiRefForPermActiveStatus")) {
         LOGE(PRI_DOMAIN, PRI_TAG, "DeleteNapiRef: Failed to SendEvent");
     } else {
         workPtr.release();
@@ -109,7 +109,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
         napi_close_handle_scope(permActiveStatusWorker->env, scope);
         delete permActiveStatusWorker;
     };
-    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_high, "ActiveStatusChangeCallback")) {
         LOGE(PRI_DOMAIN, PRI_TAG, "ActiveStatusChangeCallback: Failed to SendEvent");
     } else {
         workPtr.release();
