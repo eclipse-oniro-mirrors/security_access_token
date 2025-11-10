@@ -813,11 +813,6 @@ bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
     return (tokenId & ATOMIC_SERVICE_MASK) == ATOMIC_SERVICE_MASK;
 }
 
-bool AccessTokenKit::IsToastShownNeeded(int32_t pid)
-{
-    return AccessTokenManagerClient::GetInstance().IsToastShownNeeded(pid);
-}
-
 int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     uint32_t tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag)
 {

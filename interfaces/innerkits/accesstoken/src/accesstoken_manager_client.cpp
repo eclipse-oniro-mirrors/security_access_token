@@ -1269,25 +1269,6 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
     return RET_SUCCESS;
 }
 #endif
-
-bool AccessTokenManagerClient::IsToastShownNeeded(int32_t pid)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return true;
-    }
-
-    bool needToShow;
-    int32_t errCode = proxy->IsToastShownNeeded(pid, needToShow);
-    if (errCode != RET_SUCCESS) {
-        errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-        return true;
-    }
-
-    return needToShow;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

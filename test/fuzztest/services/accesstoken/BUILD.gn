@@ -47,7 +47,6 @@ group("fuzztest") {
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "inithaptokenstub_fuzzer:InitHapTokenStubFuzzTest",
     "setuserpolicystub_fuzzer:SetUserPolicyStubFuzzTest",
-    "istoastshownneededstub_fuzzer:IsToastShownNeededStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "registerselfpermstatechangecallbackstub_fuzzer:RegisterSelfPermStateChangeCallbackStubFuzzTest",
     "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",

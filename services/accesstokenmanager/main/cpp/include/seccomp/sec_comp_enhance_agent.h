@@ -21,7 +21,6 @@
 #include "app_status_change_callback.h"
 #include "nocopyable.h"
 #include "sec_comp_enhance_data.h"
-#include "sec_comp_monitor.h"
 #include "sec_comp_raw_data.h"
 
 namespace OHOS {
@@ -32,6 +31,26 @@ constexpr uint32_t MAC_KEY_SIZE = 160;
 struct EnhanceKey {
     uint8_t data[MAC_KEY_SIZE] = { 0 };
     uint32_t size = MAC_KEY_SIZE;
+};
+
+class SecCompUsageObserver : public ApplicationStateObserverStub {
+public:
+    SecCompUsageObserver() = default;
+    ~SecCompUsageObserver() = default;
+
+    void OnProcessDied(const ProcessData &processData) override;
+    void OnProcessStateChanged(const ProcessData &processData) override;
+    void OnAppCacheStateChanged(const AppStateData &appStateData) override;
+    DISALLOW_COPY_AND_MOVE(SecCompUsageObserver);
+};
+
+class SecCompAppManagerDeathCallback : public AppManagerDeathCallback {
+public:
+    SecCompAppManagerDeathCallback() = default;
+    ~SecCompAppManagerDeathCallback() = default;
+
+    void NotifyAppManagerDeath() override;
+    DISALLOW_COPY_AND_MOVE(SecCompAppManagerDeathCallback);
 };
 
 class SecCompEnhanceAgent final {

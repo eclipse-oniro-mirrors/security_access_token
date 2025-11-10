@@ -47,7 +47,6 @@
 #include "sec_comp_enhance_agent.h"
 #include "sec_comp_raw_data.h"
 #endif
-#include "sec_comp_monitor.h"
 #include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
@@ -1681,18 +1680,6 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
     return TokenIDAttributes::IsSystemApp(fullTokenId);
 }
 
-bool AccessTokenManagerService::IsSecCompServiceCalling()
-{
-    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (secCompTokenId_ == 0) {
-        std::lock_guard<std::mutex> lock(secCompTokenIdMutex_);
-        if (secCompTokenId_ == 0) {
-            this->GetNativeTokenId("security_component_service", secCompTokenId_);
-        }
-    }
-    return tokenCaller == secCompTokenId_;
-}
-
 int32_t AccessTokenManagerService::CallbackEnter(uint32_t code)
 {
     ClearThreadErrorMsg();
@@ -1717,6 +1704,15 @@ int32_t AccessTokenManagerService::CallbackExit(uint32_t code, int32_t result)
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool AccessTokenManagerService::IsSecCompServiceCalling()
+{
+    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (secCompTokenId_ == 0) {
+        this->GetNativeTokenId("security_component_service", secCompTokenId_);
+    }
+    return tokenCaller == secCompTokenId_;
+}
+
 int32_t AccessTokenManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Pid: %{public}d.", enhanceParcel.enhanceData.pid);
@@ -1749,16 +1745,6 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     return RET_SUCCESS;
 }
 #endif
-
-int32_t AccessTokenManagerService::IsToastShownNeeded(int32_t pid, bool& needToShow)
-{
-    if (!IsSecCompServiceCalling()) {
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
-    needToShow = SecCompMonitor::GetInstance().IsToastShownNeeded(pid);
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

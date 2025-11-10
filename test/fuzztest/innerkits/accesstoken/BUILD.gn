@@ -48,7 +48,6 @@ group("fuzztest") {
     "grantpermission_fuzzer:GrantPermissionFuzzTest",
     "grantpermissionforspecifiedtime_fuzzer:GrantPermissionForSpecifiedTimeFuzzTest",
     "inithaptoken_fuzzer:InitHapTokenFuzzTest",
-    "istoastshownneeded_fuzzer:IsToastShownNeededFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "registertokensynccallback_fuzzer:RegisterTokenSyncCallbackFuzzTest",
     "requestapppermonsetting_fuzzer:RequestAppPermOnSettingFuzzTest",
