@@ -14,7 +14,7 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.CRYPTO_EXTENSION_CONNECT",
+            "name": "ohos.permission.CONNECT_CRYPTO_EXTENSION",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
