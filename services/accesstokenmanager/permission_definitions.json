@@ -267,6 +267,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INSTALL_ALLOW_DOWNGRADE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.INSTALL_BUNDLE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
