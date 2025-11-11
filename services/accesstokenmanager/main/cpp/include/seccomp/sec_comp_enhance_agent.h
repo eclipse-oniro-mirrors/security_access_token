@@ -39,8 +39,6 @@ public:
     ~SecCompUsageObserver() = default;
 
     void OnProcessDied(const ProcessData &processData) override;
-    void OnProcessStateChanged(const ProcessData &processData) override;
-    void OnAppCacheStateChanged(const AppStateData &appStateData) override;
     DISALLOW_COPY_AND_MOVE(SecCompUsageObserver);
 };
 
