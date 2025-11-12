@@ -101,6 +101,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source-root-dir', help='build root dir', required=True)
     parser.add_argument('--input-full-permissions', help='json file for permission definition', required=True)
+    parser.add_argument('--output-path', help='no use, only update stamp', required=True)
     return parser.parse_args()
 
 
@@ -115,3 +116,6 @@ if __name__ == "__main__":
     full_permissions_map = parse_definition_json(input_args.input_full_permissions)
     check_maps(module_json_map, full_permissions_map)
     print("Check permission consistency pass!")
+
+    with open(input_args.output_path, "w") as f:
+        f.write("Check permissions finish.")

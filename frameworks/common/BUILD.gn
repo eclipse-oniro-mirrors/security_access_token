@@ -27,10 +27,12 @@ action("permission_definition_check") {
     "--input-full-permissions",
     rebase_path("${access_token_path}") +
         "/services/accesstokenmanager/permission_definitions.json",
+    "--output-path",
+    rebase_path(target_out_dir) + "/permission_definition_check.txt",
   ]
   inputs = [ rebase_path("${access_token_path}") +
              "/services/accesstokenmanager/permission_definitions.json" ]
-  outputs = [ "$target_out_dir/permission_definition_check.stamp" ]
+  outputs = [ "$target_out_dir/permission_definition_check.txt" ]
 }
 
 action("permission_definition_parse") {
@@ -50,6 +52,27 @@ action("permission_definition_parse") {
   if (!ohos_indep_compiler_enable) {
     deps = [ ":permission_definition_check" ]
   }
+}
+
+action("permission_definition_filter") {
+  script = "permission_definition_filter.py"
+  inputs = [ rebase_path("${access_token_path}") +
+             "/services/accesstokenmanager/permission_definitions.json" ]
+  args = [
+    "--input-json",
+    rebase_path("${access_token_path}") +
+        "/services/accesstokenmanager/permission_definitions.json",
+    "--output-path",
+    rebase_path(target_out_dir) + "/PermissionDefinitions.json",
+  ]
+  outputs = [ "$target_out_dir" + "/PermissionDefinitions.json" ]
+}
+
+ohos_prebuilt_etc("permission_definitions_in_sdk") {
+  output_values = get_target_outputs(":permission_definition_filter")
+  source = output_values[0]
+  deps = [ ":permission_definition_filter" ]
+  install_enable = false
 }
 
 ohos_static_library("accesstoken_hisysevent") {
