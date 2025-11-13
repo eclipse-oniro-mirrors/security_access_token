@@ -500,8 +500,7 @@ int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::Rdb
 
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from currentVersion %{public}d to targetVersion %{public}d.",
-        currentVersion, targetVersion);
+    LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
 
     int32_t res = 0;
     switch (currentVersion) { // upgrade to the latest db version in rom, no mather how much the version is
@@ -516,20 +515,20 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
                 LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column perm_dialog_cap_state, res is %{public}d.", res);
                 return res;
             }
-
+            [[fallthrough]];
         case DATABASE_VERSION_2: // 2->3
             res = CreateVersionThreeTable(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }
-
+            [[fallthrough]];
         case DATABASE_VERSION_3: // 3->4
             res = AddRequestToggleStatusColumn(rdbStore);
             if (res != NativeRdb::E_OK) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column status.");
                 return res;
             }
-
+            [[fallthrough]];
         case DATABASE_VERSION_4: // 4->5
             res = CreateVersionFiveTable(rdbStore);
             if (res != NativeRdb::E_OK) {
@@ -537,16 +536,15 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             }
             res = AddKernelEffectAndHasValueColumn(rdbStore);
             if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column kernel_effect or has_value.");
                 return res;
             }
-
+            [[fallthrough]];
         case DATABASE_VERSION_5: // 5->6
             res = CreateVersionSixTable(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }
-
+            [[fallthrough]];
         default:
             return NativeRdb::E_OK;
     }

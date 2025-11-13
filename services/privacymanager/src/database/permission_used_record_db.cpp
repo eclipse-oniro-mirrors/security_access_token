@@ -71,20 +71,20 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
     switch (version) {
         case DataBaseVersion::VERISION_1: // 1->2
             InsertLockScreenStatusColumn();
-
+            [[fallthrough]];
         case DataBaseVersion::VERISION_2: // 2->3
             InsertPermissionUsedTypeColumn();
             CreatePermissionUsedTypeTable();
-
+            [[fallthrough]];
         case DataBaseVersion::VERISION_3: // 3->4
             UpdatePermissionRecordTablePrimaryKey();
-
+            [[fallthrough]];
         case DataBaseVersion::VERISION_4: // 4->5
             CreatePermissionUsedRecordToggleStatusTable();
-
+            [[fallthrough]];
         case DataBaseVersion::VERISION_5: // 5->6
             CreatePermissionDisablePolicyTable();
-
+            [[fallthrough]];
         default:
             return;
     }
