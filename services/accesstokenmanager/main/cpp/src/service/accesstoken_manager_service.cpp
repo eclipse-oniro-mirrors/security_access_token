@@ -1708,7 +1708,10 @@ bool AccessTokenManagerService::IsSecCompServiceCalling()
 {
     uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (secCompTokenId_ == 0) {
-        this->GetNativeTokenId("security_component_service", secCompTokenId_);
+        std::lock_guard<std::mutex> lock(secCompTokenIdMutex_);
+        if (secCompTokenId_ == 0) {
+            this->GetNativeTokenId("security_component_service", secCompTokenId_);
+        }
     }
     return tokenCaller == secCompTokenId_;
 }
