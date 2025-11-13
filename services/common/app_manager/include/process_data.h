@@ -85,7 +85,7 @@ struct ProcessData : public Parcelable {
     int32_t childUid = -1;
     bool isPreload = false;
     bool isPreloadModule = false;
-    bool isPrelaunch = false;
+    int32_t preloadMode = -1;
     bool isFromWindowFocusChanged = false;
 };
 }  // namespace AccessToken
