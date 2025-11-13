@@ -25,7 +25,8 @@ bool AppStateData::Marshalling(Parcel &parcel) const
         && parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids)
         && parcel.WriteString(callerBundleName) && parcel.WriteBool(isSplitScreenMode) && parcel.WriteInt32(callerUid)
         && parcel.WriteBool(isFloatingWindowMode) && parcel.WriteInt32(appIndex) && parcel.WriteBool(isPreloadModule)
-        && parcel.WriteBool(isFromWindowFocusChanged) && parcel.WriteInt32(preloadMode));
+        && parcel.WriteBool(isPrelaunch) && parcel.WriteBool(isFromWindowFocusChanged)
+        && parcel.WriteInt32(preloadMode));
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -48,6 +49,7 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     appStateData->isFloatingWindowMode = parcel.ReadBool();
     appStateData->appIndex = parcel.ReadInt32();
     appStateData->isPreloadModule = parcel.ReadBool();
+    appStateData->isPrelaunch = parcel.ReadBool();
     appStateData->isFromWindowFocusChanged = parcel.ReadBool();
     appStateData->preloadMode = parcel.ReadInt32();
     return appStateData;
