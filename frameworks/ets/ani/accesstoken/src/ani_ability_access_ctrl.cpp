@@ -990,8 +990,10 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(GetPermissionRequestToggleStatusExecute) },
         ani_native_function{ "requestAppPermOnSettingExecute",
             nullptr, reinterpret_cast<void*>(RequestAppPermOnSettingExecute) },
-        ani_native_function { "onExcute", nullptr, reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
-        ani_native_function { "offExcute", nullptr, reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
+        ani_native_function { "onPermissionStateChangeExecute", nullptr,
+            reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
+        ani_native_function { "offPermissionStateChangeExecute", nullptr,
+            reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
         ani_native_function { "getSelfPermissionStatusExecute",
             nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
     };
@@ -1037,6 +1039,7 @@ ani_status InitAbilityCtrlFunction(ani_env* env)
     };
     return retStatus;
 }
+
 extern "C" {
 ANI_EXPORT ani_status ANI_Constructor(ani_vm* vm, uint32_t* result)
 {

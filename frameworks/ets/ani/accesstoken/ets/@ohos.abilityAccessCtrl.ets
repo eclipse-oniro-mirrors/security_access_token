@@ -153,10 +153,10 @@ export default namespace abilityAccessCtrl {
         setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
         getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
         RequestAppPermOnSettingExecute(tokenID: int): undefined;
-        onExcute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        onPermissionStateChangeExecute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
-        offExcute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
-            callback?: Callback<PermissionStateChangeInfo>): void;
+        offPermissionStateChangeExecute(type: string, tokenIDList: Array<int>,
+            permissionList: Array<Permissions>, callback?: Callback<PermissionStateChangeInfo>): void;
         requestAppPermOnSettingExecute(tokenID: int): void;
 
         checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus;
@@ -197,13 +197,13 @@ export default namespace abilityAccessCtrl {
             permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void>;
         getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus>;
         requestPermissionOnApplicationSetting(tokenID: int): Promise<void>;
-        on(type: 'selfPermissionStateChange', permissionList: Array<Permissions>,
+        onSelfPermissionStateChange(permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
-        on(type: 'permissionStateChange', tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        onPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
-        off(type: 'selfPermissionStateChange', permissionList: Array<Permissions>,
+        offSelfPermissionStateChange(permissionList: Array<Permissions>,
             callback?: Callback<PermissionStateChangeInfo>): void;
-        off(type: 'permissionStateChange', tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        offPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus;
     }
@@ -231,10 +231,10 @@ export default namespace abilityAccessCtrl {
         native setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
         native getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
         native RequestAppPermOnSettingExecute(tokenID: int): undefined;
-        native onExcute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        native onPermissionStateChangeExecute(type:string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
-        native offExcute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
-            callback?: Callback<PermissionStateChangeInfo>): void;
+        native offPermissionStateChangeExecute(type: string, tokenIDList: Array<int>,
+            permissionList: Array<Permissions>, callback?: Callback<PermissionStateChangeInfo>): void;
         native requestAppPermOnSettingExecute(tokenID: int): void;
         native getSelfPermissionStatusExecute(permissionName: Permissions): int;
 
@@ -494,7 +494,7 @@ export default namespace abilityAccessCtrl {
 
         getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int> {
             let p = new Promise<int>(
-                (resolve: (v: int) => void, reject: (err: BusinessError) => void): int => {
+                (resolve: (v: int) => void, reject: (err: Error) => void): void => {
                 let p1 = taskpool.execute((): int => {
                     return new AtManagerInner().getPermissionFlagsExecute(tokenID, permissionName);
                 });
@@ -525,7 +525,7 @@ export default namespace abilityAccessCtrl {
         getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus> {
             let p =  new Promise<PermissionRequestToggleStatus>(
                 (resolve: (v: PermissionRequestToggleStatus) => void,
-                    reject: (err: BusinessError) => void): PermissionRequestToggleStatus => {
+                    reject: (err: Error) => void): void => {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
                         return new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName) as PermissionRequestToggleStatus;
                     });
@@ -553,24 +553,28 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
-        on(type: 'selfPermissionStateChange', permissionList: Array<Permissions>,
+        onSelfPermissionStateChange(permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void {
-                new AtManagerInner().onExcute('selfPermissionStateChange', [], permissionList, callback);
+                new AtManagerInner().onPermissionStateChangeExecute(
+                    'selfPermissionStateChange', [], permissionList, callback);
             }
 
-        on(type: 'permissionStateChange', tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        onPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void {
-                new AtManagerInner().onExcute('permissionStateChange', tokenIDList, permissionList, callback);
+                new AtManagerInner().onPermissionStateChangeExecute(
+                    'permissionStateChange', tokenIDList, permissionList, callback);
             }
 
-        off(type: 'selfPermissionStateChange', permissionList: Array<Permissions>,
+        offSelfPermissionStateChange(permissionList: Array<Permissions>,
             callback?: Callback<PermissionStateChangeInfo>): void {
-                new AtManagerInner().offExcute('selfPermissionStateChange', [], permissionList, callback);
+                new AtManagerInner().offPermissionStateChangeExecute(
+                    'selfPermissionStateChange', [], permissionList, callback);
             }
 
-        off(type: 'permissionStateChange', tokenIDList: Array<int>, permissionList: Array<Permissions>,
+        offPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback?: Callback<PermissionStateChangeInfo>): void {
-                new AtManagerInner().offExcute('permissionStateChange', tokenIDList, permissionList, callback);
+                new AtManagerInner().offPermissionStateChangeExecute(
+                    'permissionStateChange', tokenIDList, permissionList, callback);
             }
 
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus {
