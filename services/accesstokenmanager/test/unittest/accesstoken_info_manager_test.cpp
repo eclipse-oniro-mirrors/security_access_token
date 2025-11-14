@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -94,7 +94,16 @@ static HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest"
+    .appIDDesc = "testtesttesttest",
+    .isSystemApp = false
+};
+
+static HapInfoParams g_infoManagerTestInfoParms2 = {
+    .userID = 1,
+    .bundleName = "accesstoken_info_manager_test2",
+    .instIndex = 0,
+    .appIDDesc = "testtesttesttest",
+    .isSystemApp = true
 };
 
 static HapPolicy g_infoManagerTestPolicyPrams1 = {
@@ -1060,8 +1069,10 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level0)
 
     std::string deviceId = "device_1";
     std::string deviceId2 = "device_2";
-    AccessTokenID mapID =
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx =
         AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, 0);
     HapTokenInfoForSync hapSync;
     ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
@@ -1095,8 +1106,10 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level0)
 
     std::string deviceId = "device_1";
     std::string deviceId2 = "device_2";
-    AccessTokenID mapId =
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx =
         AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID mapId = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapId == 0, true);
     HapTokenInfoForSync hapSync;
     ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
@@ -1434,7 +1447,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
     std::string remoteDeviceID;
     AccessTokenID remoteTokenID = 0;
 
-    ASSERT_EQ(static_cast<AccessTokenID>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
         remoteTokenID)); // remoteDeviceID invalid
 
     // deviceID invalid + tokenID == 0
@@ -1445,7 +1458,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
     ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
 
     remoteDeviceID = "dev-001";
-    ASSERT_EQ(static_cast<AccessTokenID>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
         remoteTokenID)); // remoteTokenID invalid
 
     // deviceID valid + tokenID == 0
@@ -2479,6 +2492,79 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, Test
     EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
         "ohos.permission.CAMERA"));
 }
+
+#ifdef TOKEN_SYNC_ENABLE
+/**
+ * @tc.name: GetFullRemoteTokenId001
+ * @tc.desc: GetFullRemoteTokenId with invalid tokenid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetFullRemoteTokenId001, TestSize.Level0)
+{
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIdExStruct.tokenID = 123; // invalid tokenid
+
+    AccessTokenIDEx idEx2 = {0};
+    idEx2.tokenIDEx = AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(idEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(idEx.tokenIDEx, idEx2.tokenIDEx);
+}
+
+/**
+ * @tc.name: GetFullRemoteTokenId002
+ * @tc.desc: GetFullRemoteTokenId with normal app tokenid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetFullRemoteTokenId002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a normal hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    EXPECT_NE(nullptr, tokenInfo);
+
+    EXPECT_EQ(tokenID, AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(tokenID));
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the normal hap token info";
+}
+
+/**
+ * @tc.name: GetFullRemoteTokenId003
+ * @tc.desc: GetFullRemoteTokenId with system app tokenid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetFullRemoteTokenId003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms2,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a system hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    EXPECT_NE(nullptr, tokenInfo);
+
+    EXPECT_NE(tokenID, AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(tokenID));
+    EXPECT_EQ(tokenIdEx.tokenIDEx, AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(tokenID));
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the system hap token info";
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

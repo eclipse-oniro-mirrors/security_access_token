@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -680,7 +680,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level0)
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
@@ -712,7 +714,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level0)
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
@@ -745,7 +749,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level0)
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
@@ -779,7 +785,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level0)
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
@@ -812,7 +820,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level0)
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
@@ -861,7 +871,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level0)
         count++;
     }
     free(recvBuffer);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(g_udid, 0);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 

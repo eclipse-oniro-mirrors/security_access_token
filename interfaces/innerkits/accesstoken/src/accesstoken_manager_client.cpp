@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_client.h"
 
+#include <cinttypes>
 #include "access_token_error.h"
 #include "access_token_manager_proxy.h"
 #include "accesstoken_callbacks.h"
@@ -672,7 +673,7 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     return result;
 }
 
-AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
+FullTokenID AccessTokenManagerClient::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
     auto proxy = GetProxy();
@@ -680,14 +681,15 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return INVALID_TOKENID;
     }
-    uint32_t tokenId;
+    FullTokenID tokenId;
     int32_t errCode = proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID, tokenId);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
         return INVALID_TOKENID;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result tokenId is %{public}u.", tokenId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result full tokenId is %{public}" PRIu64 ", tokenId is %{public}u",
+        tokenId, static_cast<uint32_t>(tokenId));
     return tokenId;
 }
 

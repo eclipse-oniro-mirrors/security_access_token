@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -159,9 +159,14 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest001, Test
     ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID1, remoteTokenInfo2);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId1);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId1);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
-    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId2);
+
+    AccessTokenIDEx idEx2 = {0};
+    idEx2.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId2);
+    AccessTokenID mapID1 = idEx2.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID1, 0);
 
     ret = AccessTokenKit::DeleteRemoteDeviceTokens(deviceID1);
@@ -208,9 +213,14 @@ HWTEST_F(DeleteRemoteDeviceTokensTest, DeleteRemoteDeviceTokensFuncTest002, Test
     ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID2, remoteTokenInfo1);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId1);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId1);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
-    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId2);
+
+    AccessTokenIDEx idEx2 = {0};
+    idEx2.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId2);
+    AccessTokenID mapID1 = idEx2.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID1, 0);
 
     ret = AccessTokenKit::DeleteRemoteDeviceTokens("1111111");

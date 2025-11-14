@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,8 @@ static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static uint64_t g_selfTokenId = 0;
 static AccessTokenID g_testTokenId = 0x20100000;
+static AccessTokenID g_testTokenIdNormal = 0x20100001;
+static AccessTokenID g_testTokenIdSystem = 0x20100002;
 
 HapTokenInfo g_baseInfo = {
     .ver = 1,
@@ -39,6 +41,24 @@ HapTokenInfo g_baseInfo = {
     .instIndex = 1,
     .tokenID = g_testTokenId,
     .tokenAttr = 0
+};
+
+HapTokenInfo g_baseInfoNormal = {
+    .ver = 1,
+    .userID = 1,
+    .bundleName = "com.ohos.access_token_normal",
+    .instIndex = 1,
+    .tokenID = g_testTokenIdNormal,
+    .tokenAttr = 0
+};
+
+HapTokenInfo g_baseInfoSystem = {
+    .ver = 1,
+    .userID = 1,
+    .bundleName = "com.ohos.access_token_system",
+    .instIndex = 1,
+    .tokenID = g_testTokenIdSystem,
+    .tokenAttr = 1 // system hap
 };
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -152,7 +172,9 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest001, TestSize.Level0)
     ASSERT_NE(tokenId, INVALID_TOKENID);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));  // set self hap token
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     EXPECT_EQ(mapID, 0);
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
@@ -185,7 +207,75 @@ HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest002, TestSize.Level0)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID1, remoteTokenInfo1);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
+}
+
+/**
+ * @tc.name: AllocLocalTokenIDFuncTest003
+ * @tc.desc: get already mapping tokenInfo with normal app
+ * @tc.type: FUNC
+ * @tc.require:issue
+ */
+HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest003, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest003 start.");
+    MockNativeToken mock("token_sync_service");
+    std::string deviceID1 = udid_;
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenIdNormal);
+    PermissionStatus infoManagerTestState_3 = {
+        .permissionName = "ohos.permission.test1",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList3;
+    permStateList3.emplace_back(infoManagerTestState_3);
+
+    HapTokenInfoForSync remoteTokenInfo3 = {
+        .baseInfo = g_baseInfoNormal,
+        .permStateList = permStateList3
+    };
+
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID1, remoteTokenInfo3);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    uint64_t mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenIdNormal);
+    EXPECT_NE(mapID, 0);
+    EXPECT_FALSE(AccessTokenKit::IsSystemAppByFullTokenID(mapID));
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenIdNormal);
+}
+
+/**
+ * @tc.name: AllocLocalTokenIDFuncTest004
+ * @tc.desc: get already mapping tokenInfo with system app
+ * @tc.type: FUNC
+ * @tc.require:issue
+ */
+HWTEST_F(AllocLocalTokenIDTest, AllocLocalTokenIDFuncTest004, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "AllocLocalTokenIDFuncTest004 start.");
+    MockNativeToken mock("token_sync_service");
+    std::string deviceID1 = udid_;
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenIdSystem);
+    PermissionStatus infoManagerTestState_4 = {
+        .permissionName = "ohos.permission.test1",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET};
+    std::vector<PermissionStatus> permStateList4;
+    permStateList4.emplace_back(infoManagerTestState_4);
+
+    HapTokenInfoForSync remoteTokenInfo4 = {
+        .baseInfo = g_baseInfoSystem,
+        .permStateList = permStateList4
+    };
+
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID1, remoteTokenInfo4);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    uint64_t mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenIdSystem);
+    EXPECT_NE(mapID, 0);
+    EXPECT_TRUE(AccessTokenKit::IsSystemAppByFullTokenID(mapID));
+    AccessTokenKit::DeleteRemoteToken(deviceID1, g_testTokenIdSystem);
 }
 #endif

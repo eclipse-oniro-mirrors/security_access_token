@@ -68,7 +68,7 @@ public:
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
         std::vector<GenericValues>& undefValues);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
-    AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
+    FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
         std::vector<GenericValues>& undefValues);
@@ -98,6 +98,7 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
+    FullTokenID GetFullRemoteTokenId(AccessTokenID id);
 #endif
 
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -138,13 +138,13 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
     return AccessTokenManagerClient::GetInstance().InitHapToken(info, newPolicy, fullTokenId, result);
 }
 
-AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
+FullTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeviceID=%{public}s, tokenID=%{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
 #ifdef DEBUG_API_PERFORMANCE
     LOGD(ATM_DOMAIN, ATM_TAG, "Api_performance:start call");
-    AccessTokenID resID = AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    FullTokenID resID = AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
     LOGD(ATM_DOMAIN, ATM_TAG, "Api_performance:end call");
     return resID;
 #else
