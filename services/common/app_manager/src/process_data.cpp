@@ -29,8 +29,7 @@ bool ProcessData::Marshalling(Parcel &parcel) const
         && parcel.WriteInt32(renderUid) && parcel.WriteUint32(accessTokenId) &&
         parcel.WriteBool(isTestMode) && parcel.WriteInt32(exitReason) && parcel.WriteString(exitMsg) &&
         parcel.WriteInt32(childUid) && parcel.WriteBool(isPreload) && parcel.WriteBool(isPreloadModule) &&
-        parcel.WriteBool(isPrelaunch) && parcel.WriteInt32(preloadMode) &&
-        parcel.WriteBool(isFromWindowFocusChanged));
+        parcel.WriteInt32(preloadMode) && parcel.WriteBool(isFromWindowFocusChanged));
 }
 
 bool ProcessData::ReadFromParcel(Parcel &parcel)
@@ -58,7 +57,6 @@ bool ProcessData::ReadFromParcel(Parcel &parcel)
     isPreload = parcel.ReadBool();
     isPreloadModule = parcel.ReadBool();
     preloadMode = parcel.ReadInt32();
-    isPrelaunch = parcel.ReadBool();
     isFromWindowFocusChanged = parcel.ReadBool();
     return true;
 }
