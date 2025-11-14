@@ -209,7 +209,7 @@ export default namespace abilityAccessCtrl {
                 let p1 = taskpool.execute((): GrantStatus => {
                     return new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName) as GrantStatus;
                 });
-                p1.then((e: NullishType) => {
+                p1.then((e: Any) => {
                     resolve(e as GrantStatus);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
@@ -224,7 +224,7 @@ export default namespace abilityAccessCtrl {
                 let p1 = taskpool.execute((): GrantStatus => {
                     return new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName) as GrantStatus;
                 });
-                p1.then((e: NullishType) => {
+                p1.then((e: Any) => {
                     resolve(e as GrantStatus);
                 }).catch((err: Error): void => {
                     resolve(GrantStatus.PERMISSION_DENIED);
@@ -328,7 +328,7 @@ export default namespace abilityAccessCtrl {
                 let p = taskpool.execute(() : void => {
                     new AtManagerInner().grantUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
                 });
-                p.then((e: NullishType) : void => {
+                p.then((e: Any) : void => {
                     resolve(undefined);
                 }).catch((err: Error) : void => {
                     reject(err as BusinessError);
@@ -342,7 +342,7 @@ export default namespace abilityAccessCtrl {
                 let p = taskpool.execute((): void => {
                     new AtManagerInner().revokeUserGrantedPermissionExecute(tokenID, permissionName, permissionFlags);
                 });
-                p.then((e: NullishType): void => {
+                p.then((e: Any): void => {
                     resolve(undefined);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
@@ -368,7 +368,7 @@ export default namespace abilityAccessCtrl {
                     let p1 = taskpool.execute((): int => {
                         return new AtManagerInner().getVersionExecute() as int;
                     });
-                    p1.then((e: NullishType) => {
+                    p1.then((e: Any) => {
                         resolve(e as int);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
@@ -384,7 +384,7 @@ export default namespace abilityAccessCtrl {
                     return new AtManagerInner().getPermissionsStatusExecute(
                         tokenID, permissionList) as Array<PermissionStatus>;
                 });
-                p1.then((e: NullishType) => {
+                p1.then((e: Any) => {
                     resolve(e as Array<PermissionStatus>);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
@@ -399,7 +399,7 @@ export default namespace abilityAccessCtrl {
                 let p1 = taskpool.execute((): int => {
                     return new AtManagerInner().getPermissionFlagsExecute(tokenID, permissionName);
                 });
-                p1.then((e: NullishType): void => {
+                p1.then((e: Any): void => {
                     resolve(e as int);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
@@ -414,7 +414,7 @@ export default namespace abilityAccessCtrl {
                 let p = taskpool.execute((): void => {
                     new AtManagerInner().setPermissionRequestToggleStatusExecute(permissionName, status);
                 });
-                p.then((e: NullishType): void => {
+                p.then((e: Any): void => {
                     resolve(undefined);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
@@ -430,7 +430,7 @@ export default namespace abilityAccessCtrl {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
                         return new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName) as PermissionRequestToggleStatus;
                     });
-                    p1.then((e: NullishType): void => {
+                    p1.then((e: Any): void => {
                         resolve(e as PermissionRequestToggleStatus);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
@@ -445,7 +445,7 @@ export default namespace abilityAccessCtrl {
                 let p = taskpool.execute((): void => {
                     new AtManagerInner().requestAppPermOnSettingExecute(tokenID);
                 });
-                p.then((e: NullishType): void => {
+                p.then((e: Any): void => {
                     resolve(undefined);
                 }).catch((err: Error): void => {
                     reject(err as BusinessError);
