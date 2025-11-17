@@ -236,10 +236,9 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     }
 }
 
-static bool ParseInputToRegister(const ani_string& aniType, const ani_array& aniArray,
+static bool ParseInputToRegister(const ani_array& aniArray,
     const ani_ref& aniCallback, RegisterPermActiveChangeContext* context, bool isReg)
 {
-    std::string type = ParseAniString(context->env, static_cast<ani_string>(aniType));
     std::vector<std::string> permList = ParseAniStringVector(context->env, aniArray);
     std::sort(permList.begin(), permList.end());
 
@@ -264,7 +263,6 @@ static bool ParseInputToRegister(const ani_string& aniType, const ani_array& ani
     }
 
     context->callbackRef = callback;
-    context->type = type;
     context->permissionList = permList;
     context->subscriber = std::make_shared<PermActiveStatusPtr>(permList);
     context->threadId = std::this_thread::get_id();
@@ -313,7 +311,7 @@ static bool IsExistRegister(const RegisterPermActiveChangeContext* context)
 }
 
 static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
-    ani_string aniType, ani_array aniArray, ani_ref callback)
+    ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         return;
@@ -327,7 +325,7 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     context->env = env;
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {context};
 
-    if (!ParseInputToRegister(aniType, aniArray, callback, context, true)) {
+    if (!ParseInputToRegister(aniArray, callback, context, true)) {
         return;
     }
 
@@ -427,7 +425,7 @@ static void DeleteRegisterInVector(const RegisterPermActiveChangeContext* contex
 }
 
 static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
-    ani_string aniType, ani_array aniArray, ani_ref callback)
+    ani_array aniArray, ani_ref callback)
 {
     if (env == nullptr) {
         return;
@@ -439,7 +437,7 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     }
     context->env = env;
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {context};
-    if (!ParseInputToRegister(aniType, aniArray, callback, context, false)) {
+    if (!ParseInputToRegister(aniArray, callback, context, false)) {
         return;
     }
 
@@ -904,8 +902,10 @@ void InitPrivacyFunction(ani_env *env)
             nullptr, reinterpret_cast<void *>(SetPermissionUsedRecordToggleStatusExecute)},
         ani_native_function {"getPermissionUsedRecordToggleStatusExecute",
             nullptr, reinterpret_cast<void *>(GetPermissionUsedRecordToggleStatusExecute)},
-        ani_native_function {"onExecute", nullptr, reinterpret_cast<void *>(RegisterPermActiveStatusCallback)},
-        ani_native_function {"offExecute", nullptr, reinterpret_cast<void *>(UnRegisterPermActiveStatusCallback)},
+        ani_native_function {"onActiveStateChangeExecute",
+            nullptr, reinterpret_cast<void *>(RegisterPermActiveStatusCallback)},
+        ani_native_function {"offActiveStateChangeExecute",
+            nullptr, reinterpret_cast<void *>(UnRegisterPermActiveStatusCallback)},
     };
     ani_status status = env->Namespace_BindNativeFunctions(ns, nsMethods.data(), nsMethods.size());
     if (status != ANI_OK) {

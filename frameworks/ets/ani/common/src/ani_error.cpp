@@ -64,7 +64,6 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         return nullptr;
     }
     ani_class cls = nullptr;
-    ani_field field = nullptr;
     ani_method method = nullptr;
     ani_object obj = nullptr;
 
@@ -73,36 +72,27 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass: %{public}u.", status);
         return nullptr;
     }
-    status = env->Class_FindMethod(cls, "<ctor>", ":", &method);
+    // constructor(code: int, message: string, data?: T)
+    status = env->Class_FindMethod(cls, "<ctor>", "iC{std.core.String}C{std.core.Object}:", &method);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return nullptr;
     }
-    status = env->Object_New(cls, method, &obj);
+    ani_string errMessage = nullptr;
+    status = env->String_NewUTF8(msg.c_str(), msg.size(), &errMessage);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_NewUTF8: %{public}u.", status);
+        return nullptr;
+    }
+    ani_ref undRef = nullptr;
+    status = env->GetUndefined(&undRef);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return nullptr;
+    }
+    status = env->Object_New(cls, method, &obj, code, errMessage, static_cast<ani_object>(undRef));
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New: %{public}u.", status);
-        return nullptr;
-    }
-    status = env->Class_FindField(cls, "code_", &field);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}u.", status);
-        return nullptr;
-    }
-    status = env->Object_SetField_Int(obj, field, code);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Int: %{public}u.", status);
-        return nullptr;
-    }
-    status = env->Class_FindField(cls, "data", &field);
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindField: %{public}u.", status);
-        return nullptr;
-    }
-    ani_string string = nullptr;
-    env->String_NewUTF8(msg.c_str(), msg.size(), &string);
-    status = env->Object_SetField_Ref(obj, field, static_cast<ani_ref>(string));
-    if (status != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_SetField_Ref: %{public}u.", status);
         return nullptr;
     }
     return obj;

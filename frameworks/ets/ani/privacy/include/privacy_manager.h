@@ -47,7 +47,6 @@ private:
 struct RegisterPermActiveChangeContext {
     ani_env* env = nullptr;
     ani_ref callbackRef = nullptr;
-    std::string type;
     std::vector<std::string> permissionList;
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr;
     std::thread::id threadId;

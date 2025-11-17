@@ -102,9 +102,9 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetEnumItemByIndex value %{public}u!", state);
             break;
         }
-
-        if (env->Object_CallMethodByName_Void(arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem) != ANI_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_CallMethodByName_Void set!");
+        ani_status status;
+        if ((status = env->Object_CallMethodByName_Void(
+            arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem)) != ANI_OK) {
             break;
         }
         index++;

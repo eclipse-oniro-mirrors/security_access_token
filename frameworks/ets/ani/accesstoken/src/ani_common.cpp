@@ -46,7 +46,7 @@ bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, a
     ani_method method = {};
     if ((status = env->Class_FindMethod(
         clsCall, INVOKE_METHOD_NAME, "C{@ohos.base.BusinessError}C{std.core.Object}:", &method)) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, error=%{public}u.", status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod, error=%{public}d.", static_cast<int32_t>(status));
         return false;
     }
 
