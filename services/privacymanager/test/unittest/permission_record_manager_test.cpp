@@ -157,6 +157,20 @@ static HapInfoParams g_InfoParms3 = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleC"
 };
+
+static HapPolicyParams g_PolicyPrams4 = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.D",
+    .permList = {},
+    .permStateList = {g_testState1},
+};
+
+static HapInfoParams g_InfoParms4 = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleD",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleD"
+};
 }
 class PermissionRecordManagerTest : public testing::Test {
 public:
@@ -1546,6 +1560,55 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest002, TestSize.L
     request.isRemote = false;
     request.deviceId = "";
     request.bundleName = g_InfoParms3.bundleName;
+    request.permissionList = permissionList;
+    request.beginTimeMillis = 0;
+    request.endTimeMillis = 0;
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
+
+    PermissionUsedResult result;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
+    EXPECT_EQ(0, result.bundleRecords.size());
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest003
+ * @tc.desc: PermissionRecordManager::AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(g_InfoParms4, g_PolicyPrams4);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    {
+        MockNativeToken mock("edm");
+        std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            tokenId, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+        uint32_t flag = 0;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenId, "ohos.permission.CAMERA", flag));
+        EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    }
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    std::vector<std::string> permissionList;
+    permissionList.push_back("ohos.permission.CAMERA");
+    PermissionUsedRequest request;
+    request.tokenId = tokenId;
+    request.isRemote = false;
+    request.deviceId = "";
+    request.bundleName = g_InfoParms4.bundleName;
     request.permissionList = permissionList;
     request.beginTimeMillis = 0;
     request.endTimeMillis = 0;

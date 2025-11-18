@@ -456,11 +456,14 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
-    if (info.permissionName == CAMERA_PERMISSION_NAME &&
-        AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS &&
-        flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, don't add used record.");
-        return Constant::SUCCESS;
+    if (AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS) {
+        if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED && info.permissionName == CAMERA_PERMISSION_NAME) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, don't add used record.");
+            return Constant::SUCCESS;
+        } else if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "fixed by admin policy, don't add used record.");
+            return Constant::SUCCESS;
+        }
     }
 
     HapTokenInfo tokenInfo;
