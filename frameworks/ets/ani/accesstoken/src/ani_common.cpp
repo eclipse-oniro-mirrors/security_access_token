@@ -15,6 +15,8 @@
 #include "ani_common.h"
 #include "accesstoken_common_log.h"
 #include "hisysevent.h"
+#include "refbase.h"
+#include "window.h"
 #include <sstream>
 namespace OHOS {
 namespace Security {
@@ -58,16 +60,22 @@ bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, a
     return true;
 }
 
-OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext)
+OHOS::Ace::UIContent* GetUIContent(
+    const std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext, uint32_t windowId, bool isWithWindowId)
 {
-    if (stageContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "stageContext is nullptr");
-        return nullptr;
-    }
     OHOS::Ace::UIContent* uiContent = nullptr;
     auto abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(
         stageContext);
-    if (abilityContext != nullptr) {
+    if (isWithWindowId) {
+        sptr<OHOS::Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(windowId);
+        if (window == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get window with id %{public}d failed", windowId);
+            return nullptr;
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get window with id %{public}d success", windowId);
+        uiContent = window->GetUIContent();
+    } else if (abilityContext != nullptr) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get UIContent from AbilityContext");
         uiContent = abilityContext->GetUIContent();
     } else {
         auto uiExtensionContext =
@@ -90,7 +98,8 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
         return;
     }
     auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
-        OHOS::Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
+        OHOS::Ace::UIContent* uiContent = GetUIContent(
+            asyncContext->stageContext_, asyncContext->windowId, asyncContext->isWithWindowId);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
             asyncContext->result_.errorCode = AccessToken::RET_FAILED;
@@ -132,7 +141,8 @@ void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> as
         return;
     }
     auto task = [asyncContext, sessionId]() {
-        Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
+        Ace::UIContent* uiContent = GetUIContent(
+            asyncContext->stageContext_, asyncContext->windowId, asyncContext->isWithWindowId);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
             asyncContext->result_.errorCode = RET_FAILED;

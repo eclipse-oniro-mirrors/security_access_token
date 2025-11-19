@@ -305,6 +305,10 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
 {
     uint32_t size = reqPermList.size();
     if (size > MAX_PERMISSION_SIZE) {
+        for (auto& perm: reqPermList) {
+            perm.permsState.state = INVALID_OPER;
+            perm.permsState.errorReason = PERM_INVALID;
+        }
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList size %{public}d is invalid.", size);
         return INVALID_OPER;
     }

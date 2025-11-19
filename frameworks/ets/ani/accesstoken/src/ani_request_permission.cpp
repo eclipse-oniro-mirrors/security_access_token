@@ -25,8 +25,10 @@
 #include "ani_common.h"
 #include "ani_hisysevent_adapter.h"
 #include "hisysevent.h"
+#include "refbase.h"
 #include "token_setproc.h"
 #include "want.h"
+#include "window.h"
 
 namespace OHOS {
 namespace Security {
@@ -68,8 +70,62 @@ RequestAsyncContext::~RequestAsyncContext()
     Clear();
 }
 
+static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+    sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
+    if (window == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetWindowWithId failed, windowId: %{public}d", asyncContext->windowId);
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = STS_ERROR_PARAM_INVALID;
+        asyncContext->result_.errorMsg = "Cannot find window by windowId.";
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
+        return;
+    }
+    OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
+    if (remoteObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+        return;
+    }
+    OHOS::AAFwk::Want want;
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(CALLBACK_KEY, remoteObject);
+
+    want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
+    
+    Rosen::Rect windowRect = window->GetRect();
+
+    int32_t left = windowRect.posX_;
+    int32_t top = windowRect.posY_;
+    int32_t width = static_cast<int32_t>(windowRect.width_);
+    int32_t height = static_cast<int32_t>(windowRect.height_);
+    want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, left);
+    want.SetParam(WINDOW_RECTANGLE_TOP_KEY, top);
+    want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, width);
+    want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, height);
+    want.SetParam(REQUEST_TOKEN_KEY, window->GetContext()->GetToken());
+
+    int32_t ret = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
+        want, window->GetContext()->GetToken());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
+        ret, asyncContext->tokenId, asyncContext->permissionList.size());
+}
+
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (asyncContext->isWithWindowId) {
+        CreateServiceExtensionWithWindowId(asyncContext);
+        return;
+    }
     auto abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(
         asyncContext->stageContext_);
     if (abilityContext == nullptr) {
@@ -122,6 +178,11 @@ void RequestAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncCont
         LOGI(ATM_DOMAIN, ATM_TAG, "asyncContext is nullptr.");
         return;
     }
+    if (asyncContext->isWithWindowId) {
+        CreateServiceExtensionWithWindowId(std::static_pointer_cast<RequestAsyncContext>(asyncContext));
+        return;
+    }
+
     if (uiExtensionFlag) {
         OHOS::AAFwk::Want want;
         want.SetElementName(this->info.grantBundleName, this->info.grantAbilityName);
@@ -378,6 +439,51 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         asyncContext->uiExtensionFlag, asyncContext->uiContentFlag);
 }
 
+void RequestPermissionsFromUserWithWindowIdExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_object aniContext, ani_int aniWindowId, ani_array aniPermissionList, ani_object callback)
+{
+    if (env == nullptr || aniPermissionList == nullptr || callback == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "env or aniPermissionList or callback is null.");
+        return;
+    }
+    ani_vm* vm;
+    ani_status status = env->GetVM(&vm);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetVM failed, error=%{public}u.", status);
+        return;
+    }
+    std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>(vm, env);
+    asyncContext->windowId = static_cast<AccessTokenID>(aniWindowId);
+    asyncContext->isWithWindowId = true;
+    if (!ParseParameter(env, aniContext, aniPermissionList, callback, asyncContext)) {
+        return;
+    }
+
+    static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
+    if (selfTokenID != asyncContext->tokenId) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
+
+        ani_ref undefRef = nullptr;
+        env->GetUndefined(&undefRef);
+        ani_object result = reinterpret_cast<ani_object>(undefRef);
+        ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
+            "The specified context does not belong to the current application."));
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
+            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
+        (void)ExecuteAsyncCallback(env, callback, error, result);
+        return;
+    }
+    RequestPermissionsFromUserProcess(asyncContext);
+    if (asyncContext->needDynamicRequest_) {
+        return;
+    }
+    asyncContext->FinishCallback();
+    LOGI(ATM_DOMAIN, ATM_TAG, "uiExtensionFlag: %{public}d, uiContentFlag: %{public}d",
+        asyncContext->uiExtensionFlag, asyncContext->uiContentFlag);
+}
+
 
 AuthorizationResult::AuthorizationResult(std::shared_ptr<RequestAsyncContext> data) : data_(data)
 {
@@ -407,7 +513,8 @@ void AuthorizationResult::WindowShownCallback()
     if (asyncContext == nullptr) {
         return;
     }
-    OHOS::Ace::UIContent* uiContent = GetUIContent(asyncContext->stageContext_);
+    OHOS::Ace::UIContent* uiContent = GetUIContent(
+        asyncContext->stageContext_, asyncContext->windowId, asyncContext->isWithWindowId);
     if ((uiContent == nullptr) || !(asyncContext->uiContentFlag)) {
         return;
     }

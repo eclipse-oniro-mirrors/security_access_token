@@ -97,14 +97,38 @@ export default namespace abilityAccessCtrl {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
         if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
             permissionList.length == 0 || typeof permissionList[0] !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.data = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
+            err.message = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
+            throw err;
+        }
+    }
+
+    function validateRequestParams(context: Context, windowId: int, permissionList: Array<Permissions>): void {
+        if ((typeof context === "undefined") || (context == null)) {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.message = PARAM_ERROR_MSG("context", "Context of stage mode");
+            throw err;
+        }
+        
+        if (typeof windowId !== "number") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.message = PARAM_ERROR_MSG("windowId", "int");
+            throw err;
+        }
+
+        if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
+            permissionList.length == 0 || typeof permissionList[0] !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.message = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
             throw err;
         }
     }
@@ -113,13 +137,13 @@ export default namespace abilityAccessCtrl {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
         if (typeof permission !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.data = PARAM_ERROR_MSG("permission", "Permissions");
+            err.message = PARAM_ERROR_MSG("permission", "Permissions");
             throw err;
         }
     }
@@ -129,7 +153,7 @@ export default namespace abilityAccessCtrl {
         if (result != (STSErrorCode.STS_OK as int)) {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+            err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
     }
@@ -140,6 +164,8 @@ export default namespace abilityAccessCtrl {
         checkContextExecute(context: Context): int;
         requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
+        requestPermissionsFromUserWithWindowIdExecute(context: Context, windowId: int,
+            permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
         openPermissionOnSettingExecute(context: Context,
@@ -168,6 +194,8 @@ export default namespace abilityAccessCtrl {
             requestCallback: AsyncCallback<PermissionRequestResult, void>): void;
         requestPermissionsFromUser(
             context: Context, permissionList: Array<Permissions>): Promise<PermissionRequestResult>;
+        requestPermissionsFromUserWithWindowId(
+            context: Context, windowId: int, permissionList: Array<Permissions>): Promise<PermissionRequestResult>;
         requestPermissionOnSetting(
             context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>>;
         openPermissionOnSetting(context: Context, permission: Permissions): Promise<SelectedResult>;
@@ -213,6 +241,8 @@ export default namespace abilityAccessCtrl {
         native checkContextExecute(context: Context): int;
         native requestPermissionsFromUserExecute(context: Context, permissionList: Array<Permissions>,
             callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
+        native requestPermissionsFromUserWithWindowIdExecute(context: Context, windowId: int,
+            permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<PermissionRequestResult>): void;
         native requestPermissionOnSettingExecute(context: Context,
             permissionList: Array<Permissions>, callback: AsyncCallbackWrapper<Array<GrantStatus>>): void;
         native openPermissionOnSettingExecute(context: Context,
@@ -311,6 +341,29 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
+        requestPermissionsFromUserWithWindowId(context: Context, windowId: int, permissionList: Array<Permissions>):
+            Promise<PermissionRequestResult> {
+            validateRequestParams(context, windowId, permissionList);
+            let p: Promise<PermissionRequestResult> = new Promise<PermissionRequestResult>((
+                resolve: (v: PermissionRequestResult) => void, reject: (error: BusinessError) => void) => {
+                let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>((
+                    err: BusinessError<void> | null, data: PermissionRequestResult | undefined) => {
+                    if (err === null) {
+                        if (data !== undefined) {
+                            resolve(data);
+                        }
+                    } else {
+                        reject(err as BusinessError);
+                    }
+                });
+                taskpool.execute((): void => {
+                    new AtManagerInner().requestPermissionsFromUserWithWindowIdExecute(
+                        context, windowId, permissionList, callbackWrap);
+                });
+            });
+            return p;
+        }
+
         requestPermissionOnSetting(context: Context, permissionList: Array<Permissions>): Promise<Array<GrantStatus>> {
             validateRequestParams(context, permissionList);
             checkContext(context);
@@ -359,7 +412,7 @@ export default namespace abilityAccessCtrl {
             if ((typeof context === "undefined") || (context == null)) {
                 let err = new BusinessError<string>();
                 err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-                err.data = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
+                err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
                 throw err;
             }
             checkContext(context);
