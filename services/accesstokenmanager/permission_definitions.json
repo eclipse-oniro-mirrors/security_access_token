@@ -7594,6 +7594,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.GET_NPU_LARGEMEM_PRIVILEGED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.START_WINDOW_BELOW_LOCK_SCREEN",
             "grantMode": "system_grant",
             "availableLevel": "normal",
