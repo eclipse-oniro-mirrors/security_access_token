@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
 #include <string>
 #include "accesstoken_kit.h"
 #include "test_common.h"
@@ -27,26 +26,22 @@ using namespace OHOS::Security::AccessToken;
 int32_t main(int argc, char *argv[])
 {
     if (argc < 3) { // 3: size
-        std::cout << "Help: ./SetPermDialogCap bundleName 0/1 (0: allow, 1: forbid)\n" << std::endl;
+        std::cout << "Help: ./GrantPermission tokenid permisision\n" << std::endl;
         return 0;
     }
 
     std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    AccessTokenID mockToken = GetHapTokenId("SetPermDialogCap", reqPerm);
+    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
+    AccessTokenID mockToken = GetHapTokenId("GrantPermission", reqPerm);
     SetSelfTokenID(mockToken);
     std::cout << "Self tokenId is " << GetSelfTokenID() << std::endl;
 
-    std::string bundle = argv[1];
-    bool isForbidden = static_cast<bool>(atoi(argv[2]));
-    HapBaseInfo baseInfo;
-    baseInfo.bundleName = bundle;
-    baseInfo.instIndex = 0;
-    baseInfo.userID = 100; // 100: user id
+    uint32_t tokenId = static_cast<uint32_t>(atoi(argv[1])); // 1: index
+    std::string permisisionName = argv[2]; // 2: index
 
-    std::cout << "SetPermDialogCap begin" << std::endl;
-    int32_t ret = AccessTokenKit::SetPermDialogCap(baseInfo, isForbidden);
-    std::cout << "SetPermDialogCap end, " << ret << std::endl;
+    std::cout << "GrantPermission begin" << std::endl;
+    int32_t ret = AccessTokenKit::GrantPermission(tokenId, permisisionName, PERMISSION_USER_SET);
+    std::cout << "GrantPermission end, ret=" << ret << std::endl;
 
     AccessTokenKit::DeleteToken(mockToken);
     return 0;
