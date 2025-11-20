@@ -311,15 +311,6 @@ typedef struct {
 } UserPermissionPolicy;
 
 /**
- * @brief Dlp permission type
- */
-typedef enum TypeDlpPerm {
-    DLP_PERM_ALL = 0,
-    DLP_PERM_FULL_CONTROL = 1,
-    DLP_PERM_NONE = 2,
-} DlpPermMode;
-
-/**
  * @brief PermssionRule
  */
 typedef enum TypePermissionRulesEnum {
@@ -347,16 +338,6 @@ typedef enum HapPolicyCheckIgnoreType {
     /** ignore acl check */
     ACL_IGNORE_CHECK,
 } HapPolicyCheckIgnore;
-
-/**
- * @brief Apl and isSystemApp info about tokenId
- */
-typedef struct {
-    /** apl for tokenId */
-    int32_t apl;
-    /** is system app */
-    bool isSystemApp;
-} TokenIdInfo;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

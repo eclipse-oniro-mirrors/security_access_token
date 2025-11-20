@@ -1,0 +1,112 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("../../../../../../access_token.gni")
+
+ohos_unittest("libcompat_sdk_proxy_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_innerkit_path}/include",
+    "${access_token_innerkit_path}/src",
+  ]
+
+  sources = [
+    "${access_token_innerkit_path}/src/accesstoken_compat_client.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_kit.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_parcel.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_proxy.cpp",
+    "${access_token_innerkit_path}/test/mock/src/iservice_registry.cpp",
+    "ProxyMockTest/compat_sdk_proxy_test.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_static_log",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
+ohos_unittest("libcompat_sdk_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_innerkit_path}/include",
+    "${access_token_innerkit_path}/src",
+    "Common",
+  ]
+
+  sources = [
+    "Common/test_common.cpp",
+    "FunctionalTest/compat_multi_thread_test.cpp",
+    "FunctionalTest/compat_sdk_test.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_compat_sdk",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+}
+
+group("unittest") {
+  testonly = true
+  deps = [
+    ":libcompat_sdk_proxy_test",
+    ":libcompat_sdk_test",
+  ]
+}

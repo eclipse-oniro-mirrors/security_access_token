@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,31 +14,33 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
+import("../access_token_service_fuzz.gni")
 
-ohos_fuzztest("GetNativeTokenIdFuzzTest") {
-  module_out_path = module_output_path_interface_access_token
+ohos_fuzztest("GetHapTokenInfoCompatStubFuzzTest") {
+  module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/test/fuzztest/common",
-  ]
+
+  sources = [ "gethaptokeninfocompatstub_fuzzer.cpp" ]
+
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "getnativetokenid_fuzzer.cpp" ]
 
-  deps = [
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_compat_sdk",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  include_dirs = access_token_include_dirs
+
+  deps = access_token_deps
+
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  external_deps = access_token_external_deps
 
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-  ]
+  cflags_cc = access_token_cflags_cc
+
+  sources += access_token_sources
 }

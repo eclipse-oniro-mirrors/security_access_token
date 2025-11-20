@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -46,6 +46,15 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 /**
+ * @brief Dlp permission type
+ */
+typedef enum TypeDlpPerm {
+    DLP_PERM_ALL = 0,
+    DLP_PERM_FULL_CONTROL = 1,
+    DLP_PERM_NONE = 2,
+} DlpPermMode;
+
+/**
  * @brief Declares permission dlp mode class
  */
 class PermissionDlpMode final {
@@ -53,7 +62,6 @@ public:
     std::string permissionName;
     /**
      * dlp mode, for details about the valid values,
-     * see the definition of DlpPermMode in the access_token.h file
      */
     int32_t dlpMode;
 };

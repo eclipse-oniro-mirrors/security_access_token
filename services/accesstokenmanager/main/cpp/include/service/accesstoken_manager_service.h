@@ -21,6 +21,7 @@
 #include <vector>
 #include <unordered_set>
 
+#include "accesstoken_info_manager.h"
 #include "access_token_manager_stub.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
@@ -91,6 +92,8 @@ public:
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
     int32_t GetTokenIDByUserID(int32_t userID, std::vector<AccessTokenID>& tokenIds) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
+    int32_t GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl) override;
+    int32_t GetPermissionCode(const std::string& permission, uint32_t& opCode) override;
     int32_t UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl) override;
     int32_t RegisterPermStateChangeCallback(
@@ -141,7 +144,7 @@ private:
     void GetConfigValue(uint32_t& parseConfigFlag);
     bool Initialize();
     void AccessTokenServiceParamSet() const;
-    bool isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
+    bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
     void ReportAddHap(AccessTokenIDEx fullTokenId, const HapInfoParams& hapInfo,

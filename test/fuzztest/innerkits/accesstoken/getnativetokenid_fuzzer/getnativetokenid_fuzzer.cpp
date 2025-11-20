@@ -21,6 +21,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_compat_kit.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -35,6 +36,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
+        (void)AccessTokenCompatKit::GetNativeTokenId(provider.ConsumeRandomLengthString());
         return AccessTokenKit::GetNativeTokenId(provider.ConsumeRandomLengthString()) != INVALID_TOKENID;
     }
 }
