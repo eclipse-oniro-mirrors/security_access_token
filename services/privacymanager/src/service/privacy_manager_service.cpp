@@ -21,6 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
+#include "active_change_response_parcel.h"
 #include "active_status_callback_manager.h"
 #include "disable_policy_cbk_manager.h"
 #include "ipc_skeleton.h"
@@ -526,6 +527,27 @@ int32_t PrivacyManagerService::GetDisablePolicy(const std::string& permissionNam
     }
 
     return PermissionRecordManager::GetInstance().GetDisablePolicy(permissionName, isDisable);
+}
+
+int32_t PrivacyManagerService::GetCurrUsingPermInfo(std::vector<ActiveChangeResponseParcel>& resultParcelList)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (AccessTokenKit::GetTokenTypeFlag(callingTokenID) != TOKEN_NATIVE) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "TokenID %{public}u.", callingTokenID);
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "TokenID %{public}u.", callingTokenID);
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+    std::vector<CurrUsingPermInfo> infoList;
+    PermissionRecordManager::GetInstance().GetCurrUsingPermInfo(infoList);
+    for (const auto& info : infoList) {
+        ActiveChangeResponseParcel resultParcel;
+        resultParcel.changeResponse = info;
+        resultParcelList.emplace_back(resultParcel);
+    }
+    return RET_SUCCESS;
 }
 
 int32_t PrivacyManagerService::RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,

@@ -14,7 +14,7 @@
  */
 
 #include "parcel_utils.h"
-#include "perm_active_response_parcel.h"
+#include "active_change_response_parcel.h"
 
 namespace OHOS {
 namespace Security {

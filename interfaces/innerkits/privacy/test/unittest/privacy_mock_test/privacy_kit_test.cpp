@@ -338,6 +338,18 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder001, TestSize.Level0)
     AccessTokenID tokenId = 0xff;
     EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::SetHapWithFGReminder(tokenId, true));
 }
+
+/**
+ * @tc.name: GetCurrUsingPermInfo001
+ * @tc.desc: GetCurrUsingPermInfo proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetCurrUsingPermInfo001, TestSize.Level0)
+{
+    std::vector<CurrUsingPermInfo> results;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::GetCurrUsingPermInfo(results));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

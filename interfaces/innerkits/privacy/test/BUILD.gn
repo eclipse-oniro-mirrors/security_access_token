@@ -110,8 +110,90 @@ ohos_unittest("libprivacy_mock_test") {
     "../src/state_change_callback_stub.cpp",
     "../src/state_change_callback.cpp",
     "../src/state_customized_cbk.cpp",
+    "../src/system_ability_status_change_listener.cpp",
     "mock/src/iservice_registry.cpp",
     "unittest/privacy_mock_test/privacy_kit_test.cpp",
+  ]
+
+  configs = [
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
+  ]
+
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
+    "${access_token_path}/services/privacymanager:privacy_manager_proxy",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gmock",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "ipc:libdbinder",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
+  ]
+
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
+}
+
+ohos_unittest("libprivacy_coverage_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_privacy
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "../include",
+    "../src",
+    "${access_token_path}/frameworks/privacy/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/tokensync/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/innerkits/proxy_death/include",
+  ]
+
+  sources = [
+    "../src/disable_policy_change_callback.cpp",
+    "../src/on_permission_used_record_callback_stub.cpp",
+    "../src/perm_active_status_change_callback_stub.cpp",
+    "../src/perm_active_status_change_callback.cpp",
+    "../src/perm_active_status_customized_cbk.cpp",
+    "../src/perm_disable_policy_change_callback_stub.cpp",
+    "../src/perm_disable_policy_change_callback.cpp",
+    "../src/privacy_death_recipient.cpp",
+    "../src/privacy_kit.cpp",
+    "../src/privacy_manager_client.cpp",
+    "../src/state_change_callback_stub.cpp",
+    "../src/state_change_callback.cpp",
+    "../src/state_customized_cbk.cpp",
+    "../src/system_ability_status_change_listener.cpp",
+    "unittest/src/privacy_kit_coverage_test.cpp",
+    "unittest/src/privacy_test_common.cpp",
   ]
 
   configs = [
@@ -207,6 +289,7 @@ group("unittest") {
   testonly = true
   deps = [
     ":libprivacy_mock_test",
+    ":libprivacy_coverage_test",
     ":libprivacy_multi_thread_test",
     ":libprivacy_sdk_test",
   ]

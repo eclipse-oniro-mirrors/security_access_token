@@ -324,6 +324,31 @@ HWTEST_F(PermDenyTest, RegisterPermDisablePolicyCallback001, TestSize.Level0)
         EXPECT_EQ(NO_ERROR, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
     }
 }
+
+/**
+* @tc.name: GetCurrUsingPermInfo001
+* @tc.desc: Test GetCurrUsingPermInfo with no permission.
+* @tc.type: FUNC
+* @tc.require: issue2901
+*/
+HWTEST_F(PermDenyTest, GetCurrUsingPermInfo001, TestSize.Level0)
+{
+    std::vector<CurrUsingPermInfo> results;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetCurrUsingPermInfo(results));
+}
+
+/**
+* @tc.name: GetCurrUsingPermInfo002
+* @tc.desc: Test GetCurrUsingPermInfo with no permission.
+* @tc.type: FUNC
+* @tc.require: issue2901
+*/
+HWTEST_F(PermDenyTest, GetCurrUsingPermInfo002, TestSize.Level0)
+{
+    std::vector<CurrUsingPermInfo> results;
+    MockNativeToken mock("token_sync_service");
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetCurrUsingPermInfo(results));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

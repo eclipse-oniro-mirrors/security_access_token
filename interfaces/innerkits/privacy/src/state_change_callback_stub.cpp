@@ -17,7 +17,7 @@
 
 #include "accesstoken_common_log.h"
 #include "privacy_error.h"
-#include "perm_active_response_parcel.h"
+#include "active_change_response_parcel.h"
 #include "string_ex.h"
 
 namespace OHOS {

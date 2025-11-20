@@ -53,6 +53,7 @@
       "OHOS::Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
       "OHOS::Security::AccessToken::PrivacyManagerClient::RegisterPermDisablePolicyCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&)";
       "OHOS::Security::AccessToken::PrivacyManagerClient::CreatePermDisablePolicyCbk(std::__h::shared_ptr<OHOS::Security::AccessToken::DisablePolicyChangeCallback> const&, OHOS::sptr<OHOS::Security::AccessToken::PermDisablePolicyChangeCallback>&)";
+      "OHOS::Security::AccessToken::PrivacyKit::GetCurrUsingPermInfo(std::__h::vector<OHOS::Security::AccessToken::ActiveChangeResponse, std::__h::allocator<OHOS::Security::AccessToken::ActiveChangeResponse>>&)";
       "";
     };
   local:

@@ -30,10 +30,16 @@
 #include "proxy_death_callback.h"
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
+#include "system_ability_status_change_listener.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+struct StartUsingPermInputInfo {
+    PermissionUsedTypeInfo input;
+    bool hasCbk;
+};
 class PrivacyManagerClient final {
 public:
     static PrivacyManagerClient& GetInstance();
@@ -67,8 +73,10 @@ public:
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
     int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
     int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo> &infoList);
     int32_t RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
     int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
+    void OnAddPrivacySa(void);
 
 private:
     PrivacyManagerClient();
@@ -85,6 +93,9 @@ private:
     int32_t CreatePermDisablePolicyCbk(
         const std::shared_ptr<DisablePolicyChangeCallback>& callback,
         sptr<PermDisablePolicyChangeCallback>& callbackWrap);
+    void SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc);
+    void SetInputCache(const PermissionUsedTypeInfo& info, bool hasCbk);
+    void DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
 
 private:
     std::mutex activeCbkMutex_;
@@ -95,6 +106,9 @@ private:
     std::map<uint64_t, sptr<StateChangeCallback>> stateChangeCallbackMap_;
     std::mutex stubMutex_;
     sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
+    bool isSubscribeSA_ = false;
+    std::mutex startUsingPermInputMutex_;
+    std::vector<StartUsingPermInputInfo> cacheList_;
 };
 } // namespace AccessToken
 } // namespace Security

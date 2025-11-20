@@ -47,6 +47,8 @@ struct ContinusPermissionRecord {
     int32_t status = 0;
     int32_t pid = 0;
     int32_t callerPid = 0;
+    PermissionUsedType usedType = NORMAL_TYPE;
+    uint32_t callertokenId = 0;
 
     bool operator < (const ContinusPermissionRecord& other) const;
 
