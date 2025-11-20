@@ -961,7 +961,21 @@ int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID
     return ret;
 }
 
-AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
+FullTokenID AccessTokenInfoManager::GetFullRemoteTokenId(AccessTokenID id)
+{
+    HapTokenInfo info;
+    int32_t ret = GetHapTokenInfo(id, info);
+    if (ret != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetHapTokenInfo, ret is %{public}d.", ret);
+        return id;
+    }
+    AccessTokenIDEx idEx;
+    idEx.tokenIdExStruct.tokenID = id;
+    idEx.tokenIdExStruct.tokenAttr = info.tokenAttr;
+    return idEx.tokenIDEx;
+}
+
+FullTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
     AccessTokenID remoteTokenID)
 {
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
@@ -983,7 +997,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);
     if (mapID != 0) {
-        return mapID;
+        return GetFullRemoteTokenId(mapID);
     }
     int ret = TokenModifyNotifier::GetInstance().GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
@@ -996,10 +1010,11 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
         return 0;
     }
 
-    return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid, remoteTokenID);
+    mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid, remoteTokenID);
+    return GetFullRemoteTokenId(mapID);
 }
 #else
-AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
+uint64_t AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
     AccessTokenID remoteTokenID)
 {
     LOGE(ATM_DOMAIN, ATM_TAG, "Tokensync is disable, check dependent components");

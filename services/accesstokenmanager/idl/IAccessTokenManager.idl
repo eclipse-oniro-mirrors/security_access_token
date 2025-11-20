@@ -52,7 +52,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
 
     [ipccode 18] void GetHapTokenID([in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
-    [ipccode 19] void AllocLocalTokenID([in] String remoteDeviceID, [in] unsigned int remoteTokenID, [out] unsigned int tokenId);
+    [ipccode 19] void AllocLocalTokenID([in] String remoteDeviceID, [in] unsigned int remoteTokenID, [out] unsigned long tokenId);
     [ipccode 20] void GetNativeTokenInfo([in] unsigned int tokenID, [out] NativeTokenInfoParcel nativeTokenInfoRes);
     [ipccode 21] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes);
     [ipccode 22] void UpdateHapToken([inout] unsigned long fullTokenId, [in] UpdateHapInfoParamsIdl infoIdl, [in] HapPolicyParcel policyParcel, [out] HapInfoCheckResultIdl resultInfoIdl);

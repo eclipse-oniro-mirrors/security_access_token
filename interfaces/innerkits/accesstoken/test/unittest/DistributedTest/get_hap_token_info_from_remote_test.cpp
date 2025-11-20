@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -199,7 +199,9 @@ HWTEST_F(GetHapTokenInfoFromRemoteTest, GetHapTokenInfoFromRemoteFuncTest002, Te
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID2, remoteTokenInfo2);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     HapTokenInfoForSync infoSync;

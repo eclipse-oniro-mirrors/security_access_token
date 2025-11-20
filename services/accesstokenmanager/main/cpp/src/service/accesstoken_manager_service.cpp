@@ -883,7 +883,7 @@ int32_t AccessTokenManagerService::GetHapTokenID(
 }
 
 int32_t AccessTokenManagerService::AllocLocalTokenID(
-    const std::string& remoteDeviceID, AccessTokenID remoteTokenID, AccessTokenID& tokenId)
+    const std::string& remoteDeviceID, AccessTokenID remoteTokenID, FullTokenID& tokenId)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "RemoteDeviceID %{public}s, remoteTokenID %{public}d, callerPid %{public}d.",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID, IPCSkeleton::GetCallingPid());
@@ -892,7 +892,7 @@ int32_t AccessTokenManagerService::AllocLocalTokenID(
         tokenId = INVALID_TOKENID;
         return ERR_OK;
     }
-    AccessTokenID tokenID = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    FullTokenID tokenID = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
     tokenId = tokenID;
     return ERR_OK;
 }

@@ -56,7 +56,7 @@ ATM部件的架构图如下所示：
 | **接口申明** | **接口描述** |
 | --- | --- |
 | AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy); | 为应用进程分配一个tokenID |
-| AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | 为远端设备的应用进程分配一个本地tokenID |
+| FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | 为远端设备的应用进程分配一个本地tokenID |
 | int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | 更新tokenId对应的tokenInfo信息 |
 | int DeleteToken(AccessTokenID tokenID); | 删除应用tokenID及其对应的tokenInfo信息 |
 | int GetTokenType(AccessTokenID tokenID); | 查询指定tokenID的类型 |

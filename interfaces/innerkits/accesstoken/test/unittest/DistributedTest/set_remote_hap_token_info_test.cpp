@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -154,7 +154,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest001, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     // check local map token
@@ -265,7 +267,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest003, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
@@ -303,7 +307,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoFuncTest004, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
@@ -348,7 +354,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest001, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
@@ -402,7 +410,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest002, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.READ_AUDIO", false);
@@ -451,7 +461,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest003, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::DeleteToken(mapID);
@@ -490,7 +502,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest004, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
     AccessTokenIDEx tokenIdEx {
         .tokenIdExStruct.tokenID = mapID,
@@ -536,7 +550,9 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(networkId_, g_testTokenId);
+    AccessTokenID mapID = idEx.tokenIdExStruct.tokenID;
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);

@@ -152,7 +152,9 @@ HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
 {
     std::string remoteDevice = "remote device";
     AccessTokenID tokenId = RANDOM_TOKENID;
-    AccessTokenID localTokenId = AccessTokenKit::AllocLocalTokenID(remoteDevice, tokenId);
+    AccessTokenIDEx idEx = {0};
+    idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(remoteDevice, tokenId);
+    AccessTokenID localTokenId = idEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(INVALID_TOKENID, localTokenId);
 }
 

@@ -48,7 +48,7 @@ The following figure shows the ATM architecture.
 | **API**| **Description**|
 | --- | --- |
 | AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy); | Allocates a token ID to an app.|
-| AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | Allocates a local token ID to the app of a remote device.|
+| FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | Allocates a local token ID to the app of a remote device.|
 | int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | Updates token information.|
 | int DeleteToken(AccessTokenID tokenID); | Deletes the app's token ID and information.|
 | int GetTokenType(AccessTokenID tokenID); | Obtains the type of an access token.|
