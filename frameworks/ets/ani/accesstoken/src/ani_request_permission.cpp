@@ -56,7 +56,9 @@ RequestAsyncContext::~RequestAsyncContext()
         return;
     }
     bool isSameThread = IsCurrentThread(threadId);
-    ani_env* curEnv = isSameThread ? env : GetCurrentEnv(vm);
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* curEnv = isSameThread ? env : GetCurrentEnv(vm, aniArgs);
     if (curEnv == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetCurrentEnv.");
         return;
@@ -65,6 +67,10 @@ RequestAsyncContext::~RequestAsyncContext()
     if (callbackRef != nullptr) {
         curEnv->GlobalReference_Delete(callbackRef);
         callbackRef = nullptr;
+    }
+
+    if (!isSameThread) {
+        DetachCurrentEnv(vm);
     }
 }
 
@@ -325,7 +331,9 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
     data->grantResults.assign(newGrantResults.begin(), newGrantResults.end());
 
     bool isSameThread = IsCurrentThread(data->threadId);
-    ani_env* env = isSameThread ? data->env : GetCurrentEnv(data->vm);
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* env = isSameThread ? data->env : GetCurrentEnv(data->vm, aniArgs);
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetCurrentEnv.");
         return;
@@ -334,8 +342,8 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
     ani_object error = BusinessErrorAni::CreateError(env, stsCode, GetErrorMessage(stsCode, data->result.errorMsg));
     ani_object result = WrapResult(env, data);
     ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(data->callbackRef), error, result);
-    if (!isSameThread && data->vm->DetachCurrentThread() != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentThread!");
+    if (!isSameThread && DetachCurrentEnv(data->vm) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
     }
 }
 
