@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include "ani_utils.h"
+
+#include <unistd.h>
 #include "accesstoken_common_log.h"
 
 namespace OHOS {
@@ -792,21 +794,45 @@ bool SetEnumProperty(ani_env* env, ani_object& aniObject,
     return true;
 }
 
-ani_env* GetCurrentEnv(ani_vm* vm)
+static bool IsAppMainThread()
+{
+    return getpid() == gettid();
+}
+
+ani_env* GetCurrentEnv(ani_vm* vm, const ani_options& aniArgs)
 {
     if (vm == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
         return nullptr;
     }
     ani_env* env = nullptr;
-    ani_option interopEnabled {"--interop=enable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
-    if (vm->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
+    if (IsAppMainThread()) {
         if (vm->GetEnv(ANI_VERSION_1, &env) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetEnv.");
+            return nullptr;
+        }
+    } else {
+        if (vm->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AttachCurrentThread.");
             return nullptr;
         }
     }
+    
     return env;
+}
+
+ani_status DetachCurrentEnv(ani_vm* vm)
+{
+    if (vm == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Vm is null.");
+        return ANI_ERROR;
+    }
+
+    if (IsAppMainThread()) {
+        return ANI_OK;
+    }
+
+    return vm->DetachCurrentThread();
 }
 } // namespace AccessToken
 } // namespace Security

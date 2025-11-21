@@ -69,7 +69,9 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
         return;
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
-    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
@@ -78,7 +80,7 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
     ref_ = nullptr;
 
     if (!isSameThread) {
-        vm_->DetachCurrentThread();
+        DetachCurrentEnv(vm_);
     }
 }
 
@@ -156,9 +158,9 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
 
     ani_option interopEnabled {"--interop=disable", nullptr};
     ani_options aniArgs {1, &interopEnabled};
-    ani_env* env;
-    if (vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to AttachCurrentThread!");
+    ani_env* env = GetCurrentEnv(vm_, aniArgs);
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetCurrentEnv!");
         return;
     }
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
@@ -176,8 +178,8 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     if (!AniFunctionalObjectCall(env, fnObj, args.size(), args.data(), result)) {
         return;
     }
-    if (vm_->DetachCurrentThread() != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentThread!");
+    if (DetachCurrentEnv(vm_) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
         return;
     }
 }

@@ -133,7 +133,9 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
         return;
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
-    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
+    ani_option interopEnabled {"--interop=enable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
@@ -142,7 +144,7 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
     ref_ = nullptr;
 
     if (!isSameThread) {
-        vm_->DetachCurrentThread();
+        DetachCurrentEnv(vm_);
     }
 }
 
@@ -206,9 +208,9 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
 
     ani_option interopEnabled {"--interop=disable", nullptr};
     ani_options aniArgs {1, &interopEnabled};
-    ani_env* env;
-    if (vm_->AttachCurrentThread(&aniArgs, ANI_VERSION_1, &env) != ANI_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to AttachCurrentThread!");
+    ani_env* env = GetCurrentEnv(vm_, aniArgs);
+    if (env == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetCurrentEnv!");
         return;
     }
 
@@ -230,8 +232,8 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
         return;
     }
 
-    if (vm_->DetachCurrentThread() != ANI_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to DetachCurrentThread!");
+    if (DetachCurrentEnv(vm_) != ANI_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to DetachCurrentEnv!");
         return;
     }
 }
