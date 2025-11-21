@@ -27,7 +27,6 @@ namespace CJSystemapi {
 extern "C" {
 int32_t FfiOHOSAbilityAccessCtrlCheckAccessTokenSync(unsigned int tokenID, const char* cPermissionName)
 {
-    LOGI("ACCESS_CTRL_TEST::FfiOHOSAbilityAccessCtrlCheckAccessTokenSync START");
     auto result = AtManagerImpl::VerifyAccessTokenSync(tokenID, cPermissionName);
     return result;
 }
