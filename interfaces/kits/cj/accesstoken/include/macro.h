@@ -38,4 +38,9 @@ if (HiLogIsLoggable(LOG_DOMAIN, LOG_TAG, LOG_ERROR)) {      \
     HILOG_ERROR(LOG_CORE, __VA_ARGS__);                     \
 }
 
+#define LOGD(...)                                           \
+if (HiLogIsLoggable(LOG_DOMAIN, LOG_TAG, LOG_DEBUG)) {      \
+    HILOG_DEBUG(LOG_CORE, __VA_ARGS__);                     \
+}
+
 #endif // OHOS_ABILITY_ACCESS_CTRL_MACRO_H

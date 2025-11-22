@@ -188,11 +188,10 @@ static bool* VectorToCArrBool(const std::vector<bool>& vec)
 
 int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* cPermissionName)
 {
-    LOGI("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync START");
     static AccessTokenID selgTokenId = GetSelfTokenID();
     if (tokenID != selgTokenId) {
         auto result = AccessTokenKit::VerifyAccessToken(tokenID, cPermissionName);
-        LOGI("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync end.");
+        LOGD("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync end.");
         return result;
     }
 
@@ -206,7 +205,7 @@ int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* c
                 tokenID, cPermissionName);
             iter->second.status = result;
             iter->second.paramValue = currPara;
-            LOGI("Param changed currPara %{public}s", currPara.c_str());
+            LOGD("Param changed currPara %{public}s", currPara.c_str());
         } else {
             result = iter->second.status;
         }
@@ -214,9 +213,8 @@ int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* c
         result = AccessTokenKit::VerifyAccessToken(tokenID, cPermissionName);
         g_cache[cPermissionName].status = result;
         g_cache[cPermissionName].paramValue = GetPermParamValue();
-        LOGI("g_cacheParam set %{public}s", g_cache[cPermissionName].paramValue.c_str());
+        LOGD("g_cacheParam set %{public}s", g_cache[cPermissionName].paramValue.c_str());
     }
-    LOGI("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync end cache.");
     return result;
 }
 
@@ -819,7 +817,7 @@ std::string AtManagerImpl::GetPermParamValue()
 {
     long long sysCommitId = GetSystemCommitId();
     if (sysCommitId == g_paramCache.sysCommitIdCache) {
-        LOGI("sysCommitId = %{public}lld", sysCommitId);
+        LOGD("sysCommitId = %{public}lld", sysCommitId);
         return g_paramCache.sysParamCache;
     }
     g_paramCache.sysCommitIdCache = sysCommitId;
