@@ -19,6 +19,7 @@
 #include <cstdint>
 
 #include "accesstoken_compat_kit.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_token_info.h"
@@ -35,8 +36,9 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
         HapTokenInfo info;
         HapTokenInfoCompat infoCompat;
-        (void)AccessTokenCompatKit::GetHapTokenInfo(provider.ConsumeIntegral<AccessTokenID>(), infoCompat);
-        return AccessTokenKit::GetHapTokenInfo(provider.ConsumeIntegral<AccessTokenID>(), info) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        (void)AccessTokenCompatKit::GetHapTokenInfo(tokenId, infoCompat);
+        return AccessTokenKit::GetHapTokenInfo(tokenId, info) == RET_SUCCESS;
     }
 }
 

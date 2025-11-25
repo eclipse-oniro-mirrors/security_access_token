@@ -22,6 +22,7 @@
 
 #undef private
 #include "accesstoken_compat_kit.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -36,8 +37,9 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        (void)AccessTokenCompatKit::GetNativeTokenId(provider.ConsumeRandomLengthString());
-        return AccessTokenKit::GetNativeTokenId(provider.ConsumeRandomLengthString()) != INVALID_TOKENID;
+        std::string processName = ConsumeProcessName(provider);
+        (void)AccessTokenCompatKit::GetNativeTokenId(processName);
+        return AccessTokenKit::GetNativeTokenId(processName) != INVALID_TOKENID;
     }
 }
 

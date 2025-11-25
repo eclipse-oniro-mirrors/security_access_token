@@ -99,7 +99,7 @@ HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
     uint64_t selfTokenId = GetSelfTokenID();
 
     // proxy is nullptr
-    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
+    EXPECT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
         TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
 
     StartOrStopTokenSyncService(true);
@@ -108,12 +108,12 @@ HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
     SetNativeTokenId("hdcd");
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
-    ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
     setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
-    ASSERT_EQ(0, TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
+    EXPECT_EQ(0, TokenSyncManagerClient::GetInstance().UpdateRemoteHapTokenInfo(tokenInfo));
 
     StartOrStopTokenSyncService(false);
     SetSelfTokenID(selfTokenId);
@@ -130,7 +130,7 @@ HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level0)
     uint64_t selfTokenId = GetSelfTokenID();
 
     // proxy is nullptr
-    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
+    EXPECT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
         TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo("", 0));
 
     StartOrStopTokenSyncService(true);
@@ -139,12 +139,12 @@ HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level0)
     SetNativeTokenId("hdcd");
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
-    ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo("", 0));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo("", 0));
     setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
-    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_PARAMS_INVALID,
+    EXPECT_EQ(TokenSyncError::TOKEN_SYNC_PARAMS_INVALID,
         TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo("", 0));
 
     StartOrStopTokenSyncService(false);
@@ -162,7 +162,7 @@ HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
     uint64_t selfTokenId = GetSelfTokenID();
 
     // proxy is nullptr
-    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
+    EXPECT_EQ(TokenSyncError::TOKEN_SYNC_IPC_ERROR,
         TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(0));
 
     StartOrStopTokenSyncService(true);
@@ -171,12 +171,12 @@ HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
     SetNativeTokenId("hdcd");
     int32_t selfUid = getuid();
     setuid(10001); // 10001： UID
-    ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(0));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(0));
     setuid(selfUid);
 
     // service is starting, and has permission(native process)
     SetNativeTokenId("accesstoken_service");
-    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_PARAMS_INVALID,
+    EXPECT_EQ(TokenSyncError::TOKEN_SYNC_PARAMS_INVALID,
         TokenSyncManagerClient::GetInstance().DeleteRemoteHapTokenInfo(0));
 
     StartOrStopTokenSyncService(false);

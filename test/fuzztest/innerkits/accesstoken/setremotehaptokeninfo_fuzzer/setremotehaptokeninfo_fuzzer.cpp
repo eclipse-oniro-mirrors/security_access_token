@@ -18,6 +18,7 @@
 #include <vector>
 #include <thread>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -31,7 +32,6 @@ namespace OHOS {
             return false;
         }
 
-#ifdef TOKEN_SYNC_ENABLE
         FuzzedDataProvider provider(data, size);
         HapTokenInfo baseInfo = {
             .ver = '1',
@@ -61,9 +61,6 @@ namespace OHOS {
 
         return AccessTokenKit::SetRemoteHapTokenInfo(
             provider.ConsumeRandomLengthString(), remoteTokenInfo) == RET_SUCCESS;
-#else
-        return true;
-#endif
     }
 }
 

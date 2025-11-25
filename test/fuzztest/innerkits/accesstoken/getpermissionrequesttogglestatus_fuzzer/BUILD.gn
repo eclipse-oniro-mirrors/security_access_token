@@ -31,6 +31,7 @@ ohos_fuzztest("GetPermissionRequestToggleStatusFuzzTest") {
   sources = [ "getpermissionrequesttogglestatus_fuzzer.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   ]
 

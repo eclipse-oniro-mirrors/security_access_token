@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
-#include "access_token.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
 using namespace std;
@@ -33,7 +33,7 @@ bool SetUserPolicyFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permission = provider.ConsumeRandomLengthString();
+    std::string permission = ConsumePermissionName(provider);
 
     std::vector<std::string> permList = { permission };
     UserPermissionPolicy policy;

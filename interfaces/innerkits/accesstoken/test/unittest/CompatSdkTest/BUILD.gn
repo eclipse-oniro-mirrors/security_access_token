@@ -29,6 +29,7 @@ ohos_unittest("libcompat_sdk_proxy_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
     "${access_token_innerkit_path}/include",
     "${access_token_innerkit_path}/src",
+    "ProxyMockTest",
   ]
 
   sources = [
@@ -38,6 +39,7 @@ ohos_unittest("libcompat_sdk_proxy_test") {
     "${access_token_innerkit_path}/src/accesstoken_compat_proxy.cpp",
     "${access_token_innerkit_path}/test/mock/src/iservice_registry.cpp",
     "ProxyMockTest/compat_sdk_proxy_test.cpp",
+    "ProxyMockTest/parameter.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -51,8 +53,6 @@ ohos_unittest("libcompat_sdk_proxy_test") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
-    "init:libbeget_proxy",
-    "init:libbegetutil",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
@@ -103,9 +103,56 @@ ohos_unittest("libcompat_sdk_test") {
   }
 }
 
+ohos_unittest("libcompat_sdk_coverage_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_innerkit_path}/include",
+    "${access_token_innerkit_path}/src",
+    "Coverage",
+  ]
+
+  sources = [
+    "${access_token_innerkit_path}/src/accesstoken_compat_client.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_kit.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_parcel.cpp",
+    "${access_token_innerkit_path}/src/accesstoken_compat_proxy.cpp",
+    "Coverage/compat_sdk_coverage_test.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_static_log",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
 group("unittest") {
   testonly = true
   deps = [
+    ":libcompat_sdk_coverage_test",
     ":libcompat_sdk_proxy_test",
     ":libcompat_sdk_test",
   ]

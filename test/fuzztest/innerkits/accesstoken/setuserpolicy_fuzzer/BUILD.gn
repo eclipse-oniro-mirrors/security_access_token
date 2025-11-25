@@ -20,6 +20,7 @@ ohos_fuzztest("SetUserPolicyFuzzTest") {
   fuzz_config_file = "."
 
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/test/fuzztest/common",
   ]
@@ -32,6 +33,7 @@ ohos_fuzztest("SetUserPolicyFuzzTest") {
   sources = [ "setuserpolicy_fuzzer.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   ]
 

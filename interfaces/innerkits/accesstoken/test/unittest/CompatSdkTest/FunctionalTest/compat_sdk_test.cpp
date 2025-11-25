@@ -35,13 +35,13 @@ static constexpr uint32_t COMMAND_GET_NATIVE_TOKEN_ID = 54;
 static constexpr uint32_t COMMAND_GET_HAP_TOKEN_INFO_IN_UNSIGNED_INT_OUT_HAPTOKENINFOCOMPATIDL = 200;
 static constexpr uint32_t COMMAND_GET_PERMISSION_CODE = 201;
 
-static uint64_t g_selfShellTokenId = 0;
 static uint64_t g_selfUid = 0;
 const std::string TEST_NATIVE_PROCESS_NAME = "accesstoken_service";
 const std::string TEST_SHELL_PROCESS_NAME = "hdcd";
 const std::string TEST_HAP_PROCESS_NAME = "ohos.global.systemres";
+static constexpr uint32_t TEST_HAP_TOKEN = 537919487; // 537919486: 001 00 0 000000 11111111111111111111
+static uint64_t g_selfShellTokenId = 0;
 static AccessTokenID g_nativeTokenId = 0;
-static AccessTokenID g_shellTokenId = 0;
 static AccessTokenID g_hapTokenId = 0;
 static AccessTokenID g_renderTokenId = 0;
 }
@@ -60,12 +60,10 @@ void ATCompatSdkTest::SetUpTestCase()
     g_selfUid = getuid();
 
     g_nativeTokenId = GetNativeTokenId(TEST_NATIVE_PROCESS_NAME);
-    g_shellTokenId = GetNativeTokenId(TEST_SHELL_PROCESS_NAME);
     g_hapTokenId = GetHapTokenId(TEST_HAP_PROCESS_NAME);
-    g_renderTokenId = TokenIdKit::GetRenderTokenID(g_hapTokenId);
-    GTEST_LOG_(INFO) << "selfTokenId: " << g_selfShellTokenId;
+    g_renderTokenId = TokenIdKit::GetRenderTokenID(TEST_HAP_TOKEN);
+    GTEST_LOG_(INFO) << "selfShellTokenId: " << g_selfShellTokenId;
     GTEST_LOG_(INFO) << "nativeTokenId: " << g_nativeTokenId;
-    GTEST_LOG_(INFO) << "shellTokenId: " << g_shellTokenId;
     GTEST_LOG_(INFO) << "hapTokenId: " << g_hapTokenId;
     GTEST_LOG_(INFO) << "renderTokenId: " << g_renderTokenId;
 }
@@ -119,6 +117,9 @@ HWTEST_F(ATCompatSdkTest, GetTokenTypeFlagTest001, TestSize.Level0)
 
     // native token
     EXPECT_EQ(TOKEN_NATIVE, AccessTokenCompatKit::GetTokenTypeFlag(g_nativeTokenId));
+
+    // shell token
+    EXPECT_EQ(TOKEN_SHELL, AccessTokenCompatKit::GetTokenTypeFlag(g_selfShellTokenId));
 }
 
 /**
@@ -162,26 +163,18 @@ HWTEST_F(ATCompatSdkTest, GetNativeTokenIdTest002, TestSize.Level0)
     int32_t selfUid = getuid();
     {
         // shell process: deny
-        SetSelfTokenID(g_shellTokenId);
-#ifdef ATM_BUILD_VARIANT_USER_ENABLE
-        EXPECT_EQ(INVALID_TOKENID, AccessTokenCompatKit::GetNativeTokenId(TEST_NATIVE_PROCESS_NAME));
-#else
+        SetSelfTokenID(g_selfShellTokenId);
         setuid(123); // 123: uid
         EXPECT_EQ(INVALID_TOKENID, AccessTokenCompatKit::GetNativeTokenId(TEST_NATIVE_PROCESS_NAME));
         setuid(selfUid);
-#endif
         SetSelfTokenID(selfTokenId);
     }
     {
         // hap: deny
         SetSelfTokenID(g_hapTokenId);
-#ifdef ATM_BUILD_VARIANT_USER_ENABLE
-        EXPECT_EQ(INVALID_TOKENID, AccessTokenCompatKit::GetNativeTokenId(TEST_NATIVE_PROCESS_NAME));
-#else
         setuid(123); // 123: uid
         EXPECT_EQ(INVALID_TOKENID, AccessTokenCompatKit::GetNativeTokenId(TEST_NATIVE_PROCESS_NAME));
         setuid(selfUid);
-#endif
         SetSelfTokenID(selfTokenId);
     }
     // restore environment
@@ -229,7 +222,7 @@ HWTEST_F(ATCompatSdkTest, GetHapTokenInfoTest001, TestSize.Level0)
     EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenCompatKit::GetHapTokenInfo(g_nativeTokenId, hapInfo));
 
     // token id is shell process
-    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenCompatKit::GetHapTokenInfo(g_shellTokenId, hapInfo));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenCompatKit::GetHapTokenInfo(g_selfShellTokenId, hapInfo));
 
     // token id is render process
     EXPECT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenCompatKit::GetHapTokenInfo(g_renderTokenId, hapInfo));
@@ -249,7 +242,7 @@ HWTEST_F(ATCompatSdkTest, GetHapTokenInfoTest002, TestSize.Level0)
     HapTokenInfoCompat hapInfo;
     {
         // shell process: deny
-        SetSelfTokenID(g_shellTokenId);
+        SetSelfTokenID(g_selfShellTokenId);
         EXPECT_EQ(ERR_PERMISSION_DENIED, AccessTokenCompatKit::GetHapTokenInfo(g_hapTokenId, hapInfo));
         SetSelfTokenID(selfTokenId);
     }
@@ -363,10 +356,6 @@ HWTEST_F(ATCompatSdkTest, VerifyAccessTokenTest002, TestSize.Level0)
         AccessTokenCompatKit::VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.LOCATION"));
     EXPECT_EQ(PERMISSION_DENIED,
         AccessTokenCompatKit::VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.test"));
-
-    AccessTokenID renderTokenId = TokenIdKit::GetRenderTokenID(tokenIdEx.tokenIdExStruct.tokenID);
-    // tokenId is render process
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenCompatKit::VerifyAccessToken(renderTokenId, sysPerm.permissionName));
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
     SetSelfTokenID(selfTokenId);

@@ -19,6 +19,7 @@ ohos_fuzztest("RevokeUserGrantedPermissionFuzzTest") {
   module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/test/fuzztest/common",
   ]
@@ -31,6 +32,7 @@ ohos_fuzztest("RevokeUserGrantedPermissionFuzzTest") {
   sources = [ "revokeusergrantedpermission_fuzzer.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   ]
 

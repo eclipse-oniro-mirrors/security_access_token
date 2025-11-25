@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -34,12 +35,8 @@ namespace OHOS {
             return false;
         }
 
-#ifdef TOKEN_SYNC_ENABLE
         FuzzedDataProvider provider(data, size);
         return AccessTokenKit::DeleteRemoteDeviceTokens(provider.ConsumeRandomLengthString()) == RET_SUCCESS;
-#else
-        return true;
-#endif
     }
 }
 

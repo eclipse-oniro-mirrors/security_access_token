@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -34,7 +35,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenKit::RequestAppPermOnSetting(provider.ConsumeIntegral<AccessTokenID>());
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        AccessTokenKit::RequestAppPermOnSetting(tokenId);
 
         return true;
     }
