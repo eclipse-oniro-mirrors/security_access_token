@@ -55,3 +55,10 @@ struct HapInfoCheckResultIdl {
     PermissionRulesEnumIdl rule;
     int realResult
 };
+
+struct HapTokenInfoCompatIdl {
+    String bundleName;
+    int userID;
+    int instIndex;
+    int apiVersion;
+};

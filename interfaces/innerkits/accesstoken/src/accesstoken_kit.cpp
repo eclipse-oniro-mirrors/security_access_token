@@ -86,8 +86,8 @@ static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& 
     for (const auto& perm : policyIn.permStateList) {
         PermissionStatus tmp;
         tmp.permissionName = perm.permissionName;
-        tmp.grantStatus = perm.grantStatus[0];
-        tmp.grantFlag = perm.grantFlags[0];
+        tmp.grantStatus = perm.grantStatus.empty() ? PERMISSION_DENIED : perm.grantStatus[0];
+        tmp.grantFlag = perm.grantFlags.empty() ? PERMISSION_DEFAULT_FLAG : perm.grantFlags[0];
         policyOut.permStateList.emplace_back(tmp);
     }
     policyOut.checkIgnore = policyIn.checkIgnore;

@@ -93,12 +93,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   external_deps = [
-    "cJSON:cjson",
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
-    "samgr:samgr_proxy",
   ]
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]

@@ -107,7 +107,6 @@
               "native_token_info.h",
               "perm_state_change_callback_customize.h",
               "permission_def.h",
-              "permission_dlp_mode.h",
               "permission_grant_info.h",
               "permission_list_state.h",
               "permission_state_change_info.h",
@@ -117,6 +116,17 @@
               "token_sync_kit_interface.h",
               "tokenid_kit.h",
               "tokensync_callback_ipc_interface_code.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_compat_sdk",
+          "header": {
+            "header_files": [
+              "access_token_error.h",
+              "access_token.h",
+              "accesstoken_compat_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
           }

@@ -136,3 +136,60 @@ if (is_standard_system) {
     }
   }
 }
+
+if (is_standard_system) {
+  ohos_shared_library("libaccesstoken_compat_sdk") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+    innerapi_tags = [
+      "chipsetsdk",
+      "platformsdk",
+      "sasdk",
+    ]
+    if (!use_clang_coverage) {
+      version_script = "libaccesstoken_compat_sdk.map"
+    }
+
+    output_name = "libaccesstoken_compat_sdk"
+    public_configs = [
+      ":accesstoken"
+    ]
+
+    include_dirs = [
+      "${access_token_path}/frameworks/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+      "src",
+    ]
+    sources = [
+      "src/accesstoken_compat_client.cpp",
+      "src/accesstoken_compat_kit.cpp",
+      "src/accesstoken_compat_proxy.cpp",
+      "src/accesstoken_compat_parcel.cpp"
+    ]
+
+    deps = [
+      "${access_token_path}/frameworks/common:accesstoken_static_log",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    ]
+
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
+      "init:libbegetutil",
+      "ipc:ipc_single",
+      "samgr:samgr_proxy",
+    ]
+
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+  }
+}

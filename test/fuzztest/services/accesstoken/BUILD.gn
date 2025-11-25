@@ -29,6 +29,7 @@ group("fuzztest") {
     "gethaptokeninfoextstub_fuzzer:GetHapTokenInfoExtStubFuzzTest",
     "gethaptokeninfofromremotestub_fuzzer:GetHapTokenInfoFromRemoteStubFuzzTest",
     "gethaptokeninfostub_fuzzer:GetHapTokenInfoStubFuzzTest",
+    "gethaptokeninfocompatstub_fuzzer:GetHapTokenInfoCompatStubFuzzTest",
     "getkernelpermissionsstub_fuzzer:GetKernelPermissionsStubFuzzTest",
     "getnativetokenidstub_fuzzer:GetNativeTokenIdStubFuzzTest",
     "getnativetokeninfostub_fuzzer:GetNativeTokenInfoStubFuzzTest",

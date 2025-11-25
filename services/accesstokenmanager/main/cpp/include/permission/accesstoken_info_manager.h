@@ -50,6 +50,17 @@ struct UserPolicyInner {
     std::map<int32_t, bool> changedUserList;
 };
 
+
+/**
+ * @brief Apl and isSystemApp info about tokenId
+ */
+typedef struct {
+    /** apl for tokenId */
+    int32_t apl;
+    /** is system app */
+    bool isSystemApp;
+} TokenIdInfo;
+
 class AccessTokenInfoManager final {
 public:
     static AccessTokenInfoManager& GetInstance();

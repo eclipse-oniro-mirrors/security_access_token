@@ -24,7 +24,6 @@
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
-#include "accesstoken_info_manager.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "constant_common.h"
 #include "data_usage_dfx.h"
@@ -360,7 +359,7 @@ static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionSt
     return true;
 }
 
-bool AccessTokenManagerService::isLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion)
+bool AccessTokenManagerService::IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion)
 {
     return ((permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
             (permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
@@ -394,7 +393,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     uint32_t size = reqPermList.size();
     for (uint32_t i = 0; i < size; i++) {
         // api9 location permission special handle above
-        if (isLocationPermSpecialHandle(reqPermList[i].permsState.permissionName, apiVersion)) {
+        if (IsLocationPermSpecialHandle(reqPermList[i].permsState.permissionName, apiVersion)) {
             continue;
         }
 
@@ -980,12 +979,38 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
 
+int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
+
+    if (!IsNativeProcessCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    HapTokenInfo tokenInfo;
+    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo);
+    infoIdl.bundleName = tokenInfo.bundleName;
+    infoIdl.userID = tokenInfo.userID;
+    infoIdl.instIndex = tokenInfo.instIndex;
+    infoIdl.apiVersion = tokenInfo.apiVersion;
+    return error;
+}
+
+int32_t AccessTokenManagerService::GetPermissionCode(const std::string& permission, uint32_t& opCode)
+{
+    if (!TransferPermissionToOpcode(permission, opCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
+    return RET_SUCCESS;
+}
+
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}u.", tokenID);
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}u).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
