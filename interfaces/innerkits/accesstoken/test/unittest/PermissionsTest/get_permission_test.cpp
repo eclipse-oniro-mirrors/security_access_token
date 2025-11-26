@@ -519,6 +519,34 @@ HWTEST_F(GetPermissionTest, GetReqPermissionByNameTest001, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE,
         AccessTokenKit::GetReqPermissionByName(tokenID, "ohos.permission.MANAGE_HAP_TOKENID", value));
 }
+
+/*
+ * @tc.name: TransferOpcodeToPermission001
+ * @tc.desc: TransferOpcodeToPermission function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferOpcodeToPermission001, TestSize.Level0)
+{
+    std::string permissionName;
+    uint32_t opCode;
+    EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode("ohos.permission.ANSWER_CALL", opCode));
+    EXPECT_TRUE(AccessTokenKit::TransferOpcodeToPermission(opCode, permissionName));
+    EXPECT_EQ(permissionName, "ohos.permission.ANSWER_CALL");
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission002
+ * @tc.desc: TransferOpcodeToPermission code oversize
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferOpcodeToPermission002, TestSize.Level0)
+{
+    std::string permissionName;
+    EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(MAX_PERM_SIZE, permissionName));
+    EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(MAX_PERM_SIZE - 1, permissionName));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

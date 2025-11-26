@@ -90,8 +90,8 @@
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::IsAtomicServiceByFullTokenID*;
-        "";
-        "";
+        "OHOS::Security::AccessToken::AccessTokenKit::TransferPermissionToOpcode(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::TransferOpcodeToPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
     };
   local:
     *;

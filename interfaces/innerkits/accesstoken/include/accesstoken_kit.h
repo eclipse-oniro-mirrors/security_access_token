@@ -561,6 +561,22 @@ public:
      */
     static int32_t SetPermissionStatusWithPolicy(
         uint32_t tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
+
+    /**
+     * @brief Transfer permission to opcode.
+     * @param permissionName permissionName
+     * @param opCode opCode
+     * @return result
+     */
+    static bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
+
+    /**
+     * @brief Transfer opcode to permission.
+     * @param opCode opCode
+     * @param permissionName permissionName
+     * @return result
+     */
+    static bool TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

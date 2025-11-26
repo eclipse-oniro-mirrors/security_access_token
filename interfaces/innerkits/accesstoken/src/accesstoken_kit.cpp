@@ -846,6 +846,16 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     }
     return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
 }
+
+bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode)
+{
+    return AccessToken::TransferPermissionToOpcode(permissionName, opCode);
+}
+
+bool AccessTokenKit::TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName)
+{
+    return AccessToken::TransferOpcodeToPermission(opCode, permissionName);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
