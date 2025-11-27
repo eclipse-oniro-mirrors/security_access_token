@@ -40,6 +40,7 @@ static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int CYCLE_TIMES = 100;
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static const uint32_t MAX_PERM_SIZE = 2048;
 static const std::string TEST_PERMISSION = "ohos.permission.ALPHA";
 HapInfoParams g_infoManagerTestInfoParms = TestCommon::GetInfoManagerTestInfoParms();
 HapPolicyParams g_infoManagerTestPolicyPrams = TestCommon::GetInfoManagerTestPolicyPrams();
