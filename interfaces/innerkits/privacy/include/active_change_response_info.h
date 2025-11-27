@@ -78,6 +78,8 @@ struct ActiveChangeResponse {
     PermissionUsedType usedType;
     int32_t pid;
 };
+
+typedef ActiveChangeResponse CurrUsingPermInfo;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

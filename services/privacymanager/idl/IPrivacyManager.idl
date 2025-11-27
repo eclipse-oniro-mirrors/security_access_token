@@ -20,6 +20,7 @@ sequenceable OHOS.Security.AccessToken.AddPermParamInfoParcel;
 sequenceable OHOS.Security.AccessToken.PermissionUsedTypeInfoParcel;
 sequenceable OHOS.Security.AccessToken.PermissionUsedRequestParcel;
 sequenceable OHOS.Security.AccessToken.PermissionUsedResultParcel;
+sequenceable OHOS.Security.AccessToken.ActiveChangeResponseParcel;
 
 interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 1] void AddPermissionUsedRecord([in] AddPermParamInfoParcel infoParcel);
@@ -42,4 +43,5 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 18] void GetDisablePolicy([in] String permissionName, [out] boolean isDisable);
     [ipccode 19] void RegisterPermDisablePolicyCallback([in] List<String> permList, [in] IRemoteObject cb);
     [ipccode 20] void UnRegisterPermDisablePolicyCallback([in] IRemoteObject cb);
+    [ipccode 21] void GetCurrUsingPermInfo([out] List<ActiveChangeResponseParcel> resultsParcel);
 }

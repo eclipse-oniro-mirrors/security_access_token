@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include "accesstoken_common_log.h"
+#include "active_change_response_parcel.h"
 #include "iservice_registry.h"
 #include "privacy_error.h"
 #include "privacy_manager_proxy.h"
@@ -120,6 +121,108 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID
     return ret;
 }
 
+std::function<void(int32_t, const std::string &)> PrivacySaAddCallback()
+{
+    return [](int32_t systemAbilityId, const std::string &deviceId) {
+        if (systemAbilityId == SA_ID_PRIVACY_MANAGER_SERVICE) {
+            PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+        }
+    };
+}
+
+void PrivacyManagerClient::SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc)
+{
+    sptr<ISystemAbilityStatusChange> statusChangeListener =
+        new (std::nothrow) SystemAbilityStatusChangeListener(callbackFunc);
+    if (statusChangeListener == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "statusChangeListener is nullptr.");
+        return;
+    }
+    auto saProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (saProxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "saProxy is NULL.");
+        return;
+    }
+    int32_t ret = saProxy->SubscribeSystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, statusChangeListener);
+    if (ret != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "SubscribeSystemAbility is failed.");
+        return;
+    }
+    return;
+}
+
+void PrivacyManagerClient::OnAddPrivacySa(void)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "Enter.");
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return;
+    }
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(startUsingPermInputMutex_);
+    LOGI(PRI_DOMAIN, PRI_TAG, "CacheList_ size %{public}zu.", cacheList_.size());
+    for (auto it = cacheList_.begin(); it != cacheList_.end(); ++it) {
+        PermissionUsedTypeInfoParcel parcel;
+        parcel.info = it->input;
+        LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d, pid %{public}d, permission %{public}s.",
+            it->input.tokenId, it->input.pid, it->input.permissionName.c_str());
+        if (it->hasCbk) {
+            uint64_t id = GetUniqueId(it->input.tokenId, it->input.pid);
+            std::lock_guard<std::mutex> lock(stateCbkMutex_);
+            auto iter = stateChangeCallbackMap_.find(id);
+            if (iter == stateChangeCallbackMap_.end()) {
+                LOGE(PRI_DOMAIN, PRI_TAG, "Callback is not exist, tokenid %{public}u, pid %{public}d.",
+                    it->input.tokenId, it->input.pid);
+                continue;
+            }
+            int32_t ret = proxy->StartUsingPermissionCallback(parcel, iter->second->AsObject(), anonyStub->AsObject());
+            ret = ConvertResult(ret);
+            LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartUsingPermissionCallback result is %{public}d.", ret);
+        } else {
+            int32_t ret = proxy->StartUsingPermission(parcel, anonyStub->AsObject());
+            ret = ConvertResult(ret);
+            LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartUsingPermission result is %{public}d.", ret);
+        }
+    }
+}
+
+void PrivacyManagerClient::SetInputCache(
+    const PermissionUsedTypeInfo& info, bool hasCbk)
+{
+    StartUsingPermInputInfo cache;
+    cache.input = info;
+    cache.hasCbk = hasCbk;
+
+    std::lock_guard<std::mutex> lock(startUsingPermInputMutex_);
+    for (auto it = cacheList_.begin(); it != cacheList_.end(); ++it) {
+        if ((it->input.permissionName == info.permissionName) &&
+            (it->input.pid == info.pid) && (it->input.tokenId == info.tokenId)) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "It already exists in cache.");
+            return;
+        }
+    }
+    cacheList_.emplace_back(cache);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Cache is added.");
+}
+
+void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+{
+    std::lock_guard<std::mutex> lock(startUsingPermInputMutex_);
+    for (auto it = cacheList_.begin(); it != cacheList_.end(); ++it) {
+        if ((it->input.permissionName == permissionName) &&
+            (it->input.pid == pid) && (it->input.tokenId == tokenID)) {
+            cacheList_.erase(it);
+            LOGI(PRI_DOMAIN, PRI_TAG, "Cache is cleared.");
+            break;
+        }
+    }
+}
+
 int32_t PrivacyManagerClient::StartUsingPermission(
     AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
 {
@@ -128,7 +231,6 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-
     PermissionUsedTypeInfoParcel parcel;
     parcel.info.tokenId = tokenID;
     parcel.info.pid = pid;
@@ -140,9 +242,13 @@ int32_t PrivacyManagerClient::StartUsingPermission(
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
+
     int32_t ret = proxy->StartUsingPermission(parcel, anonyStub->AsObject());
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    if (ret == RET_SUCCESS) {
+        SetInputCache(parcel.info, false);
+    }
     return ret;
 }
 
@@ -171,7 +277,10 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-
+    if (permissionName != CAMERA_PERMISSION_NAME) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "permission %{public}s is not supported.", permissionName.c_str());
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     sptr<StateChangeCallback> callbackWrap = nullptr;
     uint64_t id = GetUniqueId(tokenId, pid);
     int32_t result = CreateStateChangeCbk(id, callback, callbackWrap);
@@ -199,6 +308,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallbackMap_[id] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+        SetInputCache(parcel.info, true);
     } else {
         result = ConvertResult(result);
         LOGE(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
@@ -209,11 +319,14 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
 int32_t PrivacyManagerClient::StopUsingPermission(
     AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
 {
+    DeleteInputCache(tokenID, pid, permissionName);
+
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
+
     if (permissionName == CAMERA_PERMISSION_NAME) {
         uint64_t id = GetUniqueId(tokenID, pid);
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
@@ -460,6 +573,27 @@ int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName
     return ret;
 }
 
+int32_t PrivacyManagerClient::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo> &infoList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<ActiveChangeResponseParcel> resultParcelList;
+
+    int32_t ret = proxy->GetCurrUsingPermInfo(resultParcelList);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    for (const auto& resultParcel : resultParcelList) {
+        infoList.emplace_back(resultParcel.changeResponse);
+    }
+    return ret;
+}
+
 int32_t PrivacyManagerClient::CreatePermDisablePolicyCbk(
     const std::shared_ptr<DisablePolicyChangeCallback>& callback,
     sptr<PermDisablePolicyChangeCallback>& callbackWrap)
@@ -596,6 +730,10 @@ void PrivacyManagerClient::OnRemoteDiedHandle()
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
     InitProxy();
+    if (!isSubscribeSA_) {
+        isSubscribeSA_ = true;
+        SubscribeSystemAbility(PrivacySaAddCallback());
+    }
 }
 
 sptr<IPrivacyManager> PrivacyManagerClient::GetProxy()

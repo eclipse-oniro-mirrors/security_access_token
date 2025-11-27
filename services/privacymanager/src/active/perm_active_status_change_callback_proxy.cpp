@@ -16,7 +16,7 @@
 #include "perm_active_status_change_callback_proxy.h"
 
 #include "accesstoken_common_log.h"
-#include "perm_active_response_parcel.h"
+#include "active_change_response_parcel.h"
 
 namespace OHOS {
 namespace Security {

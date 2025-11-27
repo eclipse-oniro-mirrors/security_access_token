@@ -105,6 +105,7 @@ public:
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
     int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
     int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    void GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList);
     int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback);

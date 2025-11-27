@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -213,6 +213,13 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
+
+    /**
+     * @brief Get current permission used record list.
+     * @param info the result
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList);
 };
 } // namespace AccessToken
 } // namespace Security

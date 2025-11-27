@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -41,7 +41,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
   sources = [
     "src/add_perm_param_info_parcel.cpp",
     "src/bundle_used_record_parcel.cpp",
-    "src/perm_active_response_parcel.cpp",
+    "src/active_change_response_parcel.cpp",
     "src/perm_disable_policy_parcel.cpp",
     "src/permission_used_record_parcel.cpp",
     "src/permission_used_request_parcel.cpp",

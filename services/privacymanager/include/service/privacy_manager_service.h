@@ -66,6 +66,7 @@ public:
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) override;
     int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable) override;
     int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable) override;
+    int32_t GetCurrUsingPermInfo(std::vector<ActiveChangeResponseParcel>& resultParcelList) override;
     int32_t RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback) override;

@@ -64,6 +64,7 @@ if (is_standard_system) {
       "src/state_change_callback.cpp",
       "src/state_change_callback_stub.cpp",
       "src/state_customized_cbk.cpp",
+      "src/system_ability_status_change_listener.cpp",
     ]
 
     deps = [

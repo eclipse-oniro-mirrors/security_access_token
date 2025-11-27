@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,7 @@
 #include "bundle_used_record_parcel.h"
 #include "parcel.h"
 #include "parcel_utils.h"
-#include "perm_active_response_parcel.h"
+#include "active_change_response_parcel.h"
 #include "perm_disable_policy_parcel.h"
 #include "permission_used_record_parcel.h"
 #include "permission_used_request_parcel.h"

@@ -261,6 +261,11 @@ int32_t PrivacyKit::GetDisablePolicy(const std::string& permissionName, bool& is
     return PrivacyManagerClient::GetInstance().GetDisablePolicy(permissionName, isDisable);
 }
 
+int32_t PrivacyKit::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList)
+{
+    return PrivacyManagerClient::GetInstance().GetCurrUsingPermInfo(infoList);
+}
+
 int32_t PrivacyKit::RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback)
 {
     if (callback == nullptr) {

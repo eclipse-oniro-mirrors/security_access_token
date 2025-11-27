@@ -43,5 +43,6 @@ ohos_fuzztest("RegisterPermActiveStatusCallbackFuzzTest") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "samgr:samgr_proxy",
   ]
 }

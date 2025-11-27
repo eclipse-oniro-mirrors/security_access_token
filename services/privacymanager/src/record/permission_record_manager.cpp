@@ -994,6 +994,8 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         .status = status,
         .pid = info.pid,
         .callerPid = callerPid,
+        .usedType = info.type,
+        .callertokenId = IPCSkeleton::GetCallingTokenID(),
     };
 
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
@@ -1010,6 +1012,29 @@ int32_t PermissionRecordManager::AddRecordToStartList(
     }
     
     return ret;
+}
+
+
+void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList)
+{
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        std::string perm;
+        Constant::TransferOpcodeToPermission(it->opCode, perm);
+        ActiveChangeResponse info;
+        info.callingTokenID = it->callertokenId;
+        info.tokenID = it->tokenId;
+        info.permissionName = perm;
+        info.deviceId = "";
+        info.type = static_cast<ActiveChangeType>(it->status);
+        info.usedType = it->usedType;
+        info.pid = it->pid;
+        infoList.emplace_back(info);
+        LOGI(PRI_DOMAIN, PRI_TAG, "tokenId %{public}d using permission %{public}s, "
+            "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", it->tokenId,
+            perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
+    }
+    return;
 }
 
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
