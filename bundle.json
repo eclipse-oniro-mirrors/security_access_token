@@ -58,6 +58,7 @@
         "samgr",
         "screenlock_mgr",
         "selinux_adapter",
+        "security_guard",
         "sqlite",
         "window_manager",
         "zlib",

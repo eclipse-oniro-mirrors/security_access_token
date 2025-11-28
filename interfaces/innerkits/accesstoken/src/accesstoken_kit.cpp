@@ -76,6 +76,15 @@ static bool IsRenderToken(AccessTokenID tokenID)
     return idInner->renderFlag;
 }
 
+static bool IsNeedCrossIpc(AccessTokenID verifyingTokenID)
+{
+    uint64_t selfTokenId = GetSelfTokenID();
+    bool isSelfNormalApp = (AccessTokenKit::GetTokenTypeFlag(selfTokenId) == TOKEN_HAP) &&
+                           (!AccessTokenKit::IsSystemAppByFullTokenID(selfTokenId));
+
+    return isSelfNormalApp && ((selfTokenId & TOKEN_ID_LOWMASK) != verifyingTokenID);
+}
+
 static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& policyOut)
 {
     policyOut.apl = policyIn.apl;
@@ -332,7 +341,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
         return PERMISSION_DENIED;
     }
-    if (crossIpc) {
+    if (crossIpc || IsNeedCrossIpc(tokenID)) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
     bool isGranted = false;
@@ -365,6 +374,9 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     if (IsRenderToken(tokenID)) {
         LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process, perm denied.", tokenID);
         return PERMISSION_DENIED;
+    }
+    if (IsNeedCrossIpc(tokenID)) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
@@ -405,7 +417,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
         permStateList.resize(permissionList.size(), PERMISSION_DENIED);
         return RET_SUCCESS;
     }
-    if (crossIpc) {
+    if (crossIpc || IsNeedCrossIpc(tokenID)) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionList, permStateList);
     }
 

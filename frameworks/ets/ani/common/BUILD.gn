@@ -30,7 +30,7 @@ ohos_static_library("libani_common") {
 
   sources = [
     "src/ani_error.cpp",
-    "src/ani_utils.cpp"
+    "src/ani_utils.cpp",
   ]
 
   deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]

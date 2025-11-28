@@ -46,6 +46,7 @@ if (is_standard_system) {
     include_dirs = [
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/frameworks/json_adapter/include",
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
@@ -87,6 +88,7 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_manager.cpp",
       "main/cpp/src/permission/short_grant_manager.cpp",
       "main/cpp/src/permission/temp_permission_observer.cpp",
+      "main/cpp/src/permission/verify_accesstoken_monitor.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
     ]
 
@@ -113,6 +115,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/frameworks/common:accesstoken_hisysevent",
+      "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
@@ -124,6 +127,7 @@ if (is_standard_system) {
     deps += [ "etc:param_files" ]
 
     external_deps = [
+      "cJSON:cjson",
       "c_utils:utils",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
@@ -133,6 +137,11 @@ if (is_standard_system) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+
+    if (security_guard_enable) {
+      external_deps += [ "security_guard:libsg_collect_sdk" ]
+      cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+    }
 
     if (ohos_indep_compiler_enable) {
       external_deps += [ "bounds_checking_function:libsec_shared" ]

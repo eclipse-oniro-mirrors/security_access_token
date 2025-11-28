@@ -99,16 +99,16 @@ ohos_unittest("libprivacy_mock_test") {
   sources = [
     "../src/disable_policy_change_callback.cpp",
     "../src/on_permission_used_record_callback_stub.cpp",
-    "../src/perm_active_status_change_callback_stub.cpp",
     "../src/perm_active_status_change_callback.cpp",
+    "../src/perm_active_status_change_callback_stub.cpp",
     "../src/perm_active_status_customized_cbk.cpp",
-    "../src/perm_disable_policy_change_callback_stub.cpp",
     "../src/perm_disable_policy_change_callback.cpp",
+    "../src/perm_disable_policy_change_callback_stub.cpp",
     "../src/privacy_death_recipient.cpp",
     "../src/privacy_kit.cpp",
     "../src/privacy_manager_client.cpp",
-    "../src/state_change_callback_stub.cpp",
     "../src/state_change_callback.cpp",
+    "../src/state_change_callback_stub.cpp",
     "../src/state_customized_cbk.cpp",
     "mock/src/iservice_registry.cpp",
     "unittest/privacy_mock_test/privacy_kit_test.cpp",
@@ -176,7 +176,7 @@ ohos_unittest("libprivacy_multi_thread_test") {
 
   sources = [
     "unittest/src/privacy_multi_thread_test.cpp",
-    "unittest/src/privacy_test_common.cpp"
+    "unittest/src/privacy_test_common.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]

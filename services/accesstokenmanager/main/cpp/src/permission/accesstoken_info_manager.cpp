@@ -67,6 +67,7 @@ static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 #endif
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
+static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
@@ -85,6 +86,8 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
 #endif
 
     this->hasInited_ = false;
+    std::unique_lock<std::shared_mutex> monitorLock(this->monitorLock_);
+    this->tokenMonitor_ = nullptr;
 }
 
 void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
@@ -131,6 +134,12 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         hapSize, nativeSize, pefDefSize, dlpSize);
 
     hasInited_ = true;
+    {
+        std::unique_lock<std::shared_mutex> monitorLock(this->monitorLock_);
+        if (this->tokenMonitor_ == nullptr) {
+            this->tokenMonitor_ = std::make_shared<VerifyAccessTokenMonitor>();
+        }
+    }
 }
 
 static bool IsSystemResource(const std::string& bundleName)
@@ -1572,6 +1581,16 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
     return true;
 }
 
+static bool IsCallerNormalApp(uint64_t fulltokenID)
+{
+    ATokenTypeEnum tokenType =
+        TokenIDAttributes::GetTokenIdTypeEnum(static_cast<AccessTokenID>(fulltokenID & TOKEN_ID_LOWMASK));
+    if (tokenType != TOKEN_HAP) {
+        return false;
+    }
+    return !TokenIDAttributes::IsSystemApp(fulltokenID);
+}
+
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!IsDefinedPermission(permissionName)) {
@@ -1615,8 +1634,28 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
-
-    ATokenTypeEnum tokenType = TokenIDAttributes::GetTokenIdTypeEnum(tokenID);
+    uint64_t callerFullTokenID = IPCSkeleton::GetCallingFullTokenID();
+    AccessTokenID callertokenID = static_cast<AccessTokenID>(callerFullTokenID & TOKEN_ID_LOWMASK);
+    bool isCallerNormalApp = IsCallerNormalApp(callerFullTokenID);
+    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+    if (isCallerNormalApp && tokenID != callertokenID) {
+        std::shared_lock<std::shared_mutex> monitorLock(this->monitorLock_);
+        tokenMonitor_->ReportExceptionalAccessTokenUsage();
+        if (tokenType == ATokenTypeEnum::TOKEN_INVALID) {
+            // record
+            std::shared_ptr<HapTokenInfoInner> hap = GetHapTokenInfoInner(callertokenID);
+            if (hap == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "TokenID(%{public}u) not exist!", callertokenID);
+                return PERMISSION_DENIED;
+            }
+            tokenMonitor_->RecordExceptionalBehavior(hap->GetHapInfoBasic(), tokenID, permissionName);
+            return PERMISSION_DENIED;
+        }
+        if (tokenMonitor_->IsInPunishingTime(callertokenID)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID(%{public}u) is in punishing time!", callertokenID);
+            return PERMISSION_DENIED;
+        }
+    }
     if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
         return VerifyNativeAccessToken(tokenID, permissionName);
     }

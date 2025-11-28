@@ -38,9 +38,7 @@ ohos_shared_library("accesstoken_json_parse") {
       "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     ]
 
-    sources = [
-      "src/json_parse_loader.cpp",
-    ]
+    sources = [ "src/json_parse_loader.cpp" ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [
@@ -51,8 +49,8 @@ ohos_shared_library("accesstoken_json_parse") {
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils"
-      ]
+      "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
+    ]
 
     external_deps = [
       "cJSON:cjson",
