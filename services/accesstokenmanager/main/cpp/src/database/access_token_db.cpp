@@ -32,7 +32,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* DATABASE_NAME = "access_token.db";
-constexpr const char* ACCESSTOKEN_SERVICE_NAME = "accesstoken_service";
 static constexpr int32_t ACCESSTOKEN_CLEAR_MEMORY_SIZE = 4;
 }
 
@@ -80,7 +79,6 @@ void AccessTokenDb::InitRdb()
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S3);
     config.SetAllowRebuild(true);
     config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA); // Real-time dual-write backup database
-    config.SetServiceName(std::string(ACCESSTOKEN_SERVICE_NAME));
     config.SetClearMemorySize(ACCESSTOKEN_CLEAR_MEMORY_SIZE);
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
