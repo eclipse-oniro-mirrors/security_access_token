@@ -47,7 +47,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
@@ -71,7 +71,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let options: AddPermissionUsedRecordOptions = { usedType: PermissionUsedType.NORMAL_TYPE };
@@ -91,7 +91,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let p = taskpool.execute((): void => {
@@ -107,7 +107,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let optionalPid: int = pid ?? -1;
@@ -128,7 +128,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let p = taskpool.execute((): void => {
@@ -146,7 +146,7 @@ export default namespace privacyManager {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
-            err.data = PARAM_ERROR_MSG("permissionName", "Permissions");
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
         let optionalPid: int = pid ?? -1;

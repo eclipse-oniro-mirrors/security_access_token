@@ -40,6 +40,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool needDynamicRequest = true;
     AtmResult result;
     int32_t instanceId = -1;
+    uint32_t windowId = 0;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
@@ -50,6 +51,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
+    bool isWithWindowId = false;
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
@@ -125,10 +127,13 @@ class NapiRequestPermission {
 public:
     static bool IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
+    static napi_value RequestPermissionsFromUserWithWindowId(napi_env env, napi_callback_info info);
     static napi_value GetPermissionsStatus(napi_env env, napi_callback_info info);
 
 private:
     static bool ParseRequestPermissionFromUser(const napi_env& env, const napi_callback_info& cbInfo,
+        std::shared_ptr<RequestAsyncContext>& asyncContext);
+    static bool ParseRequestPermissionFromUserWithWindowId(const napi_env& env, const napi_callback_info& cbInfo,
         std::shared_ptr<RequestAsyncContext>& asyncContext);
     static void RequestPermissionsFromUserExecute(napi_env env, void* data);
     static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);

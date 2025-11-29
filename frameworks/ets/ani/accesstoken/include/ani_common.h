@@ -28,7 +28,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result);
-OHOS::Ace::UIContent* GetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext);
+OHOS::Ace::UIContent* GetUIContent(
+    const std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext, uint32_t windowId, bool isWithWindowId);
 void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncContext,
     const OHOS::AAFwk::Want& want, const OHOS::Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
     const std::shared_ptr<UIExtensionCallback> uiExtCallback);

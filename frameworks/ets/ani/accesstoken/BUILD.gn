@@ -66,6 +66,7 @@ ohos_shared_library("accesstoken_ani") {
     "napi:ace_napi",
     "runtime_core:ani",
     "runtime_core:libarkruntime",
+    "window_manager:libwm",
   ]
 
   if (eventhandler_enable == true) {

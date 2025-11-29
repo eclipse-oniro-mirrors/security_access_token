@@ -244,6 +244,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setPermissionRequestToggleStatus", SetPermissionRequestToggleStatus),
         DECLARE_NAPI_FUNCTION("getPermissionRequestToggleStatus", GetPermissionRequestToggleStatus),
         DECLARE_NAPI_FUNCTION("requestPermissionsFromUser", NapiRequestPermission::RequestPermissionsFromUser),
+        DECLARE_NAPI_FUNCTION("requestPermissionsFromUserWithWindowId",
+            NapiRequestPermission::RequestPermissionsFromUserWithWindowId),
         DECLARE_NAPI_FUNCTION("getPermissionsStatus", NapiRequestPermission::GetPermissionsStatus),
         DECLARE_NAPI_FUNCTION("requestPermissionOnSetting", NapiRequestPermissionOnSetting::RequestPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),

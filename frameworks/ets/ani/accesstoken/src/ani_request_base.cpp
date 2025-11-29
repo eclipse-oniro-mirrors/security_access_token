@@ -61,7 +61,7 @@ bool RequestAsyncContextBase::FillInfoFromContext(const ani_object& aniContext)
 void RequestAsyncContextBase::GetInstanceId()
 {
     auto task = [this]() {
-        Ace::UIContent* uiContent = GetUIContent(this->stageContext_);
+        Ace::UIContent* uiContent = GetUIContent(this->stageContext_, this->windowId, this->isWithWindowId);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
             (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",

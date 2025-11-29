@@ -965,6 +965,8 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(CheckContextExecute) },
         ani_native_function { "requestPermissionsFromUserExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
+        ani_native_function { "requestPermissionsFromUserWithWindowIdExecute",
+            nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserWithWindowIdExecute) },
         ani_native_function { "requestPermissionOnSettingExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionOnSettingExecute) },
         ani_native_function { "openPermissionOnSettingExecute",

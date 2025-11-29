@@ -27,6 +27,7 @@ enum ReqPermFromUserErrorCode {
     TRIGGER_RELEASE = 4,
     TRIGGER_ONERROR = 5,
     TRIGGER_DESTROY = 6,
+    GET_WINDOW_FAILED = 7,
 };
 enum VerifyAccessTokenEventCode {
     VERIFY_TOKENID_INCONSISTENCY = 0,

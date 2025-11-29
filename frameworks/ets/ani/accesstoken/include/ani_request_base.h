@@ -44,6 +44,8 @@ struct RequestAsyncContextBase {
     PermissionGrantInfo info;
     int32_t instanceId = -1;
     std::shared_ptr<OHOS::AbilityRuntime::Context> stageContext_ = nullptr;
+    uint32_t windowId = 0;
+    bool isWithWindowId = false;
     bool uiExtensionFlag = false;
     bool releaseFlag = false;
     bool uiContentFlag = false;

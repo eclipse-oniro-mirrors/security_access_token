@@ -22,8 +22,11 @@
 #include "hisysevent.h"
 #include "napi_base_context.h"
 #include "napi_hisysevent_adapter.h"
+#include "permission_map.h"
+#include "refbase.h"
 #include "token_setproc.h"
 #include "want.h"
+#include "window.h"
 
 namespace OHOS {
 namespace Security {
@@ -92,10 +95,26 @@ static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncCo
         return nullptr;
     }
     Ace::UIContent* uiContent = nullptr;
-    if (asyncContext->uiAbilityFlag) {
+    if (asyncContext->isWithWindowId) {
+        sptr<OHOS::Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
+        if (window == nullptr) {
+            asyncContext->result.errorCode = ERR_PARAM_INVALID;
+            asyncContext->result.errorMsg = "Cannot find window by windowId.";
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get window with id %{public}d failed.", asyncContext->windowId);
+            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_WINDOW_FAILED);
+            return nullptr;
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get window with id %{public}d success", asyncContext->windowId);
+        uiContent = window->GetUIContent();
+    } else if (asyncContext->uiAbilityFlag) {
         uiContent = asyncContext->abilityContext->GetUIContent();
     } else {
         uiContent = asyncContext->uiExtensionContext->GetUIContent();
+    }
+
+    if (uiContent == nullptr) {
+        asyncContext->result.errorCode = RET_FAILED;
     }
     return uiContent;
 }
@@ -134,7 +153,6 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -174,7 +192,6 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
-            asyncContext->result.errorCode = RET_FAILED;
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
@@ -206,9 +223,16 @@ static napi_value GetContext(
             LOGE(ATM_DOMAIN, ATM_TAG, "Get context failed");
             return nullptr;
         }
-        asyncContext->abilityContext =
-            AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-        if ((asyncContext->abilityContext != nullptr) &&
+        asyncContext->abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+        if (asyncContext->isWithWindowId) {
+            auto appInfo = context->GetApplicationInfo();
+            if (appInfo == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "GetApplicationInfo failed");
+                return nullptr;
+            }
+            asyncContext->tokenId = appInfo->accessTokenId;
+            asyncContext->bundleName = appInfo->bundleName;
+        } else if ((asyncContext->abilityContext != nullptr) &&
             (asyncContext->abilityContext->GetApplicationInfo() != nullptr)) {
             asyncContext->uiAbilityFlag = true;
             asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
@@ -225,6 +249,8 @@ static napi_value GetContext(
             asyncContext->tokenId = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
             asyncContext->bundleName = asyncContext->uiExtensionContext->GetApplicationInfo()->bundleName;
         }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Get context success, tokenId: %{public}d, bundleName: %{public}s",
+            asyncContext->tokenId, asyncContext->bundleName.c_str());
         return WrapVoidToJS(env);
     }
 }
@@ -374,8 +400,59 @@ void AuthorizationResult::WindowShownCallback()
     LOGD(ATM_DOMAIN, ATM_TAG, "OnRequestPermissionsFromUser async callback is called end");
 }
 
+static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+    sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
+    if (window == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetWindowWithId failed, windowId: %{public}d", asyncContext->windowId);
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = ERR_PARAM_INVALID;
+        asyncContext->result.errorMsg = "Cannot find window by windowId.";
+        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
+        return;
+    }
+    sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
+    if (remoteObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return;
+    }
+
+    AAFwk::Want want;
+
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(CALLBACK_KEY, remoteObject);
+    want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
+    
+    Rosen::Rect windowRect = window->GetRect();
+
+    int32_t left = windowRect.posX_;
+    int32_t top = windowRect.posY_;
+    int32_t width = static_cast<int32_t>(windowRect.width_);
+    int32_t height = static_cast<int32_t>(windowRect.height_);
+    want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, left);
+    want.SetParam(WINDOW_RECTANGLE_TOP_KEY, top);
+    want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, width);
+    want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, height);
+    want.SetParam(REQUEST_TOKEN_KEY, window->GetContext()->GetToken());
+
+    int32_t ret = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
+        want, window->GetContext()->GetToken());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
+        ret, asyncContext->tokenId, asyncContext->permissionList.size());
+}
+
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (asyncContext->isWithWindowId) {
+        CreateServiceExtensionWithWindowId(asyncContext);
+        return;
+    }
+
     if ((asyncContext == nullptr) || (asyncContext->abilityContext == nullptr)) {
         return;
     }
@@ -413,7 +490,6 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     want.SetParam(REQUEST_TOKEN_KEY, asyncContext->abilityContext->GetToken());
     int32_t ret = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
         want, asyncContext->abilityContext->GetToken());
-
     LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
 }
@@ -554,6 +630,11 @@ void UIExtensionCallback::OnDestroy()
 
 static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (asyncContext->isWithWindowId) {
+        CreateServiceExtensionWithWindowId(asyncContext);
+        return;
+    }
+
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -642,7 +723,6 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
 
     // argv[1] : permissionList
     if (!ParseStringArray(env, argv[1], asyncContext->permissionList) ||
@@ -661,6 +741,90 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
             return false;
         }
     }
+
+#ifdef EVENTHANDLER_ENABLE
+    asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
+#endif
+    return true;
+}
+
+napi_value NapiRequestPermission::RequestPermissionsFromUserWithWindowId(napi_env env, napi_callback_info info)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "RequestPermissionsFromUserWithWindowId begin.");
+    // use handle to protect asyncContext
+    std::shared_ptr<RequestAsyncContext> asyncContext = std::make_shared<RequestAsyncContext>(env);
+    asyncContext->isWithWindowId = true;
+    asyncContext->windowId = 0;
+    if (!ParseRequestPermissionFromUserWithWindowId(env, info, asyncContext)) {
+        return nullptr;
+    }
+    auto asyncContextHandle = std::make_unique<RequestAsyncContextHandle>(asyncContext);
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContextHandle->asyncContextPtr->deferred), &result));
+
+    napi_value resource = nullptr; // resource name
+    NAPI_CALL(env, napi_create_string_utf8(env, "RequestPermissionsFromUserWithWindowId", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource, RequestPermissionsFromUserExecute, RequestPermissionsFromUserComplete,
+        reinterpret_cast<void*>(asyncContextHandle.get()), &(asyncContextHandle->asyncContextPtr->work)));
+
+    NAPI_CALL(env,
+        napi_queue_async_work_with_qos(env, asyncContextHandle->asyncContextPtr->work, napi_qos_user_initiated));
+
+    LOGD(ATM_DOMAIN, ATM_TAG, "RequestPermissionsFromUserWithWindowId end.");
+    asyncContextHandle.release();
+    return result;
+}
+
+bool NapiRequestPermission::ParseRequestPermissionFromUserWithWindowId(const napi_env& env,
+    const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
+    napi_value thisVar = nullptr;
+
+    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Napi_get_cb_info failed");
+        return false;
+    }
+    if (argc < MAX_PARAMS_THREE) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
+    asyncContext->env = env;
+    std::string errMsg;
+
+    // argv[0] : context : AbilityContext
+    if (GetContext(env, argv[0], asyncContext) == nullptr) {
+        errMsg = GetParamErrorMsg("context", "Context of stage mode");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+    
+    if (argc < MAX_PARAMS_THREE) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "permissionList is missing.")), false);
+        return false;
+    }
+
+    // argv[1] : windowId
+    if (!ParseUint32(env, argv[1], asyncContext->windowId)) {
+        errMsg = GetParamErrorMsg("windowId", "number");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    // argv[2] : permissionList
+    if (!ParseStringArray(env, argv[2], asyncContext->permissionList) || asyncContext->permissionList.empty()) {
+        errMsg = GetParamErrorMsg("permissionList", "Array<Permissions>");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
 #ifdef EVENTHANDLER_ENABLE
     asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
 #endif
