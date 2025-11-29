@@ -305,9 +305,11 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
     }
     result = proxy->StartUsingPermissionCallback(parcel, callbackWrap->AsObject(), anonyStub->AsObject());
     if (result == RET_SUCCESS) {
-        std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        stateChangeCallbackMap_[id] = callbackWrap;
-        LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+        {
+            std::lock_guard<std::mutex> lock(stateCbkMutex_);
+            stateChangeCallbackMap_[id] = callbackWrap;
+            LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
+        }
         SetInputCache(parcel.info, true);
     } else {
         result = ConvertResult(result);
