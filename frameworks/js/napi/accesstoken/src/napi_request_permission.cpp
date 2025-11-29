@@ -426,6 +426,12 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(CALLBACK_KEY, remoteObject);
+    if (window->GetContext() == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetContext failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return;
+    }
     want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
     
     Rosen::Rect windowRect = window->GetRect();
