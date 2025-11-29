@@ -6797,11 +6797,12 @@
             "name": "ohos.permission.HIVIEW_TRACE_MANAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SERVICE",
-            "since": 19,
+            "availableType": "SYSTEM",
+            "since": 23,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.SANDBOX_ACCESS_MANAGER",
