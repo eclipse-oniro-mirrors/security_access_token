@@ -120,6 +120,9 @@ HWTEST_F(TokenSyncCommandCoverageTest, FromPermStateJsonTest001, TestSize.Level4
         "\"grantStatus\":0, \"grantFlag\":0,\"isGeneral\":true,\"grantConfig\":"
         "[]}],\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}");
     EXPECT_FALSE(deleteCommand.FromPermStateJson(jsonPtr.get(), status));
+
+    jsonPtr = CreateJsonFromString("{\"permissionName\":\"test.permission2\", \"grantConfig\":[]}");
+    EXPECT_FALSE(deleteCommand.FromPermStateJson(jsonPtr.get(), status));
 }
 
 /**
@@ -156,6 +159,9 @@ HWTEST_F(TokenSyncCommandCoverageTest, DeleteRemoteTokenCommandTest001, TestSize
 
     std::string result = deleteCommand2.ToJsonPayload();
     EXPECT_NE(std::string::npos, result.find("123"));
+
+    DeleteRemoteTokenCommand deleteCommand3("{\"flag\":1}");
+    EXPECT_EQ(0, deleteCommand3.deleteTokenId_);
 }
 
 /**
