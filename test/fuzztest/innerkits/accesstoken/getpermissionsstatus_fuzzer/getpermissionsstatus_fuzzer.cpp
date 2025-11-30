@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -36,8 +36,9 @@ bool GetPermissionsStatusFuzzTest(const uint8_t* data, size_t size)
         .permissionName = provider.ConsumeRandomLengthString(),
         .state = SETTING_OPER,
     };
+    AccessTokenID tokenId = ConsumeTokenId(provider);
     std::vector<PermissionListState> permList = { perm };
-    return AccessTokenKit::GetPermissionsStatus(provider.ConsumeIntegral<AccessTokenID>(), permList) == RET_SUCCESS;
+    return AccessTokenKit::GetPermissionsStatus(tokenId, permList) == RET_SUCCESS;
 }
 }
 

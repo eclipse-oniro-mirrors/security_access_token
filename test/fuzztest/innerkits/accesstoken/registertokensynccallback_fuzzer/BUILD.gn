@@ -18,8 +18,11 @@ import("../../../../../access_token.gni")
 ohos_fuzztest("RegisterTokenSyncCallbackFuzzTest") {
   module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
-  include_dirs =
-      [ "${access_token_path}/interfaces/innerkits/accesstoken/include" ]
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/test/fuzztest/common",
+  ]
   cflags = [
     "-g",
     "-O0",
@@ -28,6 +31,7 @@ ohos_fuzztest("RegisterTokenSyncCallbackFuzzTest") {
   ]
   sources = [ "registertokensynccallback_fuzzer.cpp" ]
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]

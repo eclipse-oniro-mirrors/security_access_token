@@ -18,12 +18,17 @@
 #include "accesstoken_compat_kit.h"
 #include "access_token_error.h"
 #include "iservice_registry.h"
+#include "accesstoken_compat_client.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr uint32_t TEST_NATIVE_TOKEN = 672137215; // 672137215: 001 01 0 000000 11111111111111111111
+static constexpr uint32_t TEST_HAP_TOKEN = 537919487; // 537919486: 001 00 0 000000 11111111111111111111
+}
 class ATCompatMockTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -52,12 +57,42 @@ void ATCompatMockTest::TearDown()
  * @tc.name: VerifyAccessTokenTest001
  * @tc.desc: VerifyAccessToken with proxy is null
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require: issueI61A6M
  */
 HWTEST_F(ATCompatMockTest, VerifyAccessTokenTest001, TestSize.Level4)
 {
-    AccessTokenID tokenID = 123; // 123: tokenid
-    ASSERT_EQ(PERMISSION_DENIED, AccessTokenCompatKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    std::string permission = "ohos.permission.CAMERA";
+
+    // first call: ret < 0(GetParameter)
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenCompatClient::GetInstance().VerifyAccessToken(TEST_NATIVE_TOKEN, permission));
+
+    // second call: ret > 0(GetParameter), (static_cast<uint64_t>(std::atoll(value)) != 0
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenCompatClient::GetInstance().VerifyAccessToken(TEST_NATIVE_TOKEN, permission));
+
+    // third call: ret > 0(GetParameter), (static_cast<uint64_t>(std::atoll(value)) == 0
+    // token id is native, granted
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenCompatClient::GetInstance().VerifyAccessToken(TEST_NATIVE_TOKEN, permission));
+
+    // fouth call: ret > 0(GetParameter), (static_cast<uint64_t>(std::atoll(value)) == 0
+    // token is is hap, denied
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenCompatClient::GetInstance().VerifyAccessToken(TEST_HAP_TOKEN, permission));
+}
+
+/**
+ * @tc.name: GetPermissionCodeTest001
+ * @tc.desc: GetPermissionCode with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ATCompatMockTest, GetPermissionCodeTest001, TestSize.Level4)
+{
+    uint32_t code;
+    ASSERT_EQ(ERR_SERVICE_ABNORMAL,
+        AccessTokenCompatClient::GetInstance().GetPermissionCode("ohos.permission.CAMERA", code));
 }
 
 /**
@@ -68,9 +103,8 @@ HWTEST_F(ATCompatMockTest, VerifyAccessTokenTest001, TestSize.Level4)
  */
 HWTEST_F(ATCompatMockTest, GetHapTokenInfoTest001, TestSize.Level4)
 {
-    AccessTokenID tokenID = 123; // 123: tokenid
-    HapTokenInfoCompat hapInfo;
-    ASSERT_EQ(ERR_SERVICE_ABNORMAL, AccessTokenCompatKit::GetHapTokenInfo(tokenID, hapInfo));
+    HapTokenInfoCompatParcel hapInfo;
+    ASSERT_EQ(ERR_SERVICE_ABNORMAL, AccessTokenCompatClient::GetInstance().GetHapTokenInfo(TEST_HAP_TOKEN, hapInfo));
 }
 
 /**
@@ -81,7 +115,7 @@ HWTEST_F(ATCompatMockTest, GetHapTokenInfoTest001, TestSize.Level4)
  */
 HWTEST_F(ATCompatMockTest, GetNativeTokenIdTest001, TestSize.Level4)
 {
-    ASSERT_EQ(INVALID_TOKENID, AccessTokenCompatKit::GetNativeTokenId("accesstoken_service"));
+    ASSERT_EQ(INVALID_TOKENID, AccessTokenCompatClient::GetInstance().GetNativeTokenId("accesstoken_service"));
 }
 }  // namespace AccessToken
 }  // namespace Security

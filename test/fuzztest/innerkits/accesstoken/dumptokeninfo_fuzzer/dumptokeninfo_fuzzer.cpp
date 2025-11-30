@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -33,7 +33,7 @@ bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
 
     FuzzedDataProvider provider(data, size);
     AtmToolsParamInfo info = {
-        .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+        .tokenId = ConsumeTokenId(provider),
     };
 
     std::string dumpInfo;

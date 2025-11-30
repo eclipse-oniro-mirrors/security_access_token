@@ -22,22 +22,18 @@ group("fuzztest") {
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
-    "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",
-    "deleteremotetoken_fuzzer:DeleteRemoteTokenFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
     "dumptokeninfo_fuzzer:DumpTokenInfoFuzzTest",
     "getdefpermission_fuzzer:GetDefPermissionFuzzTest",
     "gethapdlpflag_fuzzer:GetHapDlpFlagFuzzTest",
     "gethaptokenid_fuzzer:GetHapTokenIDFuzzTest",
     "gethaptokeninfo_fuzzer:GetHapTokenInfoFuzzTest",
-    "gethaptokeninfofromremote_fuzzer:GetHapTokenInfoFromRemoteFuzzTest",
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
     "getpermissionrequesttogglestatus_fuzzer:GetPermissionRequestToggleStatusFuzzTest",
     "getpermissionsstatus_fuzzer:GetPermissionsStatusFuzzTest",
     "getpermissionusedtype_fuzzer:GetPermissionUsedTypeFuzzTest",
-    "getremotenativetokenid_fuzzer:GetRemoteNativeTokenIDFuzzTest",
     "getrendertokenid_fuzzer:GetRenderTokenIdFuzzTest",
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
@@ -55,7 +51,6 @@ group("fuzztest") {
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
-    "setremotehaptokeninfo_fuzzer:SetRemoteHapTokenInfoFuzzTest",
     "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
@@ -68,6 +63,15 @@ group("fuzztest") {
       "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
+    ]
+  }
+  if (is_standard_system && token_sync_enable) {
+    deps += [
+      "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",
+      "deleteremotetoken_fuzzer:DeleteRemoteTokenFuzzTest",
+      "gethaptokeninfofromremote_fuzzer:GetHapTokenInfoFromRemoteFuzzTest",
+      "getremotenativetokenid_fuzzer:GetRemoteNativeTokenIDFuzzTest",
+      "setremotehaptokeninfo_fuzzer:SetRemoteHapTokenInfoFuzzTest",
     ]
   }
 }

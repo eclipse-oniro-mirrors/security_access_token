@@ -21,6 +21,7 @@
 #include <vector>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -35,7 +36,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::GetHapDlpFlag(provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        return AccessTokenKit::GetHapDlpFlag(tokenId) == RET_SUCCESS;
     }
 }
 

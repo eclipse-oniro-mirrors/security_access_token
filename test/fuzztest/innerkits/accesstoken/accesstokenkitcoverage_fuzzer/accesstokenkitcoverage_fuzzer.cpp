@@ -22,7 +22,6 @@
 #undef private
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
-#include "access_token.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -34,10 +33,10 @@ bool AccessTokenKitCoverageFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    AccessTokenFuzzData fuzzData(data, size);
+    FuzzedDataProvider provider(data, size);
 
-    std::string permissionName(fuzzData.GenerateStochasticString());
-    AccessTokenID tokenID = fuzzData.GetData<AccessTokenID>();
+    std::string permissionName = ConsumePermissionName(provider);
+    AccessTokenID tokenID = ConsumeTokenId(provider);
     HapTokenInfoExt info;
     AccessTokenKit::GetHapTokenInfoExtension(tokenID, info);
     std::vector<PermissionWithValue> kernelPermList;

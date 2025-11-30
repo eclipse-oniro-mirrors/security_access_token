@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 const static int32_t STATUS_SIZE = 3;
@@ -35,7 +36,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::SetPermissionRequestToggleStatus(provider.ConsumeRandomLengthString(),
+        std::string permission = ConsumePermissionName(provider);
+        return AccessTokenKit::SetPermissionRequestToggleStatus(permission,
             provider.ConsumeIntegral<uint32_t>() % STATUS_SIZE, provider.ConsumeIntegral<int32_t>()) == RET_SUCCESS;
     }
 }

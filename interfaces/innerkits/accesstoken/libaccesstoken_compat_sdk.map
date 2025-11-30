@@ -18,6 +18,9 @@
       "OHOS::Security::AccessToken::AccessTokenCompatKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
       "OHOS::Security::AccessToken::AccessTokenCompatKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfoCompat&)";
       "OHOS::Security::AccessToken::AccessTokenCompatKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::Security::AccessToken::AccessTokenCompatClient::GetInstance()";
+        "OHOS::Security::AccessToken::AccessTokenCompatClient::InitProxy()";
+        "OHOS::Security::AccessToken::AccessTokenCompatClient::ReleaseProxy()";
     };
   local:
     *;

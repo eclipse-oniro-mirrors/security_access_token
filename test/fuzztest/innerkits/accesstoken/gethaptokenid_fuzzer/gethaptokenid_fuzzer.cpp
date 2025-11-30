@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -32,7 +33,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::GetHapTokenID(provider.ConsumeIntegral<int32_t>(), provider.ConsumeRandomLengthString(),
+        std::string bundleName = ConsumeProcessName(provider);
+        return AccessTokenKit::GetHapTokenID(provider.ConsumeIntegral<int32_t>(), bundleName,
             provider.ConsumeIntegral<int32_t>()) != INVALID_TOKENID;
     }
 }

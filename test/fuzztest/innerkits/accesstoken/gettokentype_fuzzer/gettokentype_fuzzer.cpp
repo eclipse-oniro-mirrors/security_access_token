@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -31,8 +32,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::GetTokenType(
-            provider.ConsumeIntegral<AccessTokenID>()) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        return AccessTokenKit::GetTokenType(tokenId) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-22025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,7 +43,7 @@ static OHOS::Security::AccessToken::AccessTokenID TransfterStrToAccesstokenID(co
     return id;
 }
 
-void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenID> &tokenIdList)
+static void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenID> &tokenIdList)
 {
     std::string dumpInfo;
     OHOS::Security::AccessToken::AtmToolsParamInfo info;
@@ -58,6 +58,23 @@ void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenID> &tok
             if (id != OHOS::Security::AccessToken::INVALID_TOKENID) {
                 tokenIdList.push_back(id);
             }
+        }
+    }
+}
+
+static void GetProcessList(std::vector<std::string> &processList)
+{
+    std::string dumpInfo;
+    OHOS::Security::AccessToken::AtmToolsParamInfo info;
+    OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    std::istringstream stream(dumpInfo);
+    std::string line;
+    while (std::getline(stream, line)) {
+        size_t pos = line.find(':');
+        if (pos != std::string::npos) {
+            std::string process = line.substr(pos + 1);
+            process.erase(0, process.find_first_not_of(" \t"));
+            processList.emplace_back(process);
         }
     }
 }
@@ -92,6 +109,25 @@ std::string ConsumePermissionName(FuzzedDataProvider &provider)
             0, static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1), permissionName);
     }
     return permissionName;
+}
+
+std::string ConsumeProcessName(FuzzedDataProvider &provider)
+{
+    static std::vector<std::string> processList;
+    static bool isIntialize = false;
+    if (!isIntialize) {
+        GetProcessList(processList);
+        isIntialize = true;
+    }
+    std::string process;
+    if (provider.ConsumeBool() || processList.empty()) {
+        process = provider.ConsumeRandomLengthString();
+    } else {
+        process = processList[
+            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(processList.size() - 1))];
+    }
+
+    return process;
 }
 
 namespace OHOS {

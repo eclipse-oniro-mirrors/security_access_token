@@ -21,6 +21,7 @@
 
 #include "fuzzer/FuzzedDataProvider.h"
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 
 using namespace std;
@@ -34,7 +35,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::DeleteToken(provider.ConsumeIntegral<AccessTokenID>()) == RET_SUCCESS;
+        AccessTokenID tokenId = ConsumeTokenId(provider);
+        return AccessTokenKit::DeleteToken(tokenId) == RET_SUCCESS;
     }
 }
 

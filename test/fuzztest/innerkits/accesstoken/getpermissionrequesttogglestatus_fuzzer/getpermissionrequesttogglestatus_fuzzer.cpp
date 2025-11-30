@@ -20,6 +20,7 @@
 #include <thread>
 
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -34,8 +35,9 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
+        std::string permission = ConsumePermissionName(provider);
         uint32_t status = 0;
-        return AccessTokenKit::GetPermissionRequestToggleStatus(provider.ConsumeRandomLengthString(), status,
+        return AccessTokenKit::GetPermissionRequestToggleStatus(permission, status,
             provider.ConsumeIntegral<int32_t>()) == RET_SUCCESS;
     }
 }

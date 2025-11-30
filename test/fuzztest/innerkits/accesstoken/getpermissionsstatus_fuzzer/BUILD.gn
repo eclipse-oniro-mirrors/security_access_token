@@ -22,6 +22,7 @@ ohos_fuzztest("GetPermissionsStatusFuzzTest") {
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/test/fuzztest/common",
   ]
   cflags = [
     "-g",
@@ -31,6 +32,7 @@ ohos_fuzztest("GetPermissionsStatusFuzzTest") {
   ]
   sources = [ "getpermissionsstatus_fuzzer.cpp" ]
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
