@@ -588,7 +588,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsStateWithManualTest001, T
     permsList.emplace_back(manualState);
     PermissionGrantInfo info;
     EXPECT_NE(DYNAMIC_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
-    EXPECT_EQ(permsList[0].state, SETTING_OPER);
+    EXPECT_EQ(permsList[0].state, INVALID_OPER);
     EXPECT_EQ(permsList[0].errorReason, MANUAL_SETTING_PERM);
 
     PermissionListState state = {

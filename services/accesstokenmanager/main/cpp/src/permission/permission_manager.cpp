@@ -216,7 +216,7 @@ bool PermissionManager::HandlePermissionDeniedCase(uint32_t goalGrantFlag, Permi
 {
     PermissionBriefDef briefDef;
     if (GetPermissionBriefDef(permState.permissionName, briefDef) && briefDef.grantMode == MANUAL_SETTINGS) {
-        permState.state = SETTING_OPER;
+        permState.state = INVALID_OPER;
         permState.errorReason = MANUAL_SETTING_PERM;
         return true;
     }
