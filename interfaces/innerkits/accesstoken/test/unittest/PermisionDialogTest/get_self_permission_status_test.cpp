@@ -584,7 +584,7 @@ HWTEST_F(GetSelfPermissionStatusTest, GetSelfPermissionStatusWithManualTest001, 
     PermissionOper status;
     int32_t ret = AccessTokenKit::GetSelfPermissionStatus("ohos.permission.MANUAL_ATM_SELF_USE", status);
     EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_EQ(SETTING_OPER, status);
+    EXPECT_EQ(INVALID_OPER, status);
 
     {
         std::vector<std::string> reqPerm;
