@@ -260,49 +260,6 @@ int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& bundleName, in
     return service_->DeleteAppKey(bundleName, userId);
 }
 
-int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos)
-{
-    LOG_INFO("Get user %{public}d app key.", userId);
-    if (userId < 0) {
-        LOG_ERROR("UserId is invalid!");
-        return EFM_ERR_INVALID_PARAMETER;
-    }
-    if (!VerifyNativeCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
-        LOG_ERROR("Get user app key permission denied.");
-        return EFM_ERR_NO_PERMISSION;
-    }
-
-    if (service_ == nullptr) {
-        LOG_ERROR("Failed to get policy.");
-        PostDelayedUnloadTask(API_DELAY_TIME);
-        return EFM_SUCCESS;
-    }
-
-    return service_->GetUserAppKey(userId, getAllFlag, keyInfos);
-}
-
-int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
-    const std::vector<AppKeyLoadInfo> &loadInfos)
-{
-    LOG_INFO("Change user %{public}d load infos.", userId);
-    if (userId < 0) {
-        LOG_ERROR("UserId is invalid!");
-        return EFM_ERR_INVALID_PARAMETER;
-    }
-    if (!VerifyNativeCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
-        LOG_ERROR("Change user load infos permission denied.");
-        return EFM_ERR_NO_PERMISSION;
-    }
-
-    if (service_ == nullptr) {
-        LOG_ERROR("Failed to get policy.");
-        PostDelayedUnloadTask(API_DELAY_TIME);
-        return EFM_SUCCESS;
-    }
-
-    return service_->ChangeUserAppkeysLoadInfo(userId, loadInfos);
-}
-
 int32_t El5FilekeyManagerService::SetFilePathPolicy()
 {
     int32_t userId = IPCSkeleton::GetCallingUid() / USERID_MASK;

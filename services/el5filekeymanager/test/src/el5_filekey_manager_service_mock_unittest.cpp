@@ -79,19 +79,6 @@ public:
         return EFM_SUCCESS;
     }
 
-    int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<UserAppKeyInfo> &keyInfos)
-    {
-        int32_t key = 111;
-        std::string info = "test";
-        keyInfos.emplace_back(UserAppKeyInfo(key, info));
-        return EFM_SUCCESS;
-    }
-
-    int32_t ChangeUserAppkeysLoadInfo(int32_t userId, const std::vector<AppKeyLoadInfo> &loadInfos)
-    {
-        return EFM_SUCCESS;
-    }
-
     int32_t SetFilePathPolicy(int32_t userId)
     {
         return EFM_SUCCESS;
@@ -303,108 +290,6 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey002, TestSize.Level1)
     MockIpc::SetCallingUid(3060);
 
     ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, userId), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: GetUserAppKey001
- * @tc.desc: Find key infos of the specified user id.
- * @tc.type: FUNC
- * @tc.require: issueIAD2MD
- */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey001, TestSize.Level1)
-{
-    el5FilekeyManagerService_->service_ = nullptr;
-
-    int32_t userId = 100;
-    std::vector<UserAppKeyInfo> keyInfos;
-
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
-    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
-
-    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: GetUserAppKey002
- * @tc.desc: Find key infos of the specified user id.
- * @tc.type: FUNC
- * @tc.require: issueIAD2MD
- */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey002, TestSize.Level1)
-{
-    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
-
-    int32_t userId = 100;
-    std::vector<UserAppKeyInfo> keyInfos;
-
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
-    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
-
-    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: GetUserAppKey003
- * @tc.desc: Find key infos of the specified user id.
- * @tc.type: FUNC
- * @tc.require: issueIAD2MD
- */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey003, TestSize.Level1)
-{
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
-
-    data.WriteInt32(100);
-    data.WriteBool(false);
-
-    ASSERT_EQ(el5FilekeyManagerService_->OnRemoteRequest(
-        static_cast<uint32_t>(El5FilekeyManagerInterfaceIpcCode::COMMAND_GET_USER_APP_KEY), data, reply, option),
-        OHOS::NO_ERROR);
-}
-
-/**
- * @tc.name: ChangeUserAppkeysLoadInfo001
- * @tc.desc: Change key infos of the specified user id.
- * @tc.type: FUNC
- * @tc.require: issueIAD2MD
- */
-HWTEST_F(El5FilekeyManagerServiceMockTest, ChangeUserAppkeysLoadInfo001, TestSize.Level1)
-{
-    el5FilekeyManagerService_->service_ = nullptr;
-
-    int32_t userId = 100;
-    std::vector<AppKeyLoadInfo> loadInfos;
-    std::string emptyStr("");
-    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
-
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
-    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
-
-    ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: ChangeUserAppkeysLoadInfo002
- * @tc.desc: Change key infos of the specified user id.
- * @tc.type: FUNC
- * @tc.require: issueIAD2MD
- */
-HWTEST_F(El5FilekeyManagerServiceMockTest, ChangeUserAppkeysLoadInfo002, TestSize.Level1)
-{
-    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
-
-    int32_t userId = 100;
-    std::vector<AppKeyLoadInfo> loadInfos;
-    std::string emptyStr("");
-    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
-
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("storage_daemon");
-    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
-
-    ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_SUCCESS);
 }
 
 /**

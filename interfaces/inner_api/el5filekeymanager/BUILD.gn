@@ -97,10 +97,8 @@ ohos_shared_library("el5_filekey_manager_sdk") {
 
   sources = [
     "src/app_key_info.cpp",
-    "src/app_key_load_info.cpp",
     "src/el5_filekey_manager_client.cpp",
     "src/el5_filekey_manager_kit.cpp",
-    "src/user_app_key_info.cpp",
   ]
 
   deps = [ ":el5_filekey_manager_proxy" ]

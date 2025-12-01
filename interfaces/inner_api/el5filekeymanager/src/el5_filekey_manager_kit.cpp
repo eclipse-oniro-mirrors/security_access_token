@@ -40,17 +40,6 @@ int32_t El5FilekeyManagerKit::DeleteAppKey(const std::string& bundleName, int32_
     return El5FilekeyManagerClient::GetInstance().DeleteAppKey(bundleName, userId);
 }
 
-int32_t El5FilekeyManagerKit::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
-{
-    return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, false, keyInfos);
-}
-
-int32_t El5FilekeyManagerKit::ChangeUserAppkeysLoadInfo(int32_t userId,
-    std::vector<std::pair<std::string, bool>> &loadInfos)
-{
-    return El5FilekeyManagerClient::GetInstance().ChangeUserAppkeysLoadInfo(userId, loadInfos);
-}
-
 int32_t El5FilekeyManagerKit::SetFilePathPolicy()
 {
     return El5FilekeyManagerClient::GetInstance().SetFilePathPolicy();
@@ -61,10 +50,6 @@ int32_t El5FilekeyManagerKit::RegisterCallback(const sptr<El5FilekeyCallbackInte
     return El5FilekeyManagerClient::GetInstance().RegisterCallback(callback);
 }
 
-int32_t El5FilekeyManagerKit::GetUserAllAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
-{
-    return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, true, keyInfos);
-}
 int32_t El5FilekeyManagerKit::GenerateGroupIDKey(uint32_t uid, const std::string &groupID, std::string &keyId)
 {
     return El5FilekeyManagerClient::GetInstance().GenerateGroupIDKey(uid, groupID, keyId);
