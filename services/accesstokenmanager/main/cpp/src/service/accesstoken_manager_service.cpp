@@ -309,7 +309,8 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
             perm.permsState.errorReason = PERM_INVALID;
         }
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList size %{public}d is invalid.", size);
-        return INVALID_OPER;
+        permOper = INVALID_OPER;
+        return ERR_OK;
     }
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Bundle %{public}s, uiExAbility %{public}s, serExAbility %{public}s, callerPid %{public}d.",

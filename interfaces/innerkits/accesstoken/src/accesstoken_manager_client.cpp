@@ -273,6 +273,10 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     }
     if (size > MAX_PERMISSION_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size(%{public}zu) is oversize.", size);
+        for (auto& perm: permList) {
+            perm.state = INVALID_OPER;
+            perm.errorReason = PERM_INVALID;
+        }
         return INVALID_OPER;
     }
 
