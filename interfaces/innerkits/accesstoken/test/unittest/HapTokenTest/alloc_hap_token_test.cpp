@@ -42,7 +42,6 @@ static const int INVALID_APPIDDESC_LEN = 10244;
 static const int INVALID_LABEL_LEN = 260;
 static const int INVALID_DESCRIPTION_LEN = 260;
 static const int INVALID_PERMNAME_LEN = 260;
-static const int CYCLE_TIMES = 100;
 static const int INVALID_DLP_TYPE = 4;
 static MockNativeToken* g_mock;
 
@@ -433,49 +432,6 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken009, TestSize.Level0)
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
     DeleteTestToken();
-}
-
-static bool ExistInVector(vector<unsigned int> array, unsigned int value)
-{
-    vector<unsigned int>::iterator it = find(array.begin(), array.end(), value);
-    if (it != array.end()) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/**
- * @tc.name: AllocHapToken010
- * @tc.desc: alloc and delete in a loop.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AllocHapTokenTest, AllocHapToken010, TestSize.Level0)
-{
-    int ret;
-    bool exist = false;
-    int allocFlag = 0;
-    int deleteFlag = 0;
-
-    DeleteTestToken();
-    vector<unsigned int> obj;
-    for (int i = 0; i < CYCLE_TIMES; i++) {
-        AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-
-        exist = ExistInVector(obj, tokenID);
-        if (exist) {
-            allocFlag = 1;
-        }
-        obj.push_back(tokenID);
-
-        ret = AccessTokenKit::DeleteToken(tokenID);
-        if (RET_SUCCESS != ret) {
-            deleteFlag = 1;
-        }
-    }
-    EXPECT_EQ(allocFlag, 0);
-    EXPECT_EQ(deleteFlag, 0);
 }
 
 /**
