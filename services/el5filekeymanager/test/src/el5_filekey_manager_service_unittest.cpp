@@ -144,62 +144,6 @@ HWTEST_F(El5FilekeyManagerServiceTest, DeleteAppKey001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetUserAppKey001
- * @tc.desc: Find key infos of the specified user id without permission.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey001, TestSize.Level1)
-{
-    int32_t userId = 100;
-    std::vector<UserAppKeyInfo> keyInfos;
-    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_NO_PERMISSION);
-}
-
-/**
- * @tc.name: GetUserAppKey002
- * @tc.desc: Find key infos of the specified user id without permission, userId < 0.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey002, TestSize.Level1)
-{
-    int32_t userId = -100;
-    std::vector<UserAppKeyInfo> keyInfos;
-    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_INVALID_PARAMETER);
-}
-
-/**
- * @tc.name: ChangeUserAppkeysLoadInfo001
- * @tc.desc: Change key infos of the specified user id without permission.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo001, TestSize.Level1)
-{
-    int32_t userId = 100;
-    std::vector<AppKeyLoadInfo> loadInfos;
-    std::string emptyStr("");
-    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
-    ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_NO_PERMISSION);
-}
-
-/**
- * @tc.name: ChangeUserAppkeysLoadInfo002
- * @tc.desc: Change key infos of the specified user id without permission, userId < 0.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo002, TestSize.Level1)
-{
-    int32_t userId = -100;
-    std::vector<AppKeyLoadInfo> loadInfos;
-    std::string emptyStr("");
-    loadInfos.emplace_back(AppKeyLoadInfo(emptyStr, true));
-    ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_INVALID_PARAMETER);
-}
-
-/**
  * @tc.name: SetFilePathPolicy001
  * @tc.desc: Set path policy without permission.
  * @tc.type: FUNC

@@ -60,20 +60,6 @@ public:
      */
     static int32_t DeleteAppKey(const std::string& bundleName, int32_t userId);
     /**
-     * @brief Get key infos of the specified user, the state is unloaded.
-     * @param userId The user id
-     * @param keyInfos Key infos of the specified user id, as query result
-     * @return error code, see el5_filekey_manager_error.h
-     */
-    static int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos);
-    /**
-     * @brief Set app key load infos of the specified user.
-     * @param userId The user id
-     * @param loadInfos Key load infos of the specified user id
-     * @return error code, see el5_filekey_manager_error.h
-     */
-    static int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos);
-    /**
      * @brief Set file path policy.
      * @return error code, see el5_filekey_manager_error.h
      */
@@ -84,13 +70,6 @@ public:
      * @return error code, see el5_filekey_manager_error.h
      */
     static int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
-    /**
-     * @brief Get all key infos of the specified user
-     * @param userId The user id
-     * @param keyInfos Key infos of the specified user id, as query result
-     * @return error code, see el5_filekey_manager_error.h
-     */
-    static int32_t GetUserAllAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos);
     /**
      * @brief Generate app key of the installed data group.
      * @param uid The uid

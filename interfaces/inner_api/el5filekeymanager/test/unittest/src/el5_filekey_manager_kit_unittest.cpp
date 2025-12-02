@@ -16,7 +16,6 @@
 #include "el5_filekey_manager_kit_unittest.h"
 
 #include "accesstoken_kit.h"
-#include "user_app_key_info.h"
 #include "el5_filekey_callback_interface_stub.h"
 #include "el5_filekey_manager_error.h"
 #include "el5_filekey_manager_kit.h"
@@ -126,53 +125,6 @@ HWTEST_F(El5FilekeyManagerKitTest, DeleteAppKey001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetUserAppKey001
- * @tc.desc: Find key infos of the specified user id without permission.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerKitTest, GetUserAppKey001, TestSize.Level1)
-{
-    int32_t userId = 100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
-    ASSERT_EQ(El5FilekeyManagerKit::GetUserAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
-}
-
-/**
- * @tc.name: UserAppKeyInfo001
- * @tc.desc: interface coverage
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerKitTest, UserAppKeyInfo001, TestSize.Level0)
-{
-    std::string mockKeyInfo("mockKeyInfo");
-    UserAppKeyInfo src(100, mockKeyInfo);
-    OHOS::Parcel parcel{};
-    EXPECT_TRUE(src.Marshalling(parcel));
-
-    UserAppKeyInfo *dst = UserAppKeyInfo::Unmarshalling(parcel);
-    EXPECT_NE(dst, nullptr);
-    EXPECT_EQ(src.first, dst->first);
-    EXPECT_EQ(src.second, dst->second);
-    delete dst;
-}
-
-/**
- * @tc.name: ChangeUserAppkeysLoadInfo001
- * @tc.desc: Change key infos of the specified user id without permission.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerKitTest, ChangeUserAppkeysLoadInfo001, TestSize.Level1)
-{
-    int32_t userId = 100;
-    std::vector<std::pair<std::string, bool>> loadInfos;
-    loadInfos.emplace_back(std::make_pair("", true));
-    ASSERT_EQ(El5FilekeyManagerKit::ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_NO_PERMISSION);
-}
-
-/**
  * @tc.name: SetFilePathPolicy001
  * @tc.desc: Set path policy without permission.
  * @tc.type: FUNC
@@ -192,20 +144,6 @@ HWTEST_F(El5FilekeyManagerKitTest, SetFilePathPolicy001, TestSize.Level1)
 HWTEST_F(El5FilekeyManagerKitTest, RegisterCallback001, TestSize.Level1)
 {
     ASSERT_NE(El5FilekeyManagerKit::RegisterCallback((new (std::nothrow) TestEl5FilekeyCallback())), EFM_SUCCESS);
-}
-
-/**
- * @tc.name: GetUserAllAppKey001
- * @tc.desc: GetUserAllAppKey function test without permission.
- * @tc.type: FUNC
- * @tc.require: issueI9Q6K2
- */
-HWTEST_F(El5FilekeyManagerKitTest, GetUserAllAppKey001, TestSize.Level1)
-{
-    int32_t userId = 100;
-    std::vector<std::pair<int32_t, std::string>> keyInfos;
-    keyInfos.emplace_back(std::make_pair(100, ""));
-    ASSERT_EQ(El5FilekeyManagerKit::GetUserAllAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
 }
 
 /**

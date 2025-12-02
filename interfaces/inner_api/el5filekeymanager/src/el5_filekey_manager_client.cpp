@@ -18,8 +18,6 @@
 #include "el5_filekey_manager_log.h"
 #include "el5_filekey_manager_interface_proxy.h"
 #include "el5_filekey_manager_error.h"
-#include "app_key_load_info.h"
-#include "user_app_key_info.h"
 #include "iservice_registry.h"
 #include "refbase.h"
 #include "system_ability_definition.h"
@@ -31,7 +29,6 @@ namespace AccessToken {
 namespace {
 constexpr int32_t LOAD_SA_TIMEOUT_SECOND = 4;
 constexpr int32_t LOAD_SA_RETRY_TIMES = 5;
-constexpr int32_t SA_REQUEST_RETRY_TIMES = 3;
 static const int32_t SENDREQ_FAIL_ERR = 32;
 static const std::vector<int32_t> RETRY_CODE_LIST = { BR_DEAD_REPLY, BR_FAILED_REPLY, SENDREQ_FAIL_ERR };
 }
@@ -73,33 +70,6 @@ int32_t El5FilekeyManagerClient::DeleteAppKey(const std::string &bundleName, int
 {
     std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
         return proxy->DeleteAppKey(bundleName, userId);
-    };
-    return CallProxyWithRetry(func, __FUNCTION__);
-}
-
-int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
-    std::vector<std::pair<int32_t, std::string>> &keyInfos)
-{
-    std::vector<UserAppKeyInfo> userAppKeyInfos;
-    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->GetUserAppKey(userId, getAllFlag, userAppKeyInfos);
-    };
-    int32_t ret = CallProxyWithRetry(func, __FUNCTION__, SA_REQUEST_RETRY_TIMES);
-    for (auto const &it : userAppKeyInfos) {
-        keyInfos.emplace_back(std::make_pair(it.first, it.second));
-    }
-    return ret;
-}
-
-int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
-    std::vector<std::pair<std::string, bool>> &loadInfos)
-{
-    std::vector<AppKeyLoadInfo> appKeyLoadInfos;
-    for (auto &it : loadInfos) {
-        appKeyLoadInfos.emplace_back(AppKeyLoadInfo(it.first, it.second));
-    }
-    std::function<int32_t(sptr<El5FilekeyManagerInterface> &)> func = [&](sptr<El5FilekeyManagerInterface> &proxy) {
-        return proxy->ChangeUserAppkeysLoadInfo(userId, appKeyLoadInfos);
     };
     return CallProxyWithRetry(func, __FUNCTION__);
 }

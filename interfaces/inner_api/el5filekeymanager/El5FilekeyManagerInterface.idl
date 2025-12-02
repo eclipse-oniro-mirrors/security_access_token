@@ -16,8 +16,6 @@
 package OHOS.Security.AccessToken;
 import data_lock_type;
 import El5FilekeyCallbackInterface;
-sequenceable OHOS.Security.AccessToken.UserAppKeyInfo;
-sequenceable OHOS.Security.AccessToken.AppKeyLoadInfo;
 option_stub_hooks on;
 
 interface OHOS.Security.AccessToken.El5FilekeyManagerInterface{
@@ -25,8 +23,6 @@ interface OHOS.Security.AccessToken.El5FilekeyManagerInterface{
     void ReleaseAccess([in] DataLockType type);
     void GenerateAppKey([in] unsigned int uid, [in] String bundleName, [inout] String keyId);
     void DeleteAppKey([in] String bundleName, [in] int userId);
-    void GetUserAppKey([in] int userId, [in] boolean getAllFlag, [inout] List<UserAppKeyInfo> keyInfos);
-    void ChangeUserAppkeysLoadInfo([in] int userId, [in] List<AppKeyLoadInfo> loadInfos);
     void SetFilePathPolicy();
     void RegisterCallback([in] El5FilekeyCallbackInterface cb);
     void GenerateGroupIDKey([in] unsigned int uid, [in] String groupID, [inout] String keyId);
