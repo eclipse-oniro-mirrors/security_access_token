@@ -21,6 +21,7 @@
 #include "accesstoken_common_log.h"
 #include "accesstoken_compat_client.h"
 #include "perm_setproc.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -29,12 +30,25 @@ namespace {
 std::mutex g_lockCache;
 std::map<std::string, uint32_t> g_permCode;
 static constexpr int32_t MAX_LENGTH = 256;
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 }
 static bool IsRenderToken(AccessTokenID tokenID)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
     return idInner->renderFlag;
 }
+
+static bool IsNeedCrossIpc(AccessTokenID verifyingTokenID)
+{
+    uint64_t selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = static_cast<AccessTokenID>(selfTokenId & TOKEN_ID_LOWMASK);
+    bool isSelfNormalApp = (AccessTokenCompatKit::GetTokenTypeFlag(tokenId) == TOKEN_HAP) &&
+                           !((selfTokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK);
+
+    return isSelfNormalApp && ((selfTokenId & TOKEN_ID_LOWMASK) != verifyingTokenID);
+}
+
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& code)
 {
@@ -73,6 +87,9 @@ PermissionState AccessTokenCompatKit::VerifyAccessToken(AccessTokenID tokenID, c
     if (!TransferPermissionToOpcode(permission, code)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not exist.", permission.c_str());
         return PERMISSION_DENIED;
+    }
+    if (IsNeedCrossIpc(tokenID)) {
+        return AccessTokenCompatClient::GetInstance().VerifyAccessToken(tokenID, permission);
     }
     bool isGranted = false;
     int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);

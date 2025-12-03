@@ -33,6 +33,7 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
+#include "verify_accesstoken_monitor.h"
 
 namespace OHOS {
 namespace Security {
@@ -171,6 +172,9 @@ private:
     std::shared_mutex userPolicyLock_;
     std::map<uint32_t, std::vector<int32_t>> userPermPolicyList_; // key-permCode
     std::map<uint32_t, uint32_t> policyController_; // key-permCode, value-callerToken
+
+    std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
+    std::shared_mutex monitorLock_;
 };
 } // namespace AccessToken
 } // namespace Security

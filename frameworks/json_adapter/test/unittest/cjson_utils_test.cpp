@@ -440,6 +440,42 @@ HWTEST_F(CJsonUtilsTest, JsonToStringFormattedTest002, TestSize.Level3)
     str = JsonToStringFormatted(json.get());
     EXPECT_FALSE(str.empty());
 }
+
+/*
+ * @tc.name: AddUnsignedIntToArray
+ * @tc.desc: AddUnsignedIntToArray
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, AddUnsignedIntToArray001, TestSize.Level3)
+{
+    CJsonUnique jsonInner = nullptr;
+    uint32_t value = 1;
+    bool flag = AddUnsignedIntToArray(jsonInner, value);
+    EXPECT_FALSE(flag);
+
+    jsonInner = CreateJson();
+    flag = AddUnsignedIntToArray(jsonInner, value);
+    EXPECT_FALSE(flag);
+}
+
+/*
+ * @tc.name: AddStringToArray
+ * @tc.desc: AddStringToArray
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, AddStringToArray001, TestSize.Level3)
+{
+    CJsonUnique jsonInner = nullptr;
+    std::string value = "123";
+    bool flag = AddStringToArray(jsonInner, value);
+    EXPECT_FALSE(flag);
+
+    jsonInner = CreateJson();
+    flag = AddStringToArray(jsonInner, value);
+    EXPECT_FALSE(flag);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

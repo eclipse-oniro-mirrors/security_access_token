@@ -382,6 +382,51 @@ bool AddBoolToJson(CJson* jsonObj, const std::string& key, bool value)
     return true;
 }
 
+bool AddUnsignedIntToArray(CJson* jsonArr, const uint32_t value)
+{
+    if ((jsonArr == nullptr || !cJSON_IsArray(jsonArr))) {
+        return false;
+    }
+
+    CJson* tmpObj = cJSON_CreateNumber(static_cast<double>(value));
+    if (tmpObj == nullptr) {
+        return false;
+    }
+    
+    if (!cJSON_AddItemToArray(jsonArr, tmpObj)) {
+        cJSON_Delete(tmpObj);
+        return false;
+    }
+    return true;
+}
+
+bool AddUnsignedIntToArray(CJsonUnique& jsonObj, const uint32_t value)
+{
+    return AddUnsignedIntToArray(jsonObj.get(), value);
+}
+
+bool AddStringToArray(CJson* jsonArr, const std::string& value)
+{
+    if ((jsonArr == nullptr || !cJSON_IsArray(jsonArr))) {
+        return false;
+    }
+
+    CJson* tmpObj = cJSON_CreateString(value.c_str());
+    if (tmpObj == nullptr) {
+        return false;
+    }
+    if (!cJSON_AddItemToArray(jsonArr, tmpObj)) {
+        cJSON_Delete(tmpObj);
+        return false;
+    }
+    return true;
+}
+
+bool AddStringToArray(CJsonUnique& jsonObj, const std::string& value)
+{
+    return AddStringToArray(jsonObj.get(), value);
+}
+
 bool AddBoolToJson(CJsonUnique& jsonObj, const std::string& key, bool value)
 {
     return AddBoolToJson(jsonObj.get(), key, value);
@@ -399,7 +444,7 @@ bool AddIntToJson(CJson* jsonObj, const std::string& key, const int32_t value)
             return false;
         }
     } else {
-        CJson* tmp = cJSON_CreateNumber(value);
+        CJson* tmp = cJSON_CreateNumber(static_cast<double>(value));
         if (tmp == nullptr) {
             return false;
         }

@@ -65,6 +65,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
     ]
 
@@ -157,9 +158,7 @@ if (is_standard_system) {
     }
 
     output_name = "libaccesstoken_compat_sdk"
-    public_configs = [
-      ":accesstoken"
-    ]
+    public_configs = [ ":accesstoken" ]
 
     include_dirs = [
       "${access_token_path}/frameworks/accesstoken/include",
@@ -169,13 +168,14 @@ if (is_standard_system) {
     sources = [
       "src/accesstoken_compat_client.cpp",
       "src/accesstoken_compat_kit.cpp",
+      "src/accesstoken_compat_parcel.cpp",
       "src/accesstoken_compat_proxy.cpp",
-      "src/accesstoken_compat_parcel.cpp"
     ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_static_log",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 
     external_deps = [

@@ -99,6 +99,7 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
@@ -166,6 +167,11 @@ if (access_token_background_task_mgr_continuous_task_enable == true) {
     "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
     "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
   ]
+}
+
+if (security_guard_enable) {
+  access_token_external_deps += [ "security_guard:libsg_collect_sdk" ]
+  access_token_cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
 }
 
 if (eventhandler_enable == true) {

@@ -48,6 +48,7 @@ ohos_unittest("libcompat_sdk_proxy_test") {
   deps = [
     "${access_token_path}/frameworks/common:accesstoken_static_log",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]
 
   external_deps = [

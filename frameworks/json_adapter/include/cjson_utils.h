@@ -81,6 +81,10 @@ bool AddUnsignedIntToJson(CJson* jsonObj, const std::string& key, const uint32_t
 bool AddUnsignedIntToJson(CJsonUnique& jsonObj, const std::string& key, const uint32_t value);
 bool AddInt64ToJson(CJson* jsonObj, const std::string& key, const int64_t value);
 bool AddInt64ToJson(CJsonUnique& jsonObj, const std::string& key, const int64_t value);
+bool AddUnsignedIntToArray(CJsonUnique& jsonObj, uint32_t value);
+bool AddUnsignedIntToArray(CJson* jsonArr, uint32_t value);
+bool AddStringToArray(CJsonUnique& jsonObj, const std::string& value);
+bool AddStringToArray(CJson* jsonArr, const std::string& value);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

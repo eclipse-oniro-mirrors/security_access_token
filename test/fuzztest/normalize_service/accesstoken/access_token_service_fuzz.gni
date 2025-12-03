@@ -29,6 +29,7 @@ access_token_include_dirs = [
   "${access_token_path}/services/tokensyncmanager/include/device",
   "${access_token_path}/services/tokensyncmanager/include/protocol",
   "${access_token_path}/frameworks/common/include",
+  "${access_token_path}/frameworks/json_adapter/include",
   "${access_token_path}/frameworks/accesstoken/include",
   "${access_token_path}/frameworks/privacy/include",
   "${access_token_path}/interfaces/innerkits/privacy/include",
@@ -60,6 +61,7 @@ access_token_deps = [
   "${access_token_path}/services/accesstokenmanager/etc:param_files",
   "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
   "${access_token_path}/services/common:accesstoken_service_common",
+  "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
 ]
 
 access_token_external_deps = [
@@ -98,6 +100,7 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_id_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
@@ -136,6 +139,11 @@ if (dlp_permission_enable == true) {
 if (hicollie_enable == true) {
   access_token_external_deps += [ "hicollie:libhicollie" ]
   access_token_cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+}
+
+if (security_guard_enable) {
+  access_token_external_deps += [ "security_guard:libsg_collect_sdk" ]
+  access_token_cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
 }
 
 if (token_sync_enable == true) {
