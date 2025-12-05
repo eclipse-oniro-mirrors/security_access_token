@@ -7045,7 +7045,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.MANAGE_ANTIVIRUS",
@@ -7089,7 +7089,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_MANAGE_EAP",
