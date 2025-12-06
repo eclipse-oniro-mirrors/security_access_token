@@ -6588,6 +6588,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ANTIFRAUD_VOICE_DETECT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1"]
+        },
+        {
             "name": "ohos.permission.ACCESS_APP_CLONE_DIR",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
