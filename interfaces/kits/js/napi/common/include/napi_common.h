@@ -17,6 +17,7 @@
 #define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 
 #include "access_token.h"
+#include "napi_hisysevent_adapter.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include <thread>
@@ -43,6 +44,8 @@ bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetyp
 bool IsUndefinedOrNull(const napi_env& env, const napi_value& value);
 bool IsNeedParseProperty(
     const napi_env& env, const napi_value& value, const std::string& key, napi_value& property);
+
+std::string TransPermissionsToString(const std::vector<std::string>& permList);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

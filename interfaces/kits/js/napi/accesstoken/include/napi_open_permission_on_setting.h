@@ -20,6 +20,7 @@
 #include "event_queue.h"
 #endif
 #include "napi_context_common.h"
+#include "napi_hisysevent_adapter.h"
 #include "permission_grant_info.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
@@ -34,6 +35,7 @@ struct OpenPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
     }
 
     AccessTokenID tokenId = 0;
+    std::string bundleName = "";
     AtmResult result;
     PermissionGrantInfo info;
 
@@ -50,6 +52,7 @@ struct OpenPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
+    int32_t contextType_ = static_cast<int32_t>(OPEN_PERMISSION_ON_SETTING);
 };
 
 struct OpenOnSettingAsyncContextHandle {
@@ -89,6 +92,7 @@ public:
 private:
     int32_t sessionId_ = 0;
     std::shared_ptr<OpenPermOnSettingAsyncContext> reqContext_ = nullptr;
+    std::atomic<bool> isOnResult_ = false;
 };
 
 struct OpenPermOnSettingResultCallback {

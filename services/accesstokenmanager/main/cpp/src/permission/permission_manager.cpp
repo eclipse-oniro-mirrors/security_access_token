@@ -284,7 +284,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s", tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName:%{public}s invalid!", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermission(permissionName)) {
@@ -396,14 +396,16 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
 int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
     AccessTokenID tokenID, const std::string& permission, bool isGranted, uint32_t flag, bool needKill)
 {
+    std::string bundleName = infoPtr->GetBundleName();
     bool isSecCompGrantedBefore = HapTokenInfoInner::IsPermissionGrantedWithSecComp(tokenID, permission);
     bool statusChanged = false;
     int32_t ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Update info perm status failed, ret is %{public}d", ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}u-%{public}s, isGranted=%{public}d, \
+            flag=%{public}u, ret=%{public}d.", permission.c_str(), tokenID, bundleName.c_str(), isGranted, flag, ret);
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID",
-            tokenID, "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret, "INT_VAL2",
+            tokenID, "PERM", permission, "BUNDLE_NAME", bundleName, "INT_VAL1", ret, "INT_VAL2",
             static_cast<int32_t>(flag), "NEED_KILL", needKill);
         return ret;
     }
@@ -411,8 +413,8 @@ int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapT
         NotifyWhenPermissionStateUpdated(tokenID, permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
-            LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(),
-                tokenID);
+            LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u, %{public}s).",
+                permission.c_str(), tokenID, bundleName.c_str());
             std::shared_ptr<LibraryLoader> abilityManagerLoader = GetAbilityManager();
             AbilityManagerAccessLoaderInterface *abilityManager =
                 abilityManagerLoader->GetObject<AbilityManagerAccessLoaderInterface>();
@@ -475,7 +477,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "tokenInfo is null, tokenId=%{public}u", id);
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}u is not exist.", id);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
@@ -489,7 +491,8 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     bool statusChanged = false;
     ret = infoPtr->UpdatePermissionStatus(permission, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Update info perm status failed, ret is %{public}d", ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}us, granted=%{public}d, \
+            flag=%{public}u, ret=%{public}d.", permission.c_str(), id, isGranted, flag, ret);
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
             HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID", id,
             "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret,
@@ -525,13 +528,15 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
     AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag)
 {
+    std::string bundleName = infoPtr->GetBundleName();
     if (infoPtr->IsRemote()) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Remote token can not update");
         return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
     }
     if ((flag == PERMISSION_ALLOW_THIS_TIME) && isGranted) {
         if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(id, permission)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Id:%{public}d fail to grant permission:%{public}s", id, permission.c_str());
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to grant perm(%{public}s) of (%{public}u, %{public}s).",
+                permission.c_str(), id, bundleName.c_str());
             return ERR_IDENTITY_CHECK_FAILED;
         }
     }
@@ -541,10 +546,12 @@ int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr
     if (hapDlpType != DLP_COMMON) {
         int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permission);
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to %{public}u", permission.c_str(), id);
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to (%{public}u, %{public}s), \
+                dlpType: %{public}d, permDlpMode: %{public}d.",
+                permission.c_str(), id, bundleName.c_str(), hapDlpType, permDlpMode);
             (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", id, "PERM",
-                permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType, "INT_VAL2", permDlpMode);
+                permission, "BUNDLE_NAME", bundleName, "INT_VAL1", hapDlpType, "INT_VAL2", permDlpMode);
             return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
@@ -576,7 +583,8 @@ int32_t PermissionManager::UpdateMultiPermissionStatus(
 
     ret = UpdateMultiTokenPermissionState(infoPtr, tokenID, permissionList, isGranted, flag, needKill);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Update permission %{public}u failed, ret is %{public}d.", tokenID, ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update perms of (%{public}u, %{public}s), ret is %{public}d.",
+            tokenID, infoPtr->GetBundleName().c_str(), ret);
         return ret;
     }
 
@@ -608,8 +616,8 @@ int32_t PermissionManager::UpdateMultiTokenPermissionStateCheck(const std::share
     for (const std::string& permissionName : permissionList) {
         int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
-            LOGC(ATM_DOMAIN, ATM_TAG,
-                "%{public}s cannot to be granted to %{public}u.", permissionName.c_str(), tokenID);
+            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to %{public}u, dlpType: %{public}d, \
+                permDlpMode: %{public}d.", permissionName.c_str(), tokenID, hapDlpType, permDlpMode);
             (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", tokenID, "PERM",
                 permissionName, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType,
@@ -627,8 +635,8 @@ int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::st
 {
     int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag, needKill);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Update permission %{public}u %{public}s failed, ret is %{public}d", tokenID,
-            permissionName.c_str(), ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}u, isGranted=%{public}d, \
+            flag=%{public}u, ret=%{public}d.", permissionName.c_str(), tokenID, isGranted, flag, ret);
         return ret;
     }
 
@@ -648,7 +656,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     bool isGranted, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "permissionName: %{public}s, Invalid params!", permissionName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermission(permissionName)) {
@@ -656,7 +664,8 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag) || PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "flag: %{public}d, Invalid params!", flag);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Flag(%{public}u) of %{public}s from %{public}u is invaid!",
+            flag, permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     bool needKill = false;
@@ -701,19 +710,19 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
     AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "flag: %{public}d, Invalid params!", flag);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid flag: %{public}d!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     for (const std::string& permissionName : permissionList) {
         LOGI(ATM_DOMAIN, ATM_TAG,
-            "tokenID: %{public}d, permissionName: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
+            "Id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
             permissionName.c_str(), status, flag);
         if (!IsDefinedPermission(permissionName)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
+            LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not defined!", permissionName.c_str());
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
         if (!IsUserGrantPermission(permissionName)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to set.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not user_grant, cannot be granted.", permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -1067,7 +1076,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 
     if (policy.apl < briefDef.availableLevel) {
         if (!briefDef.provisionEnable) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s provisionEnable is false.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Ths provisionEnable of %{public}s is false.", briefDef.permissionName);
             return false;
         }
         bool isAclExist = false;
@@ -1084,7 +1093,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
         }
         
         if (!isAclExist) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s need acl.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) need acl.", briefDef.permissionName);
             return false;
         }
     }
@@ -1240,7 +1249,8 @@ bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const
         LOGE(ATM_DOMAIN, ATM_TAG, "Enterprise normal permission check failed.");
         result.permCheckResult.rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid.", briefDef.permissionName);
+    LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid, bundle: %{public}s.",
+        briefDef.permissionName, bundleName.c_str());
     return false;
 }
 

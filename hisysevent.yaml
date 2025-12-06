@@ -98,11 +98,6 @@ GRANT_TEMP_PERMISSION:
   BUNDLENAME: {type: STRING, desc: bundle name}
   PERMISSION_NAME: {type: STRING, desc: permission name}
 
-REQUEST_PERMISSIONS_FROM_USER:
-  __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
-  BUNDLENAME: {type: STRING, desc: bundle name}
-  UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
-
 UPDATE_PERMISSION:
   __BASE: {type: BEHAVIOR, level: MINOR, desc: grant or revoke permission}
   TOKENID: {type: UINT32, desc: tokenID}
@@ -143,11 +138,22 @@ SET_PERMISSION_DIALOG_CAP:
   INSTINDEX: {type: INT32, desc: inst index}
   ENABLE: {type: BOOL, desc: enable or disable}
 
+REQUEST_PERMISSIONS_FROM_USER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
+  SCENE_CODE: {type: INT32, desc: scene code}
+  TOKENID: {type: UINT32, desc: tokenID}
+  EXTRA_INFO: {type: STRING, desc: extra info}
+
 REQ_PERM_FROM_USER_ERROR:
   __BASE: {type: FAULT, level: CRITICAL, desc: failed to request permission from user}
   ERROR_CODE: {type: INT32, desc: error code}
   SELF_TOKENID: {type: UINT32, desc: self tokenID}
   CONTEXT_TOKENID: {type: UINT32, desc: context tokenID}
+  INNER_CODE: {type: INT32, desc: inner code}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  SCENE_CODE: {type: INT32, desc: scene code}
 
 UPDATE_PERMISSION_STATUS_ERROR:
   __BASE: {type: FAULT, level: CRITICAL, desc: failed to grant or revoke permission}

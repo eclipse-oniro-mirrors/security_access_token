@@ -107,8 +107,8 @@ void PermissionDataBrief::GetExtendedValueListInner(
     for (const auto& item : extendedValue_) {
         uint64_t key = item.first;
         uint32_t permCode = key & 0xFFFFFFFF;
-        std::string permissionName;
-        if (!TransferOpcodeToPermission(permCode, permissionName)) {
+        std::string permissionName = TransferOpcodeToPermission(permCode);
+        if (permissionName.empty()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", permCode);
             continue;
         }
@@ -139,8 +139,8 @@ int32_t PermissionDataBrief::GetKernelPermissions(
         if ((data.type & IS_KERNEL_EFFECT) != IS_KERNEL_EFFECT) {
             continue;
         }
-        std::string permissionName;
-        if (!TransferOpcodeToPermission(data.permCode, permissionName)) {
+        std::string permissionName = TransferOpcodeToPermission(data.permCode);
+        if (permissionName.empty()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", data.permCode);
             continue;
         }
@@ -199,8 +199,8 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
 
 bool PermissionDataBrief::GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState)
 {
-    std::string permissionName;
-    if (TransferOpcodeToPermission(briefPermData.permCode, permissionName)) {
+    std::string permissionName = TransferOpcodeToPermission(briefPermData.permCode);
+    if (!permissionName.empty()) {
         permState.grantStatus = static_cast<int32_t>(briefPermData.status);
         permState.permissionName = permissionName;
         permState.grantFlag = briefPermData.flag;
@@ -447,6 +447,7 @@ bool PermissionDataBrief::isRestrictedPermission(uint32_t oldFlag, uint32_t newF
 int32_t PermissionDataBrief::UpdatePermStateList(
     AccessTokenID tokenId, uint32_t opCode, bool isGranted, uint32_t flag)
 {
+    std::string permission = TransferOpcodeToPermission(opCode);
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iterPermData = requestedPermData_.find(tokenId);
     if (iterPermData == requestedPermData_.end()) {
@@ -459,20 +460,21 @@ int32_t PermissionDataBrief::UpdatePermStateList(
             return opCode == permData.permCode;
         });
     if (iter == permBriefDatalist.end()) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Permission not request!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s is not request by %{public}u!", permission.c_str(), tokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if ((static_cast<uint32_t>(iter->flag) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Permission fixed by system!");
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u fixed by system!", permission.c_str(), tokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (isRestrictedPermission(iter->flag, flag)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Oldflag: %{public}d, invalid params!", iter->flag);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Flag(%{public}d) of %{public}s of %{public}u is invalid!",
+            iter->flag, permission.c_str(), tokenId);
         return AccessTokenError::ERR_PERMISSION_RESTRICTED;
     }
     if ((flag & PERMISSION_ADMIN_POLICIES_CANCEL) == PERMISSION_ADMIN_POLICIES_CANCEL &&
         (iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Permission is not fixed by admin policy, cannot cancel.");
+        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is fixed by admin policy.", permission.c_str(), tokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if ((flag & PERMISSION_ADMIN_POLICIES_CANCEL) == 0) {
@@ -480,8 +482,8 @@ int32_t PermissionDataBrief::UpdatePermStateList(
     }
     iter->flag = UpdateWithNewFlag(iter->flag, flag);
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "Update perm state list, tokenId: %{public}d, permCode: %{public}d, status: %{public}d, flag: %{public}d",
-        tokenId, opCode, iter->status, iter->flag);
+        "Update perm state list, id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d",
+        tokenId, permission.c_str(), iter->status, iter->flag);
     return RET_SUCCESS;
 }
 
@@ -638,8 +640,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     for (const auto& data : iter->second) {
         if (data.status == PERMISSION_GRANTED) {
             if (std::find(constrainedList.begin(), constrainedList.end(), data.permCode) == constrainedList.end()) {
-                std::string permission;
-                (void)TransferOpcodeToPermission(data.permCode, permission);
+                std::string permission = TransferOpcodeToPermission(data.permCode);
                 permissionList.emplace_back(permission);
                 LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is granted.", permission.c_str());
             }
@@ -648,8 +649,7 @@ void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
     std::list<BriefSecCompData>::iterator secCompData;
     for (secCompData = secCompList_.begin(); secCompData != secCompList_.end(); ++secCompData) {
         if (secCompData->tokenId == tokenID) {
-            std::string permission;
-            (void)TransferOpcodeToPermission(secCompData->permCode, permission);
+            std::string permission = TransferOpcodeToPermission(secCompData->permCode);
             permissionList.emplace_back(permission);
             LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is granted by secComp.", permission.c_str());
         }
@@ -924,8 +924,7 @@ int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId, uin
             LOGE(ATM_DOMAIN, ATM_TAG, "SetPermissionToKernel err=%{public}d", ret);
             continue;
         }
-        std::string permission;
-        (void)TransferOpcodeToPermission(data.permCode, permission);
+        std::string permission = TransferOpcodeToPermission(data.permCode);
         refreshedPermList[permission] = isGrantedToBe;
         break;
     }

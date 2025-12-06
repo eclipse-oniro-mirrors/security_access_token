@@ -106,7 +106,7 @@ std::string ConsumePermissionName(FuzzedDataProvider &provider)
     } else {
         permissionName = OHOS::Security::AccessToken::TransferOpcodeToPermission(
             provider.ConsumeIntegralInRange<uint32_t>(
-            0, static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1), permissionName);
+            0, static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1));
     }
     return permissionName;
 }

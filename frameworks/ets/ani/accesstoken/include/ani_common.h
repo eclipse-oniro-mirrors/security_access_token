@@ -39,7 +39,7 @@ void CreateUIExtension(
     std::shared_ptr<RequestAsyncContextBase> asyncContext,
     std::shared_ptr<RequestInstanceControl> controller
 );
-int32_t GetDifferRequestErrorCode(const ReqPermFromUserErrorCode& errorCode, const AniRequestType& contextType);
+std::string TransPermissionsToString(const std::vector<std::string>& permList);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -507,7 +507,7 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
 int AccessTokenKit::GrantPermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u.",
         tokenID, permissionName.c_str(), flag);
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
@@ -531,7 +531,7 @@ int AccessTokenKit::GrantPermission(
 int AccessTokenKit::RevokePermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u.",
         tokenID, permissionName.c_str(), flag);
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenID");
@@ -859,14 +859,19 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
 }
 
-bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode)
+bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionName, uint32_t& permCode)
 {
-    return AccessToken::TransferPermissionToOpcode(permissionName, opCode);
+    return AccessToken::TransferPermissionToOpcode(permissionName, permCode);
 }
 
-bool AccessTokenKit::TransferOpcodeToPermission(uint32_t opCode, std::string& permissionName)
+bool AccessTokenKit::TransferOpcodeToPermission(uint32_t permCode, std::string& permissionName)
 {
-    return AccessToken::TransferOpcodeToPermission(opCode, permissionName);
+    permissionName = AccessToken::TransferOpcodeToPermission(permCode);
+    if (permissionName.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}u) is not exist.", permCode);
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

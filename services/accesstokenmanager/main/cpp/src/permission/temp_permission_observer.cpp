@@ -428,13 +428,15 @@ bool TempPermissionObserver::FindContinuousTask(AccessTokenID tokenID)
 bool TempPermissionObserver::IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     HapTokenInfo tokenInfo;
-    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid tokenId(%{public}d)", tokenID);
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u, err %{public}d.", tokenID, ret);
         return false;
     }
     auto iterator = std::find(g_tempPermission.begin(), g_tempPermission.end(), permissionName);
     if (iterator == g_tempPermission.end()) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Permission is not available to temp grant: %{public}s!", permissionName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) of %{public}u is not available to temp grant!",
+            permissionName.c_str(), tokenID);
         return false;
     }
     return CheckPermissionState(tokenID, permissionName, tokenInfo.bundleName);

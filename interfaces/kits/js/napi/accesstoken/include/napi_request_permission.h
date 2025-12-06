@@ -20,6 +20,7 @@
 #include "event_queue.h"
 #endif
 #include "napi_context_common.h"
+#include "napi_hisysevent_adapter.h"
 #include "permission_grant_info.h"
 #include "token_callback_stub.h"
 #include "ui_content.h"
@@ -55,6 +56,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
+    int32_t contextType_ = static_cast<int32_t>(REQUEST_PERMISSIONS_FROM_USER);
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif

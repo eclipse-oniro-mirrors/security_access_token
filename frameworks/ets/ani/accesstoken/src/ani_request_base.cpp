@@ -65,8 +65,8 @@ void RequestAsyncContextBase::GetInstanceId()
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
             (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
-                GetDifferRequestErrorCode(GET_UI_CONTENT_FAILED, contextType_));
+                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED,
+                "SELF_TOKENID", this->tokenId, "BUNDLENAME", this->bundleName, "SCENE_CODE", contextType_);
             return;
         }
         this->uiContentFlag = true;
@@ -196,6 +196,10 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& 
 {
     isOnResult_.exchange(true);
     LOGI(ATM_DOMAIN, ATM_TAG, "ResultCode is %{public}d", resultCode);
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     reqContext_->ProcessUIExtensionCallback(result);
     ReleaseHandler(0);
 }
@@ -215,10 +219,14 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
-
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
-        GetDifferRequestErrorCode(TRIGGER_RELEASE, reqContext_->contextType_), "INNER_CODE", releaseCode);
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "ERROR_CODE", TRIGGER_RELEASE, "SELF_TOKENID", reqContext_->tokenId, "INNER_CODE", releaseCode,
+        "BUNDLENAME", reqContext_->bundleName, "SCENE_CODE", reqContext_->contextType_);
     ReleaseHandler(-1);
 }
 
@@ -229,10 +237,14 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
-        GetDifferRequestErrorCode(TRIGGER_ONERROR, reqContext_->contextType_), "INNER_CODE", code);
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "ERROR_CODE", TRIGGER_ONERROR, "SELF_TOKENID", reqContext_->tokenId, "INNER_CODE", code,
+        "BUNDLENAME", reqContext_->bundleName, "SCENE_CODE", reqContext_->contextType_);
     ReleaseHandler(-1);
 }
 
@@ -251,10 +263,15 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
     if (!isOnResult_.load()) {
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
-            GetDifferRequestErrorCode(TRIGGER_DESTROY, reqContext_->contextType_));
+            HiviewDFX::HiSysEvent::EventType::FAULT,
+            "ERROR_CODE", TRIGGER_DESTROY, "SELF_TOKENID", reqContext_->tokenId,
+            "BUNDLENAME", reqContext_->bundleName, "SCENE_CODE", reqContext_->contextType_);
     }
     ReleaseHandler(-1);
 }

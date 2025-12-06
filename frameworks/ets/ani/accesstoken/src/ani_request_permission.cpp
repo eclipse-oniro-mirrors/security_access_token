@@ -30,6 +30,8 @@
 #include "want.h"
 #include "window.h"
 
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -50,6 +52,31 @@ const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.widt
 const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
 std::shared_ptr<RequestInstanceControl> g_requestInstanceControl = nullptr;
 std::mutex g_requestInstanceControlLock;
+}
+
+static inline void ReportHisysEventReqPermsFromUserBehavior(bool uiExtensionFlag, const RequestAsyncContext& context)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "BUNDLENAME", context.bundleName,
+        "UIEXTENSION_FLAG", uiExtensionFlag,
+        "SCENE_CODE", context.contextType_,
+        "TOKENID", context.tokenId,
+        "EXTRA_INFO", TransPermissionsToString(context.permissionList)
+    );
+}
+
+static inline void ReportHisysEventError(const RequestAsyncContext& context, int32_t errorCode, uint32_t selfTokenId)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "ERROR_CODE", errorCode,
+        "CONTEXT_TOKEN", context.tokenId,
+        "SELF_TOKENID", selfTokenId,
+        "BUNDLENAME", context.bundleName,
+        "SCENE_CODE", context.contextType_,
+        "EXTRA_INFO", TransPermissionsToString(context.permissionList)
+    );
 }
 
 static std::shared_ptr<RequestInstanceControl> GetRequestInstanceControl()
@@ -78,23 +105,21 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = STS_ERROR_PARAM_INVALID;
         asyncContext->result_.errorMsg = "Cannot find window by windowId.";
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GET_UI_CONTENT_FAILED);
+        ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, asyncContext->tokenId);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "New AuthorizationResult fail!");
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = RET_FAILED;
         return;
     }
-    OHOS::AAFwk::Want want;
+    Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(CALLBACK_KEY, remoteObject);
-
     if (window->GetContext() == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetContext failed!");
         asyncContext->needDynamicRequest_ = false;
@@ -104,7 +129,6 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
     want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
     
     Rosen::Rect windowRect = window->GetRect();
-
     int32_t left = windowRect.posX_;
     int32_t top = windowRect.posY_;
     int32_t width = static_cast<int32_t>(windowRect.width_);
@@ -114,9 +138,7 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
     want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, width);
     want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, height);
     want.SetParam(REQUEST_TOKEN_KEY, window->GetContext()->GetToken());
-
-    int32_t ret = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
-        want, window->GetContext()->GetToken());
+    int32_t ret = AbilityManagerClient::GetInstance()->RequestDialogService(want, window->GetContext()->GetToken());
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
         asyncContext->needDynamicRequest_ = false;
@@ -139,24 +161,22 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
             "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = RET_FAILED;
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", ABILITY_FLAG_ERROR);
+        ReportHisysEventError(*asyncContext, ABILITY_FLAG_ERROR, asyncContext->tokenId);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
+        LOGE(ATM_DOMAIN, ATM_TAG, "New AuthorizationResult failed!");
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = RET_FAILED;
         return;
     }
-    OHOS::AAFwk::Want want;
+    Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(TOKEN_KEY, abilityContext->GetToken());
     want.SetParam(CALLBACK_KEY, remoteObject);
-
     int32_t left = 0;
     int32_t top = 0;
     int32_t width = 0;
@@ -167,14 +187,14 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, width);
     want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, height);
     want.SetParam(REQUEST_TOKEN_KEY, abilityContext->GetToken());
-    int32_t ret = OHOS::AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
-        want, abilityContext->GetToken());
+    int32_t ret = AbilityManagerClient::GetInstance()->RequestDialogService(want, abilityContext->GetToken());
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
         asyncContext->needDynamicRequest_ = false;
         asyncContext->result_.errorCode = RET_FAILED;
+        asyncContext->result_.errorMsg = "Failed to pop up permission dialog.";
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu", ret,
+    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, id: %{public}d, permNum: %{public}zu", ret,
         asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
@@ -190,7 +210,7 @@ void RequestAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncCont
     }
 
     if (uiExtensionFlag) {
-        OHOS::AAFwk::Want want;
+        Want want;
         want.SetElementName(this->info.grantBundleName, this->info.grantAbilityName);
         want.SetParam(PERMISSION_KEY, this->permissionList);
         want.SetParam(STATE_KEY, this->permissionsState);
@@ -328,7 +348,7 @@ bool RequestAsyncContext::CheckDynamicRequest()
     return true;
 }
 
-void RequestAsyncContext::ProcessUIExtensionCallback(const OHOS::AAFwk::Want& result)
+void RequestAsyncContext::ProcessUIExtensionCallback(const Want& result)
 {
     this->permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     this->permissionsState = result.GetIntArrayParam(RESULT_KEY);
@@ -369,16 +389,12 @@ static void RequestPermissionsFromUserProcess(std::shared_ptr<RequestAsyncContex
     } else if (asyncContext->instanceId == -1) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Pop service extension dialog, instanceId is -1.");
         CreateServiceExtension(asyncContext);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName.c_str(),
-            "UIEXTENSION_FLAG", false);
+        ReportHisysEventReqPermsFromUserBehavior(false, *asyncContext);
     } else {
         LOGI(ATM_DOMAIN, ATM_TAG, "Pop ui extension dialog");
         asyncContext->uiExtensionFlag = true;
         GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName, "UIEXTENSION_FLAG",
-            false);
+        ReportHisysEventReqPermsFromUserBehavior(asyncContext->uiExtensionFlag, *asyncContext);
         if (!asyncContext->uiExtensionFlag) {
             LOGW(ATM_DOMAIN, ATM_TAG, "Pop uiextension dialog fail, start to pop service extension dialog.");
             GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
@@ -430,9 +446,7 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
         ani_object result = reinterpret_cast<ani_object>(undefRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
-            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
+        ReportHisysEventError(*asyncContext, TOKENID_INCONSISTENCY, selfTokenID);
         (void)ExecuteAsyncCallback(env, callback, error, result);
         return;
     }
@@ -475,9 +489,7 @@ void RequestPermissionsFromUserWithWindowIdExecute([[maybe_unused]] ani_env* env
         ani_object result = reinterpret_cast<ani_object>(undefRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", TOKENID_INCONSISTENCY,
-            "SELF_TOKEN", selfTokenID, "CONTEXT_TOKEN", asyncContext->tokenId);
+        ReportHisysEventError(*asyncContext, TOKENID_INCONSISTENCY, selfTokenID);
         (void)ExecuteAsyncCallback(env, callback, error, result);
         return;
     }

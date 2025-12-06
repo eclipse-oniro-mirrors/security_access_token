@@ -54,22 +54,6 @@ void ClearThreadErrorMsg(void)
     g_msgLen = 0;
 }
 
-void AppendThreadErrMsg(unsigned int domain, const char* tag,
-    const uint8_t* buff, uint32_t buffLen)
-{
-    if (g_msgLen + buffLen >= MAX_ERROR_MESSAGE_LEN) {
-        ACCESSTOKEN_COMMON_LOGE(domain, tag, "Buff will overflow!"
-            "g_msgLen = %" LOG_PUBLIC "u, buffLen = %" LOG_PUBLIC "u", g_msgLen, buffLen);
-        return;
-    }
-    if (memcpy_s(g_errMsg + g_msgLen, MAX_ERROR_MESSAGE_LEN - g_msgLen, buff, buffLen) != EOK) {
-        ACCESSTOKEN_COMMON_LOGE(domain, tag, "Failed to memcpy_s!"
-            "g_msgLen = %" LOG_PUBLIC "u, buffLen = %" LOG_PUBLIC "u", g_msgLen, buffLen);
-        return;
-    }
-    g_msgLen += buffLen;
-}
-
 static bool ReplaceSubstring(unsigned int domain, const char* tag,
     const char* format, char result[MAX_ERROR_MESSAGE_LEN])
 {
