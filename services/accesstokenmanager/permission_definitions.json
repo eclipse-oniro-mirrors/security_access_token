@@ -7967,7 +7967,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+            "deviceTypes": ["general"]
         }
     ]
 }
