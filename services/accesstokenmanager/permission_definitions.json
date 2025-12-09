@@ -7335,7 +7335,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.kernel.IGNORE_LIBRARY_VALIDATION",
