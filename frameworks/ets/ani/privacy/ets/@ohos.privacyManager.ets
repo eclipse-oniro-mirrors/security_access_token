@@ -171,7 +171,7 @@ export default namespace privacyManager {
             let p1 = taskpool.execute((): PermissionUsedResponse => {
                 return getPermissionUsedRecordExecute(request);
             });
-            p1.then((e: NullishType):void => {
+            p1.then((e: Any):void => {
                 resolve(e as PermissionUsedResponse);
             }).catch((err: Error): void => {
                 reject(err as BusinessError);
@@ -183,7 +183,7 @@ export default namespace privacyManager {
         let p1 = taskpool.execute((): PermissionUsedResponse => {
             return getPermissionUsedRecordExecute(request);
         });
-        p1.then((ret: NullishType): void => {
+        p1.then((ret: Any): void => {
             callback(null, ret as PermissionUsedResponse);
         }).catch((err: Error): void => {
             callback(err as BusinessError, undefined);
@@ -200,7 +200,7 @@ export default namespace privacyManager {
             let p1 = taskpool.execute((): Array<PermissionUsedTypeInfo> => {
                 return getPermissionUsedTypeInfosExecute(tokenIdIn, permissionNameIn);
             });
-            p1.then((e: NullishType): void => {
+            p1.then((e: Any): void => {
                 resolve(e as Array<PermissionUsedTypeInfo>);
             }).catch((err: Error): void => {
                 reject(err as BusinessError);
@@ -214,7 +214,7 @@ export default namespace privacyManager {
             let p1 = taskpool.execute((): void => {
                 setPermissionUsedRecordToggleStatusExecute(status);
             });
-            p1.then((e: NullishType): void => {
+            p1.then((e: Any): void => {
                 resolve(undefined);
             }).catch((err: Error): void => {
                 reject(err as BusinessError);
@@ -228,7 +228,7 @@ export default namespace privacyManager {
             let p1 = taskpool.execute((): boolean => {
                 return getPermissionUsedRecordToggleStatusExecute();
             });
-            p1.then((e: NullishType): void => {
+            p1.then((e: Any): void => {
                 resolve(e as boolean);
             }).catch((err: Error): void =>{
                 reject(err as BusinessError);
