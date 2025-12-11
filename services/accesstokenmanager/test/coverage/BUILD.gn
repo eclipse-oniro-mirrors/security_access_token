@@ -122,6 +122,10 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "samgr:samgr_proxy",
   ]
 
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+
   if (security_guard_enable) {
     external_deps += [ "security_guard:libsg_collect_sdk" ]
     cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]

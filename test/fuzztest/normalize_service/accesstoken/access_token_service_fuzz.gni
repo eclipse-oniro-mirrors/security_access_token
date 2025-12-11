@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/config/features.gni")
+import("//build/ohos.gni")
 import("../../../../access_token.gni")
 
 access_token_include_dirs = [
@@ -144,6 +145,10 @@ if (hicollie_enable == true) {
 if (security_guard_enable) {
   access_token_external_deps += [ "security_guard:libsg_collect_sdk" ]
   access_token_cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+}
+
+if (build_variant == "user") {
+  access_token_cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
 }
 
 if (token_sync_enable == true) {

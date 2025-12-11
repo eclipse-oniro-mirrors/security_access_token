@@ -76,10 +76,14 @@ ohos_unittest("libcompat_sdk_test") {
     "${access_token_innerkit_path}/include",
     "${access_token_innerkit_path}/src",
     "Common",
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/frameworks/common/include",
   ]
 
   sources = [
-    "Common/test_common.cpp",
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
+    "Common/compat_test_common.cpp",
     "FunctionalTest/compat_multi_thread_test.cpp",
     "FunctionalTest/compat_sdk_test.cpp",
   ]

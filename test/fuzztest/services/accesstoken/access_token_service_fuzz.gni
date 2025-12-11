@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/config/features.gni")
+import("//build/ohos.gni")
 import("../../../../access_token.gni")
 
 access_token_include_dirs = [
@@ -63,6 +64,10 @@ access_token_deps = [
   "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
   "${access_token_path}/services/common:accesstoken_service_common",
 ]
+
+if (build_variant == "user") {
+  access_token_cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+}
 
 access_token_external_deps = [
   "ability_base:want",

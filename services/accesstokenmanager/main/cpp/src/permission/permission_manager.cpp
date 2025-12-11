@@ -559,7 +559,7 @@ int32_t PermissionManager::UpdateMultiPermissionStatus(
     bool needKill = false;
     // To kill process when perm is revoke
     if (!isGranted) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm is revoked, kill process(%{public}u).", tokenID);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm of process(%{public}u) is revoked.", tokenID);
         needKill = true;
     }
 
@@ -662,7 +662,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     bool needKill = false;
     // To kill process when perm is revoke
     if (!isGranted && flag != PERMISSION_COMPONENT_SET) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is revoked, kill process(%{public}u).",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) of process(%{public}u) is revoked.",
             permissionName.c_str(), tokenID);
         needKill = true;
     }

@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TEST_COMMON_H
-#define TEST_COMMON_H
+#ifndef COMPAT_TEST_COMMON_H
+#define COMPAT_TEST_COMMON_H
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ std::vector<TokenInfoForTest> GetAllTokenId();
 }
 }
 }
-#endif  // TEST_COMMON_H
+#endif  // COMPAT_TEST_COMMON_H

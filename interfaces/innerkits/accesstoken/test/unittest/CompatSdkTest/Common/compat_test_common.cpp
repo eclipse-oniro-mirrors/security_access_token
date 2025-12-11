@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "test_common.h"
+#include "compat_test_common.h"
 #include <iostream>
 #include <memory>
 #include <sstream>
