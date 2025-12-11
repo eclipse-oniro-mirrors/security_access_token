@@ -37,6 +37,8 @@ if (is_standard_system) {
     ]
     if (!use_clang_coverage) {
       version_script = "libaccesstoken_sdk.map"
+    } else {
+      version_script = "libaccesstoken_sdk_coverage.map"
     }
 
     output_name = "libaccesstoken_sdk"
@@ -155,6 +157,8 @@ if (is_standard_system) {
     ]
     if (!use_clang_coverage) {
       version_script = "libaccesstoken_compat_sdk.map"
+    } else {
+      version_script = "libaccesstoken_sdk_coverage.map"
     }
 
     output_name = "libaccesstoken_compat_sdk"
