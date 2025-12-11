@@ -512,7 +512,7 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
     }
 
     ani_class aniClass;
-    if (!AniFindClass(env, "escompat.Array", aniClass)) {
+    if (!AniFindClass(env, "std.core.Array", aniClass)) {
         return nullptr;
     }
     ani_method aniMethod;

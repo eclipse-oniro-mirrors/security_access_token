@@ -68,8 +68,8 @@ static void StateToEnumIndex(int32_t state, ani_size& enumIndex)
 ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
 {
     ani_class arrayCls = nullptr;
-    if (env->FindClass("escompat.Array", &arrayCls) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name escompat.Array!");
+    if (env->FindClass("std.core.Array", &arrayCls) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass name std.core.Array!");
         return nullptr;
     }
 
