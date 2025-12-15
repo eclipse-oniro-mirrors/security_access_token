@@ -42,5 +42,7 @@ ohos_fuzztest("VerifyAccessTokenStubFuzzTest") {
 
   cflags_cc = access_token_cflags_cc
 
+  cflags_cc += [ "-DVERIFY_ACCESS_MONITOR_TEST" ]
+
   sources += access_token_sources
 }

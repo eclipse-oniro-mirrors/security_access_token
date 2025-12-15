@@ -24,9 +24,13 @@
 #include "accesstoken_compat_kit.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+AccessTokenID g_hdcdTokenID = 0;
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 
 namespace OHOS {
     bool VerifyAccessTokenFuzzTest(const uint8_t* data, size_t size)
@@ -38,9 +42,25 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
         AccessTokenID tokenId = ConsumeTokenId(provider);
         std::string permissionName = ConsumePermissionName(provider);
+        uint64_t fulltokenId =
+            static_cast<uint64_t>(ConsumeTokenId(provider)) | (provider.ConsumeBool() ? SYSTEM_APP_MASK : 0);
+        SetSelfTokenID(fulltokenId);
         AccessTokenCompatKit::VerifyAccessToken(tokenId, permissionName);
-        return AccessTokenKit::VerifyAccessToken(tokenId, permissionName, provider.ConsumeBool()) == RET_SUCCESS;
+        AccessTokenKit::VerifyAccessToken(tokenId, permissionName, provider.ConsumeBool());
+        SetSelfTokenID(g_hdcdTokenID);
+        return true;
     }
+
+    void Initialize()
+    {
+        g_hdcdTokenID = AccessTokenKit::GetNativeTokenId("hdcd");
+    }
+}
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    OHOS::Initialize();
+    return 0;
 }
 
 /* Fuzzer entry point */

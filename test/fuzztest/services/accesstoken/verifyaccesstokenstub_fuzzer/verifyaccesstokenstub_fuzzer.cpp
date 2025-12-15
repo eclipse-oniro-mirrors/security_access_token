@@ -26,10 +26,13 @@
 #undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+AccessTokenID g_hdcdTokenID = 0;
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 
 namespace OHOS {
     bool VerifyAccessTokenStubFuzzTest(const uint8_t* data, size_t size)
@@ -53,7 +56,11 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        uint64_t fulltokenId =
+            static_cast<uint64_t>(ConsumeTokenId(provider)) | (provider.ConsumeBool() ? SYSTEM_APP_MASK : 0);
+        SetSelfTokenID(fulltokenId);
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        SetSelfTokenID(g_hdcdTokenID);
 
         return true;
     }
@@ -61,6 +68,7 @@ namespace OHOS {
 void Initialize()
 {
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    g_hdcdTokenID = AccessTokenKit::GetNativeTokenId("hdcd");
 }
 } // namespace OHOS
 

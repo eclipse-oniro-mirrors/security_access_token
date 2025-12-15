@@ -98,7 +98,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   cflags_cc = [
     "-DHILOG_ENABLE",
-    "-DVERIFY_ACCESS_MONITER_TEST",
+    "-DVERIFY_ACCESS_MONITOR_TEST",
   ]
 
   if (dlp_permission_enable == true) {
@@ -136,6 +136,10 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
 
   if (security_guard_enable) {
     external_deps += [ "security_guard:libsg_collect_sdk" ]

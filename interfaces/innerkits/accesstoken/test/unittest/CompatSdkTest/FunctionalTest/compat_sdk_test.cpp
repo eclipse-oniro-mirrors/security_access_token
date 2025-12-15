@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #include "iaccess_token_manager.h"
+#include "compat_test_common.h"
 #include "test_common.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
@@ -44,6 +45,10 @@ static uint64_t g_selfShellTokenId = 0;
 static AccessTokenID g_nativeTokenId = 0;
 static AccessTokenID g_hapTokenId = 0;
 static AccessTokenID g_renderTokenId = 0;
+static const std::string TEST_BUNDLE_NAME = "ohos";
+static const int32_t TEST_USER_ID = 0;
+static constexpr int32_t DEFAULT_API_VERSION = 8;
+constexpr const int32_t VERIFY_THRESHOLD = 50;
 }
 
 class ATCompatSdkTest : public testing::Test {
@@ -359,6 +364,54 @@ HWTEST_F(ATCompatSdkTest, VerifyAccessTokenTest002, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
     SetSelfTokenID(selfTokenId);
+}
+
+/**
+ * @tc.name: VerifyAccessTokenMonitorTestFunc001
+ * @tc.desc: Verify user granted permission.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(ATCompatSdkTest, VerifyAccessTokenMonitorTestFunc001, TestSize.Level1)
+{
+    setuid(0);
+    AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
+    TestCommon::DeleteTestHapToken(tokenID1);
+    HapInfoParams info = {
+        .userID = TEST_USER_ID,
+        .bundleName = TEST_BUNDLE_NAME,
+        .instIndex = 0,
+        .appIDDesc = "VerifyAccessTokenMonitorTest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false
+    };
+
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "VerifyAccessTokenMonitorTest",
+        .permStateList = {},
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, INVALID_TOKENID);
+
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    int32_t ret = AccessTokenCompatKit::VerifyAccessToken(
+        static_cast<AccessTokenID>(g_selfShellTokenId), "ohos.permission.DUMP");
+    EXPECT_EQ(PERMISSION_GRANTED, ret);
+
+    for (int32_t i = 1; i < VERIFY_THRESHOLD + 1; ++i) {
+        EXPECT_EQ(AccessTokenCompatKit::VerifyAccessToken(i, "ohos.permission.MICROPHONE"), PERMISSION_DENIED);
+    }
+
+    ret = AccessTokenCompatKit::VerifyAccessToken(
+        static_cast<AccessTokenID>(g_selfShellTokenId), "ohos.permission.DUMP");
+    EXPECT_EQ(PERMISSION_DENIED, ret);
+
+    TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    SetSelfTokenID(g_selfShellTokenId);
 }
 }  // namespace AccessToken
 }  // namespace Security

@@ -17,7 +17,7 @@
 
 #include "accesstoken_compat_kit.h"
 #include "access_token_error.h"
-#include "test_common.h"
+#include "compat_test_common.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;

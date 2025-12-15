@@ -32,7 +32,7 @@ namespace AccessToken {
 namespace {
 constexpr const int32_t VERIFY_THRESHOLD = 50;
 constexpr const int32_t REPORT_THRESHOLD = 5;
-#ifndef VERIFY_ACCESS_MONITER_TEST
+#ifndef VERIFY_ACCESS_MONITOR_TEST
 constexpr const int64_t REPORT_TIME_WINDOW = 60 * 60 * 1000; // 60min
 constexpr const int64_t MONITOR_TIME_WINDOW = 60 * 1000; // 60s
 constexpr const int64_t DENIED_TIME_WINDOW = 30 * 60 * 1000; // 30min
