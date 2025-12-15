@@ -103,7 +103,7 @@ public:
     void SetCancelTime(int32_t cancelTime);
 #endif
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
-    bool CancleTaskOfPermissionRevoking(const std::string& taskName);
+    bool CancelTaskOfPermissionRevoking(const std::string& taskName);
     void RegisterCallback();
     void RegisterAppStatusListener();
     void UnRegisterCallback();

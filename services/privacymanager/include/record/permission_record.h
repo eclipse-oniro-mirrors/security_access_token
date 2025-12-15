@@ -41,7 +41,7 @@ struct PermissionRecord {
     static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
 };
 
-struct ContinusPermissionRecord {
+struct ContinuousPermissionRecord {
     uint32_t tokenId = 0;
     int32_t opCode = 0;
     int32_t status = 0;
@@ -50,16 +50,16 @@ struct ContinusPermissionRecord {
     PermissionUsedType usedType = NORMAL_TYPE;
     uint32_t callertokenId = 0;
 
-    bool operator < (const ContinusPermissionRecord& other) const;
+    bool operator < (const ContinuousPermissionRecord& other) const;
 
     uint64_t GetTokenIdAndPermCode() const;
     uint64_t GetTokenIdAndPid() const;
-    bool IsEqualRecord(const ContinusPermissionRecord& record) const;
-    bool IsEqualTokenId(const ContinusPermissionRecord& record) const;
-    bool IsEqualPermCode(const ContinusPermissionRecord& record) const;
-    bool IsEqualCallerPid(const ContinusPermissionRecord& record) const;
-    bool IsEqualPid(const ContinusPermissionRecord& record) const;
-    bool IsEqualTokenIdAndPid(const ContinusPermissionRecord& record) const;
+    bool IsEqualRecord(const ContinuousPermissionRecord& record) const;
+    bool IsEqualTokenId(const ContinuousPermissionRecord& record) const;
+    bool IsEqualPermCode(const ContinuousPermissionRecord& record) const;
+    bool IsEqualCallerPid(const ContinuousPermissionRecord& record) const;
+    bool IsEqualPid(const ContinuousPermissionRecord& record) const;
+    bool IsEqualTokenIdAndPid(const ContinuousPermissionRecord& record) const;
     static bool IsPidValid(int32_t pid);
 };
 

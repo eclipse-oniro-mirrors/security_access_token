@@ -138,7 +138,7 @@ int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userI
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    LOGI(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
 }
 
@@ -152,7 +152,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userI
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
+    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
 }
 
@@ -168,7 +168,7 @@ std::shared_ptr<ProxyDeathHandler> PrivacyManagerService::GetProxyDeathHandler()
 void PrivacyManagerService::ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub, int32_t callerPid)
 {
     if (anonyStub == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "anonyStub is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "AnonyStub is nullptr.");
         return;
     }
     std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
@@ -249,7 +249,7 @@ int32_t PrivacyManagerService::StopUsingPermission(
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u, pid: %{public}d, perm: %{public}s",
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s",
         tokenId, pid, permissionName.c_str());
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName, callerPid);
@@ -273,7 +273,7 @@ int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}u", tokenId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u", tokenId);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
     return Constant::SUCCESS;
 }
@@ -294,7 +294,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
         permissionList.append(perm);
         permissionList.append(" ");
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, timestamp: [%{public}s-%{public}s], flag: %{public}d, perm: %{public}s.",
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, timestamp: [%{public}s-%{public}s], flag: %{public}d, perm: %{public}s.",
         request.request.tokenId, std::to_string(request.request.beginTimeMillis).c_str(),
         std::to_string(request.request.endTimeMillis).c_str(), request.request.flag, permissionList.c_str());
 
@@ -315,7 +315,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordsAsync(
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d", request.request.tokenId);
+    LOGD(PRI_DOMAIN, PRI_TAG, "Id: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
@@ -331,7 +331,7 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     }
 
     if (permList.size() > PERM_LIST_SIZE_MAX) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "permList oversize");
+        LOGE(PRI_DOMAIN, PRI_TAG, "PermList oversize");
         return PrivacyError::ERR_OVERSIZE;
     }
 
@@ -474,7 +474,7 @@ int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAll
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "id: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
     return PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
 }
 
@@ -489,7 +489,7 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
     std::vector<PermissionUsedTypeInfo> results;
     int32_t res = PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
     if (res != RET_SUCCESS) {
@@ -561,7 +561,7 @@ int32_t PrivacyManagerService::RegisterPermDisablePolicyCallback(const std::vect
     }
 
     if (permList.size() > PERM_LIST_SIZE_MAX) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "permList oversize");
+        LOGE(PRI_DOMAIN, PRI_TAG, "PermList oversize");
         return PrivacyError::ERR_OVERSIZE;
     }
 
@@ -580,7 +580,7 @@ int32_t PrivacyManagerService::UnRegisterPermDisablePolicyCallback(const sptr<IR
 
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "saId is %{public}d", systemAbilityId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "SaId is %{public}d", systemAbilityId);
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         PrivacyCommonEventSubscriber::RegisterEvent();

@@ -91,7 +91,7 @@ public:
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
-    void CallbackExecute(const ContinusPermissionRecord& record, const std::string& permissionName,
+    void CallbackExecute(const ContinuousPermissionRecord& record, const std::string& permissionName,
         PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
@@ -195,7 +195,7 @@ private:
 
     void SetDefaultConfigValue();
     void GetConfigValue();
-    bool ToRemoveRecord(const ContinusPermissionRecord& targetRecord,
+    bool ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
         const IsEqualFunc& isEqualFunc, bool needClearCamera = true);
 
     void InitDisablePolicyFromDb();
@@ -211,7 +211,7 @@ private:
     bool hasInited_ = false;
     std::shared_mutex rwLock_;
     std::mutex startRecordListMutex_;
-    std::set<ContinusPermissionRecord> startRecordList_;
+    std::set<ContinuousPermissionRecord> startRecordList_;
     SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
 
     // microphone

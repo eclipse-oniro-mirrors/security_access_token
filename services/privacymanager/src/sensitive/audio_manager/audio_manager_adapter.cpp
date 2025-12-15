@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,7 +41,7 @@ AudioManagerAdapter::~AudioManagerAdapter()
 bool AudioManagerAdapter::GetPersistentMicMuteState()
 {
 #ifndef AUDIO_FRAMEWORK_ENABLE
-    LOGI(PRI_DOMAIN, PRI_TAG, "audio framework is not support.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Audio framework is not support.");
     return false;
 #else
     auto proxy = GetProxy();

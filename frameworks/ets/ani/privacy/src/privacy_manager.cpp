@@ -557,7 +557,7 @@ static ani_object ConvertUsedRecordDetails(ani_env* env, const std::vector<UsedR
     for (const auto& record: details) {
         ani_ref aniRecord = ConvertSingleUsedRecordDetail(env, record);
         if (aniRecord == nullptr) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "aniRecord is null.");
+            LOGE(PRI_DOMAIN, PRI_TAG, "AniRecord is null.");
             break;
         }
         ani_status status = env->Object_CallMethodByName_Void(

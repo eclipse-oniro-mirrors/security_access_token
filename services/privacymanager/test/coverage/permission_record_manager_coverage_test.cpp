@@ -196,25 +196,25 @@ HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level4)
     AccessTokenID tokenId2 = tokenIdEx2.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId2);
 
-    ContinusPermissionRecord recordA1 = {
+    ContinuousPermissionRecord recordA1 = {
         .tokenId = tokenId1,
         .opCode = Constant::OP_CAMERA,
         .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
     };
 
-    ContinusPermissionRecord recordA2 = {
+    ContinuousPermissionRecord recordA2 = {
         .tokenId = tokenId1,
         .opCode = Constant::OP_MICROPHONE,
         .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
     };
 
-    ContinusPermissionRecord recordB1 = {
+    ContinuousPermissionRecord recordB1 = {
         .tokenId = tokenId2,
         .opCode = Constant::OP_CAMERA,
         .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
     };
 
-    ContinusPermissionRecord recordB2 = {
+    ContinuousPermissionRecord recordB2 = {
         .tokenId = tokenId2,
         .opCode = Constant::OP_MICROPHONE,
         .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
@@ -1115,7 +1115,7 @@ HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level4
  */
 HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize.Level4)
 {
-    std::set<ContinusPermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
+    std::set<ContinuousPermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
     PermissionRecordManager::GetInstance().startRecordList_.clear();
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.CAMERA");

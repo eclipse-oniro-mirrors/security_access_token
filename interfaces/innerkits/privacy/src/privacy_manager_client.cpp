@@ -135,12 +135,12 @@ void PrivacyManagerClient::SubscribeSystemAbility(const SubscribeSACallbackFunc&
     sptr<ISystemAbilityStatusChange> statusChangeListener =
         new (std::nothrow) SystemAbilityStatusChangeListener(callbackFunc);
     if (statusChangeListener == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "statusChangeListener is nullptr.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "StatusChangeListener is nullptr.");
         return;
     }
     auto saProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (saProxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "saProxy is NULL.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "SaProxy is NULL.");
         return;
     }
     int32_t ret = saProxy->SubscribeSystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, statusChangeListener);
@@ -278,7 +278,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (permissionName != CAMERA_PERMISSION_NAME) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "permission %{public}s is not supported.", permissionName.c_str());
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission %{public}s is not supported.", permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
     }
     sptr<StateChangeCallback> callbackWrap = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,12 +49,12 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
 }
 
-bool ContinusPermissionRecord::IsPidValid(int32_t pid)
+bool ContinuousPermissionRecord::IsPidValid(int32_t pid)
 {
     return pid > 0;
 }
 
-bool ContinusPermissionRecord::operator < (const ContinusPermissionRecord& other) const
+bool ContinuousPermissionRecord::operator < (const ContinuousPermissionRecord& other) const
 {
     if (tokenId != other.tokenId) {
         return tokenId < other.tokenId;
@@ -66,44 +66,44 @@ bool ContinusPermissionRecord::operator < (const ContinusPermissionRecord& other
     return callerPid < other.callerPid;
 }
 
-uint64_t ContinusPermissionRecord::GetTokenIdAndPermCode() const
+uint64_t ContinuousPermissionRecord::GetTokenIdAndPermCode() const
 {
     // 32 bit
     return (static_cast<uint64_t>(this->tokenId) << 32) | (static_cast<uint64_t>(this->opCode) & 0xFFFFFFFF);
 }
 
-uint64_t ContinusPermissionRecord::GetTokenIdAndPid() const
+uint64_t ContinuousPermissionRecord::GetTokenIdAndPid() const
 {
     uint32_t tmpPid = (pid <= 0) ? 0 : (uint32_t)pid;
     return ((uint64_t)tmpPid << 32) | ((uint64_t)tokenId & 0xFFFFFFFF); // 32: bit
 }
 
-bool ContinusPermissionRecord::IsEqualRecord(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualRecord(const ContinuousPermissionRecord& record) const
 {
     return IsEqualTokenIdAndPid(record) && IsEqualPermCode(record) && IsEqualCallerPid(record);
 }
 
-bool ContinusPermissionRecord::IsEqualTokenId(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualTokenId(const ContinuousPermissionRecord& record) const
 {
     return tokenId == record.tokenId;
 }
 
-bool ContinusPermissionRecord::IsEqualPermCode(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualPermCode(const ContinuousPermissionRecord& record) const
 {
     return record.opCode == opCode;
 }
 
-bool ContinusPermissionRecord::IsEqualCallerPid(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualCallerPid(const ContinuousPermissionRecord& record) const
 {
     return record.callerPid == callerPid;
 }
 
-bool ContinusPermissionRecord::IsEqualPid(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualPid(const ContinuousPermissionRecord& record) const
 {
     return !IsPidValid(record.pid) || record.pid == pid;
 }
 
-bool ContinusPermissionRecord::IsEqualTokenIdAndPid(const ContinusPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualTokenIdAndPid(const ContinuousPermissionRecord& record) const
 {
     return tokenId == record.tokenId && IsEqualPid(record);
 }

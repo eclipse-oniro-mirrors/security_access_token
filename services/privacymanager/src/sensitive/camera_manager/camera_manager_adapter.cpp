@@ -42,7 +42,7 @@ CameraManagerAdapter::~CameraManagerAdapter()
 bool CameraManagerAdapter::IsCameraMuted()
 {
 #ifndef CAMERA_FRAMEWORK_ENABLE
-    LOGI(PRI_DOMAIN, PRI_TAG, "camera framework is not support.");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Camera framework is not support.");
     return false;
 #else
     auto proxy = GetProxy();
