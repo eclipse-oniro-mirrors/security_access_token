@@ -100,7 +100,7 @@ int32_t DisablePolicyCbkManager::AddCallback(AccessTokenID registerTokenId, cons
 
     if (callback->IsProxyObject() &&
         ((callbackDeathRecipient_ == nullptr) || !callback->AddDeathRecipient(callbackDeathRecipient_))) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "add death recipient failed.");
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add death recipient failed.");
         return PrivacyError::ERR_ADD_DEATH_RECIPIENT_FAILED;
     }
 

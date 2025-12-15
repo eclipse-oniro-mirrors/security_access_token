@@ -35,9 +35,9 @@ static constexpr int32_t THIRD_PARAM = 3;
 static constexpr int32_t FORTH_PARAM = 4;
 }
 
-static ContinusPermissionRecord MakeRecord(const int32_t recordArray[RECORD_ITEM_SIZE])
+static ContinuousPermissionRecord MakeRecord(const int32_t recordArray[RECORD_ITEM_SIZE])
 {
-    ContinusPermissionRecord record;
+    ContinuousPermissionRecord record;
     record.tokenId = recordArray[0];
     record.opCode = recordArray[1];
     record.status = recordArray[SECOND_PARAM];
@@ -47,52 +47,52 @@ static ContinusPermissionRecord MakeRecord(const int32_t recordArray[RECORD_ITEM
 }
 
 static void MakeRecordSet(const int32_t recordArray[][RECORD_ITEM_SIZE], int32_t setSize,
-    std::set<ContinusPermissionRecord>& recordSet)
+    std::set<ContinuousPermissionRecord>& recordSet)
 {
     for (size_t i = 0; i < setSize; i++) {
-        ContinusPermissionRecord record = MakeRecord(recordArray[i]);
+        ContinuousPermissionRecord record = MakeRecord(recordArray[i]);
         recordSet.emplace(record);
     }
 }
 
 static void MakeRecordList(const int32_t recordArray[][RECORD_ITEM_SIZE], int32_t setSize,
-    std::vector<ContinusPermissionRecord>& recordList)
+    std::vector<ContinuousPermissionRecord>& recordList)
 {
     for (size_t i = 0; i < setSize; i++) {
-        ContinusPermissionRecord record = MakeRecord(recordArray[i]);
+        ContinuousPermissionRecord record = MakeRecord(recordArray[i]);
         recordList.emplace_back(record);
     }
 }
 
-static void RemoveRecord(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, std::vector<ContinusPermissionRecord>& retList)
+static void RemoveRecord(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinusPermissionRecord::IsEqualRecord, retList);
+    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualRecord, retList);
 }
 
-static void RemoveTokenId(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, std::vector<ContinusPermissionRecord>& retList)
+static void RemoveTokenId(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinusPermissionRecord::IsEqualTokenId, retList);
+    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualTokenId, retList);
 }
 
-static void RemoveTokenIdAndPid(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, std::vector<ContinusPermissionRecord>& retList)
+static void RemoveTokenIdAndPid(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
     return PermissionRecordSet::RemoveByKey(recordList, record,
-        &ContinusPermissionRecord::IsEqualTokenIdAndPid, retList);
+        &ContinuousPermissionRecord::IsEqualTokenIdAndPid, retList);
 }
 
-static void RemovePermCode(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, std::vector<ContinusPermissionRecord>& retList)
+static void RemovePermCode(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinusPermissionRecord::IsEqualPermCode, retList);
+    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualPermCode, retList);
 }
 
-static void RemoveCallerPid(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, std::vector<ContinusPermissionRecord>& retList)
+static void RemoveCallerPid(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinusPermissionRecord::IsEqualCallerPid, retList);
+    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualCallerPid, retList);
 }
 
 class PermissionRecordSetTest : public testing::Test {
@@ -132,7 +132,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0001, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 1);
 }
@@ -150,7 +150,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],  INACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 1);
 }
@@ -168,7 +168,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[1] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
 }
@@ -186,7 +186,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0004, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
 }
@@ -204,7 +204,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0005, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
 }
@@ -222,7 +222,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0006, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
 }
@@ -240,7 +240,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0007, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
 }
@@ -262,7 +262,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0008, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] }, // 5-1
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 6);
     auto it = recordSet.begin();
@@ -298,7 +298,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0009, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] }, // 4-4
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 5);
     auto it = recordSet.begin();
@@ -331,7 +331,7 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0010, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] }, // 4-0
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 5);
     auto it = recordSet.begin();
@@ -361,21 +361,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0001, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -393,21 +393,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    INACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -425,21 +425,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0003, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -457,21 +457,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0005, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    INACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -489,21 +489,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0001, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -521,21 +521,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -553,21 +553,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0003, TestSize.Level0)
         { HAP_TOKEN_ID[1],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -585,21 +585,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0001, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[0], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 2);
 }
@@ -617,21 +617,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -649,21 +649,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0003, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -681,21 +681,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0004, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -713,21 +713,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0005, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   -1, CALLER_PID[1] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[1],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -745,21 +745,21 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0001, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[0],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -777,21 +777,21 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -809,21 +809,21 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0003, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -841,21 +841,21 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0004, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,     HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -873,21 +873,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0001, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -905,21 +905,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0002, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[0] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 2);
 }
@@ -937,21 +937,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0003, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[1] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -969,21 +969,21 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0004, TestSize.Level0)
         { HAP_TOKEN_ID[0],   OPCODE[1],    ACTIVE,   HAP_PID[1], CALLER_PID[1] },
     };
     int32_t setSize = sizeof(recordList) / sizeof(recordList[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = HAP_TOKEN_ID[0],
         .opCode = OPCODE[0],
         .status = ACTIVE,
         .pid = HAP_PID[0],
         .callerPid = CALLER_PID[0],
     };
-    std::vector<ContinusPermissionRecord> retList;
+    std::vector<ContinuousPermissionRecord> retList;
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -1006,11 +1006,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0001, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -1033,11 +1033,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0002, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1060,11 +1060,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0003, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1087,11 +1087,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0004, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1112,11 +1112,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0005, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1138,11 +1138,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0006, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1164,11 +1164,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0007, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -1190,11 +1190,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0008, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1216,11 +1216,11 @@ HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecords0009, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetUnusedCameraRecords(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -1243,11 +1243,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0001, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1269,11 +1269,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0002, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1295,11 +1295,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0003, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1320,11 +1320,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0004, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
@@ -1345,11 +1345,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0005, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
@@ -1371,11 +1371,11 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0006, TestSize.Level0)
     };
     int32_t size1 = sizeof(recordArray1) / sizeof(recordArray1[0]);
     int32_t size2 = sizeof(recordArray2) / sizeof(recordArray1[0]);
-    std::set<ContinusPermissionRecord> recordSet;
+    std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordArray1, size1, recordSet);
-    std::vector<ContinusPermissionRecord> recordList;
+    std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinusPermissionRecord> inactiveList;
+    std::vector<ContinuousPermissionRecord> inactiveList;
     PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }

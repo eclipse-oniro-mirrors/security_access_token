@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,9 +21,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
-void PermissionRecordSet::RemoveByKey(std::set<ContinusPermissionRecord>& recordList,
-    const ContinusPermissionRecord& record, const IsEqualFunc& isEqualFunc,
-    std::vector<ContinusPermissionRecord>& retList)
+void PermissionRecordSet::RemoveByKey(std::set<ContinuousPermissionRecord>& recordList,
+    const ContinuousPermissionRecord& record, const IsEqualFunc& isEqualFunc,
+    std::vector<ContinuousPermissionRecord>& retList)
 {
     for (auto it = recordList.begin(); it != recordList.end();) {
         if (((*it).*isEqualFunc)(record)) {
@@ -37,8 +37,8 @@ void PermissionRecordSet::RemoveByKey(std::set<ContinusPermissionRecord>& record
         recordList.size(), retList.size());
 }
 
-void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinusPermissionRecord>& recordList,
-    const std::vector<ContinusPermissionRecord>& removedList, std::vector<ContinusPermissionRecord>& retList)
+void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinuousPermissionRecord>& recordList,
+    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList)
 {
     // get unique record with tokenid and opcode
     uint64_t lastUniqueKey = 0;
@@ -73,8 +73,8 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinusPermiss
     LOGI(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", retList.size());
 }
 
-void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinusPermissionRecord>& recordList,
-    const std::vector<ContinusPermissionRecord>& removedList, std::vector<ContinusPermissionRecord>& retList)
+void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,
+    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList)
 {
     if (removedList.empty()) {
         return;

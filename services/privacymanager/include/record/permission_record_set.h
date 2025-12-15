@@ -22,17 +22,17 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using IsEqualFunc=bool (ContinusPermissionRecord::*)(const ContinusPermissionRecord& record) const;
+using IsEqualFunc=bool (ContinuousPermissionRecord::*)(const ContinuousPermissionRecord& record) const;
 
 class PermissionRecordSet {
 public:
-    static void GetInActiveUniqueRecord(const std::set<ContinusPermissionRecord>& recordList,
-    const std::vector<ContinusPermissionRecord>& removedList, std::vector<ContinusPermissionRecord>& retList);
-    static void GetUnusedCameraRecords(const std::set<ContinusPermissionRecord>& recordList,
-        const std::vector<ContinusPermissionRecord>& removedList, std::vector<ContinusPermissionRecord>& retList);
-    static void RemoveByKey(std::set<ContinusPermissionRecord>& recordList,
-        const ContinusPermissionRecord& record, const IsEqualFunc& isEqualFunc,
-        std::vector<ContinusPermissionRecord>& retList);
+    static void GetInActiveUniqueRecord(const std::set<ContinuousPermissionRecord>& recordList,
+    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList);
+    static void GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,
+        const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList);
+    static void RemoveByKey(std::set<ContinuousPermissionRecord>& recordList,
+        const ContinuousPermissionRecord& record, const IsEqualFunc& isEqualFunc,
+        std::vector<ContinuousPermissionRecord>& retList);
 };
 } // namespace AccessToken
 } // namespace Security

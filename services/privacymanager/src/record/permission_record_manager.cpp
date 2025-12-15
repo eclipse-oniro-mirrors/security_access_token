@@ -420,10 +420,10 @@ bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t user
     std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
     auto it = permUsedRecToggleStatusMap_.find(userID);
     if (it != permUsedRecToggleStatusMap_.end()) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
+        LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
         return it->second;
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "userID: %{public}d not exist record, return true.", userID);
+    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d not exist record, return true.", userID);
     return true;
 }
 
@@ -461,7 +461,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
             LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, don't add used record.");
             return Constant::SUCCESS;
         } else if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "fixed by admin policy, don't add used record.");
+            LOGI(PRI_DOMAIN, PRI_TAG, "Fixed by admin policy, don't add used record.");
             return Constant::SUCCESS;
         }
     }
@@ -988,7 +988,7 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    ContinusPermissionRecord newRecord = {
+    ContinuousPermissionRecord newRecord = {
         .tokenId = info.tokenId,
         .opCode = opCode,
         .status = status,
@@ -1030,7 +1030,7 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
         info.usedType = it->usedType;
         info.pid = it->pid;
         infoList.emplace_back(info);
-        LOGI(PRI_DOMAIN, PRI_TAG, "tokenId %{public}d using permission %{public}s, "
+        LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
             "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", it->tokenId,
             perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
     }
@@ -1041,7 +1041,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
 {
     std::vector<std::string> camPermList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    std::set<ContinusPermissionRecord> updateList;
+    std::set<ContinuousPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
         if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
             std::string perm;
@@ -1134,13 +1134,13 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 
     LOGD(PRI_DOMAIN, PRI_TAG, "Id %{public}u, pid %{public}d, perm %{public}s, callerPid %{public}d",
         tokenId, pid, permissionName.c_str(), callerPid);
-    ContinusPermissionRecord record = {
+    ContinuousPermissionRecord record = {
         .tokenId = tokenId,
         .opCode = opCode,
         .pid = pid,
         .callerPid = callerPid,
     };
-    if (!ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualRecord, true)) {
+    if (!ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualRecord, true)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, " \
             "opCode=%{public}d, callerPid=%{public}d", tokenId, pid, opCode, callerPid);
         return PrivacyError::ERR_PERMISSION_NOT_START_USING;
@@ -1155,10 +1155,10 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
 void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, pid %{public}d", tokenId, pid);
-    ContinusPermissionRecord record = {0};
+    ContinuousPermissionRecord record = {0};
     record.tokenId = tokenId;
     record.pid = pid;
-    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualPid);
+    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualPid);
 }
 
 /*
@@ -1167,34 +1167,34 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u", tokenId);
-    ContinusPermissionRecord record = {0};
+    ContinuousPermissionRecord record = {0};
     record.tokenId = tokenId;
-    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualTokenId);
+    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualTokenId);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "OpCode %{public}d", opCode);
-    ContinusPermissionRecord record = {0};
+    ContinuousPermissionRecord record = {0};
     record.opCode = opCode;
-    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualPermCode);
+    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualPermCode);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t callerPid)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid %{public}d", callerPid);
-    ContinusPermissionRecord record = {0};
+    ContinuousPermissionRecord record = {0};
     record.callerPid = callerPid;
-    (void) ToRemoveRecord(record, &ContinusPermissionRecord::IsEqualCallerPid);
+    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualCallerPid);
 }
 
-bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& targetRecord,
+bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
     const IsEqualFunc& isEqualFunc, bool needClearCamera)
 {
-    std::vector<ContinusPermissionRecord> unusedCameraRecord;
+    std::vector<ContinuousPermissionRecord> unusedCameraRecord;
     {
         std::string perm;
-        std::vector<ContinusPermissionRecord> removeList, inactiveList;
+        std::vector<ContinuousPermissionRecord> removeList, inactiveList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         PermissionRecordSet::RemoveByKey(startRecordList_, targetRecord, isEqualFunc, removeList);
         if (removeList.empty()) {
@@ -1203,7 +1203,7 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
         PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
         for (const auto& record: inactiveList) {
             Constant::TransferOpcodeToPermission(record.opCode, perm);
-            ContinusPermissionRecord newRecord;
+            ContinuousPermissionRecord newRecord;
             newRecord.tokenId = record.tokenId;
             newRecord.status = PERM_INACTIVE;
             newRecord.pid = record.pid;
@@ -1219,13 +1219,13 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinusPermissionRecord& tar
     for (const auto& record: unusedCameraRecord) {
         cameraCallbackMap_.Erase(GetUniqueId(record.tokenId, record.pid));
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "cameraCallbackMap size = %{public}d after clearing",
+    LOGI(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d after clearing",
         cameraCallbackMap_.Size());
     return true;
 }
 
-void PermissionRecordManager::CallbackExecute(const ContinusPermissionRecord& record, const std::string& permissionName,
-    PermissionUsedType type)
+void PermissionRecordManager::CallbackExecute(
+    const ContinuousPermissionRecord& record, const std::string& permissionName, PermissionUsedType type)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, "
         "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", record.tokenId,
@@ -1265,10 +1265,10 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
 {
     int32_t opCode;
     Constant::TransferPermissionToOpcode(permissionName, opCode);
-    std::set<ContinusPermissionRecord> updatedRecordList;
+    std::set<ContinuousPermissionRecord> updatedRecordList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        ContinusPermissionRecord record = *it;
+        ContinuousPermissionRecord record = *it;
         if ((record.opCode) != static_cast<int32_t>(opCode)) {
             ++it;
             continue;
@@ -1603,7 +1603,7 @@ int32_t PermissionRecordManager::SetHapWithFGReminder(uint32_t tokenId, bool isA
     }
     if (iter != foreTokenIdList_.end() && !isAllowed) {
         foreTokenIdList_.erase(iter);
-        LOGI(PRI_DOMAIN, PRI_TAG, "cancel hap(%{public}d) foreground.", tokenId);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Cancel hap(%{public}d) foreground.", tokenId);
         return RET_SUCCESS;
     }
     LOGE(PRI_DOMAIN, PRI_TAG, "(%{public}d) is invalid to be operated.", tokenId);
@@ -1651,7 +1651,7 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
         }
         if (GetMuteStatus(permissionName, MIXED)) {
             AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-            ContinusPermissionRecord record;
+            ContinuousPermissionRecord record;
             record.tokenId = callingTokenID;
             record.status = PERM_TEMPORARY_CALL;
             record.pid = -1; // pid -1 with no meaning
@@ -1680,7 +1680,7 @@ void PermissionRecordManager::ModifyMuteStatus(const std::string& permissionName
             isCamMixMute_ = isMute;
         }
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d.",
+    LOGI(PRI_DOMAIN, PRI_TAG, "PermissionName: %{public}s, isMute: %{public}d, index: %{public}d.",
         permissionName.c_str(), isMute, index);
 }
 
@@ -1696,7 +1696,7 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     } else {
         return false;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "perm: %{public}s, isMute: %{public}d, index: %{public}d.",
+    LOGI(PRI_DOMAIN, PRI_TAG, "Perm: %{public}s, isMute: %{public}d, index: %{public}d.",
         permissionName.c_str(), isMute, index);
     return isMute;
 }

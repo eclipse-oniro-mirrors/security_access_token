@@ -78,7 +78,7 @@ void PermissionAppStateObserver::OnAppStateChanged(const AppStateData &appStateD
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, true);
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
     } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, false);
         if (list[FORMS_FLAG]) {
@@ -101,7 +101,7 @@ void PermissionAppStateObserver::OnAppStopped(const AppStateData &appStateData)
         LOGI(ATM_DOMAIN, ATM_TAG, "TokenID:%{public}d died.", tokenID);
         // cancle task when process die
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
     }
 }
@@ -117,7 +117,7 @@ void PermissionAppStateObserver::OnAppCacheStateChanged(const AppStateData &appS
         so temporary authorization should be cancle as OnAppStopped when receive this callback
      */
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+    (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
     TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
 }
 
@@ -141,7 +141,7 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
         if (formInstances[i].formVisiblity_ == FormVisibilityType::VISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, true);
             std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-            (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+            (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         } else if (formInstances[i].formVisiblity_ == FormVisibilityType::INVISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, false);
             if (list[FOREGROUND_FLAG]) {
@@ -178,7 +178,7 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStart(
     TempPermissionObserver::GetInstance().AddContinuousTask(tokenID);
     TempPermissionObserver::GetInstance().ModifyAppState(tokenID, CONTINUOUS_TASK_FLAG, true);
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+    (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
 }
 
 void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
@@ -598,7 +598,7 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
             }
         }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(iter->first);
-        (void)TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        (void)TempPermissionObserver::GetInstance().CancelTaskOfPermissionRevoking(taskName);
     }
     tempPermTokenMap_.clear();
     LOGI(ATM_DOMAIN, ATM_TAG, "TempPermTokenMap_ clear!");
@@ -649,7 +649,7 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
 #endif
 }
 
-bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& taskName)
+bool TempPermissionObserver::CancelTaskOfPermissionRevoking(const std::string& taskName)
 {
 #ifdef EVENTHANDLER_ENABLE
     auto eventHandler = GetEventHandler();
