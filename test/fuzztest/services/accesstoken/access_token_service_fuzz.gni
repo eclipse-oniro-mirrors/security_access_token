@@ -65,10 +65,6 @@ access_token_deps = [
   "${access_token_path}/services/common:accesstoken_service_common",
 ]
 
-if (build_variant == "user") {
-  access_token_cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-}
-
 access_token_external_deps = [
   "ability_base:want",
   "cJSON:cjson",
@@ -144,6 +140,10 @@ if (dlp_permission_enable == true) {
 if (hicollie_enable == true) {
   access_token_external_deps += [ "hicollie:libhicollie" ]
   access_token_cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+}
+
+if (build_variant == "user") {
+  access_token_cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
 }
 
 if (token_sync_enable == true) {
