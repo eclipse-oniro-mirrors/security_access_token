@@ -454,12 +454,15 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
 
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (asyncContext == nullptr) {
+        return;
+    }
     if (asyncContext->isWithWindowId) {
         CreateServiceExtensionWithWindowId(asyncContext);
         return;
     }
 
-    if ((asyncContext == nullptr) || (asyncContext->abilityContext == nullptr)) {
+    if (asyncContext->abilityContext == nullptr) {
         return;
     }
     if (!asyncContext->uiAbilityFlag) {
