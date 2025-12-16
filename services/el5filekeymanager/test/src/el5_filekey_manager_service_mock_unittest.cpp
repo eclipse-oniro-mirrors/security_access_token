@@ -272,6 +272,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey001, TestSize.Level1)
     MockIpc::SetCallingUid(3060);
 
     ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, userId), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, -1), EFM_ERR_INVALID_PARAMETER);
 }
 
 /**

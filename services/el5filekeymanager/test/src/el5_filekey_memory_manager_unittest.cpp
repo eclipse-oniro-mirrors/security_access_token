@@ -62,3 +62,44 @@ HWTEST_F(El5FilekeyMemoryManagerTest, MemoryManagerTest001, TestSize.Level1)
     }
     EXPECT_EQ(SA_READY_TO_UNLOAD, el5FilekeyManagerServiceAbility_->OnIdle(reason2));
 }
+
+/**
+ * @tc.name: Onstart001
+ * @tc.desc: test onStart
+ * @tc.type: FUNC
+ * @tc.require: issueICIZZE
+ */
+HWTEST_F(El5FilekeyMemoryManagerTest, Onstart001, TestSize.Level1)
+{
+    OHOS::SystemAbilityOnDemandReason reason1(OHOS::OnDemandReasonId::PARAM, "usual.event.SCREEN_LOCKED",
+        "true", EXTRA_PARAM);
+    el5FilekeyManagerServiceAbility_->service_ = nullptr;
+    el5FilekeyManagerServiceAbility_->OnStop();
+    el5FilekeyManagerServiceAbility_->OnAddSystemAbility(1, "test");
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+    el5FilekeyManagerServiceAbility_->OnStop();
+    el5FilekeyManagerServiceAbility_->OnAddSystemAbility(1, "test");
+    el5FilekeyManagerServiceAbility_->service_ = nullptr;
+    reason1.SetName("usual.event.USER_REMOVED");
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+
+    el5FilekeyManagerServiceAbility_->service_ = nullptr;
+    reason1.SetName("usual.event.USER_STOPPED");
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+
+    el5FilekeyManagerServiceAbility_->service_ = nullptr;
+    reason1.SetName("usual.event.USER_REMOVED");
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+    
+    reason1.SetValue("1");
+    el5FilekeyManagerServiceAbility_->service_ = nullptr;
+    el5FilekeyManagerServiceAbility_->OnStart(reason1);
+    EXPECT_NE(el5FilekeyManagerServiceAbility_->service_, nullptr);
+}
