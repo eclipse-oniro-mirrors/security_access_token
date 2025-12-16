@@ -111,7 +111,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
-      "access_token:libaccesstoken_sdk",
       "c_utils:utils",
       "googletest:gtest_main",
       "hilog:libhilog",
