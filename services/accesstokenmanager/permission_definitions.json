@@ -6941,7 +6941,7 @@
             "name": "ohos.permission.SUPPORT_APP_SERVICE_EXTENSION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",           
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 20,
             "deprecated": "",
             "provisionEnable": true,
@@ -7416,7 +7416,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
-        },        
+        },
         {
             "name": "ohos.permission.KEEP_BACKGROUND_RUNNING_SYSTEM",
             "grantMode": "system_grant",
@@ -7990,6 +7990,17 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_BLUETOOTH_ADVERTISER_NAME",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         }
     ]
 }
