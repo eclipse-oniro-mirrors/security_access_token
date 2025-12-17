@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -46,32 +46,6 @@ AccessTokenDb::~AccessTokenDb()
     LOGI(ATM_DOMAIN, ATM_TAG, "~AccessTokenDb");
 }
 
-int32_t AccessTokenDb::RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
-    const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets,
-    const std::shared_ptr<NativeRdb::RdbStore>& db)
-{
-    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
-        return resultCode;
-    }
-
-    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-    int32_t res = db->Restore("");
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
-        return res;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try insert again!");
-
-    res = db->BatchInsert(outInsertNum, tableName, buckets);
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to batch insert into table %{public}s again, res is %{public}d.",
-            tableName.c_str(), res);
-        return res;
-    }
-
-    return 0;
-}
-
 void AccessTokenDb::InitRdb()
 {
     std::string dbPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME);
@@ -96,112 +70,6 @@ std::shared_ptr<NativeRdb::RdbStore> AccessTokenDb::GetRdb()
         InitRdb();
     }
     return db_;
-}
-
-int32_t AccessTokenDb::AddValues(const AtmDataType type, const std::vector<GenericValues>& addValues)
-{
-    std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(type, tableName);
-    if (tableName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    // if nothing to insert, no need to call BatchInsert
-    if (addValues.empty()) {
-        return 0;
-    }
-
-    std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
-    if (db == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
-        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    // fill buckets with addValues
-    int64_t outInsertNum = 0;
-    std::vector<NativeRdb::ValuesBucket> buckets;
-    AccessTokenDbUtil::ToRdbValueBuckets(addValues, buckets);
-
-    int32_t res = db->BatchInsert(outInsertNum, tableName, buckets);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to batch insert into table %{public}s, res is %{public}d.",
-            tableName.c_str(), res);
-        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_INSERT_RESTORE, res, tableName);
-        int32_t result = RestoreAndInsertIfCorrupt(res, outInsertNum, tableName, buckets, db);
-        if (result != NativeRdb::E_OK) {
-            return result;
-        }
-    }
-    if (outInsertNum <= 0) { // rdb bug, adapt it
-        LOGC(ATM_DOMAIN, ATM_TAG, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
-        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Batch insert %{public}" PRId64 " records to table %{public}s.", outInsertNum,
-        tableName.c_str());
-
-    return 0;
-}
-
-int32_t AccessTokenDb::RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
-    const NativeRdb::RdbPredicates& predicates, const std::shared_ptr<NativeRdb::RdbStore>& db)
-{
-    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
-        return resultCode;
-    }
-
-    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-    int32_t res = db->Restore("");
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
-        return res;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try delete again!");
-
-    res = db->Delete(deletedRows, predicates);
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to delete record from table %{public}s again, res is %{public}d.",
-            predicates.GetTableName().c_str(), res);
-        return res;
-    }
-
-    return 0;
-}
-
-int32_t AccessTokenDb::RemoveValues(const AtmDataType type, const GenericValues& conditionValue)
-{
-    std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(type, tableName);
-    if (tableName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
-    if (db == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
-        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    int32_t deletedRows = 0;
-    NativeRdb::RdbPredicates predicates(tableName);
-    AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
-
-    int32_t res = db->Delete(deletedRows, predicates);
-    if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete record from table %{public}s, res is %{public}d.",
-            tableName.c_str(), res);
-        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_DELETE_RESTORE, res, tableName);
-        int32_t result = RestoreAndDeleteIfCorrupt(res, deletedRows, predicates, db);
-        if (result != NativeRdb::E_OK) {
-            return result;
-        }
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Delete %{public}d records from table %{public}s.", deletedRows, tableName.c_str());
-
-    return 0;
 }
 
 int32_t AccessTokenDb::RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
@@ -371,82 +239,151 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     return 0;
 }
 
-int32_t AccessTokenDb::RestoreAndCommitIfCorrupt(const int32_t resultCode,
-    const std::shared_ptr<NativeRdb::RdbStore>& db)
-{
-    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
-        return resultCode;
-    }
-
-    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-    int32_t res = db->Restore("");
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
-        return res;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try commit again!");
-
-    res = db->Commit();
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to Commit again, res is %{public}d.", res);
-        return res;
-    }
-
-    return NativeRdb::E_OK;
-}
-
 int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
     const std::vector<AddInfo>& addInfoVec)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-
+    int res = 0;
     {
         std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-        std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
-        if (db == nullptr) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
+        res = DeleteAndInsertValuesInner(delInfoVec, addInfoVec);
+        if (res != NativeRdb::E_OK) {
+            RestoreDatabase(res);
+            res = DeleteAndInsertValuesInner(delInfoVec, addInfoVec);
+        }
+    }
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertValues cost %{public}" PRId64 ".", endTime - beginTime);
+    return res;
+}
+
+int32_t AccessTokenDb::DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec,
+    const std::vector<AddInfo>& addInfoVec)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
+    if (db == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    auto [errcode, transaction] = db->CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
+    if (errcode != NativeRdb::E_OK || transaction == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "CreateTransaction failed, error:0x%{public}x", errcode);
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    int32_t res = RemoveValues(delInfoVec, transaction);
+    if (res != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remove values failed, res is 0x%{public}x.", res);
+        transaction->Rollback();
+        return res;
+    }
+
+    res = AddValues(addInfoVec, transaction);
+    if (res != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Add values failed, res is 0x%{public}x.", res);
+        transaction->Rollback();
+        return res;
+    }
+
+    res = transaction->Commit();
+    if (res != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Transaction commit failed, res is 0x%{public}x.", res);
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_COMMIT_RESTORE, res, "");
+        transaction->Rollback();
+        return res;
+    }
+
+    return 0;
+}
+
+int32_t AccessTokenDb::AddValues(const std::vector<AddInfo>& addInfoVec,
+    const std::shared_ptr<OHOS::NativeRdb::Transaction>& transaction)
+{
+    size_t count = addInfoVec.size();
+    for (size_t i = 0; i < count; ++i) {
+        std::string tableName;
+        AccessTokenDbUtil::GetTableNameByType(addInfoVec[i].addType, tableName);
+        if (tableName.empty()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+
+        // if nothing to insert, no need to call BatchInsert
+        if (addInfoVec[i].addValues.empty()) {
+            continue;
+        }
+
+        // fill buckets with addInfoVec[i].addValues
+        std::vector<NativeRdb::ValuesBucket> buckets;
+        AccessTokenDbUtil::ToRdbValueBuckets(addInfoVec[i].addValues, buckets);
+
+        // outInsertNum: int64_t
+        auto [errCode, outInsertNum] = transaction->BatchInsert(tableName, buckets);
+        if (errCode != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to batch insert into table %{public}s, errCode is 0x%{public}x.",
+                tableName.c_str(), errCode);
+            ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_INSERT_RESTORE, errCode, tableName);
+            return errCode;
+        }
+
+        if (outInsertNum <= 0) { // rdb bug, adapt it
+            LOGC(ATM_DOMAIN, ATM_TAG, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
-        db->BeginTransaction();
+        LOGI(ATM_DOMAIN, ATM_TAG, "Batch insert %{public}" PRId64 " records to table %{public}s.", outInsertNum,
+            tableName.c_str());
+    }
+    return 0;
+}
 
-        int32_t res = 0;
-        size_t count = delInfoVec.size();
-        for (size_t i = 0; i < count; ++i) {
-            res = RemoveValues(delInfoVec[i].delType, delInfoVec[i].delValue);
-            if (res != 0) {
-                db->RollBack();
-                LOGC(ATM_DOMAIN, ATM_TAG, "Remove values failed, res is %{public}d.", res);
-                return res;
-            }
+int32_t AccessTokenDb::RemoveValues(const std::vector<DelInfo>& delInfoVec,
+    const std::shared_ptr<OHOS::NativeRdb::Transaction>& transaction)
+{
+    size_t count = delInfoVec.size();
+    for (size_t i = 0; i < count; ++i) {
+        std::string tableName;
+        AccessTokenDbUtil::GetTableNameByType(delInfoVec[i].delType, tableName);
+        if (tableName.empty()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Table name is empty.");
+            return AccessTokenError::ERR_PARAM_INVALID;
         }
 
-        count = addInfoVec.size();
-        for (size_t i = 0; i < count; ++i) {
-            res = AddValues(addInfoVec[i].addType, addInfoVec[i].addValues);
-            if (res != 0) {
-                db->RollBack();
-                LOGC(ATM_DOMAIN, ATM_TAG, "Add values failed, res is %{public}d.", res);
-                return res;
-            }
+        NativeRdb::RdbPredicates predicates(tableName);
+        AccessTokenDbUtil::ToRdbPredicates(delInfoVec[i].delValue, predicates);
+
+        auto [errCode, deletedRows] = transaction->Delete(predicates);
+        if (errCode != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete record from table %{public}s, errCode is 0x%{public}x.",
+                tableName.c_str(), errCode);
+            ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_DELETE_RESTORE, errCode, tableName);
+            return errCode;
         }
 
-        res = db->Commit();
-        if (res != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to commit, res is %{public}d.", res);
-            ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_COMMIT_RESTORE, res, "");
-            int32_t result = RestoreAndCommitIfCorrupt(res, db);
-            if (result != NativeRdb::E_OK) {
-                LOGC(ATM_DOMAIN, ATM_TAG, "Failed to restore and commit, result is %{public}d.", result);
-                return result;
-            }
-        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Delete %{public}d records from table %{public}s.", deletedRows, tableName.c_str());
+    }
+    return 0;
+}
+
+void AccessTokenDb::RestoreDatabase(int32_t errCode)
+{
+    if (errCode != NativeRdb::E_SQLITE_CORRUPT) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not sqlite corrupt, can't restore!");
+        return;
     }
 
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertValues cost %{public}" PRId64 ".", endTime - beginTime);
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
+    std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
+    if (db == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
+        return;
+    }
 
-    return 0;
+    int32_t res = db->Restore("");
+    if (res != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is 0x%{public}x.", res);
+    }
 }
 } // namespace AccessToken
 } // namespace Security

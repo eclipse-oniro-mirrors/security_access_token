@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +26,7 @@
 #include "rdb_predicates.h"
 #include "rdb_store.h"
 #include "singleton.h"
+#include "transaction.h"
 
 namespace OHOS {
 namespace Security {
@@ -43,23 +44,21 @@ public:
 private:
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);
 
-    int32_t RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
-        const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets,
-        const std::shared_ptr<NativeRdb::RdbStore>& db);
-    int32_t RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
-        const NativeRdb::RdbPredicates& predicates, const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
         const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates,
         const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
         const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
         const std::shared_ptr<NativeRdb::RdbStore>& db);
+
+    int32_t DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
+    void RestoreDatabase(int32_t errCode);
+    int32_t RemoveValues(const std::vector<DelInfo>& delInfoVec,
+        const std::shared_ptr<OHOS::NativeRdb::Transaction>& transaction);
+    int32_t AddValues(const std::vector<AddInfo>& addInfoVec,
+        const std::shared_ptr<OHOS::NativeRdb::Transaction>& transaction);
+
     void InitRdb();
-
-    int32_t AddValues(const AtmDataType type, const std::vector<GenericValues>& addValues);
-    int32_t RemoveValues(const AtmDataType type, const GenericValues& conditionValue);
-
-    int32_t RestoreAndCommitIfCorrupt(const int32_t resultCode, const std::shared_ptr<NativeRdb::RdbStore>& db);
 
     std::shared_mutex rwLock_;
     std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;
