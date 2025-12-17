@@ -1386,7 +1386,7 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "HapTokenInfoInner is nullptr.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{publid}u is not exits.", tokenID);
         return ERR_TOKENID_NOT_EXIST;
     }
     infoIter->second->SetPermDialogForbidden(enable);
@@ -1631,7 +1631,7 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
     }
 
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return PERMISSION_DENIED;
     }
     uint64_t callerFullTokenID = IPCSkeleton::GetCallingFullTokenID();

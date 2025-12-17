@@ -16,6 +16,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_common.h"
+#include "hisysevent.h"
 #include "token_setproc.h"
 #include "want.h"
 
@@ -199,6 +200,10 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
     asyncContext->GetInstanceId();
     GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName,
+        "UIEXTENSION_FLAG", true, "SCENE_CODE", static_cast<int32_t>(asyncContext->contextType_),
+        "TOKENID", asyncContext->tokenId, "EXTRA_INFO", std::to_string(asyncContext->switchType));
 
     if (asyncContext->result_.errorCode != RET_SUCCESS) {
         asyncContext->FinishCallback();

@@ -296,12 +296,13 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     int32_t ret = PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenInfoBasic_.tokenID,
         permissionName, isGranted, flag, statusChanged);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Update date brief failed, ret is %{public}d", ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}u, isGranted(%{public}d), ret(%{public}d).",
+            permissionName.c_str(), tokenInfoBasic_.tokenID, isGranted, ret);
         return ret;
     }
     if (ShortGrantManager::GetInstance().IsShortGrantPermission(permissionName)) {
         LOGI(ATM_DOMAIN, ATM_TAG,
-            "Short grant permission %{public}s should not be notified to db.", permissionName.c_str());
+            "Short grant perm %{public}s should not be notified to db.", permissionName.c_str());
         return RET_SUCCESS;
     }
     if (isRemote_) {
@@ -336,7 +337,7 @@ int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStatus>&
     }
     for (const auto& perm : briefPermDataList) {
         PermissionStatus fullData;
-        (void)TransferOpcodeToPermission(perm.permCode, fullData.permissionName);
+        fullData.permissionName = TransferOpcodeToPermission(perm.permCode);
         fullData.grantStatus = static_cast<int32_t>(perm.status);
         fullData.grantFlag = perm.flag;
         permList.emplace_back(fullData);

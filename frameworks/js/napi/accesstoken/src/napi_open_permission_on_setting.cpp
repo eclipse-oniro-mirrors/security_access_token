@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "napi_base_context.h"
+#include "hisysevent.h"
 #include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -43,6 +44,31 @@ constexpr int32_t PERM_IS_NOT_SUPPORTED = 3;
 
 std::mutex g_lockFlag;
 } // namespace
+static inline void ReportHisysEventBehavior(const OpenPermOnSettingAsyncContext& context)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "BUNDLENAME", context.bundleName,
+        "UIEXTENSION_FLAG", true,
+        "SCENE_CODE", context.contextType_,
+        "TOKENID", context.tokenId,
+        "EXTRA_INFO", context.permissionName
+    );
+}
+
+static inline void ReportHisysEventError(
+    const OpenPermOnSettingAsyncContext& context, int32_t errorCode, int32_t innerCode)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "ERROR_CODE", errorCode,
+        "CONTEXT_TOKEN", context.tokenId,
+        "INNER_CODE", innerCode,
+        "BUNDLENAME", context.bundleName,
+        "SCENE_CODE", context.contextType_,
+        "EXTRA_INFO", context.permissionName
+    );
+}
 
 static int32_t TransferToJsErrorCode(int32_t errCode)
 {
@@ -222,6 +248,7 @@ OpenPermOnSettingUICallback::OpenPermOnSettingUICallback(
     const std::shared_ptr<OpenPermOnSettingAsyncContext>& reqContext)
 {
     this->reqContext_ = reqContext;
+    isOnResult_.exchange(false);
 }
 
 OpenPermOnSettingUICallback::~OpenPermOnSettingUICallback()
@@ -237,6 +264,11 @@ void OpenPermOnSettingUICallback::SetSessionId(int32_t sessionId)
  */
 void OpenPermOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
+    isOnResult_.exchange(true);
     this->reqContext_->resultCode = result.GetIntParam(RESULT_CODE_KEY, 0);
     switch (this->reqContext_->resultCode) {
         case USER_REJECTED:
@@ -274,7 +306,11 @@ void OpenPermOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 void OpenPermOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
-
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
+    ReportHisysEventError(*reqContext_, TRIGGER_RELEASE, releaseCode);
     ReleaseHandler(-1);
 }
 
@@ -285,7 +321,11 @@ void OpenPermOnSettingUICallback::OnError(int32_t code, const std::string& name,
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
+    ReportHisysEventError(*reqContext_, TRIGGER_ONERROR, code);
     ReleaseHandler(-1);
 }
 
@@ -304,6 +344,13 @@ void OpenPermOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::Modal
 void OpenPermOnSettingUICallback::OnDestroy()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "UIExtensionAbility destructed.");
+    if (this->reqContext_ == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
+        return;
+    }
+    if (isOnResult_.load() == false) {
+        ReportHisysEventError(*reqContext_, TRIGGER_DESTROY, 0);
+    }
     ReleaseHandler(-1);
 }
 
@@ -328,6 +375,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<OpenPermOnSettingAsyncCo
         if (sessionId == 0) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create component, sessionId is 0.");
             asyncContext->result.errorCode = RET_FAILED;
+            ReportHisysEventError(*asyncContext, CREATE_MODAL_UI_FAILED, 0);
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -393,6 +441,7 @@ static void GetInstanceId(std::shared_ptr<OpenPermOnSettingAsyncContext>& asyncC
         Ace::UIContent* uiContent = GetUIContent(asyncContext);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, 0);
             return;
         }
         asyncContext->instanceId = uiContent->GetInstanceId();
@@ -614,6 +663,8 @@ void NapiOpenPermissionOnSetting::OpenPermissionOnSettingExecute(napi_env env, v
         }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
+        asyncContextHandle->asyncContextPtr->bundleName =
+            asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->bundleName;
     } else {
         if ((asyncContextHandle->asyncContextPtr->uiExtensionContext == nullptr) ||
             (asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo() == nullptr)) {
@@ -621,6 +672,8 @@ void NapiOpenPermissionOnSetting::OpenPermissionOnSettingExecute(napi_env env, v
         }
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        asyncContextHandle->asyncContextPtr->bundleName =
+            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->bundleName;
     }
     static AccessTokenID currToken = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != currToken) {
@@ -635,7 +688,7 @@ void NapiOpenPermissionOnSetting::OpenPermissionOnSettingExecute(napi_env env, v
 
     GetInstanceId(asyncContextHandle->asyncContextPtr);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog");
-
+    ReportHisysEventBehavior(*asyncContextHandle->asyncContextPtr);
     OpenOnSettingAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
     if (asyncContextHandle->asyncContextPtr->result.errorCode != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");

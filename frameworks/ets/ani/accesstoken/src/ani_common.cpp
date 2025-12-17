@@ -24,13 +24,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* WRAPPER_CLASS_NAME = "@ohos.abilityAccessCtrl.AsyncCallbackWrapper";
 constexpr const char* INVOKE_METHOD_NAME = "invoke";
-static const int32_t NUM_TWENTY_FOUR = 24;
 } // namespace
-
-int32_t GetDifferRequestErrorCode(const ReqPermFromUserErrorCode& errorCode, const AniRequestType& contextType)
-{
-    return static_cast<int32_t>(errorCode | (contextType << NUM_TWENTY_FOUR));
-}
 
 bool ExecuteAsyncCallback(ani_env* env, ani_object callback, ani_object error, ani_object result)
 {
@@ -117,8 +111,9 @@ void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContextBase> asyncC
             asyncContext->result_.errorCode = AccessToken::RET_FAILED;
             asyncContext->uiExtensionFlag = false;
             (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQ_PERM_FROM_USER_ERROR",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE",
-                GetDifferRequestErrorCode(CREATE_MODAL_UI_FAILED, asyncContext->contextType_));
+                HiviewDFX::HiSysEvent::EventType::FAULT,
+                "ERROR_CODE", CREATE_MODAL_UI_FAILED, "SELF_TOKENID", asyncContext->tokenId,
+                "BUNDLENAME", asyncContext->bundleName, "SCENE_CODE", asyncContext->contextType_);
             return;
         }
         uiExtCallback->SetSessionId(sessionId);
@@ -188,6 +183,21 @@ void CreateUIExtension(
         [uiExtCallback]() { uiExtCallback->OnDestroy(); },
     };
     CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
+}
+
+std::string TransPermissionsToString(const std::vector<std::string>& permList)
+{
+    std::string resultStr = "[";
+    size_t len = permList.size();
+    for (size_t i = 0; i < len; i++) {
+        if (i != len - 1) {
+            resultStr.append(permList[i] + ", ");
+        } else {
+            resultStr.append(permList[i]);
+        }
+    }
+    resultStr.append("]");
+    return resultStr;
 }
 } // namespace AccessToken
 } // namespace Security

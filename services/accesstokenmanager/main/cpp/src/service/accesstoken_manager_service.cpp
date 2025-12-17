@@ -839,7 +839,7 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     HapTokenInfo hapInfo;
     int32_t errorCode = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     if (errorCode != ERR_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err %{public}d.", errorCode);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u, err %{public}d.", tokenID, errorCode);
         dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
         ReportSysEventDelHap(errorCode, dfxInfo);
         return errorCode;
@@ -906,8 +906,8 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
 {
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = fullTokenId;
-    LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}d, callerPid %{public}d.",
-        tokenIdEx.tokenIdExStruct.tokenID, IPCSkeleton::GetCallingPid());
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}u, callerPid %{public}d.", tokenID, IPCSkeleton::GetCallingPid());
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
@@ -916,9 +916,9 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     }
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapTokenInfo hapInfo = { 0 };
-    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
+    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     if (error != ERR_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err %{public}d.", error);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u) err %{public}d.", tokenID, error);
         ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
         return error;
     }
@@ -940,16 +940,14 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     initInfo.policy = policyParcel.hapPolicy;
     initInfo.isUpdate = true;
     initInfo.bundleName = hapInfo.bundleName;
-    initInfo.tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    initInfo.tokenID = tokenID;
     if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult, undefValues)) {
         resultInfoIdl.realResult = ERROR;
         resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
-        int32_t rule = permCheckResult.permCheckResult.rule;
-        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(rule);
+        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
         ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
         return ERR_OK;
     }
-
     error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
         initializedList, policyParcel.hapPolicy, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
@@ -1228,7 +1226,8 @@ int32_t AccessTokenManagerService::GetVersion(uint32_t& version)
 
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d, bundle %{public}s.", IPCSkeleton::GetCallingPid(),
+        hapBaseInfoParcel.hapBaseInfo.bundleName.c_str());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);

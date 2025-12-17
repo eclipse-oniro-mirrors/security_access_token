@@ -18,7 +18,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 bool IsCurrentThread(std::thread::id threadId)
 {
     std::thread::id currentThread = std::this_thread::get_id();
@@ -214,6 +213,22 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& resul
         return false;
     }
     return true;
+}
+
+std::string TransPermissionsToString(const std::vector<std::string>& permList)
+{
+    std::string resultStr = "[";
+    resultStr = "[";
+    size_t len = permList.size();
+    for (size_t i = 0; i < len; i++) {
+        if (i != len - 1) {
+            resultStr.append(permList[i] + ", ");
+        } else {
+            resultStr.append(permList[i]);
+        }
+    }
+    resultStr.append("]");
+    return resultStr;
 }
 }  // namespace AccessToken
 }  // namespace Security

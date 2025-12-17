@@ -103,10 +103,10 @@ HWTEST_F(CommonTest, IsUserGrantPermissionTest001, TestSize.Level1)
  */
 HWTEST_F(CommonTest, TransferOpcodeToPermission001, TestSize.Level1)
 {
-    std::string permissionName;
     uint32_t opCode;
     EXPECT_TRUE(TransferPermissionToOpcode("ohos.permission.ANSWER_CALL", opCode));
-    EXPECT_TRUE(TransferOpcodeToPermission(opCode, permissionName));
+    std::string permissionName = TransferOpcodeToPermission(opCode);
+    EXPECT_FALSE(permissionName.empty());
     EXPECT_EQ(permissionName, "ohos.permission.ANSWER_CALL");
 }
 
@@ -118,9 +118,10 @@ HWTEST_F(CommonTest, TransferOpcodeToPermission001, TestSize.Level1)
  */
 HWTEST_F(CommonTest, TransferOpcodeToPermission002, TestSize.Level1)
 {
-    std::string permissionName;
-    EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE, permissionName));
-    EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE - 1, permissionName));
+    std::string permissionName = TransferOpcodeToPermission(MAX_PERM_SIZE);
+    EXPECT_TRUE(permissionName.empty());
+    permissionName = TransferOpcodeToPermission(MAX_PERM_SIZE - 1);
+    EXPECT_TRUE(permissionName.empty());
 }
 
 /*

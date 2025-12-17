@@ -16,6 +16,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
 #include "ani_common.h"
+#include "hisysevent.h"
 #include "permission_map.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -283,7 +284,6 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
         LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList or callback is null.");
         return;
     }
-
     ani_vm* vm;
     ani_status status = env->GetVM(&vm);
     if (status != ANI_OK) {
@@ -299,7 +299,6 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     ani_ref undefRef = nullptr;
     env->GetUndefined(&undefRef);
     ani_object result = reinterpret_cast<ani_object>(undefRef);
-
     std::string permission;
     if (CheckManualSettingPerm(asyncContext->permissionList, permission)) {
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_EXPECTED_PERMISSION_TYPE,
@@ -322,7 +321,10 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     asyncContext->GetInstanceId();
     GetRequestInstanceControl()->AddCallbackByInstanceId(asyncContext);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start to pop ui extension dialog.");
-
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", asyncContext->bundleName,
+        "UIEXTENSION_FLAG", true, "SCENE_CODE", static_cast<int32_t>(asyncContext->contextType_),
+        "TOKENID", asyncContext->tokenId, "EXTRA_INFO", TransPermissionsToString(asyncContext->permissionList));
     if (asyncContext->result_.errorCode != RET_SUCCESS) {
         asyncContext->FinishCallback();
         LOGW(ATM_DOMAIN, ATM_TAG, "Failed to pop uiextension dialog.");

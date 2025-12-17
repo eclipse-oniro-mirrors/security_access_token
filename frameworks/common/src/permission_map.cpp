@@ -66,13 +66,12 @@ bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
     return true;
 }
 
-bool TransferOpcodeToPermission(uint32_t opCode, std::string& permission)
+std::string TransferOpcodeToPermission(uint32_t opCode)
 {
     if (opCode >= MAX_PERM_SIZE) {
-        return false;
+        return "";
     }
-    permission = std::string(g_permList[opCode].permissionName);
-    return true;
+    return std::string(g_permList[opCode].permissionName);
 }
 
 bool IsUserGrantPermission(const std::string& permission)
