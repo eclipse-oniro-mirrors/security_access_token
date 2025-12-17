@@ -375,6 +375,7 @@ HWTEST_F(ATCompatSdkTest, VerifyAccessTokenTest002, TestSize.Level0)
 HWTEST_F(ATCompatSdkTest, VerifyAccessTokenMonitorTestFunc001, TestSize.Level1)
 {
     setuid(0);
+    TestCommon::SetTestEvironment(g_selfShellTokenId);
     AccessTokenIDEx tokenIdEx1 = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
     TestCommon::DeleteTestHapToken(tokenID1);
