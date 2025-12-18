@@ -69,8 +69,6 @@ access_token_external_deps = [
   "ability_base:want",
   "cJSON:cjson",
   "c_utils:utils",
-  "device_manager:devicemanagersdk",
-  "dsoftbus:softbus_client",
   "hilog:libhilog",
   "hisysevent:libhisysevent",
   "hitrace:hitrace_meter",
@@ -164,6 +162,10 @@ if (token_sync_enable == true) {
   access_token_include_dirs += [
     "${access_token_path}/interfaces/innerkits/tokensync/include",
     "${access_token_path}/services/common/libraryloader/include",
+  ]
+  access_token_external_deps += [
+    "device_manager:devicemanagersdk",
+    "dsoftbus:softbus_client",
   ]
 }
 
