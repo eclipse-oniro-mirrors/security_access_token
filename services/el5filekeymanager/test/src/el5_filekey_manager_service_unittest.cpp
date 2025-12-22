@@ -232,7 +232,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, QueryAppKeyState003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI9Q6K2
  */
-HWTEST_F(El5FilekeyManagerServiceTest, SetPolicyScreenLocked001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, SetPolicyScreenLocked001, TestSize.Level0)
 {
     ASSERT_EQ(el5FilekeyManagerService_->SetPolicyScreenLocked(), EFM_SUCCESS);
 }
@@ -243,7 +243,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, SetPolicyScreenLocked001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueI9Q6K2
  */
-HWTEST_F(El5FilekeyManagerServiceTest, Dump001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, Dump001, TestSize.Level0)
 {
     int fd = 1;
     std::vector<std::u16string> args = {};
@@ -269,7 +269,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, Dump002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI9Q6K2
  */
-HWTEST_F(El5FilekeyManagerServiceTest, Dump003, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, Dump003, TestSize.Level0)
 {
     int fd = 1;
     std::vector<std::u16string> args = {u"-h"};
