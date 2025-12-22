@@ -73,7 +73,7 @@ ani_object BusinessErrorAni::CreateError(ani_env* env, ani_int code, const std::
         return nullptr;
     }
     // constructor(code: int, message: string, data?: T)
-    status = env->Class_FindMethod(cls, "<ctor>", "iC{std.core.String}C{std.core.Object}:", &method);
+    status = env->Class_FindMethod(cls, "<ctor>", "iC{std.core.String}Y:", &method);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Class_FindMethod: %{public}u.", status);
         return nullptr;
