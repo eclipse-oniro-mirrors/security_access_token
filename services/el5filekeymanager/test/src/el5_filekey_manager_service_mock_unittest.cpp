@@ -136,7 +136,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -158,7 +158,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -180,7 +180,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -202,7 +202,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -224,7 +224,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -243,7 +243,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -281,7 +281,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -299,7 +299,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -316,7 +316,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -333,7 +333,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, SetFilePathPolicy002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -349,7 +349,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -365,7 +365,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, RegisterCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -384,7 +384,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -403,7 +403,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateGroupIDKey002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -421,7 +421,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -439,7 +439,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteGroupIDKey002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -461,7 +461,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -483,7 +483,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, QueryAppKeyState002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -496,7 +496,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -509,7 +509,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked002, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, Dump001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, Dump001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
@@ -524,7 +524,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Dump001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, Dump002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, Dump002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
@@ -539,7 +539,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Dump002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent001, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = nullptr;
     std::string eventName = "abc";
@@ -553,7 +553,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Level0)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
     std::string eventName = "abc";
@@ -567,7 +567,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Le
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceMockTest, OnRemoteRequest001, TestSize.Level0)
 {
     TestEl5FilekeyCallback testEl5FilekeyCallback;
     OHOS::MessageParcel data;
