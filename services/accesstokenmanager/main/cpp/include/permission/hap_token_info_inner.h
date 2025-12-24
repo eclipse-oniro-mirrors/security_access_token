@@ -55,23 +55,23 @@ public:
 
     void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
         const HapPolicy& hapPolicy);
-    void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
-    void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl) const;
+    void TranslateToHapTokenInfo(HapTokenInfo& infoParcel);
+    void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl);
     void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
 
     uint32_t GetReqPermissionSize();
-    HapTokenInfo GetHapInfoBasic() const;
-    int GetUserID() const;
-    int GetDlpType() const;
-    AccessTokenAttr GetAttr() const;
-    std::string GetBundleName() const;
-    int GetInstIndex() const;
-    AccessTokenID GetTokenID() const;
+    HapTokenInfo GetHapInfoBasic();
+    int GetUserID();
+    int GetDlpType();
+    AccessTokenAttr GetAttr();
+    std::string GetBundleName();
+    int GetInstIndex();
+    AccessTokenID GetTokenID();
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
     std::string ToString();
-    bool IsRemote() const;
+    bool IsRemote();
     void SetRemote(bool isRemote);
     bool IsPermDialogForbidden() const;
     void SetPermDialogForbidden(bool isForbidden);
