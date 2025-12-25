@@ -104,10 +104,10 @@ void PrivacyMultiThreadTest::TearDownTestCase()
         delete g_mock;
         g_mock = nullptr;
     }
-    SetSelfTokenID(g_selfTokenId);
-    PrivacyTestCommon::ResetTestEvironment();
 
     DeleteHapTokenList(g_tokenIdList);
+    SetSelfTokenID(g_selfTokenId);
+    PrivacyTestCommon::ResetTestEvironment();
 }
 
 void PrivacyMultiThreadTest::SetUp()

@@ -43,6 +43,7 @@ static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 
 HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(false)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenID = 0;
     tokenInfoBasic_.tokenAttr = 0;
@@ -55,41 +56,51 @@ HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(fals
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapInfoParams &info, const HapPolicy &policy) : permUpdateTimestamp_(0), isRemote_(false)
 {
-    tokenInfoBasic_.tokenID = id;
-    tokenInfoBasic_.userID = info.userID;
-    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
-    tokenInfoBasic_.tokenAttr = 0;
-    if (info.isSystemApp) {
-        tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+        tokenInfoBasic_.tokenID = id;
+        tokenInfoBasic_.userID = info.userID;
+        tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+        tokenInfoBasic_.tokenAttr = 0;
+        if (info.isSystemApp) {
+            tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
+        }
+        if (info.isAtomicService) {
+            tokenInfoBasic_.tokenAttr |= ATOMIC_SERVICE_FLAG;
+        }
+        tokenInfoBasic_.bundleName = info.bundleName;
+        tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
+        tokenInfoBasic_.instIndex = info.instIndex;
+        tokenInfoBasic_.dlpType = info.dlpType;
     }
-    if (info.isAtomicService) {
-        tokenInfoBasic_.tokenAttr |= ATOMIC_SERVICE_FLAG;
-    }
-    tokenInfoBasic_.bundleName = info.bundleName;
-    tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
-    tokenInfoBasic_.instIndex = info.instIndex;
-    tokenInfoBasic_.dlpType = info.dlpType;
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, policy.aclExtendedMap, true);
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfo &info, const std::vector<PermissionStatus>& permStateList) : isRemote_(false)
 {
-    permUpdateTimestamp_ = 0;
-    tokenInfoBasic_ = info;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+        permUpdateTimestamp_ = 0;
+        tokenInfoBasic_ = info;
+    }
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, permStateList, true);
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfoForSync& info) : isRemote_(true)
 {
-    permUpdateTimestamp_ = 0;
-    tokenInfoBasic_ = info.baseInfo;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+        permUpdateTimestamp_ = 0;
+        tokenInfoBasic_ = info.baseInfo;
+    }
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, info.permStateList, false);
 }
 
 HapTokenInfoInner::~HapTokenInfoInner()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d destruction", tokenInfoBasic_.tokenID);
     (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenInfoBasic_.tokenID);
 }
@@ -112,8 +123,9 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
 }
 
-void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
+void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     infoParcel = tokenInfoBasic_;
 }
 
@@ -163,19 +175,23 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     const std::vector<GenericValues>& permStateRes,
     const std::vector<GenericValues> extendedPermRes)
 {
-    tokenInfoBasic_.tokenID = tokenId;
-    int ret = RestoreHapTokenBasicInfo(tokenValue);
-    if (ret != RET_SUCCESS) {
-        return ret;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+        tokenInfoBasic_.tokenID = tokenId;
+        int ret = RestoreHapTokenBasicInfo(tokenValue);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
     }
-    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+
     PermissionDataBrief::GetInstance().RestorePermissionBriefData(tokenId, permStateRes, extendedPermRes);
     return RET_SUCCESS;
 }
 
 void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList,
-    const std::string& appId, ATokenAplEnum apl) const
+    const std::string& appId, ATokenAplEnum apl)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     if (isRemote_) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is remote hap token, will not store", tokenInfoBasic_.tokenID);
         return;
@@ -190,16 +206,17 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList,
 
 void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permStateValues)
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     if (isRemote_) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return;
     }
-    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     (void)PermissionDataBrief::GetInstance().StorePermissionBriefData(tokenInfoBasic_.tokenID, permStateValues);
 }
 
 uint32_t HapTokenInfoInner::GetReqPermissionSize()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     std::vector<BriefPermData> briefPermDataList;
     int32_t ret = PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
         tokenInfoBasic_.tokenID, briefPermDataList);
@@ -209,53 +226,63 @@ uint32_t HapTokenInfoInner::GetReqPermissionSize()
     return static_cast<uint32_t>(briefPermDataList.size());
 }
 
-int HapTokenInfoInner::GetUserID() const
+int HapTokenInfoInner::GetUserID()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.userID;
 }
 
-int HapTokenInfoInner::GetDlpType() const
+int HapTokenInfoInner::GetDlpType()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.dlpType;
 }
 
-AccessTokenAttr HapTokenInfoInner::GetAttr() const
+AccessTokenAttr HapTokenInfoInner::GetAttr()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.tokenAttr;
 }
 
-std::string HapTokenInfoInner::GetBundleName() const
+std::string HapTokenInfoInner::GetBundleName()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.bundleName;
 }
 
-int HapTokenInfoInner::GetInstIndex() const
+int HapTokenInfoInner::GetInstIndex()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.instIndex;
 }
 
-AccessTokenID HapTokenInfoInner::GetTokenID() const
+AccessTokenID HapTokenInfoInner::GetTokenID()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.tokenID;
 }
 
-HapTokenInfo HapTokenInfoInner::GetHapInfoBasic() const
+HapTokenInfo HapTokenInfoInner::GetHapInfoBasic()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_;
 }
 
 void HapTokenInfoInner::SetTokenBaseInfo(const HapTokenInfo& baseInfo)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     tokenInfoBasic_ = baseInfo;
 }
 
-bool HapTokenInfoInner::IsRemote() const
+bool HapTokenInfoInner::IsRemote()
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return isRemote_;
 }
 
 void HapTokenInfoInner::SetRemote(bool isRemote)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     isRemote_ = isRemote;
 }
 
@@ -463,6 +490,7 @@ std::string HapTokenInfoInner::ToString()
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
         return "";
     }
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return policy->DumpHapTokenInfo(tokenInfoBasic_, isRemote_, isPermDialogForbidden_, permStateList);
 }
 } // namespace AccessToken
