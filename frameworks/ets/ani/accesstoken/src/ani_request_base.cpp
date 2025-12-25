@@ -109,7 +109,9 @@ void RequestAsyncContextBase::FinishCallback()
         return;
     }
     bool isSameThread = IsCurrentThread(threadId_);
-    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_);
+    ani_option interopEnabled {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetCurrentEnv failed.");
         return;
@@ -132,8 +134,8 @@ void RequestAsyncContextBase::FinishCallback()
 
     (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef_), aniError, aniResult);
 
-    if (!isSameThread && vm_->DetachCurrentThread() != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "DetachCurrentThread failed!");
+    if (!isSameThread && DetachCurrentEnv(vm_) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
     }
 }
 
@@ -144,7 +146,9 @@ void RequestAsyncContextBase::Clear()
         return;
     }
     bool isSameThread = IsCurrentThread(threadId_);
-    ani_env* curEnv = isSameThread ? env_ : GetCurrentEnv(vm_);
+    ani_option interopEnabled {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopEnabled};
+    ani_env* curEnv = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (curEnv == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetCurrentEnv failed.");
         return;
@@ -153,6 +157,10 @@ void RequestAsyncContextBase::Clear()
     if (callbackRef_ != nullptr) {
         curEnv->GlobalReference_Delete(callbackRef_);
         callbackRef_ = nullptr;
+    }
+
+    if (!isSameThread) {
+        DetachCurrentEnv(vm_);
     }
 }
 
