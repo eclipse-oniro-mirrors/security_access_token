@@ -105,7 +105,7 @@ ani_object RequestPermOnSettingAsyncContext::WrapResult(ani_env* env)
         }
         ani_status status;
         if ((status = env->Object_CallMethodByName_Void(
-            arrayObj, "$_set", "iC{std.core.Object}:", index, enumItem)) != ANI_OK) {
+            arrayObj, "$_set", "iY:", index, enumItem)) != ANI_OK) {
             break;
         }
         index++;
