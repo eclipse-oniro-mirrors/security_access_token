@@ -8018,7 +8018,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 24,
+            "since": 23,
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
