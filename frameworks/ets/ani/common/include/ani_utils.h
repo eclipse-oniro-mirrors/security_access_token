@@ -74,7 +74,8 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length);
 ani_ref CreateAniArrayBool(ani_env* env, const std::vector<bool>& cArray);
 ani_ref CreateAniArrayInt(ani_env* env, const std::vector<int32_t>& cArray);
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray);
-ani_env* GetCurrentEnv(ani_vm* vm);
+ani_env* GetCurrentEnv(ani_vm* vm, const ani_options& aniArgs);
+ani_status DetachCurrentEnv(ani_vm* vm);
 
 // delete ref of GlobalReference_Create
 void DeleteReference(ani_env* env, ani_ref& ref);
