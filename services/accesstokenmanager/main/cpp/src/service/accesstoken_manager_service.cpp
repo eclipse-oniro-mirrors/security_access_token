@@ -1747,7 +1747,6 @@ bool AccessTokenManagerService::IsSecCompServiceCalling()
 
 int32_t AccessTokenManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Pid: %{public}d.", enhanceParcel.enhanceData.pid);
     return SecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
 }
 
