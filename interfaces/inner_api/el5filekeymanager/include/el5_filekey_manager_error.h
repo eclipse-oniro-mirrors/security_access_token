@@ -41,6 +41,7 @@ enum El5FilekeyManagerErrCode {
     EFM_ERR_IOCTL_FAILED,
     EFM_ERR_KEYID_EXISTED,
     EFM_ERR_GET_GROUP_INFO,
+    EFM_ERR_KEY_NOT_EXIST,
 };
 }  // namespace AccessToken
 }  // namespace Security
