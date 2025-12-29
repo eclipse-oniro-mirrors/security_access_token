@@ -17,7 +17,7 @@ export namespace screenLockFileManager {
 
   export enum DataType {
     MEDIA_DATA = 0x00000001,
-    ALL_DATA = 0xffffffff
+    ALL_DATA = -0x00000001
   }
 
   export enum AccessStatus {
