@@ -45,7 +45,9 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
         return ERR_PARAM_INVALID;
     }
-
+    if (IsReservedTokenId(id)) {
+        return ERR_TOKENID_HAS_EXISTED;
+    }
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
@@ -111,6 +113,24 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
         return;
     }
     tokenIdSet_.erase(id);
+}
+
+bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
+{
+    std::shared_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    return reservedTokenIdSet_.count(id) > 0;
+}
+
+void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
+{
+    std::unique_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    reservedTokenIdSet_.insert(id);
+}
+
+void AccessTokenIDManager::RemoveReservedTokenId(AccessTokenID id)
+{
+    std::unique_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    reservedTokenIdSet_.erase(id);
 }
 
 AccessTokenIDManager& AccessTokenIDManager::GetInstance()

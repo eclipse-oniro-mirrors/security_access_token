@@ -110,3 +110,20 @@ AccessTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::st
     SetSelfTokenID(selfTokenId);
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
+
+int32_t DeleteHapTokenID(const std::string& bundleName, bool isReservedTokenId)
+{
+    uint64_t selfTokenId = GetSelfTokenID();
+    AccessTokenID mockToken = GetNativeTokenId("foundation");
+    if (mockToken != selfTokenId) {
+        SetSelfTokenID(mockToken);
+    }
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(0, bundleName, 0);
+    if (tokenId != 0) {
+        AccessTokenKit::DeleteToken(tokenId, isReservedTokenId);
+    } else {
+        std::cout << "Failed to get token ID for bundle: " << bundleName << std::endl;
+    }
+    SetSelfTokenID(selfTokenId);
+    return RET_SUCCESS;
+}

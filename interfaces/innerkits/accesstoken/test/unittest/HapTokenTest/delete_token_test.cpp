@@ -213,6 +213,67 @@ HWTEST_F(DeleteTokenTest, DeleteTokenSpecTest001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+/**
+ * @tc.name: DeleteTokenWithReservedTest001
+ * @tc.desc: alloc a tokenId successfully, delete it successfully but reserve the tokenId.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DeleteTokenTest, DeleteTokenWithReservedTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenWithReservedTest001");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID, true));
+
+    EXPECT_EQ(0, AccessTokenKit::GetHapTokenID(g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex));
+    HapTokenInfo info;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetHapTokenInfo(tokenID, info));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID, true));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 0));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", 0));
+    HapTokenInfoExt infoExt;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetHapTokenInfoExtension(tokenID, infoExt));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    AccessTokenID tokenID2 = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, tokenID2);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID2, false));
+}
+
+/**
+ * @tc.name: DeleteTokenWithReservedTest002
+ * @tc.desc: alloc a tokenId successfully, delete it but reserve the tokenId, test DumpInfo.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DeleteTokenTest, DeleteTokenWithReservedTest002, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteTokenWithReservedTest002");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID, true));
+    AtmToolsParamInfo info;
+    std::string dumpInfo;
+    info.tokenId = tokenID;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    EXPECT_TRUE(dumpInfo.empty());
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(g_infoParms, g_policyPrams, tokenIdEx));
+    AccessTokenID tokenID2 = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, tokenID2);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID2, false));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

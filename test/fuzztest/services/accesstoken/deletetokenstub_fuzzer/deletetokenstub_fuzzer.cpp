@@ -42,10 +42,14 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+        bool isTokenReserved = provider.ConsumeBool();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId)) {
+            return false;
+        }
+        if (!datas.WriteBool(isTokenReserved)) {
             return false;
         }
 

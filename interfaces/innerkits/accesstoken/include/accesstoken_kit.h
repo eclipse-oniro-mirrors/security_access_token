@@ -147,6 +147,13 @@ public:
      */
     static int DeleteToken(AccessTokenID tokenID);
     /**
+     * @brief Delete token info.
+     * @param tokenID token id
+     * @param isTokenReserved whether to reserve the token
+     * @return error code, see access_token_error.h
+     */
+    static int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
+    /**
      * @brief Get token type by ATM service.
      * @param tokenID token id
      * @return token type enum, see access_token.h

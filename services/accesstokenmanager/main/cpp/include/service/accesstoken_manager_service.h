@@ -82,7 +82,7 @@ public:
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
-    int DeleteToken(AccessTokenID tokenID) override;
+    int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
     int32_t GetHapTokenID(

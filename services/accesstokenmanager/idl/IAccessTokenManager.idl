@@ -43,7 +43,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 6] void RevokePermission([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int flag, [in] int updateFlag);
     [ipccode 7] void ClearUserGrantedPermissionState([in] unsigned int tokenID);
     [ipccode 8] void AllocHapToken([in] HapInfoParcel hapInfo, [in] HapPolicyParcel policyParcel, [out] unsigned long fullTokenId);
-    [ipccode 9] void DeleteToken([in] unsigned int tokenID);
+    [ipccode 9] void DeleteToken([in] unsigned int tokenID, [in] boolean isTokenReserved);
     [ipccode 10] void InitHapToken([in] HapInfoParcel info, [in] HapPolicyParcel policy, [out] unsigned long fullTokenId, [out] HapInfoCheckResultIdl resultInfoIdl);
     [ipccode 11] void SetPermissionRequestToggleStatus([in] String permissionName, [in] unsigned int status, [in] int userID);
     [ipccode 12] void GetPermissionRequestToggleStatus([in] String permissionName, [out] unsigned int status, [in] int userID);
