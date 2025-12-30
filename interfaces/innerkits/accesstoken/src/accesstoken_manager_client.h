@@ -73,7 +73,7 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int DeleteToken(AccessTokenID tokenID);
+    int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);

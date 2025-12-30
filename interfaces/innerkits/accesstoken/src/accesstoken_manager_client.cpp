@@ -626,14 +626,14 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     return res;
 }
 
-int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
+int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->DeleteToken(tokenID);
+    int32_t result = proxy->DeleteToken(tokenID, isTokenReserved);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }

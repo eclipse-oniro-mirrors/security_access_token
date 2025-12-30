@@ -32,6 +32,7 @@
 #include "permission_manager.h"
 #include "token_modify_notifier.h"
 #undef private
+#include "access_token_db_operator.h"
 #include "permission_validator.h"
 #include "string_ex.h"
 #include "token_setproc.h"
@@ -51,6 +52,7 @@ static constexpr int INST_INDEX = 0;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
 static constexpr int32_t INVALID_GRANT_MODE = 1000;
+static const int32_t TOKEN_ATTR_RESERVED = 0x4;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -577,7 +579,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken004, TestSize.Level0)
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
-    ret = atManagerService_->DeleteToken(tokenID);
+    ret = atManagerService_->DeleteToken(tokenID, false);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -616,7 +618,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken005, TestSize.Level0)
     ret = atManagerService_->InitHapToken(info, policy, fullTokenId, result);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
-    ret = atManagerService_->DeleteToken(tokenID);
+    ret = atManagerService_->DeleteToken(tokenID, false);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -652,7 +654,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken006, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
         tokenID, "ohos.permission.CAMERA", value));
 
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 
 
@@ -684,7 +686,7 @@ HWTEST_F(AccessTokenInfoManagerTest, InitHapToken007, TestSize.Level0)
         tokenID, "ohos.permission.KERNEL_ATM_SELF_USE", value));
     EXPECT_EQ("", value);
 
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 
 /**
@@ -979,7 +981,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken004, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_WITHOUT_VALUE, atManagerService_->GetReqPermissionByName(
         tokenID, "ohos.permission.CAMERA", value));
 
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 
 
@@ -2491,6 +2493,198 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, Test
     AccessTokenID tokenID = 123; // invalid tokenid
     EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
         "ohos.permission.CAMERA"));
+}
+
+/**
+ * @tc.name: ReservedHapInfo001
+ * @tc.desc: RemoveReservedHapInfo
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ReservedHapInfo001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a normal hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, true);
+    // check whether reserved successfully
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
+    ASSERT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    std::vector<GenericValues> hapTokenResults;
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(false, hapTokenResults.empty());
+    ASSERT_NE(0, hapTokenResults[0].GetInt(TokenFiledConst::FIELD_TOKEN_ATTR) & TOKEN_ATTR_RESERVED);
+
+    // check whether can get hap info
+    HapTokenInfo info;
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, true));
+
+    // create hap again, will remove reserved info
+    AccessTokenIDEx tokenIdEx1 = {0};
+    ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx1, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
+    ASSERT_NE(tokenID, tokenID1);
+    it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
+    ASSERT_EQ(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
+    hapTokenResults.clear();
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(true, hapTokenResults.empty());
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID1));
+}
+
+/**
+ * @tc.name: ReservedHapInfo002
+ * @tc.desc: Inithaptokeninfos with invalid token info in db
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
+{
+    GenericValues genericValues;
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, 123);
+    genericValues.Put(TokenFiledConst::FIELD_USER_ID, 100);
+    genericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name");
+    genericValues.Put(TokenFiledConst::FIELD_API_VERSION, 9);
+    genericValues.Put(TokenFiledConst::FIELD_INST_INDEX, 0);
+    genericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, 0);
+    genericValues.Put(TokenFiledConst::FIELD_APP_ID, "test_app_id");
+    genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
+    genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, TOKEN_ATTR_RESERVED);
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    addInfo.addValues.emplace_back(genericValues);
+
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    addInfoVec.emplace_back(addInfo);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+    AccessTokenInfoManager::GetInstance().hasInited_ = false;
+    uint32_t hapSize = 0;
+    uint32_t nativeSize = 0;
+    uint32_t pefDefSize = 0;
+    uint32_t dlpSize = 0;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(100, "test_bundle_name", 0);
+    auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
+    EXPECT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
+
+    AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.erase(HapUniqueKey);
+    addInfoVec.clear();
+    DelInfo delInfo;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    delInfo.delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, 123);
+    delInfoVec.emplace_back(delInfo);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
+}
+
+/**
+ * @tc.name: ReservedHapInfo003
+ * @tc.desc: RegisterTokenId with reserved hap tokenid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ReservedHapInfo003, TestSize.Level0)
+{
+    AccessTokenIDInner idInner = {
+        .cloneFlag = 0,
+        .renderFlag = 0,
+        .dlpFlag = 0,
+        .version = DEFAULT_TOKEN_VERSION, // invalid version
+        .type = ATokenTypeEnum::TOKEN_HAP,
+        .tokenUniqueID = 123,
+    };
+    AccessTokenID tokenId = static_cast<AccessTokenID>(*(reinterpret_cast<uint32_t*>(&idInner)));
+    AccessTokenInfoManager::GetInstance().AddReservedHapTokenId(100, "test_bundle_name", 0, tokenId);
+    AccessTokenInfoManager::GetInstance().AddReservedHapTokenId(100, "test_bundle_name", 0, tokenId); // repeat add
+    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(100, "test_bundle_name", 0);
+    EXPECT_EQ(AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.count(HapUniqueKey), 1);
+
+    EXPECT_EQ(ERR_TOKENID_HAS_EXISTED,
+        AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, ATokenTypeEnum::TOKEN_HAP));
+    AccessTokenInfoManager::GetInstance().RemoveReservedHapTokenId(100, "test_bundle_name", 0);
+}
+
+/**
+ * @tc.name: ReservedHapInfo004
+ * @tc.desc: if reservedHapTokenIdMap_ not find tokenid, get from db
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ReservedHapInfo004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a normal hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, true);
+    // check whether reserved successfully
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
+    ASSERT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
+    AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.erase(HapUniqueKey);
+    // check whether can get hap info
+    HapTokenInfo info;
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
+    it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
+    ASSERT_EQ(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
+
+    AccessTokenIDEx tokenIdEx1 = {0};
+    ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx1, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID1));
+}
+
+/**
+ * @tc.name: ReservedHapInfo005
+ * @tc.desc: coverage test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ReservedHapInfo005, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a normal hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenID);
+    HapTokenInfo info;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
 }
 
 #ifdef TOKEN_SYNC_ENABLE

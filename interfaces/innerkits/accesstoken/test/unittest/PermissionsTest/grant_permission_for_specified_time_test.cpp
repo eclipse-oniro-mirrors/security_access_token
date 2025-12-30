@@ -202,6 +202,29 @@ HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbn
 }
 
 /**
+ * @tc.name: GrantPermissionForSpecifiedTimeAbnormalTest005
+ * @tc.desc: 1. tokenID is reserved when deleted;
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(GrantPermissionForSpecifiedTimeTest, GrantPermissionForSpecifiedTimeAbnormalTest005, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionForSpecifiedTimeAbnormalTest005");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(
+        g_infoParms.userID, g_infoParms.bundleName, g_infoParms.instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    uint64_t selfTokenId = GetSelfTokenID();
+    AccessTokenID foundationTokenID = TestCommon::GetNativeTokenIdFromProcess("foundation");
+    SetSelfTokenID(foundationTokenID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID, true));
+    SetSelfTokenID(selfTokenId);
+    uint32_t onceTime = 4;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::GrantPermissionForSpecifiedTime(tokenID,
+        "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", onceTime));
+}
+
+/**
  * @tc.name: GrantPermissionForSpecifiedTimeSpecsTest001
  * @tc.desc: 1. The permission is granted when onceTime is not reached;
  *           2. The permission is revoked after onceTime is reached.

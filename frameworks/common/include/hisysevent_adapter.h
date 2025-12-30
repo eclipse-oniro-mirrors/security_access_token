@@ -60,7 +60,7 @@ void ReportSysEventServiceStartError(SceneCode scene, const std::string& errMsg,
 void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode);
 void ReportSysEventAddHap(int32_t errorCode, const HapDfxInfo& info, bool needReportFault);
 void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info);
-void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info);
+void ReportSysEventDelHap(int32_t errorCode, int32_t sceneCode, const HapDfxInfo& info);
 void ReportSysEventDbException(AccessTokenDbSceneCode sceneCode, int32_t errCode, const std::string& tableName);
 } // namespace AccessToken
 } // namespace Security

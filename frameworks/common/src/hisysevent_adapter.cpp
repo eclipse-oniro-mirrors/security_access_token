@@ -126,7 +126,7 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
     ReportSysCommonEventError(info.ipcCode, errorCode);
 }
 
-void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info)
+void ReportSysEventDelHap(int32_t errorCode, int32_t sceneCode, const HapDfxInfo& info)
 {
     int32_t res = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
@@ -134,7 +134,7 @@ void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info)
         "USERID", info.userID,
         "BUNDLENAME", info.bundleName,
         "INSTINDEX", info.instIndex,
-        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "SCENE_CODE", sceneCode,
         "ERROR_CODE", errorCode,
         "DURATION", info.duration);
     if (res != 0) {
