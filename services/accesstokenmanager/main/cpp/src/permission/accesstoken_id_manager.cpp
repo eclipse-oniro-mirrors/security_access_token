@@ -45,10 +45,10 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
         return ERR_PARAM_INVALID;
     }
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
     if (IsReservedTokenId(id)) {
         return ERR_TOKENID_HAS_EXISTED;
     }
-    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
         AccessTokenID tokenId = *it;
