@@ -123,7 +123,7 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap);
 }
 
-void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel)
+void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     infoParcel = tokenInfoBasic_;
@@ -189,7 +189,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
 }
 
 void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList,
-    const std::string& appId, ATokenAplEnum apl)
+    const std::string& appId, ATokenAplEnum apl) const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     if (isRemote_) {
@@ -226,43 +226,43 @@ uint32_t HapTokenInfoInner::GetReqPermissionSize()
     return static_cast<uint32_t>(briefPermDataList.size());
 }
 
-int HapTokenInfoInner::GetUserID()
+int HapTokenInfoInner::GetUserID() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.userID;
 }
 
-int HapTokenInfoInner::GetDlpType()
+int HapTokenInfoInner::GetDlpType() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.dlpType;
 }
 
-AccessTokenAttr HapTokenInfoInner::GetAttr()
+AccessTokenAttr HapTokenInfoInner::GetAttr() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.tokenAttr;
 }
 
-std::string HapTokenInfoInner::GetBundleName()
+std::string HapTokenInfoInner::GetBundleName() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.bundleName;
 }
 
-int HapTokenInfoInner::GetInstIndex()
+int HapTokenInfoInner::GetInstIndex() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.instIndex;
 }
 
-AccessTokenID HapTokenInfoInner::GetTokenID()
+AccessTokenID HapTokenInfoInner::GetTokenID() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.tokenID;
 }
 
-HapTokenInfo HapTokenInfoInner::GetHapInfoBasic()
+HapTokenInfo HapTokenInfoInner::GetHapInfoBasic() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_;
@@ -274,7 +274,7 @@ void HapTokenInfoInner::SetTokenBaseInfo(const HapTokenInfo& baseInfo)
     tokenInfoBasic_ = baseInfo;
 }
 
-bool HapTokenInfoInner::IsRemote()
+bool HapTokenInfoInner::IsRemote() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return isRemote_;
@@ -288,12 +288,14 @@ void HapTokenInfoInner::SetRemote(bool isRemote)
 
 bool HapTokenInfoInner::IsPermDialogForbidden() const
 {
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     LOGI(ATM_DOMAIN, ATM_TAG, "%{public}d", isPermDialogForbidden_);
     return isPermDialogForbidden_;
 }
 
 void HapTokenInfoInner::SetPermDialogForbidden(bool isForbidden)
 {
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     isPermDialogForbidden_ = isForbidden;
 }
 
@@ -354,7 +356,13 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     return RET_SUCCESS;
 }
 
-int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStatus>& permList)
+int32_t HapTokenInfoInner::GetPermissionStateList(std::vector<PermissionStatus>& permList) const
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    return GetPermissionStateListInner(permList);
+}
+
+int32_t HapTokenInfoInner::GetPermissionStateListInner(std::vector<PermissionStatus>& permList) const
 {
     std::vector<BriefPermData> briefPermDataList;
     int32_t ret = PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
@@ -406,7 +414,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     }
 
     std::vector<PermissionStatus> permListOfHap;
-    ret = GetPermissionStateList(permListOfHap);
+    ret = GetPermissionStateListInner(permListOfHap);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get permission state list.");
         return ret;
@@ -479,10 +487,9 @@ bool HapTokenInfoInner::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, co
     return PermissionDataBrief::GetInstance().IsPermissionGrantedWithSecComp(tokenID, permissionName);
 }
 
-std::string HapTokenInfoInner::ToString()
+std::string HapTokenInfoInner::ToString() const
 {
     std::vector<PermissionStatus> permStateList;
-    (void)GetPermissionStateList(permStateList);
     std::vector<NativeTokenInfoBase> tokenInfos;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
@@ -491,6 +498,7 @@ std::string HapTokenInfoInner::ToString()
         return "";
     }
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    (void)GetPermissionStateListInner(permStateList);
     return policy->DumpHapTokenInfo(tokenInfoBasic_, isRemote_, isPermDialogForbidden_, permStateList);
 }
 } // namespace AccessToken
