@@ -55,30 +55,30 @@ public:
 
     void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
         const HapPolicy& hapPolicy);
-    void TranslateToHapTokenInfo(HapTokenInfo& infoParcel);
-    void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl);
+    void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
+    void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl) const;
     void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
 
     uint32_t GetReqPermissionSize();
-    HapTokenInfo GetHapInfoBasic();
-    int GetUserID();
-    int GetDlpType();
-    AccessTokenAttr GetAttr();
-    std::string GetBundleName();
-    int GetInstIndex();
-    AccessTokenID GetTokenID();
+    HapTokenInfo GetHapInfoBasic() const;
+    int GetUserID() const;
+    int GetDlpType() const;
+    AccessTokenAttr GetAttr() const;
+    std::string GetBundleName() const;
+    int GetInstIndex() const;
+    AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
-    std::string ToString();
-    bool IsRemote();
+    std::string ToString() const;
+    bool IsRemote() const;
     void SetRemote(bool isRemote);
     bool IsPermDialogForbidden() const;
     void SetPermDialogForbidden(bool isForbidden);
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
-    int32_t GetPermissionStateList(std::vector<PermissionStatus>& permList);
+    int32_t GetPermissionStateList(std::vector<PermissionStatus>& permList) const;
     int32_t ResetUserGrantPermissionStatus(void);
     void UpdateRemoteHapTokenInfo(AccessTokenID mapID,
         const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList);
@@ -102,6 +102,7 @@ private:
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
     bool UpdateStatesToDB(AccessTokenID tokenID, std::vector<PermissionStatus>& stateChangeList);
+    int32_t GetPermissionStateListInner(std::vector<PermissionStatus>& permList) const;
 
     HapTokenInfo tokenInfoBasic_;
 
@@ -110,7 +111,7 @@ private:
     /** permission dialog is forbidden */
     bool isPermDialogForbidden_ = false;
 
-    std::shared_mutex policySetLock_;
+    mutable std::shared_mutex policySetLock_;
 };
 } // namespace AccessToken
 } // namespace Security
