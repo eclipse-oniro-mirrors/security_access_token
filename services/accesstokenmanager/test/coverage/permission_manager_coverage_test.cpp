@@ -265,7 +265,7 @@ HWTEST_F(PermissionManagerCoverageTest, AddBriefPermData001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, PermissionDataBrief::GetInstance().AddBriefPermData(
         RANDOM_TOKENID, permissionName, grantStatus, grantFlag, value));
 
-    permissionName = "ohos.permission.READ_MEDIA";
+    permissionName = "ohos.permission.ACTIVITY_MOTION";
     ASSERT_EQ(AccessTokenError::ERR_TOKEN_INVALID, PermissionDataBrief::GetInstance().AddBriefPermData(
         RANDOM_TOKENID, permissionName, grantStatus, grantFlag, value));
 }
@@ -292,16 +292,16 @@ HWTEST_F(PermissionManagerCoverageTest, GetMasterAppUndValues001, TestSize.Level
  */
 HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
 {
-    PermissionStatus status1; // user grant permission ohos.permission.READ_MEDIA with pre-authorization
-    status1.permissionName = "ohos.permission.READ_MEDIA";
+    PermissionStatus status1; // user grant permission ohos.permission.ACTIVITY_MOTION with pre-authorization
+    status1.permissionName = "ohos.permission.ACTIVITY_MOTION";
     status1.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_DENIED);
     status1.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
-    PermissionStatus status2; // user grant permission ohos.permission.WRITE_MEDIA without pre-authorization
-    status2.permissionName = "ohos.permission.WRITE_MEDIA";
+    PermissionStatus status2; // user grant permission ohos.permission.ACCESS_BLUETOOTH without pre-authorization
+    status2.permissionName = "ohos.permission.ACCESS_BLUETOOTH";
     status2.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_DENIED);
     status2.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG);
     PreAuthorizationInfo info;
-    info.permissionName = "ohos.permission.READ_MEDIA";
+    info.permissionName = "ohos.permission.ACTIVITY_MOTION";
 
     HapPolicy policy;
     policy.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
@@ -322,7 +322,7 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
         initInfo, initializedList, result, undefValues));
     ASSERT_EQ(2, initializedList.size());
     for (const auto& status : initializedList) {
-        if (status.permissionName == "ohos.permission.READ_MEDIA") {
+        if (status.permissionName == "ohos.permission.ACTIVITY_MOTION") {
             ASSERT_EQ(static_cast<uint32_t>(PermissionFlag::PERMISSION_SYSTEM_FIXED), status.grantFlag);
         }
     }
@@ -350,7 +350,7 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     value1.Put(TokenFiledConst::FIELD_ACL, 0);
     GenericValues value2;
     value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID); // tokenID invalid
-    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_MEDIA");
+    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.ACTIVITY_MOTION");
     value2.Put(TokenFiledConst::FIELD_ACL, 0);
     GenericValues value3;
     value2.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID); // tokenID invalid
