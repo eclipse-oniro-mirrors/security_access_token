@@ -358,7 +358,7 @@ HapPolicyParams GetPolicyParam()
     };
     //test REQ_SUCCESS
     PermissionStateFull permState5 = {
-        .permissionName = "ohos.permission.WRITE_MEDIA",
+        .permissionName = "ohos.permission.ACCESS_BLUETOOTH",
         .isGeneral = true,
         .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -392,7 +392,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState007, TestSize.Level0
         .state = FORBIDDEN_OPER
     };
     PermissionListState permNotConfig = {
-        .permissionName = "ohos.permission.READ_MEDIA",
+        .permissionName = "ohos.permission.ACTIVITY_MOTION",
         .state = FORBIDDEN_OPER
     };
     std::vector<PermissionListState> permsList;

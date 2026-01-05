@@ -49,7 +49,7 @@ static constexpr int32_t NATIVE_TOKEN_WITHOUT_PERM = 671999999;
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_shellToken = 0;
 static MockNativeToken* g_mock = nullptr;
-static const char* INVALID_PERMISSION_NAME = "ohos.permission.READ_MEDIA";
+static const char* INVALID_PERMISSION_NAME = "ohos.permission.ACTIVITY_MOTION";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 }

@@ -59,7 +59,7 @@ static PermissionStatus g_state3 = { // invalid permission
 };
 
 static PermissionStatus g_state4 = { // user grant permission
-    .permissionName = "ohos.permission.READ_MEDIA",
+    .permissionName = "ohos.permission.ACTIVITY_MOTION",
     .grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED),
     .grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED)
 };

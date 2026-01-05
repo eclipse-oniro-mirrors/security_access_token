@@ -77,7 +77,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, TranslationIntoPermissionStatus001, Te
 {
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_MEDIA");
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.ACTIVITY_MOTION");
     value.Put(TokenFiledConst::FIELD_DEVICE_ID, "local");
     value.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(PermissionFlag::PERMISSION_ALLOW_THIS_TIME));
     value.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED));

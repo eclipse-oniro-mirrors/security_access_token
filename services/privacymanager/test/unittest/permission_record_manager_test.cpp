@@ -450,7 +450,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
         PolicyType::PRIVACY, CallerType::MICROPHONE, true, RANDOM_TOKENID));
 
-    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
+    std::vector<std::string> permList = {"ohos.permission.ACTIVITY_MOTION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -460,7 +460,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    std::string permissionName = "ohos.permission.READ_MEDIA";
+    std::string permissionName = "ohos.permission.ACTIVITY_MOTION";
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
@@ -490,7 +490,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
 
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::MICROPHONE, false,
         RANDOM_TOKENID);
-    std::vector<std::string> permList = {"ohos.permission.READ_MEDIA"};
+    std::vector<std::string> permList = {"ohos.permission.ACTIVITY_MOTION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
@@ -500,7 +500,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    std::string permissionName = "ohos.permission.READ_MEDIA";
+    std::string permissionName = "ohos.permission.ACTIVITY_MOTION";
     ASSERT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
@@ -570,17 +570,17 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest007, TestSize.Leve
 
     // tokenId invaild
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
-        MakeInfo(g_nativeToken, PID, "ohos.permission.READ_MEDIA"), CALLER_PID));
+        MakeInfo(g_nativeToken, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
-        MakeInfo(tokenId, PID, "ohos.permission.READ_MEDIA"), CALLER_PID));
+        MakeInfo(tokenId, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
         PermissionRecordManager::GetInstance().StartUsingPermission(
-        MakeInfo(tokenId, PID, "ohos.permission.READ_MEDIA"), CALLER_PID));
+        MakeInfo(tokenId, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
 
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(
-        tokenId, PID, "ohos.permission.READ_MEDIA", CALLER_PID));
+        tokenId, PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
 }
 
 /*
@@ -951,7 +951,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
 
     AddPermParamInfo info;
     info.tokenId = tokenId;
-    info.permissionName = "com.permission.READ_MEDIA";
+    info.permissionName = "com.permission.ACTIVITY_MOTION";
     info.successCount = 0;
     info.failCount = 0;
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
@@ -1032,7 +1032,7 @@ HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level0)
 
     // tokenId invaild
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StopUsingPermission(
-        static_cast<AccessTokenID>(0), PID, "ohos.permission.READ_MEDIA", CALLER_PID));
+        static_cast<AccessTokenID>(0), PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
 
     // permission invaild
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().StopUsingPermission(
@@ -1041,7 +1041,7 @@ HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level0)
     // not start using
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
         PermissionRecordManager::GetInstance().StopUsingPermission(
-        tokenId, PID, "ohos.permission.READ_MEDIA", CALLER_PID));
+        tokenId, PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
 }
 
 /*

@@ -29,7 +29,7 @@ using namespace OHOS::Security::AccessToken;
 
 namespace {
 static const std::string PERMISSION_ALL = "ohos.permission.APP_TRACKING_CONSENT";
-static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.WRITE_MEDIA";
+static const std::string PERMISSION_FULL_CONTROL = "ohos.permission.ACCESS_BLUETOOTH";
 static const std::string PERMISSION_NOT_DISPLAYED = "ohos.permission.ANSWER_CALL";
 static const std::string TEST_PERMISSION_GRANT = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string TEST_PERMISSION_REVOKE = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
@@ -76,7 +76,7 @@ HapInfoParams g_infoParmsReadOnly = {
 };
 
 PermissionStateFull g_stateFullControl = {
-    .permissionName = "ohos.permission.WRITE_MEDIA",
+    .permissionName = "ohos.permission.ACCESS_BLUETOOTH",
     .isGeneral = true,
     .resDeviceID = {"local"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},

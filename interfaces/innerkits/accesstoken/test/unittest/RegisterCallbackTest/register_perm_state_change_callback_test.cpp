@@ -617,7 +617,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallbackSpecTest005");
     PermStateChangeScope scopeInfo;
     static PermissionStateFull infoManagerTestStateA = {
-        .permissionName = "ohos.permission.READ_MEDIA",
+        .permissionName = "ohos.permission.ACTIVITY_MOTION",
         .isGeneral = true,
         .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
@@ -635,13 +635,13 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackSpe
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
     scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
-    scopeInfo.permList = {"ohos.permission.READ_MEDIA"};
+    scopeInfo.permList = {"ohos.permission.ACTIVITY_MOTION"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     EXPECT_EQ(RET_SUCCESS, res);
 
     res = TestCommon::GrantPermissionByTest(tokenIdEx.tokenIdExStruct.tokenID,
-        "ohos.permission.READ_MEDIA", PERMISSION_SYSTEM_FIXED);
+        "ohos.permission.ACTIVITY_MOTION", PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(RET_SUCCESS, res);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
