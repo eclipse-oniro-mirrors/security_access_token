@@ -125,6 +125,32 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DumpTokenInfoAbnormalTest003
+ * @tc.desc: Get dump information with invalid param
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest003, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest003");
+    SetSelfTokenID(g_selfTokenId);
+    std::string dumpInfo = "param invalid";
+    AtmToolsParamInfo info;
+    std::string invalidstr(257, 's');
+    info.permissionName = invalidstr;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    ASSERT_EQ("param invalid", dumpInfo);
+    info.permissionName = "";
+    info.bundleName = invalidstr;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    ASSERT_EQ("param invalid", dumpInfo);
+    info.bundleName = "";
+    info.processName = invalidstr;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    ASSERT_EQ("param invalid", dumpInfo);
+}
+
+/**
  * @tc.name: DumpTokenInfoFuncTest001
  * @tc.desc: Get dump token information with valid tokenID
  * @tc.type: FUNC

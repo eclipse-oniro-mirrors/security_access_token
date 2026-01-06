@@ -30,6 +30,8 @@ struct AtmToolsParamInfoParcel final : public Parcelable {
 
     bool Marshalling(Parcel &out) const override;
 
+    bool CheckParam(const std::string& param);
+
     static AtmToolsParamInfoParcel *Unmarshalling(Parcel &in);
 
     AtmToolsParamInfo info;

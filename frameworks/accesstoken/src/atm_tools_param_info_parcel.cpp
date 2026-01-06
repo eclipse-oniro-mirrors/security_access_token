@@ -19,12 +19,21 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const static int MAX_LENGTH = 256;
 bool AtmToolsParamInfoParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteUint32(this->info.tokenId));
     RETURN_IF_FALSE(out.WriteString(this->info.permissionName));
     RETURN_IF_FALSE(out.WriteString(this->info.bundleName));
     RETURN_IF_FALSE(out.WriteString(this->info.processName));
+    return true;
+}
+
+bool AtmToolsParamInfoParcel::CheckParam(const std::string& param)
+{
+    if (!param.empty() && param.length() > MAX_LENGTH) {
+        return false;
+    }
     return true;
 }
 
@@ -36,9 +45,15 @@ AtmToolsParamInfoParcel* AtmToolsParamInfoParcel::Unmarshalling(Parcel& in)
     }
 
     RELEASE_IF_FALSE(in.ReadUint32(atmToolsParamInfoParcel->info.tokenId), atmToolsParamInfoParcel);
-    atmToolsParamInfoParcel->info.permissionName = in.ReadString();
-    atmToolsParamInfoParcel->info.bundleName = in.ReadString();
-    atmToolsParamInfoParcel->info.processName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(atmToolsParamInfoParcel->info.permissionName), atmToolsParamInfoParcel);
+    RELEASE_IF_FALSE(atmToolsParamInfoParcel->CheckParam(atmToolsParamInfoParcel->info.permissionName),
+        atmToolsParamInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(atmToolsParamInfoParcel->info.bundleName), atmToolsParamInfoParcel);
+    RELEASE_IF_FALSE(atmToolsParamInfoParcel->CheckParam(atmToolsParamInfoParcel->info.bundleName),
+        atmToolsParamInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(atmToolsParamInfoParcel->info.processName), atmToolsParamInfoParcel);
+    RELEASE_IF_FALSE(atmToolsParamInfoParcel->CheckParam(atmToolsParamInfoParcel->info.processName),
+        atmToolsParamInfoParcel);
     return atmToolsParamInfoParcel;
 }
 } // namespace AccessToken
