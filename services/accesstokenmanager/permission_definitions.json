@@ -8043,7 +8043,8 @@
             "since": 23,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["wearable"]
         }
     ]
 }
