@@ -32,7 +32,7 @@ int32_t main(int argc, char *argv[])
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
-    AccessTokenID mockToken = GetHapTokenId("GrantPermission", reqPerm);
+    FullTokenID mockToken = GetHapTokenId("GrantPermission", reqPerm);
     SetSelfTokenID(mockToken);
     std::cout << "Self tokenId is " << GetSelfTokenID() << std::endl;
 
@@ -43,6 +43,6 @@ int32_t main(int argc, char *argv[])
     int32_t ret = AccessTokenKit::GrantPermission(tokenId, permisisionName, PERMISSION_USER_SET);
     std::cout << "GrantPermission end, ret=" << ret << std::endl;
 
-    AccessTokenKit::DeleteToken(mockToken);
+    AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;
 }

@@ -33,7 +33,7 @@ int32_t main(int argc, char *argv[])
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    AccessTokenID mockToken = GetHapTokenId("SetPermDialogCap", reqPerm);
+    FullTokenID mockToken = GetHapTokenId("SetPermDialogCap", reqPerm);
     SetSelfTokenID(mockToken);
     std::cout << "Self tokenId is " << GetSelfTokenID() << std::endl;
 
@@ -48,6 +48,6 @@ int32_t main(int argc, char *argv[])
     int32_t ret = AccessTokenKit::SetPermDialogCap(baseInfo, isForbidden);
     std::cout << "SetPermDialogCap end, " << ret << std::endl;
 
-    AccessTokenKit::DeleteToken(mockToken);
+    AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;
 }

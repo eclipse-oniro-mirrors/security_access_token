@@ -21,7 +21,7 @@
 
 void PrintCurrentTime();
 OHOS::Security::AccessToken::AccessTokenID GetNativeTokenId(const std::string& process);
-OHOS::Security::AccessToken::AccessTokenID GetHapTokenId(
+OHOS::Security::AccessToken::FullTokenID GetHapTokenId(
     const std::string& bundle, const std::vector<std::string>& reqPerm);
 int32_t DeleteHapTokenID(const std::string& bundleName, bool isReservedTokenId);
 
