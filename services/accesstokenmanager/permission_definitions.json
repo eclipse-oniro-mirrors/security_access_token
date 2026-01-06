@@ -8034,6 +8034,16 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_RISK_PHOTOS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
