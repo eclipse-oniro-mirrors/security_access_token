@@ -8044,7 +8044,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["wearable"]
+            "deviceTypes": ["general"]
         }
     ]
 }
