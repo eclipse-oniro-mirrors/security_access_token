@@ -458,14 +458,23 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
     if (AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS) {
         if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED && info.permissionName == CAMERA_PERMISSION_NAME) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, don't add used record.");
+            LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, add used record asynchronously.");
+            auto addRecord = [this, info]() {
+                (void)AddPermissionUsedRecordInner(info);
+            };
+            std::thread addRecordTask(addRecord);
+            addRecordTask.detach();
             return Constant::SUCCESS;
         } else if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
             LOGI(PRI_DOMAIN, PRI_TAG, "Fixed by admin policy, don't add used record.");
             return Constant::SUCCESS;
         }
     }
+    return AddPermissionUsedRecordInner(info);
+}
 
+int32_t PermissionRecordManager::AddPermissionUsedRecordInner(const AddPermParamInfo& info)
+{
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid tokenId(%{public}d).", info.tokenId);
