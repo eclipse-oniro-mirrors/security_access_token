@@ -62,7 +62,7 @@ AccessTokenID GetNativeTokenId(const std::string& process)
     return tokenID;
 }
 
-AccessTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::string>& reqPerm)
+FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::string>& reqPerm)
 {
     uint64_t selfTokenId = GetSelfTokenID();
     HapInfoParams infoParams = {
@@ -108,7 +108,7 @@ AccessTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::st
 
     // restore
     SetSelfTokenID(selfTokenId);
-    return tokenIdEx.tokenIdExStruct.tokenID;
+    return tokenIdEx.tokenIDEx;
 }
 
 int32_t DeleteHapTokenID(const std::string& bundleName, bool isReservedTokenId)

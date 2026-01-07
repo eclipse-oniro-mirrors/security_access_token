@@ -32,7 +32,7 @@ int32_t main(int argc, char *argv[])
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO");
-    AccessTokenID mockToken = GetHapTokenId("GrantShortTermWriteImageVideo", reqPerm);
+    FullTokenID mockToken = GetHapTokenId("GrantShortTermWriteImageVideo", reqPerm);
     SetSelfTokenID(mockToken);
     std::cout << "Self tokenId is " << GetSelfTokenID() << std::endl;
 
@@ -44,6 +44,6 @@ int32_t main(int argc, char *argv[])
     int32_t ret = AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permisisionName, time);
     std::cout << "GrantPermissionForSpecifiedTime end, " << ret << std::endl;
 
-    AccessTokenKit::DeleteToken(mockToken);
+    AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;
 }
