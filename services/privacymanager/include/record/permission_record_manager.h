@@ -136,6 +136,7 @@ private:
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
+    int32_t AddPermissionUsedRecordInner(const AddPermParamInfo& info);
     bool AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
