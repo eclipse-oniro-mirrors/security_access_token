@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,19 +31,19 @@ namespace Security {
 namespace AccessToken {
 class RemoteCommandFactory {
 public:
-    static RemoteCommandFactory &GetInstance();
+    static RemoteCommandFactory& GetInstance();
 
-    std::shared_ptr<SyncRemoteHapTokenCommand> NewSyncRemoteHapTokenCommand(const std::string &srcDeviceId,
-        const std::string &dstDeviceId, AccessTokenID tokenID);
+    std::shared_ptr<SyncRemoteHapTokenCommand> NewSyncRemoteHapTokenCommand(const std::string& srcDeviceId,
+        const std::string& dstDeviceId, AccessTokenID tokenID);
 
-    std::shared_ptr<DeleteRemoteTokenCommand> NewDeleteRemoteTokenCommand(const std::string &srcDeviceId,
-        const std::string &dstDeviceId, AccessTokenID tokenID);
+    std::shared_ptr<DeleteRemoteTokenCommand> NewDeleteRemoteTokenCommand(const std::string& srcDeviceId,
+        const std::string& dstDeviceId, AccessTokenID tokenID);
 
-    std::shared_ptr<UpdateRemoteHapTokenCommand> NewUpdateRemoteHapTokenCommand(const std::string &srcDeviceId,
-        const std::string &dstDeviceId, const HapTokenInfoForSync& tokenInfo);
+    std::shared_ptr<UpdateRemoteHapTokenCommand> NewUpdateRemoteHapTokenCommand(const std::string& srcDeviceId,
+        const std::string& dstDeviceId, const HapTokenInfoForSync& tokenInfo);
 
     std::shared_ptr<BaseRemoteCommand> NewRemoteCommandFromJson(
-        const std::string &commandName, const std::string &commandJsonString);
+        const std::string& commandName, const std::string& commandJsonString, const std::string& rawDeviceId);
 
 private:
     const std::string TAG = "RemoteCommandFactory";

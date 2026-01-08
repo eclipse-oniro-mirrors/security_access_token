@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,8 +34,8 @@ public:
 
     std::string ToJsonPayload() override;
 
-    explicit DeleteRemoteTokenCommand(const std::string &json);
-    DeleteRemoteTokenCommand(const std::string &srcDeviceId, const std::string &dstDeviceId,
+    explicit DeleteRemoteTokenCommand(const std::string& json, const std::string& rawDeviceId = "");
+    DeleteRemoteTokenCommand(const std::string& srcDeviceId, const std::string& dstDeviceId,
         AccessTokenID deleteID);
     ~DeleteRemoteTokenCommand() override = default;
 

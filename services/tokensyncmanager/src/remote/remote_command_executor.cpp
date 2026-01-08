@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,7 +30,7 @@ namespace AccessToken {
 namespace {
 static const std::string TASK_NAME = "RemoteCommandExecutor::ProcessBufferedCommandsWithThread";
 }  // namespace
-RemoteCommandExecutor::RemoteCommandExecutor(const std::string &targetNodeId)
+RemoteCommandExecutor::RemoteCommandExecutor(const std::string& targetNodeId)
     : targetNodeId_(targetNodeId), ptrChannel_(nullptr), mutex_(), commands_(), running_(false)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "RemoteCommandExecutor()");
@@ -42,7 +42,7 @@ RemoteCommandExecutor::~RemoteCommandExecutor()
     running_ = false;
 }
 
-const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std::string &targetNodeId)
+const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std::string& targetNodeId)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "CreateChannel: targetNodeId=%{public}s",
         ConstantCommon::EncryptDevId(targetNodeId).c_str());
@@ -290,7 +290,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     }
 
     std::shared_ptr<BaseRemoteCommand> ptrResponseCommand =
-        RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, responseString);
+        RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, responseString, targetNodeId_);
     if (ptrResponseCommand == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TargetNodeId %{public}s, get null response command!", tartgetNodeId.c_str());
         return Constant::FAILURE;

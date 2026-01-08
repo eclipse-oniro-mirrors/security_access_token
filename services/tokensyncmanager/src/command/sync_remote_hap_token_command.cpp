@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,7 +26,7 @@ namespace Security {
 namespace AccessToken {
 
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
-    const std::string &srcDeviceId, const std::string &dstDeviceId, AccessTokenID id) : requestTokenId_(id)
+    const std::string& srcDeviceId, const std::string& dstDeviceId, AccessTokenID id) : requestTokenId_(id)
 {
     remoteProtocol_.commandName = COMMAND_NAME;
     remoteProtocol_.uniqueId = COMMAND_NAME;
@@ -41,9 +41,10 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     hapTokenInfo_.baseInfo.tokenID = 0;
     hapTokenInfo_.baseInfo.userID = 0;
     hapTokenInfo_.baseInfo.ver = DEFAULT_TOKEN_VERSION;
+    rawDeviceId_ = dstDeviceId;
 }
 
-SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
+SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string& json, const std::string& rawDeviceId)
 {
     requestTokenId_ = 0;
     hapTokenInfo_.baseInfo.bundleName = "";
@@ -66,6 +67,8 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
     if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, hapTokenInfo_);
     }
+
+    rawDeviceId_ = rawDeviceId;
 }
 
 std::string SyncRemoteHapTokenCommand::ToJsonPayload()
@@ -90,6 +93,12 @@ void SyncRemoteHapTokenCommand::Execute()
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
+    if (!CheckDeviceIdValid(remoteProtocol_.srcDeviceId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to SyncRemoteHapTokenCommand, deviceId(%{public}s) invalid.",
+            ConstantCommon::EncryptDevId(remoteProtocol_.srcDeviceId).c_str());
+        return;
+    }
+
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(requestTokenId_, hapTokenInfo_);
     if (ret != RET_SUCCESS) {
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
@@ -106,6 +115,11 @@ void SyncRemoteHapTokenCommand::Finish()
 {
     if (remoteProtocol_.statusCode != Constant::SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Finish: end as: SyncRemoteHapTokenCommand get remote result error.");
+        return;
+    }
+    if (!CheckDeviceIdValid(remoteProtocol_.dstDeviceId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to SyncRemoteHapTokenCommand, deviceId(%{public}s) invalid.",
+            ConstantCommon::EncryptDevId(remoteProtocol_.dstDeviceId).c_str());
         return;
     }
     AccessTokenKit::SetRemoteHapTokenInfo(remoteProtocol_.dstDeviceId, hapTokenInfo_);
