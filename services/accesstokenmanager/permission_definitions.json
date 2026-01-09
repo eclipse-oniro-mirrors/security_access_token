@@ -7959,6 +7959,17 @@
             "deviceTypes": ["2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.ALLOW_COREDUMP",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.MANAGE_MEDIA_RESOURCES_FOR_PUBLIC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
