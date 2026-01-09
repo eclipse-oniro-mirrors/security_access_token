@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,15 +20,13 @@
 #include "accesstoken_common_log.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
-#include "device_info.h"
-#include "device_info_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
 DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
-    const std::string &srcDeviceId, const std::string &dstDeviceId, AccessTokenID deleteID)
+    const std::string& srcDeviceId, const std::string& dstDeviceId, AccessTokenID deleteID)
     : deleteTokenId_(deleteID)
 {
     remoteProtocol_.commandName = COMMAND_NAME;
@@ -37,9 +35,10 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
     remoteProtocol_.dstDeviceId = dstDeviceId;
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
     remoteProtocol_.requestVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
+    rawDeviceId_ = dstDeviceId;
 }
 
-DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
+DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json, const std::string& rawDeviceId)
 {
     deleteTokenId_ = 0;
     CJsonUnique jsonObject = CreateJsonFromString(json);
@@ -52,6 +51,8 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
     if (GetUnsignedIntFromJson(jsonObject, "tokenId", tokenId)) {
         deleteTokenId_ = (AccessTokenID)tokenId;
     }
+
+    rawDeviceId_ = rawDeviceId;
 }
 
 std::string DeleteRemoteTokenCommand::ToJsonPayload()
@@ -77,18 +78,12 @@ void DeleteRemoteTokenCommand::Execute()
     LOGI(ATM_DOMAIN, ATM_TAG, "Execute: start as: DeleteRemoteTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
-
-    DeviceInfo devInfo;
-    bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
-        DeviceIdType::UNKNOWN, devInfo);
-    if (!result) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Error: get remote uniqueDeviceId failed");
-        remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+    if (!CheckDeviceIdValid(remoteProtocol_.srcDeviceId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DeleteRemoteTokenCommand, deviceId(%{public}s) invalid.",
+            ConstantCommon::EncryptDevId(remoteProtocol_.srcDeviceId).c_str());
         return;
     }
-
-    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
-    int ret = AccessTokenKit::DeleteRemoteToken(uniqueDeviceId, deleteTokenId_);
+    int ret = AccessTokenKit::DeleteRemoteToken(rawDeviceId_, deleteTokenId_);
     if (ret != RET_SUCCESS) {
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         remoteProtocol_.message = Constant::COMMAND_RESULT_FAILED;

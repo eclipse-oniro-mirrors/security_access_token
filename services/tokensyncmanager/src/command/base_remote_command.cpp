@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,8 @@
 
 #include "accesstoken_common_log.h"
 #include "data_validator.h"
+#include "device_info.h"
+#include "device_info_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -260,6 +262,25 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const CJson* nativeTokenJson,
         nativeTokenInfo.nativeAcls = nativeAcls;
     }
     FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);
+}
+
+bool BaseRemoteCommand::CheckDeviceIdValid(const std::string& deviceId)
+{
+    DeviceInfo devInfo;
+    bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, devInfo);
+    if (!result) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Failed to get remote uniqueDeviceId.");
+        remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+        return false;
+    }
+
+    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
+    if (uniqueDeviceId != rawDeviceId_) {
+        remoteProtocol_.statusCode = Constant::FAILURE;
+        remoteProtocol_.message = Constant::COMMAND_RESULT_FAILED;
+        return false;
+    }
+    return true;
 }
 }  // namespace AccessToken
 }  // namespace Security

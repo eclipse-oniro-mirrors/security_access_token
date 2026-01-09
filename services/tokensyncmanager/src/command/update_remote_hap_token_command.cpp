@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,14 +20,13 @@
 #include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
-#include "device_info_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
-    const std::string &srcDeviceId, const std::string &dstDeviceId, const HapTokenInfoForSync& tokenInfo)
+    const std::string& srcDeviceId, const std::string& dstDeviceId, const HapTokenInfoForSync& tokenInfo)
     : updateTokenInfo_(tokenInfo)
 {
     remoteProtocol_.commandName = COMMAND_NAME;
@@ -36,9 +35,10 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
     remoteProtocol_.dstDeviceId = dstDeviceId;
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
     remoteProtocol_.requestVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
+    rawDeviceId_ = dstDeviceId;
 }
 
-UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json)
+UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string& json, const std::string& rawDeviceId)
 {
     CJsonUnique jsonObject = CreateJsonFromString(json);
     if (jsonObject == nullptr) {
@@ -51,6 +51,8 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
     if (hapTokenJson != nullptr) {
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, updateTokenInfo_);
     }
+
+    rawDeviceId_ = rawDeviceId;
 }
 
 std::string UpdateRemoteHapTokenCommand::ToJsonPayload()
@@ -74,18 +76,12 @@ void UpdateRemoteHapTokenCommand::Execute()
 
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
-
-    DeviceInfo devInfo;
-    bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
-        DeviceIdType::UNKNOWN, devInfo);
-    if (!result) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
-        remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+    if (!CheckDeviceIdValid(remoteProtocol_.srcDeviceId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UpdateRemoteHapTokenCommand, deviceId(%{public}s) invalid.",
+            ConstantCommon::EncryptDevId(remoteProtocol_.srcDeviceId).c_str());
         return;
     }
-
-    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(uniqueDeviceId, updateTokenInfo_);
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(rawDeviceId_, updateTokenInfo_);
     if (ret != RET_SUCCESS) {
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         remoteProtocol_.message = Constant::COMMAND_RESULT_FAILED;

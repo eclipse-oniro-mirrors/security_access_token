@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,9 +39,9 @@ public:
 
     std::string ToJsonPayload() override;
 
-    explicit SyncRemoteHapTokenCommand(const std::string &json);
-    SyncRemoteHapTokenCommand(const std::string &srcDeviceId,
-        const std::string &dstDeviceId, AccessTokenID id);
+    explicit SyncRemoteHapTokenCommand(const std::string& json, const std::string& rawDeviceId = "");
+    SyncRemoteHapTokenCommand(const std::string& srcDeviceId,
+        const std::string& dstDeviceId, AccessTokenID id);
     ~SyncRemoteHapTokenCommand() override = default;
 
 private:

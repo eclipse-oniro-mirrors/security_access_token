@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -388,8 +388,8 @@ void SoftBusChannel::CancelCloseConnectionIfNeeded()
 void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std::string &commandName,
     const std::string &jsonPayload)
 {
-    std::shared_ptr<BaseRemoteCommand> command =
-        RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, jsonPayload);
+    std::shared_ptr<BaseRemoteCommand> command =RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(
+        commandName, jsonPayload, deviceId_);
     if (command == nullptr) {
         // send result back directly
         LOGW(ATM_DOMAIN, ATM_TAG, "Command %{public}s cannot get from json", commandName.c_str());

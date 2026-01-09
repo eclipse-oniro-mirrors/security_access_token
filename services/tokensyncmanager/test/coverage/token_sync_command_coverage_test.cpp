@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -172,22 +172,14 @@ HWTEST_F(TokenSyncCommandCoverageTest, DeleteRemoteTokenCommandTest001, TestSize
  */
 HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest001, TestSize.Level4)
 {
-    DeleteRemoteTokenCommand deleteCommand1(g_invalidDeviceId, g_invalidDeviceId, 123); // invalid tokenid
+    DeleteRemoteTokenCommand deleteCommand1(g_validDeviceId, g_validDeviceId, 123); // invalid tokenid
     deleteCommand1.Execute();
     EXPECT_EQ(deleteCommand1.remoteProtocol_.statusCode, Constant::FAILURE_BUT_CAN_RETRY);
     EXPECT_EQ(deleteCommand1.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
 }
 
-/**
- * @tc.name: DeleteCommandMockExecuteTest002
- * @tc.desc: mock test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest002, TestSize.Level4)
+static void AddHapTokenInfoForSync(HapTokenInfoForSync& remoteTokenInfo)
 {
-    MockNativeToken mock("token_sync_service");
-
     HapTokenInfo baseInfo = {
         .ver = 1,
         .userID = 1,
@@ -200,14 +192,26 @@ HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest002, TestSize
     PermissionStatus infoManagerTestState = {
         .permissionName = "ohos.permission.CAMERA",
         .grantStatus = PermissionState::PERMISSION_GRANTED,
-        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED};
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
+    };
     std::vector<PermissionStatus> permStateList;
     permStateList.emplace_back(infoManagerTestState);
+    remoteTokenInfo.baseInfo = baseInfo;
+    remoteTokenInfo.permStateList = permStateList;
+}
 
-    HapTokenInfoForSync remoteTokenInfo = {
-        .baseInfo = baseInfo,
-        .permStateList = permStateList
-    };
+/**
+ * @tc.name: DeleteCommandMockExecuteTest002
+ * @tc.desc: mock test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest002, TestSize.Level4)
+{
+    MockNativeToken mock("token_sync_service");
+
+    HapTokenInfoForSync remoteTokenInfo;
+    AddHapTokenInfoForSync(remoteTokenInfo);
 
     int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(g_validDeviceId, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -216,6 +220,40 @@ HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest002, TestSize
     deleteCommand1.Execute();
     EXPECT_EQ(deleteCommand1.remoteProtocol_.statusCode, Constant::SUCCESS);
     EXPECT_EQ(deleteCommand1.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+}
+
+/**
+ * @tc.name: DeleteCommandMockExecuteTest003
+ * @tc.desc: mock test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncCommandCoverageTest, DeleteCommandMockExecuteTest003, TestSize.Level4)
+{
+    MockNativeToken mock("token_sync_service");
+
+    HapTokenInfoForSync remoteTokenInfo;
+    AddHapTokenInfoForSync(remoteTokenInfo);
+
+    std::string deviceId1 = "valid_deviceId_sync_1";
+    std::string deviceId2 = "valid_deviceId_sync_2";
+    std::string deviceId3 = "valid_deviceId_sync_3";
+
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceId2, remoteTokenInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    DeleteRemoteTokenCommand deleteCommand1(deviceId2, deviceId1, g_testTokenId);
+
+    DeleteRemoteTokenCommand deleteCommand2(deleteCommand1.ToJsonPayload(), deviceId2);
+    deleteCommand2.Execute();
+    EXPECT_EQ(deleteCommand2.remoteProtocol_.statusCode, Constant::SUCCESS);
+    EXPECT_EQ(deleteCommand2.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+
+    // check deviceId mismatch
+    DeleteRemoteTokenCommand deleteCommand3(deleteCommand1.ToJsonPayload(), deviceId3);
+    deleteCommand3.Execute();
+    EXPECT_EQ(deleteCommand3.remoteProtocol_.statusCode, Constant::FAILURE);
+    EXPECT_EQ(deleteCommand3.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
 }
 
 /**
@@ -257,7 +295,7 @@ HWTEST_F(TokenSyncCommandCoverageTest, UpdateCommandMockExecuteTest001, TestSize
     infoSync.baseInfo.tokenID = g_testTokenId;
     infoSync.baseInfo.tokenAttr = 0;
 
-    UpdateRemoteHapTokenCommand updateCommand1(g_invalidDeviceId, g_invalidDeviceId, infoSync);
+    UpdateRemoteHapTokenCommand updateCommand1(g_validDeviceId, g_validDeviceId, infoSync);
     updateCommand1.Execute();
     EXPECT_EQ(updateCommand1.remoteProtocol_.statusCode, Constant::FAILURE_BUT_CAN_RETRY);
     EXPECT_EQ(updateCommand1.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
@@ -272,28 +310,8 @@ HWTEST_F(TokenSyncCommandCoverageTest, UpdateCommandMockExecuteTest001, TestSize
 HWTEST_F(TokenSyncCommandCoverageTest, UpdateCommandMockExecuteTest002, TestSize.Level4)
 {
     MockNativeToken mock("token_sync_service");
-
-    HapTokenInfo baseInfo = {
-        .ver = 1,
-        .userID = 1,
-        .bundleName = "com.ohos.access_token",
-        .instIndex = 1,
-        .tokenID = g_testTokenId,
-        .tokenAttr = 0
-    };
-
-    PermissionStatus infoManagerTestState = {
-        .permissionName = "ohos.permission.CAMERA",
-        .grantStatus = PermissionState::PERMISSION_GRANTED,
-        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
-    };
-    std::vector<PermissionStatus> permStateList;
-    permStateList.emplace_back(infoManagerTestState);
-
-    HapTokenInfoForSync remoteTokenInfo = {
-        .baseInfo = baseInfo,
-        .permStateList = permStateList
-    };
+    HapTokenInfoForSync remoteTokenInfo;
+    AddHapTokenInfoForSync(remoteTokenInfo);
 
     int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(g_validDeviceId, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -312,6 +330,50 @@ HWTEST_F(TokenSyncCommandCoverageTest, UpdateCommandMockExecuteTest002, TestSize
 
     DeleteRemoteTokenCommand deleteCommand1(g_validDeviceId, g_validDeviceId, g_testTokenId);
     deleteCommand1.Execute();
+}
+
+/**
+ * @tc.name: UpdateCommandMockExecuteTest003
+ * @tc.desc: mock test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncCommandCoverageTest, UpdateCommandMockExecuteTest003, TestSize.Level4)
+{
+    MockNativeToken mock("token_sync_service");
+
+    HapTokenInfoForSync remoteTokenInfo;
+    AddHapTokenInfoForSync(remoteTokenInfo);
+
+    std::string deviceId1 = "valid_deviceId_sync_1";
+    std::string deviceId2 = "valid_deviceId_sync_2";
+    std::string deviceId3 = "valid_deviceId_sync_3";
+
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceId2, remoteTokenInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    PermissionStatus infoManagerTestState2 = {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
+    };
+    remoteTokenInfo.permStateList.emplace_back(infoManagerTestState2);
+
+    UpdateRemoteHapTokenCommand updateCommand1(deviceId2, deviceId1, remoteTokenInfo);
+
+    UpdateRemoteHapTokenCommand updateCommand2(updateCommand1.ToJsonPayload(), deviceId2);
+    updateCommand2.Execute();
+    EXPECT_EQ(updateCommand2.remoteProtocol_.statusCode, Constant::SUCCESS);
+    EXPECT_EQ(updateCommand2.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+
+    // check deviceId mismatch
+    UpdateRemoteHapTokenCommand updateCommand3(updateCommand1.ToJsonPayload(), deviceId3);
+    updateCommand3.Execute();
+    EXPECT_EQ(updateCommand3.remoteProtocol_.statusCode, Constant::FAILURE);
+    EXPECT_EQ(updateCommand3.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
+
+    ret = AccessTokenKit::DeleteRemoteToken(deviceId2, g_testTokenId);
+    ASSERT_EQ(ret, RET_SUCCESS);
 }
 
 /**
@@ -340,15 +402,9 @@ HWTEST_F(TokenSyncCommandCoverageTest, SyncRemoteHapTokenCommandTest001, TestSiz
     EXPECT_NE(std::string::npos, result.find("123"));
 }
 
-/**
- * @tc.name: SyncCommandMockExecuteTest001
- * @tc.desc: mock test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenSyncCommandCoverageTest, SyncCommandMockExecuteTest001, TestSize.Level4)
+
+static void AddTestHapToken(AccessTokenIDEx& tokenIdEx)
 {
-    AccessTokenIDEx tokenIdEx = {0};
     {
         MockNativeToken mock("foundation");
         HapInfoParams infoParams = {
@@ -368,6 +424,18 @@ HWTEST_F(TokenSyncCommandCoverageTest, SyncCommandMockExecuteTest001, TestSize.L
         int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, tokenIdEx);
         ASSERT_EQ(RET_SUCCESS, ret);
     }
+}
+
+/**
+ * @tc.name: SyncCommandMockExecuteTest001
+ * @tc.desc: mock test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncCommandCoverageTest, SyncCommandMockExecuteTest001, TestSize.Level4)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AddTestHapToken(tokenIdEx);
 
     {
         MockNativeToken mock("token_sync_service");
@@ -375,6 +443,56 @@ HWTEST_F(TokenSyncCommandCoverageTest, SyncCommandMockExecuteTest001, TestSize.L
         syncCommand1.Execute();
         EXPECT_EQ(syncCommand1.remoteProtocol_.statusCode, Constant::SUCCESS);
         EXPECT_EQ(syncCommand1.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+    }
+
+    {
+        MockNativeToken mock("foundation");
+        AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    }
+}
+
+/**
+ * @tc.name: SyncCommandMockExecuteTest002
+ * @tc.desc: mock test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncCommandCoverageTest, SyncCommandMockExecuteTest002, TestSize.Level4)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AddTestHapToken(tokenIdEx);
+
+    std::string deviceId1 = "valid_deviceId_sync_1";
+    std::string deviceId2 = "valid_deviceId_sync_2";
+    std::string deviceId3 = "valid_deviceId_sync_3";
+
+    {
+        MockNativeToken mock("token_sync_service");
+        SyncRemoteHapTokenCommand syncCommand1(deviceId2, deviceId1, tokenIdEx.tokenIdExStruct.tokenID);
+
+        // execute success test
+        SyncRemoteHapTokenCommand syncCommand2(syncCommand1.ToJsonPayload(), deviceId2);
+        syncCommand2.Execute();
+        EXPECT_EQ(syncCommand2.remoteProtocol_.statusCode, Constant::SUCCESS);
+        EXPECT_EQ(syncCommand2.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+
+        // finish success test
+        SyncRemoteHapTokenCommand syncCommand3(syncCommand2.ToJsonPayload(), deviceId1);
+        syncCommand3.Finish();
+        EXPECT_EQ(syncCommand3.remoteProtocol_.statusCode, Constant::SUCCESS);
+        EXPECT_EQ(syncCommand3.remoteProtocol_.message, Constant::COMMAND_RESULT_SUCCESS);
+
+        // finish failure test
+        SyncRemoteHapTokenCommand syncCommand4(syncCommand2.ToJsonPayload(), deviceId3);
+        syncCommand4.Finish();
+        EXPECT_EQ(syncCommand4.remoteProtocol_.statusCode, Constant::FAILURE);
+        EXPECT_EQ(syncCommand4.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
+
+        // execute failure test
+        SyncRemoteHapTokenCommand syncCommand5(syncCommand1.ToJsonPayload(), deviceId3);
+        syncCommand5.Execute();
+        EXPECT_EQ(syncCommand5.remoteProtocol_.statusCode, Constant::FAILURE);
+        EXPECT_EQ(syncCommand5.remoteProtocol_.message, Constant::COMMAND_RESULT_FAILED);
     }
 
     {

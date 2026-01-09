@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,16 +22,16 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-DeviceInfoManager &DeviceInfoManager::GetInstance()
+DeviceInfoManager& DeviceInfoManager::GetInstance()
 {
     static DeviceInfoManager instance;
     return instance;
 }
 
-bool DeviceInfoManager::GetDeviceInfo(const std::string &srcDeviceId, DeviceIdType type, DeviceInfo &devInfo)
+bool DeviceInfoManager::GetDeviceInfo(const std::string& srcDeviceId, DeviceIdType type, DeviceInfo& devInfo)
 {
-    if (srcDeviceId == "valid_deviceId1") {
-        devInfo.deviceId.uniqueDeviceId = "valid_deviceId1";
+    if (srcDeviceId.find("valid_deviceId") != std::string::npos) {
+        devInfo.deviceId.uniqueDeviceId = srcDeviceId;
     }
     return true;
 }
