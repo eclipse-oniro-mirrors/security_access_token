@@ -620,8 +620,6 @@ bool PrivacyManagerService::Initialize()
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
     DisablePolicyCbkManager::GetInstance()->InitEventHandler(eventHandler_);
 #endif
-    std::thread reportUserData(ReportPrivacyUserData);
-    reportUserData.detach();
     return true;
 }
 
