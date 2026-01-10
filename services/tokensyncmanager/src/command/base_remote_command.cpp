@@ -274,7 +274,7 @@ bool BaseRemoteCommand::CheckDeviceIdValid(const std::string& deviceId)
         return false;
     }
 
-    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
+    std::string uniqueDeviceId = devInfo.GetDeviceId().GetUniqueDeviceId();
     if (uniqueDeviceId != rawDeviceId_) {
         remoteProtocol_.statusCode = Constant::FAILURE;
         remoteProtocol_.message = Constant::COMMAND_RESULT_FAILED;
