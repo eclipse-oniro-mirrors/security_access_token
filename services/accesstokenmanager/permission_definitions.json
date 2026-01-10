@@ -8067,6 +8067,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet", "2in1"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_SECURE_FENCE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
         }
     ]
 }
