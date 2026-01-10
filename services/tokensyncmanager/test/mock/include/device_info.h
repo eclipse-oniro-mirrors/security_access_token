@@ -31,11 +31,21 @@ enum DeviceIdType {
 class DeviceId {
 public:
     std::string uniqueDeviceId;
+
+    const std::string& GetUniqueDeviceId() const
+    {
+        return uniqueDeviceId;
+    }
 };
 
 class DeviceInfo {
 public:
     DeviceId deviceId;
+
+    const DeviceId& GetDeviceId() const
+    {
+        return deviceId;
+    }
 };
 } // namespace AccessToken
 } // namespace Security

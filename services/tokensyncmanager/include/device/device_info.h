@@ -32,12 +32,40 @@ struct DeviceId {
     std::string networkId;
     std::string universallyUniqueId; // uuid
     std::string uniqueDeviceId; // udid
+
+    const std::string& GetNetworkId() const
+    {
+        return networkId;
+    }
+
+    const std::string& GetUniversallyUniqueId() const
+    {
+        return universallyUniqueId;
+    }
+
+    const std::string& GetUniqueDeviceId() const
+    {
+        return uniqueDeviceId;
+    }
 };
 
 struct DeviceInfo {
     DeviceId deviceId;
     std::string deviceName;
     std::string deviceType;
+
+    const DeviceId& GetDeviceId() const
+    {
+        return deviceId;
+    }
+    const std::string& GetDeviceName() const
+    {
+        return deviceName;
+    }
+    const std::string& GetDeviceType() const
+    {
+        return deviceType;
+    }
 };
 } // namespace AccessToken
 } // namespace Security
