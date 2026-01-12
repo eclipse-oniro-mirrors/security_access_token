@@ -25,10 +25,13 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* INVALID_FILE = "/data/123456/xyz";
-constexpr const char* ACCESSTOKEN_DATABASE_NAME = "access_token.db";
+constexpr const char* INVALID_FILE2 = "/data/123456/xyz/";
 constexpr const char* TEST_FILE_PATH = "/data/test/dfx_test_file.txt";
 constexpr const char* TEST_TXT = "1234567890abcdefghij";
+constexpr const char* DATABASE_DIR_PATH = "/data/service/el1/public/access_token/";
 constexpr int32_t TEST_SIZE = 20;
+constexpr int32_t INITIAL_DEPTH = 1;
+constexpr int32_t OVERSIZE_DEPTH = 6;
 } // namespace
 class DfxTest : public testing::Test {
 public:
@@ -78,30 +81,39 @@ HWTEST_F(DfxTest, GetFileSizeTest001, TestSize.Level1)
     // invalid file size is 0
     uint64_t invalidSize = GetFileSize(INVALID_FILE);
     EXPECT_EQ(invalidSize, 0);
+
+    EXPECT_EQ(false, IsDirectory(INVALID_FILE));
+
+    EXPECT_EQ("", GetFilePathByDir("", ""));
+    EXPECT_EQ(INVALID_FILE2, GetFilePathByDir(INVALID_FILE, ""));
+    EXPECT_EQ(INVALID_FILE2, GetFilePathByDir(INVALID_FILE2, ""));
 }
 
 /**
- * @tc.name: GetDatabaseFileSizeTest001
- * @tc.desc: Test GetDatabaseFileSize function
+ * @tc.name: GetDirFileSizeTest001
+ * @tc.desc: Test GetDirFileSize function
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(DfxTest, GetDatabaseFileSizeTest001, TestSize.Level1)
+HWTEST_F(DfxTest, GetDirFileSizeTest001, TestSize.Level1)
 {
     std::vector<std::string> filePath;
     std::vector<uint64_t> fileSize;
-    std::vector<std::string> nameList = { ACCESSTOKEN_DATABASE_NAME };
-    GetDatabaseFileSize(nameList, filePath, fileSize);
+    GetDirFileSize(DATABASE_DIR_PATH, filePath, fileSize, INITIAL_DEPTH);
     EXPECT_GT(filePath.size(), 0);
     EXPECT_GT(fileSize.size(), 0);
     EXPECT_EQ(filePath.size(), fileSize.size());
 
     std::vector<std::string> invalidFilePath;
     std::vector<uint64_t> invalidFileSize;
-    std::vector<std::string> nameListInvalid = { INVALID_FILE };
-    GetDatabaseFileSize(nameListInvalid, invalidFilePath, invalidFileSize);
+    GetDirFileSize(INVALID_FILE, invalidFilePath, invalidFileSize, INITIAL_DEPTH);
     EXPECT_EQ(invalidFilePath.size(), 0);
     EXPECT_EQ(invalidFileSize.size(), 0);
+    GetDirFileSize(INVALID_FILE, invalidFilePath, invalidFileSize, OVERSIZE_DEPTH);
+
+    std::vector<std::string> files;
+    GetAllDirFile(INVALID_FILE, files);
+    EXPECT_EQ(files.size(), 0);
 }
 } // namespace AccessToken
 } // namespace Security

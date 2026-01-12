@@ -25,10 +25,12 @@ namespace Security {
 namespace AccessToken {
 uint64_t GetUserDataRemainSize();
 uint64_t GetFileSize(const char* filePath);
-void GetDatabaseFileSize(const std::vector<std::string>& nameList, std::vector<std::string>& filePath,
-    std::vector<uint64_t>& fileSize);
+bool IsDirectory(const char* filePath);
+std::string GetFilePathByDir(const std::string& dir, const std::string& fileName);
+void GetAllDirFile(const std::string& path, std::vector<std::string>& files);
+void GetDirFileSize(
+    const std::string& path, std::vector<std::string>& filePath, std::vector<uint64_t>& fileSize, int32_t depth);
 void ReportAccessTokenUserData();
-void ReportPrivacyUserData();
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
