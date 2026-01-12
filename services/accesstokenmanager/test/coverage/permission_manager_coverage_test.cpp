@@ -362,17 +362,17 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     validValueList.emplace_back(value3);
 
     PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(RANDOM_TOKENID);
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, atManagerService_);
+    ASSERT_NE(nullptr, atManagerService);
 
     std::vector<GenericValues> stateValues;
     std::vector<GenericValues> extendValues;
-    atManagerService_->UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
+    atManagerService->UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
     ASSERT_EQ(true, stateValues.empty());
     ASSERT_EQ(true, extendValues.empty());
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
-    atManagerService_ = nullptr;
+    ASSERT_EQ(RET_SUCCESS, atManagerService->DeleteToken(tokenId));
+    atManagerService = nullptr;
 }
 
 void BackupAndDelOriData(AtmDataType type, std::vector<GenericValues>& oriData)
@@ -420,17 +420,17 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo001, TestSize.Leve
     std::vector<GenericValues> oriData;
     BackupAndDelOriData(type, oriData);
 
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
 
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
+    atManagerService->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
 
     DelTestDataAndRestoreOri(type, oriData);
-    atManagerService_ = nullptr;
+    atManagerService = nullptr;
 }
 
 /**
@@ -460,17 +460,17 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo002, TestSize.Leve
     // add test data
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
 
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
 
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     std::vector<DelInfo> delInfoVec2;
     std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
+    atManagerService->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
 
     DelTestDataAndRestoreOri(type, oriData);
-    atManagerService_ = nullptr;
+    atManagerService = nullptr;
 }
 
 /**
@@ -501,17 +501,17 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo003, TestSize.Leve
     // add test data
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
 
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
 
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     std::vector<DelInfo> delInfoVec2;
     std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
+    atManagerService->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
 
     DelTestDataAndRestoreOri(type, oriData);
-    atManagerService_ = nullptr;
+    atManagerService = nullptr;
 }
 
 /**
@@ -526,15 +526,16 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate001, TestSize.Level4)
     std::vector<GenericValues> oriData;
     BackupAndDelOriData(type, oriData);
 
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is empty
+    atManagerService->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is empty
 
     DelTestDataAndRestoreOri(type, oriData);
-    atManagerService_ = nullptr;
+    sleep(2);
+    atManagerService = nullptr;
 }
 
 /**
@@ -562,15 +563,16 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate002, TestSize.Level4)
     // update permission define version in db to test data
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
 
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    atManagerService_->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is not empty
+    atManagerService->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is not empty
 
     DelTestDataAndRestoreOri(type, oriData);
-    atManagerService_ = nullptr;
+    sleep(2);
+    atManagerService = nullptr;
 }
 
 /**
@@ -605,14 +607,14 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
  */
 HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest001, TestSize.Level4)
 {
-    std::shared_ptr<AccessTokenManagerService> atManagerService_ =
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
         DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    EXPECT_NE(nullptr, atManagerService_);
+    EXPECT_NE(nullptr, atManagerService);
 
     AccessTokenServiceConfig config;
     int32_t cancelTime = 0;
     uint32_t parseConfigFlag = 0;
-    atManagerService_->SetFlagIfNeed(config, cancelTime, parseConfigFlag);
+    atManagerService->SetFlagIfNeed(config, cancelTime, parseConfigFlag);
     EXPECT_EQ(parseConfigFlag, 0);
 
     config.grantBundleName = "ability";
@@ -626,10 +628,10 @@ HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest001, TestSize.Level4)
 
     int32_t cancelTime2 = 10;
     uint32_t parseConfigFlag2 = 0;
-    atManagerService_->SetFlagIfNeed(config, cancelTime2, parseConfigFlag2);
+    atManagerService->SetFlagIfNeed(config, cancelTime2, parseConfigFlag2);
     EXPECT_NE(parseConfigFlag2, 0);
 
-    atManagerService_ = nullptr;
+    atManagerService = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security
