@@ -8069,6 +8069,17 @@
             "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
+            "name": "ohos.permission.CONNECT_PARTNER_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1"]
+        },
+        {
             "name": "ohos.permission.ACCESS_SECURE_FENCE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
