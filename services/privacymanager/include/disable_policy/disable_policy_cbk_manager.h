@@ -48,9 +48,6 @@ public:
     DisablePolicyCbkManager();
     virtual ~DisablePolicyCbkManager();
 
-#ifdef EVENTHANDLER_ENABLE
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
-#endif
     int32_t AddCallback(AccessTokenID registerTokenId, const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
@@ -71,7 +68,10 @@ private:
     std::vector<DisableCallbackData> callbackDataList_;
     sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient_;
 #ifdef EVENTHANDLER_ENABLE
+    std::mutex eventHandlerLock_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
+    void InitEventHandler();
 #endif
 };
 } // namespace AccessToken

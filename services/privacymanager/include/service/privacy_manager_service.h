@@ -18,9 +18,6 @@
 
 #include <string>
 
-#ifdef EVENTHANDLER_ENABLE
-#include "access_event_handler.h"
-#endif
 #include "privacy_manager_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
@@ -70,9 +67,9 @@ public:
     int32_t RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback) override;
+    bool RetryPublishInner();
 private:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
-    bool Initialize();
     int32_t ResponseDumpCommand(int32_t fd,  const std::vector<std::u16string>& args);
     std::shared_ptr<ProxyDeathHandler> GetProxyDeathHandler();
     void ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub, int32_t callerPid);
@@ -88,10 +85,6 @@ private:
 
     ServiceRunningState state_;
 
-#ifdef EVENTHANDLER_ENABLE
-    std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
-    std::shared_ptr<AccessEventHandler> eventHandler_;
-#endif
     std::mutex deathHandlerMutex_;
     std::shared_ptr<ProxyDeathHandler> proxyDeathHandler_;
     std::mutex stateMutex_;

@@ -191,7 +191,6 @@ void PermissionRecordManagerTest::SetUpTestCase()
     PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
     g_mock = new (std::nothrow) MockNativeToken("privacy_service");
 
-    DelayedSingleton<PrivacyManagerService>::GetInstance()->Initialize();
     PermissionRecordManager::GetInstance().Init();
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");

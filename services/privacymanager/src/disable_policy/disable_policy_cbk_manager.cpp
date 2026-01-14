@@ -44,9 +44,23 @@ DisablePolicyCbkManager::~DisablePolicyCbkManager()
 {}
 
 #ifdef EVENTHANDLER_ENABLE
-void DisablePolicyCbkManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
+void DisablePolicyCbkManager::InitEventHandler()
 {
-    eventHandler_ = eventHandler;
+    auto eventRunner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!eventRunner) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create eventRunner.");
+        return;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner);
+}
+
+std::shared_ptr<AccessEventHandler> DisablePolicyCbkManager::GetEventHandler()
+{
+    std::lock_guard<std::mutex> lock(eventHandlerLock_);
+    if (eventHandler_ == nullptr) {
+        InitEventHandler();
+    }
+    return eventHandler_;
 }
 #endif
 
@@ -165,8 +179,9 @@ void DisablePolicyCbkManager::PermDisablePolicyCallback(const PermDisablePolicyI
 void DisablePolicyCbkManager::ExecuteCallbackAsync(const PermDisablePolicyInfo& info)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get EventHandler!");
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler!");
         return;
     }
 
@@ -176,7 +191,7 @@ void DisablePolicyCbkManager::ExecuteCallbackAsync(const PermDisablePolicyInfo& 
     std::function<void()> task = ([info]() {
         DisablePolicyCbkManager::GetInstance()->PermDisablePolicyCallback(info);
     });
-    eventHandler_->ProxyPostTask(task, taskName);
+    eventHandler->ProxyPostTask(task, taskName);
     LOGI(PRI_DOMAIN, PRI_TAG, "The callback execution is complete");
     return;
 #else
