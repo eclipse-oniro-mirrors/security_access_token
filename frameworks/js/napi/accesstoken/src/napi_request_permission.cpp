@@ -116,7 +116,7 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
-static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncContext)
+static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncContext, bool& isNoWindow)
 {
     if (asyncContext == nullptr) {
         return nullptr;
@@ -125,8 +125,7 @@ static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncCo
     if (asyncContext->isWithWindowId) {
         sptr<OHOS::Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
         if (window == nullptr) {
-            asyncContext->result.errorCode = ERR_PARAM_INVALID;
-            asyncContext->result.errorMsg = "Cannot find window by windowId.";
+            isNoWindow = true;
             LOGE(ATM_DOMAIN, ATM_TAG, "Get window with id %{public}d failed.", asyncContext->windowId);
             ReportHisysEventError(*asyncContext, GET_WINDOW_FAILED, asyncContext->tokenId, 0);
             return nullptr;
@@ -138,11 +137,13 @@ static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncCo
     } else {
         uiContent = asyncContext->uiExtensionContext->GetUIContent();
     }
-
-    if (uiContent == nullptr) {
-        asyncContext->result.errorCode = RET_FAILED;
-    }
     return uiContent;
+}
+
+static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+    bool isNoWindow = false;
+    return GetUIContent(asyncContext, isNoWindow);
 }
 
 static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
@@ -175,9 +176,16 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
     const std::shared_ptr<UIExtensionCallback>& uiExtCallback)
 {
     auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
-        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        bool isNoWindow = false;
+        Ace::UIContent* uiContent = GetUIContent(asyncContext, isNoWindow);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            if (asyncContext->isWithWindowId && isNoWindow) {
+                asyncContext->result.errorCode = ERR_PARAM_INVALID;
+                asyncContext->result.errorMsg = "Cannot find window by windowId.";
+            } else {
+                asyncContext->result.errorCode = RET_FAILED;
+            }
             asyncContext->uiExtensionFlag = false;
             return;
         }
@@ -213,9 +221,16 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
 static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, int32_t sessionId)
 {
     auto task = [asyncContext, sessionId]() {
-        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        bool isNoWindow = false;
+        Ace::UIContent* uiContent = GetUIContent(asyncContext, isNoWindow);
         if (uiContent == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get ui content failed!");
+            if (asyncContext->isWithWindowId && isNoWindow) {
+                asyncContext->result.errorCode = ERR_PARAM_INVALID;
+                asyncContext->result.errorMsg = "Cannot find window by windowId.";
+            } else {
+                asyncContext->result.errorCode = RET_FAILED;
+            }
             return;
         }
         uiContent->CloseModalUIExtension(sessionId);
