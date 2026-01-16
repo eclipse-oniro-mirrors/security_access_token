@@ -280,9 +280,6 @@ void SoftBusManager::Initialize()
 
 void SoftBusManager::Destroy()
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "Destroy, init: %{public}d, isSoftBusServiceBindSuccess: %{public}d", inited_.load(),
-        isSoftBusServiceBindSuccess_);
-
     if (!inited_.load()) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Not inited, skip");
         return;
