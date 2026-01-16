@@ -8110,7 +8110,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "2in1", "tablet", "wearable"]
+            "deviceTypes": ["phone", "tv", "tablet", "wearable"]
         }
     ]
 }
