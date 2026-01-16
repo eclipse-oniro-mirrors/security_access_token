@@ -24,13 +24,14 @@
 #include "active_change_response_parcel.h"
 #include "active_status_callback_manager.h"
 #include "disable_policy_cbk_manager.h"
-#include "ipc_skeleton.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "privacy_common_event_subscriber.h"
 #endif //COMMON_EVENT_SERVICE_ENABLE
 #include "constant_common.h"
 #include "constant.h"
 #include "data_usage_dfx.h"
+#include "hisysevent.h"
+#include "hisysevent_common.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #include "privacy_error.h"
@@ -56,6 +57,14 @@ constexpr const char* MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 constexpr const char* GET_PERMISSION_POLICY = "ohos.permission.GET_PERMISSION_POLICY";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
+static const int32_t RETRY_COUNT = 128;
+static const int32_t RETRY_TIMES_MS = 500; // 0.5s
+static const int32_t ASYNC_RETRY_COUNT = 43200; // 30d * 24h * 60m
+static const int32_t ASYNC_RETRY_TIMES_MS = 60 * 1000; // 1min
+static const int32_t ASYNC_RETRY_DFX_COUNT = 60;
+static const int32_t PUBLISH_ERROR_CODE = -1;
+std::mutex g_accessTokenRunningMutex;
+bool g_isAccessTokenRunning = false;
 }
 
 const bool REGISTER_RESULT =
@@ -84,10 +93,7 @@ void PrivacyManagerService::OnStart()
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "PrivacyManagerService is starting");
-    if (!Initialize()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to initialize");
-        return;
-    }
+    PermissionRecordManager::GetInstance().Init();
     state_ = ServiceRunningState::STATE_INITIALIZED;
 
     AddSystemAbilityListener(ACCESS_TOKEN_MANAGER_SERVICE_ID);
@@ -578,6 +584,35 @@ int32_t PrivacyManagerService::UnRegisterPermDisablePolicyCallback(const sptr<IR
     return PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callback);
 }
 
+bool PrivacyManagerService::RetryPublishInner()
+{
+    bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
+    if (ret) {
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        state_ = ServiceRunningState::STATE_RUNNING;
+        LOGI(PRI_DOMAIN, PRI_TAG, "Congratulations, PrivacyManagerService retry start successfully!");
+        return true;
+    }
+    return false;
+}
+
+static void RetryPublish()
+{
+    for (int32_t i = 1; i <= ASYNC_RETRY_COUNT; i++) {
+        if (DelayedSingleton<PrivacyManagerService>::GetInstance()->RetryPublishInner()) {
+            return;
+        }
+
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service, retry!");
+        if (i % ASYNC_RETRY_DFX_COUNT == 0) {
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START_ERROR",
+                HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", SceneCode::SA_PUBLISH_FAILED,
+                "ERROR_CODE", PUBLISH_ERROR_CODE, "ERROR_MSG", "privacy_service Publish failed");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(ASYNC_RETRY_TIMES_MS));
+    }
+}
+
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "SaId is %{public}d", systemAbilityId);
@@ -596,31 +631,31 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
 
     std::lock_guard<std::mutex> lock(stateMutex_);
     if (systemAbilityId == ACCESS_TOKEN_MANAGER_SERVICE_ID && state_ != ServiceRunningState::STATE_RUNNING) {
-        bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
-        if (!ret) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service!");
+        {
+            std::lock_guard<std::mutex> lock(g_accessTokenRunningMutex);
+            if (g_isAccessTokenRunning) {
+                return;
+            }
+            g_isAccessTokenRunning = true;
+        }
+        for (int32_t i = 0; i < RETRY_COUNT; i++) {
+            bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
+            if (ret) {
+                state_ = ServiceRunningState::STATE_RUNNING;
+                break;
+            }
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service, retry!");
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMES_MS));
+        }
+        if (state_ != ServiceRunningState::STATE_RUNNING) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Publish retry all failed!");
+            std::thread publishThread(RetryPublish);
+            publishThread.detach();
             return;
         }
-        state_ = ServiceRunningState::STATE_RUNNING;
         LOGI(PRI_DOMAIN, PRI_TAG, "Congratulations, PrivacyManagerService start successfully!");
         return;
     }
-}
-
-bool PrivacyManagerService::Initialize()
-{
-    PermissionRecordManager::GetInstance().Init();
-#ifdef EVENTHANDLER_ENABLE
-    eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
-    if (!eventRunner_) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create eventRunner.");
-        return false;
-    }
-    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
-    ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
-    DisablePolicyCbkManager::GetInstance()->InitEventHandler(eventHandler_);
-#endif
-    return true;
 }
 
 bool PrivacyManagerService::IsPrivilegedCalling() const

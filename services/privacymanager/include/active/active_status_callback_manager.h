@@ -54,16 +54,16 @@ public:
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
     void ExecuteCallbackAsync(ActiveChangeResponse& info);
-#ifdef EVENTHANDLER_ENABLE
-    void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
-#endif
     void ActiveStatusChange(ActiveChangeResponse& info);
 private:
     std::mutex mutex_;
     std::vector<CallbackData> callbackDataList_;
     sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient_;
 #ifdef EVENTHANDLER_ENABLE
+    std::mutex eventHandlerLock_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
+    void InitEventHandler();
 #endif
 };
 } // namespace AccessToken

@@ -57,9 +57,23 @@ ActiveStatusCallbackManager::~ActiveStatusCallbackManager()
 }
 
 #ifdef EVENTHANDLER_ENABLE
-void ActiveStatusCallbackManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
+void ActiveStatusCallbackManager::InitEventHandler()
 {
-    eventHandler_ = eventHandler;
+    auto eventRunner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!eventRunner) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create eventRunner.");
+        return;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner);
+}
+
+std::shared_ptr<AccessEventHandler> ActiveStatusCallbackManager::GetEventHandler()
+{
+    std::lock_guard<std::mutex> lock(eventHandlerLock_);
+    if (eventHandler_ == nullptr) {
+        InitEventHandler();
+    }
+    return eventHandler_;
 }
 #endif
 
@@ -156,10 +170,12 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& info)
 {
 #ifdef EVENTHANDLER_ENABLE
-    if (eventHandler_ == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Fail to get EventHandler");
+    auto eventHandler = GetEventHandler();
+    if (eventHandler == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler!");
         return;
     }
+
     std::string taskName = info.permissionName + std::to_string(info.tokenID);
     LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([info]() mutable {
@@ -168,7 +184,7 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
             "Token: %{public}u, pid: %{public}d, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
             info.tokenID, info.pid, info.permissionName.c_str(), info.type);
     });
-    eventHandler_->ProxyPostTask(task, taskName);
+    eventHandler->ProxyPostTask(task, taskName);
     LOGI(PRI_DOMAIN, PRI_TAG, "The callback execution is complete");
     return;
 #else
