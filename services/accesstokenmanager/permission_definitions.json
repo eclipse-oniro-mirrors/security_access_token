@@ -8102,7 +8102,7 @@
             "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
         },
         {
-            "name": "ohso.permission.ACCESS_MINI_SYSTEM",
+            "name": "ohos.permission.ACCESS_MINI_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
