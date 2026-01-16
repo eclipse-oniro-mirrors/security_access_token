@@ -439,6 +439,33 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level0)
 #endif
 
 /**
+ * @tc.name: InitHapToken012
+ * @tc.desc: Test installation permission application upper limit
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken012, TestSize.Level0)
+{
+    std::vector<PermissionStateFull> permStateList;
+    for (uint32_t i = 0; i < 1024; i++) {
+        permStateList.emplace_back(g_infoManagerTestState4);
+    }
+    HapPolicyParams testPolicyParam = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain2",
+        .permStateList = permStateList,
+    };
+    g_testHapInfoParams.appDistributionType = "";
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    testPolicyParam.permStateList.emplace_back(g_infoManagerTestState4);
+    res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(ERR_WRITE_PARCEL_FAILED, res);
+}
+
+/**
  * @tc.name: UpdateHapToken001
  * @tc.desc:
  * @tc.type: FUNC
