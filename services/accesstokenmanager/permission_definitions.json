@@ -8100,6 +8100,17 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_MINI_SYSTEM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "tablet", "wearable"]
         }
     ]
 }
