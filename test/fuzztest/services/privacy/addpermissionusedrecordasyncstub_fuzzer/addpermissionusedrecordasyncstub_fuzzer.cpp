@@ -15,6 +15,8 @@
 
 #include "addpermissionusedrecordasyncstub_fuzzer.h"
 
+#include <chrono>
+#include <cstdlib>
 #include <string>
 #include <thread>
 #include <vector>
@@ -27,6 +29,8 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+static constexpr int32_t SLEEP_TIME = 5;
 
 namespace OHOS {
     bool AddPermissionUsedRecordAsyncStubFuzzTest(const uint8_t* data, size_t size)
@@ -61,6 +65,17 @@ namespace OHOS {
         return true;
     }
 } // namespace OHOS
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    (void)atexit(BeforeExit);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
