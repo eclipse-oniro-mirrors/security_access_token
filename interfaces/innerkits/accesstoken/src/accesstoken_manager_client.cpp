@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1240,7 +1240,7 @@ int32_t AccessTokenManagerClient::RegisterSecCompEnhance(const SecCompEnhanceDat
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     SecCompEnhanceDataParcel registerParcel;
     registerParcel.enhanceData = enhance;
@@ -1253,7 +1253,7 @@ int32_t AccessTokenManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seq
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t ret = proxy->UpdateSecCompEnhance(pid, seqNum);
     return ConvertResult(ret);
@@ -1264,7 +1264,7 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     SecCompEnhanceDataParcel parcel;
     int32_t res = proxy->GetSecCompEnhance(pid, parcel);

@@ -163,7 +163,7 @@ typedef enum TypePermissionState {
  * @brief Permission grant mode
  */
 typedef enum TypeGrantMode {
-    /** user grant the permisson by dynamic pop-up window */
+    /** user grant the permission by dynamic pop-up window */
     USER_GRANT = 0,
     /**
      * system grant the permission automated when

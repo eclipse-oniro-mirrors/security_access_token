@@ -110,11 +110,11 @@ void GetPermissionTest::TearDown()
 HWTEST_F(GetPermissionTest, GetPermissionUsedTypeAbnormalTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionUsedTypeAbnormalTest001");
-    std::string permisson = "ohos.permission.CAMERA";
+    std::string permission = "ohos.permission.CAMERA";
     // caller is not native, IsPrivilegedCalling return false(uid != accesstoken_uid)
     int32_t selfUid = getuid();
     setuid(1);
-    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permisson));
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_selfTokenId, permission));
     setuid(selfUid);
 }
 
