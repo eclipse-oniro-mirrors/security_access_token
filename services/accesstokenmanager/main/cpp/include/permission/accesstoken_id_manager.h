@@ -38,9 +38,6 @@ public:
     AccessTokenID CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag);
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
-    void AddReservedTokenId(AccessTokenID id);
-    void RemoveReservedTokenId(AccessTokenID id);
-    bool IsReservedTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
 private:
     AccessTokenIDManager() = default;
@@ -49,9 +46,6 @@ private:
 
     std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;
-
-    std::shared_mutex reservedTokenIdLock_;
-    std::set<AccessTokenID> reservedTokenIdSet_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -49,10 +49,6 @@ typedef enum AddHapSceneCode {
     INSTALL_FINISH,
 } AddHapSceneCode;
 
-typedef enum DeleteHapSceneCode {
-    AT_DELETE_KEEP_TOKEN_FINISH = 2,
-} DeleteHapSceneCode;
-
 typedef enum AccessTokenDbSceneCode {
     AT_DB_INSERT_RESTORE = 1001,
     AT_DB_DELETE_RESTORE = 1002,
