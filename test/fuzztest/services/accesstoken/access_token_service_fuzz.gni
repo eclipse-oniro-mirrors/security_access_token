@@ -24,6 +24,7 @@ access_token_include_dirs = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
   "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
   "${access_token_path}/services/tokensyncmanager/include/command",
   "${access_token_path}/services/tokensyncmanager/include/common",
   "${access_token_path}/services/tokensyncmanager/include/device",
