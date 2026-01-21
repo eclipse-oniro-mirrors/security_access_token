@@ -212,7 +212,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level0)
     ASSERT_EQ(1, results[0].GetInt(TokenFiledConst::FIELD_ACL));
     ASSERT_EQ(g_policy.aclExtendedMap[g_state2.permissionName], results[0].GetString(TokenFiledConst::FIELD_VALUE));
 
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false)); // delete token
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId)); // delete token
 
     // after delete token, data remove from undefine table
     std::vector<GenericValues> results1;
@@ -258,8 +258,8 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
     // dlp app has the same undefine data with mater app, INVALIDB change to INVALIDA
     ASSERT_EQ(g_state2.permissionName, results[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId2, false));
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId2));
 }
 
 /**
@@ -310,7 +310,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
     // undefine permission change from INVALIDA to INVALIDB
     ASSERT_EQ(g_state3.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
 /**
@@ -346,7 +346,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level0)
     ASSERT_EQ(0, atManagerService_->UpdateHapToken(fullTokenId, infoIdl, policyParcel, resultInfoIdl));
     ASSERT_EQ(PermissionRulesEnumIdl::PERMISSION_ACL_RULE, resultInfoIdl.rule);
 
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
 /**
@@ -399,7 +399,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
     // undefine permission change from INVALIDA to INVALIDB
     ASSERT_EQ(g_state1.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
-    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId));
 }
 
 void BackupAndDelOriData(std::vector<GenericValues>& oriData)
@@ -422,7 +422,7 @@ void BackupAndDelOriData(std::vector<GenericValues>& oriData)
 void AccessTokenManagerServiceTest::DelTestDataAndRestoreOri(AccessTokenID tokenId,
     const std::vector<GenericValues>& oriData)
 {
-    EXPECT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+    EXPECT_EQ(0, atManagerService_->DeleteToken(tokenId));
 
     DelInfo delInfo;
     delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;

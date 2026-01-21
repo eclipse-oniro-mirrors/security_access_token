@@ -36,8 +36,7 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         AccessTokenID tokenId = ConsumeTokenId(provider);
-        bool isTokenReserved = provider.ConsumeBool();
-        return AccessTokenKit::DeleteToken(tokenId, isTokenReserved) == RET_SUCCESS;
+        return AccessTokenKit::DeleteToken(tokenId) == RET_SUCCESS;
     }
 }
 

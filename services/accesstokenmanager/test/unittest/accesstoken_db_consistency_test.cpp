@@ -163,7 +163,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, CreateHapTokenCompareTest001, TestSize.Le
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 }
 
 /**
@@ -218,7 +218,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdateHapTokenCompareTest001, TestSize.Le
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 }
 
 /**
@@ -282,7 +282,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdatePermStatusCompareTest001, TestSize.
         AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results3));
     EXPECT_EQ(1, results3.size());
 
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 }
 
 /**
@@ -302,7 +302,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, DeleteHapTokenCompareTest001, TestSize.Le
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
 
     // delete
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 
     // get hap token info empty
     HapTokenInfo hapInfo;
