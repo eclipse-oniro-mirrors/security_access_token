@@ -113,7 +113,6 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
 #ifdef HITRACE_NATIVE_ENABLE
     PRIVACY_SYNC_TRACE;
 #endif
-    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
 
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -124,9 +123,7 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     }
 
     AddPermParamInfo info = infoParcel.info;
-    int32_t res = PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
-    return res;
+    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecordAsync(const AddPermParamInfoParcel& infoParcel)
@@ -217,7 +214,7 @@ int32_t PrivacyManagerService::StartUsingPermission(
     }
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Caller pid = %{public}d.", callerPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid=%{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callerPid);
 }
@@ -228,7 +225,6 @@ int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsed
 #ifdef HITRACE_NATIVE_ENABLE
     PRIVACY_SYNC_TRACE;
 #endif
-    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return PrivacyError::ERR_NOT_SYSTEM_APP;
@@ -238,10 +234,9 @@ int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsed
     }
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
+    LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid=%{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
-    int32_t res = PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
-    return res;
+    return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(
@@ -440,7 +435,6 @@ int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, c
 #ifdef HITRACE_NATIVE_ENABLE
     PRIVACY_SYNC_TRACE;
 #endif
-    LOGI(PRI_DOMAIN, PRI_TAG, "Entry!");
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Permission denied(tokenID=%{public}d)", callingTokenID);
@@ -451,7 +445,6 @@ int32_t PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, c
     }
 
     isAllowed = PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName, pid);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Exit!");
     return ERR_OK;
 }
 
