@@ -109,14 +109,14 @@ export default namespace abilityAccessCtrl {
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL.valueOf();
             err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
         if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
             permissionList.length == 0 || typeof permissionList[0] !== "string") {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL.valueOf();
             err.message = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
             throw err;
         }
@@ -125,13 +125,13 @@ export default namespace abilityAccessCtrl {
     function openPermRequestParams(context: Context, permission: Permissions): void {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL.valueOf();
             err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
         if (typeof permission !== "string") {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL.valueOf();
             err.message = PARAM_ERROR_MSG("permission", "Permissions");
             throw err;
         }
@@ -139,9 +139,9 @@ export default namespace abilityAccessCtrl {
 
     function checkContext(context: Context): void {
         let result: int = new AtManagerInner().checkContextExecute(context);
-        if (result != (STSErrorCode.STS_OK as int)) {
+        if (result != (STSErrorCode.STS_OK.valueOf())) {
             let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL.valueOf();
             err.message = PARAM_ERROR_MSG("context", "UIAbility or UIExtension Context");
             throw err;
         }
@@ -264,19 +264,19 @@ export default namespace abilityAccessCtrl {
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
-            return result as GrantStatus;
+            return GrantStatus.fromValue(result);
         }
 
         checkAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
-            return result as GrantStatus;
+            return GrantStatus.fromValue(result);
         }
 
         checkAccessToken(tokenID: int, permissionName: Permissions): Promise<GrantStatus> {
             let p = new Promise<GrantStatus>((
                 resolve: (v: GrantStatus) => void, reject: (error: BusinessError) => void) => {
                 let p1 = taskpool.execute((): GrantStatus => {
-                    return new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName) as GrantStatus;
+                    return GrantStatus.fromValue(new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
                 });
                 p1.then((e: Any) => {
                     resolve(e as GrantStatus);
@@ -291,7 +291,7 @@ export default namespace abilityAccessCtrl {
             let p = new Promise<GrantStatus>((
                 resolve: (v: GrantStatus) => void, reject: (error: BusinessError) => void) => {
                 let p1 = taskpool.execute((): GrantStatus => {
-                    return new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName) as GrantStatus;
+                    return GrantStatus.fromValue(new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
                 });
                 p1.then((e: Any) => {
                     resolve(e as GrantStatus);
@@ -389,7 +389,7 @@ export default namespace abilityAccessCtrl {
                     err: BusinessError<void> | null, data: int | undefined) => {
                     if (err === null) {
                         if (data !== undefined) {
-                            resolve(data as int as SelectedResult);
+                            resolve(SelectedResult.fromValue(data));
                         }
                     } else {
                         reject(err as BusinessError);
@@ -515,7 +515,7 @@ export default namespace abilityAccessCtrl {
             let p = new Promise<int>((
                 resolve: (v: int) => void, reject: (error: BusinessError) => void) => {
                     let p1 = taskpool.execute((): int => {
-                        return new AtManagerInner().getVersionExecute() as int;
+                        return new AtManagerInner().getVersionExecute();
                     });
                     p1.then((e: Any) => {
                         resolve(e as int);
@@ -577,7 +577,7 @@ export default namespace abilityAccessCtrl {
                 (resolve: (v: PermissionRequestToggleStatus) => void,
                     reject: (err: Error) => void): void => {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
-                        return new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName) as PermissionRequestToggleStatus;
+                        return PermissionRequestToggleStatus.fromValue(new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName));
                     });
                     p1.then((e: Any): void => {
                         resolve(e as PermissionRequestToggleStatus);
@@ -629,7 +629,7 @@ export default namespace abilityAccessCtrl {
 
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus {
             let status = this.getSelfPermissionStatusExecute(permissionName);
-            return status as PermissionStatus;
+            return PermissionStatus.fromValue(status);
         }
 
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,28 +45,28 @@ export namespace screenLockFileManager {
 
   export function acquireAccess(): AccessStatus {
     let result: int = acquireAccessSync();
-    return result as AccessStatus;
+    return AccessStatus.fromValue(result);
   }
   export function acquireAccess(dataType: DataType): AccessStatus {
     let result: int = acquireAccessExecute(dataType);
-    return result as AccessStatus;
+    return AccessStatus.fromValue(result);
   }
 
   export function releaseAccess(): ReleaseStatus {
     let result: int = releaseAccessSync();
-    return result as ReleaseStatus;
+    return ReleaseStatus.fromValue(result);
   }
   export function releaseAccess(dataType: DataType): ReleaseStatus {
     let result: int = releaseAccessExecute(dataType);
-    return result as ReleaseStatus;
+    return ReleaseStatus.fromValue(result);
   }
 
   export function queryAppKeyState(): KeyStatus {
     let result: int = queryAppKeyStateSync();
-    return result as KeyStatus;
+    return KeyStatus.fromValue(result);
   }
   export function queryAppKeyState(dataType: DataType): KeyStatus {
     let result: int = queryAppKeyStateExecute(dataType);
-    return result as KeyStatus;
+    return KeyStatus.fromValue(result);
   }
 }
