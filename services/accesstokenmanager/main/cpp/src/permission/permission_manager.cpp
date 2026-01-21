@@ -1076,7 +1076,7 @@ bool IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
 
     if (policy.apl < briefDef.availableLevel) {
         if (!briefDef.provisionEnable) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Ths provisionEnable of %{public}s is false.", briefDef.permissionName);
+            LOGC(ATM_DOMAIN, ATM_TAG, "The provisionEnable of %{public}s is false.", briefDef.permissionName);
             return false;
         }
         bool isAclExist = false;

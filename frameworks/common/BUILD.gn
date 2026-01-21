@@ -27,12 +27,10 @@ action("permission_definition_check") {
     "--input-full-permissions",
     rebase_path("${access_token_path}") +
         "/services/accesstokenmanager/permission_definitions.json",
-    "--output-path",
-    rebase_path(target_out_dir) + "/permission_definition_check.txt",
   ]
   inputs = [ rebase_path("${access_token_path}") +
              "/services/accesstokenmanager/permission_definitions.json" ]
-  outputs = [ "$target_out_dir/permission_definition_check.txt" ]
+  outputs = [ "$target_out_dir/permission_definition_check.stamp" ]
 }
 
 action("permission_definition_parse") {

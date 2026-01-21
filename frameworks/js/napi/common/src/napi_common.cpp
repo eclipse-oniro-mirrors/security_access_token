@@ -218,7 +218,6 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& resul
 std::string TransPermissionsToString(const std::vector<std::string>& permList)
 {
     std::string resultStr = "[";
-    resultStr = "[";
     size_t len = permList.size();
     for (size_t i = 0; i < len; i++) {
         if (i != len - 1) {
