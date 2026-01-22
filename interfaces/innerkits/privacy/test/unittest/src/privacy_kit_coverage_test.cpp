@@ -304,3 +304,69 @@ HWTEST_F(PrivacyKitTest, OnAddPrivacySa001, TestSize.Level0)
     EXPECT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdA, "ohos.permission.CAMERA"));
     EXPECT_EQ(PrivacyManagerClient::GetInstance().cacheList_.size(), 0);
 }
+
+/**
+ * @tc.name: SystemAbilityStatusChangeListener002
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyKitTest, OnAddPrivacySa002, TestSize.Level0)
+{
+    RemoteCallerInfo info;
+    info.remoteDeviceId = "ididid";
+    info.remoteDeviceName = "namename";
+
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 0);
+    EXPECT_EQ(0, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 1);
+    EXPECT_EQ(0, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 2);
+    EXPECT_EQ(0, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.MICROPHONE"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 3);
+
+    // when the proxy is equal
+    PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+
+    PrivacyManagerClient::GetInstance().OnRemoteDiedHandle();
+
+    // when the proxy is not equal
+    PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+
+    EXPECT_EQ(0, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 2);
+    EXPECT_EQ(0, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 1);
+    EXPECT_EQ(0, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.MICROPHONE"));
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 0);
+}
+
+/**
+ * @tc.name: SystemAbilityStatusChangeListener003
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, OnAddPrivacySa003, TestSize.Level0)
+{
+    RemotePermissionUsedInfo usedInfo;
+    usedInfo.remoteDeviceId = "ididid";
+    usedInfo.remoteDeviceName = "namename";
+    usedInfo.permissionName = "ohos.permission.CAMERA";
+    PrivacyManagerClient::GetInstance().remoteCacheList_.emplace_back(usedInfo);
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 1);
+
+    RemoteCallerInfo info;
+    info.remoteDeviceId = "ididid2222";
+    info.remoteDeviceName = "namename";
+
+    PrivacyManagerClient::GetInstance().DeleteRemoteInputCache(info, "ohos.permission.CAMERA");
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 1);
+    info.remoteDeviceId = "ididid";
+
+    PrivacyManagerClient::GetInstance().DeleteRemoteInputCache(info, "ohos.permission.MICROPHONE");
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 1);
+
+    PrivacyManagerClient::GetInstance().DeleteRemoteInputCache(info, "ohos.permission.CAMERA");
+    EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 0);
+}

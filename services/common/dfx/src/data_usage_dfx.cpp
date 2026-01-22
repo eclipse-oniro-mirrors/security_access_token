@@ -128,6 +128,21 @@ void ReportAccessTokenUserData()
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
     LOGI(ATM_DOMAIN, ATM_TAG, "Report accesstoken_service userdata end.");
 }
+
+void ReportPrivacyUserData(const std::string& path)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Report privacy_service userdata start, path=%{public}s.", path.c_str());
+
+    std::vector<std::string> filePath;
+    std::vector<uint64_t> fileSize;
+    GetDirFileSize(path, filePath, fileSize, INITIAL_DEPTH);
+
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "COMPONENT_NAME", ACCESSTOKEN_NAME, "PARTITION_NAME", DATA_FOLDER,
+        "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
+        "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Report privacy_service userdata end.");
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

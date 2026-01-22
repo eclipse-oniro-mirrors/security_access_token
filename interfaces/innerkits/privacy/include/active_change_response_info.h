@@ -52,6 +52,7 @@ enum ActiveChangeType {
     PERM_ACTIVE_IN_FOREGROUND = 1,
     PERM_ACTIVE_IN_BACKGROUND = 2,
     PERM_TEMPORARY_CALL = 3,
+    PERM_REMOTE_USING = 4,
 };
 
 /**
@@ -66,17 +67,19 @@ enum LockScreenStatusChangeType {
  * @brief Permission active state change response struct
  */
 struct ActiveChangeResponse {
-    AccessTokenID callingTokenID;
-    AccessTokenID tokenID;
+    AccessTokenID callingTokenID = 0;
+    AccessTokenID tokenID = 0;
     std::string permissionName;
-    std::string deviceId;
     /**
      * permission active change type, for details about the valid values,
      * see the definition above.
      */
     ActiveChangeType type;
     PermissionUsedType usedType;
-    int32_t pid;
+    int32_t pid = -1;
+    bool isRemote = false;
+    std::string deviceId;
+    std::string remoteDeviceName;
 };
 
 typedef ActiveChangeResponse CurrUsingPermInfo;

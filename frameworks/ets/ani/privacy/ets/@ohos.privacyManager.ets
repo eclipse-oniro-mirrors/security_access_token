@@ -371,6 +371,7 @@ export default namespace privacyManager {
         tokenId: int;
         isRemote: boolean;
         deviceId: string;
+        deviceName?: string;
         bundleName: string;
         permissionRecords: Array<PermissionUsedRecord>;
     }
@@ -379,6 +380,7 @@ export default namespace privacyManager {
         tokenId: int;
         isRemote: boolean;
         deviceId: string;
+        deviceName?: string;
         bundleName: string;
         permissionRecords: Array<PermissionUsedRecord>;
     }

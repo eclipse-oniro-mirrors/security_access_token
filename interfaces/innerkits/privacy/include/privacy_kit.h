@@ -46,6 +46,9 @@
 #include "permission_used_type_info.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_param.h"
+#include "remote_add_perm_param_info.h"
+#include "remote_caller_info.h"
+#include "remote_permission_used_info.h"
 #include "state_customized_cbk.h"
 
 namespace OHOS {
@@ -115,6 +118,20 @@ public:
      */
     static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
     /**
+     * @brief Input info start remote using input permission.
+     * @param info caller info
+     * @param permissionName permission nanme
+     * @return error code, see privacy_error.h
+     */
+    static int32_t StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
+    /**
+     * @brief Input info stop remote using input permission.
+     * @param info caller info
+     * @param permissionName permission nanme
+     * @return error code, see privacy_error.h
+     */
+    static int32_t StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
+    /**
      * @brief Remove input tokenID sensitive permission used records.
      * @param tokenID token id
      * @return error code, see privacy_error.h
@@ -135,6 +152,29 @@ public:
      */
     static int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
+
+    /**
+     * @brief Add remote device permission used record.
+     * @param info RemoteCallerInfo contains remote device id and name
+     * @param permissionName permission name
+     * @param successCount access success count
+     * @param failCount fail count
+     * @param asyncMode ipc wait type, true means sync waiting, false means async waiting
+     * @return error code, see privacy_error.h
+     */
+    static int32_t AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, bool asyncMode = false);
+
+    /**
+     * @brief Get remote device permission used records.
+     * @param request PermissionUsedRequest quote
+     * @param result PermissionUsedResult quote, as query result
+     * @param userId user ID
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetRemotePermissionUsedRecords(
+        const PermissionUsedRequest& request, PermissionUsedResult& result);
+
     /**
      * @brief Register sensitive permission active status change callback.
      * @param callback PermActiveStatusCustomizedCbk smark pointer quote

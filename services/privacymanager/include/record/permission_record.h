@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,8 +63,39 @@ struct ContinuousPermissionRecord {
     static bool IsPidValid(int32_t pid);
 };
 
+struct RemoteContinuousPermissionRecord {
+    int32_t opCode = 0;
+    int32_t callerPid = 0;
+
+    bool operator < (const RemoteContinuousPermissionRecord& other) const;
+
+    bool IsEqualRecord(const RemoteContinuousPermissionRecord& record) const;
+    bool IsEqualPermCode(const RemoteContinuousPermissionRecord& record) const;
+    bool IsEqualCallerPid(const RemoteContinuousPermissionRecord& record) const;
+};
+
 struct PermissionRecordCache {
     PermissionRecord record;
+    bool needUpdateToDb = false;
+};
+
+struct RemotePermissionRecord {
+    std::string deviceId;
+    std::string deviceName;
+    int32_t opCode = 0;
+    int64_t timestamp = 0L;
+    int32_t accessCount = 0;
+    int32_t rejectCount = 0;
+    int32_t userId = 0;
+
+    RemotePermissionRecord() = default;
+
+    static void TranslationIntoGenericValues(const RemotePermissionRecord& record, GenericValues& values);
+    static void TranslationIntoRemotePermissionRecord(const GenericValues& values, RemotePermissionRecord& record);
+};
+
+struct RemotePermissionRecordCache {
+    RemotePermissionRecord record;
     bool needUpdateToDb = false;
 };
 } // namespace AccessToken

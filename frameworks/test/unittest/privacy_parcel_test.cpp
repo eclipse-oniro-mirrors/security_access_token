@@ -87,6 +87,7 @@ BundleUsedRecord g_bundleUsedRecord1 = {
     .tokenId = 100,
     .isRemote = false,
     .deviceId = "you guess",
+    .deviceName = "your name",
     .bundleName = "com.ohos.test",
 };
 
@@ -94,6 +95,7 @@ BundleUsedRecord g_bundleUsedRecord2 = {
     .tokenId = 101,
     .isRemote = false,
     .deviceId = "i want to know too",
+    .deviceName = "your name",
     .bundleName = "com.ohos.permissionmanager",
 };
 }
@@ -126,6 +128,7 @@ HWTEST_F(PrivacyParcelTest, BundleUsedRecordParcel001, TestSize.Level1)
         .tokenId = 100,
         .isRemote = false,
         .deviceId = "device",
+        .deviceName = "name",
         .bundleName = "com.ohos.permissionmanager",
     };
 
@@ -146,6 +149,7 @@ HWTEST_F(PrivacyParcelTest, BundleUsedRecordParcel001, TestSize.Level1)
     EXPECT_EQ(bundleUsedRecordParcel.bundleRecord.tokenId, readedData->bundleRecord.tokenId);
     EXPECT_EQ(bundleUsedRecordParcel.bundleRecord.isRemote, readedData->bundleRecord.isRemote);
     EXPECT_EQ(bundleUsedRecordParcel.bundleRecord.deviceId, readedData->bundleRecord.deviceId);
+    EXPECT_EQ(bundleUsedRecordParcel.bundleRecord.deviceName, readedData->bundleRecord.deviceName);
     EXPECT_EQ(bundleUsedRecordParcel.bundleRecord.bundleName, readedData->bundleRecord.bundleName);
 }
 
@@ -163,10 +167,12 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
         .callingTokenID = 100,
         .tokenID = 100,
         .permissionName = "ohos.permission.CAMERA",
-        .deviceId = "device",
         .type = PERM_INACTIVE,
         .usedType = NORMAL_TYPE,
         .pid = -1,
+        .isRemote = false,
+        .deviceId = "device",
+        .remoteDeviceName = "name",
     };
 
     Parcel parcel;
@@ -178,10 +184,12 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.callingTokenID, readedData->changeResponse.callingTokenID);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.tokenID, readedData->changeResponse.tokenID);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.permissionName, readedData->changeResponse.permissionName);
-    EXPECT_EQ(activeChangeResponseParcel.changeResponse.deviceId, readedData->changeResponse.deviceId);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.type, readedData->changeResponse.type);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.usedType, readedData->changeResponse.usedType);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.pid, readedData->changeResponse.pid);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.isRemote, readedData->changeResponse.isRemote);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.deviceId, readedData->changeResponse.deviceId);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.remoteDeviceName, readedData->changeResponse.remoteDeviceName);
 }
 
 /**
@@ -357,6 +365,7 @@ void BundleUsedRecordData(Parcel& out, uint32_t size)
     EXPECT_EQ(true, out.WriteUint32(100)); // 100: tokenid
     EXPECT_EQ(true, out.WriteBool(false));
     EXPECT_EQ(true, out.WriteString("device"));
+    EXPECT_EQ(true, out.WriteString("name"));
     EXPECT_EQ(true, out.WriteString("bundleName"));
 
     EXPECT_EQ(true, out.WriteUint32(size));

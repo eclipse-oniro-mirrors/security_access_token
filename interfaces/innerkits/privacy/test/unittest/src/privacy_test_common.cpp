@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,10 @@
  * limitations under the License.
  */
 #include "privacy_test_common.h"
+
 #include "gtest/gtest.h"
+
+#include <cstdio>
 #include <thread>
 
 namespace OHOS {
@@ -27,12 +30,14 @@ void PrivacyTestCommon::SetTestEvironment(uint64_t shellTokenId)
 {
     std::lock_guard<std::mutex> lock(g_lockSetToken);
     g_shellTokenId = shellTokenId;
+    std::remove("/data/service/el2/100/access_token/remote_permission_used_record.db");
 }
 
 void PrivacyTestCommon::ResetTestEvironment()
 {
     std::lock_guard<std::mutex> lock(g_lockSetToken);
     g_shellTokenId = 0;
+    std::remove("/data/service/el2/100/access_token/remote_permission_used_record.db");
 }
 
 uint64_t PrivacyTestCommon::GetShellTokenId()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -106,6 +106,51 @@ bool ContinuousPermissionRecord::IsEqualPid(const ContinuousPermissionRecord& re
 bool ContinuousPermissionRecord::IsEqualTokenIdAndPid(const ContinuousPermissionRecord& record) const
 {
     return tokenId == record.tokenId && IsEqualPid(record);
+}
+
+bool RemoteContinuousPermissionRecord::operator < (const RemoteContinuousPermissionRecord& other) const
+{
+    if (opCode != other.opCode) {
+        return opCode < other.opCode;
+    }
+    return callerPid < other.callerPid;
+}
+
+bool RemoteContinuousPermissionRecord::IsEqualRecord(const RemoteContinuousPermissionRecord& record) const
+{
+    return IsEqualPermCode(record) && IsEqualCallerPid(record);
+}
+
+bool RemoteContinuousPermissionRecord::IsEqualPermCode(const RemoteContinuousPermissionRecord& record) const
+{
+    return record.opCode == opCode;
+}
+
+bool RemoteContinuousPermissionRecord::IsEqualCallerPid(const RemoteContinuousPermissionRecord& record) const
+{
+    return record.callerPid == callerPid;
+}
+
+void RemotePermissionRecord::TranslationIntoGenericValues(const RemotePermissionRecord& record,
+    GenericValues& values)
+{
+    values.Put(PrivacyFiledConst::FIELD_DEVICE_ID, record.deviceId);
+    values.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, record.deviceName);
+    values.Put(PrivacyFiledConst::FIELD_OP_CODE, record.opCode);
+    values.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
+    values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
+    values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+}
+
+void RemotePermissionRecord::TranslationIntoRemotePermissionRecord(const GenericValues& values,
+    RemotePermissionRecord& record)
+{
+    record.deviceId = values.GetString(PrivacyFiledConst::FIELD_DEVICE_ID);
+    record.deviceName = values.GetString(PrivacyFiledConst::FIELD_DEVICE_NAME);
+    record.opCode = values.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
+    record.timestamp = values.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+    record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
+    record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
 }
 } // namespace AccessToken
 } // namespace Security

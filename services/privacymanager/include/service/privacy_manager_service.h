@@ -46,11 +46,19 @@ public:
     int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
     int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName) override;
+    int32_t StartRemoteUsingPermission(const RemotePermissionUsedInfoParcel &infoParcel,
+        const sptr<IRemoteObject>& anonyStub) override;
+    int32_t StopRemoteUsingPermission(const std::string& remoteDeviceId,
+        const std::string& remoteDeviceName, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenId) override;
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel) override;
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) override;
+    int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfoParcel& infoParcel) override;
+    int32_t AddRemotePermissionUsedRecordAsync(const RemoteAddPermParamInfoParcel& infoParcel) override;
+    int32_t GetRemotePermissionUsedRecords(
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel) override;
     int32_t RegisterPermActiveStatusCallback(
         const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;

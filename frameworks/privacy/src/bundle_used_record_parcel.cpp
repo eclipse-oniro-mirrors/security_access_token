@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +26,7 @@ bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint32(this->bundleRecord.tokenId));
     RETURN_IF_FALSE(out.WriteBool(this->bundleRecord.isRemote));
     RETURN_IF_FALSE(out.WriteString(this->bundleRecord.deviceId));
+    RETURN_IF_FALSE(out.WriteString(this->bundleRecord.deviceName));
     RETURN_IF_FALSE(out.WriteString(this->bundleRecord.bundleName));
 
     RETURN_IF_FALSE(out.WriteUint32(this->bundleRecord.permissionRecords.size()));
@@ -47,6 +48,7 @@ BundleUsedRecordParcel* BundleUsedRecordParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint32(bundleRecordParcel->bundleRecord.tokenId), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadBool(bundleRecordParcel->bundleRecord.isRemote), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.deviceId), bundleRecordParcel);
+    RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.deviceName), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.bundleName), bundleRecordParcel);
 
     uint32_t permRecordSize = 0;

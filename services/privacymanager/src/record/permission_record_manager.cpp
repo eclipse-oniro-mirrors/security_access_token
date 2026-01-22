@@ -33,12 +33,14 @@
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
+#include "data_validator.h"
 #include "disable_policy_cbk_manager.h"
 #include "i_state_change_callback.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "json_parse_loader.h"
 #include "libraryloader.h"
+#include "os_account_manager.h"
 #include "parameter.h"
 #include "parcel_utils.h"
 #include "permission_map.h"
@@ -47,6 +49,7 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
+#include "remote_permission_used_record_db.h"
 #include "screenlock_manager_loader.h"
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
@@ -248,7 +251,7 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::UpdatePermissionUsedRecordToDb(const PermissionRecord& record)
+int32_t PermissionRecordManager::UpdatePermissionUsedRecordToDb(const PermissionRecord& record)
 {
     GenericValues modifyValue;
     modifyValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
@@ -261,11 +264,25 @@ bool PermissionRecordManager::UpdatePermissionUsedRecordToDb(const PermissionRec
     conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
     conditionValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, record.type);
 
-    {
-        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
-        return (PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_RECORD,
-            modifyValue, conditionValue) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
-    }
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+    return PermissionUsedRecordDb::GetInstance().Update(
+        PermissionUsedRecordDb::DataType::PERMISSION_RECORD, modifyValue, conditionValue);
+}
+
+int32_t PermissionRecordManager::UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record)
+{
+    GenericValues modifyValue;
+    modifyValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
+    modifyValue.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, record.deviceId);
+    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, record.deviceName);
+    conditionValue.Put(PrivacyFiledConst::FIELD_OP_CODE, record.opCode);
+    conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
+
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+    return RemotePermUsedRecordDbManager::GetInstance().Update(record.userId, modifyValue, conditionValue);
 }
 
 int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -292,7 +309,7 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
                 - true means record has merged, need to update database before remove from cache
             whether update database succeed or not, recod remove from cache
         */
-        if ((it->needUpdateToDb) && (!UpdatePermissionUsedRecordToDb(it->record))) {
+        if ((it->needUpdateToDb) && (UpdatePermissionUsedRecordToDb(it->record) != Constant::SUCCESS)) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Record with timestamp %{public}s update database failed!",
                 std::to_string(it->record.timestamp).c_str());
         }
@@ -305,10 +322,23 @@ int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
 
 void PermissionRecordManager::UpdatePermRecImmediately()
 {
-    std::lock_guard<std::mutex> lock(permUsedRecMutex_);
-    for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
-        if (it->needUpdateToDb) {
-            (void)UpdatePermissionUsedRecordToDb(it->record);
+    // update local cache
+    {
+        std::lock_guard<std::mutex> lock(permUsedRecMutex_);
+        for (auto it = permUsedRecList_.begin(); it != permUsedRecList_.end(); ++it) {
+            if (it->needUpdateToDb) {
+                (void)UpdatePermissionUsedRecordToDb(it->record);
+            }
+        }
+    }
+
+    // update remote cache
+    {
+        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+        for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end(); ++it) {
+            if (it->needUpdateToDb) {
+                (void)UpdateRemotePermissionUsedRecordToDb(it->record);
+            }
         }
     }
 }
@@ -357,7 +387,7 @@ void PermissionRecordManager::TransformEnumToBitValue(const PermissionUsedType t
     }
 }
 
-bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
+int32_t PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
     const PermissionUsedType type)
 {
     uint32_t inputType = 0;
@@ -371,7 +401,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
     int32_t res = PermissionUsedRecordDb::GetInstance().Query(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
         conditionValue, results);
     if (res != PermissionUsedRecordDb::SUCCESS) {
-        return false;
+        return res;
     }
 
     if (results.empty()) {
@@ -385,35 +415,30 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
         std::vector<GenericValues> recordValues;
         recordValues.emplace_back(recordValue);
-        res = PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
+        return PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
             recordValues);
-        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-            return false;
-        }
-    } else {
-        // not empty means there is permission used type record exsit, update it if needed
-        uint32_t dbType = static_cast<uint32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
-        LOGD(PRI_DOMAIN, PRI_TAG, "Record exsit, type is %{public}u.", dbType);
-
-        if ((dbType & inputType) == inputType) {
-            // true means visitTypeEnum has exsits, no need to add
-            LOGD(PRI_DOMAIN, PRI_TAG, "Used type has add.");
-            return true;
-        } else {
-            results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
-            dbType |= inputType;
-
-            // false means visitTypeEnum not exsits, update record
-            LOGD(PRI_DOMAIN, PRI_TAG, "Used type not add, generate new %{public}u.", dbType);
-
-            GenericValues newValue;
-            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(dbType));
-            return (PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
-                newValue, results[0]) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
-        }
     }
 
-    return true;
+    // not empty means there is permission used type record exist, update it if needed
+    uint32_t dbType = static_cast<uint32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+    LOGD(PRI_DOMAIN, PRI_TAG, "Record exsit, type is %{public}u.", dbType);
+
+    if ((dbType & inputType) == inputType) {
+        // true means visitTypeEnum has exists, no need to add
+        LOGD(PRI_DOMAIN, PRI_TAG, "Used type has add.");
+        return Constant::SUCCESS;
+    }
+
+    results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
+    dbType |= inputType;
+
+    // false means visitTypeEnum not exists, update record
+    LOGD(PRI_DOMAIN, PRI_TAG, "Used type not add, generate new %{public}u.", dbType);
+
+    GenericValues newValue;
+    newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(dbType));
+    return PermissionUsedRecordDb::GetInstance().Update(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, newValue, results[0]);
 }
 
 bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID)
@@ -502,8 +527,331 @@ int32_t PermissionRecordManager::AddPermissionUsedRecordInner(const AddPermParam
         return result;
     }
 
-    return AddOrUpdateUsedTypeIfNeeded(
-        info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
+    return AddOrUpdateUsedTypeIfNeeded(info.tokenId, record.opCode, info.type);
+}
+
+static bool RemoteRecordMergeCheck(const RemotePermissionRecord& record1, const RemotePermissionRecord& record2)
+{
+    // timestamp in the same minute
+    if (!AccessToken::TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
+        return false;
+    }
+
+    // the same deviceId + deviceName + opCode + userId
+    if ((record1.deviceId != record2.deviceId) || (record1.deviceName != record2.deviceName) ||
+        (record1.opCode != record2.opCode) || (record1.userId != record2.userId)) {
+        return false;
+    }
+
+    // both success
+    if (((record1.accessCount > 0) && (record2.accessCount == 0)) ||
+        ((record1.accessCount == 0) && (record2.accessCount > 0))) {
+        return false;
+    }
+
+    // both failure
+    if (((record1.rejectCount > 0) && (record2.rejectCount == 0)) ||
+        ((record1.rejectCount == 0) && (record2.rejectCount > 0))) {
+        return false;
+    }
+
+    return true;
+}
+
+void PermissionRecordManager::AddRemoteRecToCacheAndValueVec(const RemotePermissionRecord& record,
+    std::vector<GenericValues>& values)
+{
+    RemotePermissionRecordCache cache;
+    cache.record = record;
+    remotePermUsedRecList_.emplace_back(cache);
+
+    GenericValues value;
+    RemotePermissionRecord::TranslationIntoGenericValues(cache.record, value);
+    values.emplace_back(value);
+}
+
+int32_t PermissionRecordManager::MergeOrInsertRemoteRecord(const RemotePermissionRecord& record)
+{
+    std::vector<GenericValues> insertRecords;
+    {
+        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+        if (remotePermUsedRecList_.empty()) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "First remote record in cache!");
+
+            AddRemoteRecToCacheAndValueVec(record, insertRecords);
+        } else {
+            bool mergeFlag = false;
+            for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end(); ++it) {
+                if (RemoteRecordMergeCheck(it->record, record)) {
+                    LOGI(PRI_DOMAIN, PRI_TAG, "Merge remote record, ori timestamp is %{public}s.",
+                        std::to_string(it->record.timestamp).c_str());
+
+                    // merge new record to older one if match the merge condition
+                    it->record.accessCount += record.accessCount;
+                    it->record.rejectCount += record.rejectCount;
+
+                    // set update flag to true
+                    it->needUpdateToDb = true;
+                    mergeFlag = true;
+                    break;
+                }
+            }
+
+            if (!mergeFlag) {
+                // record can't merge store to database immediately and add to cache
+                AddRemoteRecToCacheAndValueVec(record, insertRecords);
+            }
+        }
+
+        if (insertRecords.empty()) {
+            return Constant::SUCCESS;
+        }
+        
+        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+        int32_t res = RemotePermUsedRecordDbManager::GetInstance().Add(record.userId, insertRecords);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Add remote record failed!");
+            // if add fail, rollback cache, must under lock
+            remotePermUsedRecList_.pop_back();
+            return res;
+        }
+    }
+
+    LOGI(PRI_DOMAIN, PRI_TAG, "Add remote record, deviceId %{public}s, op %{public}d, "
+        "sucCnt: %{public}d, failCnt: %{public}d, timestamp %{public}s.",
+        ConstantCommon::EncryptDevId(record.deviceId).c_str(), record.opCode, record.accessCount,
+        record.rejectCount, std::to_string(record.timestamp).c_str());
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::AddRemoteRecord(const RemotePermissionRecord& record)
+{
+    int32_t res = MergeOrInsertRemoteRecord(record);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    int64_t updateStamp = record.timestamp - ONE_MINUTE_MILLISECONDS; // timestamp less than 1 min from now
+    std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+    auto it = remotePermUsedRecList_.begin();
+    while (it != remotePermUsedRecList_.end()) {
+        if ((it->record.timestamp > updateStamp) || (it->record.opCode != record.opCode) ||
+            (it->record.userId != record.userId)) {
+            // record from cache less than updateStamp may merge, ignore them
+            ++it;
+            continue;
+        }
+
+        if ((it->needUpdateToDb) && (UpdateRemotePermissionUsedRecordToDb(it->record) != Constant::SUCCESS)) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Remote record with timestamp %{public}s update database failed!",
+                std::to_string(it->record.timestamp).c_str());
+        }
+
+        it = remotePermUsedRecList_.erase(it);
+    }
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::GetRemotePermissionRecord(
+    const RemoteAddPermParamInfo& info, RemotePermissionRecord& record, const int32_t userId)
+{
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(info.permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", info.permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    record.deviceId = info.deviceId;
+    record.deviceName = info.deviceName;
+    record.accessCount = info.successCount;
+    record.rejectCount = info.failCount;
+    record.opCode = opCode;
+    record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
+    record.userId = userId;
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info)
+{
+    if (!DataValidator::IsDeviceIdValid(info.deviceId) || !DataValidator::IsDeviceNameValid(info.deviceName) ||
+        !DataValidator::IsPermissionNameValid(info.permissionName) ||
+        ((info.successCount == 0) && (info.failCount == 0))) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid param");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t userId = 0;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    // Check privacy toggle status: if switch is closed, return error, error while exchange to OK in client
+    if (!CheckPermissionUsedRecordToggleStatus(userId)) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "The permission used record toggle status is false for user %{public}d.", userId);
+        return PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED;
+    }
+    
+    RemotePermissionRecord record;
+    int32_t result = GetRemotePermissionRecord(info, record, userId);
+    if (result != Constant::SUCCESS) {
+        return result;
+    }
+
+    result = AddRemoteRecord(record);
+    if (result != Constant::SUCCESS) {
+        return result;
+    }
+
+    return Constant::SUCCESS;
+}
+
+static void TransferToOpcode(const std::vector<std::string>& permissionList, std::set<int32_t>& opCodeList)
+{
+    for (const auto& permission : permissionList) {
+        int32_t opCode = Constant::OP_INVALID;
+        (void)Constant::TransferPermissionToOpcode(permission, opCode);
+        opCodeList.insert(opCode);
+    }
+}
+
+void PermissionRecordManager::InsteadMergedRemoteRecIfNecessary(
+    GenericValues& queryValue, std::vector<RemotePermissionRecord>& mergedRecords)
+{
+    std::string deviceId = queryValue.GetString(PrivacyFiledConst::FIELD_DEVICE_ID);
+    std::string deviceName = queryValue.GetString(PrivacyFiledConst::FIELD_DEVICE_NAME);
+    int32_t opCode = queryValue.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
+    int64_t timestamp = queryValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+
+    for (const auto& record : mergedRecords) {
+        if (deviceId == record.deviceId && deviceName == record.deviceName &&
+            opCode == record.opCode && timestamp == record.timestamp) {
+            queryValue.Remove(PrivacyFiledConst::FIELD_ACCESS_COUNT);
+            queryValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
+            queryValue.Remove(PrivacyFiledConst::FIELD_REJECT_COUNT);
+            queryValue.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+            return;
+        }
+    }
+}
+
+static void AddRemoteDebugLog(const std::string& deviceId, const BundleUsedRecord& bundleRecord,
+    int32_t& totalSuccCount, int32_t& totalFailCount)
+{
+    int32_t deviceTotalSuccCount = 0;
+    int32_t deviceTotalFailCount = 0;
+    for (const auto& permissionRecord : bundleRecord.permissionRecords) {
+        deviceTotalSuccCount += permissionRecord.accessCount;
+        deviceTotalFailCount += permissionRecord.rejectCount;
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "DeviceId: %{public}s, success %{public}d, failure %{public}d",
+        ConstantCommon::EncryptDevId(deviceId).c_str(), deviceTotalSuccCount, deviceTotalFailCount);
+    totalSuccCount += deviceTotalSuccCount;
+    totalFailCount += deviceTotalFailCount;
+}
+
+int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
+    const PermissionUsedRequest& request, PermissionUsedResult& result)
+{
+    int32_t userId = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    if (!request.isRemote || !PermissionRecordManager::IsUserIdValid(userId)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid param");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    GenericValues andConditionValues;
+    if (DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andConditionValues) != Constant::SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Query time or flag is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
+    std::vector<GenericValues> findRecordsValues;
+
+    std::set<int32_t> opCodeList;
+    TransferToOpcode(request.permissionList, opCodeList);
+
+    RemotePermUsedRecordDbManager::GetInstance().FindByConditions(
+        userId, opCodeList, andConditionValues, findRecordsValues, dataLimitNum);
+
+    if (findRecordsValues.empty()) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "No remote record match the condition.");
+        return Constant::SUCCESS;
+    }
+
+    std::vector<RemotePermissionRecord> mergedRecords;
+    {
+        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+        for (const auto& cache : remotePermUsedRecList_) {
+            if (cache.needUpdateToDb && cache.record.userId == userId) { // need userId check
+                mergedRecords.emplace_back(cache.record);
+            }
+        }
+    }
+
+    std::map<std::string, BundleUsedRecord> deviceIdToBundleMap;
+    BuildBundleUsedRecordsFromRemoteResults(
+        findRecordsValues, mergedRecords, deviceIdToBundleMap, result, request.flag);
+
+    int32_t totalSuccCount = 0;
+    int32_t totalFailCount = 0;
+    for (auto iter = deviceIdToBundleMap.begin(); iter != deviceIdToBundleMap.end(); ++iter) {
+        result.bundleRecords.emplace_back(iter->second);
+        AddRemoteDebugLog(iter->second.deviceId, iter->second, totalSuccCount, totalFailCount);
+    }
+
+    if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "Total success count is %{public}d, total failure count is %{public}d",
+            totalSuccCount, totalFailCount);
+    }
+
+    return Constant::SUCCESS;
+}
+
+void PermissionRecordManager::BuildBundleUsedRecordsFromRemoteResults(
+    std::vector<GenericValues>& findRecordsValues, std::vector<RemotePermissionRecord>& mergedRecords,
+    std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
+    const PermissionUsageFlag& flag)
+{
+    std::map<std::string, int64_t> deviceIdToMaxTimestamp;
+    for (auto& recordValue : findRecordsValues) {
+        InsteadMergedRemoteRecIfNecessary(recordValue, mergedRecords);
+
+        // update beginTimeMillis and endTimeMillis if necessary
+        int64_t timestamp = recordValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+        result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
+            timestamp : result.beginTimeMillis;
+        result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
+
+        std::string deviceId = recordValue.GetString(PrivacyFiledConst::FIELD_DEVICE_ID);
+        std::string deviceName = recordValue.GetString(PrivacyFiledConst::FIELD_DEVICE_NAME);
+        std::string uniqueStr = deviceId + deviceName;
+
+        if (deviceIdToBundleMap.count(uniqueStr) == 0) {
+            BundleUsedRecord bundleRecord;
+            bundleRecord.tokenId = 0;
+            bundleRecord.isRemote = true;
+            bundleRecord.deviceId = deviceId;
+            bundleRecord.deviceName = deviceName;
+            bundleRecord.bundleName = "";
+
+            deviceIdToBundleMap[uniqueStr] = bundleRecord;
+            deviceIdToMaxTimestamp[uniqueStr] = timestamp;
+        } else if (deviceIdToMaxTimestamp[uniqueStr] < timestamp) {
+            deviceIdToMaxTimestamp[uniqueStr] = timestamp;
+        }
+
+        // Fill permission records
+        PermissionUsedRecord permissionRecord;
+        if (DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
+            flag, recordValue, permissionRecord) == Constant::SUCCESS) {
+            FillPermissionUsedRecords(permissionRecord, flag,
+                deviceIdToBundleMap[uniqueStr].permissionRecords);
+        }
+    }
 }
 
 int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
@@ -526,6 +874,23 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         if (!tokenIDList.empty()) {
             RemoveHistoryPermissionUsedRecords(tokenIDList);
         }
+
+        // Remove remote permission records
+        {
+            std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+            for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
+                if (it->record.userId == userID) {
+                    it = remotePermUsedRecList_.erase(it);
+                } else {
+                    it++;
+                }
+            }
+        }
+
+        GenericValues conditions;
+        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+        RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
     }
 
     if (!UpdatePermUsedRecToggleStatusMap(userID, status)) {
@@ -533,12 +898,7 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         return Constant::SUCCESS;
     }
 
-    if (!AddOrUpdateUsedStatusIfNeeded(userID, status)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to AddOrUpdateUsedStatusIfNeeded.");
-        return Constant::FAILURE;
-    }
-
-    return Constant::SUCCESS;
+    return AddOrUpdateUsedStatusIfNeeded(userID, status);
 }
 
 bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status)
@@ -558,7 +918,7 @@ bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, b
     return false;
 }
 
-bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status)
+int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status)
 {
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
@@ -567,7 +927,7 @@ bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool
     int32_t res = PermissionUsedRecordDb::GetInstance().Query(
         PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue, results);
     if (res != PermissionUsedRecordDb::SUCCESS) {
-        return false;
+        return res;
     }
 
     if (results.empty()) {
@@ -580,21 +940,15 @@ bool PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool
 
         std::vector<GenericValues> recordValues;
         recordValues.emplace_back(recordValue);
-        int32_t res = PermissionUsedRecordDb::GetInstance().Add(
+        return PermissionUsedRecordDb::GetInstance().Add(
             PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, recordValues);
-        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-            return false;
-        }
-    } else {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Exsit record, update it.");
-        GenericValues newValue;
-        newValue.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(status));
-        return (PermissionUsedRecordDb::GetInstance().Update(
-            PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS,
-            newValue, conditionValue) == PermissionUsedRecordDb::ExecuteResult::SUCCESS);
     }
 
-    return true;
+    LOGD(PRI_DOMAIN, PRI_TAG, "Exsit record, update it.");
+    GenericValues newValue;
+    newValue.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(status));
+    return PermissionUsedRecordDb::GetInstance().Update(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, newValue, conditionValue);
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
@@ -691,9 +1045,12 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    if (!request.isRemote && !GetRecordsFromLocalDB(request, result)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetRecordsFromLocalDB");
-        return  PrivacyError::ERR_PARAM_INVALID;
+    if (!request.isRemote) {
+        int32_t res = GetRecordsFromLocalDB(request, result);
+        if (res != Constant::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetRecordsFromLocalDB");
+            return res;
+        }
     }
     return Constant::SUCCESS;
 }
@@ -713,15 +1070,6 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     std::thread recordThread(task);
     recordThread.detach();
     return Constant::SUCCESS;
-}
-
-static void TransferToOpcode(const std::vector<std::string>& permissionList, std::set<int32_t>& opCodeList)
-{
-    for (const auto& permission : permissionList) {
-        int32_t opCode = Constant::OP_INVALID;
-        (void)Constant::TransferPermissionToOpcode(permission, opCode);
-        opCodeList.insert(opCode);
-    }
 }
 
 void PermissionRecordManager::GetMergedRecordsFromCache(std::vector<PermissionRecord>& mergedRecords)
@@ -845,12 +1193,13 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
     totalFailCount += tokenTotalFailCount;
 }
 
-bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
+int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request,
+    PermissionUsedResult& result)
 {
     GenericValues andConditionValues;
     if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues) != Constant::SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Query time or flag is invalid");
-        return false;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
@@ -866,7 +1215,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     uint32_t currentCount = findRecordsValues.size(); // handle query result
     if (currentCount == 0) {
         LOGI(PRI_DOMAIN, PRI_TAG, "No record match the condition.");
-        return true;
+        return Constant::SUCCESS;
     }
 
     std::vector<PermissionRecord> mergedRecords;
@@ -908,7 +1257,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
             totalSuccCount, totalFailCount);
     }
 
-    return true;
+    return Constant::SUCCESS;
 }
 
 bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord)
@@ -936,6 +1285,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 
     std::function<void()> delayed = ([this]() {
         (void)DeletePermissionRecord(recordAgingTime_);
+        (void)DeleteRemotePermissionRecord(recordAgingTime_);
         LOGI(PRI_DOMAIN, PRI_TAG, "Delete record end.");
         // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
@@ -987,6 +1337,40 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     return Constant::SUCCESS;
 }
 
+int32_t PermissionRecordManager::DeleteRemotePermissionRecord(int32_t days)
+{
+    int32_t userId = 0;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
+    int32_t total = RemotePermUsedRecordDbManager::GetInstance().Count(userId);
+    if (total > recordSizeMaximum_) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "The count of remote record is %{public}d, begin to delete aging data.", total);
+        uint32_t excessiveSize = static_cast<uint32_t>(total) - static_cast<uint32_t>(recordSizeMaximum_);
+        res = RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(userId, excessiveSize);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Delete excessive remote records failed, res %{public}d.", res);
+            return Constant::FAILURE;
+        }
+    }
+
+    GenericValues andConditionValues;
+    int64_t deleteTimestamp = AccessToken::TimeUtil::GetCurrentTimestamp() - interval;
+    andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
+
+    res = RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(userId, andConditionValues);
+    if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Delete expire remote records failed, res %{public}d.", res);
+        return Constant::FAILURE;
+    }
+
+    return Constant::SUCCESS;
+}
+
 int32_t PermissionRecordManager::AddRecordToStartList(
     const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid)
 {
@@ -1027,24 +1411,43 @@ int32_t PermissionRecordManager::AddRecordToStartList(
 
 void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList)
 {
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        std::string perm;
-        Constant::TransferOpcodeToPermission(it->opCode, perm);
-        ActiveChangeResponse info;
-        info.callingTokenID = it->callertokenId;
-        info.tokenID = it->tokenId;
-        info.permissionName = perm;
-        info.deviceId = "";
-        info.type = static_cast<ActiveChangeType>(it->status);
-        info.usedType = it->usedType;
-        info.pid = it->pid;
-        infoList.emplace_back(info);
-        LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
-            "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", it->tokenId,
-            perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            ActiveChangeResponse info;
+            info.callingTokenID = it->callertokenId;
+            info.tokenID = it->tokenId;
+            info.permissionName = perm;
+            info.deviceId = "";
+            info.type = static_cast<ActiveChangeType>(it->status);
+            info.usedType = it->usedType;
+            info.pid = it->pid;
+            infoList.emplace_back(info);
+            LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
+                "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", it->tokenId,
+                perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
+        }
     }
-    return;
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            ActiveChangeResponse info;
+            info.permissionName = perm;
+            info.type = ActiveChangeType::PERM_REMOTE_USING;
+            info.isRemote = true;
+            info.deviceId = uniqueDeviceId_;
+            info.remoteDeviceName = uniqueDeviceName_;
+
+            infoList.emplace_back(info);
+            LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
+            "using permission %{public}s, type %{public}d, callerPid %{public}d.",
+                ConstantCommon::EncryptDevId(info.deviceId).c_str(), perm.c_str(), info.type, it->callerPid);
+        }
+    }
 }
 
 int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
@@ -1216,20 +1619,17 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
     (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualTokenId);
 }
 
-void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "OpCode %{public}d", opCode);
-    ContinuousPermissionRecord record = {0};
-    record.opCode = opCode;
-    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualPermCode);
-}
-
 void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t callerPid)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid %{public}d", callerPid);
     ContinuousPermissionRecord record = {0};
     record.callerPid = callerPid;
     (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualCallerPid);
+
+    RemoteContinuousPermissionRecord targetRecord;
+    targetRecord.callerPid = callerPid;
+    // remove all remote using by callingPid
+    (void) ToRemoveRemoteRecord(targetRecord, &RemoteContinuousPermissionRecord::IsEqualCallerPid, true);
 }
 
 bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
@@ -1307,6 +1707,12 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  */
 void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus)
 {
+    UpdateStartUsingRecord(permissionName, switchStatus);
+    UpdateStartRemoteUsingRecord(permissionName, switchStatus);
+}
+
+void PermissionRecordManager::UpdateStartUsingRecord(const std::string& permissionName, bool switchStatus)
+{
     int32_t opCode;
     Constant::TransferPermissionToOpcode(permissionName, opCode);
     std::set<ContinuousPermissionRecord> updatedRecordList;
@@ -1332,6 +1738,36 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
     // each permission sends a status change notice
     for (const auto& record : updatedRecordList) {
         CallbackExecute(record, permissionName);
+    }
+}
+
+void PermissionRecordManager::UpdateStartRemoteUsingRecord(const std::string& permissionName, bool switchStatus)
+{
+    // only active when permission is disabled
+    if (switchStatus) {
+        return;
+    }
+    int32_t opCode = 0;
+    Constant::TransferPermissionToOpcode(permissionName, opCode);
+    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+    std::multiset<RemoteContinuousPermissionRecord> updatedRecordList;
+    for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
+        RemoteContinuousPermissionRecord record = *it;
+        if ((record.opCode) != static_cast<int32_t>(opCode)) {
+            ++it;
+            continue;
+        }
+        LOGI(PRI_DOMAIN, PRI_TAG, "Global switch is close, update remote record to inactive");
+        updatedRecordList.emplace(record);
+        it = startRemoteRecordList_.erase(it);
+    }
+    for (const auto& record : updatedRecordList) {
+        // deviceName is latest when inactive
+        CallbackRemoteExecute(
+            record, uniqueDeviceId_, uniqueDeviceName_, permissionName, ActiveChangeType::PERM_INACTIVE);
+    }
+    if (startRemoteRecordList_.empty()) {
+        uniqueDeviceId_ = "";
     }
 }
 
@@ -1512,13 +1948,177 @@ int32_t PermissionRecordManager::StopUsingPermission(
 
 bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
 {
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if (it->callerPid == callerPid) {
-            return true;
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            if (it->callerPid == callerPid) {
+                return true;
+            }
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
+            if (it->callerPid == callerPid) {
+                return true;
+            }
         }
     }
     return false;
+}
+
+void PermissionRecordManager::CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record,
+    const std::string& remoteDeviceId, const std::string& remoteDeviceName, const std::string& permissionName,
+    ActiveChangeType type)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteRemoteCallbackAsync, deviceId: %{public}s, "
+        "using permission %{public}s, type %{public}d, callerPid %{public}d.",
+        ConstantCommon::EncryptDevId(remoteDeviceId).c_str(), permissionName.c_str(), type, record.callerPid);
+
+    ActiveChangeResponse info;
+    info.permissionName = permissionName;
+    info.isRemote = true;
+    info.deviceId = remoteDeviceId;
+    info.remoteDeviceName = remoteDeviceName;
+    info.type = type;
+
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
+}
+
+int32_t PermissionRecordManager::AddRecordToStartRemoteList(
+    const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid)
+{
+    int32_t opCode;
+    const std::string& permissionName = info.permissionName;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+    if (uniqueDeviceId_.empty()) {
+        uniqueDeviceId_ = info.remoteDeviceId;
+    } else if (uniqueDeviceId_ != info.remoteDeviceId) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote already using, id:%{public}s",
+            ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str());
+        return PrivacyError::ERR_REMOTE_USING_CONFLICT;
+    }
+    // update to newest deviceName
+    uniqueDeviceName_ = info.remoteDeviceName;
+
+    RemoteContinuousPermissionRecord newRecord = {
+        .opCode = opCode,
+        .callerPid = callerPid,
+    };
+
+    startRemoteRecordList_.emplace(newRecord);
+    CallbackRemoteExecute(newRecord, uniqueDeviceId_, info.remoteDeviceName, permissionName, type);
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid)
+{
+    if (!DataValidator::IsPermissionNameValid(info.permissionName) ||
+        !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
+        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    const std::string& permissionName = info.permissionName;
+    LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, perm: %{public}s, callerPid: %{public}d",
+        ConstantCommon::EncryptDevId(info.remoteDeviceId).c_str(), permissionName.c_str(), callerPid);
+
+    InitializeMuteState(permissionName);
+    if (IsEdmMuteOrDisable(permissionName)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+    }
+
+    if (!Register()) {
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+
+    ActiveChangeType type = ActiveChangeType::PERM_REMOTE_USING;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
+    if (!GetGlobalSwitchStatus(permissionName)) {
+        type = ActiveChangeType::PERM_INACTIVE;
+    }
+#endif
+
+    return AddRecordToStartRemoteList(info, type, callerPid);
+}
+
+int32_t PermissionRecordManager::StopRemoteUsingPermission(const std::string& remoteDeviceId,
+    const std::string& remoteDeviceName, const std::string& permissionName, int32_t callerPid)
+{
+    if (!DataValidator::IsDeviceIdValid(remoteDeviceId) || !DataValidator::IsDeviceNameValid(remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        if (uniqueDeviceId_.empty() || uniqueDeviceId_ != remoteDeviceId) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Remote not match, id:%{public}s",
+                ConstantCommon::EncryptDevId(remoteDeviceId).c_str());
+            return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+        }
+    }
+
+    RemoteContinuousPermissionRecord record = {
+        .opCode = opCode,
+        .callerPid = callerPid,
+    };
+
+    if (!ToRemoveRemoteRecord(record, &RemoteContinuousPermissionRecord::IsEqualRecord, false)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "No remote records started, deviceId: %{public}s, "
+            "opCode=%{public}d, callerPid=%{public}d", ConstantCommon::EncryptDevId(remoteDeviceId).c_str(),
+            opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+    }
+    return Constant::SUCCESS;
+}
+
+bool PermissionRecordManager::ToRemoveRemoteRecord(
+    const RemoteContinuousPermissionRecord& targetRecord, const IsRemoteEqualFunc& isEqualFunc, bool removeAll)
+{
+    bool res = false;
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
+            if (((*it).*isEqualFunc)(targetRecord)) {
+                std::string perm;
+                Constant::TransferOpcodeToPermission(it->opCode, perm);
+                RemoteContinuousPermissionRecord newRecord = {
+                    .opCode = it->opCode,
+                    .callerPid = it->callerPid,
+                };
+                // deviceName is latest when inactive
+                CallbackRemoteExecute(
+                    newRecord, uniqueDeviceId_, uniqueDeviceName_, perm, ActiveChangeType::PERM_INACTIVE);
+                // remove record success
+                res = true;
+                it = startRemoteRecordList_.erase(it);
+                
+                if (!removeAll) {
+                    // only remove one record
+                    break;
+                }
+            } else {
+                ++it;
+            }
+        }
+        if (startRemoteRecordList_.empty()) {
+            uniqueDeviceId_ = "";
+        }
+    }
+    return res;
 }
 
 void PermissionRecordManager::PermListToString(const std::vector<std::string>& permList)

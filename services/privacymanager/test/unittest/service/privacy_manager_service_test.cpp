@@ -429,6 +429,75 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordAsyncInner003, TestSi
 }
 
 /**
+ * @tc.name: AddRemotePermissionUsedRecordInner001
+ * @tc.desc: AddRemotePermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddRemotePermissionUsedRecordInner001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.push_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("AddRemotePermissionUsedRecordInner001", reqPerm, true); // set self tokenID to system app
+    RemoteAddPermParamInfoParcel infoParcel;
+
+    int32_t ret = privacyManagerService_->AddRemotePermissionUsedRecord(infoParcel);
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: AddRemotePermissionUsedRecordInner002
+ * @tc.desc: AddRemotePermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddRemotePermissionUsedRecordInner002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("AddRemotePermissionUsedRecordInner002", reqPerm, false); // set self tokenID to normal app
+    RemoteAddPermParamInfoParcel infoParcel;
+
+    int32_t ret = privacyManagerService_->AddRemotePermissionUsedRecord(infoParcel);
+    
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: AddRemotePermissionUsedRecordInner003
+ * @tc.desc: AddRemotePermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddRemotePermissionUsedRecordInner003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("AddRemotePermissionUsedRecordInner003", reqPerm, true); // set self tokenID to system app
+    RemoteAddPermParamInfoParcel infoParcel;
+
+    int32_t ret = privacyManagerService_->AddRemotePermissionUsedRecord(infoParcel);
+    
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: AddRemotePermissionUsedRecordAsyncInner001
+ * @tc.desc: AddRemotePermissionUsedRecordAsyncInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddRemotePermissionUsedRecordAsyncInner001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("AddRemotePermissionUsedRecordAsyncInner001", reqPerm, false); // set self tokenID to normal app
+    RemoteAddPermParamInfoParcel infoParcel;
+
+    int32_t ret = privacyManagerService_->AddRemotePermissionUsedRecordAsync(infoParcel);
+    
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
  * @tc.name: SetPermissionUsedRecordToggleStatusInner001
  * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
  * @tc.type: FUNC
@@ -598,6 +667,59 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
 }
 
 /**
+ * @tc.name: StartRemoteUsingPermissionInner001
+ * @tc.desc: StartRemoteUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartRemoteUsingPermissionInner001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.push_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("StartRemoteUsingPermissionInner001", reqPerm, true);
+
+    RemotePermissionUsedInfoParcel infoParcel;
+
+    int32_t ret = privacyManagerService_->StartRemoteUsingPermission(infoParcel, nullptr);
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: StartRemoteUsingPermissionInner002
+ * @tc.desc: StartRemoteUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartRemoteUsingPermissionInner002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StartRemoteUsingPermissionInner002", reqPerm, false); // set self tokenID to normal app
+
+    RemotePermissionUsedInfoParcel infoParcel;
+
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        privacyManagerService_->StartRemoteUsingPermission(infoParcel, nullptr));
+}
+
+/**
+ * @tc.name: StartRemoteUsingPermissionInner003
+ * @tc.desc: StartUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartRemoteUsingPermissionInner003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StartRemoteUsingPermissionInner003", reqPerm, true); // set self tokenID to system app
+
+    RemotePermissionUsedInfoParcel infoParcel;
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        privacyManagerService_->StartRemoteUsingPermission(infoParcel, nullptr));
+}
+
+/**
  * @tc.name: StartUsingPermissionCallbackInner001
  * @tc.desc: StartUsingPermissionCallbackInner test.
  * @tc.type: FUNC
@@ -723,6 +845,65 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level0
 
     // callingTokenID is system hap without need permission
     int32_t ret = privacyManagerService_->StopUsingPermission(tokenID, pid, permissionName);
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: StopRemoteUsingPermissionInner001
+ * @tc.desc: StopRemoteUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopRemoteUsingPermissionInner001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.push_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("StopRemoteUsingPermissionInner001", reqPerm, true); // set self tokenID to system app
+
+    std::string remoteDeviceId = "";
+    std::string remoteDeviceName = "";
+    std::string permissionName = "";
+
+    int32_t ret = privacyManagerService_->StopRemoteUsingPermission(remoteDeviceId, remoteDeviceName, permissionName);
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: StopRemoteUsingPermissionInner002
+ * @tc.desc: StopRemoteUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopRemoteUsingPermissionInner002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StopRemoteUsingPermissionInner002", reqPerm, false); // set self tokenID to normal app
+
+    std::string remoteDeviceId = "ididid";
+    std::string remoteDeviceName = "namename";
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    int32_t ret = privacyManagerService_->StopRemoteUsingPermission(remoteDeviceId, remoteDeviceName, permissionName);
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: StopRemoteUsingPermissionInner003
+ * @tc.desc: StopRemoteUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopRemoteUsingPermissionInner003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("StopRemoteUsingPermissionInner003", reqPerm, true); // set self tokenID to system app
+
+    std::string remoteDeviceId = "ididid";
+    std::string remoteDeviceName = "namename";
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    int32_t ret = privacyManagerService_->StopRemoteUsingPermission(remoteDeviceId, remoteDeviceName, permissionName);
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
 }
 

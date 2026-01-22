@@ -20,10 +20,13 @@ group("fuzztest") {
     deps += [
       "addpermissionusedrecordasyncstub_fuzzer:AddPermissionUsedRecordAsyncStubFuzzTest",
       "addpermissionusedrecordstub_fuzzer:AddPermissionUsedRecordStubFuzzTest",
+      "addremotepermissionusedrecordasyncstub_fuzzer:AddRemotePermissionUsedRecordAsyncStubFuzzTest",
+      "addremotepermissionusedrecordstub_fuzzer:AddRemotePermissionUsedRecordStubFuzzTest",
       "getpermissionusedrecordsasyncstub_fuzzer:GetPermissionUsedRecordsAsyncStubFuzzTest",
       "getpermissionusedrecordsstub_fuzzer:GetPermissionUsedRecordsStubFuzzTest",
       "getpermissionusedrecordtogglestatusstub_fuzzer:GetPermissionUsedRecordToggleStatusStubFuzzTest",
       "getpermissionusedtypeinfosstub_fuzzer:GetPermissionUsedTypeInfosStubFuzzTest",
+      "getremotepermissionusedrecordsstub_fuzzer:GetRemotePermissionUsedRecordsStubFuzzTest",
       "isallowedusingpermissionstub_fuzzer:IsAllowedUsingPermissionStubFuzzTest",
       "privacystub_fuzzer:PrivacyStubFuzzTest",
       "registerpermactivestatuscallbackstub_fuzzer:RegisterPermActiveStatusCallbackStubFuzzTest",
@@ -32,7 +35,9 @@ group("fuzztest") {
       "setmutepolicystub_fuzzer:SetMutePolicyStubFuzzTest",
       "setpermissionusedrecordtogglestatusstub_fuzzer:SetPermissionUsedRecordToggleStatusStubFuzzTest",
       "startusingpermissioncallbackstub_fuzzer:StartUsingPermissionCallbackStubFuzzTest",
+      "startremoteusingpermissionstub_fuzzer:StartRemoteUsingPermissionStubFuzzTest",
       "startusingpermissionstub_fuzzer:StartUsingPermissionStubFuzzTest",
+      "stopremoteusingpermissionstub_fuzzer:StopRemoteUsingPermissionStubFuzzTest",
       "stopusingpermissionstub_fuzzer:StopUsingPermissionStubFuzzTest",
       "unregisterpermactivestatuscallbackstub_fuzzer:UnRegisterPermActiveStatusCallbackStubFuzzTest",
     ]

@@ -14,6 +14,7 @@
  */
 
 #include <cstdint>
+#include <cstdio>
 
 #include <gtest/gtest.h>
 
@@ -27,6 +28,7 @@
 #include "active_status_callback_manager.h"
 #include "permission_record_manager.h"
 #include "permission_used_record_db.h"
+#include "remote_permission_used_record_db.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
@@ -56,6 +58,11 @@ static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
 static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t TEST_USER_ID_11 = 11;
+static constexpr int32_t USER_ID_100 = 100;
+static constexpr int32_t USER_ID_INVALID = 12345;
+static constexpr uint32_t USER_100_UID = 20000000;
+static constexpr int32_t NOT_SAME_TIME = 10000000;
+static constexpr int32_t CAMERA_OP_CODE = 18;
 static constexpr int32_t INVALID_CODE = 9999;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
@@ -846,6 +853,259 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level4)
     PermissionRecordManager::GetInstance().ExecuteDeletePermissionRecordTask();
 }
 
+/*
+ * @tc.name: AddRemotePermissionUsedRecordTest001
+ * @tc.desc: AddRemotePermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest001, TestSize.Level4)
+{
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+
+    RemotePermissionRecord record;
+    record.deviceId = "ididid";
+    record.deviceName = "namename";
+    record.opCode = 0;
+    record.timestamp = 0L;
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    record.userId = USER_ID_100;
+
+    RemotePermissionRecordCache cache;
+    cache.record = record;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(cache);
+
+    record.timestamp = 1;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record));
+
+    record.timestamp = NOT_SAME_TIME;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+    record.timestamp = 1;
+
+    record.deviceId = "ididid222";
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+    record.deviceId = "ididid";
+
+    record.deviceName = "namename222";
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+    record.deviceName = "namename";
+
+    record.opCode = 1;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+    record.opCode = 0;
+
+    record.userId = USER_ID_INVALID;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+    record.userId = USER_ID_100;
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+}
+
+/*
+ * @tc.name: AddRemotePermissionUsedRecordTest002
+ * @tc.desc: AddRemotePermissionUsedRecord function test, coverage RemoteRecordMergeCheck
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest002, TestSize.Level4)
+{
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+
+    RemotePermissionRecord record;
+    record.deviceId = "ididid";
+    record.deviceName = "namename";
+    record.opCode = 0;
+    record.timestamp = 0L;
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    record.userId = USER_ID_100;
+
+    RemotePermissionRecordCache cache;
+    cache.record = record;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(cache);
+
+    record.accessCount = 0;
+    record.rejectCount = 0;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    cache.record = record;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(cache);
+
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    record.accessCount = 0;
+    record.rejectCount = 1;
+    cache.record = record;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(cache);
+
+    record.accessCount = 0;
+    record.rejectCount = 0;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    cache.record = record;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(cache);
+
+    record.accessCount = 0;
+    record.rejectCount = 1;
+    PermissionRecordManager::GetInstance().MergeOrInsertRemoteRecord(record);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    EXPECT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions));
+}
+
+/*
+ * @tc.name: AddRemotePermissionUsedRecordTest003
+ * @tc.desc: AddRemotePermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest003, TestSize.Level4)
+{
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+
+    RemotePermissionRecord record;
+    record.deviceId = "ididid";
+    record.deviceName = "namename";
+    record.opCode = CAMERA_OP_CODE;
+    record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    record.userId = USER_ID_100;
+
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemoteRecord(record));
+
+    ASSERT_EQ(PermissionRecordManager::GetInstance().remotePermUsedRecList_.size(), 1);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].record.accessCount = 2;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].needUpdateToDb = true;
+    PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+}
+
+/*
+ * @tc.name: GetRemotePermissionUsedRecordsTest001
+ * @tc.desc: GetRemotePermissionUsedRecords function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, TestSize.Level4)
+{
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+
+    RemotePermissionRecord record;
+    record.deviceId = "ididid";
+    record.deviceName = "namename";
+    record.opCode = CAMERA_OP_CODE;
+    record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    record.userId = USER_ID_100;
+
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemoteRecord(record));
+
+    uint32_t selfUid = getuid();
+    setuid(USER_100_UID);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->needUpdateToDb = true;
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    request.isRemote = true;
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->record.userId = USER_ID_INVALID;
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+    setuid(selfUid);
+}
+
+/*
+ * @tc.name: InsteadMergedRemoteRecIfNecessaryTest001
+ * @tc.desc: InsteadMergedRemoteRecIfNecessary function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, InsteadMergedRemoteRecIfNecessaryTest001, TestSize.Level4)
+{
+    GenericValues queryValue;
+    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
+    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
+    queryValue.Put(PrivacyFiledConst::FIELD_OP_CODE, 1);
+    queryValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1);
+
+    std::vector<RemotePermissionRecord> mergedRecords;
+    RemotePermissionRecord record;
+    mergedRecords.push_back(record);
+
+    mergedRecords[0].deviceId = "id666";
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+
+    mergedRecords[0].deviceName = "name666";
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+
+    mergedRecords[0].opCode = 1;
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+
+    mergedRecords[0].timestamp = 1;
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    EXPECT_EQ(RET_SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions));
+}
+
+/*
+ * @tc.name: BuildBundleUsedRecordsFromRemoteResultsTest001
+ * @tc.desc: BuildBundleUsedRecordsFromRemoteResults function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, BuildBundleUsedRecordsFromRemoteResultsTest001, TestSize.Level4)
+{
+    std::vector<GenericValues> findRecordsValues;
+
+    GenericValues queryValue;
+    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
+    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
+    queryValue.Put(PrivacyFiledConst::FIELD_OP_CODE, 1);
+    queryValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 0);
+
+    GenericValues queryValue2;
+    queryValue2.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
+    queryValue2.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
+    queryValue2.Put(PrivacyFiledConst::FIELD_OP_CODE, MAX_DETAIL_NUM);
+    queryValue2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1);
+
+    findRecordsValues.push_back(queryValue);
+    findRecordsValues.push_back(queryValue2);
+
+    std::vector<RemotePermissionRecord> mergedRecords;
+    std::map<std::string, BundleUsedRecord> deviceIdToBundleMap;
+    PermissionUsedResult result;
+    PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
+
+    PermissionRecordManager::GetInstance().BuildBundleUsedRecordsFromRemoteResults(
+        findRecordsValues, mergedRecords, deviceIdToBundleMap, result, flag);
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    EXPECT_EQ(RET_SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions));
+}
+
 /**
  * @tc.name: SetPermissionUsedRecordToggleStatus001
  * @tc.desc: test ERR_PARAM_INVALID
@@ -965,7 +1225,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Lev
     request.isRemote = false;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
     PermissionUsedResult result;
-    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
 }
 
 /**
@@ -982,7 +1242,8 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
     request.beginTimeMillis = -1; // -1 is a invalid input
     PermissionUsedResult result;
-    EXPECT_EQ(false, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
 }
 
 /*
@@ -994,8 +1255,8 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
 HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize.Level4)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS;
-    bool ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, false);
-    EXPECT_TRUE(ret);
+    int32_t ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, false);
+    EXPECT_EQ(Constant::SUCCESS, ret);
 
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, TEST_USER_ID_11);
@@ -1011,7 +1272,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize
     results.clear();
 
     ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, true);
-    EXPECT_TRUE(ret);
+    EXPECT_EQ(Constant::SUCCESS, ret);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     ASSERT_FALSE(results.empty());
     for (const auto& result : results) {
@@ -1039,7 +1300,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
     conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
 
     // query result empty, add input type
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
         RANDOM_TOKENID, opCode, visitType));
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
@@ -1055,7 +1316,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
     results.clear();
 
     // uesd type exsit and same to input type, return
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
         RANDOM_TOKENID, opCode, visitType));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     for (const auto& result : results) {
@@ -1070,7 +1331,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
 
     visitType = PermissionUsedType::PICKER_TYPE;
     // used type exsit and diff from input type, update the type
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(
         RANDOM_TOKENID, opCode, visitType));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     for (const auto& result : results) {
@@ -1167,6 +1428,32 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
 }
 
 /*
+ * @tc.name: StartRemoteUsingPermissionCoverageTest001
+ * @tc.desc: coverage test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, StartRemoteUsingPermissionCoverageTest001, TestSize.Level4)
+{
+    RemotePermissionUsedInfo info;
+    ActiveChangeType type = PERM_REMOTE_USING;
+    int32_t callerPid = 0;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().AddRecordToStartRemoteList(info, type, callerPid));
+
+    RemoteContinuousPermissionRecord record;
+    record.opCode = CAMERA_OP_CODE;
+    record.callerPid = CALLER_PID;
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    // remove all
+    EXPECT_EQ(true, PermissionRecordManager::GetInstance().ToRemoveRemoteRecord(
+        record, &RemoteContinuousPermissionRecord::IsEqualRecord, true));
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().startRemoteRecordList_.size());
+}
+
+/*
  * @tc.name: CreatePermissionUsedTypeTable001
  * @tc.desc: PermissionUsedRecordDb::CreatePermissionUsedTypeTable function test
  * @tc.type: FUNC
@@ -1180,7 +1467,8 @@ HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize
     dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
 
-    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
@@ -1198,7 +1486,8 @@ HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSiz
     dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
 
-    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
@@ -1265,7 +1554,8 @@ HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy001, TestSize.Level4)
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
 
     // can't find type
-    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
     ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
         PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false));
     PermissionRecordManager::GetInstance().InitDisablePolicyFromDb();

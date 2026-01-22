@@ -419,6 +419,13 @@ static void ConvertBundleUsedRecord(napi_env env, napi_value value, const Bundle
         bundleRecord.deviceId.c_str(), NAPI_AUTO_LENGTH, &nDeviceId));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "deviceId", nDeviceId));
 
+    if (bundleRecord.isRemote) {
+        napi_value nDeviceName;
+        NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+            bundleRecord.deviceName.c_str(), NAPI_AUTO_LENGTH, &nDeviceName));
+        NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "deviceName", nDeviceName));
+    }
+
     napi_value nBundleName;
     NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
         bundleRecord.bundleName.c_str(), NAPI_AUTO_LENGTH, &nBundleName));
@@ -887,7 +894,13 @@ static void GetPermissionUsedRecordsExecute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->retCode = PrivacyKit::GetPermissionUsedRecords(asyncContext->request, asyncContext->result);
+    if (asyncContext->request.isRemote) {
+        asyncContext->retCode = PrivacyKit::GetRemotePermissionUsedRecords(
+            asyncContext->request, asyncContext->result);
+    } else {
+        asyncContext->retCode = PrivacyKit::GetPermissionUsedRecords(
+            asyncContext->request, asyncContext->result);
+    }
 }
 
 static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, void* data)

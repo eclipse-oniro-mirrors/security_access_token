@@ -24,10 +24,12 @@ bool ActiveChangeResponseParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint32(this->changeResponse.callingTokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->changeResponse.tokenID));
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.permissionName));
-    RETURN_IF_FALSE(out.WriteString(this->changeResponse.deviceId));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.type));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.usedType));
     RETURN_IF_FALSE(out.WriteInt32(this->changeResponse.pid));
+    RETURN_IF_FALSE(out.WriteBool(this->changeResponse.isRemote));
+    RETURN_IF_FALSE(out.WriteString(this->changeResponse.deviceId));
+    RETURN_IF_FALSE(out.WriteString(this->changeResponse.remoteDeviceName));
     return true;
 }
 
@@ -43,8 +45,7 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadUint32(activeChangeResponseParcel->changeResponse.tokenID), activeChangeResponseParcel);
     RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.permissionName),
         activeChangeResponseParcel);
-    RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.deviceId), activeChangeResponseParcel);
-
+    
     int32_t type;
     RELEASE_IF_FALSE(in.ReadInt32(type), activeChangeResponseParcel);
     activeChangeResponseParcel->changeResponse.type = static_cast<ActiveChangeType>(type);
@@ -52,6 +53,12 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadInt32(usedType), activeChangeResponseParcel);
     activeChangeResponseParcel->changeResponse.usedType = static_cast<PermissionUsedType>(usedType);
     RELEASE_IF_FALSE(in.ReadInt32(activeChangeResponseParcel->changeResponse.pid), activeChangeResponseParcel);
+
+    RELEASE_IF_FALSE(in.ReadBool(activeChangeResponseParcel->changeResponse.isRemote), activeChangeResponseParcel);
+    RELEASE_IF_FALSE(
+        in.ReadString(activeChangeResponseParcel->changeResponse.deviceId), activeChangeResponseParcel);
+    RELEASE_IF_FALSE(
+        in.ReadString(activeChangeResponseParcel->changeResponse.remoteDeviceName), activeChangeResponseParcel);
     return activeChangeResponseParcel;
 }
 } // namespace AccessToken

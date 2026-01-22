@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@
 #include "active_change_response_info.h"
 #include "constant.h"
 #include "permission_used_type.h"
+#include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "time_util.h"
 
@@ -175,7 +176,7 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "Add sql is %{public}s.", prepareSql.c_str());
 
@@ -197,7 +198,7 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     if (!isAddSuccessfully) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
         RollbackTransaction();
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "Commit transaction.");
     CommitTransaction();
@@ -217,7 +218,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "Remove sql is %{public}s.", prepareSql.c_str());
 
@@ -230,7 +231,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LOGI(PRI_DOMAIN, PRI_TAG, "Remove cost %{public}" PRId64 ".", endTime - beginTime);
 
-    return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
+    return (ret == Statement::State::DONE) ? SUCCESS : PrivacyError::ERR_DATABASE_OPERATE_FAILED;
 }
 
 int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList,
@@ -245,7 +246,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
         databaseQueryCount);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "FindByConditions sql is %{public}s.", prepareSql.c_str());
 
@@ -310,7 +311,8 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
             deleteExpireStatement.Bind(columnName, andConditions.Get(columnName));
         }
         if (deleteExpireStatement.Step() != Statement::State::DONE) {
-            return FAILURE;
+            LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
     
@@ -334,7 +336,7 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataTyp
         if (deleteHistoryStatement.Step() != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
             RollbackTransaction();
-            return FAILURE;
+            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
 
@@ -356,7 +358,8 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t e
     LOGD(PRI_DOMAIN, PRI_TAG, "DeleteExcessiveRecords sql is %{public}s.", deleteExcessiveSql.c_str());
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
     if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -377,7 +380,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "Update sql is %{public}s.", prepareSql.c_str());
 
@@ -396,7 +399,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
         LOGE(PRI_DOMAIN, PRI_TAG,
             "Update table Type %{public}u failed, errCode is %{public}d, errMsg is %{public}s.", type, ret,
             SpitError().c_str());
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -416,7 +419,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid.", type);
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     LOGD(PRI_DOMAIN, PRI_TAG, "Query sql is %{public}s.", prepareSql.c_str());
 
@@ -658,7 +661,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
@@ -698,7 +702,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedTypeTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_USED_TYPE);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
@@ -720,7 +725,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedRecordToggleStatusTable() co
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
@@ -738,7 +744,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_DISABLE_POLICY);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
@@ -756,7 +763,8 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" +
@@ -781,7 +789,8 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
     std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
         PrivacyFiledConst::FIELD_USED_TYPE + "=" +
@@ -841,7 +850,8 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     std::string tableName = it->second.tableName_;
@@ -855,7 +865,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     if (createNewRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
             createNewRes, SpitError().c_str());
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     std::string copyDataSql = "insert into " + newTableName + " select * from " + tableName;
@@ -864,7 +874,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Copy data from old table failed, errCode is %{public}d, errMsg is %{public}s.",
             copyDataRes, SpitError().c_str());
         RollbackTransaction();
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     std::string dropOldSql = "drop table " + tableName;
@@ -873,7 +883,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Drop old table failed, errCode is %{public}d, errMsg is %{public}s.",
             dropOldRes, SpitError().c_str());
         RollbackTransaction();
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     std::string renameSql = "alter table " + newTableName + " rename to " + tableName;
@@ -882,7 +892,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Rename table failed, errCode is %{public}d, errMsg is %{public}s.",
             renameRes, SpitError().c_str());
         RollbackTransaction();
-        return FAILURE;
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     CommitTransaction();
