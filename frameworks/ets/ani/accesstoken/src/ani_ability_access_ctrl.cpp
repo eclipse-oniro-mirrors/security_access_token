@@ -284,7 +284,8 @@ static ani_int CheckAccessTokenExecute([[maybe_unused]] ani_env* env, [[maybe_un
         return AccessToken::PermissionState::PERMISSION_DENIED;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermission), permissionName);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -325,7 +326,8 @@ static void GrantPermissionInner([[maybe_unused]] ani_env *env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermission), permissionName);
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
     LOGI(ATM_DOMAIN, ATM_TAG, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d.",
         tokenID, permissionName.c_str(), permissionFlags);
@@ -375,7 +377,8 @@ static void RevokePermissionInner(ani_env *env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermission));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermission), permissionName);
     uint32_t permissionFlags = static_cast<uint32_t>(aniFlags);
     LOGI(ATM_DOMAIN, ATM_TAG, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d.",
         tokenID, permissionName.c_str(), permissionFlags);
@@ -506,7 +509,8 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
         return flag;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermissionName), permissionName);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -531,7 +535,8 @@ static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* en
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return;
     }
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermissionName), permissionName);
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return;
@@ -552,7 +557,8 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return flag;
     }
-    std::string permissionName = ParseAniString(env, static_cast<ani_string>(aniPermissionName));
+    std::string permissionName;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermissionName), permissionName);
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return flag;
@@ -611,8 +617,8 @@ static bool SetupPermissionSubscriber(
 static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
     RegisterPermStateChangeInf* context, bool isReg)
 {
-    std::string type = ParseAniString(context->env, aniInputInfo.aniType);
-    if (type.empty()) {
+    std::string type;
+    if (!ParseAniString(context->env, aniInputInfo.aniType, type) || type.empty()) {
         BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
             "type", "permissionStateChange or selfPermissionStateChange"));
         return false;
@@ -931,7 +937,8 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
         return static_cast<ani_int>(PermissionOper::INVALID_OPER);
     }
 
-    std::string permissionName = ParseAniString(env, aniPermissionName);
+    std::string permissionName;
+    (void)ParseAniString(env, aniPermissionName, permissionName);
     if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
         return static_cast<ani_int>(PermissionOper::INVALID_OPER);
     }

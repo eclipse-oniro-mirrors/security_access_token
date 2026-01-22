@@ -109,30 +109,6 @@ export default namespace abilityAccessCtrl {
         }
     }
 
-    function validateRequestParams(context: Context, windowId: int, permissionList: Array<Permissions>): void {
-        if ((typeof context === "undefined") || (context == null)) {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.message = PARAM_ERROR_MSG("context", "Context of stage mode");
-            throw err;
-        }
-        
-        if (typeof windowId !== "number") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.message = PARAM_ERROR_MSG("windowId", "int");
-            throw err;
-        }
-
-        if (typeof permissionList !== "object" || !Array.isArray(permissionList) ||
-            permissionList.length == 0 || typeof permissionList[0] !== "string") {
-            let err = new BusinessError<string>();
-            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL as int;
-            err.message = PARAM_ERROR_MSG("permissionList", "Array<Permissions>");
-            throw err;
-        }
-    }
-
     function openPermRequestParams(context: Context, permission: Permissions): void {
         if ((typeof context === "undefined") || (context == null)) {
             let err = new BusinessError<string>();
@@ -343,7 +319,7 @@ export default namespace abilityAccessCtrl {
 
         requestPermissionsFromUserWithWindowId(context: Context, windowId: int, permissionList: Array<Permissions>):
             Promise<PermissionRequestResult> {
-            validateRequestParams(context, windowId, permissionList);
+            validateRequestParams(context, permissionList);
             let p: Promise<PermissionRequestResult> = new Promise<PermissionRequestResult>((
                 resolve: (v: PermissionRequestResult) => void, reject: (error: BusinessError) => void) => {
                 let callbackWrap = new AsyncCallbackWrapper<PermissionRequestResult>((

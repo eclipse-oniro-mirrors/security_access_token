@@ -179,7 +179,7 @@ static bool ParseOpenPermissionOnSetting(ani_env* env, ani_object& aniContext, a
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-    asyncContext->permissionName = ParseAniString(env, aniPermission);
+    (void)ParseAniString(env, aniPermission, asyncContext->permissionName);
     if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef_)) {
         return false;
     }

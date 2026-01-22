@@ -156,8 +156,8 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& ani
             return out;
         }
 
-        std::string stdStr = ParseAniString(env, static_cast<ani_string>(aniRef));
-        if (!stdStr.empty()) {
+        std::string stdStr;
+        if (ParseAniString(env, static_cast<ani_string>(aniRef), stdStr)) {
             out.emplace_back(stdStr);
         }
     }
@@ -253,30 +253,30 @@ bool AniFunctionalObjectCall(ani_env* env, const ani_fn_object& fn, ani_size siz
     return true;
 }
 
-std::string ParseAniString(ani_env* env, const ani_string& aniStr)
+bool ParseAniString(ani_env* env, const ani_string& aniStr, std::string& inputStr)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
-        return "";
+        return false;
     }
 
     ani_size strSize;
     ani_status status;
     if ((status = env->String_GetUTF8Size(aniStr, &strSize)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8Size: %{public}u.", status);
-        return "";
+        return false;
     }
     std::vector<char> buffer(strSize + 1);
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
     if ((status = env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_GetUTF8: %{public}u.", status);
-        return "";
+        return false;
     }
 
     utf8Buffer[bytesWritten] = '\0';
-    std::string content = std::string(utf8Buffer);
-    return content;
+    inputStr = std::string(utf8Buffer);
+    return true;
 }
 
 ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArray)
@@ -634,8 +634,7 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
     if (AniIsRefUndefined(env, ref)) {
         return true;
     }
-    value = ParseAniString(env, static_cast<ani_string>(ref));
-    return true;
+    return ParseAniString(env, static_cast<ani_string>(ref), value);
 }
 
 bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
