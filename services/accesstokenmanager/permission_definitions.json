@@ -7023,7 +7023,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.UPLOAD_SAMPLE_FILE",
@@ -7034,7 +7034,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.DOWNLOAD_POLICY_FILE",
@@ -7045,7 +7045,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.NOTIFY_VIRUS_PROTECTION",
@@ -7067,7 +7067,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.REGISTER_ANTIVIRUS",
@@ -7078,7 +7078,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.MANAGE_PREINSTALLED_ANTIVIRUS",
@@ -7089,7 +7089,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.ACCESS_VIRUS_PROTECTION",
