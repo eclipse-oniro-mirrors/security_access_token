@@ -179,9 +179,10 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info);
  * @brief Report HAP token deletion event
  * @details Reports DEL_HAP event when token is removed
  * @param errorCode Operation error code (RET_SUCCESS if success)
+ * @param sceneCode Scene code for the deletion operation
  * @param info HAP token DFX information
  */
-void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info);
+void ReportSysEventDelHap(int32_t errorCode, int32_t sceneCode, const HapDfxInfo& info);
 
 // ===========================================
 // Permission Verification Events

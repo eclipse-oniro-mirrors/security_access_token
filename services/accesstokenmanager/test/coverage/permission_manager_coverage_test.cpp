@@ -370,7 +370,7 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateUndefinedInfo001, TestSize.Level4)
     atManagerService->UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
     ASSERT_EQ(true, stateValues.empty());
     ASSERT_EQ(true, extendValues.empty());
-    ASSERT_EQ(RET_SUCCESS, atManagerService->DeleteToken(tokenId));
+    ASSERT_EQ(RET_SUCCESS, atManagerService->DeleteToken(tokenId, false));
     atManagerService = nullptr;
 }
 
