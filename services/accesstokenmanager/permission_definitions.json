@@ -8101,7 +8101,7 @@
             "availableType": "SYSTEM",
             "since": 23,
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
         },
