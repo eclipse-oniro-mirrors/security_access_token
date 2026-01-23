@@ -5592,6 +5592,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.EXPORT_FINDNETWORK_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["wearable"]
+        },
+        {
             "name": "ohos.permission.MANAGE_SHUTDOWN_FINDNETWORK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
