@@ -6340,7 +6340,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "isKernelEffect": true,
- 	        "hasValue": false
+            "hasValue": false
         },
         {
             "name": "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
