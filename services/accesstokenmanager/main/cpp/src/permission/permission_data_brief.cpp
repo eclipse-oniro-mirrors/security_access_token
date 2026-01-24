@@ -107,17 +107,12 @@ void PermissionDataBrief::GetExtendedValueListInner(
     for (const auto& item : extendedValue_) {
         uint64_t key = item.first;
         uint32_t permCode = key & 0xFFFFFFFF;
-        std::string permissionName = TransferOpcodeToPermission(permCode);
-        if (permissionName.empty()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", permCode);
-            continue;
-        }
         uint32_t tmpTokenID = key >> 32;
         if (tmpTokenID != tokenId) {
             continue;
         }
         PermissionWithValue extendedPerm;
-        extendedPerm.permissionName = permissionName;
+        extendedPerm.permissionName = TransferOpcodeToPermission(permCode);
         extendedPerm.value = item.second;
         extendedPermList.emplace_back(extendedPerm);
     }
@@ -140,10 +135,6 @@ int32_t PermissionDataBrief::GetKernelPermissions(
             continue;
         }
         std::string permissionName = TransferOpcodeToPermission(data.permCode);
-        if (permissionName.empty()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TransferOpcodeToPermission failed, permCode: %{public}u", data.permCode);
-            continue;
-        }
         std::string value;
         if ((data.type & HAS_VALUE) == HAS_VALUE) {
             uint64_t key = (static_cast<uint64_t>(tokenId) << 32) | data.permCode;
@@ -197,16 +188,11 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
     return RET_SUCCESS;
 }
 
-bool PermissionDataBrief::GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState)
+void PermissionDataBrief::GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState)
 {
-    std::string permissionName = TransferOpcodeToPermission(briefPermData.permCode);
-    if (!permissionName.empty()) {
-        permState.grantStatus = static_cast<int32_t>(briefPermData.status);
-        permState.permissionName = permissionName;
-        permState.grantFlag = briefPermData.flag;
-        return true;
-    }
-    return false;
+    permState.grantStatus = static_cast<int32_t>(briefPermData.status);
+    permState.permissionName = TransferOpcodeToPermission(briefPermData.permCode);
+    permState.grantFlag = briefPermData.flag;
 }
 
 void PermissionDataBrief::GetPermissionBriefDataList(AccessTokenID tokenID,
@@ -405,10 +391,7 @@ int32_t PermissionDataBrief::StorePermissionBriefData(AccessTokenID tokenId,
         LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName: %{public}d", static_cast<int32_t>(data.permCode));
         GenericValues genericValues;
         PermissionStatus permState;
-        if (!GetPermissionStatus(data, permState)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Permission not exist, code=%{public}d", static_cast<int32_t>(data.permCode));
-            continue;
-        }
+        GetPermissionStatus(data, permState);
         genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         DataTranslator::TranslationIntoGenericValues(permState, genericValues);
         permStateValueList.emplace_back(genericValues);

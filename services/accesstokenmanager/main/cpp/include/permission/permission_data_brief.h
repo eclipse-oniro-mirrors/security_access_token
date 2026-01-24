@@ -90,7 +90,7 @@ public:
 private:
     bool GetPermissionBriefData(AccessTokenID tokenID, const PermissionStatus &permState,
         const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData);
-    bool GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState);
+    void GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState);
     void GetPermissionBriefDataList(AccessTokenID tokenID,
         const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap,
