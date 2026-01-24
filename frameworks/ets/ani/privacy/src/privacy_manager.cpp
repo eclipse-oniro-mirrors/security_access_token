@@ -96,7 +96,8 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ParseAniString(env, aniPermission);
+    std::string permission;
+    (void)ParseAniString(env, aniPermission, permission);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -476,7 +477,8 @@ static void StopUsingPermissionExecute(
     }
 
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ParseAniString(env, aniPermission);
+    std::string permission;
+    (void)ParseAniString(env, aniPermission, permission);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -503,7 +505,8 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
         return;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ParseAniString(env, aniPermission);
+    std::string permission;
+    (void)ParseAniString(env, aniPermission, permission);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
         (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
@@ -830,7 +833,8 @@ static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
         return nullptr;
     }
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
-    std::string permission = ParseAniString(env, static_cast<ani_string>(aniPermission));
+    std::string permission;
+    (void)ParseAniString(env, static_cast<ani_string>(aniPermission), permission);
     std::vector<PermissionUsedTypeInfo> typeInfos;
     int32_t retCode = PrivacyKit::GetPermissionUsedTypeInfos(tokenID, permission, typeInfos);
     if (retCode != RET_SUCCESS) {

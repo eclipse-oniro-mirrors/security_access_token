@@ -61,7 +61,7 @@ bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_re
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
 
 // ani to naitive
-std::string ParseAniString(ani_env* env, const ani_string& aniStr);
+bool ParseAniString(ani_env* env, const ani_string& aniStr, std::string& inputStr);
 std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& aniStrArr);
 
 // native to ani
