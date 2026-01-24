@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 #include <thread>
 #include "access_token_error.h"
 #include "permission_grant_info.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 
@@ -24,6 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static AccessTokenID g_testTokenId = 123;  // 123: tokenId
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
@@ -107,7 +109,7 @@ HWTEST_F(AccessTokenMockTest, AllocHapToken001, TestSize.Level4)
 HWTEST_F(AccessTokenMockTest, AllocLocalTokenID001, TestSize.Level4)
 {
     std::string remoteDevice = "remote device";
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = 123; // 123: tokenId
     AccessTokenIDEx idEx = {0};
     idEx.tokenIDEx = AccessTokenKit::AllocLocalTokenID(remoteDevice, tokenId);
     AccessTokenID localTokenId = idEx.tokenIdExStruct.tokenID;
@@ -152,8 +154,12 @@ HWTEST_F(AccessTokenMockTest, DeleteToken001, TestSize.Level4)
  */
 HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level4)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = 123; // 123: tokenId
     ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(tokenId));
+
+
+    FullTokenID fullTokenId = 123; // 123: tokenId
+    ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(fullTokenId));
 }
 
 /**
@@ -451,9 +457,25 @@ HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback001, TestSize.Level
 {
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
-    scopeInfo.tokenIDs = {};
+    scopeInfo.tokenIDs = {GetSelfTokenID()};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: RegisterSelfPermStateChangeCallback001
+ * @tc.desc: RegisterSelfPermStateChangeCallback with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, RegisterSelfPermStateChangeCallback001, TestSize.Level4)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
@@ -638,6 +660,147 @@ HWTEST_F(AccessTokenMockTest, GetKernelPermissions001, TestSize.Level4)
     AccessTokenID tokenId = 123;
     std::vector<PermissionWithValue> kernelPermList;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetKernelPermissions(tokenId, kernelPermList));
+}
+
+/**
+ * @tc.name: GetPermissionUsedType001
+ * @tc.desc: GetPermissionUsedType with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetPermissionUsedType001, TestSize.Level4)
+{
+    std::string permission = "ohos.permission.CAMERA";
+    ASSERT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE, AccessTokenKit::GetPermissionUsedType(g_testTokenId, permission));
+}
+
+/**
+ * @tc.name: GetVersion001
+ * @tc.desc: GetVersion with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetVersion001, TestSize.Level4)
+{
+    uint32_t version;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetVersion(version));
+}
+
+/**
+ * @tc.name: GetHapTokenInfoExtension001
+ * @tc.desc: GetHapTokenInfoExtension with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetHapTokenInfoExtension001, TestSize.Level4)
+{
+    HapTokenInfoExt hapInfoExt;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetHapTokenInfoExtension(g_testTokenId, hapInfoExt));
+}
+
+/**
+ * @tc.name: SetUserPolicy001
+ * @tc.desc: SetUserPolicy with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SetUserPolicy001, TestSize.Level4)
+{
+    UserPermissionPolicy policy = {
+        .permissionName = "ohos.permission.INTERNET",
+        .userPolicyList = {
+            {
+                .userId = 101,
+                .isRestricted = true
+            }
+        } // 101: userId
+    };
+    std::vector<UserPermissionPolicy> policyList;
+    policyList.emplace_back(policy);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetUserPolicy(policyList));
+}
+
+/**
+ * @tc.name: ClearUserPolicy001
+ * @tc.desc: ClearUserPolicy with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClearUserPolicy001, TestSize.Level4)
+{
+    std::vector<std::string> permissionList;
+    permissionList.emplace_back("ohos.permission.INTERNET");
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserPolicy(permissionList));
+}
+
+/**
+ * @tc.name: GetReqPermissionByName001
+ * @tc.desc: GetReqPermissionByName with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetReqPermissionByName001, TestSize.Level4)
+{
+    std::string value;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetReqPermissionByName(g_testTokenId, "ohos.permission.CAMERA", value));
+}
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+/**
+ * @tc.name: RegisterSecCompEnhance001
+ * @tc.desc: RegisterSecCompEnhance with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, RegisterSecCompEnhance001, TestSize.Level4)
+{
+    SecCompEnhanceData data;
+    data.callback = nullptr;
+    data.challenge = 0;
+    data.seqNum = 0;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterSecCompEnhance(data));
+}
+
+/**
+ * @tc.name: UpdateSecCompEnhance001
+ * @tc.desc: UpdateSecCompEnhance with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, UpdateSecCompEnhance001, TestSize.Level4)
+{
+    std::string value;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UpdateSecCompEnhance(getpid(), 1));
+}
+
+/**
+ * @tc.name: GetSecCompEnhance001
+ * @tc.desc: GetSecCompEnhance with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSecCompEnhance001, TestSize.Level4)
+{
+    SecCompEnhanceData data;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSecCompEnhance(getpid(), data));
+}
+#endif
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy001
+ * @tc.desc: SetPermissionStatusWithPolicy with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SetPermissionStatusWithPolicy001, TestSize.Level4)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    int32_t ret = RET_SUCCESS;
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        g_testTokenId, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
 }
 }  // namespace AccessToken
 }  // namespace Security

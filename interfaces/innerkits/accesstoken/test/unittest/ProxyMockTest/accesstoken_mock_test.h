@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TOKENSYNC_MOCK_TEST_H
-#define TOKENSYNC_MOCK_TEST_H
+#ifndef ACCESSTOKEN_MOCK_TEST_H
+#define ACCESSTOKEN_MOCK_TEST_H
 
 #include <gtest/gtest.h>
 
@@ -38,4 +38,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // TOKENSYNC_MOCK_TEST_H
+#endif // ACCESSTOKEN_MOCK_TEST_H

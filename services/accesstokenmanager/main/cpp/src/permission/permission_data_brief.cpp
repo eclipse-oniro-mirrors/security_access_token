@@ -248,14 +248,14 @@ void PermissionDataBrief::AddPermToBriefPermission(
 
 void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew)
 {
-    // If old permission is fixed by admin policy or admin cancel, and new permisson is fixed by system,
+    // If old permission is fixed by admin policy or admin cancel, and new permission is fixed by system,
     // use new initalized state.
     if (((permOld.flag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0 ||
         (permOld.flag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0) &&
         (permNew.flag == PERMISSION_SYSTEM_FIXED)) {
         return;
     }
-    // If old permission is admin cancel, and new permisson is pre_authorization cancelable,
+    // If old permission is admin cancel, and new permission is pre_authorization cancelable,
     // use new initalized state.
     if ((permOld.flag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0 &&
         permNew.flag == PERMISSION_PRE_AUTHORIZED_CANCELABLE) {

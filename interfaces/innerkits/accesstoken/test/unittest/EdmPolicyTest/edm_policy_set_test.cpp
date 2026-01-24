@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1184,7 +1184,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy002, TestSize.Level0)
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
 
     std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         INVALID_TOKENID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
@@ -1211,7 +1211,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy003, TestSize.Level0)
     uint64_t selfTokenId = GetSelfTokenID();
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
 
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
 
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, {""}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
@@ -1262,7 +1262,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy004, TestSize.Level0)
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
 
     std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, 1, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
@@ -1319,7 +1319,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy006, TestSize.Level0)
     ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(selfTokenId, MANAGE_EDM_POLICY, false));
 
     std::vector<std::string> permList = {CAMERA};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
@@ -1345,7 +1345,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy007, TestSize.Level0)
     MockNativeToken mock("foundation");
 
     std::vector<std::string> permList = {MICROPHONE, CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     int32_t selfUid = getuid();
     setuid(10001);
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
@@ -1372,7 +1372,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy008, TestSize.Level0)
     MockNativeToken mock("edm");
 
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
 
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
@@ -1437,7 +1437,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy009, TestSize.Level0)
     MockNativeToken mock("edm");
 
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
 
     // set flag is PERMISSION_FIXED_BY_ADMIN_POLICY, status is PERMISSION_GRANTED.
@@ -1478,7 +1478,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy010, TestSize.Level0)
     MockNativeToken mock("edm");
 
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
 
     // set flag is PERMISSION_ADMIN_POLICIES_CANCEL, status is PERMISSION_GRANTED.
@@ -1548,7 +1548,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy011, TestSize.Level0)
     MockNativeToken mock("edm");
 
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
 
     for (const uint32_t &permFlag : g_permFlagList) {
@@ -1616,7 +1616,7 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy012, TestSize.Level0)
     MockNativeToken mock("edm");
 
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
 
     std::vector<uint32_t> permFlagList = {
@@ -1684,7 +1684,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestGrantPermission001, TestSize.Level0)
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -1743,7 +1743,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestRevokePermission001, TestSize.Level0)
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -1796,7 +1796,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestClearUserGrantedPermissionState001, TestSize.L
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -1863,7 +1863,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestGetSelfPermissionsState001, TestSize.Level0)
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_DENIED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -1914,7 +1914,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken001, TestSize.Level0)
 
     MockNativeToken mock("edm");
     uint32_t flag = 0;
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
 
     // can't UpdateHapToken flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     {
@@ -1989,7 +1989,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken002, TestSize.Level0)
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
@@ -2042,7 +2042,7 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken003, TestSize.Level0)
 
     // 1. set flag is PERMISSION_FIXED_BY_ADMIN_POLICY.
     std::vector<std::string> permList = {CUSTOM_SCREEN_CAPTURE};
-    uint32_t ret = RET_SUCCESS;
+    int32_t ret = RET_SUCCESS;
     ret = AccessTokenKit::SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     EXPECT_EQ(RET_SUCCESS, ret);
