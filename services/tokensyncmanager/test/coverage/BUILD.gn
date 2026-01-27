@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("../../../../access_token.gni")
+import("../../tokensync_manager.gni")
 
 ohos_unittest("libtoken_sync_service_coverage_test") {
   subsystem_name = "accesscontrol"
@@ -24,87 +24,34 @@ ohos_unittest("libtoken_sync_service_coverage_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  sources = [
+  sources = tokensync_manager_base_config.sources
+  sources -= [
+    "${access_token_path}/services/tokensyncmanager/src/common/constant.cpp",
+  ]
+  sources += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
-    "../../src/command/base_remote_command.cpp",
-    "../../src/command/delete_remote_token_command.cpp",
-    "../../src/command/sync_remote_hap_token_command.cpp",
-    "../../src/command/update_remote_hap_token_command.cpp",
-    "../../src/device/device_info_manager.cpp",
-    "../../src/device/device_info_repository.cpp",
-    "../../src/remote/remote_command_executor.cpp",
-    "../../src/remote/remote_command_factory.cpp",
-    "../../src/remote/remote_command_manager.cpp",
-    "../../src/remote/soft_bus_channel.cpp",
-    "../../src/remote/soft_bus_device_connection_listener.cpp",
-    "../../src/remote/soft_bus_manager.cpp",
-    "../../src/remote/soft_bus_socket_listener.cpp",
-    "../../src/service/token_sync_manager_service.cpp",
-    "../../src/service/token_sync_manager_stub.cpp",
-    "../mock/src/constant_mock.cpp",
-    "../mock/src/soft_bus_socket_mock.cpp",
+    "${access_token_path}/services/tokensyncmanager/test/mock/src/constant_mock.cpp",
+    "${access_token_path}/services/tokensyncmanager/test/mock/src/soft_bus_socket_mock.cpp",
     "token_sync_service_coverage_test.cpp",
   ]
-
-  include_dirs = [
-    "../../include/service",
-    "../../include/remote",
-    "../../include/command",
-    "../../include/common",
-    "../../include/device",
-    "../../include/protocol",
-    "../mock/include",
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/frameworks/tokensync/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+  include_dirs = tokensync_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/services/tokensyncmanager/test/mock/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
-    "${access_token_path}/frameworks/json_adapter/include",
-    "${access_token_path}/services/common/json_parse/include",
-    "${access_token_path}/services/common/handler/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/",
-    "${access_token_path}/interfaces/innerkits/tokensync/include",
   ]
 
-  deps = [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  deps = tokensync_manager_base_config.deps
+  deps += [
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "${access_token_path}/services/common:accesstoken_service_common",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = tokensync_manager_base_config.cflags_cc
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = tokensync_manager_base_config.configs
 
-  external_deps = [
-    "cJSON:cjson",
-    "c_utils:utils",
-    "dsoftbus:softbus_client",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "zlib:libz",
-  ]
-
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-
-  if (memory_manager_enable == true) {
-    cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
-    external_deps += [ "memmgr:memmgrclient" ]
-  }
+  external_deps = tokensync_manager_base_config.external_deps
 }
 
 ohos_unittest("libtoken_sync_command_coverage_test") {
@@ -128,60 +75,23 @@ ohos_unittest("libtoken_sync_command_coverage_test") {
     "token_sync_command_coverage_test.cpp",
   ]
 
-  include_dirs = [
-    "../../include/remote",
-    "../../include/command",
-    "../../include/common",
-    "../../include/protocol",
-    "../mock/include",
-    "${access_token_path}/frameworks/common/include",
-    "${access_token_path}/frameworks/accesstoken/include",
-    "${access_token_path}/frameworks/tokensync/include",
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+  include_dirs = tokensync_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/services/tokensyncmanager/test/mock/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
-    "${access_token_path}/frameworks/json_adapter/include",
-    "${access_token_path}/services/common/json_parse/include",
-    "${access_token_path}/services/common/handler/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/",
-    "${access_token_path}/interfaces/innerkits/tokensync/include",
   ]
 
-  deps = [
-    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  deps = tokensync_manager_base_config.deps
+  deps += [
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "${access_token_path}/services/common:accesstoken_service_common",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = tokensync_manager_base_config.cflags_cc
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = tokensync_manager_base_config.configs
 
-  external_deps = [
-    "cJSON:cjson",
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "zlib:libz",
-  ]
-
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-
-  if (memory_manager_enable == true) {
-    cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
-    external_deps += [ "memmgr:memmgrclient" ]
-  }
+  external_deps = tokensync_manager_base_config.external_deps
+  external_deps -= [ "dsoftbus:softbus_client" ]
 }

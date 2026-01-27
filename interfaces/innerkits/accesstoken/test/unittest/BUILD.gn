@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
 
 ohos_unittest("libaccesstoken_sdk_test") {
   subsystem_name = "accesscontrol"
@@ -79,7 +79,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "common/test_common.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
@@ -99,19 +99,14 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "init:libbegetutil",
     "ipc:ipc_single",
   ]
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    external_deps += [ "device_manager:devicemanagersdk" ]
-  }
+
+  external_deps += access_token_external_deps
+
   if (dlp_permission_enable == true) {
-    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
     sources += [
       "DlpTest/clone_app_permission_test.cpp",
       "DlpTest/share_permission_with_sandbox_test.cpp",
     ]
-  }
-  if (security_component_enhance_enable == true) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
   }
 }
 
@@ -146,7 +141,7 @@ ohos_unittest("accesstoken_mock_test") {
     "ProxyMockTest/accesstoken_mock_test.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
   configs = [
     "${access_token_path}/config:coverage_flags",
     "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
@@ -173,16 +168,8 @@ ohos_unittest("accesstoken_mock_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-  if (security_component_enhance_enable == true) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-  }
+
+  external_deps += access_token_external_deps
 }
 
 ohos_unittest("libaccesstoken_muti_thread_test") {
@@ -209,7 +196,7 @@ ohos_unittest("libaccesstoken_muti_thread_test") {
     "common/test_common.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
   configs = [
     "${access_token_path}/config:coverage_flags",
     "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
@@ -235,11 +222,6 @@ ohos_unittest("libaccesstoken_muti_thread_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
+
+  external_deps += access_token_external_deps
 }

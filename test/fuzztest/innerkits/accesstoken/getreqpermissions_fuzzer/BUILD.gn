@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
 
 ohos_fuzztest("GetReqPermissionsFuzzTest") {
   module_out_path = module_output_path_interface_access_token
@@ -40,5 +40,6 @@ ohos_fuzztest("GetReqPermissionsFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "ipc:ipc_single",
   ]
 }

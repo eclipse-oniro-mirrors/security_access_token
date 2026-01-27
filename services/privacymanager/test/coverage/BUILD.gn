@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("../../../../access_token.gni")
+import("../../privacy_manager.gni")
 
 if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("libprivacy_manager_service_coverage_test") {
@@ -25,121 +25,38 @@ if (is_standard_system && ability_base_enable == true) {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = [
-      "${access_token_path}/frameworks/common/include",
+    include_dirs = privacy_manager_base_config.include_dirs
+    include_dirs += [
       "${access_token_path}/interfaces/innerkits/nativetoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
-      "${access_token_path}/frameworks/privacy/include",
-      "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/innerkits/privacy/include",
-      "${access_token_path}/interfaces/innerkits/privacy/src",
-      "${access_token_path}/services/common/app_manager/include",
-      "${access_token_path}/services/common/json_parse/include",
-      "${access_token_path}/services/common/database/include",
-      "${access_token_path}/services/common/handler/include",
-      "${access_token_path}/services/common/libraryloader/include",
-      "${access_token_path}/services/common/screenlock_manager/include",
-      "${access_token_path}/services/common/utils/include",
-      "${access_token_path}/services/privacymanager/include/active",
-      "${access_token_path}/services/privacymanager/include/common",
-      "${access_token_path}/services/privacymanager/include/database",
-      "${access_token_path}/services/privacymanager/include/disable_policy",
-      "${access_token_path}/services/privacymanager/include/record",
-      "${access_token_path}/services/privacymanager/include/service",
-      "${access_token_path}/services/privacymanager/include/proxy",
-      "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
-      "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     ]
 
-    sources = [
+    sources = privacy_manager_base_config.sources
+    sources += [
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src/privacy_test_common.cpp",
-      "../../src/active/active_status_callback_manager.cpp",
-      "../../src/active/perm_active_status_callback_death_recipient.cpp",
-      "../../src/active/perm_active_status_change_callback_proxy.cpp",
-      "../../src/active/state_change_callback_proxy.cpp",
-      "../../src/common/access_token_helper.cpp",
-      "../../src/common/constant.cpp",
-      "../../src/database/data_translator.cpp",
-      "../../src/database/permission_used_record_db.cpp",
-      "../../src/database/privacy_field_const.cpp",
-      "../../src/disable_policy/disable_policy_cbk_manager.cpp",
-      "../../src/disable_policy/perm_disable_policy_cbk_death_recipient.cpp",
-      "../../src/disable_policy/perm_disable_policy_cbk_proxy.cpp",
-      "../../src/proxy/privacy_manager_proxy_death_param.cpp",
-      "../../src/record/on_permission_used_record_callback_proxy.cpp",
-      "../../src/record/permission_record.cpp",
-      "../../src/record/permission_record_manager.cpp",
-      "../../src/record/permission_record_set.cpp",
-      "../../src/sensitive/audio_manager/audio_manager_adapter.cpp",
-      "../../src/sensitive/camera_manager/camera_manager_adapter.cpp",
-      "../../src/service/privacy_manager_service.cpp",
-      "permission_record_manager_coverage_test.cpp",
-      "sensitive_manager_coverage_test.cpp",
+      "record/permission_record_manager_coverage_test.cpp",
+      "sensitive/sensitive_manager_coverage_test.cpp",
     ]
 
-    cflags_cc = [ "-DHILOG_ENABLE" ]
+    cflags_cc = privacy_manager_base_config.cflags_cc
 
-    configs = [
-      "${access_token_path}/config:coverage_flags",
-      "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
-    ]
+    configs = privacy_manager_base_config.configs
 
-    deps = [
-      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    deps = privacy_manager_base_config.deps
+    deps += [
       "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-      "${access_token_path}/services/common:accesstoken_service_common",
-      "${access_token_path}/services/common/proxy_death:proxy_death_handler",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+      "${access_token_path}/services/common/proxy_death:proxy_death_stub",
       "${access_token_path}/services/privacymanager:privacy_manager_service",
-      "${access_token_path}/services/privacymanager:privacy_manager_stub",
     ]
 
-    external_deps = [
-      "ability_base:want",
-      "c_utils:utils",
-      "googletest:gtest_main",
-      "hilog:libhilog",
-      "hisysevent:libhisysevent",
-      "init:libbegetutil",
-      "ipc:ipc_core",
-      "safwk:system_ability_fwk",
-      "samgr:samgr_proxy",
-      "sqlite:sqlite",
-    ]
-
-    if (audio_framework_enable) {
-      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
-      external_deps += [ "audio_framework:audio_client" ]
-    }
-
-    if (camera_framework_enable) {
-      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
-      external_deps += [ "camera_framework:camera_framework" ]
-    }
-
-    if (eventhandler_enable == true) {
-      cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-      external_deps += [ "eventhandler:libeventhandler" ]
-    }
-    if (common_event_service_enable) {
-      cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
-      external_deps += [ "common_event_service:cesfwk_innerkits" ]
-      sources += [ "../../src/common/privacy_common_event_subscriber.cpp" ]
-    }
-    if (theme_screenlock_mgr_enable) {
-      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
-      external_deps += [ "screenlock_mgr:screenlock_client" ]
-    }
-
-    if (access_token_app_security_privacy_service_enable) {
-      cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
-    } else {
-      include_dirs +=
-          [ "${access_token_path}/services/common/ability_manager/include" ]
-    }
+    external_deps = privacy_manager_base_config.external_deps
+    external_deps += [ "googletest:gtest_main" ]
   }
+}
+
+group("coverage_tests") {
+  testonly = true
+  deps = [ ":libprivacy_manager_service_coverage_test" ]
 }

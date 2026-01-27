@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
-import("../../access_token.gni")
 
 config("accesstoken_common_cxx_public_config") {
   visibility = [ ":*" ]
@@ -100,7 +100,7 @@ ohos_static_library("accesstoken_hisysevent") {
     "${access_token_path}/config:coverage_flags",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 }
 
 ohos_static_library("accesstoken_static_log") {
@@ -129,7 +129,7 @@ ohos_static_library("accesstoken_static_log") {
     "${access_token_path}/config:coverage_flags",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 }
 
 ohos_static_library("accesstoken_static_log_for_nativetoken") {
@@ -148,7 +148,8 @@ ohos_static_library("accesstoken_static_log_for_nativetoken") {
     "include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
   ]
-  cflags_cc = [ "-DUSE_NATIVE_TOKEN_KLOG" ]
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-DUSE_NATIVE_TOKEN_KLOG" ]
 
   sources = [
     "src/accesstoken_common_log.cpp",
@@ -214,5 +215,5 @@ ohos_shared_library("accesstoken_common_cxx") {
     "${access_token_path}/config:coverage_flags",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 }

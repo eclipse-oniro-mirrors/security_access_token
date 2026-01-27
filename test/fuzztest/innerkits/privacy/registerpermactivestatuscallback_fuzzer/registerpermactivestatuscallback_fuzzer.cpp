@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
-#include "perm_active_status_change_callback.h"
 #include "privacy_kit.h"
 #define private public
 #include "privacy_manager_client.h"

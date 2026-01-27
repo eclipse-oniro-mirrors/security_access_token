@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Copyright (c) 2025-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
-import("../../../../../../access_token.gni")
 
 ohos_unittest("libcompat_sdk_proxy_test") {
   subsystem_name = "accesscontrol"
@@ -42,7 +42,7 @@ ohos_unittest("libcompat_sdk_proxy_test") {
     "ProxyMockTest/parameter.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
@@ -88,7 +88,7 @@ ohos_unittest("libcompat_sdk_test") {
     "FunctionalTest/compat_sdk_test.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
@@ -103,9 +103,6 @@ ohos_unittest("libcompat_sdk_test") {
     "hilog:libhilog",
     "ipc:ipc_single",
   ]
-  if (build_variant == "user") {
-    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-  }
 }
 
 ohos_unittest("libcompat_sdk_coverage_test") {
@@ -134,7 +131,7 @@ ohos_unittest("libcompat_sdk_coverage_test") {
     "Coverage/compat_sdk_coverage_test.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [

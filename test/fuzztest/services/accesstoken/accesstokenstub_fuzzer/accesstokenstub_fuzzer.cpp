@@ -570,7 +570,7 @@ bool RevokePermissionStubFuzzTest(FuzzedDataProvider &provider)
     return true;
 }
 
-void ClearUserPolicy(const string& permission)
+static void ClearUserPolicy(const string& permission)
 {
     MessageParcel reply;
     MessageOption option;

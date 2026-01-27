@@ -13,33 +13,23 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
+import("../access_token_service_fuzz.gni")
 
 ohos_fuzztest("SetFirstCallerTokenIDFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
   sources = [ "setfirstcallertokenid_fuzzer.cpp" ]
+  sources += access_token_stub_fuzz_sources
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
+  include_dirs = access_token_stub_fuzz_include_dirs
 
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "${access_token_path}/test/fuzztest/common",
-  ]
+  deps = access_token_stub_fuzz_deps
 
-  deps = [ "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared" ]
+  configs = access_token_stub_fuzz_configs
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  external_deps = access_token_stub_fuzz_external_deps
 
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_core",
-  ]
+  cflags_cc = access_token_stub_fuzz_cflags_cc
+  cflags = access_token_stub_fuzz_cflags
 }

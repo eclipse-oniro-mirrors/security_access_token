@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,8 +14,8 @@
 group("unittest") {
   testonly = true
   deps = [
-    "coverage:libprivacy_manager_service_coverage_test",
-    "mock:libprivacy_manager_service_mock_test",
-    "unittest:libprivacy_manager_service_standard_test",
+    "coverage:coverage_tests",
+    "mock:mock_tests",
+    "unittest:functional_tests",
   ]
 }

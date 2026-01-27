@@ -11,33 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
+import("../privacy_fuzzer.gni")
 
 ohos_fuzztest("RemovePermissionUsedRecordsFuzzTest") {
   module_out_path = module_output_path_interface_privacy
   fuzz_config_file = "."
 
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/test/fuzztest/common",
-  ]
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
+  include_dirs = privacy_fuzzer_include_dirs
+  cflags = privacy_fuzzer_cflags
   sources = [ "removepermissionusedrecords_fuzzer.cpp" ]
 
-  deps = [ "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk" ]
+  deps = privacy_fuzzer_deps
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = privacy_fuzzer_configs
 
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_core",
-  ]
+  external_deps = privacy_fuzzer_external_deps
 }

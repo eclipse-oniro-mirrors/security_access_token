@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,9 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
-import("../../access_token.gni")
+import("privacy_manager.gni")
 
 idl_gen_interface("privacy_manager_interface") {
   sources = [ "./idl/IPrivacyManager.idl" ]
@@ -60,7 +61,7 @@ ohos_source_set("privacy_manager_proxy") {
     "samgr:samgr_proxy",
   ]
 
-  cflags_cc = []
+  cflags_cc = access_token_cflags_cc
 
   subsystem_name = "security"
   part_name = "access_token"
@@ -99,7 +100,10 @@ ohos_source_set("privacy_manager_stub") {
     "samgr:samgr_proxy",
   ]
 
-  cflags_cc = []
+  cflags_cc = access_token_cflags_cc
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
 
   subsystem_name = "security"
   part_name = "access_token"
@@ -137,127 +141,14 @@ if (is_standard_system && ability_base_enable == true) {
       shlib_type = "sa"
     }
 
-    include_dirs = [
-      "include/active",
-      "include/common",
-      "include/database",
-      "include/disable_policy",
-      "include/proxy",
-      "include/record",
-      "include/service",
-      "include/sensitive",
-      "include/sensitive/audio_manager/",
-      "include/sensitive/camera_manager/",
-      "${access_token_path}/frameworks/privacy/include",
-      "${access_token_path}/frameworks/common/include",
-      "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/innerkits/privacy/include",
-      "${access_token_path}/interfaces/innerkits/privacy/src",
-      "${access_token_path}/services/common/app_manager/include",
-      "${access_token_path}/services/common/json_parse/include",
-      "${access_token_path}/services/common/database/include",
-      "${access_token_path}/services/common/dfx/include",
-      "${access_token_path}/services/common/handler/include",
-      "${access_token_path}/services/common/libraryloader/include",
-      "${access_token_path}/services/common/screenlock_manager/include",
-      "${access_token_path}/services/common/utils/include",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
-    ]
+    # All configurations from privacy_manager_base_config
+    sources = privacy_manager_base_config.sources
+    include_dirs = privacy_manager_base_config.include_dirs
+    deps = privacy_manager_base_config.deps
+    external_deps = privacy_manager_base_config.external_deps
 
-    sources = [
-      "src/active/active_status_callback_manager.cpp",
-      "src/active/perm_active_status_callback_death_recipient.cpp",
-      "src/active/perm_active_status_change_callback_proxy.cpp",
-      "src/active/state_change_callback_proxy.cpp",
-      "src/common/access_token_helper.cpp",
-      "src/common/constant.cpp",
-      "src/database/data_translator.cpp",
-      "src/database/permission_used_record_db.cpp",
-      "src/database/privacy_field_const.cpp",
-      "src/disable_policy/disable_policy_cbk_manager.cpp",
-      "src/disable_policy/perm_disable_policy_cbk_death_recipient.cpp",
-      "src/disable_policy/perm_disable_policy_cbk_proxy.cpp",
-      "src/proxy/privacy_manager_proxy_death_param.cpp",
-      "src/record/on_permission_used_record_callback_proxy.cpp",
-      "src/record/permission_record.cpp",
-      "src/record/permission_record_manager.cpp",
-      "src/record/permission_record_set.cpp",
-      "src/sensitive/audio_manager/audio_manager_adapter.cpp",
-      "src/sensitive/camera_manager/camera_manager_adapter.cpp",
-      "src/service/privacy_manager_service.cpp",
-    ]
-
-    cflags_cc = [
-      "-DHILOG_ENABLE",
-      "-fvisibility=hidden",
-    ]
-    configs = [
-      "${access_token_path}/config:access_token_compile_flags",
-      "${access_token_path}/config:coverage_flags",
-      "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
-    ]
+    cflags_cc = privacy_manager_base_config.cflags_cc
+    configs = privacy_manager_base_config.configs
     defines = [ "FEATURE_DTMF_TONE" ]
-
-    deps = [
-      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-      "${access_token_path}/services/common:accesstoken_service_common",
-      "${access_token_path}/services/common/proxy_death:proxy_death_handler",
-      "${access_token_path}/services/privacymanager:privacy.rc",
-      "${access_token_path}/services/privacymanager:privacy_manager_stub",
-    ]
-
-    external_deps = [
-      "ability_base:want",
-      "c_utils:utils",
-      "hilog:libhilog",
-      "hisysevent:libhisysevent",
-      "init:libbegetutil",
-      "ipc:ipc_single",
-      "safwk:system_ability_fwk",
-      "samgr:samgr_proxy",
-      "sqlite:sqlite",
-    ]
-
-    if (audio_framework_enable) {
-      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
-      external_deps += [ "audio_framework:audio_client" ]
-    }
-
-    if (camera_framework_enable) {
-      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
-      external_deps += [ "camera_framework:camera_framework" ]
-    }
-
-    if (ohos_indep_compiler_enable) {
-      external_deps += [ "bounds_checking_function:libsec_shared" ]
-    }
-    if (eventhandler_enable == true) {
-      cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-      external_deps += [ "eventhandler:libeventhandler" ]
-    }
-
-    if (common_event_service_enable) {
-      cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
-      external_deps += [ "common_event_service:cesfwk_innerkits" ]
-      sources += [ "src/common/privacy_common_event_subscriber.cpp" ]
-    }
-
-    if (access_token_camera_float_window_enable) {
-      cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
-    }
-    if (access_token_app_security_privacy_service_enable) {
-      cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
-    } else {
-      include_dirs +=
-          [ "${access_token_path}/services/common/ability_manager/include" ]
-    }
-
-    if (hiviewdfx_hitrace_native_enable == true) {
-      cflags_cc += [ "-DHITRACE_NATIVE_ENABLE" ]
-
-      external_deps += [ "hitrace:hitrace_meter" ]
-    }
   }
 }

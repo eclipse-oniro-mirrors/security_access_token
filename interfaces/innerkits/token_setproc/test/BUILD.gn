@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
-import("../../../../access_token.gni")
 
 ohos_unittest("libtoken_setproc_test") {
   subsystem_name = "accesscontrol"
@@ -27,7 +27,8 @@ ohos_unittest("libtoken_setproc_test") {
   include_dirs = [ "../include" ]
 
   sources = [ "unittest/src/tokensetproc_kit_test.cpp" ]
-  cflags_cc = [ "-fexceptions" ]
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-fexceptions" ]
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [

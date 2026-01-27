@@ -1,0 +1,179 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#############################################
+# Access Token Manager Service Build Config
+# This file contains all configurations for accesstoken_manager
+# Including sources, includes, deps, and external_deps with conditional logic
+#############################################
+
+import("//base/security/access_token/access_token.gni")
+
+#############################################
+# Complete configuration with all conditional logic
+#############################################
+accesstoken_manager_base_config = {
+  # ========== Sources ==========
+  # Base sources (always included)
+  sources = [
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_client.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_proxy.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_death_recipient.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_id_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
+  ]
+
+  # Conditional sources based on feature flags
+  if (dlp_permission_enable == true) {
+    sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/dlp_permission_set_manager.cpp" ]
+  }
+
+  if (token_sync_enable == true) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_remote_token_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/token_modify_notifier.cpp",
+    ]
+  }
+
+  if (access_token_background_task_mgr_continuous_task_enable == true) {
+    sources += [
+      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_client.cpp",
+      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_proxy.cpp",
+      "${access_token_path}/services/common/background_task_manager/src/background_task_manager_death_recipient.cpp",
+      "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
+      "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
+    ]
+  }
+
+  if (security_component_enhance_enable == true) {
+    sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
+  }
+
+  # ========== Include Dirs ==========
+  # Base include dirs (always included)
+  include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/frameworks/json_adapter/include",
+    "${access_token_path}/interfaces/innerkits/tokensync/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/tokensync/src",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_path}/services/common/ability_manager/include",
+    "${access_token_path}/services/common/app_manager/include",
+    "${access_token_path}/services/common/json_parse/include",
+    "${access_token_path}/services/common/database/include",
+    "${access_token_path}/services/common/dfx/include",
+    "${access_token_path}/services/common/handler/include",
+    "${access_token_path}/services/common/libraryloader/include",
+    "${access_token_path}/services/common/random/include",
+    "${access_token_path}/services/common/utils/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/dfx",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+  ]
+
+  # Conditional include dirs based on feature flags
+  if (access_token_background_task_mgr_continuous_task_enable == true) {
+    include_dirs += [
+      "${access_token_path}/services/common/background_task_manager/include",
+    ]
+  }
+
+  # ========== Deps ==========
+  # Base deps (always included)
+  deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_hisysevent",
+    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/services/accesstokenmanager:access_token.rc",
+    "${access_token_path}/services/accesstokenmanager:permission_definition_config",
+    "${access_token_path}/services/accesstokenmanager/etc:param_files",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
+    "${access_token_path}/services/common:accesstoken_service_common",
+  ]
+
+  # Note: external_deps will add relational_store:native_rdb in external_deps section below
+
+  # ========== External Deps ==========
+  # Base external deps (always included)
+  external_deps = [
+    "cJSON:cjson",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "relational_store:native_rdb",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  # Add global external_deps from access_token.gni
+  external_deps += access_token_external_deps
+
+  if (ohos_indep_compiler_enable) {
+    external_deps += [ "bounds_checking_function:libsec_shared" ]
+  }
+
+  # ========== lite_device_enable: Complete Configuration ==========
+  # Light device: use dlopen database (smaller footprint)
+  # Normal device: use full native RDB implementation
+  if (lite_device_enable == true) {
+    sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/rdb_dlopen_manager.cpp" ]
+    deps += [
+      "${access_token_path}/services/accesstokenmanager:accesstoken_db_loader",
+    ]
+  } else {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
+    ]
+  }
+
+  # ========== Cflags ==========
+  cflags_cc = access_token_cflags_cc
+
+  # ========== Configs ==========
+  # Build configs
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
+  ]
+}
