@@ -6643,7 +6643,8 @@
             "since": 19,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.VISIBLE_WINDOW_INFO",
