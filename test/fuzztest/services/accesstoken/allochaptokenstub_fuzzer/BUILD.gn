@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,7 +13,6 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
 import("../access_token_service_fuzz.gni")
 
 ohos_fuzztest("AllocHapTokenStubFuzzTest") {
@@ -21,28 +20,18 @@ ohos_fuzztest("AllocHapTokenStubFuzzTest") {
   fuzz_config_file = "."
 
   sources = [ "allochaptokenstub_fuzzer.cpp" ]
+  sources += access_token_stub_fuzz_sources
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
+  include_dirs = access_token_stub_fuzz_include_dirs
 
-  include_dirs = access_token_include_dirs
+  deps = access_token_stub_fuzz_deps
 
-  deps = access_token_deps
+  configs = access_token_stub_fuzz_configs
 
-  configs = [
-    "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
-  ]
+  external_deps = access_token_stub_fuzz_external_deps
 
-  external_deps = access_token_external_deps
-
-  cflags_cc = access_token_cflags_cc
-
-  sources += access_token_sources
+  cflags_cc = access_token_stub_fuzz_cflags_cc
+  cflags = access_token_stub_fuzz_cflags
 
   if (eventhandler_enable == true) {
     sources += [ "${access_token_path}/services/common/handler/src/access_event_handler.cpp" ]

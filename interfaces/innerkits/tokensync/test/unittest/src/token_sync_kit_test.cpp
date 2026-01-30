@@ -29,7 +29,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const int32_t TIME_500_MS = 1000 * 500; // 0.5 second
+static const int32_t TIME_2000_MS = 1000 * 2000; // 2 second
 }
 static void SetNativeTokenId(const std::string &process)
 {
@@ -70,7 +70,7 @@ static void StartOrStopTokenSyncService(bool start)
         }
         exit(0);
     }
-    usleep(TIME_500_MS);
+    usleep(TIME_2000_MS);
 }
 
 void TokenSyncKitTest::SetUpTestCase()
@@ -93,7 +93,7 @@ void TokenSyncKitTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
+HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
 {
     HapTokenInfoForSync tokenInfo;
     uint64_t selfTokenId = GetSelfTokenID();
@@ -125,7 +125,7 @@ HWTEST_F(TokenSyncKitTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level0)
+HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level1)
 {
     uint64_t selfTokenId = GetSelfTokenID();
 
@@ -157,7 +157,7 @@ HWTEST_F(TokenSyncKitTest, GetRemoteHapTokenInfo001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
+HWTEST_F(TokenSyncKitTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
 {
     uint64_t selfTokenId = GetSelfTokenID();
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
-import("../../../../access_token.gni")
 
 ohos_unittest("libprivacy_sdk_test") {
   subsystem_name = "accesscontrol"
@@ -44,7 +44,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "unittest/src/privacy_test_common.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
@@ -67,10 +67,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "samgr:samgr_proxy",
   ]
 
-  if (audio_framework_enable) {
-    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
-    external_deps += [ "audio_framework:audio_client" ]
-  }
+  external_deps += access_token_external_deps
 }
 
 ohos_unittest("libprivacy_mock_test") {
@@ -143,15 +140,10 @@ ohos_unittest("libprivacy_mock_test") {
     "samgr:samgr_proxy",
   ]
 
-  cflags_cc = [
-    "-DHILOG_ENABLE",
-    "-DDEBUG_API_PERFORMANCE",
-  ]
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-DDEBUG_API_PERFORMANCE" ]
 
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
+  external_deps += access_token_external_deps
 }
 
 ohos_unittest("libprivacy_coverage_test") {
@@ -180,16 +172,16 @@ ohos_unittest("libprivacy_coverage_test") {
   sources = [
     "../src/disable_policy_change_callback.cpp",
     "../src/on_permission_used_record_callback_stub.cpp",
-    "../src/perm_active_status_change_callback_stub.cpp",
     "../src/perm_active_status_change_callback.cpp",
+    "../src/perm_active_status_change_callback_stub.cpp",
     "../src/perm_active_status_customized_cbk.cpp",
-    "../src/perm_disable_policy_change_callback_stub.cpp",
     "../src/perm_disable_policy_change_callback.cpp",
+    "../src/perm_disable_policy_change_callback_stub.cpp",
     "../src/privacy_death_recipient.cpp",
     "../src/privacy_kit.cpp",
     "../src/privacy_manager_client.cpp",
-    "../src/state_change_callback_stub.cpp",
     "../src/state_change_callback.cpp",
+    "../src/state_change_callback_stub.cpp",
     "../src/state_customized_cbk.cpp",
     "../src/system_ability_status_change_listener.cpp",
     "unittest/src/privacy_kit_coverage_test.cpp",
@@ -224,15 +216,10 @@ ohos_unittest("libprivacy_coverage_test") {
     "samgr:samgr_proxy",
   ]
 
-  cflags_cc = [
-    "-DHILOG_ENABLE",
-    "-DDEBUG_API_PERFORMANCE",
-  ]
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-DDEBUG_API_PERFORMANCE" ]
 
-  if (eventhandler_enable == true) {
-    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-    external_deps += [ "eventhandler:libeventhandler" ]
-  }
+  external_deps += access_token_external_deps
 }
 
 ohos_unittest("libprivacy_multi_thread_test") {
@@ -261,7 +248,7 @@ ohos_unittest("libprivacy_multi_thread_test") {
     "unittest/src/privacy_test_common.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = access_token_cflags_cc
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
@@ -288,8 +275,8 @@ ohos_unittest("libprivacy_multi_thread_test") {
 group("unittest") {
   testonly = true
   deps = [
-    ":libprivacy_mock_test",
     ":libprivacy_coverage_test",
+    ":libprivacy_mock_test",
     ":libprivacy_multi_thread_test",
     ":libprivacy_sdk_test",
   ]

@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
-import("../../../../access_token.gni")
 
 ohos_shared_library("screenlockfilemanager") {
   sanitize = {

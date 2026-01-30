@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,7 +13,6 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
 import("../access_token_service_fuzz.gni")
 
 ohos_fuzztest("UpdateSecCompEnhanceStubFuzzTest") {
@@ -21,28 +20,16 @@ ohos_fuzztest("UpdateSecCompEnhanceStubFuzzTest") {
   fuzz_config_file = "."
 
   sources = [ "updateseccompenhancestub_fuzzer.cpp" ]
+  sources += access_token_stub_fuzz_sources
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
+  include_dirs = access_token_stub_fuzz_include_dirs
 
-  configs = [
-    "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",
-  ]
+  deps = access_token_stub_fuzz_deps
 
-  include_dirs = access_token_include_dirs
+  configs = access_token_stub_fuzz_configs
 
-  sources += access_token_sources
-  sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
+  external_deps = access_token_stub_fuzz_external_deps
 
-  cflags_cc = access_token_cflags_cc
-  cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-
-  deps = access_token_deps
-
-  external_deps = access_token_external_deps
+  cflags_cc = access_token_stub_fuzz_cflags_cc
+  cflags = access_token_stub_fuzz_cflags
 }

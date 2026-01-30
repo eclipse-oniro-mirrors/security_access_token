@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Copyright (c) 2025-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
-import("../../../access_token.gni")
 
 idl_gen_interface("access_token_manager_interface") {
   sources = [ "IAccessTokenManager.idl" ]
@@ -35,12 +35,9 @@ ohos_source_set("access_token_manager_proxy") {
     debug = false
   }
 
-  cflags_cc = []
+  cflags_cc = access_token_cflags_cc
   if (build_variant == "user") {
     cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-  }
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }
 
   output_values = get_target_outputs(":access_token_manager_interface")
@@ -72,10 +69,6 @@ ohos_source_set("access_token_manager_proxy") {
     "samgr:samgr_proxy",
   ]
 
-  if (security_component_enhance_enable) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-  }
-
   subsystem_name = "security"
   part_name = "access_token"
 }
@@ -87,12 +80,9 @@ ohos_source_set("access_token_manager_stub") {
     debug = false
   }
 
-  cflags_cc = []
+  cflags_cc = access_token_cflags_cc
   if (build_variant == "user") {
     cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-  }
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }
 
   output_values = get_target_outputs(":access_token_manager_interface")
@@ -123,10 +113,6 @@ ohos_source_set("access_token_manager_stub") {
     "ipc:ipc_single",
     "samgr:samgr_proxy",
   ]
-
-  if (security_component_enhance_enable) {
-    cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-  }
 
   subsystem_name = "security"
   part_name = "access_token"

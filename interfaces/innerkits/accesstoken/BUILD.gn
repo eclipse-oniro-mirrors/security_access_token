@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
-import("../../../access_token.gni")
 
 config("accesstoken") {
   visibility = [ ":*" ]
@@ -84,20 +84,10 @@ if (is_standard_system) {
       "${access_token_path}/config:coverage_flags",
     ]
 
-    cflags_cc = [
-      "-DHILOG_ENABLE",
-      "-DDEBUG_API_PERFORMANCE",
-    ]
-
+    cflags_cc = access_token_cflags_cc
+    cflags_cc += [ "-DDEBUG_API_PERFORMANCE" ]
     if (build_variant == "user") {
       cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
-    }
-
-    if (token_sync_enable == true) {
-      cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    }
-    if (security_component_enhance_enable == true) {
-      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
     }
   }
 }
@@ -133,10 +123,7 @@ if (is_standard_system) {
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
     ]
-    cflags_cc = [ "-DHILOG_ENABLE" ]
-    if (security_component_enhance_enable == true) {
-      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-    }
+    cflags_cc = access_token_cflags_cc
   }
 }
 
@@ -194,6 +181,6 @@ if (is_standard_system) {
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
     ]
-    cflags_cc = [ "-DHILOG_ENABLE" ]
+    cflags_cc = access_token_cflags_cc
   }
 }

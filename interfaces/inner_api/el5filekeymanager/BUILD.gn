@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
-import("../../../access_token.gni")
 
 idl_gen_interface("el5_filekey_manager_interface") {
   sources = [ "El5FilekeyManagerInterface.idl" ]
@@ -80,7 +80,8 @@ ohos_shared_library("el5_filekey_manager_sdk") {
   }
   branch_protector_ret = "pac_ret"
 
-  cflags_cc = [
+  cflags_cc = access_token_cflags_cc
+  cflags_cc += [
     "-fdata-sections",
     "-ffunction-sections",
     "-fno-asynchronous-unwind-tables",

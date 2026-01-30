@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -100,8 +100,8 @@ public:
     bool FindContinuousTask(AccessTokenID tokenID);
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler();
-    void SetCancelTime(int32_t cancelTime);
 #endif
+    void SetCancelTime(int32_t cancelTime);
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
     bool CancelTaskOfPermissionRevoking(const std::string& taskName);
     void RegisterCallback();

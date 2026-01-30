@@ -25,9 +25,6 @@
 #include "errors.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-#include "on_permission_used_record_callback_stub.h"
-#include "permission_used_request.h"
-#include "permission_used_request_parcel.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;

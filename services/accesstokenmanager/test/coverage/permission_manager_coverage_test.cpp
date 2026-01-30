@@ -27,7 +27,6 @@
 #include "form_manager_access_client.h"
 #include "permission_manager.h"
 #undef private
-#include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
 #include "parameters.h"
 #include "permission_data_brief.h"

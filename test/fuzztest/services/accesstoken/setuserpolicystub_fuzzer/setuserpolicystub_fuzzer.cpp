@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,7 +34,6 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 static AccessTokenID g_selfTokenId = 0;
 static uint64_t g_mockTokenId = 0;
-const int32_t CONSTANTS_NUMBER_TWO = 2;
 static bool g_reload = true;
 
 namespace OHOS {
@@ -121,7 +120,7 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
+    bool enable = ((provider.ConsumeIntegral<int32_t>() % 2) == 0); // 2: seperate true/false
     if (enable) {
         GetNativeToken();
     } else {
@@ -129,7 +128,6 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     ClearUserPolicy(permission);
-
     return true;
 }
 

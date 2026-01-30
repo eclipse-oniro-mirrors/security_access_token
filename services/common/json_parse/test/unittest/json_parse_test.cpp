@@ -328,7 +328,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
@@ -383,7 +383,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
@@ -438,7 +438,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ret = AccessTokenInfoManager::GetInstance().VerifyAccessToken(
@@ -516,7 +516,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -575,7 +575,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -633,7 +633,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoManagerTestInfoParms,
         infoManagerTestPolicyPrams, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+    GTEST_LOG_(INFO) << "add a hap token " << tokenIdEx.tokenIdExStruct.tokenID;
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 

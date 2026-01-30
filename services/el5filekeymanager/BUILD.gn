@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
-import("../../access_token.gni")
 
 ohos_prebuilt_etc("el5_filekey_manager_cfg") {
   source = "el5_filekey_manager.cfg"
@@ -44,13 +44,15 @@ if (is_standard_system && ability_base_enable == true) {
 
     shlib_type = "sa"
     cflags = []
-    cflags_cc = [
+    cflags_cc = access_token_cflags_cc
+    cflags_cc += [
       "-fdata-sections",
       "-ffunction-sections",
       "-fno-asynchronous-unwind-tables",
       "-fno-unwind-tables",
       "-Os",
     ]
+
     defines = []
     sources = [
       "src/el5_filekey_manager_service.cpp",
@@ -83,20 +85,9 @@ if (is_standard_system && ability_base_enable == true) {
       "samgr:samgr_proxy",
     ]
 
+    external_deps += access_token_external_deps
     if (common_event_service_enable) {
-      cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
-      external_deps += [ "common_event_service:cesfwk_innerkits" ]
       sources += [ "src/el5_filekey_manager_subscriber.cpp" ]
-    }
-
-    if (eventhandler_enable == true) {
-      cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
-      external_deps += [ "eventhandler:libeventhandler" ]
-    }
-
-    if (theme_screenlock_mgr_enable) {
-      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
-      external_deps += [ "screenlock_mgr:screenlock_client" ]
     }
 
     subsystem_name = "security"

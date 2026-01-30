@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import("//build/ohos.gni")
 
 access_token_path = "//base/security/access_token"
 access_token_innerkit_path =
@@ -28,9 +29,23 @@ declare_args() {
   access_token_camera_float_window_enable = true
 }
 
+# External dependencies for each feature flag
+access_token_external_deps = []
+
+access_token_cflags_cc = [
+  "-DHILOG_ENABLE",
+  "-DFUZZ_ENABLE",
+]
+
+if (access_token_camera_float_window_enable == true) {
+  access_token_cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
+}
+
 if (!defined(global_parts_info) ||
     defined(global_parts_info.distributedhardware_device_manager)) {
   token_sync_enable = true
+  access_token_cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  access_token_external_deps += [ "device_manager:devicemanagersdk" ]
 } else {
   token_sync_enable = false
 }
@@ -38,6 +53,7 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.security_dlp_permission_service)) {
   dlp_permission_enable = true
+  access_token_cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
 } else {
   dlp_permission_enable = false
 }
@@ -52,6 +68,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.hiviewdfx_hicollie)) {
   hicollie_enable = true
+  access_token_cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+  access_token_external_deps += [ "hicollie:libhicollie" ]
 } else {
   hicollie_enable = false
 }
@@ -59,6 +77,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.hiviewdfx_hitrace_native)) {
   hiviewdfx_hitrace_native_enable = true
+  access_token_cflags_cc += [ "-DHITRACE_NATIVE_ENABLE" ]
+  access_token_external_deps += [ "hitrace:hitrace_meter" ]
 } else {
   hiviewdfx_hitrace_native_enable = false
 }
@@ -66,6 +86,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.multimedia_audio_framework)) {
   audio_framework_enable = true
+  access_token_cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+  access_token_external_deps += [ "audio_framework:audio_client" ]
 } else {
   audio_framework_enable = false
 }
@@ -73,6 +95,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.multimedia_camera_framework)) {
   camera_framework_enable = true
+  access_token_cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+  access_token_external_deps += [ "camera_framework:camera_framework" ]
 } else {
   camera_framework_enable = false
 }
@@ -80,6 +104,7 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.ability_ability_runtime)) {
   ability_runtime_enable = true
+  access_token_cflags_cc += [ "-DABILITY_RUNTIME_ENABLE" ]
 } else {
   ability_runtime_enable = false
 }
@@ -87,6 +112,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.security_security_component_enhance)) {
   security_component_enhance_enable = true
+  access_token_cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  access_token_external_deps += [ "ipc:ipc_single" ]
 } else {
   security_component_enhance_enable = false
 }
@@ -94,6 +121,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.customization_config_policy)) {
   customization_config_policy_enable = true
+  access_token_cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+  access_token_external_deps += [ "config_policy:configpolicy_util" ]
 } else {
   customization_config_policy_enable = false
 }
@@ -101,6 +130,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.theme_screenlock_mgr)) {
   theme_screenlock_mgr_enable = true
+  access_token_cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
+  access_token_external_deps += [ "screenlock_mgr:screenlock_client" ]
 } else {
   theme_screenlock_mgr_enable = false
 }
@@ -108,6 +139,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.notification_common_event_service)) {
   common_event_service_enable = true
+  access_token_cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
+  access_token_external_deps += [ "common_event_service:cesfwk_innerkits" ]
 } else {
   common_event_service_enable = false
 }
@@ -115,6 +148,8 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.notification_eventhandler)) {
   eventhandler_enable = true
+  access_token_cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+  access_token_external_deps += [ "eventhandler:libeventhandler" ]
 } else {
   eventhandler_enable = false
 }
@@ -122,6 +157,7 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.resourceschedule_background_task_mgr)) {
   access_token_background_task_mgr_continuous_task_enable = true
+  access_token_cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
 } else {
   access_token_background_task_mgr_continuous_task_enable = false
 }
@@ -129,20 +165,16 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.appsecurityprivacy_security_privacy_server)) {
   access_token_app_security_privacy_service_enable = true
+  access_token_cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
 } else {
   access_token_app_security_privacy_service_enable = false
-}
-
-if (!defined(global_parts_info) ||
-    defined(global_parts_info.powermgr_power_manager)) {
-  power_manager_enable = true
-} else {
-  power_manager_enable = false
 }
 
 if (defined(global_parts_info) &&
     defined(global_parts_info.resourceschedule_memmgr_override)) {
   memory_manager_enable = true
+  access_token_cflags_cc += [ "-DMEMORY_MANAGER_ENABLE" ]
+  access_token_external_deps += [ "memmgr:memmgrclient" ]
 } else {
   memory_manager_enable = false
 }
@@ -150,12 +182,15 @@ if (defined(global_parts_info) &&
 if (defined(global_parts_info) &&
     defined(global_parts_info.security_security_guard)) {
   security_guard_enable = true
+  access_token_cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+  access_token_external_deps += [ "security_guard:libsg_collect_sdk" ]
 } else {
   security_guard_enable = false
 }
 
 if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
-  light_device_enable = true
+  lite_device_enable = true
+  access_token_cflags_cc += [ "-DDYNAMIC_CLOSE_LIBS" ]
 } else {
-  light_device_enable = false
+  lite_device_enable = false
 }

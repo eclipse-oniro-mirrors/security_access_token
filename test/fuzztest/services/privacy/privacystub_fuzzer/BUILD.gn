@@ -13,7 +13,6 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
-import("../../../../../access_token.gni")
 import("../privacy_service_fuzz.gni")
 
 ohos_fuzztest("PrivacyStubFuzzTest") {
@@ -21,35 +20,27 @@ ohos_fuzztest("PrivacyStubFuzzTest") {
   fuzz_config_file = "."
 
   sources = [ "privacystub_fuzzer.cpp" ]
+  sources += privacy_stub_fuzz_sources
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
+  include_dirs = privacy_stub_fuzz_include_dirs
+  include_dirs +=
+      [ "${access_token_path}/interfaces/innerkits/token_setproc/include" ]
+
+  deps = privacy_stub_fuzz_deps
+  deps += [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
+  deps += [
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]
 
-  configs = [
-    "${access_token_path}/config:coverage_flags",
-    "${access_token_path}/services/privacymanager:privacy_manager_gen_config",
-  ]
-
-  include_dirs = privacy_include_dirs
-
-  sources += privacy_sources
-
+  configs = privacy_stub_fuzz_configs
   sources += [
     "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_change_callback.cpp",
     "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_change_callback_stub.cpp",
     "${access_token_path}/interfaces/innerkits/privacy/src/perm_active_status_customized_cbk.cpp",
   ]
 
-  defines = privacy_defines
+  external_deps = privacy_stub_fuzz_external_deps
 
-  cflags_cc = privacy_cflags_cc
-
-  deps = privacy_deps
-  deps += [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
-
-  external_deps = privacy_external_deps
+  cflags_cc = privacy_stub_fuzz_cflags_cc
+  cflags = privacy_stub_fuzz_cflags
 }

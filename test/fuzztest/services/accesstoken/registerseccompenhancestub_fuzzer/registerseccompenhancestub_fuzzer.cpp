@@ -27,9 +27,6 @@
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_token_info.h"
 #include "iaccess_token_manager.h"
-#include "on_permission_used_record_callback_stub.h"
-#include "permission_used_request.h"
-#include "permission_used_request_parcel.h"
 #include "securec.h"
 #include "token_sync_kit_interface.h"
 

@@ -28,7 +28,7 @@ DeviceInfoManager& DeviceInfoManager::GetInstance()
     return instance;
 }
 
-bool DeviceInfoManager::GetDeviceInfo(const std::string& srcDeviceId, DeviceIdType type, DeviceInfo& devInfo)
+bool DeviceInfoManager::GetDeviceInfo(const std::string& srcDeviceId, DeviceIdType type, DeviceInfo& devInfo) const
 {
     if (srcDeviceId.find("valid_deviceId") != std::string::npos) {
         devInfo.deviceId.uniqueDeviceId = srcDeviceId;
