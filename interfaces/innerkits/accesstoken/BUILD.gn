@@ -151,7 +151,7 @@ if (is_standard_system) {
     }
     branch_protector_ret = "pac_ret"
     innerapi_tags = [
-      "chipsetsdk",
+      "chipsetsdk_sp",
       "platformsdk",
       "sasdk",
     ]
