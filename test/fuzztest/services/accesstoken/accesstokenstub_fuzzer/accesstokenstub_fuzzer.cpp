@@ -570,6 +570,7 @@ bool RevokePermissionStubFuzzTest(FuzzedDataProvider &provider)
     return true;
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static void ClearUserPolicy(const string& permission)
 {
     MessageParcel reply;
@@ -627,6 +628,7 @@ bool SetUserPolicyStubFuzzTest(FuzzedDataProvider &provider)
 
     return true;
 }
+#endif
 
 bool VerifyAccessTokenStubFuzzTest(FuzzedDataProvider &provider)
 {
@@ -675,7 +677,9 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     (void)GetNativeTokenInfoStubFuzzTest(provider);
     (void)GrantPermissionStubFuzzTest(provider);
     (void)RevokePermissionStubFuzzTest(provider);
+#ifdef SUPPORT_MANAGE_USER_POLICY
     (void)SetUserPolicyStubFuzzTest(provider);
+#endif
     (void)VerifyAccessTokenStubFuzzTest(provider);
 }
 

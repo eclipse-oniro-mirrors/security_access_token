@@ -39,6 +39,7 @@ const std::string INTERNET = "ohos.permission.INTERNET";
 static const std::string GET_NETWORK_STATS = "ohos.permission.GET_NETWORK_STATS";
 static const std::string LOCATION = "ohos.permission.LOCATION";
 static const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // system_grant
 static const std::string MICROPHONE = "ohos.permission.MICROPHONE"; // user_grant
 static const std::string CAMERA = "ohos.permission.CAMERA"; // user_grant
@@ -254,12 +255,13 @@ void EdmPolicySetTest::SetUpTestCase()
     TestCommon::SetTestEvironment(g_selfShellTokenId);
 
     std::vector<std::string> reqPerm;
-    reqPerm.emplace_back(GET_SENSITIVE_PERMISSIONS);
+    reqPerm.emplace_back(MANAGE_USER_POLICY);
     reqPerm.emplace_back(REVOKE_SENSITIVE_PERMISSIONS);
     g_mock = new (std::nothrow) MockHapToken("EdmPolicySetMockTest", reqPerm);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static int32_t GetPermissionStatusFromCache(AccessTokenID tokenId, const std::string& permission)
 {
     std::vector<PermissionStateFull> permStatList;
@@ -1125,6 +1127,20 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId1));
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId2));
 }
+#else
+/**
+ * @tc.name: SetUserPolicy001
+ * @tc.desc: Not support to SetUserPolicy.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level0)
+{
+    std::vector<UserPermissionPolicy> permPolicyListEmpty;
+    EXPECT_EQ(AccessTokenError::ERR_USER_POLICY_NOT_SUPPORT, AccessTokenKit::SetUserPolicy(permPolicyListEmpty));
+    EXPECT_EQ(AccessTokenError::ERR_USER_POLICY_NOT_SUPPORT, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+}
+#endif
 
 /**
  * @tc.name: SetPermissionStatusWithPolicy001

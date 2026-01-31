@@ -2491,8 +2491,13 @@ HWTEST_F(TokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Lev
 HWTEST_F(TokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // invalid tokenid
+#ifdef SUPPORT_MANAGE_USER_POLICY
     EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
         "ohos.permission.CAMERA"));
+#else
+    EXPECT_FALSE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
+        "ohos.permission.CAMERA"));
+#endif
 }
 
 #ifdef TOKEN_SYNC_ENABLE

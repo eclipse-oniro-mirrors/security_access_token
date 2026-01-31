@@ -75,7 +75,10 @@ const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static constexpr int MAX_PERMISSION_SIZE = 1024;
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
+const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+#endif
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
@@ -1258,11 +1261,12 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     return ERR_OK;
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1292,7 +1296,7 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1304,6 +1308,7 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string
 
     return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
 }
+#endif
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
 {
