@@ -56,12 +56,14 @@ group("fuzztest") {
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
     "setpermissionstatuswithpolicystub_fuzzer:SetPermissionStatusWithPolicyStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
-    "setuserpolicystub_fuzzer:SetUserPolicyStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
   ]
 
+  if (access_token_manage_user_policy_enable) {
+    deps += [ "setuserpolicystub_fuzzer:SetUserPolicyStubFuzzTest" ]
+  }
   if (is_standard_system && token_sync_enable == true) {
     deps += [
       "deleteremotehaptokeninfostub_fuzzer:DeleteRemoteHapTokenInfoStubFuzzTest",

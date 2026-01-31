@@ -96,6 +96,7 @@ void AccessTokenDenyTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 /**
  * @tc.name: SetUserPolicy001
  * @tc.desc: SetUserPolicy without authorized.
@@ -114,7 +115,7 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
     int32_t ret = AccessTokenKit::SetUserPolicy(permPolicyList);
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
 }
-
+#endif
 
 /**
  * @tc.name: AllocHapToken001

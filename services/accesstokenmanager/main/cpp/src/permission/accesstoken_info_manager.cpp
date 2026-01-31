@@ -61,7 +61,9 @@ static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 static constexpr int32_t SYSTEM_APP = 1;
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
@@ -1326,6 +1328,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
 
 bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName)
 {
+#ifdef SUPPORT_MANAGE_USER_POLICY
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", id);
@@ -1344,6 +1347,26 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
         return true;
     }
     return false;
+#else
+    return false;
+#endif
+}
+
+std::vector<uint32_t> AccessTokenInfoManager::GetRestrictedPermListByUserId(int32_t userId)
+{
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    std::vector<uint32_t> permList;
+    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    for (auto iter = userPermPolicyList_.begin(); iter != userPermPolicyList_.end(); ++iter) {
+        std::vector<int32_t> userList = iter->second;
+        if (std::find(userList.begin(), userList.end(), userId) != userList.end()) {
+            permList.emplace_back(iter->first);
+        }
+    }
+    return permList;
+#else
+    return {};
+#endif
 }
 
 void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList)
@@ -1398,19 +1421,7 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
     return RET_SUCCESS;
 }
 
-std::vector<uint32_t> AccessTokenInfoManager::GetRestrictedPermListByUserId(int32_t userId)
-{
-    std::vector<uint32_t> permList;
-    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
-    for (auto iter = userPermPolicyList_.begin(); iter != userPermPolicyList_.end(); ++iter) {
-        std::vector<int32_t> userList = iter->second;
-        if (std::find(userList.begin(), userList.end(), userId) != userList.end()) {
-            permList.emplace_back(iter->first);
-        }
-    }
-    return permList;
-}
-
+#ifdef SUPPORT_MANAGE_USER_POLICY
 void AccessTokenInfoManager::GetHapTokenInfoListByUserId(
     const std::map<int32_t, bool>& changedUserList, std::map<AccessTokenID, bool>& tokenIdList)
 {
@@ -1547,6 +1558,7 @@ int32_t AccessTokenInfoManager::ClearUserPolicy(const std::vector<std::string>& 
     }
     return RET_SUCCESS;
 }
+#endif
 
 bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
 {
