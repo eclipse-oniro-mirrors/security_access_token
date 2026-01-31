@@ -120,7 +120,6 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceId(const std::string &nodeId
         auto iter = list.begin();
         for (; iter != list.end(); iter++) {
             DeviceInfo info = (*iter);
-            LOGD(ATM_DOMAIN, ATM_TAG, ">>> DeviceInfoRepository device name: %{public}s", info.deviceName.c_str());
             LOGD(ATM_DOMAIN, ATM_TAG, ">>> DeviceInfoRepository device type: %{public}s", info.deviceType.c_str());
             LOGD(ATM_DOMAIN, ATM_TAG, ">>> DeviceInfoRepository device network id: %{public}s",
                 ConstantCommon::EncryptDevId(info.deviceId.networkId).c_str());
