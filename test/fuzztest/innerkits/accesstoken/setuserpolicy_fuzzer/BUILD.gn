@@ -30,6 +30,7 @@ ohos_fuzztest("SetUserPolicyFuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
+  cflags_cc = access_token_cflags_cc
   sources = [ "setuserpolicy_fuzzer.cpp" ]
 
   deps = [

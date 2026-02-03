@@ -386,10 +386,13 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     ParamUpdate(permissionName, flag, false);
 
     // DFX.
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
-        "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "FLAG", flag,
-        "PERMISSION_GRANT_TYPE", changeType);
+    PermissionCheckEventInfo eventInfo;
+    eventInfo.code = USER_GRANT_PERMISSION_EVENT;
+    eventInfo.callerTokenId = tokenID;
+    eventInfo.permissionName = permissionName;
+    eventInfo.flag = flag;
+    eventInfo.changeType = changeType;
+    ReportPermissionCheckDetailEvent(eventInfo);
     grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
 }
 
@@ -403,10 +406,9 @@ int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapT
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}u-%{public}s, isGranted=%{public}d, \
             flag=%{public}u, ret=%{public}d.", permission.c_str(), tokenID, bundleName.c_str(), isGranted, flag, ret);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID",
-            tokenID, "PERM", permission, "BUNDLE_NAME", bundleName, "INT_VAL1", ret, "INT_VAL2",
-            static_cast<int32_t>(flag), "NEED_KILL", needKill);
+        ReportUpdatePermStatusErrorEvent({.errorCode = UPDATE_PERMISSION_STATUS_FAILED, .tokenId = tokenID,
+            .permissionName = permission, .bundleName = bundleName, .val1 = ret, .val2 = static_cast<int32_t>(flag),
+            .needKill = needKill});
         return ret;
     }
     if (statusChanged) {
@@ -438,10 +440,16 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     int32_t ret = RET_SUCCESS;
     bool isUpdateSuccess = false;
     for (const std::string &permissionName : permissionList) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_START, "TOKENID",
-            tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
-            "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
+        UpdatePermissionInfo updateInfo;
+        updateInfo.sceneCode = CommonSceneCode::AT_COMMON_START;
+        updateInfo.tokenId = tokenID;
+        updateInfo.userID = hapInfo.userID;
+        updateInfo.bundleName = hapInfo.bundleName;
+        updateInfo.instIndex = hapInfo.instIndex;
+        updateInfo.permissionName = permissionName;
+        updateInfo.permissionFlag = flag;
+        updateInfo.grantedFlag = isGranted;
+        ReportUpdatePermissionEvent(updateInfo);
 
         ret = UpdateTokenPermissionState(infoPtr, tokenID, permissionName, isGranted, flag, needKill);
         if (ret != RET_SUCCESS) {
@@ -454,10 +462,9 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
         if (GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
             flag = newFlag;
         }
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
-            "TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted,
-            "ERROR_CODE", ret);
+        updateInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
+        updateInfo.permissionFlag = flag;
+        ReportUpdatePermissionEvent(updateInfo);
         ReportSysCommonEventError(static_cast<int32_t>(isGranted ?
             IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
             IAccessTokenManagerIpcCode::COMMAND_REVOKE_PERMISSION), ret);
@@ -493,10 +500,9 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}us, granted=%{public}d, \
             flag=%{public}u, ret=%{public}d.", permission.c_str(), id, isGranted, flag, ret);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", UPDATE_PERMISSION_STATUS_FAILED, "TOKENID", id,
-            "PERM", permission, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", ret,
-            "INT_VAL2", static_cast<int32_t>(flag), "NEED_KILL", needKill);
+        ReportUpdatePermStatusErrorEvent({.errorCode = UPDATE_PERMISSION_STATUS_FAILED, .tokenId = id,
+            .permissionName = permission, .bundleName = infoPtr->GetBundleName(), .val1 = ret,
+            .val2 = static_cast<int32_t>(flag), .needKill = needKill});
         return ret;
     }
 
@@ -549,9 +555,9 @@ int32_t PermissionManager::UpdateTokenPermissionStateCheck(const std::shared_ptr
             LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to (%{public}u, %{public}s), \
                 dlpType: %{public}d, permDlpMode: %{public}d.",
                 permission.c_str(), id, bundleName.c_str(), hapDlpType, permDlpMode);
-            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", id, "PERM",
-                permission, "BUNDLE_NAME", bundleName, "INT_VAL1", hapDlpType, "INT_VAL2", permDlpMode);
+            ReportUpdatePermStatusErrorEvent({
+                .errorCode = DLP_CHECK_FAILED, .tokenId = id, .permissionName = permission,
+                .bundleName = bundleName, .val1 = hapDlpType, .val2 = permDlpMode, .needKill = false});
             return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
@@ -618,10 +624,9 @@ int32_t PermissionManager::UpdateMultiTokenPermissionStateCheck(const std::share
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
             LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s cannot to be granted to %{public}u, dlpType: %{public}d, \
                 permDlpMode: %{public}d.", permissionName.c_str(), tokenID, hapDlpType, permDlpMode);
-            (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", DLP_CHECK_FAILED, "TOKENID", tokenID, "PERM",
-                permissionName, "BUNDLE_NAME", infoPtr->GetBundleName(), "INT_VAL1", hapDlpType,
-                "INT_VAL2", permDlpMode);
+            ReportUpdatePermStatusErrorEvent({.errorCode = DLP_CHECK_FAILED, .tokenId = tokenID,
+                .permissionName = permissionName, .bundleName = infoPtr->GetBundleName(), .val1 = hapDlpType,
+                .val2 = permDlpMode, .needKill = false});
             return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
@@ -685,10 +690,17 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     HapTokenInfo hapInfo;
     AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     ClearThreadErrorMsg();
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_START,
-        "TOKENID", tokenID, "USERID", hapInfo.userID, "BUNDLENAME", hapInfo.bundleName, "INSTINDEX", hapInfo.instIndex,
-        "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
+
+    UpdatePermissionInfo updateInfo;
+    updateInfo.sceneCode = CommonSceneCode::AT_COMMON_START;
+    updateInfo.tokenId = tokenID;
+    updateInfo.userID = hapInfo.userID;
+    updateInfo.bundleName = hapInfo.bundleName;
+    updateInfo.instIndex = hapInfo.instIndex;
+    updateInfo.permissionName = permissionName;
+    updateInfo.permissionFlag = flag;
+    updateInfo.grantedFlag = isGranted;
+    ReportUpdatePermissionEvent(updateInfo);
 
     int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag);
 
@@ -697,10 +709,9 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
         flag = newFlag;
     }
 
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
-        "TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted,
-        "ERROR_CODE", ret);
+    updateInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
+    updateInfo.permissionFlag = flag;
+    ReportUpdatePermissionEvent(updateInfo);
     ReportSysCommonEventError(static_cast<int32_t>(isGranted ? IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
         IAccessTokenManagerIpcCode::COMMAND_REVOKE_PERMISSION), ret);
     return ret;
@@ -1127,9 +1138,7 @@ bool PermissionManager::IsPermAvailableRangeSatisfied(const PermissionBriefDef& 
             "EnterpriseRuleCheck permission = %{public}s bundleName = %{public}s, tokenID = %{public}d.",
             briefDef.permissionName, initInfo.bundleName.c_str(), initInfo.tokenID);
         rule = PERMISSION_ENTERPRISE_NORMAL_RULE;
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
-            initInfo.tokenID, "PERMISSION_NAME", briefDef.permissionName, "INTERFACE", initInfo.bundleName);
+        ReportPermissionVerifyEvent(initInfo.tokenID, briefDef.permissionName, initInfo.bundleName);
 
         bool isEnterpriseNormal = OHOS::system::GetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
         if (isEnterpriseNormal) {

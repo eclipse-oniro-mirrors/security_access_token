@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
+#include "hisysevent_adapter.h"
 #include "permission_validator.h"
 #include "token_field_const.h"
 
@@ -90,18 +91,14 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission name error");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid permission.");
         return ERR_PARAM_INVALID;
     }
 
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantFlag is wrong");
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission grant flag error");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid permission grant flag.");
         return ERR_PARAM_INVALID;
     }
     outPermissionState.grantFlag = static_cast<uint32_t>(grantFlag);
@@ -109,9 +106,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GrantStatus is wrong");
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission grant status error");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid permission grant status.");
         return ERR_PARAM_INVALID;
     }
     if (static_cast<uint32_t>(grantFlag) & PERMISSION_ALLOW_THIS_TIME) {
@@ -128,9 +123,7 @@ int32_t DataTranslator::TranslationIntoExtendedPermission(
     perm.permissionName =  inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(perm.permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission name is wrong");
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission name error");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid permission.");
         return ERR_PARAM_INVALID;
     }
     perm.value = inGenericValues.GetString(TokenFiledConst::FIELD_VALUE);

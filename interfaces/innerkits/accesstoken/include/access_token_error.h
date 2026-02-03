@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -86,7 +86,8 @@ enum AccessTokenError {
     ERR_RESOURCE_IS_NOT_READY,
     ERR_CREATE_KEY_FAILED,
     ERR_PERM_POLICY_ALREADY_SET_BY_OTHER,
-    ERR_PERM_POLICY_NOT_SET
+    ERR_PERM_POLICY_NOT_SET,
+    ERR_CAPABILITY_NOT_SUPPORT
 };
 } // namespace AccessToken
 } // namespace Security

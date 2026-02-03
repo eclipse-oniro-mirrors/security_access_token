@@ -30,7 +30,6 @@
 #include "permission_grant_info_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
-#include "sec_comp_raw_data.h"
 #endif
 
 namespace OHOS {
@@ -42,7 +41,9 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 std::recursive_mutex g_instanceMutex;
 static const int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 static const int MAX_PERMISSION_SIZE = 1024;
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
+#endif
 static const int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 } // namespace
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
@@ -1123,6 +1124,7 @@ void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& inf
     info = infoParcel.info;
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 int32_t AccessTokenManagerClient::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
     size_t policySize = userPermissionList.size();
@@ -1175,6 +1177,7 @@ int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<std::string>
     }
     return errCode;
 }
+#endif
 
 void AccessTokenManagerClient::ReleaseProxy()
 {

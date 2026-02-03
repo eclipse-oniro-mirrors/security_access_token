@@ -44,7 +44,6 @@
 #include "permission_validator.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
-#include "sec_comp_raw_data.h"
 #endif
 #include "short_grant_manager.h"
 #include "string_ex.h"
@@ -75,7 +74,10 @@ const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static constexpr int MAX_PERMISSION_SIZE = 1024;
+#ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
+const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+#endif
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
@@ -458,9 +460,7 @@ int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
     }
 
     if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
-            callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "SetToggleStatus");
+        ReportPermissionVerifyEvent(callingTokenID, permissionName, "SetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -477,9 +477,7 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
 
     if (!IsShellProcessCalling() && !IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
-            callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "GetToggleStatus");
+        ReportPermissionVerifyEvent(callingTokenID, permissionName, "GetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -512,9 +510,7 @@ int AccessTokenManagerService::GrantPermission(
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
-            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -534,9 +530,7 @@ int AccessTokenManagerService::RevokePermission(
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
-            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -555,9 +549,7 @@ int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
     
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SHORT_TERM_WRITE_MEDIAVIDEO) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
-            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -572,9 +564,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
-            "CALLER_TOKENID", callingTokenID);
+        ReportPermissionVerifyEvent(callingTokenID, "");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -596,9 +586,7 @@ int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
     }
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, MANAGE_EDM_POLICY) == PERMISSION_DENIED) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
-            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
-            callingTokenID);
+        ReportPermissionVerifyEvent(callingTokenID, "");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1240,10 +1228,13 @@ int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hap
         hapBaseInfoParcel.hapBaseInfo.instIndex);
     int32_t ret = AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenIdEx.tokenIdExStruct.tokenID, enable);
     // DFX
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "SET_PERMISSION_DIALOG_CAP",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenIdEx.tokenIdExStruct.tokenID,
-        "USERID", hapBaseInfoParcel.hapBaseInfo.userID, "BUNDLENAME", hapBaseInfoParcel.hapBaseInfo.bundleName,
-        "INSTINDEX", hapBaseInfoParcel.hapBaseInfo.instIndex, "ENABLE", enable);
+    PermDialogCapInfo info;
+    info.tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    info.userID = hapBaseInfoParcel.hapBaseInfo.userID;
+    info.bundleName = hapBaseInfoParcel.hapBaseInfo.bundleName;
+    info.instIndex = hapBaseInfoParcel.hapBaseInfo.instIndex;
+    info.enable = enable;
+    ReportSetPermDialogCapEvent(info);
     return ret;
 }
 
@@ -1258,11 +1249,12 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     return ERR_OK;
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1292,7 +1284,7 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1304,6 +1296,7 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string
 
     return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
 }
+#endif
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
 {

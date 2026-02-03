@@ -254,10 +254,73 @@ void EdmPolicySetTest::SetUpTestCase()
     TestCommon::SetTestEvironment(g_selfShellTokenId);
 
     std::vector<std::string> reqPerm;
-    reqPerm.emplace_back(GET_SENSITIVE_PERMISSIONS);
     reqPerm.emplace_back(REVOKE_SENSITIVE_PERMISSIONS);
     g_mock = new (std::nothrow) MockHapToken("EdmPolicySetMockTest", reqPerm);
     LOGI(ATM_DOMAIN, ATM_TAG, "SetUpTestCase ok.");
+}
+
+#ifdef SUPPORT_MANAGE_USER_POLICY
+static uint32_t g_mockUserPolicy1 = 0;
+static uint32_t g_mockUserPolicy2 = 0;
+static const int32_t TIME_500_MS = 1000 * 500; // 500ms
+static const int32_t TIME_3000_MS = 1000 * 3000; // 3s
+uint32_t MocNativeTokenID(const char *processName)
+{
+    const char **dcapArray = new (std::nothrow) const char *[2];
+    if (dcapArray == nullptr) {
+        return 0;
+    }
+    dcapArray[0] = "AT_CAP";
+    dcapArray[1] = "ST_CAP";
+    uint64_t tokenId;
+    const char **permArray = new (std::nothrow) const char *[2];
+    if (permArray == nullptr) {
+        return 0;
+    }
+    permArray[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    permArray[1] = "ohos.permission.MANAGE_USER_POLICY";
+    const char **acls = new (std::nothrow) const char *[1];
+    if (acls == nullptr) {
+        return 0;
+    }
+    acls[0] = "ohos.permission.test1";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 2,
+        .permsNum = 2,
+        .aclsNum = 1,
+        .dcaps = dcapArray,
+        .perms = permArray,
+        .acls = acls,
+        .processName = processName,
+        .aplStr = "system_core",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    delete[] dcapArray;
+    delete[] permArray;
+    delete[] acls;
+    return tokenId;
+}
+
+static void InitUserPolicyTestEnviroment()
+{
+    MockNativeToken mock("accesstoken_service");
+    g_mockUserPolicy1 = AccessTokenKit::GetNativeTokenId("MockUserPolicy1");
+    g_mockUserPolicy2 = AccessTokenKit::GetNativeTokenId("MockUserPolicy2");
+    if ((g_mockUserPolicy1 != 0) && (g_mockUserPolicy2 != 0)) {
+        return;
+    }
+    g_mockUserPolicy1 = MocNativeTokenID("MockUserPolicy1");
+    g_mockUserPolicy2 = MocNativeTokenID("MockUserPolicy2");
+
+    std::system("service_control stop accesstoken_service");
+    usleep(TIME_500_MS);
+    GTEST_LOG_(INFO) << "stop service, pidof accesstoken_service:";
+    std::system("pidof accesstoken_service");
+
+    std::system("service_control start accesstoken_service");
+    usleep(TIME_3000_MS);
+    GTEST_LOG_(INFO) << "restart service, pidof accesstoken_service:";
+    std::system("pidof accesstoken_service");
 }
 
 static int32_t GetPermissionStatusFromCache(AccessTokenID tokenId, const std::string& permission)
@@ -278,8 +341,10 @@ static int32_t GetPermissionStatusFromCache(AccessTokenID tokenId, const std::st
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level1)
 {
+    InitUserPolicyTestEnviroment(); // called by first testcase
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     std::vector<UserPermissionPolicy> permPolicyListEmpty;
     // empty
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::SetUserPolicy(permPolicyListEmpty));
@@ -296,8 +361,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy002, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy002, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     UserPermissionPolicy policy;
     policy.permissionName = "ohos.permission.INTERNET";
     std::vector<UserPermissionPolicy> permPolicyList;
@@ -318,8 +384,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy002, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy003, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy003, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     UserPermissionPolicy policy = {
         .permissionName = INTERNET,
         .userPolicyList = {{ .userId = MOCK_USER_ID_10002, .isRestricted = true }}
@@ -354,8 +421,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy003, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy004, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy004, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     UserPermissionPolicy policy = {
         .permissionName = INTERNET,
         .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
@@ -386,8 +454,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy004, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy005, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy005, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     testHapInfo.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
@@ -422,8 +491,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy005, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy006, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy006, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     testHapInfo.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
@@ -467,8 +537,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy006, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy007, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy007, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     testHapInfo.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
@@ -519,8 +590,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy007, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy008, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy008, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     testHapInfo.userID = MOCK_USER_ID_10001;
     AccessTokenIDEx fullIdUser1;
@@ -569,8 +641,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy008, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy009, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy009, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -598,8 +671,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy009, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy010, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy010, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -615,7 +689,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy010, TestSize.Level0)
 
     // permisison is set by other process
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER, AccessTokenKit::SetUserPolicy({ policy })); // same permission
         EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
         EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
@@ -635,7 +709,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy010, TestSize.Level0)
 
     // After clear, permission is set success
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy })); // same permission
         EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
         EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
@@ -654,8 +728,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy010, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy011, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy011, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -675,7 +750,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy011, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
     EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER, AccessTokenKit::SetUserPolicy({ policy })); // same permission
     }
 
@@ -683,7 +758,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy011, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         policy.userPolicyList[0].isRestricted = true;
         EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy })); // same permission
         EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
@@ -702,8 +777,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy011, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy012, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy012, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -718,7 +794,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy012, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
 
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER, AccessTokenKit::SetUserPolicy({ policy })); // same permission
     }
 
@@ -726,7 +802,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy012, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         policy.userPolicyList[0].isRestricted = true;
         EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy })); // same permission
         EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
@@ -745,8 +821,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy012, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, SetUserPolicy013, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, SetUserPolicy013, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -763,7 +840,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy013, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::SetUserPolicy({ policy1, policy2 }));
 
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy1 }));
         EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
         EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
@@ -781,8 +858,9 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy013, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     std::vector<std::string> permListEmpty;
     // empty
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::ClearUserPolicy(permListEmpty));
@@ -820,8 +898,9 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, ClearUserPolicy002, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, ClearUserPolicy002, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -836,7 +915,7 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy002, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
 
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER, AccessTokenKit::ClearUserPolicy({ INTERNET }));
     }
 
@@ -852,8 +931,9 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy002, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, ClearUserPolicy003, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, ClearUserPolicy003, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     AccessTokenIDEx fullIdUser1;
     EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
@@ -882,8 +962,9 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy003, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, ClearUserPolicy004, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, ClearUserPolicy004, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapInfoParams testHapInfo = g_testHapInfoParams;
     UserPermissionPolicy policy = {
         .permissionName = INTERNET,
@@ -902,7 +983,7 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy004, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatusFromCache(tokenId, INTERNET));
 
     {
-        MockNativeToken mock("privacy_service");
+        MockNativeToken mock("MockUserPolicy2");
         EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER, AccessTokenKit::ClearUserPolicy({ INTERNET }));
     }
 
@@ -919,8 +1000,9 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy004, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForInitHap, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForInitHap, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     UserPermissionPolicy policy1 = {
         .permissionName = INTERNET,
         .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
@@ -961,8 +1043,9 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForInitHap, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForUpdateHap, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForUpdateHap, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_SYSTEM_CORE,
         .domain = "test.domain2",
@@ -1037,8 +1120,9 @@ public:
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForRemove, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForRemove, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     // set policy
     UserPermissionPolicy policy = {
         .permissionName = INTERNET,
@@ -1087,8 +1171,9 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForRemove, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
+HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level1)
 {
+    MockNativeToken userPolicyMock("MockUserPolicy1");
     UserPermissionPolicy policy = {
         .permissionName = INTERNET,
         .userPolicyList = {
@@ -1125,6 +1210,20 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForClearUserGranted, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId1));
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId2));
 }
+#else
+/**
+ * @tc.name: SetUserPolicy001
+ * @tc.desc: Not support to SetUserPolicy.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level0)
+{
+    std::vector<UserPermissionPolicy> permPolicyListEmpty;
+    EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT, AccessTokenKit::SetUserPolicy(permPolicyListEmpty));
+    EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+}
+#endif
 
 /**
  * @tc.name: SetPermissionStatusWithPolicy001

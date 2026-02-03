@@ -20,13 +20,13 @@ namespace Security {
 namespace AccessToken {
 static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_PERMISSION_DENIED, "Permission denied."},
-    {JS_ERROR_NOT_SYSTEM_APP, "Not system app."},
+    {JS_ERROR_NOT_SYSTEM_APP, "Not System App. Interface caller is not a system app."},
     {JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability."},
     {JS_ERROR_START_ABILITY_FAIL, "Start grant ability failed."},
     {JS_ERROR_BACKGROUND_FAIL, "Ui extension turn background failed."},
     {JS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed."},
     {JS_ERROR_PARAM_INVALID, "Invalid parameter."},
-    {JS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist."},
+    {JS_ERROR_TOKENID_NOT_EXIST, "The specified tokenID does not exist."},
     {JS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist."},
     {JS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others."},
     {JS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation."},

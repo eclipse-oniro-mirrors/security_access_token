@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_common_log.h"
+#include "hisysevent_adapter.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,9 +55,7 @@ void PermissionGrantEvent::NotifyPermGrantStoreResult(bool isStoreSucc, uint64_t
     for (auto iter = permGrantEventList_.begin(); iter != permGrantEventList_.end();) {
         if (timestamp >= iter->timeStamp) {
             if (!isStoreSucc) {
-                (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-                    HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", PERMISSION_STORE_ERROR,
-                    "CALLER_TOKENID", iter->tokenID, "PERMISSION_NAME", iter->permissionName);
+                ReportPermStoreResultEvent(iter->tokenID, iter->permissionName);
             }
             iter = permGrantEventList_.erase(iter);
         } else {
