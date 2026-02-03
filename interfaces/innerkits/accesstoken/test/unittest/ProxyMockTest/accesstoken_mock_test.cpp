@@ -699,6 +699,7 @@ HWTEST_F(AccessTokenMockTest, GetHapTokenInfoExtension001, TestSize.Level4)
         AccessTokenKit::GetHapTokenInfoExtension(g_testTokenId, hapInfoExt));
 }
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
 /**
  * @tc.name: SetUserPolicy001
  * @tc.desc: SetUserPolicy with proxy is null
@@ -733,6 +734,7 @@ HWTEST_F(AccessTokenMockTest, ClearUserPolicy001, TestSize.Level4)
     permissionList.emplace_back("ohos.permission.INTERNET");
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserPolicy(permissionList));
 }
+#endif
 
 /**
  * @tc.name: GetReqPermissionByName001

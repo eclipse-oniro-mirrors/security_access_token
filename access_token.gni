@@ -194,3 +194,10 @@ if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
 } else {
   lite_device_enable = false
 }
+
+if ("${target_platform}" == "pc" || "${target_platform}" == "tablet") {
+  access_token_manage_user_policy_enable = true
+  access_token_cflags_cc += [ "-DSUPPORT_MANAGE_USER_POLICY" ]
+} else {
+  access_token_manage_user_policy_enable = false
+}
