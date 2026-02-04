@@ -4826,6 +4826,28 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.MANAGE_LOCAL_EDUCATION_SPACES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tablet"]
+        },
+        {
+            "name": "ohos.permission.QUERY_LOCAL_EDUCATION_SPACES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tablet"]
+        },
+        {
             "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
             "grantMode": "user_grant",
             "availableLevel": "normal",
