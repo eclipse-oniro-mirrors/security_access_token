@@ -14,6 +14,7 @@
  */
 
 #include "device_info_manager.h"
+#include "cjson_utils.h"
 #include "constant_common.h"
 
 namespace OHOS {
@@ -21,6 +22,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+const std::string OS_TYPE_STRING = "OS_TYPE";
+static constexpr int32_t UNSUPPORTED_TYPE = 11;
 }
 DeviceInfoManager &DeviceInfoManager::GetInstance()
 {
@@ -139,6 +142,22 @@ bool DeviceInfoManager::IsDeviceUniversallyUniqueId(const std::string &nodeId) c
         return deviceInfo.deviceId.universallyUniqueId == nodeId;
     }
     return false;
+}
+
+bool DeviceInfoManager::CheckOsTypeValid(const std::string &extraData) const
+{
+    CJsonUnique jsonRes = CreateJsonFromString(extraData);
+    if (jsonRes == nullptr) {
+        return true;
+    }
+    int32_t osType = 0;
+    if (!GetIntFromJson(jsonRes, OS_TYPE_STRING, osType)) {
+        return true;
+    }
+    if (osType == UNSUPPORTED_TYPE) {
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

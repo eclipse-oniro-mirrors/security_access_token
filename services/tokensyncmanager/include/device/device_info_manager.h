@@ -98,6 +98,14 @@ public:
      * @return True if node id is uuid. False otherwise.
      */
     bool IsDeviceUniversallyUniqueId(const std::string &nodeId) const;
+
+    /**
+     * Check OsType in DmDeviceInfo valid.
+     *
+     * @param extraData extraData in DmDeviceInfo.
+     * @return True if OsType is valid or empty. False otherwise.
+     */
+    bool CheckOsTypeValid(const std::string &extraData) const;
 };
 } // namespace AccessToken
 } // namespace Security
