@@ -8161,6 +8161,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
