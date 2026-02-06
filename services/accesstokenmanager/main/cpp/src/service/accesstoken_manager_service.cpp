@@ -644,10 +644,20 @@ int32_t AccessTokenManagerService::RegisterSelfPermStateChangeCallback(
     const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (this->GetTokenType(callingTokenID) != TOKEN_HAP) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id is not hap.");
+
+    if (scope.scope.tokenIDs.size() != 1) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "RegisterSelf can only monitor one token, but got %{public}zu tokens.",
+            scope.scope.tokenIDs.size());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (scope.scope.tokenIDs[0] != callingTokenID) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "RegisterSelf can only monitor self tokenID, expected %{public}u, got %{public}u.",
+            callingTokenID, scope.scope.tokenIDs[0]);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
     return PermissionManager::GetInstance().AddPermStateChangeCallback(scope.scope, callback);
 }
 
