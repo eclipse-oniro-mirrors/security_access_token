@@ -17,13 +17,17 @@
 #include "gtest/gtest.h"
 #include <gtest/hwext/gtest-multithread.h>
 
+#include "accesstoken_callbacks.h"
 #include "access_token_db_operator.h"
 #include "access_token_db.h"
 #include "access_token_error.h"
 #include "atm_tools_param_info_parcel.h"
 #include "parameters.h"
 #include "permission_map.h"
+#include "perm_state_change_callback_customize.h"
 #include "token_field_const.h"
+#include "token_setproc.h"
+
 const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 
@@ -39,6 +43,7 @@ static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static uint64_t g_selfShellTokenId = 0;
 
 static PermissionStatus g_state1 = { // kernel permission
     .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
@@ -97,6 +102,7 @@ static HapPolicy g_policy = {
 
 void AccessTokenManagerServiceTest::SetUpTestCase()
 {
+    g_selfShellTokenId = GetSelfTokenID();
 }
 
 void AccessTokenManagerServiceTest::TearDownTestCase()
@@ -1015,6 +1021,65 @@ HWTEST_F(AccessTokenManagerServiceTest, CallbackEnterAndExitTest001, TestSize.Le
     EXPECT_EQ(ERR_OK, ret);
     ret = atManagerService_->CallbackExit(0, 0);
     EXPECT_EQ(ERR_OK, ret);
+}
+
+class CbCustomizeTest : public PermStateChangeCallbackCustomize {
+public:
+    explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo)
+    {
+    }
+
+    ~CbCustomizeTest()
+    {}
+
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result)
+    {
+        ready_ = true;
+    }
+
+    bool ready_;
+};
+
+/**
+ * @tc.name: RegisterSelfPermStateChangeCallback001
+ * @tc.desc: Test RegisterSelfPermStateChangeCallback with different tokenID scope
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RegisterSelfPermStateChangeCallback001, TestSize.Level0)
+{
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = g_info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+    AccessTokenID tokenId;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+
+    SetSelfTokenID(tokenId);
+
+    PermStateChangeScopeParcel scope;
+    scope.scope.tokenIDs = {tokenId};
+    scope.scope.permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scope.scope);
+    auto callback = new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+
+    int32_t ret = atManagerService_->RegisterSelfPermStateChangeCallback(scope, callback->AsObject());
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    scope.scope.tokenIDs = {tokenId + 1};
+    ret = atManagerService_->RegisterSelfPermStateChangeCallback(scope, callback->AsObject());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    scope.scope.tokenIDs = {};
+    ret = atManagerService_->RegisterSelfPermStateChangeCallback(scope, callback->AsObject());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    // Clean up
+    atManagerService_->UnRegisterSelfPermStateChangeCallback(callback->AsObject());
+    DelTestDataAndRestoreOri(tokenId, {});
+    SetSelfTokenID(g_selfShellTokenId);
 }
 } // namespace AccessToken
 } // namespace Security
