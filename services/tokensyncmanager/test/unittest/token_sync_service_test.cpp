@@ -92,6 +92,15 @@ static DistributedHardware::DmDeviceInfo g_devInfo = {
     .networkId = "deviceid-1"
 };
 
+static DistributedHardware::DmDeviceInfo g_devInfo2 = {
+    // udid = deviceid-2:udid-002  uuid = deviceid-2:uuid-002
+    .deviceId = "deviceid-2",
+    .deviceName = "remote_mock",
+    .deviceTypeId = 2,
+    .networkId = "deviceid-2",
+    .extraData = "{\"OS_TYPE\":11}"
+};
+
 namespace {
 static constexpr int MAX_RETRY_TIMES = 10;
 static constexpr int32_t DEVICEID_MAX_LEN = 256;
@@ -1250,6 +1259,25 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level0)
 
     HapTokenInfoForSync tokenInfo;
     ASSERT_EQ(TokenSyncError::TOKEN_SYNC_SUCCESS, tokenSyncManagerService_->UpdateRemoteHapTokenInfo(tokenInfo));
+}
+
+/**
+ * @tc.name: CheckOsTypeValid001
+ * @tc.desc: TokenSyncManagerService::CheckOsTypeValid function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, CheckOsTypeValid001, TestSize.Level0)
+{
+    std::string json = "";
+    EXPECT_TRUE(DeviceInfoManager::GetInstance().CheckOsTypeValid(json));
+    json = "{\"OS_VERSION\":\"123456789\"}";
+    EXPECT_TRUE(DeviceInfoManager::GetInstance().CheckOsTypeValid(json));
+    json = "{\"OS_TYPE\":123}";
+    EXPECT_TRUE(DeviceInfoManager::GetInstance().CheckOsTypeValid(json));
+    json = "{\"OS_TYPE\":11}";
+    EXPECT_FALSE(DeviceInfoManager::GetInstance().CheckOsTypeValid(json));
+    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo2);
 }
 
 /**

@@ -97,6 +97,11 @@ int SoftBusManager::AddTrustedDeviceInfo()
     }
 
     for (const DistributedHardware::DmDeviceInfo& device : deviceList) {
+        if (!DeviceInfoManager::GetInstance().CheckOsTypeValid(device.extraData)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Unsupport osType, no need to add deviceInfo, networkId:%{public}s",
+                ConstantCommon::EncryptDevId(device.networkId).c_str());
+            continue;
+        }
         std::string uuid;
         std::string udid;
         DistributedHardware::DeviceManager::GetInstance().GetUuidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, device.networkId,
