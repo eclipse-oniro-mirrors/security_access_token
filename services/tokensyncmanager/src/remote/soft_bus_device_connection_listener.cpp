@@ -49,6 +49,12 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::
     int32_t pid = getpid();
     Memory::MemMgrClient::GetInstance().SetCritical(pid, true, TOKEN_SYNC_MANAGER_SERVICE_ID);
 #endif
+    if (!DeviceInfoManager::GetInstance().CheckOsTypeValid(info.extraData)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Unsupport osType, no need to add deviceInfo, networkId:%{public}s",
+            ConstantCommon::EncryptDevId(info.networkId).c_str());
+        return;
+    }
+
     std::string networkId = std::string(info.networkId);
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
