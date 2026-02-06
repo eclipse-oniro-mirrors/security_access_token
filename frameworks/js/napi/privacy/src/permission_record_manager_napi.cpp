@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,9 +38,11 @@ static constexpr int32_t START_STOP_MAX_PARAMS = 4;
 static constexpr int32_t START_STOP_MIN_PARAMS = 2;
 static constexpr int32_t GET_PERMISSION_USED_TYPE_MAX_PARAMS = 2;
 static constexpr int32_t GET_PERMISSION_USED_TYPE_ONE_PARAMS = 1;
+static constexpr int32_t CHECK_PERMISSION_IN_USE_MAX_PARAMS = 1;
 static constexpr int32_t FIRST_PARAM = 0;
 static constexpr int32_t SECOND_PARAM = 1;
 static constexpr int32_t THIRD_PARAM = 2;
+static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static constexpr int32_t FOURTH_PARAM = 3;
 static constexpr int32_t FIFTH_PARAM = 4;
 static constexpr int32_t SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS = 1;
@@ -1323,6 +1325,46 @@ napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
         &(asyncContext->asyncWork)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
+    return result;
+}
+
+napi_value CheckPermissionInUse(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = CHECK_PERMISSION_IN_USE_MAX_PARAMS;
+    napi_value argv[CHECK_PERMISSION_IN_USE_MAX_PARAMS] = {nullptr};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data), nullptr);
+    if (argc < CHECK_PERMISSION_IN_USE_MAX_PARAMS) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, "Parameter is missing.")), nullptr);
+        return nullptr;
+    }
+
+    std::string permissionName;
+    if (!ParseString(env, argv[FIRST_PARAM], permissionName)) {
+        ParamResolveErrorThrow(env, "permissionName", "Permissions");
+        return nullptr;
+    }
+
+    if (permissionName.empty() || permissionName.length() > MAX_PERMISSION_NAME_LENGTH) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID,
+                "Invalid parameter. The permissionName is empty or exceeds 256 characters.")), nullptr);
+        return nullptr;
+    }
+
+    bool isUsing = false;
+    int32_t retCode = PrivacyKit::CheckPermissionInUse(permissionName, isUsing);
+    if (retCode != RET_SUCCESS) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, GetJsErrorCode(retCode), GetErrorMessage(retCode))), nullptr);
+        return nullptr;
+    }
+
+    napi_value result;
+    NAPI_CALL_BASE(env, napi_get_boolean(env, isUsing, &result), nullptr);
     return result;
 }
 }  // namespace AccessToken

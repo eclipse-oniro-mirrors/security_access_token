@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -547,6 +547,19 @@ int32_t PrivacyManagerService::GetCurrUsingPermInfo(std::vector<ActiveChangeResp
         resultParcelList.emplace_back(resultParcel);
     }
     return RET_SUCCESS;
+}
+
+int32_t PrivacyManagerService::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    return PermissionRecordManager::GetInstance().CheckPermissionInUse(permissionName, isUsing);
 }
 
 int32_t PrivacyManagerService::RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,

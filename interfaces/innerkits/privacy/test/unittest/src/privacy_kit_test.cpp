@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -3564,4 +3564,124 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission020, TestSize.Level0)
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE", callbackPtr, RANDOM_PID));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse001
+ * @tc.desc: Test CheckPermissionInUse with permission being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse001, TestSize.Level0)
+{
+    // Start using CAMERA permission
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdA, "ohos.permission.CAMERA"));
+
+    // Check if permission is being used
+    bool isUsing = false;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Clean up
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdA, "ohos.permission.CAMERA"));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse002
+ * @tc.desc: Test CheckPermissionInUse with permission not being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse002, TestSize.Level0)
+{
+    // Check permission without starting to use it
+    bool isUsing = false;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_FALSE(isUsing);
+}
+
+/**
+ * @tc.name: CheckPermissionInUse003
+ * @tc.desc: Test CheckPermissionInUse with invalid permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse003, TestSize.Level0)
+{
+    bool isUsing = false;
+    // Invalid permission name
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PrivacyKit::CheckPermissionInUse("ohos.permission.INVALID_PERM", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse004
+ * @tc.desc: Test CheckPermissionInUse with empty permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse004, TestSize.Level0)
+{
+    bool isUsing = false;
+    // Empty permission name - should return error code
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::CheckPermissionInUse("", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse005
+ * @tc.desc: Test CheckPermissionInUse with multiple permissions in use.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse005, TestSize.Level0)
+{
+    // Start using permissions
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdA, "ohos.permission.CAMERA", RANDOM_PID));
+
+    // Check CAMERA permission - should be in use
+    bool isUsing = false;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Check MICROPHONE permission - should not be in use
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::CheckPermissionInUse("ohos.permission.MICROPHONE", isUsing));
+    EXPECT_FALSE(isUsing);
+
+    // Check LOCATION permission - should not be in use
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::CheckPermissionInUse("ohos.permission.LOCATION", isUsing));
+    EXPECT_FALSE(isUsing);
+
+    // Clean up
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdA, "ohos.permission.CAMERA", RANDOM_PID));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse006
+ * @tc.desc: Test CheckPermissionInUse caller is not system app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse006, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse006", reqPerm, false);
+
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse007
+ * @tc.desc: Test CheckPermissionInUse caller is system app without PERMISSION_USED_STATS permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse007, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm; // empty permission list - no PERMISSION_USED_STATS
+    MockHapToken mock("CheckPermissionInUse007", reqPerm, true); // isSystemApp = true
+
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,6 +57,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const int32_t VALUE_MAX_LEN = 32;
+static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* CAMERA_BACKGROUND_PERMISSION_NAME = "ohos.permission.CAMERA_BACKGROUND";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
@@ -1044,6 +1045,40 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
             perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
     }
     return;
+}
+
+int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
+{
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+
+    // Validate permission name parameter
+    if (permissionName.empty() || permissionName.length() > MAX_PERMISSION_NAME_LENGTH) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission name is empty or exceeds max length: %{public}zu.",
+            permissionName.length());
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    // Check if permission exists
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission(%{public}s) is not exist", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    // Iterate and check if opcode is in use
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if (it->opCode == opCode && it->status != PERM_INACTIVE) {
+            isUsing = true;
+            LOGI(PRI_DOMAIN, PRI_TAG, "Permission %{public}s (opcode %{public}d) isUsing: %{public}d",
+                permissionName.c_str(), opCode, isUsing);
+            return RET_SUCCESS;
+        }
+    }
+
+    isUsing = false;
+    LOGI(PRI_DOMAIN, PRI_TAG, "Permission %{public}s (opcode %{public}d) isUsing: %{public}d",
+        permissionName.c_str(), opCode, isUsing);
+    return RET_SUCCESS;
 }
 
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)

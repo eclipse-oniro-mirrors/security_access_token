@@ -1285,6 +1285,154 @@ HWTEST_F(PrivacyManagerServiceTest, VerifyPermission001, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_OVERSIZE,
         privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback)); // over size
 }
+
+/**
+ * @tc.name: CheckPermissionInUse001
+ * @tc.desc: Test CheckPermissionInUse with permission being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse001", reqPerm, true); // set self tokenID to system app
+
+    // Start using CAMERA permission
+    PermissionUsedTypeInfoParcel parcel;
+    AccessTokenID tokenID = 123; // use local tokenID variable like IsAllowedUsingPermissionInner003
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = 11;
+    parcel.info.permissionName = CAMERA_PERMISSION_NAME;
+    ASSERT_EQ(0, privacyManagerService_->StartUsingPermission(parcel, nullptr));
+
+    // Check if permission is being used
+    bool isUsing = false;
+    ASSERT_EQ(0, privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Clean up
+    ASSERT_EQ(0, privacyManagerService_->StopUsingPermission(tokenID, 11, CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse002
+ * @tc.desc: Test CheckPermissionInUse with permission not being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse002", reqPerm, true); // set self tokenID to system app
+
+    // Check permission without starting to use it
+    bool isUsing = false;
+    ASSERT_EQ(0, privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+    EXPECT_FALSE(isUsing);
+}
+
+/**
+ * @tc.name: CheckPermissionInUse003
+ * @tc.desc: Test CheckPermissionInUse with invalid permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse003", reqPerm, true); // set self tokenID to system app
+
+    // Invalid permission name should return error code
+    bool isUsing = false;
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        privacyManagerService_->CheckPermissionInUse("ohos.permission.INVALID_PERM", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse004
+ * @tc.desc: Test CheckPermissionInUse with empty permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse004, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse004", reqPerm, true); // set self tokenID to system app
+
+    // Empty permission name should return error code
+    bool isUsing = false;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, privacyManagerService_->CheckPermissionInUse("", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse005
+ * @tc.desc: Test CheckPermissionInUse after stopping permission use.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse005, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse005", reqPerm, true); // set self tokenID to system app
+
+    // Start using permission
+    PermissionUsedTypeInfoParcel parcel;
+    AccessTokenID tokenID = 123; // use local tokenID variable
+    parcel.info.tokenId = tokenID;
+    parcel.info.pid = 11;
+    parcel.info.permissionName = CAMERA_PERMISSION_NAME;
+    ASSERT_EQ(0, privacyManagerService_->StartUsingPermission(parcel, nullptr));
+
+    // Check if permission is being used
+    bool isUsing = false;
+    ASSERT_EQ(0, privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Stop using permission
+    ASSERT_EQ(0, privacyManagerService_->StopUsingPermission(tokenID, 11, CAMERA_PERMISSION_NAME));
+
+    // Check again - should not be in use anymore
+    ASSERT_EQ(0, privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+    EXPECT_FALSE(isUsing);
+}
+
+/**
+ * @tc.name: CheckPermissionInUse006
+ * @tc.desc: Test CheckPermissionInUse caller is not system app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse006, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse006", reqPerm, false);
+
+    bool isUsing = false;
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse007
+ * @tc.desc: Test CheckPermissionInUse caller is system app without PERMISSION_USED_STATS permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse007, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm; // empty permission list - no PERMISSION_USED_STATS
+    MockHapToken mock("CheckPermissionInUse007", reqPerm, true); // isSystemApp = true
+
+    bool isUsing = false;
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
