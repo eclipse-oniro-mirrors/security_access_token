@@ -160,7 +160,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
-        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid ersion.");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid version.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
