@@ -754,14 +754,24 @@ void AccessTokenKit::GetPermissionManagerInfo(PermissionGrantInfo& info)
 
 int32_t AccessTokenKit::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
+#ifdef SUPPORT_MANAGE_USER_POLICY
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().SetUserPolicy(userPermissionList);
+#else
+    LOGE(ATM_DOMAIN, ATM_TAG, "Noy support.");
+    return ERR_USER_POLICY_NOT_SUPPORT;
+#endif
 }
 
 int32_t AccessTokenKit::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
+#ifdef SUPPORT_MANAGE_USER_POLICY
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList);
+#else
+    LOGE(ATM_DOMAIN, ATM_TAG, "Noy support.");
+    return ERR_USER_POLICY_NOT_SUPPORT;
+#endif
 }
 
 bool AccessTokenKit::IsSystemAppByFullTokenID(uint64_t tokenId)

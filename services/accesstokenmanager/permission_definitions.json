@@ -8129,6 +8129,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "tablet", "wearable"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_USER_POLICY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
         }
     ]
 }

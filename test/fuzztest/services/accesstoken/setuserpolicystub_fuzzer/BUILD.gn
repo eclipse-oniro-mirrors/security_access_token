@@ -11,10 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/config/features.gni")
 import("//build/test.gni")
 import("../access_token_service_fuzz.gni")
 
+if (access_token_manage_user_policy_enable) {
 ohos_fuzztest("SetUserPolicyStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
@@ -32,4 +34,5 @@ ohos_fuzztest("SetUserPolicyStubFuzzTest") {
 
   cflags_cc = access_token_stub_fuzz_cflags_cc
   cflags = access_token_stub_fuzz_cflags
+}
 }
