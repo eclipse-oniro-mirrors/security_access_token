@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -528,13 +528,13 @@ int AccessTokenManagerService::GrantPermission(
 }
 
 int AccessTokenManagerService::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag, bool killProcess)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
-    
+
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
@@ -545,7 +545,7 @@ int AccessTokenManagerService::RevokePermission(
     }
 
     return PermissionManager::GetInstance().RevokePermission(
-        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
+        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag), killProcess);
 }
 
 int AccessTokenManagerService::GrantPermissionForSpecifiedTime(

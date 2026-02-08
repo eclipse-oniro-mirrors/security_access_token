@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -336,10 +336,12 @@ public:
      * @param permissionName permission name quote
      * @param flag enum PermissionFlag, see access_token.h
      * @param grantMode the final revocable type
+     * @param killProcess whether to kill the process when revoking permission
      * @return error code, see access_token_error.h
      */
     static int RevokePermission(AccessTokenID tokenID,
-        const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
+        const std::string& permissionName, uint32_t flag,
+        UpdatePermissionFlag updateFlag = USER_GRANTED_PERM, bool killProcess = true);
     /**
      * @brief Clear all user granted permissions state in input tokenID.
      * @param tokenID token id

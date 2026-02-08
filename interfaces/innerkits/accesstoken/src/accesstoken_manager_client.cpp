@@ -353,14 +353,15 @@ int AccessTokenManagerClient::GrantPermission(
 }
 
 int AccessTokenManagerClient::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+    UpdatePermissionFlag updateFlag, bool killProcess)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag, updateFlag);
+    int32_t result = proxy->RevokePermission(tokenID, permissionName, flag, updateFlag, killProcess);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }

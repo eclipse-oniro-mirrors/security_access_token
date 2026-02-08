@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -529,10 +529,12 @@ int AccessTokenKit::GrantPermission(
 }
 
 int AccessTokenKit::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+    UpdatePermissionFlag updateFlag, bool killProcess)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u.",
-        tokenID, permissionName.c_str(), flag);
+    LOGD(ATM_DOMAIN, ATM_TAG,
+        "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u, killProcess=%{public}d.",
+        tokenID, permissionName.c_str(), flag, killProcess);
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenID");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -549,7 +551,8 @@ int AccessTokenKit::RevokePermission(
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag, updateFlag);
+    return AccessTokenManagerClient::GetInstance().RevokePermission(
+        tokenID, permissionName, flag, updateFlag, killProcess);
 }
 
 int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
