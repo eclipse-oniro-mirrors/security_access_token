@@ -26,13 +26,13 @@ namespace AccessToken {
 constexpr const char* BUSINESS_ERROR_CLASS = "@ohos.base.BusinessError";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
-    { STS_ERROR_NOT_SYSTEM_APP, "Not system app." },
+    { STS_ERROR_NOT_SYSTEM_APP, "Not System App. Interface caller is not a system app." },
     { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability." },
     { STS_ERROR_START_ABILITY_FAIL, "Start grant ability failed." },
     { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
     { STS_ERROR_TERMINATE_FAIL, "UI extension terminate failed." },
     { STS_ERROR_PARAM_INVALID, "Invalid parameter." },
-    { STS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist." },
+    { STS_ERROR_TOKENID_NOT_EXIST, "The specified tokenID does not exist." },
     { STS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist." },
     { STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others." },
     { STS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation." },

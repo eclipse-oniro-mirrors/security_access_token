@@ -342,8 +342,7 @@ static void GrantPermissionInner([[maybe_unused]] ani_env *env,
 
     PermissionBriefDef def;
     if (!GetPermissionBriefDef(permissionName, def)) {
-        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
-            "The specified permission does not exist.");
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST);
         BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
         return;
     }
@@ -393,8 +392,7 @@ static void RevokePermissionInner(ani_env *env,
 
     PermissionBriefDef def;
     if (!GetPermissionBriefDef(permissionName, def)) {
-        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST,
-            "The specified permission does not exist.");
+        std::string errMsg = GetErrorMessage(STS_ERROR_PERMISSION_NOT_EXIST);
         BusinessErrorAni::ThrowError(env, STS_ERROR_PERMISSION_NOT_EXIST, errMsg);
         return;
     }

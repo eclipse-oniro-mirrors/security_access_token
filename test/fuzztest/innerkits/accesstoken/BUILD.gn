@@ -51,6 +51,7 @@ group("fuzztest") {
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
+    "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
@@ -63,9 +64,6 @@ group("fuzztest") {
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
-  }
-  if (access_token_manage_user_policy_enable) {
-    deps += [ "setuserpolicy_fuzzer:SetUserPolicyFuzzTest" ]
   }
   if (is_standard_system && token_sync_enable) {
     deps += [

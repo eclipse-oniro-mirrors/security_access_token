@@ -489,9 +489,8 @@ bool TempPermissionObserver::CheckPermissionState(AccessTokenID tokenID,
         AddTempPermTokenToList(tokenID, bundleName, permissionName, list);
         return true;
     }
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION_STATUS_ERROR",
-        HiviewDFX::HiSysEvent::EventType::FAULT, "ERROR_CODE", GRANT_TEMP_PERMISSION_FAILED,
-        "TOKENID", tokenID, "PERM", permissionName, "BUNDLE_NAME", bundleName);
+    ReportUpdatePermStatusErrorEvent({.errorCode = UpdatePermStatusErrorCode::GRANT_TEMP_PERMISSION_FAILED,
+        .tokenId = tokenID, .permissionName = permissionName, .bundleName = bundleName});
     return false;
 }
 
@@ -504,9 +503,7 @@ void TempPermissionObserver::AddTempPermTokenToList(AccessTokenID tokenID,
         tempPermTokenMap_[tokenID] = list;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID:%{public}d, permissionName:%{public}s", tokenID, permissionName.c_str());
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "GRANT_TEMP_PERMISSION",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        "TOKENID", tokenID, "PERMISSION_NAME", permissionName);
+    ReportGrantTempPermissionEvent(tokenID, permissionName);
     {
         std::unique_lock<std::mutex> lck(formTokenMutex_);
         formTokenMap_[bundleName] = tokenID;

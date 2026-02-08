@@ -15,7 +15,6 @@ import("//base/security/access_token/access_token.gni")
 import("//build/config/features.gni")
 import("//build/test.gni")
 
-if (access_token_manage_user_policy_enable) {
 ohos_fuzztest("SetUserPolicyFuzzTest") {
   module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
@@ -46,5 +45,4 @@ ohos_fuzztest("SetUserPolicyFuzzTest") {
     "hilog:libhilog",
     "ipc:ipc_single",
   ]
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "accesstoken_klog.h"
-#include "hisysevent_common.h"
 #include "nativetoken_hisysevent.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"

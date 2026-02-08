@@ -21,7 +21,6 @@
 #include "access_token_error.h"
 #include "permission_grant_info.h"
 #include "nativetoken_kit.h"
-#include "sec_comp_raw_data.h"
 #include "test_common.h"
 #include "token_setproc.h"
 

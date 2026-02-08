@@ -28,7 +28,6 @@ sequenceable OHOS.Security.AccessToken.HapTokenInfoForSyncParcel;
 sequenceable OHOS.Security.AccessToken.HapBaseInfoParcel;
 sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
-rawdata OHOS.Security.AccessToken.SecCompRawData;
 
 import IdlCommon;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,7 +31,6 @@
 #include "constant.h"
 #include "data_usage_dfx.h"
 #include "hisysevent.h"
-#include "hisysevent_common.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #include "privacy_error.h"
@@ -599,7 +598,7 @@ static void RetryPublish()
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service, retry!");
         if (i % ASYNC_RETRY_DFX_COUNT == 0) {
             HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ACCESSTOKEN_SERVICE_START_ERROR",
-                HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", SceneCode::SA_PUBLISH_FAILED,
+                HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", 0, // SA_PUBLISH_FAILED
                 "ERROR_CODE", PUBLISH_ERROR_CODE, "ERROR_MSG", "privacy_service Publish failed");
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(ASYNC_RETRY_TIMES_MS));
