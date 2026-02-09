@@ -44,26 +44,42 @@ int32_t TokenCallbackStub::OnRemoteRequest(
 
     int32_t msgCode =  static_cast<int32_t>(code);
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
-        uint32_t permListSize = data.ReadUint32();
+        uint32_t permListSize;
+        if (!data.ReadUint32(permListSize)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read permListSize.");
+            return FAILED;
+        }
         if (permListSize > LIST_SIZE_MAX) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
         for (uint32_t i = 0; i < permListSize; i++) {
-            std::u16string u16Perm = data.ReadString16();
+            std::u16string u16Perm;
+            if (!data.ReadString16(u16Perm)) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read permission at index %{public}u.", i);
+                return FAILED;
+            }
             std::string perm = to_utf8(u16Perm);
             permList.emplace_back(perm);
         }
 
-        uint32_t statusListSize = data.ReadUint32();
+        uint32_t statusListSize;
+        if (!data.ReadUint32(statusListSize)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read statusListSize.");
+            return FAILED;
+        }
         if (statusListSize != permListSize) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Read statusListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;
         for (uint32_t i = 0; i < permListSize; i++) {
-            int32_t res = data.ReadInt32();
+            int32_t res;
+            if (!data.ReadInt32(res)) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read grant result at index %{public}u.", i);
+                return FAILED;
+            }
             grantResults.emplace_back(res);
         }
         GrantResultsCallback(permList, grantResults);

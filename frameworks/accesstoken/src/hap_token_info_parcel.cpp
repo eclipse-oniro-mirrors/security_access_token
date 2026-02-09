@@ -43,7 +43,7 @@ HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint8(ver), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.ver = ver;
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.userID), hapTokenInfoParcel);
-    hapTokenInfoParcel->hapTokenInfoParams.bundleName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapTokenInfoParcel->hapTokenInfoParams.bundleName), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.apiVersion), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.instIndex), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.dlpType), hapTokenInfoParcel);

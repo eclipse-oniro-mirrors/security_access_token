@@ -36,12 +36,12 @@ PermissionGrantInfoParcel* PermissionGrantInfoParcel::Unmarshalling(Parcel& in)
     if (permissionGrantInfoParcel == nullptr) {
         return nullptr;
     }
-    permissionGrantInfoParcel->info.grantBundleName = in.ReadString();
-    permissionGrantInfoParcel->info.grantAbilityName = in.ReadString();
-    permissionGrantInfoParcel->info.grantServiceAbilityName = in.ReadString();
-    permissionGrantInfoParcel->info.permStateAbilityName = in.ReadString();
-    permissionGrantInfoParcel->info.globalSwitchAbilityName = in.ReadString();
-    permissionGrantInfoParcel->info.openSettingAbilityName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.grantBundleName), permissionGrantInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.grantAbilityName), permissionGrantInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.grantServiceAbilityName), permissionGrantInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.permStateAbilityName), permissionGrantInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.globalSwitchAbilityName), permissionGrantInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionGrantInfoParcel->info.openSettingAbilityName), permissionGrantInfoParcel);
     return permissionGrantInfoParcel;
 }
 } // namespace AccessToken

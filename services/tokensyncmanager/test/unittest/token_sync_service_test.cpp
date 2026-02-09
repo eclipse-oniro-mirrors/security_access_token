@@ -40,6 +40,7 @@
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 #include "i_token_sync_manager.h"
+#include "parcel_utils.h"
 #define private public
 #include "remote_command_manager.h"
 #undef private
@@ -602,10 +603,66 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: FromPermStateListJson003
+ * @tc.desc: FromPermStateListJson function test with permState list size exceeds MAX_PERMLIST_SIZE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, FromPermStateListJson003, TestSize.Level0)
+{
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+
+    // Test when permState list size exceeds MAX_PERMLIST_SIZE (1024)
+    std::string jsonStart = "{\"bundleName\":\"test.bundle1\","
+        "\"instIndex\":0,\"permState\":[";
+
+    // Create a JSON with more than MAX_PERMLIST_SIZE (1024) permission entries
+    std::string permEntries;
+    for (int32_t i = 0; i < MAX_PERMLIST_SIZE + 1; i++) {
+        if (i > 0) {
+            permEntries += ",";
+        }
+        permEntries += "{\"permissionName\":\"ohos.permission.TEST" + std::to_string(i) + "\", "
+            "\"grantStatus\":0, \"grantFlag\":1}";
+    }
+
+    std::string jsonEnd = "],\"tokenAttr\":0,\"tokenID\":111,\"userID\":0,\"version\":1}";
+
+    CJsonUnique hapTokenJsonExceed = CreateJsonFromString(jsonStart + permEntries + jsonEnd);
+    ASSERT_NE(hapTokenJsonExceed, nullptr);
+
+    std::vector<PermissionStatus> permStateListExceed;
+    cmd->FromPermStateListJson(hapTokenJsonExceed.get(), permStateListExceed);
+
+    // Since permState list size exceeds MAX_PERMLIST_SIZE, the list should be empty (early return)
+    EXPECT_EQ(permStateListExceed.size(), 0);
+
+    // Test when permState list size equals MAX_PERMLIST_SIZE (1024), should process successfully
+    permEntries.clear();
+    for (int32_t i = 0; i < MAX_PERMLIST_SIZE; i++) {
+        if (i > 0) {
+            permEntries += ",";
+        }
+        permEntries += "{\"permissionName\":\"ohos.permission.CAMERA\", "
+            "\"grantStatus\":0, \"grantFlag\":1}";
+    }
+
+    CJsonUnique hapTokenJsonExact = CreateJsonFromString(jsonStart + permEntries + jsonEnd);
+    ASSERT_NE(hapTokenJsonExact, nullptr);
+
+    std::vector<PermissionStatus> permStateListExact;
+    cmd->FromPermStateListJson(hapTokenJsonExact.get(), permStateListExact);
+
+    // Since permState list size equals MAX_PERMLIST_SIZE, all entries should be processed
+    // The key point is that the function doesn't early return
+    EXPECT_GT(permStateListExact.size(), 0);
+}
+
+/**
  * @tc.name: GetRemoteHapTokenInfo002
  * @tc.desc: test remote hap recv func
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level0)
 {
@@ -665,7 +722,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo003
  * @tc.desc: test remote hap send func, but get tokenInfo is wrong
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level0)
 {
@@ -699,7 +756,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo004
  * @tc.desc: test remote hap send func, but json payload lost parameter
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level0)
 {
@@ -733,7 +790,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo005
  * @tc.desc: test remote hap send func, but json payload parameter type is wrong
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level0)
 {
@@ -768,7 +825,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo006
  * @tc.desc: test remote hap send func, but json payload parameter format is wrong
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level0)
 {
@@ -804,7 +861,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo007
  * @tc.desc: test remote hap send func, statusCode is wrong
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level0)
 {
@@ -839,7 +896,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level0)
  * @tc.name: GetRemoteHapTokenInfo008
  * @tc.desc: test remote hap recv func, tokenID is not exist
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level0)
 {

@@ -46,8 +46,8 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
         return nullptr;
     }
 
-    permissionDefParcel->permissionDef.permissionName = in.ReadString();
-    permissionDefParcel->permissionDef.bundleName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(permissionDefParcel->permissionDef.permissionName), permissionDefParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionDefParcel->permissionDef.bundleName), permissionDefParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.grantMode), permissionDefParcel);
 
     int level;
@@ -56,9 +56,9 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
 
     RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.provisionEnable), permissionDefParcel);
     RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.distributedSceneEnable), permissionDefParcel);
-    permissionDefParcel->permissionDef.label = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(permissionDefParcel->permissionDef.label), permissionDefParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.labelId), permissionDefParcel);
-    permissionDefParcel->permissionDef.description = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(permissionDefParcel->permissionDef.description), permissionDefParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.descriptionId), permissionDefParcel);
     int32_t availableType;
     RELEASE_IF_FALSE(in.ReadInt32(availableType), permissionDefParcel);
