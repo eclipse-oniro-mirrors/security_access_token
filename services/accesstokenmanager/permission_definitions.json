@@ -7937,6 +7937,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.DATACLONE_ACCESS_FILE_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.atomicService.MANAGE_AGING",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8089,17 +8100,6 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
-        },
-        {
-            "name": "ohos.permission.DATACLONE_ACCESS_FILE_MANAGER",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "NORMAL",
-            "since": 23,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
         }
     ]
 }
