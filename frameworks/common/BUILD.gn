@@ -73,36 +73,6 @@ ohos_prebuilt_etc("permission_definitions_in_sdk") {
   install_enable = false
 }
 
-ohos_static_library("accesstoken_hisysevent") {
-  subsystem_name = "security"
-  part_name = "access_token"
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  branch_protector_ret = "pac_ret"
-
-  public_configs = [ ":accesstoken_common_cxx_public_config" ]
-
-  include_dirs =
-      [ "${access_token_path}/interfaces/innerkits/accesstoken/include" ]
-
-  sources = [ "src/hisysevent_adapter.cpp" ]
-
-  external_deps = [
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-  ]
-
-  configs = [
-    "${access_token_path}/config:access_token_compile_flags",
-    "${access_token_path}/config:coverage_flags",
-  ]
-
-  cflags_cc = access_token_cflags_cc
-}
-
 ohos_static_library("accesstoken_static_log") {
   subsystem_name = "security"
   part_name = "access_token"

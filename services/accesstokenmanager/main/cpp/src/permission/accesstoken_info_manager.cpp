@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -853,9 +853,7 @@ bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, 
         return true;
     }
 
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
-        HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_RESPONSE_ERROR,
-        "REMOTE_ID", ConstantCommon::EncryptDevId(deviceID), "ERROR_REASON", errReason);
+    ReportPermissionSyncEvent(TOKEN_SYNC_RESPONSE_ERROR, ConstantCommon::EncryptDevId(deviceID), errReason);
     return false;
 }
 
@@ -992,9 +990,8 @@ FullTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteD
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s parms invalid.",
             ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
-            "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "deviceID error");
+        ReportPermissionSyncEvent(
+            TOKEN_SYNC_CALL_ERROR, ConstantCommon::EncryptDevId(remoteDeviceID), "deviceID error");
         return 0;
     }
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
@@ -1014,10 +1011,8 @@ FullTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteD
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
-        std::string errorReason = "token sync call error, error number is " + std::to_string(ret);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
-            "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", errorReason);
+        ReportPermissionSyncEvent(TOKEN_SYNC_CALL_ERROR, ConstantCommon::EncryptDevId(remoteDeviceID),
+            "token sync call error, error number is " + std::to_string(ret));
         return 0;
     }
 
@@ -1290,9 +1285,7 @@ void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID token
         (void)ClearUserGrantedPermission(id);
     }
     // DFX
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CLEAR_USER_PERMISSION_STATE",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID,
-        "TOKENID_LEN", static_cast<uint32_t>(tokenIdList.size()));
+    ReportClearUserPermStateEvent(tokenID, static_cast<uint32_t>(tokenIdList.size()));
 }
 
 int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
@@ -1635,9 +1628,7 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
 int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (tokenID == INVALID_TOKENID) {
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
-            static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
+        ReportPermissionCheckEvent(VERIFY_TOKEN_ID_ERROR, "TokenID is invalid, permission: " + permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return PERMISSION_DENIED;
     }
@@ -1733,9 +1724,7 @@ int32_t AccessTokenInfoManager::SetPermissionRequestToggleStatus(const std::stri
         return ret;
     }
 
-    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
-        "TOGGLE_STATUS", status);
+    ReportPermDialogStatusEvent(userID, permissionName, status);
 
     return RET_SUCCESS;
 }

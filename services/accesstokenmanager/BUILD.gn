@@ -98,14 +98,12 @@ if (is_standard_system && lite_device_enable) {
       "main/cpp/src/database/access_token_db_util.cpp",
       "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/token_field_const.cpp",
+      "main/cpp/src/dfx/hisysevent_adapter.cpp",
     ]
 
     cflags_cc = access_token_cflags_cc
 
-    deps = [
-      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/common:accesstoken_hisysevent",
-    ]
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
     external_deps = accesstoken_manager_base_config.external_deps
   }

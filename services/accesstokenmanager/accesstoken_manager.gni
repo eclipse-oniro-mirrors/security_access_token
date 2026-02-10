@@ -30,6 +30,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/dfx/hisysevent_adapter.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
@@ -116,7 +117,6 @@ accesstoken_manager_base_config = {
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/frameworks/common:accesstoken_hisysevent",
     "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
