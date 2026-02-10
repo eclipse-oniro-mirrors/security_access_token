@@ -1974,6 +1974,335 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithManualTest002, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+void UpdateHapTokenTest::InstallHapWithProvisionType(AccessTokenIDEx& fullTokenId,
+    const std::string& appProvisionType, bool isDebugGrant)
+{
+    HapInfoParams infoParams = {
+        .userID = 0,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .dlpType = 0,
+        .appIDDesc = "accesstoken_test",
+        .apiVersion = 9,
+        .isSystemApp = false,
+        .appDistributionType = "",
+        .appProvisionType = appProvisionType
+    };
+
+    PermissionStateFull permStateCamera = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+
+    PermissionStateFull permStateMic = {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {permStateCamera, permStateMic},
+        .isDebugGrant = isDebugGrant
+    };
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    MockNativeToken mock("edm");
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, {"ohos.permission.MICROPHONE"}, PERMISSION_DENIED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    uint32_t flag = 0;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+}
+
+void UpdateHapTokenTest::UpdateHapWithProvisionType(AccessTokenIDEx& fullTokenId,
+    const std::string& appProvisionType, bool isDebugGrant)
+{
+    PermissionStateFull permState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+
+    PermissionStateFull permStateMic = {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+
+    PermissionStateFull additionalPerm = {
+        .permissionName = "ohos.permission.ACTIVITY_MOTION",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+
+    std::vector<PermissionStateFull> permStateList = {permState, permStateMic, additionalPerm};
+
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = permStateList,
+        .isDebugGrant = isDebugGrant
+    };
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = "accesstoken_test",
+        .apiVersion = 9,
+        .isSystemApp = false,
+        .appDistributionType = "",
+        .appProvisionType = appProvisionType
+    };
+
+    MockNativeToken mock("foundation");
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams));
+    uint32_t flag = 0;
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.MICROPHONE", flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest001
+ * @tc.desc: test update hap from release to debug with isDebugGrant true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest001, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install release hap
+    InstallHapWithProvisionType(fullTokenId, "release", false);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant true, add one more permission
+    UpdateHapWithProvisionType(fullTokenId, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest002
+ * @tc.desc: test update hap from release to debug with isDebugGrant false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest002, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install release hap
+    InstallHapWithProvisionType(fullTokenId, "release", false);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap but isDebugGrant is false
+    UpdateHapWithProvisionType(fullTokenId, "debug", false);
+
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest003
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from false to true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest003, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant false
+    InstallHapWithProvisionType(fullTokenId, "debug", false);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant true
+    UpdateHapWithProvisionType(fullTokenId, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest004
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from false to false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest004, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant false
+    InstallHapWithProvisionType(fullTokenId, "debug", false);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(fullTokenId, "debug", false);
+
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest005
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from true to true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest005, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(fullTokenId, "debug", true);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(fullTokenId, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest006
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from true to false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest006, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(fullTokenId, "debug", true);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(fullTokenId, "debug", false);
+
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest007
+ * @tc.desc: test update hap from debug with isDebugGrant true to release
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest007, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(fullTokenId, "debug", true);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to release hap
+    UpdateHapWithProvisionType(fullTokenId, "release", false);
+
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest008
+ * @tc.desc: test update hap from debug with isDebugGrant false to release
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest008, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(fullTokenId, "debug", false);
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to release hap
+    UpdateHapWithProvisionType(fullTokenId, "release", false);
+
+    // permission should be denied when updating from debug to release
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

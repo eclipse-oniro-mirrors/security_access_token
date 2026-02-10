@@ -62,6 +62,7 @@ public:
     static bool IsHapCaller(AccessTokenID id);
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
+    static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
     static bool IsPermissionListSizeValid(const std::vector<std::string>& permissionList);
 
 private:

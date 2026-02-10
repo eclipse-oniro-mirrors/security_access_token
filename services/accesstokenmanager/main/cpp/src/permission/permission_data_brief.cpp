@@ -39,6 +39,7 @@ std::recursive_mutex g_briefInstanceMutex;
 
 const uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 const uint32_t HAS_VALUE = (0x1 << 1);
+static const unsigned int DEBUG_APP_FLAG = 0x0008;
 
 PermissionDataBrief& PermissionDataBrief::GetInstance()
 {
@@ -280,15 +281,18 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
     permNew.flag = permOld.flag;
 }
 
-void PermissionDataBrief::Update(
-    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
-    const std::map<std::string, std::string>& aclExtendedMap)
+void PermissionDataBrief::Update(const HapTokenInfo& tokenInfo,
+    const std::vector<PermissionStatus>& permStateList, const std::map<std::string, std::string>& aclExtendedMap,
+    const AppProvisionType& provisionTypeAfter, bool isDebugGrant)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
+    AccessTokenID tokenId = tokenInfo.tokenID;
     std::vector<PermissionStatus> permStateFilterList;
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
     LOGI(ATM_DOMAIN, ATM_TAG, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
 
+    bool needUpdatePermByProvision = ((provisionTypeAfter == DEBUG) && isDebugGrant) ||
+                ((provisionTypeAfter == RELEASE) && (tokenInfo.tokenAttr & DEBUG_APP_FLAG));
     std::vector<BriefPermData> newList;
     GetPermissionBriefDataList(tokenId, permStateFilterList, aclExtendedMap, newList);
     std::vector<BriefPermData> briefPermDataList;
@@ -299,6 +303,9 @@ void PermissionDataBrief::Update(
                 return newPermData.permCode == oldPermData.permCode;
             });
         if (iter != briefPermDataList.end()) {
+            if (needUpdatePermByProvision && ((iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0)) {
+                continue;
+            }
             UpdatePermStatus(*iter, newPermData);
         }
     }

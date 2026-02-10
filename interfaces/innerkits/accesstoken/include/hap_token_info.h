@@ -76,6 +76,8 @@ public:
     AccessTokenID tokenID = INVALID_TOKENID;
     /** Whether hap is a atomic-service */
     bool isAtomicService = false;
+    /* Whether app is debug or release hap */
+    std::string appProvisionType = "release";
 };
 
 /**
@@ -94,6 +96,8 @@ public:
     bool isAtomicService = false;
     /** ota refresh app */
     bool dataRefresh = false;
+    /* Whether app is debug or release hap */
+    std::string appProvisionType = "release";
 };
 
 /**
@@ -175,6 +179,7 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    bool isDebugGrant = false;
 };
 
 /**
@@ -211,6 +216,7 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    bool isDebugGrant = false;
 };
 
 /**

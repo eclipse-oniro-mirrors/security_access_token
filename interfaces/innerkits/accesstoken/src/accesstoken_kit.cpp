@@ -101,6 +101,7 @@ static void TransferHapPolicyParams(const HapPolicyParams& policyIn, HapPolicy& 
     }
     policyOut.checkIgnore = policyIn.checkIgnore;
     policyOut.aclExtendedMap = policyIn.aclExtendedMap;
+    policyOut.isDebugGrant = policyIn.isDebugGrant;
 }
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)

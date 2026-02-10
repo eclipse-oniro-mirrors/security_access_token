@@ -18,6 +18,7 @@ import("//build/ohos.gni")
 idl_gen_interface("access_token_manager_interface") {
   sources = [ "IAccessTokenManager.idl" ]
   sources_common = [ "IdlCommon.idl" ]
+  inputs = [ "IdlCommon.idl" ]
   log_domainid = "0xD005A01"
   log_tag = "ATM"
   subsystem_name = "security"

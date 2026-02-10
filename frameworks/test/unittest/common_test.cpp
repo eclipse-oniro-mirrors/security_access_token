@@ -281,6 +281,36 @@ HWTEST_F(CommonTest, PermissionValidatorTest003, TestSize.Level1)
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, false, permList, result);
     EXPECT_EQ(1, result.size());
 }
+
+/*
+ * @tc.name: IsAppProvisionTypeValid001
+ * @tc.desc: Test IsAppProvisionTypeValid with valid inputs
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsAppProvisionTypeValid001, TestSize.Level1)
+{
+    EXPECT_TRUE(DataValidator::IsAppProvisionTypeValid("release"));
+    EXPECT_TRUE(DataValidator::IsAppProvisionTypeValid("debug"));
+}
+
+/*
+ * @tc.name: IsAppProvisionTypeValid002
+ * @tc.desc: Test IsAppProvisionTypeValid with invalid inputs
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsAppProvisionTypeValid002, TestSize.Level1)
+{
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid(""));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("Release"));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("DEBUG"));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("beta"));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("test"));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("release "));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid(" debug"));
+    EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid(" release"));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

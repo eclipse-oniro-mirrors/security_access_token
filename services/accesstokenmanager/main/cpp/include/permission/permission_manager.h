@@ -104,6 +104,8 @@ public:
     void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList);
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
+    void InitPermState(const HapInitInfo& initInfo,
+        const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state);
     bool InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
         HapInfoCheckResult& result, std::vector<GenericValues>& undefValues);
     bool InitDlpPermissionList(const HapInfoParams& initInfo,
