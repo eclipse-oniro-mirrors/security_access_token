@@ -67,12 +67,20 @@ int64_t Statement::GetColumnInt64(const int32_t column) const
 
 std::string Statement::GetColumnString(const int32_t column) const
 {
-    return std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement_, column)));
+    auto stringVal = sqlite3_column_text(statement_, column);
+    if (stringVal == nullptr) {
+        return std::string();
+    }
+    return std::string(reinterpret_cast<const char*>(stringVal));
 }
 
 std::string Statement::GetColumnName(const int32_t column) const
 {
-    return sqlite3_column_name(statement_, column);
+    auto name = sqlite3_column_name(statement_, column);
+    if (name == nullptr) {
+        return std::string();
+    }
+    return std::string(name);
 }
 
 Statement::State Statement::Step()
