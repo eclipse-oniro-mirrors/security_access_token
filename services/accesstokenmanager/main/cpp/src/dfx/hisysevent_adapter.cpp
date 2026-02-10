@@ -130,7 +130,7 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
     ReportSysCommonEventError(info.ipcCode, errorCode);
 }
 
-void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info)
+void ReportSysEventDelHap(int32_t errorCode, int32_t sceneCode, const HapDfxInfo& info)
 {
     if (!IsUEEnable()) {
         LOGW(ATM_DOMAIN, ATM_TAG, "UE is not enable.");
@@ -142,7 +142,7 @@ void ReportSysEventDelHap(int32_t errorCode, const HapDfxInfo& info)
         "USERID", info.userID,
         "BUNDLENAME", info.bundleName,
         "INSTINDEX", info.instIndex,
-        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "SCENE_CODE", sceneCode,
         "ERROR_CODE", errorCode,
         "DURATION", info.duration);
     ReportSysCommonEventError(info.ipcCode, errorCode);

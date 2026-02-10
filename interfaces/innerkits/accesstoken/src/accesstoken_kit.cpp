@@ -189,11 +189,16 @@ isAtomicService: %{public}d",
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
+    return DeleteToken(tokenID, false);
+}
+
+int AccessTokenKit::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, isTokenReserved=%{public}d.", tokenID, isTokenReserved);
     if (tokenID == INVALID_TOKENID) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
+    return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID, isTokenReserved);
 }
 
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))

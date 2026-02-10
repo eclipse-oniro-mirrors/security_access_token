@@ -816,7 +816,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     return ret;
 }
 
-int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
+int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}d, callerPid %{public}d.", tokenID, IPCSkeleton::GetCallingPid());
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -836,21 +836,22 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapTokenInfo hapInfo;
     int32_t errorCode = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    int32_t sceneCode = isTokenReserved ? AT_DELETE_KEEP_TOKEN_FINISH : AT_COMMON_FINISH;
     if (errorCode != ERR_OK) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u, err %{public}d.", tokenID, errorCode);
         dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
-        ReportSysEventDelHap(errorCode, dfxInfo);
+        ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
         return errorCode;
     }
 
     // only support hap token deletion
-    errorCode = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    errorCode = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, isTokenReserved);
 
     dfxInfo.userID = hapInfo.userID;
     dfxInfo.bundleName = hapInfo.bundleName;
     dfxInfo.instIndex = hapInfo.instIndex;
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
-    ReportSysEventDelHap(errorCode, dfxInfo);
+    ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
     return errorCode;
 }
 

@@ -74,7 +74,7 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
-    int RemoveHapTokenInfo(AccessTokenID id);
+    int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
@@ -141,7 +141,9 @@ private:
     void AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo, const std::string& appId,
         const HapPolicy& policy, bool isUpdate, const std::vector<GenericValues>& undefValues);
-    int RemoveHapTokenInfoFromDb(const std::shared_ptr<HapTokenInfoInner>& info);
+    int32_t RemoveHapTokenInfoInner(std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id, bool isTokenReserved);
+    int RemoveHapTokenInfoFromDb(
+        const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
@@ -161,16 +163,22 @@ private:
     std::string NativeTokenToString(AccessTokenID tokenID);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
+    void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
+        int32_t instIndex, AccessTokenID tokenID);
+    AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
 
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
+    std::shared_mutex reservedHapTokenInfoLock_;
     std::shared_mutex nativeTokenInfoLock_;
     std::shared_mutex managerLock_;
     std::shared_mutex modifyLock_;
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
+    std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 
 #ifdef SUPPORT_MANAGE_USER_POLICY
