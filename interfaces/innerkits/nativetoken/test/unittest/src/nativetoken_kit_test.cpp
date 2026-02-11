@@ -187,7 +187,7 @@ int32_t Start(const char *processName)
  * @tc.name: GetAccessTokenId001
  * @tc.desc: cannot getAccessTokenId with invalid processName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level0)
 {
@@ -244,7 +244,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level0)
  * @tc.name: GetAccessTokenId002
  * @tc.desc: cannot getAccessTokenId with invalid dcapNum.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level0)
 {
@@ -299,7 +299,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level0)
  * @tc.name: GetAccessTokenId003
  * @tc.desc: cannot getAccessTokenId with invalid dcaps.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level0)
 {
@@ -365,7 +365,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level0)
  * @tc.name: GetAccessTokenId004
  * @tc.desc: cannot getAccessTokenId with invalid APL.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level0)
 {
@@ -399,7 +399,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level0)
  * @tc.name: GetAccessTokenId005
  * @tc.desc: Get AccessTokenId successfully.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level0)
 {
@@ -416,7 +416,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level0)
  * @tc.name: GetAccessTokenId006
  * @tc.desc: Get AccessTokenId with new processName and check g_tokenListHead.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level0)
 {
@@ -437,7 +437,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level0)
  * @tc.name: GetAccessTokenId007
  * @tc.desc: cannot getAccessTokenId with invalid dcapNum.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level0)
 {
@@ -491,7 +491,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level0)
  * @tc.name: GetAccessTokenId008
  * @tc.desc: Get AccessTokenId with new processName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level0)
 {
@@ -532,7 +532,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level0)
  * @tc.name: GetAccessTokenId009
  * @tc.desc: cannot getAccessTokenId with invalid perms.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level0)
 {
@@ -597,7 +597,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level0)
  * @tc.name: GetAccessTokenId010
  * @tc.desc: Get a batch of AccessTokenId.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level0)
 {
@@ -627,7 +627,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level0)
  * @tc.name: GetAccessTokenId011
  * @tc.desc: Get AccessTokenId and check the config file.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level0)
 {
@@ -659,7 +659,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level0)
  * @tc.name: GetAccessTokenId012
  * @tc.desc: Get AccessTokenId with valid acls.
  * @tc.type: FUNC
- * @tc.require:AR000H09K6
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level0)
 {
@@ -697,7 +697,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level0)
  * @tc.name: GetAccessTokenId013
  * @tc.desc: cannot getAccessTokenId with invalid acls.
  * @tc.type: FUNC
- * @tc.require:AR000H09K6
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level0)
 {
@@ -761,7 +761,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level0)
  * @tc.name: GetAccessTokenId014
  * @tc.desc: getAccessTokenId success with perms and acls.
  * @tc.type: FUNC
- * @tc.require:AR000H09K7
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
 {
@@ -804,7 +804,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
  * @tc.name: GetAccessTokenId015
  * @tc.desc: cannot getAccessTokenId with invalid aclsNum.
  * @tc.type: FUNC
- * @tc.require:AR000H09K6
+ * @tc.require:
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level0)
 {

@@ -86,8 +86,19 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
         return;
     }
 
-    std::string deviceID = data.ReadString();
-    AccessTokenID tokenID = data.ReadUint32();
+    std::string deviceID;
+    if (!data.ReadString(deviceID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read deviceID.");
+        reply.WriteInt32(ERR_INVALID_DATA);
+        return;
+    }
+
+    AccessTokenID tokenID;
+    if (!data.ReadUint32(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read tokenID.");
+        reply.WriteInt32(ERR_INVALID_DATA);
+        return;
+    }
 
     HapTokenInfoForSync tokenInfo;
     int result = this->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -101,7 +112,12 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
         reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
+    AccessTokenID tokenID;
+    if (!data.ReadUint32(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read tokenID.");
+        reply.WriteInt32(ERR_INVALID_DATA);
+        return;
+    }
     int result = this->DeleteRemoteHapTokenInfo(tokenID);
     reply.WriteInt32(result);
 }

@@ -18,6 +18,7 @@
 #include "data_validator.h"
 #include "device_info.h"
 #include "device_info_manager.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
@@ -204,6 +205,10 @@ void BaseRemoteCommand::FromPermStateListJson(const CJson* hapTokenJson,
     CJson* jsonObjTmp = GetArrayFromJson(hapTokenJson, "permState");
     if (jsonObjTmp != nullptr) {
         int len = cJSON_GetArraySize(jsonObjTmp);
+        if (len > MAX_PERMLIST_SIZE) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "PermState list size %d exceeds MAX_PERMLIST_SIZE %d", len, MAX_PERMLIST_SIZE);
+            return;
+        }
         for (int i = 0; i < len; i++) {
             CJson* permissionJson = cJSON_GetArrayItem(jsonObjTmp, i);
             PermissionStatus permission;

@@ -34,7 +34,7 @@ HapBaseInfoParcel* HapBaseInfoParcel::Unmarshalling(Parcel& in)
         return nullptr;
     }
     RELEASE_IF_FALSE(in.ReadInt32(hapBaseInfoParcel->hapBaseInfo.userID), hapBaseInfoParcel);
-    hapBaseInfoParcel->hapBaseInfo.bundleName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapBaseInfoParcel->hapBaseInfo.bundleName), hapBaseInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapBaseInfoParcel->hapBaseInfo.instIndex), hapBaseInfoParcel);
     return hapBaseInfoParcel;
 }

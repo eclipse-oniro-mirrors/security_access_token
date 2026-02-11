@@ -44,10 +44,10 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
         return nullptr;
     }
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.userID), hapInfoParcel);
-    hapInfoParcel->hapInfoParameter.bundleName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.bundleName), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.instIndex), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.dlpType), hapInfoParcel);
-    hapInfoParcel->hapInfoParameter.appIDDesc = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.appIDDesc), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.apiVersion), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isSystemApp), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.appDistributionType), hapInfoParcel);
