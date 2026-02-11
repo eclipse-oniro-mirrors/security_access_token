@@ -21,7 +21,6 @@
 #include "app_status_change_callback.h"
 #include "nocopyable.h"
 #include "sec_comp_enhance_data.h"
-#include "sec_comp_raw_data.h"
 
 namespace OHOS {
 namespace Security {

@@ -30,7 +30,6 @@
 #include "permission_grant_info_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
-#include "sec_comp_raw_data.h"
 #endif
 
 namespace OHOS {

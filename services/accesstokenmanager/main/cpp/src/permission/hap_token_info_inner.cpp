@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -147,9 +147,8 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.userID = inGenericValues.GetInt(TokenFiledConst::FIELD_USER_ID);
     tokenInfoBasic_.bundleName = inGenericValues.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "bundleName error");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid bundle of id: 0x%{public}x.", tokenInfoBasic_.tokenID);
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "bundleName error");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -161,8 +160,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
+        ReportPermissionCheckEvent(LOAD_DATABASE_ERROR, "Invalid version.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
