@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -584,6 +584,34 @@ public:
      * @return result
      */
     static bool TransferOpcodeToPermission(uint32_t permCode, std::string& permissionName);
+
+    /**
+     * @brief Query all applications that have requested the specified permissions and their permission information.
+     * @note For C++ native interface: Set onlyHap=true to query only HAP applications, or onlyHap=false
+     *       to query all applications (HAP+Native processes).
+     * @note For JS interface: Only supports querying HAP applications (equivalent to onlyHap=true).
+     *       Native processes will not be included in JS query results.
+     * @param permissionList The list of permissions to be queried
+     * @param permissionInfoList Output parameter, returns the list of permission information
+     * @param onlyHap Whether to query only HAP applications, true means only HAP applications,
+     *               false means all applications (HAP+Native), default is true
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+     * @since 26
+     */
+    static int32_t QueryStatusByPermission(const std::vector<std::string>& permissionList,
+        std::vector<PermissionStatus>& permissionInfoList, bool onlyHap = true);
+
+    /**
+     * @brief Query all permission information of the specified applications.
+     * @note This interface only supports querying HAP (Harmony Ability Package) applications.
+     *       For Native token IDs, the query will not return any permission information.
+     * @param tokenIDList The list of token IDs to be queried
+     * @param permissionInfoList Output parameter, returns the list of permission information
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+     * @since 26
+     */
+    static int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
+        std::vector<PermissionStatus>& permissionInfoList);
 };
 } // namespace AccessToken
 } // namespace Security

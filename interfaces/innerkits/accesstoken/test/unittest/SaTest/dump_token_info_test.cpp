@@ -79,7 +79,7 @@ void DumpTokenInfoTest::TearDown()
 
 /**
  * @tc.name: DumpTokenInfoAbnormalTest001
- * @tc.desc: Verify the DumpTokenInfo abnormal branch return nullptr proxy.
+ * @tc.desc: Verify DumpTokenInfo returns empty when called without permission (non-root uid)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
@@ -121,12 +121,12 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest002, TestSize.Level1)
     AtmToolsParamInfo info;
     info.tokenId = 123;
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
-    ASSERT_EQ("invalid tokenId", dumpInfo);
+    ASSERT_EQ("Error: TokenID does not exist.\n", dumpInfo);
 }
 
 /**
  * @tc.name: DumpTokenInfoAbnormalTest003
- * @tc.desc: Get dump information with invalid param
+ * @tc.desc: Verify DumpTokenInfo returns param invalid when permissionName/bundleName/processName exceeds max length
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
@@ -148,6 +148,70 @@ HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest003, TestSize.Level1)
     info.processName = invalidstr;
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
     ASSERT_EQ("param invalid", dumpInfo);
+}
+
+/**
+ * @tc.name: DumpTokenInfoAbnormalTest004
+ * @tc.desc: Verify DumpTokenInfo returns error when token is already deleted
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest004, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest004");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    HapInfoParams hapInfoParms = {
+        .userID = 100,
+        .bundleName = "ohos.test.deleted.token",
+        .instIndex = 0,
+        .appIDDesc = "test.app.for.delete"
+    };
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(hapInfoParms, g_PolicyPrams, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    EXPECT_EQ("Error: TokenID does not exist.\n", dumpInfo);
+}
+
+/**
+ * @tc.name: DumpTokenInfoAbnormalTest005
+ * @tc.desc: Verify DumpTokenInfo returns error when bundleName does not exist
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest005, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest005");
+    SetSelfTokenID(g_selfTokenId);
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.bundleName = "com.nonexistent.bundle";
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    EXPECT_EQ("Error: BundleName 'com.nonexistent.bundle' does not exist.\n", dumpInfo);
+}
+
+/**
+ * @tc.name: DumpTokenInfoAbnormalTest006
+ * @tc.desc: Verify DumpTokenInfo returns error when process does not exist
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DumpTokenInfoTest, DumpTokenInfoAbnormalTest006, TestSize.Level1)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "DumpTokenInfoAbnormalTest006");
+    SetSelfTokenID(g_selfTokenId);
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.processName = "com.nonexistent.process";
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    EXPECT_EQ("Error: ProcessName 'com.nonexistent.process' does not exist.\n", dumpInfo);
 }
 
 /**

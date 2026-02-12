@@ -135,6 +135,10 @@ public:
 #endif
     int32_t DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
+    ErrCode QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+        std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
+    ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
+        std::vector<PermissionStatusIdl>& permissionInfoList) override;
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit(uint32_t code, int32_t result) override;

@@ -487,6 +487,11 @@ MockHapToken::~MockHapToken()
     }
     EXPECT_EQ(0, SetSelfTokenID(selfToken_));
 }
+
+AccessTokenID MockHapToken::GetTokenID() const
+{
+    return mockToken_;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

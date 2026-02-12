@@ -46,6 +46,7 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
         "The permission list contains the permission that has not been revoked by the user." },
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
     { STS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
+    { STS_ERROR_OVERSIZE, "The queried data exceeds the upper limit."},
 };
 
 void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
@@ -172,6 +173,9 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             break;
         case ERR_MALLOC_FAILED:
             stsCode = STS_ERROR_OUT_OF_MEMORY;
+            break;
+        case ERR_OVERSIZE:
+            stsCode = STS_ERROR_OVERSIZE;
             break;
         default:
             stsCode = STS_ERROR_INNER;

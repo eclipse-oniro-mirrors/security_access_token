@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,10 +16,15 @@
 #include "atm_command.h"
 
 #include <getopt.h>
+#include <map>
+#include <sstream>
 #include <string>
 
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
+#include "hap_token_info.h"
+#include "native_token_info.h"
+#include "permission_status.h"
 #include "privacy_kit.h"
 #include "to_string.h"
 
@@ -30,7 +35,7 @@ namespace {
 static constexpr int32_t MAX_COUNTER = 1000;
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
-static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
+static const std::string HELP_MSG_NO_OPTION = "Error: you must specify an option at least.\n";
 static const std::string SHORT_OPTIONS_DUMP = "d::h::t::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
@@ -52,6 +57,7 @@ static const std::string HELP_MSG_DUMP =
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
+    "  -t, --token -p <permission-name>                         list apps by permission (TokenID and BundleName)\n"
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
     "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
@@ -79,6 +85,30 @@ static const std::string HELP_MSG_TOGGLE =
     "  -r -o, --get -i <user-id> -p <permission-name>              get request status by specified user-id and perm\n"
     "  -u -s, --set -i <user-id> -k <status>                       set record status by a specified user-id\n"
     "  -u -o, --get -i <user-id>                                   get record status by a specified user-id\n"
+    "  <status>                                                    0 is closed, 1 is open\n";
+#else
+    "";
+#endif
+
+static const std::string HELP_MSG_TOGGLE_REQUEST =
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    "usage: atm toggle request <option>.\n"
+    "options list:\n"
+    "  -h, --help                                                  list available options\n"
+    "  -s, --set -i <user-id> -p <permission-name> -k <status>     set request status by specified user-id and perm\n"
+    "  -o, --get -i <user-id> -p <permission-name>                 get request status by specified user-id and perm\n"
+    "  <status>                                                    0 is closed, 1 is open\n";
+#else
+    "";
+#endif
+
+static const std::string HELP_MSG_TOGGLE_RECORD =
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    "usage: atm toggle record <option>.\n"
+    "options list:\n"
+    "  -h, --help                                                  list available options\n"
+    "  -s, --set -i <user-id> -k <status>                          set record status by a specified user-id\n"
+    "  -o, --get -i <user-id>                                      get record status by a specified user-id\n"
     "  <status>                                                    0 is closed, 1 is open\n";
 #else
     "";
@@ -143,6 +173,7 @@ std::map<char, ToggleOperateType> TOGGLE_OPERATE_TYPE = {
 
 AtmCommand::AtmCommand(int32_t argc, char* argv[]) : argc_(argc), argv_(argv), name_(TOOLS_NAME)
 {
+    optind = 1;
     opterr = 0;
 
     commandMap_ = {
@@ -177,11 +208,11 @@ std::string AtmCommand::GetCommandErrorMsg() const
 
 std::string AtmCommand::ExecCommand()
 {
-    auto respond = commandMap_[cmd_];
-    if (respond == nullptr) {
+    auto it = commandMap_.find(cmd_);
+    if (it == commandMap_.end() || !it->second) {
         resultReceiver_.append(GetCommandErrorMsg());
     } else {
-        respond();
+        it->second();
     }
 
     return resultReceiver_;
@@ -221,7 +252,7 @@ std::string AtmCommand::GetUnknownOptionMsg() const
         return result;
     }
 
-    result.append("error: unknown option.\n");
+    result.append("Error: Unknown option.\n");
 
     return result;
 }
@@ -236,38 +267,41 @@ int32_t AtmCommand::RunAsCommandMissingOptionArgument(const std::vector<char>& r
         resultReceiver_.append(GetUnknownOptionMsg());
         return ERR_INVALID_VALUE;
     }
-    resultReceiver_.append("error: option requires a value.\n\n");
+    resultReceiver_.append("Error: Option requires a value.\n\n");
     return ERR_INVALID_VALUE;
 }
 
-void AtmCommand::RunAsCommandExistentOptionForDump(
-    const int32_t& option, AtmToolsParamInfo& info, OptType& type, std::string& permissionName)
+void AtmCommand::RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsContext& context)
 {
     switch (option) {
         case 'd':
-        case 't':
         case 'r':
         case 'v':
-            type = DUMP_COMMAND_TYPE[option];
+            context.type = DUMP_COMMAND_TYPE[option];
+            break;
+        case 't':
+            context.hasTokenOption = true;
             break;
         case 'i':
-            if (optarg != nullptr) {
-                info.tokenId = static_cast<AccessTokenID>(std::atoi(optarg));
+            context.hasTokenIdOption = true;
+            if (optarg != nullptr && optarg[0] != '\0') {
+                context.info.tokenId = static_cast<AccessTokenID>(std::atoi(optarg));
             }
             break;
         case 'p':
-            if (optarg != nullptr) {
-                permissionName = optarg;
+            context.hasPermissionOption = true;
+            if (optarg != nullptr && optarg[0] != '\0') {
+                context.permissionName = optarg;
             }
             break;
         case 'b':
-            if (optarg != nullptr) {
-                info.bundleName = optarg;
+            if (optarg != nullptr && optarg[0] != '\0') {
+                context.info.bundleName = optarg;
             }
             break;
         case 'n':
-            if (optarg != nullptr) {
-                info.processName = optarg;
+            if (optarg != nullptr && optarg[0] != '\0') {
+                context.info.processName = optarg;
             }
             break;
         default:
@@ -275,28 +309,29 @@ void AtmCommand::RunAsCommandExistentOptionForDump(
     }
 }
 
-void AtmCommand::RunAsCommandExistentOptionForPerm(
-    const int32_t& option, bool& isGranted, AccessTokenID& tokenID, std::string& permission)
+void AtmCommand::RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context)
 {
     switch (option) {
         case 'g':
-            isGranted = true;
+            context.isGranted = true;
             break;
         case 'c':
-            isGranted = false;
+            context.isGranted = false;
             break;
         case 'i':
-            tokenID = (optarg != nullptr) ? static_cast<AccessTokenID>(std::atoi(optarg)) : INVALID_TOKENID;
+            context.hasTokenIdOption = true;
+            context.tokenID = (optarg != nullptr) ? static_cast<AccessTokenID>(std::atoi(optarg)) : INVALID_TOKENID;
             break;
         case 'p':
-            permission = (optarg != nullptr) ? optarg : "";
+            context.hasPermissionOption = true;
+            context.permission = (optarg != nullptr && optarg[0] != '\0') ? optarg : "";
             break;
         default:
             break;
         }
 }
 
-void AtmCommand::RunAsCommandExistentOptionForToggle(const int32_t& option, AtmToggleParamInfo& info)
+void AtmCommand::RunAsCommandExistentOptionForToggle(int32_t option, AtmToggleParamInfo& info)
 {
     switch (option) {
         case 'r':
@@ -371,6 +406,51 @@ std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& pe
     return ToString::PermissionUsedTypeInfoToString(results);
 }
 
+std::string AtmCommand::DumpPermissionApps(const std::string& permissionName)
+{
+    if (permissionName.empty()) {
+        return "Error: Permission name cannot be empty.\n"
+               "Usage: atm dump -t -p <permission-name>\n"
+               "Example: atm dump -t -p ohos.permission.CAMERA";
+    }
+
+    // Query all applications that have requested the specified permission
+    std::vector<std::string> permissionList = {permissionName};
+    std::vector<PermissionStatus> permissionInfoList;
+
+    int32_t ret = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList, true);
+    if (ret != RET_SUCCESS) {
+        return "Error: Permission '" + permissionName + "' does not exist.";
+    }
+
+    // Format output
+    std::stringstream ss;
+    ss << "Permission: " << permissionName << "\n";
+    ss << "Total Tokens: " << permissionInfoList.size() << "\n\n";
+
+    if (permissionInfoList.empty()) {
+        return ss.str();
+    }
+
+    // Group by tokenID and extract bundle name/process name
+    std::map<AccessTokenID, std::string> appMap;
+    for (const auto& info : permissionInfoList) {
+        if (appMap.find(info.tokenID) != appMap.end()) {
+            continue;
+        }
+        HapTokenInfo hapInfo;
+        (void)AccessTokenKit::GetHapTokenInfo(info.tokenID, hapInfo);
+        appMap[info.tokenID] = hapInfo.bundleName;
+    }
+
+    // Output in format: tokenId: bundleName/processName (same as "atm dump -t")
+    for (const auto& entry : appMap) {
+        ss << entry.first << ": " << entry.second << "\n";
+    }
+
+    return ss.str();
+}
+
 int32_t AtmCommand::ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName)
 {
     int32_t result = 0;
@@ -425,6 +505,9 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
         case DUMP_TOKEN:
             AccessTokenKit::DumpTokenInfo(info, dumpInfo);
             break;
+        case DUMP_PERMISSION_APPS:
+            dumpInfo = DumpPermissionApps(permissionName);
+            break;
         case DUMP_RECORD:
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
             dumpInfo = DumpRecordInfo(info.tokenId, permissionName);
@@ -434,7 +517,7 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
             break;
 #endif
         default:
-            resultReceiver_.append("error: miss option \n");
+            resultReceiver_.append("Error: Missing option.\n");
             return ERR_INVALID_VALUE;
     }
     resultReceiver_.append(dumpInfo + "\n");
@@ -493,7 +576,7 @@ int32_t AtmCommand::HandleToggleRequest(const AtmToggleParamInfo& info, std::str
             }
             break;
         default:
-            resultReceiver_.append("error: miss option \n");
+            resultReceiver_.append("Error: Missing option.\n");
             return ERR_INVALID_VALUE;
         }
 #endif
@@ -516,7 +599,7 @@ int32_t AtmCommand::HandleToggleRecord(const AtmToggleParamInfo& info, std::stri
             dumpInfo += (ret == RET_SUCCESS) ? "Success" : "Failure";
             break;
         default:
-            resultReceiver_.append("error: miss option \n");
+            resultReceiver_.append("Error: Miss option.\n");
             return ERR_INVALID_VALUE;
     }
 #endif
@@ -536,7 +619,7 @@ int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToggleParamInfo& in
             ret = HandleToggleRecord(info, dumpInfo);
             break;
         default:
-            resultReceiver_.append("error: unspecified toggle mode \n");
+            resultReceiver_.append("Error: Unspecified toggle mode.\n");
             return ERR_INVALID_VALUE;
     }
 
@@ -544,13 +627,28 @@ int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToggleParamInfo& in
     return ret;
 }
 
+static bool IsTokenIdInvalid(const DumpOptionsContext& context)
+{
+    return context.hasTokenIdOption && context.info.tokenId == 0;
+}
+
+static void ResolveDumpOperationType(DumpOptionsContext& context)
+{
+    if (context.hasTokenOption && context.hasPermissionOption && !context.permissionName.empty()) {
+        context.type = DUMP_PERMISSION_APPS;
+        return;
+    }
+    if (context.hasTokenOption && !context.hasPermissionOption) {
+        context.type = DUMP_TOKEN;
+    }
+}
+
 int32_t AtmCommand::RunAsCommonCommandForDump()
 {
     int32_t result = RET_SUCCESS;
-    AtmToolsParamInfo info;
+    DumpOptionsContext context;
     int32_t counter = 0;
-    OptType type = DEFAULT_OPER;
-    std::string permissionName;
+
     while (true) {
         ++counter;
         int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
@@ -571,27 +669,40 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
         }
 
         if (option == 'h') {
-            // 'atm dump -h'
             result = ERR_INVALID_VALUE;
             continue;
         }
-        RunAsCommandExistentOptionForDump(option, info, type, permissionName);
+
+        if (optarg != nullptr && optarg[0] == '\0' &&
+            (option == 'i' || option == 'p' || option == 'b' || option == 'n')) {
+            resultReceiver_.append("Error: Option requires a value.\n\n");
+            result = ERR_INVALID_VALUE;
+            break;
+        }
+
+        RunAsCommandExistentOptionForDump(option, context);
     }
 
     if (result != RET_SUCCESS) {
         resultReceiver_.append(HELP_MSG_DUMP + "\n");
         return result;
     }
-    return RunCommandByOperationType(info, type, permissionName);
+
+    if (IsTokenIdInvalid(context)) {
+        resultReceiver_.append("Error: TokenID is invalid.\n");
+        return ERR_INVALID_VALUE;
+    }
+
+    ResolveDumpOperationType(context);
+    return RunCommandByOperationType(context.info, context.type, context.permissionName);
 }
 
 int32_t AtmCommand::RunAsCommonCommandForPerm()
 {
     int32_t result = RET_SUCCESS;
     int32_t counter = 0;
-    AccessTokenID tokenID;
-    std::string permission;
-    bool isGranted = false;
+    PermOptionsContext context;
+
     while (true) {
         ++counter;
         int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
@@ -613,25 +724,93 @@ int32_t AtmCommand::RunAsCommonCommandForPerm()
             result = ERR_INVALID_VALUE;
             continue;
         }
-        RunAsCommandExistentOptionForPerm(option, isGranted, tokenID, permission);
+        RunAsCommandExistentOptionForPerm(option, context);
     }
     if (result != RET_SUCCESS) {
-        resultReceiver_.append(HELP_MSG_DUMP + "\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
         return result;
     }
-    result = ModifyPermission(isGranted, tokenID, permission);
+
+    // Check if -i parameter is missing
+    result = ValidatePermParams(context);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    result = ModifyPermission(context.isGranted, context.tokenID, context.permission);
     if (result == RET_SUCCESS) {
         resultReceiver_.append("Success\n");
+    } else if (result == AccessTokenError::ERR_TOKENID_NOT_EXIST) {
+        // TokenID does not exist or is not a valid application TokenID
+        resultReceiver_.append("Error: TokenID does not exist or is not a valid application TokenID.\n");
+    } else if (result == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+        // Permission does not exist
+        resultReceiver_.append("Error: Permission '" + context.permission + "' does not exist.\n");
     } else {
         resultReceiver_.append("Failure\n");
     }
     return result;
 }
 
+int32_t AtmCommand::ValidatePermParams(const PermOptionsContext& context)
+{
+    if (!context.hasTokenIdOption) {
+        resultReceiver_.append("Error: Missing required parameter: -i <token-id>\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+
+    if (!context.hasPermissionOption) {
+        resultReceiver_.append("Error: Missing required parameter: -p <permission-name>\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+
+    if (context.tokenID == 0) {
+        resultReceiver_.append("Error: TokenID is invalid.\n");
+        return ERR_INVALID_VALUE;
+    }
+
+    return RET_SUCCESS;
+}
+
+static int32_t ValidateToggleSetParams(const AtmToggleParamInfo& info, std::string& errorMsg)
+{
+    if (info.toggleMode == TOGGLE_REQUEST) {
+        if (info.permissionName.empty()) {
+            errorMsg = "Error: Missing required parameter: -p <permission-name>\n\n";
+        }
+        if (info.userID == 0 && info.status == INVALID_ATM_SET_STATUS) {
+            errorMsg = "Error: Missing required parameter: -i <user-id> or -k <status>\n\n";
+        }
+        errorMsg += HELP_MSG_TOGGLE_REQUEST + "\n";
+        return ERR_INVALID_VALUE;
+    } else if (info.toggleMode == TOGGLE_RECORD) {
+        if (info.userID == 0) {
+            errorMsg = "Error: Missing required parameter: -i <user-id>\n\n";
+        }
+        if (info.status == INVALID_ATM_SET_STATUS) {
+            errorMsg = "Error: Missing required parameter: -k <status>\n\n";
+        }
+        errorMsg += HELP_MSG_TOGGLE_RECORD + "\n";
+        return ERR_INVALID_VALUE;
+    }
+    return RET_SUCCESS;
+}
+
 int32_t AtmCommand::RunAsCommonCommandForToggle()
 {
     int32_t result = RET_SUCCESS;
     AtmToggleParamInfo info;
+
+    if (argc_ >= 3) {
+        if (strcmp(argv_[2], "request") == 0) {
+            info.toggleMode = TOGGLE_REQUEST;
+        } else if (strcmp(argv_[2], "record") == 0) {
+            info.toggleMode = TOGGLE_RECORD;
+        }
+    }
+
     int32_t counter = 0;
     while (counter < MAX_COUNTER) {
         ++counter;
@@ -660,9 +839,21 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
     }
 
     if (result != RET_SUCCESS) {
-        resultReceiver_.append(HELP_MSG_TOGGLE + "\n");
+        std::string helpMsg = (info.toggleMode == TOGGLE_REQUEST) ? HELP_MSG_TOGGLE_REQUEST :
+                              (info.toggleMode == TOGGLE_RECORD) ? HELP_MSG_TOGGLE_RECORD : HELP_MSG_TOGGLE;
+        resultReceiver_.append(helpMsg + "\n");
         return result;
     }
+
+    if (info.type == TOGGLE_SET) {
+        std::string errorMsg;
+        result = ValidateToggleSetParams(info, errorMsg);
+        if (result != RET_SUCCESS) {
+            resultReceiver_.append(errorMsg);
+            return result;
+        }
+    }
+
     return RunToggleCommandByOperationType(info);
 }
 } // namespace AccessToken

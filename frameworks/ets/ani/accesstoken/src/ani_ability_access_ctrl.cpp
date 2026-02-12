@@ -944,7 +944,6 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
     auto* syncContext = new (std::nothrow) AtManagerSyncContext();
     if (syncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to alloc memory for syncContext.");
-
         return static_cast<ani_int>(PermissionOper::INVALID_OPER);
     }
 
@@ -962,6 +961,111 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
     LOGI(ATM_DOMAIN, ATM_TAG, "PermissionName %{public}s self status is %{public}d.", permissionName.c_str(),
         static_cast<int32_t>(syncContext->permissionsStatus));
     return static_cast<ani_int>(syncContext->permissionsStatus);
+}
+
+static ani_ref CreatePermissionStatusInfoArray(ani_env* env,
+    const std::vector<PermissionStatus>& permissionInfoList)
+{
+    // Create result array
+    ani_ref resultArray = CreateArrayObject(env, permissionInfoList.size());
+    if (resultArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
+        return nullptr;
+    }
+
+    // Fill array with PermissionStatusInfo objects
+    for (size_t i = 0; i < permissionInfoList.size(); ++i) {
+        const auto& permStatus = permissionInfoList[i];
+
+        ani_object aniObject = CreateClassObject(env,
+            "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStatusInfoInner");
+        if (aniObject == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create PermissionStatusInfo object.");
+            continue;
+        }
+
+        // Set tokenID property
+        SetIntProperty(env, aniObject, "tokenID", static_cast<int32_t>(permStatus.tokenID));
+
+        // Set permissionName property
+        SetStringProperty(env, aniObject, "permissionName", permStatus.permissionName);
+
+        // Set grantStatus property
+        // set permStateChangeType: int32_t
+        ani_size enumIndex = (permStatus.grantStatus == 0) ? 1 : 0;
+        const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
+        SetEnumProperty(
+            env, aniObject, enumDescriptor, "grantStatus", static_cast<int32_t>(enumIndex));
+
+        // Set grantFlags property
+        SetIntProperty(env, aniObject, "grantFlags", static_cast<int32_t>(permStatus.grantFlag));
+
+        // Set array element
+        ani_size index = static_cast<ani_size>(i);
+        ani_status status = env->Any_SetByIndex(resultArray, index, aniObject);
+        if (status != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
+        }
+    }
+
+    return resultArray;
+}
+
+static ani_ref QueryStatusByPermissionExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_array aniPermissionList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionsByPermissionsExecute begin.");
+    if ((env == nullptr) || (aniPermissionList == nullptr)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList is null.");
+        return nullptr;
+    }
+
+    // Parse permission list from ANI array
+    std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
+
+    // Call C++ API to query permission information
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t result = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList, true);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryStatusByPermissionExecute end, result size: %{public}zu.",
+        permissionInfoList.size());
+    return CreatePermissionStatusInfoArray(env, permissionInfoList);
+}
+
+static ani_ref QueryStatusByTokenIDExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_array aniTokenIDList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionsByTokenIDsExecute begin.");
+    if ((env == nullptr) || (aniTokenIDList == nullptr)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env or tokenIDList is null.");
+        return nullptr;
+    }
+
+    // Parse tokenID list from ANI array
+    std::vector<AccessTokenID> tokenIDList;
+    if (!AniParseAccessTokenIDArray(env, aniTokenIDList, tokenIDList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to parse tokenID list.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("tokenIDList", "Array<int>"));
+        return nullptr;
+    }
+
+    // Call C++ API to query permission information
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t result = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryStatusByTokenIDExecute end, result size: %{public}zu.",
+        permissionInfoList.size());
+    return CreatePermissionStatusInfoArray(env, permissionInfoList);
 }
 
 static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
@@ -1005,6 +1109,10 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
         ani_native_function { "getSelfPermissionStatusExecute",
             nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
+        ani_native_function { "queryStatusByPermissionExecute",
+            nullptr, reinterpret_cast<void*>(QueryStatusByPermissionExecute) },
+        ani_native_function { "queryStatusByTokenIDExecute",
+            nullptr, reinterpret_cast<void*>(QueryStatusByTokenIDExecute) },
     };
     return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
 }

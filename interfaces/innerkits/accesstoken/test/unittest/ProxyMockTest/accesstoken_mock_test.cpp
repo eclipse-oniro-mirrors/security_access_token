@@ -804,6 +804,38 @@ HWTEST_F(AccessTokenMockTest, SetPermissionStatusWithPolicy001, TestSize.Level4)
         g_testTokenId, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
 }
+
+/**
+ * @tc.name: QueryPermissionInfosByPerm001
+ * @tc.desc: QueryStatusByPermission by permission list with valid parameters and proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, QueryPermissionInfosByPerm001, TestSize.Level4)
+{
+    std::vector<std::string> permissionList = {"ohos.permission.CAMERA"};
+    std::vector<PermissionStatus> permissionInfoList;
+
+    int32_t ret = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
+    ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: QueryPermissionInfosByToken001
+ * @tc.desc: QueryStatusByTokenID by TokenID list with valid parameters and proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, QueryPermissionInfosByToken001, TestSize.Level4)
+{
+    std::vector<AccessTokenID> tokenIDList = {g_testTokenId};
+    std::vector<PermissionStatus> permissionInfoList;
+
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
+    ASSERT_TRUE(permissionInfoList.empty());
+}
 }  // namespace AccessToken
 }  // namespace Security
 }

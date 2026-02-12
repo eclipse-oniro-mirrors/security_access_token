@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -238,10 +238,10 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     return true;
 }
 
-bool DataValidator::IsPermissionListSizeValid(const std::vector<std::string>& permissionList)
+bool DataValidator::IsListSizeValid(uint32_t size)
 {
-    if (permissionList.size() <= 0 || permissionList.size() > MAX_PERMISSION_LIST_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission list size is invalid(%{public}zu).", permissionList.size());
+    if (size <= 0 || size > MAX_PERMISSION_LIST_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
         return false;
     }
     return true;

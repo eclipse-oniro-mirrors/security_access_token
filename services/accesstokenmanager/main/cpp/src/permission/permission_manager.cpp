@@ -1316,6 +1316,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
     return true;
 }
 
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

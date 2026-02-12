@@ -151,6 +151,7 @@ private:
         AtManagerAsyncContext& asyncContext);
     static bool ParseInputGetPermStatus(const napi_env env, const napi_callback_info info,
         AtManagerSyncContext& syncContext);
+
     static void VerifyAccessTokenExecute(napi_env env, void *data);
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
     static void CheckAccessTokenExecute(napi_env env, void* data);

@@ -182,6 +182,8 @@ std::string ToString::DumpPermDefinition(const std::string& permissionName)
             GetPermissionBriefDef(code, briefDef);
             permDefJson = CreateJson();
             PermDefToJson(briefDef, permDefJson);
+        } else {
+            return "Error: Permission '" + permissionName + "' does not exist.";
         }
     }
     return JsonToStringFormatted(permDefJson.get());

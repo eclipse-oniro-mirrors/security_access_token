@@ -94,4 +94,6 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
 
     [ipccode 200] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoCompatIdl hapTokenInfoIdl);
     [ipccode 201] void GetPermissionCode([in] String permission, [out] unsigned int permCode);
+    [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);
+    [ipccode 203, ipcoutcapacity 122880] void QueryStatusByTokenID([in] List<unsigned int> tokenIDList, [out] List<PermissionStatusIdl> permissionInfoList);
 }

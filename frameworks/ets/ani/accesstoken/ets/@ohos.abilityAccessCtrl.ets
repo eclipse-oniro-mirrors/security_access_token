@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -69,6 +69,13 @@ export default namespace abilityAccessCtrl {
         permissionName: Permissions;
     }
 
+    interface PermissionStatusInfo {
+        tokenID: int;
+        permissionName: Permissions;
+        grantStatus: GrantStatus;
+        grantFlags: int;
+    }
+
     export enum PermissionStateChangeType {
         PERMISSION_REVOKED_OPER = 0,
         PERMISSION_GRANTED_OPER = 1
@@ -92,6 +99,12 @@ export default namespace abilityAccessCtrl {
         change: PermissionStateChangeType;
         tokenID: int;
         permissionName: Permissions;
+    }
+    class PermissionStatusInfoInner implements PermissionStatusInfo {
+        tokenID: int;
+        permissionName: Permissions;
+        grantStatus: GrantStatus;
+        grantFlags: int;
     }
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {
@@ -210,6 +223,8 @@ export default namespace abilityAccessCtrl {
         offPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus;
+        queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>>;
+        queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>>;
     }
 
     class AtManagerInner implements AtManager {
@@ -243,6 +258,8 @@ export default namespace abilityAccessCtrl {
             permissionList: Array<Permissions>, callback?: Callback<PermissionStateChangeInfo>): void;
         native requestAppPermOnSettingExecute(tokenID: int): void;
         native getSelfPermissionStatusExecute(permissionName: Permissions): int;
+        native queryStatusByPermissionExecute(permissionList: Array<Permissions>): Array<PermissionStatusInfo>;
+        native queryStatusByTokenIDExecute(tokenIDList: Array<int>): Array<PermissionStatusInfo>;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -609,6 +626,38 @@ export default namespace abilityAccessCtrl {
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus {
             let status = this.getSelfPermissionStatusExecute(permissionName);
             return status as PermissionStatus;
+        }
+
+        queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>> {
+            let p = new Promise<Array<PermissionStatusInfo>>(
+                (resolve: (v: Array<PermissionStatusInfo>) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): Array<PermissionStatusInfo> => {
+                        return new AtManagerInner().queryStatusByPermissionExecute(permissionList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as Array<PermissionStatusInfo>);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>> {
+            let p = new Promise<Array<PermissionStatusInfo>>(
+                (resolve: (v: Array<PermissionStatusInfo>) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): Array<PermissionStatusInfo> => {
+                        return new AtManagerInner().queryStatusByTokenIDExecute(tokenIDList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as Array<PermissionStatusInfo>);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
         }
     }
 }
