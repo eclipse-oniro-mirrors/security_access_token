@@ -1,7 +1,5 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 This is the **AccessTokenManager (ATM)** module for OpenHarmony. It provides unified permission management based on access tokens, controlling what permissions apps have to access sensitive data and APIs.
@@ -51,24 +49,28 @@ This is the **AccessTokenManager (ATM)** module for OpenHarmony. It provides uni
 ## Core Capabilities
 ### Access Token Manager
 - **Location**: `frameworks/accesstoken`, `frameworks/ets/ani/accesstoken`, `frameworks/js/napi/accesstoken`, `interfaces/innerkits/accesstoken`, `services/accesstokenmanager`
-- **Purpose**: 
+- **Purpose**:
+  - **Manage Permission Grant State**: Manage permission grant/revoke state (granted/denied) and grant flag. This is about whether an app HAS a permission, not whether it is USING it.
   - Provide unified permission management enabling application and system service processes to request and verify permission.
-  - Provide the capability to subscribe to permission status change events for specific processes.
+  - Provide the capability to subscribe to permission grant status change events for specific processes.
   - Provide capabilities for granting and revoking permissions by user and system mechanism.
+- **Details**: @services/accesstokenmanager/AGENTS.md
 
 ### Privacy Manager
 - **Location**: `frameworks/privacy`, `frameworks/ets/ani/privacy`, `frameworks/js/napi/privacy`, `interfaces/innerkits/privacy`, `services/privacymanager`
-- **Purpose**: 
-  - Support validation whether a process or application is allowed to use permissions
+- **Purpose**:
+  - **Manage Permission Usage Records/Status**: Manage permission usage records and active status (when an app is actively using a permission).
+  - Support validation whether a process or application is allowed to use permissions.
   - Provide the capability to add and persist permission usage records.
   - Provide the switch of permissions records. When the switch is turned off permission records of the user will be deleted.
-  - Manage the usage status of sensitive permissions and provides the capability to subscribe to status change notifications.
+  - Manage the usage status of sensitive permissions and provides the capability to subscribe to active status change notifications.
 
 ### Token Sync Manager
 - **Location**: `frameworks/tokensync`, `interfaces/innerkits/tokensync`, `services/tokensyncmanager`
 - **Purpose**: 
   - Synchronize distributed permissions among trusted devices and update when the permission status changes.
   - Support permission verification to check whether the peer in the RPC call has the distributed permission.
+- **Details**: @services/tokensyncmanager/AGENTS.md
 
 ### El5 File Key Manager
 - **Location**: `frameworks/ets/ani/el5filekeymanager`, `frameworks/js/napi/el5filekeymanager`, `interfaces/inner_api/el5filekeymanager`, `services/el5filekeymanager`
@@ -197,3 +199,4 @@ run -t FUZZ -tp access_token
 | version | date | modify content | writer |
 |------|------|---------|--------|
 | v1.0 | 2026-01-31 | primary version | xiacong |
+| v1.1 | 2026-02-05 | clarify distinction between Permission Grant State (AccessTokenManager) and Permission Usage Status (PrivacyManager) | hehehe-li |
