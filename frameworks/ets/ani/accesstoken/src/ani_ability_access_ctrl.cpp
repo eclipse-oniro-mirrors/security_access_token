@@ -369,7 +369,7 @@ static void GrantPermissionInner([[maybe_unused]] ani_env *env,
 }
 
 static void RevokePermissionInner(ani_env *env,
-    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags, UpdatePermissionFlag updateFlag)
+    ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags, UpdatePermissionFlag updateFlag, bool killProcess)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -411,7 +411,7 @@ static void RevokePermissionInner(ani_env *env,
         return;
     }
 
-    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, permissionFlags, updateFlag);
+    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, permissionFlags, updateFlag, killProcess);
     if (ret != RET_SUCCESS) {
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(ret);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
@@ -427,7 +427,7 @@ static void GrantUserGrantedPermissionExecute([[maybe_unused]] ani_env *env, [[m
 static void RevokeUserGrantedPermissionExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
 {
-    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, USER_GRANTED_PERM);
+    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, USER_GRANTED_PERM, true);
 }
 
 static void GrantPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused]] ani_object object,
@@ -437,9 +437,10 @@ static void GrantPermissionExecute([[maybe_unused]] ani_env *env, [[maybe_unused
 }
 
 static void RevokePermissionExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags)
+    [[maybe_unused]] ani_object object, ani_int aniTokenID, ani_string aniPermission, ani_int aniFlags,
+    ani_boolean killProcess)
 {
-    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, OPERABLE_PERM);
+    RevokePermissionInner(env, aniTokenID, aniPermission, aniFlags, OPERABLE_PERM, killProcess);
 }
 
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)

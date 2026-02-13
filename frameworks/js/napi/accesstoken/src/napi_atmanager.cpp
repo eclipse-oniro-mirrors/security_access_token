@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -665,8 +665,31 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
     return result;
 }
 
+bool NapiAtManager::ParseKillProcessParam(const napi_env env, const napi_value* argv, size_t argc,
+    AtManagerAsyncContext& asyncContext)
+{
+    if (argc < MAX_PARAMS_FOUR) {
+        return true;
+    }
+
+    // 3: the fourth parameter of argv
+    if (IsNull(env, argv[3])) {
+        std::string errMsg = GetParamErrorMsg("killProcess", "boolean");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+    // 3: the fourth parameter of argv
+    if ((!IsUndefined(env, argv[3])) && (!ParseBool(env, argv[3], asyncContext.killProcess))) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
+                            GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_ILLEGAL))), false);
+        return false;
+    }
+    return true;
+}
+
 bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
-    AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag)
+    AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag, bool needParseKillParam)
 {
     size_t argc = MAX_PARAMS_FOUR;
     napi_value argv[MAX_PARAMS_FOUR] = { nullptr };
@@ -713,10 +736,16 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
                                 GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_ILLEGAL))), false);
             return false;
         }
+    } else if (argc == MAX_PARAMS_FOUR && needParseKillParam) {
+        // Parse optional killProcess parameter for revokePermission
+        if (!ParseKillProcessParam(env, argv, argc, asyncContext)) {
+            return false;
+        }
     }
 
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}d, permissionName = %{public}s, flag = %{public}d",
-        asyncContext.tokenId, asyncContext.permissionName.c_str(), asyncContext.flag);
+    LOGD(ATM_DOMAIN, ATM_TAG,
+        "TokenID = %{public}d, permissionName = %{public}s, flag = %{public}d, killProcess = %{public}d",
+        asyncContext.tokenId, asyncContext.permissionName.c_str(), asyncContext.flag, asyncContext.killProcess);
     return true;
 }
 
@@ -1074,8 +1103,9 @@ void NapiAtManager::RevokePermissionExecute(napi_env env, void *data)
     // only user_grant or manual_settings permission can use innerkit class method to grant permission
     // system_grant return failed
     if (permissionDef.grantMode == USER_GRANT || permissionDef.grantMode == MANUAL_SETTINGS) {
-        asyncContext->errorCode = AccessTokenKit::RevokePermission(asyncContext->tokenId,
-            asyncContext->permissionName, asyncContext->flag, UpdatePermissionFlag::OPERABLE_PERM);
+        asyncContext->errorCode = AccessTokenKit::RevokePermission(
+            asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag,
+            UpdatePermissionFlag::OPERABLE_PERM, asyncContext->killProcess);
     } else {
         asyncContext->errorCode = ERR_EXPECTED_PERMISSION_TYPE;
         asyncContext->extErrorMsg = "The specified permission is not a user_grant or manual_settings permission.";
@@ -1101,7 +1131,8 @@ napi_value NapiAtManager::RevokePermission(napi_env env, napi_callback_info info
     }
 
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext, OPERABLE_PERM)) {
+    bool needParseKillParam = true;
+    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext, OPERABLE_PERM, needParseKillParam)) {
         return nullptr;
     }
 

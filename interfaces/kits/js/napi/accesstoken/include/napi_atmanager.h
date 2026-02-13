@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -87,6 +87,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
         uint32_t flag = 0;
         uint32_t status;
     };
+    bool killProcess = true;  // New parameter for revokePermission, default is true
     int32_t result = RET_FAILED;
     int32_t errorCode = 0;
     std::string extErrorMsg = "";
@@ -156,7 +157,10 @@ private:
     static void CheckAccessTokenExecute(napi_env env, void* data);
     static void CheckAccessTokenComplete(napi_env env, napi_status status, void* data);
     static bool ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
-        AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
+        AtManagerAsyncContext& asyncContext, UpdatePermissionFlag updateFlag = USER_GRANTED_PERM,
+        bool needParseKillParam = false);
+    static bool ParseKillProcessParam(const napi_env env, const napi_value* argv, size_t argc,
+        AtManagerAsyncContext& asyncContext);
     static void GrantUserGrantedPermissionExecute(napi_env env, void *data);
     static void GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
     static void RevokeUserGrantedPermissionExecute(napi_env env, void *data);

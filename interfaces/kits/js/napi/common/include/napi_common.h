@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +42,8 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& resul
 bool IsArray(const napi_env& env, const napi_value& value);
 bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type);
 bool IsUndefinedOrNull(const napi_env& env, const napi_value& value);
+bool IsUndefined(const napi_env& env, const napi_value& value);
+bool IsNull(const napi_env& env, const napi_value& value);
 bool IsNeedParseProperty(
     const napi_env& env, const napi_value& value, const std::string& key, napi_value& property);
 

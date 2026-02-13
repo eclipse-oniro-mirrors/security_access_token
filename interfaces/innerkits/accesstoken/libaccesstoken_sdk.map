@@ -30,7 +30,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionFlag(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, OHOS::Security::AccessToken::TypeUpdatePermissionFlag)";
         "OHOS::Security::AccessToken::AccessTokenKit::SetPermissionStatusWithPolicy(unsigned int, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, int, unsigned int)";
-        "OHOS::Security::AccessToken::AccessTokenKit::RevokePermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, OHOS::Security::AccessToken::TypeUpdatePermissionFlag)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RevokePermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, OHOS::Security::AccessToken::TypeUpdatePermissionFlag, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::ClearUserGrantedPermissionState(unsigned int)";
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize(OHOS::Security::AccessToken::PermStateChangeScope const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";

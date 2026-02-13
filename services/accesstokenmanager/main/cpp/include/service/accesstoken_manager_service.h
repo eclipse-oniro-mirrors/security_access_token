@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -75,8 +75,8 @@ public:
     int32_t RequestAppPermOnSetting(AccessTokenID tokenID) override;
     int GrantPermission(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag) override;
-    int RevokePermission(
-        AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag) override;
+    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+        int32_t updateFlag, bool killProcess = true) override;
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;

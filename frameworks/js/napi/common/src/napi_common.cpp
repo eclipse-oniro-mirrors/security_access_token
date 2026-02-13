@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -186,6 +186,24 @@ bool IsUndefinedOrNull(const napi_env& env, const napi_value& value)
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, value, &valueType);
     return (valueType == napi_undefined) || (valueType == napi_null) ;
+}
+
+bool IsUndefined(const napi_env& env, const napi_value& value)
+{
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, value, &valueType) == napi_ok) {
+        return (valueType == napi_undefined);
+    }
+    return true;
+}
+
+bool IsNull(const napi_env& env, const napi_value& value)
+{
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, value, &valueType) == napi_ok) {
+        return (valueType == napi_null);
+    }
+    return true;
 }
 
 bool IsNeedParseProperty(

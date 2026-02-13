@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -192,7 +192,8 @@ export default namespace abilityAccessCtrl {
             tokenID: int, permissionName: Permissions, permissionFlags: int, callback: AsyncCallback<void>): void;
 
         grantPermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
-        revokePermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void>;
+        revokePermission(tokenID: int, permissionName: Permissions, permissionFlags: int,
+            killProcess?: boolean): Promise<void>;
 
         getVersion(): Promise<int>;
         getPermissionsStatus(tokenID: int, permissionList: Array<Permissions>): Promise<Array<PermissionStatus>>;
@@ -230,7 +231,7 @@ export default namespace abilityAccessCtrl {
             tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native grantPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native revokePermissionExecute(
-            tokenID: int, permissionName: Permissions, permissionFlags: int): void;
+            tokenID: int, permissionName: Permissions, permissionFlags: int, killProcess: boolean): void;
         native getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         native getVersionExecute(): int;
         native getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
@@ -476,11 +477,14 @@ export default namespace abilityAccessCtrl {
             });
         }
 
-        revokePermission(tokenID: int, permissionName: Permissions, permissionFlags: int): Promise<void> {
+        revokePermission(tokenID: int, permissionName: Permissions, permissionFlags: int,
+            killProcess?: boolean): Promise<void> {
+            let killProcessIn = killProcess ?? true;
             return new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
                 let p = taskpool.execute((): void => {
-                    new AtManagerInner().revokePermissionExecute(tokenID, permissionName, permissionFlags);
+                    new AtManagerInner().revokePermissionExecute(tokenID, permissionName, permissionFlags,
+                        killProcessIn);
                 });
                 p.then((e: Any): void => {
                     resolve(undefined);
