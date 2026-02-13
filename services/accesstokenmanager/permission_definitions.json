@@ -8175,6 +8175,28 @@
             "deviceTypes": ["2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.MANAGE_STANDBY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_STANDBY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 23,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
+        },
+        {
             "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
