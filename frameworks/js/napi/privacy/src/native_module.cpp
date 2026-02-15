@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,6 +34,7 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", RegisterPermActiveChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback),
         DECLARE_NAPI_FUNCTION("getPermissionUsedTypeInfos", GetPermissionUsedTypeInfos),
+        DECLARE_NAPI_FUNCTION("checkPermissionInUse", CheckPermissionInUse),
         DECLARE_NAPI_FUNCTION("setPermissionUsedRecordToggleStatus", SetPermissionUsedRecordToggleStatus),
         DECLARE_NAPI_FUNCTION("getPermissionUsedRecordToggleStatus", GetPermissionUsedRecordToggleStatus)
     };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -875,6 +875,32 @@ static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] a
     return isToggleStatus;
 }
 
+static ani_boolean CheckPermissionInUseExecute([[maybe_unused]] ani_env* env, ani_string aniPermission)
+{
+    if (env == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
+        return false;
+    }
+
+    // Get permission name string
+    std::string permissionName;
+    (void)ParseAniString(env, aniPermission, permissionName);
+    if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Permission(%{public}s) is invalid.", permissionName.c_str());
+        return false;
+    }
+
+    bool isUsing = false;
+    int32_t retCode = PrivacyKit::CheckPermissionInUse(permissionName, isUsing);
+    if (retCode != RET_SUCCESS) {
+        int32_t stsCode = GetStsErrorCode(retCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return false;
+    }
+
+    return isUsing;
+}
+
 void InitPrivacyFunction(ani_env *env)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "InitPrivacyFunction call.");
@@ -904,6 +930,8 @@ void InitPrivacyFunction(ani_env *env)
             reinterpret_cast<void *>(GetPermissionUsedRecordExecute)},
         ani_native_function {"getPermissionUsedTypeInfosExecute", nullptr,
             reinterpret_cast<void *>(GetPermissionUsedTypeInfosExecute)},
+        ani_native_function {"checkPermissionInUseExecute", nullptr,
+            reinterpret_cast<void *>(CheckPermissionInUseExecute)},
         ani_native_function {"setPermissionUsedRecordToggleStatusExecute",
             nullptr, reinterpret_cast<void *>(SetPermissionUsedRecordToggleStatusExecute)},
         ani_native_function {"getPermissionUsedRecordToggleStatusExecute",

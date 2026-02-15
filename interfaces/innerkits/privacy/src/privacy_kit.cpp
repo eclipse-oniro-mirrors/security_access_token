@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -264,6 +264,11 @@ int32_t PrivacyKit::GetDisablePolicy(const std::string& permissionName, bool& is
 int32_t PrivacyKit::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList)
 {
     return PrivacyManagerClient::GetInstance().GetCurrUsingPermInfo(infoList);
+}
+
+int32_t PrivacyKit::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
+{
+    return PrivacyManagerClient::GetInstance().CheckPermissionInUse(permissionName, isUsing);
 }
 
 int32_t PrivacyKit::RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback)

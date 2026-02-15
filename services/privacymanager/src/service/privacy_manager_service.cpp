@@ -548,6 +548,19 @@ int32_t PrivacyManagerService::GetCurrUsingPermInfo(std::vector<ActiveChangeResp
     return RET_SUCCESS;
 }
 
+int32_t PrivacyManagerService::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    return PermissionRecordManager::GetInstance().CheckPermissionInUse(permissionName, isUsing);
+}
+
 int32_t PrivacyManagerService::RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,
     const sptr<IRemoteObject>& callback)
 {
