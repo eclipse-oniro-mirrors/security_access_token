@@ -25,7 +25,7 @@ function PARAM_ERROR_MSG(param: string, type: string): string {
 export { Permissions };
 export type PermissionRequestResult = _PermissionRequestResult;
 
-class AsyncCallbackWrapper<T> {
+export class AsyncCallbackWrapper<T> {
   private wrapperCallback_: AsyncCallback<T, void> = (err: BusinessError<void> | null, data: T | undefined) => {}
 
   constructor(callback: AsyncCallback<T, void>) {
