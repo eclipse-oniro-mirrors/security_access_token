@@ -8219,7 +8219,7 @@
             "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
-            "name": "ohos.permission.CONNECT_OBJECTEDITOR_EXTENSION",
+            "name": "ohos.permission.REGISTER_OBJECTEDITOR_EXTENSION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
