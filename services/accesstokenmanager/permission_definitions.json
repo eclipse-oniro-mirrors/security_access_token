@@ -8175,10 +8175,10 @@
             "deviceTypes": ["2in1", "tablet"]
         },
         {
-            "name": "ohos.permission.SCAN_REMEDIATE_VIRUS",
+            "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableType": "SYSTEM",
             "since": 24,
             "deprecated": "",
             "provisionEnable": true,
@@ -8186,10 +8186,10 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
+            "name": "ohos.permission.SCAN_REMEDIATE_VIRUS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": 24,
             "deprecated": "",
             "provisionEnable": true,
