@@ -27,6 +27,7 @@
 #include "access_token_db.h"
 #include "access_token.h"
 #include "atm_tools_param_info.h"
+#include "iaccess_token_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
 #endif
@@ -51,7 +52,6 @@ struct UserPolicyInner {
     std::map<int32_t, bool> changedUserList;
 };
 
-
 /**
  * @brief Apl and isSystemApp info about tokenId
  */
@@ -69,7 +69,10 @@ public:
     void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
         std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
-    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
+    void GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
+    void GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,
+        std::vector<PermissionStatusIdl>& permissionInfoList);
+    void GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
@@ -97,7 +100,7 @@ public:
     bool GetPermDialogCap(AccessTokenID tokenID);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
-    bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
+    bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, uint32_t permCode);
     std::vector<uint32_t> GetRestrictedPermListByUserId(int32_t userId);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
@@ -121,6 +124,16 @@ public:
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(AccessTokenID tokenId, const std::string& permissionName, std::string& value);
+
+    int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+        std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
+    int32_t QueryStatusByTokenID(AccessTokenID tokenID,
+        std::vector<PermissionStatusIdl>& permissionInfoList);
+    size_t GetMaxQueryResultSize() const;
+
+#ifdef ATM_TEST_ENABLE
+    void SetMaxQueryResultSize(size_t maxSize);
+#endif
 
 private:
     AccessTokenInfoManager();
@@ -189,6 +202,8 @@ private:
 
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
     std::shared_mutex monitorLock_;
+
+    size_t maxQueryResultSize_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,6 +44,8 @@ typedef enum TypeOptType {
     DUMP_TYPE,
     /** dump permission definition info */
     DUMP_PERM,
+    /** dump apps by permission (token id and bundle name) */
+    DUMP_PERMISSION_APPS,
     /** grant permission */
     PERM_GRANT,
     /** revoke permission */
@@ -76,6 +78,25 @@ public:
     uint32_t status = INVALID_ATM_SET_STATUS;
 };
 
+struct DumpOptionsContext {
+    AtmToolsParamInfo info;
+    OptType type = DEFAULT_OPER;
+    std::string permissionName;
+    bool hasTokenOption = false;
+    bool hasPermissionOption = false;
+    bool hasTokenIdOption = false;
+    bool hasBundleOption = false;
+    bool hasProcessOption = false;
+};
+
+struct PermOptionsContext {
+    bool isGranted = false;
+    AccessTokenID tokenID = 0;
+    std::string permission;
+    bool hasTokenIdOption = false;
+    bool hasPermissionOption = false;
+};
+
 class AtmCommand final {
 public:
     AtmCommand(int32_t argc, char* argv[]);
@@ -88,13 +109,12 @@ private:
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
     int32_t RunAsCommandMissingOptionArgument(const std::vector<char>& requiredOptions);
-    void RunAsCommandExistentOptionForDump(
-        const int32_t& option, AtmToolsParamInfo& info, OptType& type, std::string& permissionName);
-    void RunAsCommandExistentOptionForPerm(
-        const int32_t& option, bool& isGranted, AccessTokenID& tokenID, std::string& permission);
-    void RunAsCommandExistentOptionForToggle(const int32_t& option, AtmToggleParamInfo& info);
+    void RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context);
+    void RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsContext& context);
+    void RunAsCommandExistentOptionForToggle(int32_t option, AtmToggleParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
+    std::string DumpPermissionApps(const std::string& permissionName);
     int32_t ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName);
     int32_t RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName);
 
@@ -110,7 +130,11 @@ private:
 
     int32_t RunAsHelpCommand();
     int32_t RunAsCommonCommandForDump();
+    int32_t ParseDumpOptions(DumpOptionsContext& context);
+    void DetermineDumpOperationType(DumpOptionsContext& context);
+    int32_t ValidateDumpOptions(const DumpOptionsContext& context);
     int32_t RunAsCommonCommandForPerm();
+    int32_t ValidatePermParams(const PermOptionsContext& context);
     int32_t RunAsCommonCommandForToggle();
 
     int32_t argc_;

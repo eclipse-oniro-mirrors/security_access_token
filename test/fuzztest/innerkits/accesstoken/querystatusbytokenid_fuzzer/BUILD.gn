@@ -1,0 +1,48 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//base/security/access_token/access_token.gni")
+import("//build/config/features.gni")
+import("//build/test.gni")
+
+ohos_fuzztest("QueryStatusByTokenIDFuzzTest") {
+  module_out_path = module_output_path_interface_access_token
+  fuzz_config_file = "."
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/test/fuzztest/common",
+  ]
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+  ]
+  sources = [ "querystatusbytokenid_fuzzer.cpp" ]
+  deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+}

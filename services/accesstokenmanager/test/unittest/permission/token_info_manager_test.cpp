@@ -1493,7 +1493,7 @@ HWTEST_F(TokenInfoManagerTest, DumpTokenInfo001, TestSize.Level0)
     dumpInfo.clear();
     info.tokenId = static_cast<AccessTokenID>(RANDOM_TOKENID);
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ("invalid tokenId", dumpInfo);
+    EXPECT_EQ("Error: TokenID does not exist.\n", dumpInfo);
 }
 
 /**
@@ -2493,12 +2493,12 @@ HWTEST_F(TokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Lev
 HWTEST_F(TokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, TestSize.Level0)
 {
     AccessTokenID tokenID = 123; // invalid tokenid
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
 #ifdef SUPPORT_MANAGE_USER_POLICY
-    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
-        "ohos.permission.CAMERA"));
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permCode));
 #else
-    EXPECT_FALSE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID,
-        "ohos.permission.CAMERA"));
+    EXPECT_FALSE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permCode));
 #endif
 }
 

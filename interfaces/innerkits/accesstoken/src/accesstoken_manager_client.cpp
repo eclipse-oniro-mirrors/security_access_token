@@ -16,18 +16,21 @@
 #include "accesstoken_manager_client.h"
 
 #include <cinttypes>
+#include <map>
 #include "access_token_error.h"
 #include "access_token_manager_proxy.h"
 #include "accesstoken_callbacks.h"
 #include "accesstoken_common_log.h"
 #include "atm_tools_param_info_parcel.h"
 #include "hap_token_info.h"
+#include "permission_status_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "idl_common.h"
 #include "iservice_registry.h"
 #include "parameter.h"
 #include "perm_state_change_scope_parcel.h"
 #include "permission_grant_info_parcel.h"
+#include "permission_map.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -1278,7 +1281,66 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
     enhance = parcel.enhanceData;
     return RET_SUCCESS;
 }
-#endif
+#endif // SECURITY_COMPONENT_ENHANCE_ENABLE
+
+int32_t AccessTokenManagerClient::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+    std::vector<PermissionStatus>& permissionInfoList, bool onlyHap)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<PermissionStatusIdl> idlList;
+    int32_t res = proxy->QueryStatusByPermission(permCodeList, idlList, onlyHap);
+    if (res != RET_SUCCESS) {
+        return ConvertResult(res);
+    }
+
+    // Convert PermissionStatusIdl to PermissionStatus
+    permissionInfoList.clear();
+    permissionInfoList.reserve(idlList.size());
+    for (const auto& idl : idlList) {
+        PermissionStatus status;
+        status.tokenID = idl.tokenID;
+        status.permissionName = AccessToken::TransferOpcodeToPermission(idl.permCode);
+        status.grantStatus = idl.grantStatus;
+        status.grantFlag = idl.grantFlag;
+        permissionInfoList.emplace_back(status);
+    }
+
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
+    std::vector<PermissionStatus>& permissionInfoList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<PermissionStatusIdl> idlList;
+    int32_t res = proxy->QueryStatusByTokenID(tokenIDList, idlList);
+    if (res != RET_SUCCESS) {
+        return ConvertResult(res);
+    }
+
+    // Convert PermissionStatusIdl to PermissionStatus
+    permissionInfoList.clear();
+    permissionInfoList.reserve(idlList.size());
+    for (const auto& idl : idlList) {
+        PermissionStatus status;
+        status.tokenID = idl.tokenID;
+        status.permissionName = AccessToken::TransferOpcodeToPermission(idl.permCode);
+        status.grantStatus = idl.grantStatus;
+        status.grantFlag = idl.grantFlag;
+        permissionInfoList.emplace_back(status);
+    }
+
+    return RET_SUCCESS;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+

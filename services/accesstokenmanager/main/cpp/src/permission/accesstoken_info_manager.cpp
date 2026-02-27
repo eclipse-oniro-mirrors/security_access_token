@@ -44,6 +44,8 @@
 #include "permission_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "permission_data_brief.h"
+#include "idl_common.h"
 #include "perm_setproc.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
@@ -61,6 +63,7 @@ static const uint32_t SYSTEM_APP_FLAG = 0x0001;
 static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 static const uint32_t TOKEN_RESERVED_FLAG = 0x0004;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
 #endif
@@ -72,7 +75,8 @@ static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 }
 
-AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
+AccessTokenInfoManager::AccessTokenInfoManager()
+    : hasInited_(false), maxQueryResultSize_(DEFAULT_MAX_QUERY_RESULT_SIZE) {}
 
 AccessTokenInfoManager::~AccessTokenInfoManager()
 {
@@ -419,27 +423,54 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
     return false;
 }
 
-int32_t AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+void AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> tokenIDResults;
-    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
+    for (const auto& [key, tokenInfoPtr] : hapTokenInfoMap_) {
+        if (tokenInfoPtr != nullptr &&(tokenInfoPtr->GetUserID() == userID)) {
+            tokenIdList.emplace(tokenInfoPtr->GetTokenID());
+        }
+    }
+}
 
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, tokenIDResults);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserID(%{public}d) find tokenID failed, ret: %{public}d.", userID, ret);
-        return ret;
-    }
-    if (tokenIDResults.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "UserID(%{public}d) find tokenID empty.", userID);
-        return RET_SUCCESS;
-    }
+void AccessTokenInfoManager::GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    std::shared_lock<std::shared_mutex> infoGuard(nativeTokenInfoLock_);
 
-    for (const GenericValues& tokenIDResult : tokenIDResults) {
-        AccessTokenID tokenId = (AccessTokenID)tokenIDResult.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        tokenIdList.emplace(tokenId);
+    // Convert permCodeList to set for O(1) lookup performance
+    std::unordered_set<uint32_t> permCodeSet(permCodeList.begin(), permCodeList.end());
+
+    // Only return permissions that are in the requested permCodeList
+    // (i.e., native tokens that have applied for these specific permissions)
+    for (const auto& [tokenID, cache] : nativeTokenInfoMap_) {
+        size_t opCodeSize = cache.opCodeList.size();
+        for (size_t i = 0; i < opCodeSize; ++i) {
+            uint32_t permCode = cache.opCodeList[i];
+            // Check if this permCode is in the requested set (O(1) lookup)
+            if (permCodeSet.find(permCode) == permCodeSet.end()) {
+                continue;
+            }
+
+            // Helper lambda to convert permission status
+            PermissionStatusIdl idl;
+            idl.tokenID = tokenID;
+            idl.permCode = permCode;
+            idl.grantStatus = PERMISSION_GRANTED;
+            idl.grantFlag = PERMISSION_SYSTEM_FIXED;
+            permissionInfoList.emplace_back(idl);
+        }
     }
-    return RET_SUCCESS;
+}
+
+void AccessTokenInfoManager::GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList)
+{
+    std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
+    for (const auto& [key, tokenInfoPtr] : hapTokenInfoMap_) {
+        if (tokenInfoPtr != nullptr) {
+            tokenIdList.emplace(tokenInfoPtr->GetTokenID());
+        }
+    }
 }
 
 int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& info)
@@ -1300,17 +1331,20 @@ void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID token
         std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
         if (infoPtr != nullptr) {
             dumpInfo = infoPtr->ToString();
+        } else {
+            dumpInfo = "Error: TokenID does not exist.\n";
         }
     } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
         dumpInfo = NativeTokenToString(tokenId);
     } else {
-        dumpInfo.append("invalid tokenId");
+        dumpInfo = "Error: TokenID does not exist.\n";
     }
 }
 
 void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo)
 {
     std::shared_lock<std::shared_mutex> hapInfoGuard(this->hapTokenInfoLock_);
+    bool found = false;
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
             if (bundleName != iter->second->GetBundleName()) {
@@ -1318,7 +1352,11 @@ void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bun
             }
             dumpInfo = iter->second->ToString();
             dumpInfo.append("\n");
+            found = true;
         }
+    }
+    if (!found) {
+        dumpInfo = "Error: BundleName '" + bundleName + "' does not exist.\n";
     }
 }
 
@@ -1337,7 +1375,12 @@ void AccessTokenInfoManager::DumpAllHapTokenname(std::string& dumpInfo)
 
 void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
 {
-    dumpInfo = NativeTokenToString(GetNativeTokenId(processName));
+    AccessTokenID tokenID = GetNativeTokenId(processName);
+    if (tokenID == INVALID_TOKENID) {
+        dumpInfo = "Error: ProcessName '" + processName + "' does not exist.\n";
+        return;
+    }
+    dumpInfo = NativeTokenToString(tokenID);
 }
 
 void AccessTokenInfoManager::DumpAllNativeTokenName(std::string& dumpInfo)
@@ -1418,7 +1461,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
     return RET_SUCCESS;
 }
 
-bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName)
+bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id, uint32_t permCode)
 {
 #ifdef SUPPORT_MANAGE_USER_POLICY
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
@@ -1426,15 +1469,11 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", id);
         return true;
     }
-    uint32_t permCode;
-    if (!TransferPermissionToOpcode(permissionName, permCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "permissionName %{public}s is invalid.", permissionName.c_str());
-        return true;
-    }
     std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     auto iter = userPermPolicyList_.find(permCode);
     if (iter != userPermPolicyList_.end() &&
         std::find(iter->second.begin(), iter->second.end(), infoPtr->GetUserID()) != iter->second.end()) {
+        std::string permissionName = TransferOpcodeToPermission(permCode);
         LOGW(ATM_DOMAIN, ATM_TAG, "Perm %{public}s of %{public}u is restricted.", permissionName.c_str(), id);
         return true;
     }
@@ -1880,6 +1919,90 @@ int32_t AccessTokenInfoManager::GetKernelPermissions(
     return PermissionDataBrief::GetInstance().GetKernelPermissions(tokenId, kernelPermList);
 }
 
+int32_t AccessTokenInfoManager::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+    std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap)
+{
+    permissionInfoList.clear();
+    int32_t userId = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+
+    // Convert permCodeList to unordered_set for O(1) lookup performance
+    std::unordered_set<uint32_t> permCodeSet(permCodeList.begin(), permCodeList.end());
+
+    // Step 1: Get hapTokenIdSet and process HAP tokens
+    std::unordered_set<AccessTokenID> hapTokenIdSet;
+    if (userId == 0) {
+        GetAllHapTokenId(hapTokenIdSet);
+    } else {
+        GetTokenIDByUserID(userId, hapTokenIdSet);
+    }
+
+    // Reserve space for HAP token permissions
+    permissionInfoList.reserve(hapTokenIdSet.size() * permCodeList.size());
+
+    // Step 2: Process HAP tokens
+    for (const auto& tokenID : hapTokenIdSet) {
+        // Query BriefPermData for this token
+        std::vector<BriefPermData> permDataList;
+        if (PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenID, permDataList) != RET_SUCCESS) {
+            continue;
+        }
+
+        // Filter permissions that match the requested permCodeList
+        for (const auto& permData : permDataList) {
+            // Check if this permCode is in the requested set (O(1) lookup)
+            if (permCodeSet.find(permData.permCode) != permCodeSet.end()) {
+                PermissionStatusIdl idl;
+                idl.tokenID = tokenID;
+                idl.permCode = permData.permCode;
+                idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permData.permCode) ?
+                    PERMISSION_DENIED : permData.status;
+                idl.grantFlag = permData.flag;
+                permissionInfoList.push_back(idl);
+            }
+        }
+    }
+
+    // Step 3: Process Native tokens (if not onlyHap)
+    if (!onlyHap) {
+        // If not onlyHap, also include native tokens' permissions
+        GetAllNativeTokenPerms(permCodeList, permissionInfoList);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "End result size: %{public}zu", permissionInfoList.size());
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::QueryStatusByTokenID(AccessTokenID tokenID,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    permissionInfoList.clear();
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionInfosByTokenID input: %{public}u.", tokenID);
+
+    // Query all permissions for this token from BriefData
+    std::vector<BriefPermData> permDataList;
+    if (PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenID, permDataList) != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "No permissions found for tokenID: %{public}u.", tokenID);
+        return RET_SUCCESS;
+    }
+
+    // Reserve exact space since we know the size
+    permissionInfoList.reserve(permDataList.size());
+
+    // Convert BriefPermData to PermissionStatusIdl
+    for (const auto& permData : permDataList) {
+        PermissionStatusIdl idl;
+        idl.tokenID = tokenID;
+        idl.permCode = permData.permCode;
+        idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permData.permCode) ?
+            PERMISSION_DENIED : permData.status;
+        idl.grantFlag = permData.flag;
+        permissionInfoList.push_back(idl);
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionInfosByTokenID result: %{public}zu",
+        permissionInfoList.size());
+    return RET_SUCCESS;
+}
 
 int32_t AccessTokenInfoManager::GetReqPermissionByName(
     AccessTokenID tokenId, const std::string& permissionName, std::string& value)
@@ -1887,6 +2010,18 @@ int32_t AccessTokenInfoManager::GetReqPermissionByName(
     return PermissionDataBrief::GetInstance().GetReqPermissionByName(
         tokenId, permissionName, value, true);
 }
+
+size_t AccessTokenInfoManager::GetMaxQueryResultSize() const
+{
+    return maxQueryResultSize_;
+}
+
+#ifdef ATM_TEST_ENABLE
+void AccessTokenInfoManager::SetMaxQueryResultSize(size_t maxSize)
+{
+    maxQueryResultSize_ = maxSize;
+}
+#endif
 
 std::string AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID)
 {
@@ -1911,7 +2046,7 @@ std::string AccessTokenInfoManager::NativeTokenToString(AccessTokenID tokenID)
     }
     if (iter == tokenInfos.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
-        return "";
+        return "Error: TokenID does not exist.\n";
     }
     NativeTokenInfoBase native = *iter;
     return policy->DumpNativeTokenInfo(native);
