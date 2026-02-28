@@ -34,8 +34,8 @@ bool IsUEEnable()
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter("persist.hiviewdfx.hiview.ue.enable", "", value, VALUE_MAX_LEN - 1);
     if (ret < 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get parameter failed, ret=%{public}d", ret);
-        return true;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get parameter failed, ret=%{public}d.", ret);
+        return false;
     }
     return std::atoi(value) == 1;
 }
