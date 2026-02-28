@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -535,10 +535,12 @@ int AccessTokenKit::GrantPermission(
 }
 
 int AccessTokenKit::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+    UpdatePermissionFlag updateFlag, bool killProcess)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u.",
-        tokenID, permissionName.c_str(), flag);
+    LOGD(ATM_DOMAIN, ATM_TAG,
+        "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}u, killProcess=%{public}d.",
+        tokenID, permissionName.c_str(), flag, killProcess);
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid tokenID");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -555,7 +557,8 @@ int AccessTokenKit::RevokePermission(
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag, updateFlag);
+    return AccessTokenManagerClient::GetInstance().RevokePermission(
+        tokenID, permissionName, flag, updateFlag, killProcess);
 }
 
 int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
@@ -868,8 +871,7 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
         LOGE(ATM_DOMAIN, ATM_TAG, "Flag: %{public}u, flag is invalid.", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsPermissionListSizeValid(permissionList)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionList size is invalid: %{public}zu.", permissionList.size());
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
@@ -888,6 +890,47 @@ bool AccessTokenKit::TransferOpcodeToPermission(uint32_t permCode, std::string& 
         return false;
     }
     return true;
+}
+
+int32_t AccessTokenKit::QueryStatusByPermission(const std::vector<std::string>& permissionList,
+    std::vector<PermissionStatus>& permissionInfoList, bool onlyHap)
+{
+    // Validate permission list size
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Convert permissionList to permCodeList for IPC
+    std::vector<uint32_t> permCodeList;
+    permCodeList.reserve(permissionList.size());
+    for (const auto& permissionName : permissionList) {
+        // Validate permission name format
+        if (!DataValidator::IsPermissionNameValid(permissionName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName format is invalid: %{public}s.", permissionName.c_str());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+
+        // Validate permission exists and convert to permCode
+        uint32_t permCode = 0;
+        if (!AccessToken::TransferPermissionToOpcode(permissionName, permCode)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission %{public}s does not exist.", permissionName.c_str());
+            return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        }
+        permCodeList.emplace_back(permCode);
+    }
+
+    return AccessTokenManagerClient::GetInstance().QueryStatusByPermission(
+        permCodeList, permissionInfoList, onlyHap);
+}
+
+int32_t AccessTokenKit::QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
+    std::vector<PermissionStatus>& permissionInfoList)
+{
+    if (!DataValidator::IsListSizeValid(tokenIDList.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenIDList size is invalid: %{public}zu", tokenIDList.size());
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().QueryStatusByTokenID(tokenIDList, permissionInfoList);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -658,7 +658,7 @@ int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::st
 }
 
 int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
-    bool isGranted, uint32_t flag)
+    bool isGranted, uint32_t flag, bool killProcess)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
@@ -678,14 +678,14 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     if (!isGranted && flag != PERMISSION_COMPONENT_SET) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) of process(%{public}u) is revoked.",
             permissionName.c_str(), tokenID);
-        needKill = true;
+        needKill = killProcess;
     }
 
     return UpdatePermission(tokenID, permissionName, isGranted, flag, needKill);
 }
 
 int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
-    bool isGranted, uint32_t flag)
+    bool isGranted, uint32_t flag, bool killProcess)
 {
     HapTokenInfo hapInfo;
     AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
@@ -702,7 +702,7 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     updateInfo.grantedFlag = isGranted;
     ReportUpdatePermissionEvent(updateInfo);
 
-    int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag);
+    int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag, killProcess);
 
     uint32_t newFlag = flag;
     if (ret == RET_SUCCESS && GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
@@ -772,11 +772,13 @@ int32_t PermissionManager::GrantPermission(
 }
 
 int32_t PermissionManager::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+    UpdatePermissionFlag updateFlag, bool killProcess)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
-        tokenID, permissionName.c_str(), flag);
-    
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "TokenID: %{public}u, permissionName: %{public}s, flag: %{public}d, killProcess: %{public}d",
+        tokenID, permissionName.c_str(), flag, killProcess);
+
     if (updateFlag < OPERABLE_PERM) {
         PermissionBriefDef briefDef;
         if (GetPermissionBriefDef(permissionName, briefDef) && briefDef.grantMode == MANUAL_SETTINGS) {
@@ -784,7 +786,7 @@ int32_t PermissionManager::RevokePermission(
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
     }
-    return CheckAndUpdatePermissionInner(tokenID, permissionName, false, flag);
+    return CheckAndUpdatePermissionInner(tokenID, permissionName, false, flag, killProcess);
 }
 
 int32_t PermissionManager::GrantPermissionForSpecifiedTime(
@@ -1325,6 +1327,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
+
 
 } // namespace AccessToken
 } // namespace Security

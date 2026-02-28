@@ -21,13 +21,40 @@ ohos_executable("atm") {
 
   include_dirs = [
     "${access_token_path}/frameworks/json_adapter/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "include",
+  ]
+
+  sources = [
+    "src/main.cpp",
+  ]
+
+  deps = [
+    ":atm_tools",
+  ]
+
+  cflags = []
+
+  if (build_variant == "user") {
+    cflags_cc = [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+}
+
+# Source set for testing
+source_set("atm_tools") {
+  include_dirs = [
+    "${access_token_path}/frameworks/json_adapter/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
   ]
 
   sources = [
     "src/atm_command.cpp",
-    "src/main.cpp",
     "src/to_string.cpp",
   ]
 

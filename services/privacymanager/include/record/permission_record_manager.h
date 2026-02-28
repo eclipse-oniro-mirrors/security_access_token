@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -106,6 +106,7 @@ public:
     int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
     int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
     void GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList);
+    int32_t CheckPermissionInUse(const std::string& permissionName, bool& isUsing);
     int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback);

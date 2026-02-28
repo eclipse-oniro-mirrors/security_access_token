@@ -42,6 +42,7 @@
 
 #include <string>
 #include <vector>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -51,14 +52,22 @@ namespace AccessToken {
  */
 class PermissionStatus final {
 public:
+    /**
+     * The tokenID which owns this permission.
+     * Indicates the application or native token to which this permission belongs.
+     */
+    AccessTokenID tokenID;
+    /**
+     * Permission name, such as ohos.permission.CAMERA.
+     */
     std::string permissionName;
     /**
-     * permission grant status, for details about the valid values,
+     * Permission grant status, for details about the valid values,
      * see the definition of PermissionState in the access_token.h file.
      */
     int32_t grantStatus;
     /**
-     * permission grant flag, for details about the valid values,
+     * Permission grant flag, for details about the valid values,
      * see the definition of PermissionFlag in the access_token.h file.
      */
     uint32_t grantFlag;

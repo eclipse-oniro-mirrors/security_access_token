@@ -64,3 +64,10 @@ struct HapTokenInfoCompatIdl {
     int instIndex;
     int apiVersion;
 };
+
+struct PermissionStatusIdl {
+    unsigned int tokenID;
+    unsigned int permCode;
+    int grantStatus;
+    unsigned int grantFlag;
+};

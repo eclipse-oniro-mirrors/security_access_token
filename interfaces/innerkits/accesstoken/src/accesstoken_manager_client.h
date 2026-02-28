@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -64,7 +64,8 @@ public:
     int GrantPermission(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag);
     int RevokePermission(
-        AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, UpdatePermissionFlag updateFlag);
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+        UpdatePermissionFlag updateFlag, bool killProcess = true);
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
@@ -120,6 +121,10 @@ public:
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
+    int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+        std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
+    int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
+        std::vector<PermissionStatus>& permissionInfoList);
 
 private:
     AccessTokenManagerClient();

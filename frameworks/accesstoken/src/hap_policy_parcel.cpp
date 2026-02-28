@@ -116,7 +116,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(apl), hapPolicyParcel);
     hapPolicyParcel->hapPolicy.apl = ATokenAplEnum(apl);
 
-    hapPolicyParcel->hapPolicy.domain = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapPolicyParcel->hapPolicy.domain), hapPolicyParcel);
 
     uint32_t permListSize;
     RELEASE_IF_FALSE(in.ReadUint32(permListSize), hapPolicyParcel);

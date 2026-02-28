@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,7 +63,7 @@ public:
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
-    static bool IsPermissionListSizeValid(const std::vector<std::string>& permissionList);
+    static bool IsListSizeValid(uint32_t size);
 
 private:
     const static int MAX_LENGTH = 256;

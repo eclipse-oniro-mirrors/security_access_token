@@ -36,8 +36,17 @@ int32_t StateChangeCallbackStub::OnRemoteRequest(
 
     int32_t msgCode = static_cast<int32_t>(code);
     if (msgCode == IStateChangeCallback::STATE_CHANGE_CALLBACK) {
-        AccessTokenID tokenId = data.ReadUint32();
-        bool isShowing = data.ReadBool();
+        AccessTokenID tokenId;
+        if (!data.ReadUint32(tokenId)) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read tokenId.");
+            return ERROR_IPC_REQUEST_FAIL;
+        }
+
+        bool isShowing;
+        if (!data.ReadBool(isShowing)) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to read isShowing.");
+            return ERROR_IPC_REQUEST_FAIL;
+        }
 
         StateChangeNotify(tokenId, isShowing);
     } else {

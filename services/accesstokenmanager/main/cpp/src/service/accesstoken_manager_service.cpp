@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,6 +41,8 @@
 #include "parameters.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
+#include "permission_map.h"
+#include "permission_status_parcel.h"
 #include "permission_validator.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -199,8 +201,11 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
         tokenID, permissionName.c_str(), res);
     if ((res == PERMISSION_GRANTED) &&
         (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
-        res = AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permissionName) ?
-            PERMISSION_DENIED : PERMISSION_GRANTED;
+        uint32_t permCode;
+        if (TransferPermissionToOpcode(permissionName, permCode)) {
+            res = AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permCode) ?
+                PERMISSION_DENIED : PERMISSION_GRANTED;
+        }
     }
 #ifdef HITRACE_NATIVE_ENABLE
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
@@ -521,13 +526,13 @@ int AccessTokenManagerService::GrantPermission(
 }
 
 int AccessTokenManagerService::RevokePermission(
-    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag, bool killProcess)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
-    
+
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName);
@@ -536,7 +541,7 @@ int AccessTokenManagerService::RevokePermission(
     }
 
     return PermissionManager::GetInstance().RevokePermission(
-        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
+        tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag), killProcess);
 }
 
 int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
@@ -590,8 +595,7 @@ int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    if (!DataValidator::IsPermissionListSizeValid(permissionList)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermList size is invalid: %{public}zu.", permissionList.size());
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return PermissionManager::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
@@ -964,11 +968,11 @@ int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::vecto
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    std::unordered_set<AccessTokenID> tokenIdList;
 
-    auto result = AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
+    std::unordered_set<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
     std::copy(tokenIdList.begin(), tokenIdList.end(), std::back_inserter(tokenIds));
-    return result;
+    return RET_SUCCESS;
 }
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
@@ -1782,6 +1786,110 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     return RET_SUCCESS;
 }
 #endif
+
+ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
+    std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start, permCodeList size: %{public}zu, onlyHap: %{public}d",
+        permCodeList.size(), onlyHap);
+
+    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
+    if ((IsShellProcessCalling() || (this->GetTokenType(callingTokenId) == TOKEN_HAP)) && !onlyHap) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Shell or hap process only allow onlyHap=true.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if ((this->GetTokenType(callingTokenId) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Third-party app is not allowed to call this interface.");
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsShellProcessCalling() &&
+        VerifyAccessToken(callingTokenId, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have GET_SENSITIVE_PERMISSIONS permission.");
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    if (!DataValidator::IsListSizeValid(permCodeList.size())) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByPermission(
+        permCodeList, permissionInfoList, onlyHap);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "QueryStatusByPermission failed, ret: %{public}d.", ret);
+        return ret;
+    }
+    size_t maxQueryResultSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
+    if (permissionInfoList.size() > maxQueryResultSize) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query result size %{public}zu exceeds max limit %{public}zu.",
+            permissionInfoList.size(), maxQueryResultSize);
+        permissionInfoList.clear();
+        return AccessTokenError::ERR_OVERSIZE;
+    }
+    return RET_SUCCESS;
+}
+
+ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start, tokenIDList size: %{public}zu", tokenIDList.size());
+
+    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenId) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Third-party app is not allowed to call this interface.");
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!IsShellProcessCalling() &&
+        VerifyAccessToken(callingTokenId, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have GET_SENSITIVE_PERMISSIONS permission.");
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    if (!DataValidator::IsListSizeValid(tokenIDList.size())) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Validate tokenIDs and query permissions
+    permissionInfoList.clear();
+    // Reserve space to reduce reallocations (assume avg 10 permissions per token)
+    permissionInfoList.reserve(tokenIDList.size() * 10);
+
+    for (const auto& tokenID : tokenIDList) {
+        if (tokenID == 0) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID cannot be 0.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+
+        if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist.", tokenID);
+            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        }
+
+        if (this->GetTokenType(tokenID) != ATokenTypeEnum::TOKEN_HAP) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not HAP type.", tokenID);
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+
+        std::vector<PermissionStatusIdl> idlList;
+        int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByTokenID(tokenID, idlList);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Query failed for tokenID: %{public}u, ret: %{public}d.", tokenID, ret);
+            return ret;
+        }
+
+        permissionInfoList.insert(permissionInfoList.end(), idlList.begin(), idlList.end());
+    }
+
+    size_t maxQueryResultSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
+    if (permissionInfoList.size() > maxQueryResultSize) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query result size %{public}zu exceeds max limit %{public}zu.",
+            permissionInfoList.size(), maxQueryResultSize);
+        permissionInfoList.clear();
+        return AccessTokenError::ERR_OVERSIZE;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "End, result size: %{public}zu", permissionInfoList.size());
+    return RET_SUCCESS;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -127,9 +127,6 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vecto
         if (!AniParseUint32(env, elementRef, value)) {
             return false;
         }
-        if (value == 0) {
-            return false;
-        }
         out.emplace_back(value);
     }
     return true;

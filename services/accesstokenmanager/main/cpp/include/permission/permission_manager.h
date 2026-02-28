@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,9 +67,9 @@ public:
     int32_t RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         const std::string& bundleName, const std::string& abilityName);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
-        bool isGranted, uint32_t flag);
+        bool isGranted, uint32_t flag, bool killProcess = true);
     int32_t CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
-        bool isGranted, uint32_t flag);
+        bool isGranted, uint32_t flag, bool killProcess = true);
     int32_t CheckMultiPermissionStatus(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     int32_t UpdateMultiPermissionStatus(
@@ -81,7 +81,7 @@ public:
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
         UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
     int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
-        UpdatePermissionFlag updateFlag = USER_GRANTED_PERM);
+        UpdatePermissionFlag updateFlag = USER_GRANTED_PERM, bool killProcess = true);
     int32_t GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int32_t SetPermissionStatusWithPolicy(

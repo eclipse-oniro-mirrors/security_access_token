@@ -95,6 +95,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   sources += accesstoken_manager_base_config.sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
 
   configs = accesstoken_manager_base_config.configs
 

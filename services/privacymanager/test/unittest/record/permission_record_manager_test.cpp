@@ -1621,6 +1621,228 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest003, TestSize.L
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
 
+/**
+ * @tc.name: CheckPermissionInUse001
+ * @tc.desc: Test CheckPermissionInUse with permission being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse001, TestSize.Level1)
+{
+    // Get HAP token from bundle
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
+        g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // Start using CAMERA permission
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA"), CALLER_PID));
+
+    // Check if permission is being used
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Clean up
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse002
+ * @tc.desc: Test CheckPermissionInUse with permission not being used.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse002, TestSize.Level1)
+{
+    // Check permission without any record - should return false
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_FALSE(isUsing);
+}
+
+/**
+ * @tc.name: CheckPermissionInUse003
+ * @tc.desc: Test CheckPermissionInUse with invalid permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse003, TestSize.Level1)
+{
+    // Invalid permission name should return error code
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().CheckPermissionInUse(
+        "ohos.permission.INVALID_PERM", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse004
+ * @tc.desc: Test CheckPermissionInUse with non-existent permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse004, TestSize.Level1)
+{
+    // Non-existent permission should return ERR_PERMISSION_NOT_EXIST
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().CheckPermissionInUse(
+        "ohos.permission.NOT_EXIST_PERMISSION", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse005
+ * @tc.desc: Test CheckPermissionInUse with empty permission name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse005, TestSize.Level1)
+{
+    // Empty permission name should return error code
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("", isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse006
+ * @tc.desc: Test CheckPermissionInUse with permission name exceeding 256 characters.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse006, TestSize.Level1)
+{
+    // Permission name exceeding 256 characters should return error code
+    std::string longPermissionName(257, 'a');  // 257 characters, exceeds MAX_PERMISSION_NAME_LENGTH (256)
+    bool isUsing = false;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().CheckPermissionInUse(
+        longPermissionName, isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse007
+ * @tc.desc: Test CheckPermissionInUse with multiple permissions.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse007, TestSize.Level1)
+{
+    // Get HAP token from bundle
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
+        g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // Start using permissions
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA"), CALLER_PID));
+
+    // Check CAMERA permission - should be in use
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Check MICROPHONE permission - should not be in use
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.MICROPHONE", isUsing));
+    EXPECT_FALSE(isUsing);
+
+    // Check LOCATION permission - should not be in use
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.LOCATION", isUsing));
+    EXPECT_FALSE(isUsing);
+
+    // Clean up
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse008
+ * @tc.desc: Test CheckPermissionInUse after removing permission record.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse008, TestSize.Level1)
+{
+    // Get HAP token from bundle
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
+        g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // Start using CAMERA permission
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA"), CALLER_PID));
+
+    // Verify permission is in use
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    // Stop using permission
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+
+    // Verify permission is no longer in use
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_FALSE(isUsing);
+}
+
+/**
+ * @tc.name: CheckPermissionInUse009
+ * @tc.desc: Test CheckPermissionInUse with different permission types.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse009, TestSize.Level1)
+{
+    // Get HAP token from bundle
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
+        g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // Test with NORMAL_TYPE
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE), CALLER_PID));
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+
+    // Test with PICKER_TYPE
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::PICKER_TYPE), CALLER_PID));
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+
+    // Test with SECURITY_COMPONENT_TYPE
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::SECURITY_COMPONENT_TYPE), CALLER_PID));
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+}
+
 #ifdef MAX_COUNT_TEST
 class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {
 public:

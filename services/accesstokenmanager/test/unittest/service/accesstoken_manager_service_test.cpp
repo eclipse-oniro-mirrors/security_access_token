@@ -22,8 +22,11 @@
 #include "access_token_db.h"
 #include "access_token_error.h"
 #include "atm_tools_param_info_parcel.h"
+#include "hap_info_parcel.h"
+#include "hap_policy_parcel.h"
 #include "parameters.h"
 #include "permission_map.h"
+#include "permission_manager.h"
 #include "perm_state_change_callback_customize.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
@@ -1406,6 +1409,307 @@ HWTEST_F(AccessTokenManagerServiceTest, RegisterSelfPermStateChangeCallback001, 
     atManagerService_->UnRegisterSelfPermStateChangeCallback(callback->AsObject());
     DelTestDataAndRestoreOri(tokenId, {});
     SetSelfTokenID(g_selfShellTokenId);
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDServiceTest001
+ * @tc.desc: Test QueryStatusByTokenID with tokenIDList size exceeding limit (1025), return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest001, TestSize.Level1)
+{
+    // Arrange: Create a valid HAP token
+    atManagerService_->Initialize();
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = g_info;
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+
+    AccessTokenID tokenId;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    // Act: Create tokenIDList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
+    std::vector<AccessTokenID> tokenIDList;
+    tokenIDList.emplace_back(tokenId);  // Add valid tokenID first
+    // Fill remaining 1024 entries with dummy tokenIDs
+    for (int32_t i = 0; i < 1024; i++) { // 1024: size
+        tokenIDList.emplace_back(1000000 + i);  // 1000000: Use large numbers unlikely to be valid tokenIDs
+    }
+
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+
+    // Assert: Should return ERR_PARAM_INVALID due to size exceeding limit
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_TRUE(permissionInfoList.empty());
+
+    // Cleanup: Always execute cleanup to ensure resources are released
+    int32_t result = atManagerService_->DeleteToken(tokenId, false);
+    EXPECT_EQ(RET_SUCCESS, result);
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDServiceTest002
+ * @tc.desc: Test QueryStatusByTokenID with empty tokenIDList, return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest002, TestSize.Level1)
+{
+    // Arrange: Create empty tokenIDList
+    std::vector<AccessTokenID> tokenIDList;
+    std::vector<PermissionStatusIdl> permissionInfoList;
+
+    // Act: Query with empty tokenIDList
+    atManagerService_->Initialize();
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+
+    // Assert: Should return ERR_PARAM_INVALID due to empty list
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDServiceTest003
+ * @tc.desc: Test QueryStatusByTokenID with tokenID=0, return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest003, TestSize.Level1)
+{
+    // Arrange: Create tokenIDList with tokenID=0
+    std::vector<AccessTokenID> tokenIDList = {0};
+    std::vector<PermissionStatusIdl> permissionInfoList;
+
+    // Act: Query with tokenID=0
+    atManagerService_->Initialize();
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+
+    // Assert: Should return ERR_PARAM_INVALID due to tokenID=0
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionOverSizeTest001
+ * @tc.desc: Test oversize scenario with maxQueryResultSize for testing
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, TestSize.Level1)
+{
+    std::string permission = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    uint32_t opCpde;
+    (void)TransferPermissionToOpcode(permission, opCpde);
+    // Prepare: Create a HAP with permissions
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter.userID = USER_ID;
+    infoParcel.hapInfoParameter.bundleName = "com.example.oversize.test";
+    infoParcel.hapInfoParameter.instIndex = INST_INDEX;
+    infoParcel.hapInfoParameter.dlpType = static_cast<int>(HapDlpType::DLP_COMMON);
+    infoParcel.hapInfoParameter.apiVersion = 9; // 9: api version
+    infoParcel.hapInfoParameter.isSystemApp = false;
+    infoParcel.hapInfoParameter.appIDDesc = "com.example.oversize.test";
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_SYSTEM_BASIC;
+    policyParcel.hapPolicy.domain = "test.domain";
+
+    // Add INTERNET permission (opcode=1) to the HAP
+    std::vector<PermissionStatus> permStates;
+    PermissionStatus permState;
+    permState.permissionName = permission;
+    permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
+    permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
+    permStates.push_back(permState);
+    policyParcel.hapPolicy.permStateList = permStates;
+
+    // Create a HAP token
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenID tokenID;
+    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+
+    size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
+    AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
+    std::vector<uint32_t> permCodeList = {opCpde};
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode errCode = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
+
+    // Assert: Should return ERR_OVERSIZE since result exceeds limit
+    EXPECT_EQ(AccessTokenError::ERR_OVERSIZE, errCode);
+    EXPECT_TRUE(permissionInfoList.empty());
+
+    // Cleanup
+    AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(originalMaxSize);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionServiceTest001
+ * @tc.desc: Test QueryStatusByPermission with empty permCodeList, return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest001, TestSize.Level1)
+{
+    // Arrange: Create empty permCodeList
+    std::vector<uint32_t> permCodeList;
+    std::vector<PermissionStatusIdl> permissionInfoList;
+
+    // Act: Query with empty permCodeList
+    atManagerService_->Initialize();
+    ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
+
+    // Assert: Should return ERR_PARAM_INVALID due to empty list
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionServiceTest002
+ * @tc.desc: Test QueryStatusByPermission with permCodeList size exceeding limit (1025), return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest002, TestSize.Level1)
+{
+    // Prepare: Create a HAP with permissions
+    atManagerService_->Initialize();
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = g_info;
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+
+    AccessTokenID tokenId;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    // Act: Create permCodeList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
+    std::vector<uint32_t> permCodeList;
+    permCodeList.emplace_back(1);  // Add valid permCode first
+    // Fill remaining 1024 entries with dummy permCodes
+    for (int32_t i = 0; i < 1024; i++) { // 1024: size
+        permCodeList.emplace_back(i);
+    }
+
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
+
+    // Assert: Should return ERR_PARAM_INVALID due to size exceeding limit
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_TRUE(permissionInfoList.empty());
+
+    // Cleanup: Always execute cleanup to ensure resources are released
+    int32_t result = atManagerService_->DeleteToken(tokenId, false);
+    EXPECT_EQ(RET_SUCCESS, result);
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionServiceTest003
+ * @tc.desc: Test QueryStatusByPermission with valid permCodeList, return RET_SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, TestSize.Level1)
+{
+    // Prepare: Create a HAP with permissions
+    atManagerService_->Initialize();
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter.userID = USER_ID;
+    infoParcel.hapInfoParameter.bundleName = "com.example.query.test";
+    infoParcel.hapInfoParameter.instIndex = INST_INDEX;
+    infoParcel.hapInfoParameter.dlpType = static_cast<int>(HapDlpType::DLP_COMMON);
+    infoParcel.hapInfoParameter.apiVersion = API_VERSION_9;
+    infoParcel.hapInfoParameter.isSystemApp = false;
+    infoParcel.hapInfoParameter.appIDDesc = "com.example.query.test";
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_NORMAL;
+    policyParcel.hapPolicy.domain = "test.domain";
+
+    // Add CAMERA permission to the HAP
+    std::vector<PermissionStatus> permStates;
+    PermissionStatus permState;
+    permState.permissionName = "ohos.permission.CAMERA";
+    permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
+    permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
+    permStates.push_back(permState);
+    policyParcel.hapPolicy.permStateList = permStates;
+
+    // Create a HAP token
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenID tokenID;
+    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+    EXPECT_NE(INVALID_TOKENID, tokenID);
+
+    // Act: Query with valid permCodeList
+    uint32_t opCode;
+    (void)TransferPermissionToOpcode("ohos.permission.CAMERA", opCode);
+    std::vector<uint32_t> permCodeList = {opCode};
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
+
+    // Assert: Should return RET_SUCCESS
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(permissionInfoList.empty());
+
+    // Cleanup
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDOverSizeTest001
+ * @tc.desc: Test oversize scenario with maxQueryResultSize for testing
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, TestSize.Level1)
+{
+    // Prepare: Create a HAP with multiple permissions
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter.userID = USER_ID;
+    infoParcel.hapInfoParameter.bundleName = "com.example.oversize.token.test";
+    infoParcel.hapInfoParameter.instIndex = INST_INDEX;
+    infoParcel.hapInfoParameter.dlpType = static_cast<int>(HapDlpType::DLP_COMMON);
+    infoParcel.hapInfoParameter.apiVersion = 9; // 9: api version
+    infoParcel.hapInfoParameter.isSystemApp = false;
+    infoParcel.hapInfoParameter.appIDDesc = "com.example.oversize.token.test";
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_SYSTEM_BASIC;
+    policyParcel.hapPolicy.domain = "test.domain";
+    std::vector<PermissionStatus> permStates;
+    PermissionStatus permState;
+    permState.permissionName = "ohos.permission.INTERNET";
+    permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
+    permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
+    permStates.push_back(permState);
+    policyParcel.hapPolicy.permStateList = permStates;
+
+    // Create a HAP token
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenID tokenID;
+    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+
+    size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
+    AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
+    std::vector<AccessTokenID> tokenIDList = {static_cast<uint32_t>(tokenID)};
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode errCode = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+
+    // Assert: Should return ERR_OVERSIZE since result exceeds limit
+    EXPECT_EQ(AccessTokenError::ERR_OVERSIZE, errCode);
+    EXPECT_TRUE(permissionInfoList.empty());
+
+    // Cleanup
+    AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(originalMaxSize);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 } // namespace AccessToken
 } // namespace Security

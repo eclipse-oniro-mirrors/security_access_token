@@ -63,6 +63,9 @@ int32_t GetJsErrorCode(int32_t errCode)
         case ERR_EXPECTED_PERMISSION_TYPE:
             jsCode = JS_ERROR_EXPECTED_PERMISSION_TYPE;
             break;
+        case ERR_OVERSIZE:
+            jsCode = JS_ERROR_OVERSIZE;
+            break;
         default:
             jsCode = JS_ERROR_INNER;
             break;

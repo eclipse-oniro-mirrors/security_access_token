@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,4 +44,5 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 19] void RegisterPermDisablePolicyCallback([in] List<String> permList, [in] IRemoteObject cb);
     [ipccode 20] void UnRegisterPermDisablePolicyCallback([in] IRemoteObject cb);
     [ipccode 21] void GetCurrUsingPermInfo([out] List<ActiveChangeResponseParcel> resultsParcel);
+    [ipccode 22] void CheckPermissionInUse([in] String permissionName, [out] boolean isUsing);
 }
