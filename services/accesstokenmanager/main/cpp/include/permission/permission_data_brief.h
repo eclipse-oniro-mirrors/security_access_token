@@ -79,9 +79,9 @@ public:
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
-    void Update(const HapTokenInfo& tokenInfo,
-        const std::vector<PermissionStatus>& permStateList, const std::map<std::string, std::string>& aclExtendedMap,
-        const AppProvisionType& provisionTypeAfter, bool isDebugGrant);
+    void Update(
+        AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,	 
+        const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);
     void RestorePermissionBriefData(AccessTokenID tokenId,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
     int32_t StorePermissionBriefData(AccessTokenID tokenId, std::vector<GenericValues>& permStateValueList);

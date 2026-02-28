@@ -126,9 +126,11 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     } else {
         tokenInfoBasic_.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
-    AppProvisionType provisionTypeAfter = (info.appProvisionType == "debug") ? DEBUG:RELEASE;
-    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_, permStateList, hapPolicy.aclExtendedMap,
-        provisionTypeAfter, hapPolicy.isDebugGrant);
+    AppProvisionType provisionTypeAfter = (info.appProvisionType == "debug") ? DEBUG : RELEASE;
+    bool needUpdatePermByProvision = ((provisionTypeAfter == DEBUG) && hapPolicy.isDebugGrant) ||
+        ((provisionTypeAfter == RELEASE) && (tokenInfoBasic_.tokenAttr & DEBUG_APP_FLAG));
+    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap,
+        needUpdatePermByProvision);
     if (info.appProvisionType == "release") {
         tokenInfoBasic_.tokenAttr &= ~DEBUG_APP_FLAG;
     } else if (info.appProvisionType == "debug") {
@@ -440,12 +442,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     for (const auto& extendedperm : extendedPermList) {
         aclExtendedMap[extendedperm.permissionName] = extendedperm.value;
     }
-    AppProvisionType provisionTypeBefore = RELEASE;
-    if (tokenInfoBasic_.tokenAttr & DEBUG_APP_FLAG) {
-        provisionTypeBefore = DEBUG;
-    }
-    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_, permListOfHap, aclExtendedMap,
-        provisionTypeBefore, false);
+    PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permListOfHap, aclExtendedMap, false);
 #endif
     if (!UpdateStatesToDB(tokenInfoBasic_.tokenID, permListOfHap)) {
         return ERR_DATABASE_OPERATE_FAILED;

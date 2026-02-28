@@ -281,18 +281,15 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
     permNew.flag = permOld.flag;
 }
 
-void PermissionDataBrief::Update(const HapTokenInfo& tokenInfo,
-    const std::vector<PermissionStatus>& permStateList, const std::map<std::string, std::string>& aclExtendedMap,
-    const AppProvisionType& provisionTypeAfter, bool isDebugGrant)
+void PermissionDataBrief::Update(
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,	 
+    const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
-    AccessTokenID tokenId = tokenInfo.tokenID;
     std::vector<PermissionStatus> permStateFilterList;
     PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
     LOGI(ATM_DOMAIN, ATM_TAG, "PermStateFilterList size: %{public}zu.", permStateFilterList.size());
 
-    bool needUpdatePermByProvision = ((provisionTypeAfter == DEBUG) && isDebugGrant) ||
-                ((provisionTypeAfter == RELEASE) && (tokenInfo.tokenAttr & DEBUG_APP_FLAG));
     std::vector<BriefPermData> newList;
     GetPermissionBriefDataList(tokenId, permStateFilterList, aclExtendedMap, newList);
     std::vector<BriefPermData> briefPermDataList;
