@@ -2010,6 +2010,166 @@ HWTEST_F(PermissionManagerTest, UpdatePermissionWithInvalidPermTest001, TestSize
 
     EXPECT_EQ(false, IsOperablePermission("ohos.permission.TEST123"));
 }
+
+/**
+ * @tc.name: RevokePermissionWithKill001
+ * @tc.desc: Test RevokePermission with killProcess=false.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill001, TestSize.Level1)
+{
+    AccessTokenID tokenId = CreateTempHapTokenInfo();
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM, false);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: RevokePermissionWithKill002
+ * @tc.desc: Test RevokePermission with killProcess=true.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill002, TestSize.Level1)
+{
+    AccessTokenID tokenId = CreateTempHapTokenInfo();
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM, true);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: RevokePermissionWithKill003
+ * @tc.desc: Test RevokePermission with default killProcess parameter (backward compatibility).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill003, TestSize.Level1)
+{
+    AccessTokenID tokenId = CreateTempHapTokenInfo();
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_USER_FIXED, OPERABLE_PERM);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: RevokePermissionWithKill004
+ * @tc.desc: Test RevokePermission with invalid tokenID and killProcess parameter.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill004, TestSize.Level1)
+{
+    AccessTokenID invalidTokenID = 0;
+
+    int32_t ret = PermissionManager::GetInstance().RevokePermission(
+        invalidTokenID, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, OPERABLE_PERM, false);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        invalidTokenID, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, OPERABLE_PERM, true);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+}
+
+/**
+ * @tc.name: RevokePermissionWithKill005
+ * @tc.desc: Test RevokePermission with invalid permission name and killProcess parameter.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill005, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    int32_t ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "", PERMISSION_USER_FIXED, OPERABLE_PERM, false);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "ohos.permission.INVALID", PERMISSION_USER_FIXED, OPERABLE_PERM, true);
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: RevokePermissionWithKill006
+ * @tc.desc: Test RevokePermission with PERMISSION_COMPONENT_SET flag and killProcess parameter.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RevokePermissionWithKill006, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(INVALID_TOKENID, tokenId);
+
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+        tokenId, "ohos.permission.CAMERA", PERMISSION_COMPONENT_SET, OPERABLE_PERM);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+
+    ret = PermissionManager::GetInstance().RevokePermission(
+        tokenId, "ohos.permission.CAMERA", PERMISSION_COMPONENT_SET, OPERABLE_PERM, false);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
