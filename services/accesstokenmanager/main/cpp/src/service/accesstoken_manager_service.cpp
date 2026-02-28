@@ -1792,13 +1792,13 @@ ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uin
         permCodeList.size(), onlyHap);
 
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    if ((IsShellProcessCalling() || (this->GetTokenType(callingTokenId) == TOKEN_HAP)) && !onlyHap) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Shell or hap process only allow onlyHap=true.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     if ((this->GetTokenType(callingTokenId) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Third-party app is not allowed to call this interface.");
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if ((IsShellProcessCalling() || (this->GetTokenType(callingTokenId) == TOKEN_HAP)) && !onlyHap) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Shell or hap process only allow onlyHap=true.");
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsShellProcessCalling() &&
         VerifyAccessToken(callingTokenId, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {

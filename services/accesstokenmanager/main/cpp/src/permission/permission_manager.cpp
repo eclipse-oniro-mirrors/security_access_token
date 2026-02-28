@@ -1317,8 +1317,6 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
-
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
