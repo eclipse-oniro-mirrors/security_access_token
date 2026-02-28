@@ -8197,6 +8197,17 @@
             "deviceTypes": ["phone", "tv", "2in1", "tablet", "car"]
         },
         {
+            "name": "ohos.permission.vehicle.CAR_MODE_MANAGEMENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
