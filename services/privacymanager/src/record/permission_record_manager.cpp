@@ -1733,10 +1733,10 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     bool isMute = false;
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMute = (index == EDM) ? isMicEdmMute_ : isMicMixMute_;
+        isMute = (index == EDM) ? (isMicEdmMute_ || (GetCacheDisablePolicy(Constant::OP_MICROPHONE))) : isMicMixMute_;
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isMute = (index == EDM) ? isCamEdmMute_ : isCamMixMute_;
+        isMute = (index == EDM) ? (isCamEdmMute_ || (GetCacheDisablePolicy(Constant::OP_CAMERA))) : isCamMixMute_;
     } else {
         return false;
     }
