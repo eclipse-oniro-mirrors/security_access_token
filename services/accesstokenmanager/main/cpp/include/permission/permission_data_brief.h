@@ -80,7 +80,7 @@ public:
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
     void Update(
-        AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,	 
+        AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);
     void RestorePermissionBriefData(AccessTokenID tokenId,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);

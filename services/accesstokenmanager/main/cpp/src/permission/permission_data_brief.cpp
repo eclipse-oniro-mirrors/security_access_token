@@ -39,7 +39,6 @@ std::recursive_mutex g_briefInstanceMutex;
 
 const uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 const uint32_t HAS_VALUE = (0x1 << 1);
-static const unsigned int DEBUG_APP_FLAG = 0x0008;
 
 PermissionDataBrief& PermissionDataBrief::GetInstance()
 {
@@ -282,7 +281,7 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
 }
 
 void PermissionDataBrief::Update(
-    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,	 
+    AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
     const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
