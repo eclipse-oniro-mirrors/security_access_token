@@ -71,11 +71,14 @@ typedef enum TypeToggleOperateType {
 
 class AtmToggleParamInfo final {
 public:
-    ToggleModeType toggleMode;
-    ToggleOperateType type;
-    int32_t userID;
+    ToggleModeType toggleMode = TOGGLE_REQUEST;
+    ToggleOperateType type = TOGGLE_GET;
+    int32_t userID = 0;
     std::string permissionName;
     uint32_t status = INVALID_ATM_SET_STATUS;
+    bool hasUserIdOption = false;
+    bool hasPermissionOption = false;
+    bool hasStatusOption = false;
 };
 
 struct DumpOptionsContext {
