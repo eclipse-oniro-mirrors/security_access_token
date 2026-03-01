@@ -132,7 +132,7 @@ void NapiQueryPermissionStatus::QueryPermissionStatusExecute(napi_env env, void*
 {
     QueryPermissionStatusAsyncContext* asyncContext = reinterpret_cast<QueryPermissionStatusAsyncContext*>(data);
     if (asyncContext == nullptr) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusExecute enter, asyncContext is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusExecute enter, asyncContext is null.");
         return;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusExecute enter, isQueryByPermission: %{public}d.",
@@ -151,7 +151,7 @@ void NapiQueryPermissionStatus::QueryPermissionStatusComplete(napi_env env, napi
 {
     QueryPermissionStatusAsyncContext* asyncContext = reinterpret_cast<QueryPermissionStatusAsyncContext*>(data);
     if (asyncContext == nullptr) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusComplete enter, asyncContext is null.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusComplete enter, asyncContext is null.");
         return;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "QueryPermissionStatusComplete enter, isQueryByPermission: %{public}d, "
@@ -162,7 +162,7 @@ void NapiQueryPermissionStatus::QueryPermissionStatusComplete(napi_env env, napi
     napi_value result;
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
 
-    for (size_t i = 0; i < asyncContext->permissionInfoList.size(); i++) {
+    for (size_t i = 0; i < asyncContext->permissionInfoList.size(); ++i) {
         const auto& permStatus = asyncContext->permissionInfoList[i];
 
         napi_value obj = nullptr;

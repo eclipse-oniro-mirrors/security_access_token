@@ -406,6 +406,29 @@ std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& pe
     return ToString::PermissionUsedTypeInfoToString(results);
 }
 
+static std::string GetBundleName(AccessTokenID tokenID)
+{
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.tokenId = tokenID;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    size_t pos = dumpInfo.find("\"bundleName\": ");
+    if (pos == std::string::npos) {
+        return "";
+    }
+    pos += std::string("\"bundleName\": ").length();
+    if (pos >= dumpInfo.length() || dumpInfo[pos] != '"') {
+        return "";
+    }
+    ++pos;
+    std::string bundleName;
+    while (pos < dumpInfo.length() && dumpInfo[pos] != '"') {
+        bundleName += dumpInfo[pos];
+        ++pos;
+    }
+    return bundleName;
+}
+
 std::string AtmCommand::DumpPermissionApps(const std::string& permissionName)
 {
     if (permissionName.empty()) {
@@ -438,9 +461,7 @@ std::string AtmCommand::DumpPermissionApps(const std::string& permissionName)
         if (appMap.find(info.tokenID) != appMap.end()) {
             continue;
         }
-        HapTokenInfo hapInfo;
-        (void)AccessTokenKit::GetHapTokenInfo(info.tokenID, hapInfo);
-        appMap[info.tokenID] = hapInfo.bundleName;
+        appMap[info.tokenID] = GetBundleName(info.tokenID);
     }
 
     // Output in format: tokenId: bundleName/processName (same as "atm dump -t")

@@ -24,6 +24,7 @@ module_output_path_service_access_token =
     "access_token/access_token/service_access_token"
 module_output_path_unittest_accesstoken = "access_token/access_token"
 module_output_path_unittest_privacy = "access_token/privacy"
+module_output_path_unittest_atm_tools = "access_token/tools"
 
 declare_args() {
   access_token_camera_float_window_enable = true

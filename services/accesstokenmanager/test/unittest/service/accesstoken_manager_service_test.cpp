@@ -1110,7 +1110,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest001, Test
     std::vector<AccessTokenID> tokenIDList;
     tokenIDList.emplace_back(tokenId);  // Add valid tokenID first
     // Fill remaining 1024 entries with dummy tokenIDs
-    for (int32_t i = 0; i < 1024; i++) { // 1024: size
+    for (int32_t i = 0; i < 1024; ++i) { // 1024: size
         tokenIDList.emplace_back(1000000 + i);  // 1000000: Use large numbers unlikely to be valid tokenIDs
     }
 
@@ -1177,8 +1177,8 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest003, Test
 HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, TestSize.Level1)
 {
     std::string permission = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
-    uint32_t opCpde;
-    (void)TransferPermissionToOpcode(permission, opCpde);
+    uint32_t opCdde;
+    (void)TransferPermissionToOpcode(permission, opCdde);
     // Prepare: Create a HAP with permissions
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter.userID = USER_ID;
@@ -1199,7 +1199,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, 
     permState.permissionName = permission;
     permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
     permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
-    permStates.push_back(permState);
+    permStates.emplace_back(permState);
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
@@ -1209,7 +1209,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, 
 
     size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
-    std::vector<uint32_t> permCodeList = {opCpde};
+    std::vector<uint32_t> permCodeList = {opCdde};
     std::vector<PermissionStatusIdl> permissionInfoList;
     ErrCode errCode = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
 
@@ -1268,7 +1268,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest002, T
     std::vector<uint32_t> permCodeList;
     permCodeList.emplace_back(1);  // Add valid permCode first
     // Fill remaining 1024 entries with dummy permCodes
-    for (int32_t i = 0; i < 1024; i++) { // 1024: size
+    for (int32_t i = 0; i < 1024; ++i) { // 1024: size
         permCodeList.emplace_back(i);
     }
 
@@ -1313,7 +1313,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, T
     permState.permissionName = "ohos.permission.CAMERA";
     permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
     permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
-    permStates.push_back(permState);
+    permStates.emplace_back(permState);
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
@@ -1363,7 +1363,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, Tes
     permState.permissionName = "ohos.permission.INTERNET";
     permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
     permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
-    permStates.push_back(permState);
+    permStates.emplace_back(permState);
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
