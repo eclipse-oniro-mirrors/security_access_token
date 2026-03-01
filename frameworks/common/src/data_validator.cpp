@@ -92,6 +92,11 @@ bool DataValidator::IsAclExtendedMapContentValid(const std::string& permissionNa
     return true;
 }
 
+bool DataValidator::IsAppProvisionTypeValid(const std::string& appProvisionType)
+{
+    return (appProvisionType == "release") || (appProvisionType == "debug");
+}
+
 bool DataValidator::IsToggleStatusValid(const uint32_t status)
 {
     return ((status == PermissionRequestToggleStatus::CLOSED) ||

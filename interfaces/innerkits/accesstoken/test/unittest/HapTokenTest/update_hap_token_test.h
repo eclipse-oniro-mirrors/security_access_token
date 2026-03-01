@@ -32,6 +32,10 @@ public:
     static void TearDownTestCase();
     void SetUp();
     void TearDown();
+    static void InstallHapWithProvisionType(AccessTokenIDEx& fullTokenId, const std::string& appProvisionType,
+        bool isDebugGrant);
+    static void UpdateHapWithProvisionType(AccessTokenIDEx& fullTokenId, const std::string& appProvisionType,
+        bool isDebugGrant);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -48,6 +48,11 @@ typedef struct {
     uint32_t tokenId;
 } BriefSecCompData;
 
+typedef enum AppProvisionType {
+    DEBUG = 0,
+    RELEASE = 1,
+} AppProvisionType;
+
 class PermissionDataBrief final {
 public:
     static PermissionDataBrief& GetInstance();
@@ -76,7 +81,7 @@ public:
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
     void Update(
         AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
-        const std::map<std::string, std::string>& aclExtendedMap);
+        const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);
     void RestorePermissionBriefData(AccessTokenID tokenId,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
     int32_t StorePermissionBriefData(AccessTokenID tokenId, std::vector<GenericValues>& permStateValueList);

@@ -35,6 +35,10 @@ public:
     void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
         std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit = false);
     void DelTestDataAndRestoreOri(AccessTokenID tokenId, const std::vector<GenericValues>& oriData);
+    void InstallHapWithProvisionType(
+        AccessTokenIDEx& tokenIdEx, const std::string& appProvisionType, bool isDebugGrant);
+    void UpdateHapWithProvisionType(
+        AccessTokenIDEx& tokenIdEx, const std::string& appProvisionType, bool isDebugGrant);
 
     std::shared_ptr<AccessTokenManagerService> atManagerService_;
 };

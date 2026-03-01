@@ -180,6 +180,7 @@ private:
     void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
         int32_t instIndex, AccessTokenID tokenID);
     AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
 
     bool hasInited_;
 

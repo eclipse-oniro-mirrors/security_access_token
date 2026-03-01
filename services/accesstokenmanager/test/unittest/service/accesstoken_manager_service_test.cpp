@@ -46,6 +46,7 @@ static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
 static PermissionStatus g_state1 = { // kernel permission
@@ -409,6 +410,331 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
     ASSERT_EQ(g_state1.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+}
+
+void AccessTokenManagerServiceTest::InstallHapWithProvisionType(
+    AccessTokenIDEx& tokenIdEx, const std::string& appProvisionType, bool isDebugGrant)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "accesstoken_manager_service_test",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = false,
+        .appIDDesc = "accesstoken_manager_service_test",
+        .appProvisionType = appProvisionType
+    };
+    PermissionStatus permStat = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain",
+        .permStateList = {permStat},
+        .isDebugGrant = isDebugGrant
+    };
+
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    uint64_t fullTokenId;
+    HapInfoCheckResultIdl result;
+    int32_t ret = atManagerService_->InitHapToken(infoParCel, policyParcel, fullTokenId, result);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    tokenIdEx.tokenIDEx = fullTokenId;
+}
+
+void AccessTokenManagerServiceTest::UpdateHapWithProvisionType(AccessTokenIDEx& tokenIdEx,
+    const std::string& appProvisionType, bool isDebugGrant)
+{
+    PermissionStatus permStatCamera = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    PermissionStatus permStatActive = {
+        .permissionName = "ohos.permission.ACTIVITY_MOTION",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_NORMAL;
+    policyParcel.hapPolicy.domain = "domain";
+    policyParcel.hapPolicy.permStateList = {permStatCamera, permStatActive};
+    policyParcel.hapPolicy.isDebugGrant = isDebugGrant;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "accesstoken_manager_service_test",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = false,
+        .appIDDesc = "accesstoken_manager_service_test",
+        .appProvisionType = appProvisionType
+    };
+
+    uint64_t fullTokenId = tokenIdEx.tokenIDEx;
+    UpdateHapInfoParamsIdl infoIdl;
+    infoIdl.appIDDesc = info.appIDDesc;
+    infoIdl.apiVersion = info.apiVersion;
+    infoIdl.isSystemApp = info.isSystemApp;
+    infoIdl.appDistributionType = info.appDistributionType;
+    infoIdl.isAtomicService = info.isAtomicService;
+    infoIdl.dataRefresh = true;
+    infoIdl.appProvisionType = appProvisionType;
+    HapInfoCheckResultIdl resultInfoIdl;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->UpdateHapToken(fullTokenId, infoIdl, policyParcel, resultInfoIdl));
+    tokenIdEx.tokenIDEx = fullTokenId;
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest001
+ * @tc.desc: test update hap from release to debug with isDebugGrant true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install release hap
+    InstallHapWithProvisionType(tokenIdEx, "release", false);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to debug hap with isDebugGrant true
+    UpdateHapWithProvisionType(tokenIdEx, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest002
+ * @tc.desc: test update hap from release to debug with isDebugGrant false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install release hap
+    InstallHapWithProvisionType(tokenIdEx, "release", false);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(tokenIdEx, "debug", false);
+
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest003
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from false to true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install debug hap with isDebugGrant false
+    InstallHapWithProvisionType(tokenIdEx, "debug", false);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to debug hap with isDebugGrant true
+    UpdateHapWithProvisionType(tokenIdEx, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest004
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from true to true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(tokenIdEx, "debug", true);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->RevokePermission(
+        tokenID, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant true
+    UpdateHapWithProvisionType(tokenIdEx, "debug", true);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest005
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from true to false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest005, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install release hap with isDebugGrant true
+    InstallHapWithProvisionType(tokenIdEx, "debug", true);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(tokenIdEx, "debug", false);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest006
+ * @tc.desc: test update hap from debug to debug with isDebugGrant from false to false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest006, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install debug hap with isDebugGrant false
+    InstallHapWithProvisionType(tokenIdEx, "debug", false);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->GrantPermission(
+        tokenID, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // Step 2: update to debug hap with isDebugGrant false
+    UpdateHapWithProvisionType(tokenIdEx, "debug", false);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest007
+ * @tc.desc: test update hap from debug with isDebugGrant true to release
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest007, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install debug hap with isDebugGrant true
+    InstallHapWithProvisionType(tokenIdEx, "debug", true);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to release hap
+    UpdateHapWithProvisionType(tokenIdEx, "release", false);
+
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenWithProvisionTypeTest008
+ * @tc.desc: test update hap from debug with isDebugGrant false to release
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest008, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    // Step 1: install debug hap with isDebugGrant false
+    InstallHapWithProvisionType(tokenIdEx, "debug", false);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(DEBUG_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    // Step 2: update to release hap
+    UpdateHapWithProvisionType(tokenIdEx, "release", false);
+
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenAttr & DEBUG_APP_FLAG);
+
+    ASSERT_EQ(0, atManagerService_->DeleteToken(tokenID, false));
 }
 
 void BackupAndDelOriData(std::vector<GenericValues>& oriData)

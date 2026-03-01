@@ -2731,7 +2731,7 @@ HWTEST_F(TokenInfoManagerTest, GetFullRemoteTokenId002, TestSize.Level0)
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     EXPECT_NE(nullptr, tokenInfo);
 
-    EXPECT_EQ(tokenID, AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(tokenID));
+    EXPECT_EQ(tokenIdEx.tokenIDEx, AccessTokenInfoManager::GetInstance().GetFullRemoteTokenId(tokenID));
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

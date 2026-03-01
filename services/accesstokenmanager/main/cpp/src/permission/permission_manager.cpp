@@ -1265,6 +1265,27 @@ bool PermissionManager::AclAndEdmCheck(const PermissionBriefDef& briefDef, const
     return false;
 }
 
+void PermissionManager::InitPermState(const HapInitInfo& initInfo,
+    const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state)
+{
+    if (briefDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
+        state.grantFlag = PERMISSION_SYSTEM_FIXED;
+        state.grantStatus = PERMISSION_GRANTED;
+        return;
+    }
+    if ((initInfo.policy.preAuthorizationInfo.size() == 0) && (!needGrantForDebug)) {
+        return;
+    }
+    bool userCancelable = true;
+    if (IsUserGrantPermPreAuthorized(initInfo.policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
+        state.grantFlag = userCancelable ? PERMISSION_PRE_AUTHORIZED_CANCELABLE : PERMISSION_SYSTEM_FIXED;
+        state.grantStatus = PERMISSION_GRANTED;
+    } else if (needGrantForDebug) {
+        state.grantFlag = PERMISSION_USER_FIXED;
+        state.grantStatus = PERMISSION_GRANTED;
+    }
+}
+
 bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
     HapInfoCheckResult& result, std::vector<GenericValues>& undefValues)
 {
@@ -1275,6 +1296,9 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
         initInfo.updateInfo.appDistributionType : initInfo.installInfo.appDistributionType;
 
     PermissionStatus state;
+    bool isDebug = (initInfo.isUpdate) ?
+        (initInfo.updateInfo.appProvisionType == "debug") : (initInfo.installInfo.appProvisionType == "debug");
+    bool needGrantForDebug = isDebug && initInfo.policy.isDebugGrant;
     for (const auto& status : initInfo.policy.permStateList) {
         state = status;
         PermissionBriefDef briefDef;
@@ -1297,21 +1321,7 @@ bool PermissionManager::InitPermissionList(const HapInitInfo& initInfo, std::vec
         state.grantFlag = PERMISSION_DEFAULT_FLAG;
         state.grantStatus = PERMISSION_DENIED;
 
-        if (briefDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
-            state.grantFlag = PERMISSION_SYSTEM_FIXED;
-            state.grantStatus = PERMISSION_GRANTED;
-            initializedList.emplace_back(state);
-            continue;
-        }
-        if (initInfo.policy.preAuthorizationInfo.size() == 0) {
-            initializedList.emplace_back(state);
-            continue;
-        }
-        bool userCancelable = true;
-        if (IsUserGrantPermPreAuthorized(initInfo.policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
-            state.grantFlag = userCancelable ? PERMISSION_PRE_AUTHORIZED_CANCELABLE : PERMISSION_SYSTEM_FIXED;
-            state.grantStatus = PERMISSION_GRANTED;
-        }
+        InitPermState(initInfo, briefDef, needGrantForDebug, state);
         initializedList.emplace_back(state);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());

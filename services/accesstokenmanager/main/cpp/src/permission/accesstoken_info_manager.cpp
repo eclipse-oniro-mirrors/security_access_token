@@ -62,6 +62,7 @@ std::recursive_mutex g_instanceMutex;
 static const uint32_t SYSTEM_APP_FLAG = 0x0001;
 static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 static const uint32_t TOKEN_RESERVED_FLAG = 0x0004;
+static const uint32_t DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -594,7 +595,8 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
         (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID) ||
-         !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
+        (!DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) ||
+        (!DataValidator::IsAppProvisionTypeValid(info.appProvisionType))) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -758,6 +760,9 @@ int AccessTokenInfoManager::AllocAccessTokenIDEx(
     if (info.isAtomicService) {
         tokenIdEx.tokenIdExStruct.tokenAttr |= ATOMIC_SERVICE_FLAG;
     }
+    if (info.appProvisionType == "debug") {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= DEBUG_APP_FLAG;
+    }
     return RET_SUCCESS;
 }
 
@@ -830,6 +835,25 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
     }
 }
 
+void AccessTokenInfoManager::UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx)
+{
+    if (info.isSystemApp) {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
+    } else {
+        tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
+    }
+    if (info.isAtomicService) {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= ATOMIC_SERVICE_FLAG;
+    } else {
+        tokenIdEx.tokenIdExStruct.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
+    }
+    if (info.appProvisionType == "release") {
+        tokenIdEx.tokenIdExStruct.tokenAttr &= ~DEBUG_APP_FLAG;
+    } else if (info.appProvisionType == "debug") {
+        tokenIdEx.tokenIdExStruct.tokenAttr |= DEBUG_APP_FLAG;
+    }
+}
+
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
     const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
     std::vector<GenericValues>& undefValues)
@@ -849,16 +873,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
         LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not update!", tokenID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
-    if (info.isSystemApp) {
-        tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
-    } else {
-        tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
-    }
-    if (info.isAtomicService) {
-        tokenIdEx.tokenIdExStruct.tokenAttr |= ATOMIC_SERVICE_FLAG;
-    } else {
-        tokenIdEx.tokenIdExStruct.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
-    }
+    UpdateTokenAttr(info, tokenIdEx);
     {
         std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
         infoPtr->Update(info, permStateList, hapPolicy);

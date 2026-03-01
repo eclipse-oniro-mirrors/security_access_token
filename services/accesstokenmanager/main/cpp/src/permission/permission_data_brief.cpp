@@ -282,7 +282,7 @@ void PermissionDataBrief::UpdatePermStatus(const BriefPermData& permOld, BriefPe
 
 void PermissionDataBrief::Update(
     AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
-    const std::map<std::string, std::string>& aclExtendedMap)
+    const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     std::vector<PermissionStatus> permStateFilterList;
@@ -299,6 +299,9 @@ void PermissionDataBrief::Update(
                 return newPermData.permCode == oldPermData.permCode;
             });
         if (iter != briefPermDataList.end()) {
+            if (needUpdatePermByProvision && ((iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0)) {
+                continue;
+            }
             UpdatePermStatus(*iter, newPermData);
         }
     }

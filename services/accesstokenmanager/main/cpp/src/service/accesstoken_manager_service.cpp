@@ -704,6 +704,7 @@ static void TransferHapPolicy(const HapPolicyParcel& policyIn, HapPolicy& policy
     }
     policyOut.checkIgnore = policyIn.hapPolicy.checkIgnore;
     policyOut.aclExtendedMap = policyIn.hapPolicy.aclExtendedMap;
+    policyOut.isDebugGrant = policyIn.hapPolicy.isDebugGrant;
 }
 
 static void DumpEventInfo(const HapPolicy& policy, HapDfxInfo& dfxInfo)
@@ -933,6 +934,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     info.appDistributionType = infoIdl.appDistributionType;
     info.isAtomicService = infoIdl.isAtomicService;
     info.dataRefresh = infoIdl.dataRefresh;
+    info.appProvisionType = infoIdl.appProvisionType;
 
     resultInfoIdl.realResult = ERR_OK;
     HapInfoCheckResult permCheckResult;
