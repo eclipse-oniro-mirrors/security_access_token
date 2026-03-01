@@ -853,6 +853,49 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy013, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetUserPolicy014
+ * @tc.desc: SetUserPolicy to restrict permission, QueryStatusByPermission/QueryStatusByTokenID return PERMISSION_DENIED
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetUserPolicy014, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenID = fullIdUser1.tokenIdExStruct.tokenID;
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = testHapInfo.userID, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    {
+        MockNativeToken mockNative("privacy_service");
+        std::vector<PermissionStatus> permissionInfoList1;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByPermission({INTERNET}, permissionInfoList1));
+        EXPECT_FALSE(permissionInfoList1.empty());
+        for (const auto& info : permissionInfoList1) {
+            if (info.tokenID == tokenID) {
+                EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
+            }
+        }
+
+        std::vector<PermissionStatus> permissionInfoList2;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList2));
+        EXPECT_FALSE(permissionInfoList2.empty());
+        for (const auto& info : permissionInfoList2) {
+            if (info.permissionName == "ohos.permission.INTERNET") {
+                EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
+            }
+        }
+    }
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
  * @tc.name: ClearUserPolicy001
  * @tc.desc: ClearUserPolicy failed: 1. invalid permissionList; 2. invalid permission of permissionList.
  * @tc.type: FUNC

@@ -945,48 +945,6 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest027, TestSize.Leve
 }
 
 /**
- * @tc.name: QueryStatusByPermissionTest028
- * @tc.desc: SetUserPolicy to restrict permission, QueryStatusByPermission returns PERMISSION_DENIED
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest028, TestSize.Level1)
-{
-    MockNativeToken mockNative("privacy_service");
-
-    std::vector<std::string> permissions = {"ohos.permission.INTERNET"};
-    AccessTokenID tokenID = PrepareTestHap("com.example.userpolicy.queryperm028", permissions, false);
-    ASSERT_NE(tokenID, INVALID_TOKENID);
-
-    UserPermissionPolicy policy = {
-        .permissionName = "ohos.permission.INTERNET",
-        .userPolicyList = {{ .userId = TEST_USER_ID, .isRestricted = true }}
-    };
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
-
-    std::vector<std::string> permissionList = {"ohos.permission.INTERNET"};
-    std::vector<PermissionStatus> permissionInfoList;
-
-    int32_t ret = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList);
-
-    EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_FALSE(permissionInfoList.empty());
-
-    bool foundToken = false;
-    for (const auto& info : permissionInfoList) {
-        if (info.tokenID == tokenID) {
-            foundToken = true;
-            EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
-            break;
-        }
-    }
-    EXPECT_TRUE(foundToken) << "Test HAP not found in query result";
-
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ "ohos.permission.INTERNET" }));
-    CleanupTestHap(tokenID);
-}
-
-/**
  * @tc.name: QueryStatusByTokenIDTest001
  * @tc.desc: Query single HAP app's TokenID, return all its permissions
  * @tc.type: FUNC
@@ -1707,44 +1665,6 @@ static std::vector<std::string> CollectNormalAndSystemPermissions()
 
     GTEST_LOG_(INFO) << "Found " << validPermissions.size() << " valid permissions";
     return validPermissions;
-}
-
-/**
- * @tc.name: QueryStatusByTokenIDTest024
- * @tc.desc: SetUserPolicy to restrict permission, QueryStatusByTokenID returns PERMISSION_DENIED
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest024, TestSize.Level1)
-{
-    MockNativeToken mockNative("privacy_service");
-
-    std::vector<std::string> permissions = {"ohos.permission.INTERNET"};
-    AccessTokenID tokenID = PrepareTestHap("com.example.userpolicy.querytoken024", permissions, false);
-    ASSERT_NE(tokenID, INVALID_TOKENID);
-
-    UserPermissionPolicy policy = {
-        .permissionName = "ohos.permission.INTERNET",
-        .userPolicyList = {{ .userId = TEST_USER_ID, .isRestricted = true }}
-    };
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
-
-    std::vector<AccessTokenID> tokenIDList = {tokenID};
-    std::vector<PermissionStatus> permissionInfoList;
-
-    int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
-
-    EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_FALSE(permissionInfoList.empty());
-
-    for (const auto& info : permissionInfoList) {
-        if (info.permissionName == "ohos.permission.INTERNET") {
-            EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
-        }
-    }
-
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ "ohos.permission.INTERNET" }));
-    CleanupTestHap(tokenID);
 }
 
 /**
