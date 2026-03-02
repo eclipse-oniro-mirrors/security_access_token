@@ -686,8 +686,15 @@ void UIExtensionCallback::OnDestroy()
 static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (asyncContext->isWithWindowId) {
-        CreateServiceExtensionWithWindowId(asyncContext);
-        return;
+        sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
+        if (window == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GetWindowWithId failed, windowId: %{public}d", asyncContext->windowId);
+            asyncContext->needDynamicRequest = false;
+            asyncContext->result.errorCode = ERR_PARAM_INVALID;
+            asyncContext->result.errorMsg = "Cannot find window by windowId.";
+            ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, asyncContext->tokenId, 0);
+            return;
+        }
     }
 
     AAFwk::Want want;
