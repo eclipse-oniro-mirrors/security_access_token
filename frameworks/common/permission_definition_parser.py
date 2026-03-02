@@ -130,7 +130,7 @@ class PermissionDef(object):
         else:
             self.has_value = "false"
 
-        if permission_def_dict["since"] >= 20 and not "deviceTypes" in permission_def_dict:
+        if self.is_support_device_types(permission_def_dict["since"]) and not "deviceTypes" in permission_def_dict:
             raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
 
         if "deviceTypes" in permission_def_dict:
@@ -142,6 +142,19 @@ class PermissionDef(object):
             self.device_types = ["general"]
 
         self.code = code
+
+    def is_support_device_types(self, version):
+        if isinstance(version, int):
+            if version >= 26:
+                raise Exception("The style of version({}, {}) error, should be like 'since 26.0.0'.".format(version, self.name))
+            return version >= 20
+        elif isinstance(version, str) and version:
+            vernum = int(version.split('.')[0])
+            if vernum < 26:
+                raise Exception("The style of version({}, {}) error, should be like 'since 25'.".format(version, self.name))
+            return True
+        else:
+            raise Exception("Since version({}) error.".format(version))
 
     def dump_permission_name(self):
         return PERMISSION_NAME_STRING % (
