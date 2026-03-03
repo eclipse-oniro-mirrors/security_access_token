@@ -48,6 +48,8 @@ group("fuzztest") {
     "grantpermissionforspecifiedtimestub_fuzzer:GrantPermissionForSpecifiedTimeStubFuzzTest",
     "grantpermissionstub_fuzzer:GrantPermissionStubFuzzTest",
     "inithaptokenstub_fuzzer:InitHapTokenStubFuzzTest",
+    "querystatusbypermissionstub_fuzzer:QueryStatusByPermissionStubFuzzTest",
+    "querystatusbytokenidstub_fuzzer:QueryStatusByTokenIDStubFuzzTest",
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "registerselfpermstatechangecallbackstub_fuzzer:RegisterSelfPermStateChangeCallbackStubFuzzTest",
     "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",
