@@ -198,18 +198,33 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
+static bool CheckWindowId(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+    if (asyncContext->isWithWindowId) {
+        sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
+        if (window == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GetWindowWithId failed, windowId: %{public}d", asyncContext->windowId);
+            asyncContext->needDynamicRequest_ = false;
+            asyncContext->result_.errorCode = STS_ERROR_PARAM_INVALID;
+            asyncContext->result_.errorMsg = "Cannot find window by windowId.";
+            ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, asyncContext->tokenId);
+            return false;
+        }
+    }
+    return true;
+}
+
 void RequestAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncContextBase> asyncContext)
 {
     if (asyncContext == nullptr) {
         LOGI(ATM_DOMAIN, ATM_TAG, "asyncContext is nullptr.");
         return;
     }
-    if (asyncContext->isWithWindowId) {
-        CreateServiceExtensionWithWindowId(std::static_pointer_cast<RequestAsyncContext>(asyncContext));
-        return;
-    }
 
-    if (uiExtensionFlag) {
+    if (uiExtensionFlag || asyncContext->isWithWindowId) {
+        if (!CheckWindowId(std::static_pointer_cast<RequestAsyncContext>(asyncContext))) {
+            return;
+        }
         Want want;
         want.SetElementName(this->info.grantBundleName, this->info.grantAbilityName);
         want.SetParam(PERMISSION_KEY, this->permissionList);
