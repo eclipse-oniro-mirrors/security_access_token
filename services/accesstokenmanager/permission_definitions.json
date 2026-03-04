@@ -3694,6 +3694,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.STYLUS_FRAME_BOOST",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.ACCESS_SERVICE_NAVIGATION_INFO",
             "grantMode": "system_grant",
             "availableLevel": "normal",
