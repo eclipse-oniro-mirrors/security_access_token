@@ -137,6 +137,15 @@ bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
     return true;
 }
 
+bool DataValidator::IsDeviceNameValid(const std::string& deviceName)
+{
+    if (deviceName.empty() || (deviceName.length() > MAX_DEVICE_NAME_LENGTH)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid deviceName length(%{public}d).", static_cast<int32_t>(deviceName.length()));
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsDcapValid(const std::string& dcap)
 {
     return !dcap.empty() && (dcap.length() <= MAX_DCAP_LENGTH);

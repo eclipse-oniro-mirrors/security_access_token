@@ -41,6 +41,8 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "privacy_param.h"
+#include "remote_add_perm_param_info.h"
+#include "remote_permission_used_info.h"
 #include "safe_map.h"
 #include "thread_pool.h"
 
@@ -87,12 +89,17 @@ public:
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         int32_t callerPid);
     bool HasCallerInStartList(int32_t callerPid);
+    int32_t StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid);
+    int32_t StopRemoteUsingPermission(const std::string& remoteDeviceId, const std::string& remoteDeviceName,
+        const std::string& permissionName, int32_t callerPid);
     int32_t RegisterPermActiveStatusCallback(
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
     void CallbackExecute(const ContinuousPermissionRecord& record, const std::string& permissionName,
         PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
+    void CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record, const std::string& remoteDeviceId,
+        const std::string& remoteDeviceName, const std::string& permissionName, ActiveChangeType type);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
@@ -111,6 +118,9 @@ public:
         const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback);
 
+    int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info);
+    int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
+
     void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus(bool isIpc = false);
@@ -120,7 +130,6 @@ public:
     void OnCameraMgrRemoteDiedHandle();
     void RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid);
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
-    void RemoveRecordFromStartListByOp(int32_t opCode);
     void RemoveRecordFromStartListByCallerPid(int32_t callerPid);
     void ExecuteAllCameraExecuteCallback();
     void UpdatePermRecImmediately();
@@ -138,10 +147,10 @@ private:
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     int32_t AddPermissionUsedRecordInner(const AddPermParamInfo& info);
-    bool AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
+    int32_t AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
-    bool UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
+    int32_t UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
     int32_t AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
@@ -159,17 +168,20 @@ private:
     bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
         std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
         PermissionUsedResult& result);
-    bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
+    int32_t GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status);
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
     void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
     bool ShowGlobalDialog(const std::string& permissionName);
+    void UpdateStartUsingRecord(const std::string& permissionName, bool switchStatus);
+    void UpdateStartRemoteUsingRecord(const std::string& permissionName, bool switchStatus);
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
         const std::string& permissionName, int32_t callerPid);
     int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
+    int32_t AddRecordToStartRemoteList(const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
@@ -179,7 +191,7 @@ private:
     void ExecuteCameraCallbackAsync(AccessTokenID callbackTokenId, int32_t pid);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
-    bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
+    int32_t AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
@@ -199,6 +211,8 @@ private:
     void GetConfigValue();
     bool ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
         const IsEqualFunc& isEqualFunc, bool needClearCamera = true);
+    bool ToRemoveRemoteRecord(const RemoteContinuousPermissionRecord& targetRecord,
+        const IsRemoteEqualFunc& isEqualFunc, bool removeAll = false);
 
     void InitDisablePolicyFromDb();
     int32_t IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode);
@@ -209,12 +223,32 @@ private:
     void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
     int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 
+    int32_t GetRemotePermissionRecord(const RemoteAddPermParamInfo& info, RemotePermissionRecord& record,
+        const int32_t userId);
+    int32_t AddRemoteRecord(const RemotePermissionRecord& record);
+    int32_t MergeOrInsertRemoteRecord(const RemotePermissionRecord& record);
+    void AddRemoteRecToCacheAndValueVec(const RemotePermissionRecord& record, std::vector<GenericValues>& values);
+    void InsteadMergedRemoteRecIfNecessary(GenericValues& queryValue,
+        std::vector<RemotePermissionRecord>& mergedRecords);
+    void BuildBundleUsedRecordsFromRemoteResults(std::vector<GenericValues>& findRecordsValues,
+        std::vector<RemotePermissionRecord>& mergedRecords,
+        std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
+        const PermissionUsageFlag& flag);
+    int32_t UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record);
+    int32_t DeleteRemotePermissionRecord(int32_t days);
+
 private:
     bool hasInited_ = false;
     std::shared_mutex rwLock_;
     std::mutex startRecordListMutex_;
     std::set<ContinuousPermissionRecord> startRecordList_;
     SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
+
+    // remote start list
+    std::mutex startRemoteRecordListMutex_;
+    std::string uniqueDeviceId_;
+    std::string uniqueDeviceName_;
+    std::multiset<RemoteContinuousPermissionRecord> startRemoteRecordList_;
 
     // microphone
     std::mutex micMuteMutex_;
@@ -265,6 +299,9 @@ private:
 
     std::shared_mutex diablePolicyMutex_;
     std::unordered_map<int32_t, bool> disablePolicyMap_;
+
+    std::mutex remotePermUsedRecMutex_;
+    std::vector<RemotePermissionRecordCache> remotePermUsedRecList_;
 };
 } // namespace AccessToken
 } // namespace Security

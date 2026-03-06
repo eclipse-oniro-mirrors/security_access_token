@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@ namespace AccessToken {
 const std::string PrivacyFiledConst::FIELD_USER_ID = "user_id";
 const std::string PrivacyFiledConst::FIELD_TOKEN_ID = "token_id";
 const std::string PrivacyFiledConst::FIELD_DEVICE_ID = "device_id";
+const std::string PrivacyFiledConst::FIELD_DEVICE_NAME = "device_name";
 const std::string PrivacyFiledConst::FIELD_OP_CODE = "op_code";
 const std::string PrivacyFiledConst::FIELD_STATUS = "status";
 const std::string PrivacyFiledConst::FIELD_TIMESTAMP = "timestamp";

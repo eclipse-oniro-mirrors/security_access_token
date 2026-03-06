@@ -52,6 +52,7 @@
         "memmgr",
         "napi",
         "openssl",
+        "os_account",
         "power_manager",
         "relational_store",
         "safwk",

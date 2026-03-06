@@ -17,9 +17,12 @@
 #include "constant.h"
 #include "data_translator.h"
 #include "active_change_response_info.h"
+#include "privacy_error.h"
 #include "privacy_field_const.h"
+#include "privacy_test_common.h"
 #define private public
 #include "permission_used_record_db.h"
+#include "remote_permission_used_record_db.h"
 #undef private
 #include "permission_used_type.h"
 
@@ -33,6 +36,8 @@ static const int32_t NOT_EXSIT_TYPE = 9;
 static const int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static const int32_t PICKER_TYPE_VALUE = 2;
 static const int32_t RANDOM_TOKENID = 123;
+static const int32_t USER_ID_100 = 100;
+static const int32_t USER_ID_INVALID = 12345;
 }
 
 class PermissionRecordDBTest : public testing::Test {
@@ -43,12 +48,18 @@ public:
     void TearDown();
 };
 
+static AccessTokenID g_selfTokenId = 0;
+
 void PermissionRecordDBTest::SetUpTestCase()
 {
+    g_selfTokenId = GetSelfTokenID();
+    PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
 }
 
 void PermissionRecordDBTest::TearDownTestCase()
 {
+    SetSelfTokenID(g_selfTokenId);
+    PrivacyTestCommon::ResetTestEvironment();
 }
 
 void PermissionRecordDBTest::SetUp()
@@ -316,7 +327,8 @@ HWTEST_F(PermissionRecordDBTest, CreatePermissionRecordTable001, TestSize.Level0
     dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
 
-    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
@@ -334,7 +346,8 @@ HWTEST_F(PermissionRecordDBTest, InsertLockScreenStatusColumn001, TestSize.Level
     dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
 
-    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().InsertLockScreenStatusColumn());
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().InsertLockScreenStatusColumn());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
@@ -393,7 +406,8 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
     int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
     inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
     // TransferOpcodeToPermission fail
-    ASSERT_EQ(Constant::FAILURE, DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
         FLAG_PERMISSION_USAGE_SUMMARY, inGenericValues, permissionRecord));
     inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
 
@@ -404,6 +418,77 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
     inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
     // lastRejectTime > 0
     ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
+        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
+}
+
+/*
+ * @tc.name: TranslationRemoteRequestIntoGenericValues001
+ * @tc.desc: DataTranslator::TranslationRemoteRequestIntoGenericValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, TranslationRemoteRequestIntoGenericValues001, TestSize.Level0)
+{
+    PermissionUsedRequest request;
+    GenericValues andGenericValues;
+
+    request.beginTimeMillis = -1;
+    // begin < 0
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
+
+    request.beginTimeMillis = 10;
+    request.endTimeMillis = -1;
+    // begin > 0 + end < 0
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
+
+    request.endTimeMillis = 1;
+    // begin > 0 + end > 0 + begin > end
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
+
+    request.beginTimeMillis = 0; // begin == 0
+    request.endTimeMillis = 20; // end != 0
+    ASSERT_EQ(Constant::SUCCESS,
+        DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
+
+    request.beginTimeMillis = 10;
+    ASSERT_EQ(Constant::SUCCESS,
+        DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
+}
+
+/*
+ * @tc.name: TranslationGenericValuesIntoRemotePermissionRecord001
+ * @tc.desc: DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoRemotePermissionRecord001, TestSize.Level0)
+{
+    GenericValues inGenericValues;
+    PermissionUsedRecord permissionRecord;
+
+    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
+    // TransferOpcodeToPermission fail
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
+        FLAG_PERMISSION_USAGE_SUMMARY, inGenericValues, permissionRecord));
+    inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
+
+    opCode = static_cast<int32_t>(Constant::OpCode::OP_CAMERA);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 10);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 0);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
+    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
+        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
+
+    inGenericValues.Remove(PrivacyFiledConst::FIELD_REJECT_COUNT);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 1);
+    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
         FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
 }
 
@@ -795,6 +880,43 @@ HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level0)
 
     ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
         type, conditionValue));
+}
+
+/*
+ * @tc.name: RemotePermUsedRecordDbManagerTest001
+ * @tc.desc: RemotePermUsedRecordDbManager function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest001, TestSize.Level0)
+{
+    std::shared_ptr<RemotePermissionUsedRecordDb> db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(
+        USER_ID_INVALID, false);
+    EXPECT_EQ(nullptr, db);
+
+    db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, false);
+
+    std::vector<GenericValues> values;
+    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
+        RemotePermUsedRecordDbManager::GetInstance().Add(USER_ID_INVALID, values));
+    GenericValues value;
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_INVALID, value));
+    
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    std::vector<GenericValues> results;
+    int32_t databaseQueryCount = 0;
+    EXPECT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().FindByConditions(
+        USER_ID_INVALID, opCodeList, andConditions, results, databaseQueryCount));
+    
+    EXPECT_EQ(0, RemotePermUsedRecordDbManager::GetInstance().Count(USER_ID_INVALID));
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(USER_ID_INVALID, value));
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(USER_ID_INVALID, 1));
+    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
+        RemotePermUsedRecordDbManager::GetInstance().Update(USER_ID_INVALID, value, value));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -21,6 +21,8 @@
 #include <pthread.h>
 
 #include "accesstoken_common_log.h"
+#include "accesstoken_kit.h"
+#include "constant_common.h"
 #include "ipc_skeleton.h"
 #include "privacy_error.h"
 
@@ -152,6 +154,11 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
                     info.permissionName.c_str());
                 continue;
             }
+            if (info.isRemote && AccessTokenKit::GetTokenTypeFlag(it->registerTokenId) != TOKEN_NATIVE) {
+                LOGI(PRI_DOMAIN, PRI_TAG, "Remote using only trigger native callback, registId=%{public}u",
+                    it->registerTokenId);
+                continue;
+            }
             list.emplace_back((*it).callbackObject_);
         }
     }
@@ -179,8 +186,9 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
     LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([info]() mutable {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info);
-        LOGI(PRI_DOMAIN, PRI_TAG,
-            "Token: %{public}u, pid: %{public}d, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
+        LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
+            "token: %{public}u, pid: %{public}d, permName: %{public}s, changeType: %{public}d, ActiveStatusChange end",
+            ConstantCommon::EncryptDevId(info.deviceId).c_str(),
             info.tokenID, info.pid, info.permissionName.c_str(), info.type);
     });
     eventHandler->ProxyPostTask(task, taskName);

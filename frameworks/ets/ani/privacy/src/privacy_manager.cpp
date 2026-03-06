@@ -650,6 +650,12 @@ static ani_object ConvertBundleUsedRecord(ani_env* env, const BundleUsedRecord& 
         return nullptr;
     }
 
+    if (record.isRemote) {
+        if (!SetStringProperty(env, aniRecord, "deviceName", record.deviceName)) {
+            return nullptr;
+        }
+    }
+
     if (!SetStringProperty(env, aniRecord, "bundleName", record.bundleName)) {
         return nullptr;
     }
@@ -770,7 +776,13 @@ static ani_object GetPermissionUsedRecordExecute([[maybe_unused]] ani_env* env, 
     }
 
     PermissionUsedResult retResult;
-    int32_t errcode = PrivacyKit::GetPermissionUsedRecords(request, retResult);
+    int32_t errcode;
+    if (request.isRemote) {
+        errcode = PrivacyKit::GetRemotePermissionUsedRecords(request, retResult);
+    } else {
+        errcode = PrivacyKit::GetPermissionUsedRecords(request, retResult);
+    }
+
     if (errcode != ANI_OK) {
         int32_t stsCode = GetStsErrorCode(errcode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));

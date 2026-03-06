@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,6 +30,11 @@ public:
     static int32_t TranslationIntoGenericValues(const PermissionUsedRequest& request,
         GenericValues& andGenericValues);
     static int32_t TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
+        const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
+
+    static int32_t TranslationRemoteRequestIntoGenericValues(const PermissionUsedRequest& request,
+        GenericValues& andGenericValues);
+    static int32_t TranslationGenericValuesIntoRemotePermissionRecord(const PermissionUsageFlag& flag,
         const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
 };
 } // namespace AccessToken

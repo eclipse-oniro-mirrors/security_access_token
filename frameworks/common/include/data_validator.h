@@ -45,6 +45,8 @@ public:
 
     static bool IsDeviceIdValid(const std::string& deviceId);
 
+    static bool IsDeviceNameValid(const std::string& deviceName);
+
     static bool IsLabelValid(const std::string& label);
 
     static bool IsDescValid(const std::string& desc);
@@ -67,6 +69,7 @@ public:
 
 private:
     const static int MAX_LENGTH = 256;
+    const static int MAX_DEVICE_NAME_LENGTH = 100;
     const static int MAX_APPIDDESC_LENGTH = 10240;
     const static int MAX_DCAP_LENGTH = 1024;
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
