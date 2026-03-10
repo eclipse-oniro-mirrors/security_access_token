@@ -281,7 +281,6 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_object aniContext, ani_array permissionList, ani_object callback)
 {
     if (env == nullptr || permissionList == nullptr || callback == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Env or permissionList or callback is null.");
         return;
     }
     ani_vm* vm;
@@ -297,7 +296,10 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
         return;
     }
     ani_ref undefRef = nullptr;
-    env->GetUndefined(&undefRef);
+    if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return;
+    }
     ani_object result = reinterpret_cast<ani_object>(undefRef);
     std::string permission;
     if (CheckManualSettingPerm(asyncContext->permissionList, permission)) {
@@ -312,9 +314,8 @@ void RequestPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
     if (selfTokenID != asyncContext->tokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",
             asyncContext->tokenId, selfTokenID);
-        ani_object error =
-            BusinessErrorAni::CreateError(env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STS_ERROR_PARAM_INVALID,
-            "The specified context does not belong to the current application."));
+        ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_PARAM_INVALID, GetErrorMessage(
+            STS_ERROR_PARAM_INVALID, "The specified context does not belong to the current application."));
         (void)ExecuteAsyncCallback(env, callback, error, result);
         return;
     }

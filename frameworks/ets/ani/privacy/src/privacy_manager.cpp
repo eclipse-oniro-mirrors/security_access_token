@@ -140,12 +140,17 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
-        env->GlobalReference_Delete(ref_);
+        ani_status status;
+        if ((status = env->GlobalReference_Delete(ref_)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GlobalReference_Delete failed.");
+        }
     }
     ref_ = nullptr;
 
     if (!isSameThread) {
-        DetachCurrentEnv(vm_);
+        if (DetachCurrentEnv(vm_) != ANI_OK) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed to DetachCurrentEnv!");
+        }
     }
 }
 

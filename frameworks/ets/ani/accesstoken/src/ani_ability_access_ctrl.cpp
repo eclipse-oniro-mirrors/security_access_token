@@ -75,12 +75,17 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Current env is null.");
     } else if (ref_ != nullptr) {
-        env->GlobalReference_Delete(ref_);
+        ani_status status;
+        if ((status = env->GlobalReference_Delete(ref_)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Delete: %{public}u.", status);
+        }
     }
     ref_ = nullptr;
 
     if (!isSameThread) {
-        DetachCurrentEnv(vm_);
+        if (DetachCurrentEnv(vm_) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
+        }
     }
 }
 
@@ -202,7 +207,7 @@ static ani_object CreateAtManager([[maybe_unused]] ani_env* env)
     }
 
     ani_method ctor;
-    if ((status = env->Class_FindMethod(cls, "<ctor>", nullptr, &ctor)) != ANI_OK) {
+    if ((status = env->Class_FindMethod(cls, "<ctor>", ":", &ctor)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get ctor %{public}s, status: %{public}u.", className, status);
         return atManagerObj;
     }
