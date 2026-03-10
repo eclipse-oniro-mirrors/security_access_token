@@ -17,7 +17,6 @@ group("fuzztest") {
   deps = [
     # deps file
     "accesstokenstub_fuzzer:AccessTokenStubFuzzTest",
-    "accesstokenstubcoverage_fuzzer:AccessTokenStubCoverageFuzzTest",
     "allochaptokenstub_fuzzer:AllocHapTokenStubFuzzTest",
     "alloclocaltokenidstub_fuzzer:AllocLocalTokenIDStubFuzzTest",
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",

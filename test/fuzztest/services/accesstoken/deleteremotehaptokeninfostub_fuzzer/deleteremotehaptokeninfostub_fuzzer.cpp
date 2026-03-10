@@ -39,7 +39,7 @@ void UpdateRemoteHapTokenInfo()
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    DelayedSingleton<TokenSyncManagerService>::GetInstance()->SendRequest(static_cast<uint32_t>(
+    DelayedSingleton<TokenSyncManagerService>::GetInstance()->OnRemoteRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
 }
 
