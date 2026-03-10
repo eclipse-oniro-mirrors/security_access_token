@@ -35,7 +35,7 @@ namespace {
 static constexpr int32_t MAX_COUNTER = 1000;
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
-static const std::string HELP_MSG_NO_OPTION = "Error: you must specify an option at least.\n";
+static const std::string HELP_MSG_NO_OPTION = "Error: You must specify an option at least.\n";
 static const std::string SHORT_OPTIONS_DUMP = "d::h::t::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
@@ -295,11 +295,13 @@ void AtmCommand::RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsCo
             }
             break;
         case 'b':
+            context.hasBundleOption = true;
             if (optarg != nullptr && optarg[0] != '\0') {
                 context.info.bundleName = optarg;
             }
             break;
         case 'n':
+            context.hasProcessOption = true;
             if (optarg != nullptr && optarg[0] != '\0') {
                 context.info.processName = optarg;
             }
@@ -343,9 +345,11 @@ void AtmCommand::RunAsCommandExistentOptionForToggle(int32_t option, AtmTogglePa
             info.type = TOGGLE_OPERATE_TYPE[option];
             break;
         case 'p':
+            info.hasPermissionOption = true;
             info.permissionName = (optarg != nullptr) ? optarg : "";;
             break;
         case 'i':
+            info.hasUserIdOption = true;
             if (optarg != nullptr) {
                 if (IsNumericString(optarg)) {
                     info.userID = static_cast<int32_t>(std::atoi(optarg));
@@ -355,7 +359,8 @@ void AtmCommand::RunAsCommandExistentOptionForToggle(int32_t option, AtmTogglePa
             }
             break;
         case 'k':
-            if (optarg != nullptr && (strcmp(optarg, "0") == 0 || strcmp(optarg, "1") == 0)) {
+            info.hasStatusOption = true;
+            if (optarg != nullptr && IsNumericString(optarg)) {
                 info.status = static_cast<uint32_t>(std::atoi(optarg));
             }
             break;
@@ -507,9 +512,9 @@ int32_t AtmCommand::GetToggleStatus(int32_t userID, const std::string& permissio
     }
 
     if (status == PermissionRequestToggleStatus::OPEN) {
-        statusInfo = "Toggle status is open";
+        statusInfo = "Toggle status is open.";
     } else {
-        statusInfo = "Toggle status is closed";
+        statusInfo = "Toggle status is closed.";
     }
 
     return result;
@@ -548,12 +553,12 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
 int32_t AtmCommand::SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo)
 {
     if ((userID < 0)) {
-        statusInfo = "Invalid userID\n";
+        statusInfo = "Invalid userID.\n";
         return ERR_INVALID_VALUE;
     }
 
     if ((recordStatus != 0) && (recordStatus != 1)) {
-        statusInfo = "Invalid status\n";
+        statusInfo = "Invalid status.\n";
         return ERR_INVALID_VALUE;
     }
 
@@ -565,7 +570,7 @@ int32_t AtmCommand::SetRecordToggleStatus(int32_t userID, const uint32_t& record
 int32_t AtmCommand::GetRecordToggleStatus(int32_t userID, std::string& statusInfo)
 {
     if ((userID < 0)) {
-        statusInfo = "Invalid userID\n";
+        statusInfo = "Invalid userID.\n";
         return ERR_INVALID_VALUE;
     }
 
@@ -575,7 +580,7 @@ int32_t AtmCommand::GetRecordToggleStatus(int32_t userID, std::string& statusInf
         return result;
     }
 
-    statusInfo = status ? "Record toggle status is open \n" : "Record toggle status is closed \n";
+    statusInfo = status ? "Record toggle status is open.\n" : "Record toggle status is closed.\n";
 
     return result;
 }
@@ -653,6 +658,25 @@ static bool IsTokenIdInvalid(const DumpOptionsContext& context)
     return context.hasTokenIdOption && context.info.tokenId == 0;
 }
 
+static int32_t ValidateDumpExclusiveOptions(const DumpOptionsContext& context, std::string& errorMsg)
+{
+    if (!context.hasTokenOption) {
+        return RET_SUCCESS;
+    }
+
+    uint32_t tokenSelectorCount = 0;
+    tokenSelectorCount += context.hasTokenIdOption ? 1 : 0;
+    tokenSelectorCount += context.hasPermissionOption ? 1 : 0;
+    tokenSelectorCount += context.hasBundleOption ? 1 : 0;
+    tokenSelectorCount += context.hasProcessOption ? 1 : 0;
+    if (tokenSelectorCount > 1) {
+        errorMsg = "Error: -i, -p, -b and -n are mutually exclusive. Only one of them can be specified.\n";
+        return ERR_INVALID_VALUE;
+    }
+
+    return RET_SUCCESS;
+}
+
 static void ResolveDumpOperationType(DumpOptionsContext& context)
 {
     if (context.hasTokenOption && context.hasPermissionOption && !context.permissionName.empty()) {
@@ -712,6 +736,13 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
     if (IsTokenIdInvalid(context)) {
         resultReceiver_.append("Error: TokenID is invalid.\n");
         return ERR_INVALID_VALUE;
+    }
+
+    std::string errorMsg;
+    result = ValidateDumpExclusiveOptions(context, errorMsg);
+    if (result != RET_SUCCESS) {
+        resultReceiver_.append(errorMsg);
+        return result;
     }
 
     ResolveDumpOperationType(context);
@@ -798,20 +829,26 @@ int32_t AtmCommand::ValidatePermParams(const PermOptionsContext& context)
 static int32_t ValidateToggleSetParams(const AtmToggleParamInfo& info, std::string& errorMsg)
 {
     if (info.toggleMode == TOGGLE_REQUEST) {
-        if (info.permissionName.empty()) {
-            errorMsg = "Error: Missing required parameter: -p <permission-name>\n\n";
+        if (!info.hasPermissionOption || info.permissionName.empty()) {
+            errorMsg += "Error: Missing required parameter: -p <permission-name>\n\n";
         }
-        if (info.userID == 0 && info.status == INVALID_ATM_SET_STATUS) {
-            errorMsg = "Error: Missing required parameter: -i <user-id> or -k <status>\n\n";
+        if (!info.hasStatusOption) {
+            errorMsg += "Error: Missing required parameter: -k <status>\n\n";
+        }
+        if (errorMsg.empty()) {
+            return RET_SUCCESS;
         }
         errorMsg += HELP_MSG_TOGGLE_REQUEST + "\n";
         return ERR_INVALID_VALUE;
     } else if (info.toggleMode == TOGGLE_RECORD) {
-        if (info.userID == 0) {
-            errorMsg = "Error: Missing required parameter: -i <user-id>\n\n";
+        if (!info.hasUserIdOption) {
+            errorMsg += "Error: Missing required parameter: -i <user-id>\n\n";
         }
-        if (info.status == INVALID_ATM_SET_STATUS) {
-            errorMsg = "Error: Missing required parameter: -k <status>\n\n";
+        if (!info.hasStatusOption) {
+            errorMsg += "Error: Missing required parameter: -k <status>\n\n";
+        }
+        if (errorMsg.empty()) {
+            return RET_SUCCESS;
         }
         errorMsg += HELP_MSG_TOGGLE_RECORD + "\n";
         return ERR_INVALID_VALUE;
