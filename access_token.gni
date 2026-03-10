@@ -196,7 +196,7 @@ if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
   lite_device_enable = false
 }
 
-if ("${target_platform}" == "pc" || "${target_platform}" == "tablet") {
+if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" || use_libfuzzer) {
   access_token_manage_user_policy_enable = true
   access_token_cflags_cc += [ "-DSUPPORT_MANAGE_USER_POLICY" ]
 } else {
