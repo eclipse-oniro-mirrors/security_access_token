@@ -108,6 +108,7 @@ bool ContinuousPermissionRecord::IsEqualTokenIdAndPid(const ContinuousPermission
     return tokenId == record.tokenId && IsEqualPid(record);
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 bool RemoteContinuousPermissionRecord::operator < (const RemoteContinuousPermissionRecord& other) const
 {
     if (opCode != other.opCode) {
@@ -152,6 +153,7 @@ void RemotePermissionRecord::TranslationIntoRemotePermissionRecord(const Generic
     record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

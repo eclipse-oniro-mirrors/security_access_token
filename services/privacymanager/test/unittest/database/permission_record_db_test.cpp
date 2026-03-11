@@ -22,7 +22,9 @@
 #include "privacy_test_common.h"
 #define private public
 #include "permission_used_record_db.h"
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_permission_used_record_db.h"
+#endif
 #undef private
 #include "permission_used_type.h"
 
@@ -36,8 +38,12 @@ static const int32_t NOT_EXSIT_TYPE = 9;
 static const int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static const int32_t PICKER_TYPE_VALUE = 2;
 static const int32_t RANDOM_TOKENID = 123;
+#ifdef REMOTE_PRIVACY_ENABLE
 static const int32_t USER_ID_100 = 100;
 static const int32_t USER_ID_INVALID = 12345;
+const std::string DB_PATH = "/data/123456";
+const std::string DB_NAME = "test.db";
+#endif
 }
 
 class PermissionRecordDBTest : public testing::Test {
@@ -421,6 +427,7 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
         FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /*
  * @tc.name: TranslationRemoteRequestIntoGenericValues001
  * @tc.desc: DataTranslator::TranslationRemoteRequestIntoGenericValues function test
@@ -491,6 +498,115 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoRemotePermissionRec
     ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
         FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
 }
+
+/*
+ * @tc.name: RemotePermUsedRecordDbManagerTest001
+ * @tc.desc: RemotePermUsedRecordDbManager function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest001, TestSize.Level0)
+{
+    std::shared_ptr<RemotePermissionUsedRecordDb> db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(
+        USER_ID_INVALID, false);
+    EXPECT_EQ(nullptr, db);
+
+    db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, false);
+
+    std::vector<GenericValues> values;
+    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
+        RemotePermUsedRecordDbManager::GetInstance().Add(USER_ID_INVALID, values));
+    GenericValues value;
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_INVALID, value));
+    
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    std::vector<GenericValues> results;
+    int32_t databaseQueryCount = 0;
+    EXPECT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().FindByConditions(
+        USER_ID_INVALID, opCodeList, andConditions, results, databaseQueryCount));
+    
+    EXPECT_EQ(0, RemotePermUsedRecordDbManager::GetInstance().Count(USER_ID_INVALID));
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(USER_ID_INVALID, value));
+    EXPECT_EQ(Constant::SUCCESS,
+        RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(USER_ID_INVALID, 1));
+    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
+        RemotePermUsedRecordDbManager::GetInstance().Update(USER_ID_INVALID, value, value));
+}
+
+/*
+ * @tc.name: RemotePermUsedRecordDbManagerTest002
+ * @tc.desc: Test Count
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest002, TestSize.Level0)
+{
+    std::shared_ptr<RemotePermissionUsedRecordDb> db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(
+        USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    
+    RemotePermUsedRecordDbManager::GetInstance().Count(USER_ID_100);
+
+    GenericValues value;
+    RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(USER_ID_100, value);
+
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN, 0);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, 1);
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(USER_ID_100, value);
+
+    RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(USER_ID_100, 1);
+
+    GenericValues value2;
+    value2.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "ididid");
+    value2.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "namename");
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1);
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    std::vector<GenericValues> values;
+    values.push_back(value2);
+    RemotePermUsedRecordDbManager::GetInstance().Add(USER_ID_100, values);
+    RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(USER_ID_100, 1);
+}
+
+/*
+ * @tc.name: RemotePermUsedRecordDbManagerTest003
+ * @tc.desc: Test Count
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest003, TestSize.Level0)
+{
+    RemotePermissionUsedRecordDb db(DB_PATH, DB_NAME);
+    std::vector<std::string> modifyColumns;
+    std::vector<std::string> conditionColumns;
+    std::string sql = db.CreateUpdatePrepareSqlCmd(modifyColumns, conditionColumns);
+    EXPECT_TRUE(sql.empty());
+
+    modifyColumns.push_back("abcde");
+    modifyColumns.push_back("fghij");
+    std::string sql2 = db.CreateUpdatePrepareSqlCmd(modifyColumns, conditionColumns);
+    EXPECT_FALSE(sql2.empty());
+
+    std::set<int32_t> opCodeList;
+    std::vector<std::string> andColumns;
+    int32_t databaseQueryCount = 0;
+    andColumns.push_back("timestamp_begin");
+    andColumns.push_back("timestamp_end");
+    andColumns.push_back("abcde");
+    std::string sql3 = db.CreateSelectByConditionPrepareSqlCmd(opCodeList, andColumns, databaseQueryCount);
+    EXPECT_FALSE(sql3.empty());
+
+    opCodeList.insert(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    opCodeList.insert(static_cast<int32_t>(Constant::OpCode::OP_INVALID));
+    std::string sql4 = db.CreateSelectByConditionPrepareSqlCmd(opCodeList, andColumns, databaseQueryCount);
+    EXPECT_FALSE(sql4.empty());
+}
+#endif
 
 /*
  * @tc.name: Add001
@@ -880,43 +996,6 @@ HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level0)
 
     ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
         type, conditionValue));
-}
-
-/*
- * @tc.name: RemotePermUsedRecordDbManagerTest001
- * @tc.desc: RemotePermUsedRecordDbManager function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest001, TestSize.Level0)
-{
-    std::shared_ptr<RemotePermissionUsedRecordDb> db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(
-        USER_ID_INVALID, false);
-    EXPECT_EQ(nullptr, db);
-
-    db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, false);
-
-    std::vector<GenericValues> values;
-    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
-        RemotePermUsedRecordDbManager::GetInstance().Add(USER_ID_INVALID, values));
-    GenericValues value;
-    EXPECT_EQ(Constant::SUCCESS,
-        RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_INVALID, value));
-    
-    std::set<int32_t> opCodeList;
-    GenericValues andConditions;
-    std::vector<GenericValues> results;
-    int32_t databaseQueryCount = 0;
-    EXPECT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().FindByConditions(
-        USER_ID_INVALID, opCodeList, andConditions, results, databaseQueryCount));
-    
-    EXPECT_EQ(0, RemotePermUsedRecordDbManager::GetInstance().Count(USER_ID_INVALID));
-    EXPECT_EQ(Constant::SUCCESS,
-        RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(USER_ID_INVALID, value));
-    EXPECT_EQ(Constant::SUCCESS,
-        RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(USER_ID_INVALID, 1));
-    EXPECT_EQ(PrivacyError::ERR_FILE_OPERATE_FAILED,
-        RemotePermUsedRecordDbManager::GetInstance().Update(USER_ID_INVALID, value, value));
 }
 } // namespace AccessToken
 } // namespace Security

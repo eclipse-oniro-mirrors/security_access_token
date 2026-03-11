@@ -194,6 +194,7 @@ if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
   access_token_cflags_cc += [ "-DDYNAMIC_CLOSE_LIBS" ]
 } else {
   lite_device_enable = false
+  access_token_cflags_cc += [ "-DREMOTE_PRIVACY_ENABLE" ]
 }
 
 if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" || use_libfuzzer) {

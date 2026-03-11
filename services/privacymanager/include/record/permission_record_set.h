@@ -23,8 +23,10 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 using IsEqualFunc=bool (ContinuousPermissionRecord::*)(const ContinuousPermissionRecord& record) const;
+#ifdef REMOTE_PRIVACY_ENABLE
 using
     IsRemoteEqualFunc=bool (RemoteContinuousPermissionRecord::*)(const RemoteContinuousPermissionRecord& record) const;
+#endif
 
 class PermissionRecordSet {
 public:

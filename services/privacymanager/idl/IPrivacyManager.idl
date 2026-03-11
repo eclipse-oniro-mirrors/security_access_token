@@ -47,9 +47,9 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 20] void UnRegisterPermDisablePolicyCallback([in] IRemoteObject cb);
     [ipccode 21] void GetCurrUsingPermInfo([out] List<ActiveChangeResponseParcel> resultsParcel);
     [ipccode 22] void CheckPermissionInUse([in] String permissionName, [out] boolean isUsing);
-    [ipccode 23] void StartRemoteUsingPermission([in] RemotePermissionUsedInfoParcel infoParcel, [in] IRemoteObject anonyStub);
-    [ipccode 24] void StopRemoteUsingPermission([in] String remoteDeviceId, [in] String remoteDeviceName, [in] String permissionName);
-    [ipccode 25] void AddRemotePermissionUsedRecord([in] RemoteAddPermParamInfoParcel infoParcel);
-    [ipccode 26, oneway] void AddRemotePermissionUsedRecordAsync([in] RemoteAddPermParamInfoParcel infoParcel);
-    [ipccode 27] void GetRemotePermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
+    [ipccode 23, macrodef REMOTE_PRIVACY_ENABLE] void StartRemoteUsingPermission([in] RemotePermissionUsedInfoParcel infoParcel, [in] IRemoteObject anonyStub);
+    [ipccode 24, macrodef REMOTE_PRIVACY_ENABLE] void StopRemoteUsingPermission([in] String remoteDeviceId, [in] String remoteDeviceName, [in] String permissionName);
+    [ipccode 25, macrodef REMOTE_PRIVACY_ENABLE] void AddRemotePermissionUsedRecord([in] RemoteAddPermParamInfoParcel infoParcel);
+    [ipccode 26, oneway, macrodef REMOTE_PRIVACY_ENABLE] void AddRemotePermissionUsedRecordAsync([in] RemoteAddPermParamInfoParcel infoParcel);
+    [ipccode 27, macrodef REMOTE_PRIVACY_ENABLE] void GetRemotePermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
 }

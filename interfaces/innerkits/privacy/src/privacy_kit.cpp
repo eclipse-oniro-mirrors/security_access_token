@@ -30,13 +30,15 @@ namespace AccessToken {
 namespace {
 constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
 std::mutex g_lockCache;
-std::mutex g_remoteLockCache;
 struct RecordCache {
     int32_t successCount = 0;
     int64_t timespamp = 0;
 };
 std::map<std::string, RecordCache> g_recordMap;
+#ifdef REMOTE_PRIVACY_ENABLE
+std::mutex g_remoteLockCache;
 std::map<std::string, RecordCache> g_remoteRecordMap;
+#endif
 }
 static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 {
@@ -66,38 +68,6 @@ bool FindAndInsertRecord(const AddPermParamInfo& record)
     }
     g_recordMap[newRecordStr].successCount += record.successCount;
     g_recordMap[newRecordStr].timespamp = curTimestamp;
-    return true;
-}
-
-static std::string GetRemoteRecordUniqueStr(const std::string& deviceId, const std::string& permissionName)
-{
-    return deviceId + "_" + permissionName;
-}
-
-bool FindAndInsertRemoteRecord(const std::string& deviceId, const std::string& permissionName,
-    int32_t successCount)
-{
-    std::lock_guard<std::mutex> lock(g_remoteLockCache);
-    std::string newRecordStr = GetRemoteRecordUniqueStr(deviceId, permissionName);
-    int64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
-    auto iter = g_remoteRecordMap.find(newRecordStr);
-    if (iter == g_remoteRecordMap.end()) {
-        g_remoteRecordMap[newRecordStr].successCount = successCount;
-        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
-        return false;
-    }
-    if (curTimestamp - iter->second.timespamp >= MERGE_TIMESTAMP) {
-        g_remoteRecordMap[newRecordStr].successCount = successCount;
-        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
-        return false;
-    }
-    if (iter->second.successCount == 0 && successCount != 0) {
-        g_remoteRecordMap[newRecordStr].successCount += successCount;
-        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
-        return false;
-    }
-    g_remoteRecordMap[newRecordStr].successCount += successCount;
-    g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
     return true;
 }
 
@@ -192,24 +162,6 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
 }
 
-int32_t PrivacyKit::StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
-{
-    if (!DataValidator::IsPermissionNameValid(permissionName) || !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
-        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    return PrivacyManagerClient::GetInstance().StartRemoteUsingPermission(info, permissionName);
-}
-
-int32_t PrivacyKit::StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
-{
-    if (!DataValidator::IsPermissionNameValid(permissionName) || !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
-        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    return PrivacyManagerClient::GetInstance().StopRemoteUsingPermission(info, permissionName);
-}
-
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     if (!DataValidator::IsTokenIDValid(tokenID)) {
@@ -248,6 +200,57 @@ int32_t PrivacyKit::GetPermissionUsedRecords(
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
+static std::string GetRemoteRecordUniqueStr(const std::string& deviceId, const std::string& permissionName)
+{
+    return deviceId + "_" + permissionName;
+}
+
+bool FindAndInsertRemoteRecord(const std::string& deviceId, const std::string& permissionName,
+    int32_t successCount)
+{
+    std::lock_guard<std::mutex> lock(g_remoteLockCache);
+    std::string newRecordStr = GetRemoteRecordUniqueStr(deviceId, permissionName);
+    int64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
+    auto iter = g_remoteRecordMap.find(newRecordStr);
+    if (iter == g_remoteRecordMap.end()) {
+        g_remoteRecordMap[newRecordStr].successCount = successCount;
+        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
+        return false;
+    }
+    if (curTimestamp - iter->second.timespamp >= MERGE_TIMESTAMP) {
+        g_remoteRecordMap[newRecordStr].successCount = successCount;
+        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
+        return false;
+    }
+    if (iter->second.successCount == 0 && successCount != 0) {
+        g_remoteRecordMap[newRecordStr].successCount += successCount;
+        g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
+        return false;
+    }
+    g_remoteRecordMap[newRecordStr].successCount += successCount;
+    g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
+    return true;
+}
+
+int32_t PrivacyKit::StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
+{
+    if (!DataValidator::IsPermissionNameValid(permissionName) || !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
+        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().StartRemoteUsingPermission(info, permissionName);
+}
+
+int32_t PrivacyKit::StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
+{
+    if (!DataValidator::IsPermissionNameValid(permissionName) || !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
+        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().StopRemoteUsingPermission(info, permissionName);
+}
+
 int32_t PrivacyKit::AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
@@ -279,6 +282,29 @@ int32_t PrivacyKit::GetRemotePermissionUsedRecords(
     }
     return PrivacyManagerClient::GetInstance().GetRemotePermissionUsedRecords(request, result);
 }
+#else
+int32_t PrivacyKit::StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
+{
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+}
+
+int32_t PrivacyKit::StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName)
+{
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+}
+
+int32_t PrivacyKit::AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, const std::string& permissionName,
+    int32_t successCount, int32_t failCount, bool asyncMode)
+{
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+}
+
+int32_t PrivacyKit::GetRemotePermissionUsedRecords(
+    const PermissionUsedRequest& request, PermissionUsedResult& result)
+{
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+}
+#endif
 
 int32_t PrivacyKit::RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {

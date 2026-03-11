@@ -87,6 +87,7 @@ HWTEST_F(PermDenyTest, AddPermissionUsedRecord001, TestSize.Level0)
         PrivacyKit::AddPermissionUsedRecord(g_testTokenId, "ohos.permission.CAMERA", 1, 0));
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /**
  * @tc.name: AddRemotePermissionUsedRecord001
  * @tc.desc: Test AddRemotePermissionUsedRecord with no permssion.
@@ -117,6 +118,24 @@ HWTEST_F(PermDenyTest, GetRemotePermissionUsedRecords001, TestSize.Level0)
     PermissionUsedResult result;
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 }
+
+/**
+* @tc.name: StarAndStoptRemoteUsingPermission001
+* @tc.desc: Test StartRemoteUsingPermission/StopRemoteUsingPermission with no permssion.
+* @tc.type: FUNC
+* @tc.require: issues3049
+*/
+HWTEST_F(PermDenyTest, StarAndStoptRemoteUsingPermission001, TestSize.Level0)
+{
+    RemoteCallerInfo info;
+    info.remoteDeviceId = "ididid";
+    info.remoteDeviceName = "namename";
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+}
+#endif
 
 /**
  * @tc.name: RemovePermissionUsedRecords001
@@ -156,23 +175,6 @@ HWTEST_F(PermDenyTest, StarAndStoptUsingPermission001, TestSize.Level0)
         PrivacyKit::StartUsingPermission(g_testTokenId, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::StopUsingPermission(g_testTokenId, "ohos.permission.CAMERA"));
-}
-
-/**
-* @tc.name: StarAndStoptRemoteUsingPermission001
-* @tc.desc: Test StartRemoteUsingPermission/StopRemoteUsingPermission with no permssion.
-* @tc.type: FUNC
-* @tc.require: issues3049
-*/
-HWTEST_F(PermDenyTest, StarAndStoptRemoteUsingPermission001, TestSize.Level0)
-{
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
 }
 
 class TestCallBack : public OnPermissionUsedRecordCallbackStub {

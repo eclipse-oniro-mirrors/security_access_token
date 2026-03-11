@@ -41,8 +41,10 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "privacy_param.h"
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_add_perm_param_info.h"
 #include "remote_permission_used_info.h"
+#endif
 #include "safe_map.h"
 #include "thread_pool.h"
 
@@ -89,17 +91,21 @@ public:
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         int32_t callerPid);
     bool HasCallerInStartList(int32_t callerPid);
+#ifdef REMOTE_PRIVACY_ENABLE
     int32_t StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid);
     int32_t StopRemoteUsingPermission(const std::string& remoteDeviceId, const std::string& remoteDeviceName,
         const std::string& permissionName, int32_t callerPid);
+    void CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record, const std::string& remoteDeviceId,
+        const std::string& remoteDeviceName, const std::string& permissionName, ActiveChangeType type);
+    int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info);
+    int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
+#endif
     int32_t RegisterPermActiveStatusCallback(
         AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
     void CallbackExecute(const ContinuousPermissionRecord& record, const std::string& permissionName,
         PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
-    void CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record, const std::string& remoteDeviceId,
-        const std::string& remoteDeviceName, const std::string& permissionName, ActiveChangeType type);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName, int32_t pid);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
@@ -117,10 +123,6 @@ public:
     int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
         const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback);
-
-    int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info);
-    int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
-
     void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus(bool isIpc = false);
@@ -176,12 +178,13 @@ private:
     void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
     bool ShowGlobalDialog(const std::string& permissionName);
     void UpdateStartUsingRecord(const std::string& permissionName, bool switchStatus);
+#ifdef REMOTE_PRIVACY_ENABLE
     void UpdateStartRemoteUsingRecord(const std::string& permissionName, bool switchStatus);
+#endif
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
         const std::string& permissionName, int32_t callerPid);
     int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
-    int32_t AddRecordToStartRemoteList(const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid);
 
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
@@ -211,8 +214,6 @@ private:
     void GetConfigValue();
     bool ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
         const IsEqualFunc& isEqualFunc, bool needClearCamera = true);
-    bool ToRemoveRemoteRecord(const RemoteContinuousPermissionRecord& targetRecord,
-        const IsRemoteEqualFunc& isEqualFunc, bool removeAll = false);
 
     void InitDisablePolicyFromDb();
     int32_t IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode);
@@ -223,6 +224,10 @@ private:
     void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
     int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 
+#ifdef REMOTE_PRIVACY_ENABLE
+    int32_t AddRecordToStartRemoteList(const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid);
+    bool ToRemoveRemoteRecord(const RemoteContinuousPermissionRecord& targetRecord,
+        const IsRemoteEqualFunc& isEqualFunc, bool removeAll = false);
     int32_t GetRemotePermissionRecord(const RemoteAddPermParamInfo& info, RemotePermissionRecord& record,
         const int32_t userId);
     int32_t AddRemoteRecord(const RemotePermissionRecord& record);
@@ -236,6 +241,7 @@ private:
         const PermissionUsageFlag& flag);
     int32_t UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record);
     int32_t DeleteRemotePermissionRecord(int32_t days);
+#endif
 
 private:
     bool hasInited_ = false;
@@ -243,12 +249,6 @@ private:
     std::mutex startRecordListMutex_;
     std::set<ContinuousPermissionRecord> startRecordList_;
     SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
-
-    // remote start list
-    std::mutex startRemoteRecordListMutex_;
-    std::string uniqueDeviceId_;
-    std::string uniqueDeviceName_;
-    std::multiset<RemoteContinuousPermissionRecord> startRemoteRecordList_;
 
     // microphone
     std::mutex micMuteMutex_;
@@ -299,9 +299,16 @@ private:
 
     std::shared_mutex diablePolicyMutex_;
     std::unordered_map<int32_t, bool> disablePolicyMap_;
+#ifdef REMOTE_PRIVACY_ENABLE
+    // remote start list
+    std::mutex startRemoteRecordListMutex_;
+    std::string uniqueDeviceId_;
+    std::string uniqueDeviceName_;
+    std::multiset<RemoteContinuousPermissionRecord> startRemoteRecordList_;
 
     std::mutex remotePermUsedRecMutex_;
     std::vector<RemotePermissionRecordCache> remotePermUsedRecList_;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

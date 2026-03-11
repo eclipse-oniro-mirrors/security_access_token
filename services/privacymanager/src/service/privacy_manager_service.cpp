@@ -263,6 +263,7 @@ int32_t PrivacyManagerService::StopUsingPermission(
     return ret;
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 int32_t PrivacyManagerService::StartRemoteUsingPermission(const RemotePermissionUsedInfoParcel &infoParcel,
     const sptr<IRemoteObject>& anonyStub)
 {
@@ -305,6 +306,59 @@ int32_t PrivacyManagerService::StopRemoteUsingPermission(const std::string& remo
     }
     return ret;
 }
+
+int32_t PrivacyManagerService::AddRemotePermissionUsedRecord(const RemoteAddPermParamInfoParcel& infoParcel)
+{
+#ifdef HITRACE_NATIVE_ENABLE
+    PRIVACY_SYNC_TRACE;
+#endif
+
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    RemoteAddPermParamInfo info = infoParcel.info;
+    return PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info);
+}
+
+int32_t PrivacyManagerService::AddRemotePermissionUsedRecordAsync(const RemoteAddPermParamInfoParcel& infoParcel)
+{
+    return AddRemotePermissionUsedRecord(infoParcel);
+}
+
+int32_t PrivacyManagerService::GetRemotePermissionUsedRecords(
+    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    std::string permissionList;
+    for (const auto& perm : request.request.permissionList) {
+        permissionList.append(perm);
+        permissionList.append(" ");
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG,
+        "Remote query - deviceId: %{public}s, timestamp: [%{public}s-%{public}s], flag: %{public}d, perm: %{public}s.",
+        ConstantCommon::EncryptDevId(request.request.deviceId).c_str(),
+        std::to_string(request.request.beginTimeMillis).c_str(), std::to_string(request.request.endTimeMillis).c_str(),
+        request.request.flag, permissionList.c_str());
+
+    PermissionUsedResult permissionRecord;
+    int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
+        request.request, permissionRecord);
+    resultParcel.result = permissionRecord;
+    return ret;
+}
+#endif
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)
 {
@@ -360,58 +414,6 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordsAsync(
 
     LOGD(PRI_DOMAIN, PRI_TAG, "Id: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
-}
-
-int32_t PrivacyManagerService::AddRemotePermissionUsedRecord(const RemoteAddPermParamInfoParcel& infoParcel)
-{
-#ifdef HITRACE_NATIVE_ENABLE
-    PRIVACY_SYNC_TRACE;
-#endif
-
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        return PrivacyError::ERR_NOT_SYSTEM_APP;
-    }
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    RemoteAddPermParamInfo info = infoParcel.info;
-    return PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info);
-}
-
-int32_t PrivacyManagerService::AddRemotePermissionUsedRecordAsync(const RemoteAddPermParamInfoParcel& infoParcel)
-{
-    return AddRemotePermissionUsedRecord(infoParcel);
-}
-
-int32_t PrivacyManagerService::GetRemotePermissionUsedRecords(
-    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel)
-{
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
-        return PrivacyError::ERR_NOT_SYSTEM_APP;
-    }
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    std::string permissionList;
-    for (const auto& perm : request.request.permissionList) {
-        permissionList.append(perm);
-        permissionList.append(" ");
-    }
-    LOGI(PRI_DOMAIN, PRI_TAG,
-        "Remote query - deviceId: %{public}s, timestamp: [%{public}s-%{public}s], flag: %{public}d, perm: %{public}s.",
-        ConstantCommon::EncryptDevId(request.request.deviceId).c_str(),
-        std::to_string(request.request.beginTimeMillis).c_str(), std::to_string(request.request.endTimeMillis).c_str(),
-        request.request.flag, permissionList.c_str());
-
-    PermissionUsedResult permissionRecord;
-    int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
-        request.request, permissionRecord);
-    resultParcel.result = permissionRecord;
-    return ret;
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(

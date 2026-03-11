@@ -69,6 +69,7 @@ enum PrivacyError {
     ERR_PERMISSION_NOT_SUPPORT,
     ERR_DATABASE_OPERATE_FAILED,
     ERR_REMOTE_USING_CONFLICT,
+    ERR_CAPABILITY_NOT_SUPPORT,
 };
 } // namespace AccessToken
 } // namespace Security

@@ -31,7 +31,9 @@ void GetAllDirFile(const std::string& path, std::vector<std::string>& files);
 void GetDirFileSize(
     const std::string& path, std::vector<std::string>& filePath, std::vector<uint64_t>& fileSize, int32_t depth);
 void ReportAccessTokenUserData();
+#ifdef REMOTE_PRIVACY_ENABLE
 void ReportPrivacyUserData(const std::string& path);
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -33,7 +33,9 @@
 #include "privacy_manager_service.h"
 #include "privacy_manager_proxy_death_param.h"
 #include "proxy_death_callback_stub.h"
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_permission_used_record_db.h"
+#endif
 #undef private
 #include "parameter.h"
 #include "perm_active_status_change_callback_stub.h"
@@ -60,9 +62,11 @@ static int32_t TEST_PID_2 = 2;
 static int32_t TEST_PID_3 = 3;
 static constexpr int32_t CALLER_PID = 11;
 static constexpr int32_t CALLER_PID2 = 12;
+#ifdef REMOTE_PRIVACY_ENABLE
 static constexpr int32_t USER_ID_100 = 100;
 static constexpr uint32_t USER_100_UID = 20000000;
 static constexpr uint32_t USER_INVALID_UID = 2147400000;
+#endif
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
@@ -840,6 +844,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Leve
     ASSERT_EQ(PERM_TEMPORARY_CALL, callback->type_);
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /*
  * @tc.name: StartRemoteUsingPermissionTest001
  * @tc.desc: StartRemoteUsingPermission function test
@@ -915,6 +920,96 @@ HWTEST_F(PermissionRecordManagerTest, StartRemoteUsingPermissionTest002, TestSiz
     std::string str = isMute ? "true" : "false";
     SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
+
+/*
+ * @tc.name: AddRemotePermissionUsedRecordTest001
+ * @tc.desc: AddRemotePermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
+{
+    uint32_t selfUid = getuid();
+    setuid(USER_100_UID);
+
+    RemoteAddPermParamInfo info;
+    info.deviceId = "ididid";
+    info.deviceName = "namename";
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+
+    info.deviceId = "";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    info.deviceId = "ididid";
+
+    info.deviceName = "";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    info.deviceName = "namename";
+
+    info.permissionName = "";
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    info.permissionName = "ohos.permission.CAMERA";
+
+    info.permissionName = "abcdefg";
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    info.permissionName = "ohos.permission.CAMERA";
+
+    info.successCount = 0;
+    info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    info.successCount = 1;
+    info.failCount = 0;
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+    setuid(selfUid);
+}
+
+/*
+ * @tc.name: GetRemotePermissionUsedRecordsTest001
+ * @tc.desc: GetRemotePermissionUsedRecords function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, TestSize.Level0)
+{
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    request.isRemote = false;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+
+    uint32_t selfUid = getuid();
+    setuid(USER_INVALID_UID);
+    // userId valid
+    request.isRemote = true;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+
+    setuid(USER_100_UID);
+
+    request.beginTimeMillis = -1;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+    request.beginTimeMillis = 0;
+
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+
+    setuid(selfUid);
+}
+#endif
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
@@ -1035,95 +1130,6 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
     info.successCount = 0;
     info.failCount = 0;
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
-}
-
-/*
- * @tc.name: AddRemotePermissionUsedRecordTest001
- * @tc.desc: AddRemotePermissionUsedRecord function test
- * @tc.type: FUNC
- * @tc.require: issues3049
- */
-HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
-{
-    uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
-
-    RemoteAddPermParamInfo info;
-    info.deviceId = "ididid";
-    info.deviceName = "namename";
-    info.permissionName = "ohos.permission.CAMERA";
-    info.successCount = 1;
-    info.failCount = 0;
-
-    info.deviceId = "";
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.deviceId = "ididid";
-
-    info.deviceName = "";
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.deviceName = "namename";
-
-    info.permissionName = "";
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.permissionName = "ohos.permission.CAMERA";
-
-    info.permissionName = "abcdefg";
-    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
-        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.permissionName = "ohos.permission.CAMERA";
-
-    info.successCount = 0;
-    info.failCount = 0;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.successCount = 1;
-    info.failCount = 0;
-
-    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
-    GenericValues conditions;
-    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
-    setuid(selfUid);
-}
-
-/*
- * @tc.name: GetRemotePermissionUsedRecordsTest001
- * @tc.desc: GetRemotePermissionUsedRecords function test
- * @tc.type: FUNC
- * @tc.require: issues3049
- */
-HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, TestSize.Level0)
-{
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    request.isRemote = false;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
-
-    uint32_t selfUid = getuid();
-    setuid(USER_INVALID_UID);
-    // userId valid
-    request.isRemote = true;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
-
-    setuid(USER_100_UID);
-
-    request.beginTimeMillis = -1;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
-    request.beginTimeMillis = 0;
-
-    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
-    GenericValues conditions;
-    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
-
-    EXPECT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
-
-    setuid(selfUid);
 }
 
 /*

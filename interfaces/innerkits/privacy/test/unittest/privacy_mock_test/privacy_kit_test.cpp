@@ -63,6 +63,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /**
  * @tc.name: AddRemotePermissionUsedRecord001
  * @tc.desc: AddRemotePermissionUsedRecord with proxy is null.
@@ -94,6 +95,39 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecords001, TestSize.Level0)
     int32_t ret = PrivacyKit::GetRemotePermissionUsedRecords(request, result);
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
+
+/**
+ * @tc.name: StartRemoteUsingPermission001
+ * @tc.desc: StartRemoteUsingPermission proxy is null.
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission001, TestSize.Level0)
+{
+    RemoteCallerInfo info;
+    info.remoteDeviceId = "ididid";
+    info.remoteDeviceName = "namename";
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StartRemoteUsingPermission(info, permissionName);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
+ * @tc.name: StopRemoteUsingPermission001
+ * @tc.desc: StopRemoteUsingPermission proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StopRemoteUsingPermission001, TestSize.Level0)
+{
+    RemoteCallerInfo info;
+    info.remoteDeviceId = "ididid";
+    info.remoteDeviceName = "namename";
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StopRemoteUsingPermission(info, permissionName);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
+#endif
 
 /**
  * @tc.name: StartUsingPermission001
@@ -137,22 +171,6 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
 }
 
 /**
- * @tc.name: StartRemoteUsingPermission001
- * @tc.desc: StartRemoteUsingPermission proxy is null.
- * @tc.type: FUNC
- * @tc.require: issues3049
- */
-HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission001, TestSize.Level0)
-{
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
-    std::string permissionName = "ohos.permission.CAMERA";
-    int32_t ret = PrivacyKit::StartRemoteUsingPermission(info, permissionName);
-    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
-}
-
-/**
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission proxy is null.
  * @tc.type: FUNC
@@ -163,22 +181,6 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level0)
     AccessTokenID tokenId = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
     int32_t ret = PrivacyKit::StopUsingPermission(tokenId, permissionName);
-    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
-}
-
-/**
- * @tc.name: StopRemoteUsingPermission001
- * @tc.desc: StopRemoteUsingPermission proxy is null.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, StopRemoteUsingPermission001, TestSize.Level0)
-{
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
-    std::string permissionName = "ohos.permission.CAMERA";
-    int32_t ret = PrivacyKit::StopRemoteUsingPermission(info, permissionName);
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 

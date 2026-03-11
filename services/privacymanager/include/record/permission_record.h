@@ -63,6 +63,12 @@ struct ContinuousPermissionRecord {
     static bool IsPidValid(int32_t pid);
 };
 
+struct PermissionRecordCache {
+    PermissionRecord record;
+    bool needUpdateToDb = false;
+};
+
+#ifdef REMOTE_PRIVACY_ENABLE
 struct RemoteContinuousPermissionRecord {
     int32_t opCode = 0;
     int32_t callerPid = 0;
@@ -72,11 +78,6 @@ struct RemoteContinuousPermissionRecord {
     bool IsEqualRecord(const RemoteContinuousPermissionRecord& record) const;
     bool IsEqualPermCode(const RemoteContinuousPermissionRecord& record) const;
     bool IsEqualCallerPid(const RemoteContinuousPermissionRecord& record) const;
-};
-
-struct PermissionRecordCache {
-    PermissionRecord record;
-    bool needUpdateToDb = false;
 };
 
 struct RemotePermissionRecord {
@@ -98,6 +99,7 @@ struct RemotePermissionRecordCache {
     RemotePermissionRecord record;
     bool needUpdateToDb = false;
 };
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

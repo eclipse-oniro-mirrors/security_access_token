@@ -35,7 +35,6 @@ privacy_manager_base_config = {
     "${access_token_path}/services/privacymanager/src/database/data_translator.cpp",
     "${access_token_path}/services/privacymanager/src/database/permission_used_record_db.cpp",
     "${access_token_path}/services/privacymanager/src/database/privacy_field_const.cpp",
-    "${access_token_path}/services/privacymanager/src/database/remote_permission_used_record_db.cpp",
     "${access_token_path}/services/privacymanager/src/disable_policy/disable_policy_cbk_manager.cpp",
     "${access_token_path}/services/privacymanager/src/disable_policy/perm_disable_policy_cbk_death_recipient.cpp",
     "${access_token_path}/services/privacymanager/src/disable_policy/perm_disable_policy_cbk_proxy.cpp",
@@ -112,7 +111,6 @@ privacy_manager_base_config = {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_single",
-    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "sqlite:sqlite",
@@ -124,6 +122,11 @@ privacy_manager_base_config = {
   # Conditional external deps based on feature flags
   if (ohos_indep_compiler_enable) {
     external_deps += [ "bounds_checking_function:libsec_shared" ]
+  }
+
+  if (lite_device_enable == false) {
+    sources += [ "${access_token_path}/services/privacymanager/src/database/remote_permission_used_record_db.cpp" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
   }
 
   # ========== Cflags ==========

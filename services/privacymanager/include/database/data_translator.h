@@ -31,11 +31,12 @@ public:
         GenericValues& andGenericValues);
     static int32_t TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
         const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
-
+#ifdef REMOTE_PRIVACY_ENABLE
     static int32_t TranslationRemoteRequestIntoGenericValues(const PermissionUsedRequest& request,
         GenericValues& andGenericValues);
     static int32_t TranslationGenericValuesIntoRemotePermissionRecord(const PermissionUsageFlag& flag,
         const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
+#endif
 };
 } // namespace AccessToken
 } // namespace Security
