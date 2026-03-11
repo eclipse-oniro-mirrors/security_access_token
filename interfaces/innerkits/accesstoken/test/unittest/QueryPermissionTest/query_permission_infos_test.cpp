@@ -149,6 +149,33 @@ void QueryPermissionInfosTest::CleanupTestHap(AccessTokenID tokenID)
     TestCommon::DeleteTestHapToken(tokenID);
 }
 
+std::vector<AccessTokenID> QueryPermissionInfosTest::PrepareBatchTestHaps(
+    const std::string& bundlePrefix, const std::vector<std::string>& permissions, int32_t appCount)
+{
+    std::vector<AccessTokenID> tokenIDs;
+    tokenIDs.reserve(appCount);
+    for (int32_t i = 0; i < appCount; ++i) {
+        std::string bundleName = bundlePrefix + "." + std::to_string(i);
+        AccessTokenID tokenID = PrepareTestHap(bundleName, permissions, false);
+        if (tokenID != INVALID_TOKENID) {
+            tokenIDs.emplace_back(tokenID);
+        }
+    }
+    return tokenIDs;
+}
+
+int64_t QueryPermissionInfosTest::MeasureGetPermissionFlagDuration(
+    const std::vector<AccessTokenID>& tokenIDs, const std::string& permissionName)
+{
+    auto startTime = std::chrono::high_resolution_clock::now();
+    for (auto tokenID : tokenIDs) {
+        uint32_t flag = 0;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, permissionName, flag));
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+}
+
 /**
  * @tc.name: QueryStatusByPermissionTest001
  * @tc.desc: Query single valid permission, return HAP app list that requested it
@@ -944,6 +971,51 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest027, TestSize.Leve
     EXPECT_EQ(0, restoreResult) << "Failed to restore original token ID";
 }
 
+
+/**
+ * @tc.name: QueryStatusByPermissionTest028
+ * @tc.desc: Compare 1000-app query cost of QueryStatusByPermission and GetPermissionFlag
+ * @tc.type: PERF
+ * @tc.require: Issue Number
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest028, TestSize.Level3)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    std::vector<std::string> permissions = {permissionName};
+    std::vector<AccessTokenID> tokenIDs = PrepareBatchTestHaps(
+        "com.example.perf.test028.permission", permissions, EXTRA_LARGE_APP_COUNT);
+    ASSERT_EQ(static_cast<size_t>(EXTRA_LARGE_APP_COUNT), tokenIDs.size());
+
+    std::vector<PermissionStatus> permissionInfoList;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    int32_t ret = AccessTokenKit::QueryStatusByPermission(permissions, permissionInfoList);
+    auto endTime = std::chrono::high_resolution_clock::now();
+    int64_t queryDuration =
+        std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_GE(permissionInfoList.size(), tokenIDs.size());
+
+    std::set<AccessTokenID> resultTokenIDs;
+    for (const auto& info : permissionInfoList) {
+        if (info.permissionName == permissionName) {
+            resultTokenIDs.emplace(info.tokenID);
+        }
+    }
+    for (auto tokenID : tokenIDs) {
+        EXPECT_TRUE(resultTokenIDs.find(tokenID) != resultTokenIDs.end());
+    }
+
+    int64_t flagDuration = MeasureGetPermissionFlagDuration(tokenIDs, permissionName);
+    GTEST_LOG_(INFO) << "QueryStatusByPermission 1000 apps took " << queryDuration
+                     << "us, GetPermissionFlag 1000 apps took " << flagDuration << "us";
+    EXPECT_GT(flagDuration, queryDuration);
+
+    for (auto tokenID : tokenIDs) {
+        CleanupTestHap(tokenID);
+    }
+}
+
 /**
  * @tc.name: QueryStatusByTokenIDTest001
  * @tc.desc: Query single HAP app's TokenID, return all its permissions
@@ -1637,6 +1709,50 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest023, TestSize.Level1)
     // Restore original token ID
     int32_t restoreResult = SetSelfTokenID(originalTokenId);
     EXPECT_EQ(0, restoreResult) << "Failed to restore original token ID";
+}
+
+
+/**
+ * @tc.name: QueryStatusByTokenIDTest024
+ * @tc.desc: Compare 1000-app query cost of QueryStatusByTokenID and GetPermissionFlag
+ * @tc.type: PERF
+ * @tc.require: Issue Number
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest024, TestSize.Level3)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    std::vector<std::string> permissions = {permissionName};
+    std::vector<AccessTokenID> tokenIDs = PrepareBatchTestHaps(
+        "com.example.perf.test024.token", permissions, EXTRA_LARGE_APP_COUNT);
+    ASSERT_EQ(static_cast<size_t>(EXTRA_LARGE_APP_COUNT), tokenIDs.size());
+
+    std::vector<PermissionStatus> permissionInfoList;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDs, permissionInfoList);
+    auto endTime = std::chrono::high_resolution_clock::now();
+    int64_t queryDuration =
+        std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(tokenIDs.size(), permissionInfoList.size());
+
+    std::set<AccessTokenID> resultTokenIDs;
+    for (const auto& info : permissionInfoList) {
+        EXPECT_EQ(permissionName, info.permissionName);
+        resultTokenIDs.emplace(info.tokenID);
+    }
+    for (auto tokenID : tokenIDs) {
+        EXPECT_TRUE(resultTokenIDs.find(tokenID) != resultTokenIDs.end());
+    }
+
+    int64_t flagDuration = MeasureGetPermissionFlagDuration(tokenIDs, permissionName);
+    GTEST_LOG_(INFO) << "QueryStatusByTokenID 1000 apps took " << queryDuration
+                     << "us, GetPermissionFlag 1000 apps took " << flagDuration << "us";
+    EXPECT_GT(flagDuration, queryDuration);
+
+    for (auto tokenID : tokenIDs) {
+        CleanupTestHap(tokenID);
+    }
 }
 
 static std::vector<std::string> CollectNormalAndSystemPermissions()
