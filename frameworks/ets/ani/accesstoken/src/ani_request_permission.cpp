@@ -457,7 +457,10 @@ void RequestPermissionsFromUserExecute([[maybe_unused]] ani_env* env, [[maybe_un
             "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
 
         ani_ref undefRef = nullptr;
-        env->GetUndefined(&undefRef);
+        if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+            return;
+        }
         ani_object result = reinterpret_cast<ani_object>(undefRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));
@@ -500,7 +503,10 @@ void RequestPermissionsFromUserWithWindowIdExecute([[maybe_unused]] ani_env* env
             "The context tokenID: %{public}d, selfTokenID: %{public}d.", asyncContext->tokenId, selfTokenID);
 
         ani_ref undefRef = nullptr;
-        env->GetUndefined(&undefRef);
+        if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+            return;
+        }
         ani_object result = reinterpret_cast<ani_object>(undefRef);
         ani_object error = BusinessErrorAni::CreateError(env, STS_ERROR_INNER, GetErrorMessage(STS_ERROR_INNER,
             "The specified context does not belong to the current application."));

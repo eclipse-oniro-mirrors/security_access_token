@@ -185,7 +185,10 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
     }
 
     ani_ref undefRef = nullptr;
-    env->GetUndefined(&undefRef);
+    if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return;
+    }
     ani_object result = reinterpret_cast<ani_object>(undefRef);
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {

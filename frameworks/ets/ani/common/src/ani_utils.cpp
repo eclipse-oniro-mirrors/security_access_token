@@ -297,8 +297,14 @@ ani_ref CreateAniArrayString(ani_env* env, const std::vector<std::string>& cArra
     }
     ani_string aString = nullptr;
     for (ani_size i = 0; i < length; ++i) {
-        env->String_NewUTF8(cArray[i].c_str(), cArray[i].size(), &aString);
-        env->Array_Set(aArrayRef, i, aString);
+        if ((status = env->String_NewUTF8(cArray[i].c_str(), cArray[i].size(), &aString)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to String_NewUTF8: %{public}u.", status);
+            return nullptr;
+        }
+        if ((status = env->Array_Set(aArrayRef, i, aString)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Set Array: %{public}u.", status);
+            return nullptr;
+        }
     }
     ani_ref aRef = nullptr;
     if ((status = env->GlobalReference_Create(aArrayRef, &aRef)) != ANI_OK) {
@@ -417,7 +423,10 @@ void DeleteReference(ani_env* env, ani_ref& ref)
     }
 
     if (ref != nullptr) {
-        env->GlobalReference_Delete(ref);
+        ani_status status;
+        if ((status = env->GlobalReference_Delete(ref)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Delete: %{public}u.", status);
+        }
         ref = nullptr;
     }
 }

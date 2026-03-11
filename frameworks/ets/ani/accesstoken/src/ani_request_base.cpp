@@ -123,7 +123,11 @@ void RequestAsyncContextBase::FinishCallback()
     ani_object aniResult = reinterpret_cast<ani_object>(undefRef);
 
     ani_ref nullRef = nullptr;
-    env->GetNull(&nullRef);
+    ani_status status = env->GetNull(&nullRef);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetNull: %{public}u.", status);
+        return;
+    }
     ani_object aniError = reinterpret_cast<ani_object>(nullRef);
 
     if (stsCode == STS_OK) {
@@ -155,12 +159,15 @@ void RequestAsyncContextBase::Clear()
     }
 
     if (callbackRef_ != nullptr) {
-        curEnv->GlobalReference_Delete(callbackRef_);
+        ani_status status;
+        if ((status = curEnv->GlobalReference_Delete(callbackRef_)) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Delete: %{public}u.", status);
+        }
         callbackRef_ = nullptr;
     }
 
-    if (!isSameThread) {
-        DetachCurrentEnv(vm_);
+    if (!isSameThread && DetachCurrentEnv(vm_) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
     }
 }
 

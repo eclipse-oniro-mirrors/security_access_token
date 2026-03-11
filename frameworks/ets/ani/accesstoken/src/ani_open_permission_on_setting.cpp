@@ -224,7 +224,10 @@ void OpenPermissionOnSettingExecute([[maybe_unused]] ani_env* env,
         return;
     }
     ani_ref undefRef = nullptr;
-    env->GetUndefined(&undefRef);
+    if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return;
+    }
     ani_object result = reinterpret_cast<ani_object>(undefRef);
     ani_object error;
 
