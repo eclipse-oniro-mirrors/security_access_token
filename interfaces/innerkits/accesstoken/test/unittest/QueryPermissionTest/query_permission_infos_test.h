@@ -16,6 +16,7 @@
 #ifndef QUERY_PERMISSION_INFOS_TEST_H
 #define QUERY_PERMISSION_INFOS_TEST_H
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <mutex>
 #include <string>
@@ -87,11 +88,29 @@ protected:
      */
     void CleanupTestHap(AccessTokenID tokenID);
 
+    /**
+     * @brief Prepare multiple test HAP tokens with the same permission set
+     * @param bundlePrefix Prefix used to generate unique bundle names
+     * @param permissions List of permissions to request
+     * @param appCount Number of HAPs to create
+     * @return Created AccessTokenID list
+     */
+    std::vector<AccessTokenID> PrepareBatchTestHaps(const std::string& bundlePrefix,
+        const std::vector<std::string>& permissions, int32_t appCount);
+
+    /**
+     * @brief Query permission flags for multiple tokens and return total elapsed time
+     * @param tokenIDs Tokens to query
+     * @param permissionName Permission to query
+     * @return Elapsed microseconds
+     */
+    int64_t MeasureGetPermissionFlagDuration(const std::vector<AccessTokenID>& tokenIDs,
+        const std::string& permissionName);
+
     static uint64_t selfShellTokenId_;
     static std::mutex testMutex_;
     static MockHapToken* mock_;
 };
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
