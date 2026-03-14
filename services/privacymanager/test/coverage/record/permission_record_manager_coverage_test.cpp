@@ -28,7 +28,9 @@
 #include "active_status_callback_manager.h"
 #include "permission_record_manager.h"
 #include "permission_used_record_db.h"
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_permission_used_record_db.h"
+#endif
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
@@ -58,11 +60,13 @@ static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
 static constexpr uint32_t RANDOM_TOKENID = 123;
 static constexpr int32_t TEST_USER_ID_11 = 11;
+#ifdef REMOTE_PRIVACY_ENABLE
 static constexpr int32_t USER_ID_100 = 100;
 static constexpr int32_t USER_ID_INVALID = 12345;
 static constexpr uint32_t USER_100_UID = 20000000;
 static constexpr int32_t NOT_SAME_TIME = 10000000;
 static constexpr int32_t CAMERA_OP_CODE = 18;
+#endif
 static constexpr int32_t INVALID_CODE = 9999;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
@@ -853,6 +857,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords005, TestSize.Level4)
     PermissionRecordManager::GetInstance().ExecuteDeletePermissionRecordTask();
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /*
  * @tc.name: AddRemotePermissionUsedRecordTest001
  * @tc.desc: AddRemotePermissionUsedRecord function test
@@ -987,7 +992,24 @@ HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest003, Test
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].record.accessCount = 2;
     PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].needUpdateToDb = true;
+
+    record.deviceId = "ididid222";
+    record.deviceName = "namename222";
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemoteRecord(record));
+
+    PermissionRecordCache cache;
+    PermissionRecordManager::GetInstance().permUsedRecList_.push_back(cache);
+    cache.needUpdateToDb = true;
+    PermissionRecordManager::GetInstance().permUsedRecList_.push_back(cache);
     PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
+
+    RemoteAddPermParamInfo info;
+    info.deviceId = "ididid333";
+    info.deviceName = "namename333";
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
@@ -1019,12 +1041,19 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
     setuid(USER_100_UID);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->needUpdateToDb = true;
+    record.deviceId = "ididid2222";
+    record.deviceName = "namename2222";
+    PermissionRecordManager::GetInstance().AddRemoteRecord(record);
+
     PermissionUsedRequest request;
     PermissionUsedResult result;
     request.isRemote = true;
     PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->record.userId = USER_ID_INVALID;
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
@@ -1105,6 +1134,33 @@ HWTEST_F(PermissionRecordManagerTest, BuildBundleUsedRecordsFromRemoteResultsTes
     GenericValues conditions;
     EXPECT_EQ(RET_SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions));
 }
+
+/*
+ * @tc.name: StartRemoteUsingPermissionCoverageTest001
+ * @tc.desc: coverage test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, StartRemoteUsingPermissionCoverageTest001, TestSize.Level4)
+{
+    RemotePermissionUsedInfo info;
+    ActiveChangeType type = PERM_REMOTE_USING;
+    int32_t callerPid = 0;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().AddRecordToStartRemoteList(info, type, callerPid));
+
+    RemoteContinuousPermissionRecord record;
+    record.opCode = CAMERA_OP_CODE;
+    record.callerPid = CALLER_PID;
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
+    // remove all
+    EXPECT_EQ(true, PermissionRecordManager::GetInstance().ToRemoveRemoteRecord(
+        record, &RemoteContinuousPermissionRecord::IsEqualRecord, true));
+    EXPECT_EQ(0, PermissionRecordManager::GetInstance().startRemoteRecordList_.size());
+}
+#endif
 
 /**
  * @tc.name: SetPermissionUsedRecordToggleStatus001
@@ -1425,32 +1481,6 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
         tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
     PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::PRIVACY, CallerType::CAMERA, isMuteCamera,
         RANDOM_TOKENID);
-}
-
-/*
- * @tc.name: StartRemoteUsingPermissionCoverageTest001
- * @tc.desc: coverage test
- * @tc.type: FUNC
- * @tc.require: issues3049
- */
-HWTEST_F(PermissionRecordManagerTest, StartRemoteUsingPermissionCoverageTest001, TestSize.Level4)
-{
-    RemotePermissionUsedInfo info;
-    ActiveChangeType type = PERM_REMOTE_USING;
-    int32_t callerPid = 0;
-    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
-        PermissionRecordManager::GetInstance().AddRecordToStartRemoteList(info, type, callerPid));
-
-    RemoteContinuousPermissionRecord record;
-    record.opCode = CAMERA_OP_CODE;
-    record.callerPid = CALLER_PID;
-    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
-    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
-    PermissionRecordManager::GetInstance().startRemoteRecordList_.insert(record);
-    // remove all
-    EXPECT_EQ(true, PermissionRecordManager::GetInstance().ToRemoveRemoteRecord(
-        record, &RemoteContinuousPermissionRecord::IsEqualRecord, true));
-    EXPECT_EQ(0, PermissionRecordManager::GetInstance().startRemoteRecordList_.size());
 }
 
 /*

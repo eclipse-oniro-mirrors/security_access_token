@@ -130,6 +130,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const P
     return Constant::SUCCESS;
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 int32_t DataTranslator::TranslationRemoteRequestIntoGenericValues(const PermissionUsedRequest& request,
     GenericValues& andGenericValues)
 {
@@ -202,6 +203,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(const
     }
     return Constant::SUCCESS;
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

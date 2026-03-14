@@ -40,7 +40,6 @@
 #include "iservice_registry.h"
 #include "json_parse_loader.h"
 #include "libraryloader.h"
-#include "os_account_manager.h"
 #include "parameter.h"
 #include "parcel_utils.h"
 #include "permission_map.h"
@@ -49,11 +48,14 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
-#include "remote_permission_used_record_db.h"
 #include "screenlock_manager_loader.h"
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
+#ifdef REMOTE_PRIVACY_ENABLE
+#include "os_account_manager.h"
+#include "remote_permission_used_record_db.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -269,22 +271,6 @@ int32_t PermissionRecordManager::UpdatePermissionUsedRecordToDb(const Permission
         PermissionUsedRecordDb::DataType::PERMISSION_RECORD, modifyValue, conditionValue);
 }
 
-int32_t PermissionRecordManager::UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record)
-{
-    GenericValues modifyValue;
-    modifyValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
-    modifyValue.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
-
-    GenericValues conditionValue;
-    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, record.deviceId);
-    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, record.deviceName);
-    conditionValue.Put(PrivacyFiledConst::FIELD_OP_CODE, record.opCode);
-    conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
-
-    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
-    return RemotePermUsedRecordDbManager::GetInstance().Update(record.userId, modifyValue, conditionValue);
-}
-
 int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     int32_t res = MergeOrInsertRecord(record);
@@ -331,7 +317,7 @@ void PermissionRecordManager::UpdatePermRecImmediately()
             }
         }
     }
-
+#ifdef REMOTE_PRIVACY_ENABLE
     // update remote cache
     {
         std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
@@ -341,6 +327,7 @@ void PermissionRecordManager::UpdatePermRecImmediately()
             }
         }
     }
+#endif
 }
 
 bool PermissionRecordManager::IsEdmMuteOrDisable(const std::string& permissionName)
@@ -530,6 +517,32 @@ int32_t PermissionRecordManager::AddPermissionUsedRecordInner(const AddPermParam
     return AddOrUpdateUsedTypeIfNeeded(info.tokenId, record.opCode, info.type);
 }
 
+static void TransferToOpcode(const std::vector<std::string>& permissionList, std::set<int32_t>& opCodeList)
+{
+    for (const auto& permission : permissionList) {
+        int32_t opCode = Constant::OP_INVALID;
+        (void)Constant::TransferPermissionToOpcode(permission, opCode);
+        opCodeList.insert(opCode);
+    }
+}
+
+#ifdef REMOTE_PRIVACY_ENABLE
+int32_t PermissionRecordManager::UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record)
+{
+    GenericValues modifyValue;
+    modifyValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
+    modifyValue.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, record.deviceId);
+    conditionValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, record.deviceName);
+    conditionValue.Put(PrivacyFiledConst::FIELD_OP_CODE, record.opCode);
+    conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
+
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+    return RemotePermUsedRecordDbManager::GetInstance().Update(record.userId, modifyValue, conditionValue);
+}
+
 static bool RemoteRecordMergeCheck(const RemotePermissionRecord& record1, const RemotePermissionRecord& record2)
 {
     // timestamp in the same minute
@@ -709,15 +722,6 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
     return Constant::SUCCESS;
 }
 
-static void TransferToOpcode(const std::vector<std::string>& permissionList, std::set<int32_t>& opCodeList)
-{
-    for (const auto& permission : permissionList) {
-        int32_t opCode = Constant::OP_INVALID;
-        (void)Constant::TransferPermissionToOpcode(permission, opCode);
-        opCodeList.insert(opCode);
-    }
-}
-
 void PermissionRecordManager::InsteadMergedRemoteRecIfNecessary(
     GenericValues& queryValue, std::vector<RemotePermissionRecord>& mergedRecords)
 {
@@ -854,6 +858,195 @@ void PermissionRecordManager::BuildBundleUsedRecordsFromRemoteResults(
     }
 }
 
+int32_t PermissionRecordManager::DeleteRemotePermissionRecord(int32_t days)
+{
+    int32_t userId = 0;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
+    int32_t total = RemotePermUsedRecordDbManager::GetInstance().Count(userId);
+    if (total > recordSizeMaximum_) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "The count of remote record is %{public}d, begin to delete aging data.", total);
+        uint32_t excessiveSize = static_cast<uint32_t>(total) - static_cast<uint32_t>(recordSizeMaximum_);
+        res = RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(userId, excessiveSize);
+        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Delete excessive remote records failed, res %{public}d.", res);
+            return Constant::FAILURE;
+        }
+    }
+
+    GenericValues andConditionValues;
+    int64_t deleteTimestamp = AccessToken::TimeUtil::GetCurrentTimestamp() - interval;
+    andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
+
+    res = RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(userId, andConditionValues);
+    if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Delete expire remote records failed, res %{public}d.", res);
+        return Constant::FAILURE;
+    }
+
+    return Constant::SUCCESS;
+}
+
+void PermissionRecordManager::CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record,
+    const std::string& remoteDeviceId, const std::string& remoteDeviceName, const std::string& permissionName,
+    ActiveChangeType type)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteRemoteCallbackAsync, deviceId: %{public}s, "
+        "using permission %{public}s, type %{public}d, callerPid %{public}d.",
+        ConstantCommon::EncryptDevId(remoteDeviceId).c_str(), permissionName.c_str(), type, record.callerPid);
+
+    ActiveChangeResponse info;
+    info.permissionName = permissionName;
+    info.isRemote = true;
+    info.deviceId = remoteDeviceId;
+    info.remoteDeviceName = remoteDeviceName;
+    info.type = type;
+
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
+}
+
+int32_t PermissionRecordManager::AddRecordToStartRemoteList(
+    const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid)
+{
+    int32_t opCode;
+    const std::string& permissionName = info.permissionName;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+    if (uniqueDeviceId_.empty()) {
+        uniqueDeviceId_ = info.remoteDeviceId;
+    } else if (uniqueDeviceId_ != info.remoteDeviceId) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Remote already using, id:%{public}s",
+            ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str());
+        return PrivacyError::ERR_REMOTE_USING_CONFLICT;
+    }
+    // update to newest deviceName
+    uniqueDeviceName_ = info.remoteDeviceName;
+
+    RemoteContinuousPermissionRecord newRecord = {
+        .opCode = opCode,
+        .callerPid = callerPid,
+    };
+
+    startRemoteRecordList_.emplace(newRecord);
+    CallbackRemoteExecute(newRecord, uniqueDeviceId_, info.remoteDeviceName, permissionName, type);
+
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid)
+{
+    if (!DataValidator::IsPermissionNameValid(info.permissionName) ||
+        !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
+        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    const std::string& permissionName = info.permissionName;
+    LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, perm: %{public}s, callerPid: %{public}d",
+        ConstantCommon::EncryptDevId(info.remoteDeviceId).c_str(), permissionName.c_str(), callerPid);
+
+    InitializeMuteState(permissionName);
+    if (IsEdmMuteOrDisable(permissionName)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+    }
+
+    if (!Register()) {
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+
+    ActiveChangeType type = ActiveChangeType::PERM_REMOTE_USING;
+#ifndef APP_SECURITY_PRIVACY_SERVICE
+    if (!GetGlobalSwitchStatus(permissionName)) {
+        type = ActiveChangeType::PERM_INACTIVE;
+    }
+#endif
+
+    return AddRecordToStartRemoteList(info, type, callerPid);
+}
+
+int32_t PermissionRecordManager::StopRemoteUsingPermission(const std::string& remoteDeviceId,
+    const std::string& remoteDeviceName, const std::string& permissionName, int32_t callerPid)
+{
+    if (!DataValidator::IsDeviceIdValid(remoteDeviceId) || !DataValidator::IsDeviceNameValid(remoteDeviceName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        if (uniqueDeviceId_.empty() || uniqueDeviceId_ != remoteDeviceId) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Remote not match, id:%{public}s",
+                ConstantCommon::EncryptDevId(remoteDeviceId).c_str());
+            return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+        }
+    }
+
+    RemoteContinuousPermissionRecord record = {
+        .opCode = opCode,
+        .callerPid = callerPid,
+    };
+
+    if (!ToRemoveRemoteRecord(record, &RemoteContinuousPermissionRecord::IsEqualRecord, false)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "No remote records started, deviceId: %{public}s, "
+            "opCode=%{public}d, callerPid=%{public}d", ConstantCommon::EncryptDevId(remoteDeviceId).c_str(),
+            opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+    }
+    return Constant::SUCCESS;
+}
+
+bool PermissionRecordManager::ToRemoveRemoteRecord(
+    const RemoteContinuousPermissionRecord& targetRecord, const IsRemoteEqualFunc& isEqualFunc, bool removeAll)
+{
+    bool res = false;
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
+            if (((*it).*isEqualFunc)(targetRecord)) {
+                std::string perm;
+                Constant::TransferOpcodeToPermission(it->opCode, perm);
+                RemoteContinuousPermissionRecord newRecord = {
+                    .opCode = it->opCode,
+                    .callerPid = it->callerPid,
+                };
+                // deviceName is latest when inactive
+                CallbackRemoteExecute(
+                    newRecord, uniqueDeviceId_, uniqueDeviceName_, perm, ActiveChangeType::PERM_INACTIVE);
+                // remove record success
+                res = true;
+                it = startRemoteRecordList_.erase(it);
+                
+                if (!removeAll) {
+                    // only remove one record
+                    break;
+                }
+            } else {
+                ++it;
+            }
+        }
+        if (startRemoteRecordList_.empty()) {
+            uniqueDeviceId_ = "";
+        }
+    }
+    return res;
+}
+#endif
+
 int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
 {
     if (userID == 0) {
@@ -874,7 +1067,7 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         if (!tokenIDList.empty()) {
             RemoveHistoryPermissionUsedRecords(tokenIDList);
         }
-
+#ifdef REMOTE_PRIVACY_ENABLE
         // Remove remote permission records
         {
             std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
@@ -891,6 +1084,7 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         std::unique_lock<std::shared_mutex> lk(this->rwLock_);
         RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
         LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
+#endif
     }
 
     if (!UpdatePermUsedRecToggleStatusMap(userID, status)) {
@@ -1285,7 +1479,9 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 
     std::function<void()> delayed = ([this]() {
         (void)DeletePermissionRecord(recordAgingTime_);
+#ifdef REMOTE_PRIVACY_ENABLE
         (void)DeleteRemotePermissionRecord(recordAgingTime_);
+#endif
         LOGI(PRI_DOMAIN, PRI_TAG, "Delete record end.");
         // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
@@ -1334,40 +1530,6 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
         LOGE(PRI_DOMAIN, PRI_TAG, "Delete expire records failed, res %{public}d.", res);
         return Constant::FAILURE;
     }
-    return Constant::SUCCESS;
-}
-
-int32_t PermissionRecordManager::DeleteRemotePermissionRecord(int32_t days)
-{
-    int32_t userId = 0;
-    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
-    if (res != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
-    int32_t total = RemotePermUsedRecordDbManager::GetInstance().Count(userId);
-    if (total > recordSizeMaximum_) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "The count of remote record is %{public}d, begin to delete aging data.", total);
-        uint32_t excessiveSize = static_cast<uint32_t>(total) - static_cast<uint32_t>(recordSizeMaximum_);
-        res = RemotePermUsedRecordDbManager::GetInstance().DeleteExcessiveRecords(userId, excessiveSize);
-        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Delete excessive remote records failed, res %{public}d.", res);
-            return Constant::FAILURE;
-        }
-    }
-
-    GenericValues andConditionValues;
-    int64_t deleteTimestamp = AccessToken::TimeUtil::GetCurrentTimestamp() - interval;
-    andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
-
-    res = RemotePermUsedRecordDbManager::GetInstance().DeleteExpireRecords(userId, andConditionValues);
-    if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Delete expire remote records failed, res %{public}d.", res);
-        return Constant::FAILURE;
-    }
-
     return Constant::SUCCESS;
 }
 
@@ -1430,6 +1592,7 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
                 perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
         }
     }
+#ifdef REMOTE_PRIVACY_ENABLE
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
         for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
@@ -1448,6 +1611,7 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
                 ConstantCommon::EncryptDevId(info.deviceId).c_str(), perm.c_str(), info.type, it->callerPid);
         }
     }
+#endif
 }
 
 int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
@@ -1625,11 +1789,12 @@ void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t calle
     ContinuousPermissionRecord record = {0};
     record.callerPid = callerPid;
     (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualCallerPid);
-
+#ifdef REMOTE_PRIVACY_ENABLE
     RemoteContinuousPermissionRecord targetRecord;
     targetRecord.callerPid = callerPid;
     // remove all remote using by callingPid
     (void) ToRemoveRemoteRecord(targetRecord, &RemoteContinuousPermissionRecord::IsEqualCallerPid, true);
+#endif
 }
 
 bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& targetRecord,
@@ -1708,8 +1873,42 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
 void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus)
 {
     UpdateStartUsingRecord(permissionName, switchStatus);
+#ifdef REMOTE_PRIVACY_ENABLE
     UpdateStartRemoteUsingRecord(permissionName, switchStatus);
+#endif
 }
+
+#ifdef REMOTE_PRIVACY_ENABLE
+void PermissionRecordManager::UpdateStartRemoteUsingRecord(const std::string& permissionName, bool switchStatus)
+{
+    // only active when permission is disabled
+    if (switchStatus) {
+        return;
+    }
+    int32_t opCode = 0;
+    Constant::TransferPermissionToOpcode(permissionName, opCode);
+    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+    std::multiset<RemoteContinuousPermissionRecord> updatedRecordList;
+    for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
+        RemoteContinuousPermissionRecord record = *it;
+        if ((record.opCode) != static_cast<int32_t>(opCode)) {
+            ++it;
+            continue;
+        }
+        LOGI(PRI_DOMAIN, PRI_TAG, "Global switch is close, update remote record to inactive");
+        updatedRecordList.emplace(record);
+        it = startRemoteRecordList_.erase(it);
+    }
+    for (const auto& record : updatedRecordList) {
+        // deviceName is latest when inactive
+        CallbackRemoteExecute(
+            record, uniqueDeviceId_, uniqueDeviceName_, permissionName, ActiveChangeType::PERM_INACTIVE);
+    }
+    if (startRemoteRecordList_.empty()) {
+        uniqueDeviceId_ = "";
+    }
+}
+#endif
 
 void PermissionRecordManager::UpdateStartUsingRecord(const std::string& permissionName, bool switchStatus)
 {
@@ -1738,36 +1937,6 @@ void PermissionRecordManager::UpdateStartUsingRecord(const std::string& permissi
     // each permission sends a status change notice
     for (const auto& record : updatedRecordList) {
         CallbackExecute(record, permissionName);
-    }
-}
-
-void PermissionRecordManager::UpdateStartRemoteUsingRecord(const std::string& permissionName, bool switchStatus)
-{
-    // only active when permission is disabled
-    if (switchStatus) {
-        return;
-    }
-    int32_t opCode = 0;
-    Constant::TransferPermissionToOpcode(permissionName, opCode);
-    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-    std::multiset<RemoteContinuousPermissionRecord> updatedRecordList;
-    for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
-        RemoteContinuousPermissionRecord record = *it;
-        if ((record.opCode) != static_cast<int32_t>(opCode)) {
-            ++it;
-            continue;
-        }
-        LOGI(PRI_DOMAIN, PRI_TAG, "Global switch is close, update remote record to inactive");
-        updatedRecordList.emplace(record);
-        it = startRemoteRecordList_.erase(it);
-    }
-    for (const auto& record : updatedRecordList) {
-        // deviceName is latest when inactive
-        CallbackRemoteExecute(
-            record, uniqueDeviceId_, uniqueDeviceName_, permissionName, ActiveChangeType::PERM_INACTIVE);
-    }
-    if (startRemoteRecordList_.empty()) {
-        uniqueDeviceId_ = "";
     }
 }
 
@@ -1956,6 +2125,7 @@ bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
             }
         }
     }
+#ifdef REMOTE_PRIVACY_ENABLE
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
         for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
@@ -1964,161 +2134,8 @@ bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
             }
         }
     }
-    return false;
-}
-
-void PermissionRecordManager::CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record,
-    const std::string& remoteDeviceId, const std::string& remoteDeviceName, const std::string& permissionName,
-    ActiveChangeType type)
-{
-    LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteRemoteCallbackAsync, deviceId: %{public}s, "
-        "using permission %{public}s, type %{public}d, callerPid %{public}d.",
-        ConstantCommon::EncryptDevId(remoteDeviceId).c_str(), permissionName.c_str(), type, record.callerPid);
-
-    ActiveChangeResponse info;
-    info.permissionName = permissionName;
-    info.isRemote = true;
-    info.deviceId = remoteDeviceId;
-    info.remoteDeviceName = remoteDeviceName;
-    info.type = type;
-
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
-}
-
-int32_t PermissionRecordManager::AddRecordToStartRemoteList(
-    const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid)
-{
-    int32_t opCode;
-    const std::string& permissionName = info.permissionName;
-    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
-        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
-    }
-
-    std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-    if (uniqueDeviceId_.empty()) {
-        uniqueDeviceId_ = info.remoteDeviceId;
-    } else if (uniqueDeviceId_ != info.remoteDeviceId) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Remote already using, id:%{public}s",
-            ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str());
-        return PrivacyError::ERR_REMOTE_USING_CONFLICT;
-    }
-    // update to newest deviceName
-    uniqueDeviceName_ = info.remoteDeviceName;
-
-    RemoteContinuousPermissionRecord newRecord = {
-        .opCode = opCode,
-        .callerPid = callerPid,
-    };
-
-    startRemoteRecordList_.emplace(newRecord);
-    CallbackRemoteExecute(newRecord, uniqueDeviceId_, info.remoteDeviceName, permissionName, type);
-
-    return Constant::SUCCESS;
-}
-
-int32_t PermissionRecordManager::StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid)
-{
-    if (!DataValidator::IsPermissionNameValid(info.permissionName) ||
-        !DataValidator::IsDeviceIdValid(info.remoteDeviceId) ||
-        !DataValidator::IsDeviceNameValid(info.remoteDeviceName)) {
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-
-    const std::string& permissionName = info.permissionName;
-    LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, perm: %{public}s, callerPid: %{public}d",
-        ConstantCommon::EncryptDevId(info.remoteDeviceId).c_str(), permissionName.c_str(), callerPid);
-
-    InitializeMuteState(permissionName);
-    if (IsEdmMuteOrDisable(permissionName)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
-        return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
-    }
-
-    if (!Register()) {
-        return PrivacyError::ERR_MALLOC_FAILED;
-    }
-
-    ActiveChangeType type = ActiveChangeType::PERM_REMOTE_USING;
-#ifndef APP_SECURITY_PRIVACY_SERVICE
-    if (!GetGlobalSwitchStatus(permissionName)) {
-        type = ActiveChangeType::PERM_INACTIVE;
-    }
 #endif
-
-    return AddRecordToStartRemoteList(info, type, callerPid);
-}
-
-int32_t PermissionRecordManager::StopRemoteUsingPermission(const std::string& remoteDeviceId,
-    const std::string& remoteDeviceName, const std::string& permissionName, int32_t callerPid)
-{
-    if (!DataValidator::IsDeviceIdValid(remoteDeviceId) || !DataValidator::IsDeviceNameValid(remoteDeviceName)) {
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-
-    int32_t opCode;
-    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
-        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-        if (uniqueDeviceId_.empty() || uniqueDeviceId_ != remoteDeviceId) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Remote not match, id:%{public}s",
-                ConstantCommon::EncryptDevId(remoteDeviceId).c_str());
-            return PrivacyError::ERR_PERMISSION_NOT_START_USING;
-        }
-    }
-
-    RemoteContinuousPermissionRecord record = {
-        .opCode = opCode,
-        .callerPid = callerPid,
-    };
-
-    if (!ToRemoveRemoteRecord(record, &RemoteContinuousPermissionRecord::IsEqualRecord, false)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "No remote records started, deviceId: %{public}s, "
-            "opCode=%{public}d, callerPid=%{public}d", ConstantCommon::EncryptDevId(remoteDeviceId).c_str(),
-            opCode, callerPid);
-        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
-    }
-    return Constant::SUCCESS;
-}
-
-bool PermissionRecordManager::ToRemoveRemoteRecord(
-    const RemoteContinuousPermissionRecord& targetRecord, const IsRemoteEqualFunc& isEqualFunc, bool removeAll)
-{
-    bool res = false;
-    {
-        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
-            if (((*it).*isEqualFunc)(targetRecord)) {
-                std::string perm;
-                Constant::TransferOpcodeToPermission(it->opCode, perm);
-                RemoteContinuousPermissionRecord newRecord = {
-                    .opCode = it->opCode,
-                    .callerPid = it->callerPid,
-                };
-                // deviceName is latest when inactive
-                CallbackRemoteExecute(
-                    newRecord, uniqueDeviceId_, uniqueDeviceName_, perm, ActiveChangeType::PERM_INACTIVE);
-                // remove record success
-                res = true;
-                it = startRemoteRecordList_.erase(it);
-                
-                if (!removeAll) {
-                    // only remove one record
-                    break;
-                }
-            } else {
-                ++it;
-            }
-        }
-        if (startRemoteRecordList_.empty()) {
-            uniqueDeviceId_ = "";
-        }
-    }
-    return res;
+    return false;
 }
 
 void PermissionRecordManager::PermListToString(const std::vector<std::string>& permList)

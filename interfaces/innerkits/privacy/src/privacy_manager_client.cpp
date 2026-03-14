@@ -155,7 +155,9 @@ void PrivacyManagerClient::OnAddPrivacySa(void)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Enter.");
     ReStartUsing();
+#ifdef REMOTE_PRIVACY_ENABLE
     ReStartRemoteUsing();
+#endif
 }
 
 void PrivacyManagerClient::ReStartUsing()
@@ -194,28 +196,6 @@ void PrivacyManagerClient::ReStartUsing()
             ret = ConvertResult(ret);
             LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartUsingPermission result is %{public}d.", ret);
         }
-    }
-}
-
-void PrivacyManagerClient::ReStartRemoteUsing()
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return;
-    }
-    auto anonyStub = GetAnonyStub();
-    if (anonyStub == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
-        return;
-    }
-    std::lock_guard<std::mutex> lock(startRemoteUsingPermInputMutex_);
-    for (const auto& info : remoteCacheList_) {
-        RemotePermissionUsedInfoParcel parcel;
-        parcel.info = info;
-        int32_t ret = proxy->StartRemoteUsingPermission(parcel, anonyStub->AsObject());
-        ret = ConvertResult(ret);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartRemoteUsingPermission result is %{public}d.", ret);
     }
 }
 
@@ -372,6 +352,29 @@ int32_t PrivacyManagerClient::StopUsingPermission(
     return ret;
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
+void PrivacyManagerClient::ReStartRemoteUsing()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return;
+    }
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(startRemoteUsingPermInputMutex_);
+    for (const auto& info : remoteCacheList_) {
+        RemotePermissionUsedInfoParcel parcel;
+        parcel.info = info;
+        int32_t ret = proxy->StartRemoteUsingPermission(parcel, anonyStub->AsObject());
+        ret = ConvertResult(ret);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartRemoteUsingPermission result is %{public}d.", ret);
+    }
+}
+
 void PrivacyManagerClient::SetRemoteInputCache(const RemotePermissionUsedInfo& info)
 {
     std::lock_guard<std::mutex> lock(startRemoteUsingPermInputMutex_);
@@ -439,6 +442,56 @@ int32_t PrivacyManagerClient::StopRemoteUsingPermission(const RemoteCallerInfo& 
     return ret;
 }
 
+int32_t PrivacyManagerClient::AddRemotePermissionUsedRecord(const RemoteCallerInfo& info,
+    const std::string& permissionName, int32_t successCount, int32_t failCount, bool asyncMode)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    RemoteAddPermParamInfoParcel infoParcel;
+    infoParcel.info.deviceId = info.remoteDeviceId;
+    infoParcel.info.deviceName = info.remoteDeviceName;
+    infoParcel.info.permissionName = permissionName;
+    infoParcel.info.successCount = successCount;
+    infoParcel.info.failCount = failCount;
+
+    int32_t ret;
+    if (asyncMode) {
+        ret = proxy->AddRemotePermissionUsedRecordAsync(infoParcel);
+    } else {
+        ret = proxy->AddRemotePermissionUsedRecord(infoParcel);
+    }
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
+}
+
+int32_t PrivacyManagerClient::GetRemotePermissionUsedRecords(const PermissionUsedRequest& request,
+    PermissionUsedResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    PermissionUsedRequestParcel requestParcel;
+    PermissionUsedResultParcel resultParcel;
+    requestParcel.request = request;
+    int32_t ret = proxy->GetRemotePermissionUsedRecords(requestParcel, resultParcel);
+    if (ret == RET_SUCCESS) {
+        result = resultParcel.result;
+    } else {
+        ret = ConvertResult(ret);
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    return ret;
+}
+#endif
+
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
@@ -487,55 +540,6 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     requestParcel.request = request;
     int32_t ret = proxy->GetPermissionUsedRecordsAsync(requestParcel, callback);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
-    return ret;
-}
-
-int32_t PrivacyManagerClient::AddRemotePermissionUsedRecord(const RemoteCallerInfo& info,
-    const std::string& permissionName, int32_t successCount, int32_t failCount, bool asyncMode)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
-    }
-
-    RemoteAddPermParamInfoParcel infoParcel;
-    infoParcel.info.deviceId = info.remoteDeviceId;
-    infoParcel.info.deviceName = info.remoteDeviceName;
-    infoParcel.info.permissionName = permissionName;
-    infoParcel.info.successCount = successCount;
-    infoParcel.info.failCount = failCount;
-
-    int32_t ret;
-    if (asyncMode) {
-        ret = proxy->AddRemotePermissionUsedRecordAsync(infoParcel);
-    } else {
-        ret = proxy->AddRemotePermissionUsedRecord(infoParcel);
-    }
-    ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
-    return ret;
-}
-
-int32_t PrivacyManagerClient::GetRemotePermissionUsedRecords(const PermissionUsedRequest& request,
-    PermissionUsedResult& result)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
-    }
-
-    PermissionUsedRequestParcel requestParcel;
-    PermissionUsedResultParcel resultParcel;
-    requestParcel.request = request;
-    int32_t ret = proxy->GetRemotePermissionUsedRecords(requestParcel, resultParcel);
-    if (ret == RET_SUCCESS) {
-        result = resultParcel.result;
-    } else {
-        ret = ConvertResult(ret);
-    }
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;
 }

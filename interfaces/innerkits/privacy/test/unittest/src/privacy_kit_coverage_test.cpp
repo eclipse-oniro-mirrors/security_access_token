@@ -305,6 +305,7 @@ HWTEST_F(PrivacyKitTest, OnAddPrivacySa001, TestSize.Level0)
     EXPECT_EQ(PrivacyManagerClient::GetInstance().cacheList_.size(), 0);
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 /**
  * @tc.name: SystemAbilityStatusChangeListener002
  * @tc.desc:
@@ -370,3 +371,4 @@ HWTEST_F(PrivacyKitTest, OnAddPrivacySa003, TestSize.Level0)
     PrivacyManagerClient::GetInstance().DeleteRemoteInputCache(info, "ohos.permission.CAMERA");
     EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 0);
 }
+#endif

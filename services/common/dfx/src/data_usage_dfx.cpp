@@ -129,6 +129,7 @@ void ReportAccessTokenUserData()
     LOGI(ATM_DOMAIN, ATM_TAG, "Report accesstoken_service userdata end.");
 }
 
+#ifdef REMOTE_PRIVACY_ENABLE
 void ReportPrivacyUserData(const std::string& path)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Report privacy_service userdata start, path=%{public}s.", path.c_str());
@@ -143,6 +144,7 @@ void ReportPrivacyUserData(const std::string& path)
         "FILE_OR_FOLDER_PATH", filePath, "FILE_OR_FOLDER_SIZE", fileSize);
     LOGI(ATM_DOMAIN, ATM_TAG, "Report privacy_service userdata end.");
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

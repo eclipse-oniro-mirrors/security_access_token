@@ -30,14 +30,18 @@ void PrivacyTestCommon::SetTestEvironment(uint64_t shellTokenId)
 {
     std::lock_guard<std::mutex> lock(g_lockSetToken);
     g_shellTokenId = shellTokenId;
+#ifdef REMOTE_PRIVACY_ENABLE
     std::remove("/data/service/el2/100/access_token/remote_permission_used_record.db");
+#endif
 }
 
 void PrivacyTestCommon::ResetTestEvironment()
 {
     std::lock_guard<std::mutex> lock(g_lockSetToken);
     g_shellTokenId = 0;
+#ifdef REMOTE_PRIVACY_ENABLE
     std::remove("/data/service/el2/100/access_token/remote_permission_used_record.db");
+#endif
 }
 
 uint64_t PrivacyTestCommon::GetShellTokenId()

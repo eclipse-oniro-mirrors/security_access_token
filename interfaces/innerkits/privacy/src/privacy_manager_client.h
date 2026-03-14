@@ -28,7 +28,9 @@
 #include "perm_disable_policy_change_callback.h"
 #include "privacy_death_recipient.h"
 #include "proxy_death_callback.h"
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_caller_info.h"
+#endif
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
 #include "system_ability_status_change_listener.h"
@@ -57,18 +59,18 @@ public:
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type);
     int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+#ifdef REMOTE_PRIVACY_ENABLE
     int32_t StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
     int32_t StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
+    int32_t AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, bool asyncMode = false);
+    int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
+    void ReStartRemoteUsing();
+#endif
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-
-    int32_t AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, const std::string& permissionName,
-        int32_t successCount, int32_t failCount, bool asyncMode = false);
-    int32_t GetRemotePermissionUsedRecords(
-        const PermissionUsedRequest& request, PermissionUsedResult& result);
-
     int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t CreateActiveStatusChangeCbk(
@@ -88,7 +90,6 @@ public:
     int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
     void OnAddPrivacySa(void);
     void ReStartUsing();
-    void ReStartRemoteUsing();
 
 private:
     PrivacyManagerClient();
@@ -108,8 +109,10 @@ private:
     void SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc);
     void SetInputCache(const PermissionUsedTypeInfo& info, bool hasCbk);
     void DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+#ifdef REMOTE_PRIVACY_ENABLE
     void SetRemoteInputCache(const RemotePermissionUsedInfo& info);
     void DeleteRemoteInputCache(const RemoteCallerInfo& info, const std::string& permissionName);
+#endif
 
 private:
     std::mutex activeCbkMutex_;
@@ -123,8 +126,10 @@ private:
     bool isSubscribeSA_ = false;
     std::mutex startUsingPermInputMutex_;
     std::vector<StartUsingPermInputInfo> cacheList_;
+#ifdef REMOTE_PRIVACY_ENABLE
     std::mutex startRemoteUsingPermInputMutex_;
     std::vector<RemotePermissionUsedInfo> remoteCacheList_;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security
