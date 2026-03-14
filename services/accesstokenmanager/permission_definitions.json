@@ -1854,6 +1854,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.PRINTER_DRIVER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.CHANGE_OVERLAY_ENABLED_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
