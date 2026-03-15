@@ -99,13 +99,13 @@ protected:
         const std::vector<std::string>& permissions, int32_t appCount);
 
     /**
-     * @brief Query permission flags for multiple tokens and return total elapsed time
+     * @brief Query permission flags for multiple tokens and permissions and return total elapsed time
      * @param tokenIDs Tokens to query
-     * @param permissionName Permission to query
+     * @param permissionNames Permissions to query
      * @return Elapsed microseconds
      */
     int64_t MeasureGetPermissionFlagDuration(const std::vector<AccessTokenID>& tokenIDs,
-        const std::string& permissionName);
+        const std::vector<std::string>& permissionNames);
 
     static uint64_t selfShellTokenId_;
     static std::mutex testMutex_;

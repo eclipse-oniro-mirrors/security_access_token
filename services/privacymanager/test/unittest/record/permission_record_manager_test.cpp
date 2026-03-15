@@ -312,11 +312,17 @@ public:
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
     {
         type_ = result.type;
+        tokenId_ = result.tokenID;
+        usedType_ = result.usedType;
+        extra_ = result.extra;
         GTEST_LOG_(INFO) << "ActiveStatusChange tokenid " << result.tokenID <<
             ", permission " << result.permissionName << ", type " << result.type;
     }
 
     ActiveChangeType type_ = PERM_INACTIVE;
+    AccessTokenID tokenId_ = 0;
+    PermissionUsedType usedType_ = NORMAL_TYPE;
+    std::string extra_;
 };
 
 /**
@@ -541,22 +547,21 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
         RANDOM_TOKENID);
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
-    ASSERT_NE(nullptr, callback);
-    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+    EXPECT_NE(nullptr, callback);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
         GetSelfTokenID(), permList, callback->AsObject()));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenId);
+    EXPECT_NE(INVALID_TOKENID, tokenId);
     std::string permissionName = "ohos.permission.LOCATION";
-    ASSERT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().StartUsingPermission(
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
 
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
-    ASSERT_EQ(Constant::SUCCESS,
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    EXPECT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName, CALLER_PID));
 
     std::string str = isMute ? "true" : "false";
@@ -1794,6 +1799,92 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest003, TestSize.L
     EXPECT_EQ(0, result.bundleRecords.size());
 
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest004
+ * @tc.desc: Verify AddPermissionUsedRecord triggers PERM_ADD callback when extra is not empty.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest004, TestSize.Level0)
+{
+    PermissionStateFull testState = {
+        .permissionName = "ohos.permission.READ_IMAGEVIDEO",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+    HapInfoParams infoParms = g_InfoParms1;
+    HapPolicyParams policyPrams = g_PolicyPrams1;
+    infoParms.bundleName = "ohos.privacy_test.bundle_perm_add_media";
+    policyPrams.permStateList.emplace_back(testState);
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(infoParms, policyPrams);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = PICKER_TYPE;
+    info.extra = "perm_add_extra";
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_ADD, callback->type_);
+    EXPECT_EQ(tokenId, callback->tokenId_);
+    EXPECT_EQ(PICKER_TYPE, callback->usedType_);
+    EXPECT_EQ("perm_add_extra", callback->extra_);
+
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest005
+ * @tc.desc: Verify AddPermissionUsedRecord does not trigger PERM_ADD callback for permissions out of config list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest005, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::vector<std::string> permList = {"ohos.permission.LOCATION"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.LOCATION";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "perm_add_extra";
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->extra_.empty());
+
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
 }
 
 /**

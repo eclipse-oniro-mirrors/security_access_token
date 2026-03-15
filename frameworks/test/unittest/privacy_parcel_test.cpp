@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,10 +17,11 @@
 #include <memory>
 #include <string>
 
+#include "add_perm_param_info_parcel.h"
+#include "active_change_response_parcel.h"
 #include "bundle_used_record_parcel.h"
 #include "parcel.h"
 #include "parcel_utils.h"
-#include "active_change_response_parcel.h"
 #include "perm_disable_policy_parcel.h"
 #include "permission_used_record_parcel.h"
 #include "permission_used_request_parcel.h"
@@ -173,6 +174,7 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
         .isRemote = false,
         .deviceId = "device",
         .remoteDeviceName = "name",
+        .extra = "perm_add",
     };
 
     Parcel parcel;
@@ -190,6 +192,38 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.isRemote, readedData->changeResponse.isRemote);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.deviceId, readedData->changeResponse.deviceId);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.remoteDeviceName, readedData->changeResponse.remoteDeviceName);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.extra, readedData->changeResponse.extra);
+}
+
+/**
+ * @tc.name: AddPermParamInfoParcel001
+ * @tc.desc: Verify AddPermParamInfoParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyParcelTest, AddPermParamInfoParcel001, TestSize.Level1)
+{
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info = {
+        .tokenId = 100,
+        .permissionName = "ohos.permission.CAMERA",
+        .successCount = 1,
+        .failCount = 0,
+        .type = NORMAL_TYPE,
+        .extra = "perm_add_extra",
+    };
+
+    Parcel parcel;
+    EXPECT_EQ(true, infoParcel.Marshalling(parcel));
+
+    std::shared_ptr<AddPermParamInfoParcel> readedData(AddPermParamInfoParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+    EXPECT_EQ(infoParcel.info.tokenId, readedData->info.tokenId);
+    EXPECT_EQ(infoParcel.info.permissionName, readedData->info.permissionName);
+    EXPECT_EQ(infoParcel.info.successCount, readedData->info.successCount);
+    EXPECT_EQ(infoParcel.info.failCount, readedData->info.failCount);
+    EXPECT_EQ(infoParcel.info.type, readedData->info.type);
+    EXPECT_EQ(infoParcel.info.extra, readedData->info.extra);
 }
 
 /**

@@ -27,6 +27,7 @@ bool AddPermParamInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->info.successCount));
     RETURN_IF_FALSE(out.WriteInt32(this->info.failCount));
     RETURN_IF_FALSE(out.WriteUint32(static_cast<uint32_t>(this->info.type)));
+    RETURN_IF_FALSE(out.WriteString(this->info.extra));
     return true;
 }
 
@@ -44,6 +45,7 @@ AddPermParamInfoParcel* AddPermParamInfoParcel::Unmarshalling(Parcel& in)
     uint32_t type = 0;
     RELEASE_IF_FALSE(in.ReadUint32(type), infoParcel);
     infoParcel->info.type = static_cast<PermissionUsedType>(type);
+    RELEASE_IF_FALSE(in.ReadString(infoParcel->info.extra), infoParcel);
 
     return infoParcel;
 }

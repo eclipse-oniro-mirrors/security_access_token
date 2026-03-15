@@ -64,7 +64,6 @@ static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 static const uint32_t TOKEN_RESERVED_FLAG = 0x0004;
 static const uint32_t DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
-static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
 #endif
@@ -74,6 +73,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 #endif
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
+static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager()

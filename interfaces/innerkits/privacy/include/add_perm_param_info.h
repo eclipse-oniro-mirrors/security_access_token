@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,6 +52,8 @@ struct AddPermParamInfo {
     int32_t failCount = 0;
     /** enum PermissionUsedType, see permission_used_type.h */
     PermissionUsedType type = NORMAL_TYPE;
+    /** extra info passed through in PERM_ADD callback when record add succeeds */
+    std::string extra = "";
 };
 } // namespace AccessToken
 } // namespace Security
