@@ -33,7 +33,8 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 6] void RemovePermissionUsedRecords([in] unsigned int tokenID);
     [ipccode 7] void GetPermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
     [ipccode 8] void GetPermissionUsedRecordsAsync([in] PermissionUsedRequestParcel request, [in] OnPermissionUsedRecordCallback cb);
-    [ipccode 9] void RegisterPermActiveStatusCallback([in] List<String> permList, [in] IRemoteObject cb);
+    [ipccode 9] void RegisterPermActiveStatusCallback([in] List<String> permList, [in] IRemoteObject cb,
+        [in] int type);
     [ipccode 10] void UnRegisterPermActiveStatusCallback([in] IRemoteObject cb);
     [ipccode 11] boolean IsAllowedUsingPermission([in] unsigned int tokenID, [in] String permissionName, [in] int pid);
     [ipccode 12] void GetPermissionUsedTypeInfos([in] unsigned int tokenId, [in] String permissionName, [out] List<PermissionUsedTypeInfoParcel> resultsParcel);
@@ -52,4 +53,7 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 25, macrodef REMOTE_PRIVACY_ENABLE] void AddRemotePermissionUsedRecord([in] RemoteAddPermParamInfoParcel infoParcel);
     [ipccode 26, oneway, macrodef REMOTE_PRIVACY_ENABLE] void AddRemotePermissionUsedRecordAsync([in] RemoteAddPermParamInfoParcel infoParcel);
     [ipccode 27, macrodef REMOTE_PRIVACY_ENABLE] void GetRemotePermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
+    [ipccode 28, macrodef PRIVACY_BUNDLE_START_STOP_ENABLE] void StartUsingPermission([in] String bundleName, [in] String permissionName,
+        [in] IRemoteObject anonyStub);
+    [ipccode 29, macrodef PRIVACY_BUNDLE_START_STOP_ENABLE] void StopUsingPermission([in] String bundleName, [in] String permissionName);
 }

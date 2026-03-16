@@ -29,6 +29,11 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
+bool IsValidCallbackRegisterType(CallbackRegisterType type)
+{
+    return (type == CallbackRegisterType::ALL) || (type == CallbackRegisterType::TOKEN_ONLY);
+}
+
 std::mutex g_lockCache;
 struct RecordCache {
     int32_t successCount = 0;
@@ -160,6 +165,30 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
+}
+
+int32_t PrivacyKit::StartUsingPermission(const std::string& bundleName, const std::string& permissionName)
+{
+#ifndef PRIVACY_BUNDLE_START_STOP_ENABLE
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+#else
+    if (!DataValidator::IsBundleNameValid(bundleName) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(bundleName, permissionName);
+#endif
+}
+
+int32_t PrivacyKit::StopUsingPermission(const std::string& bundleName, const std::string& permissionName)
+{
+#ifndef PRIVACY_BUNDLE_START_STOP_ENABLE
+    return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+#else
+    if (!DataValidator::IsBundleNameValid(bundleName) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().StopUsingPermission(bundleName, permissionName);
+#endif
 }
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID)
@@ -306,9 +335,13 @@ int32_t PrivacyKit::GetRemotePermissionUsedRecords(
 }
 #endif
 
-int32_t PrivacyKit::RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+int32_t PrivacyKit::RegisterPermActiveStatusCallback(
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, CallbackRegisterType type)
 {
-    return PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback);
+    if (!IsValidCallbackRegisterType(type)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback, type);
 }
 
 int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)

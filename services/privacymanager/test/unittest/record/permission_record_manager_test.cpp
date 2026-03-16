@@ -295,7 +295,7 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestS
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, nullptr));
+        GetSelfTokenID(), permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
 
@@ -340,7 +340,8 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestS
         sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
         ASSERT_NE(nullptr, callback);
         ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-            GetSelfTokenID(), permList, callback->AsObject()));
+            GetSelfTokenID(), permList, callback->AsObject(),
+            static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
         callbacks.emplace_back(callback);
     }
 
@@ -348,7 +349,8 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestS
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
         PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-            GetSelfTokenID(), permList, callback->AsObject()));
+            GetSelfTokenID(), permList, callback->AsObject(),
+            static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     for (size_t i = 0; i < callbacks.size(); ++i) {
         ASSERT_EQ(RET_SUCCESS,
@@ -366,7 +368,7 @@ HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, Tes
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, nullptr));
+        GetSelfTokenID(), permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
 /*
@@ -439,8 +441,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Leve
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
     std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().StartUsingPermission(
+    ASSERT_EQ(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, permissionName), CALLER_PID));
     std::string str = isMute ? "true" : "false";
     SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
@@ -468,7 +469,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -508,7 +509,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -549,7 +550,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     EXPECT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -608,7 +609,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -715,7 +716,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -825,7 +826,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest012, TestSize.Leve
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
@@ -1237,7 +1238,7 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestS
     permList.emplace_back("com.ohos.TEST");
     // GetDefPermission != Constant::SUCCESS && listRes is empty && listSrc is not empty
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, nullptr));
+        GetSelfTokenID(), permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
 /*
@@ -1663,7 +1664,7 @@ HWTEST_F(PermissionRecordManagerTest, ProxyDeathTest002, TestSize.Level0)
 }
 
 /*
- * @tc.name: PermissionRecordManagerTest
+ * @tc.name: HasCallerInStartList001
  * @tc.desc: HasCallerInStartList test
  * @tc.type: FUNC
  * @tc.require:
@@ -1687,6 +1688,247 @@ HWTEST_F(PermissionRecordManagerTest, HasCallerInStartList001, TestSize.Level0)
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId1, TEST_PID_1, permissionName, CALLER_PID));
     ASSERT_FALSE(PermissionRecordManager::GetInstance().HasCallerInStartList(CALLER_PID));
 }
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/*
+ * @tc.name: StartUsingPermissionBundle001
+ * @tc.desc: StartUsingPermission bundle function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionBundle001, TestSize.Level0)
+{
+    const std::string bundleName = g_InfoParms1.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(bundleName, permissionName, CALLER_PID));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID));
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        manager.StartUsingPermission(bundleName, permissionName, CALLER_PID));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_[bundleName].size());
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(bundleName, permissionName, CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+    ASSERT_FALSE(manager.HasCallerInStartList(CALLER_PID));
+}
+
+/*
+ * @tc.name: StartUsingPermissionBundle002
+ * @tc.desc: StartUsingPermission bundle validates bundle and permission parameters
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionBundle002, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, manager.StartUsingPermission("", "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, manager.StartUsingPermission(g_InfoParms1.bundleName, "", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StartUsingPermissionBundle003
+ * @tc.desc: StartUsingPermission bundle returns ERR_PERMISSION_NOT_EXIST for unsupported permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionBundle003, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        manager.StartUsingPermission(g_InfoParms1.bundleName, "ohos.permission.TEST", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StartUsingPermissionBundle004
+ * @tc.desc: StartUsingPermission bundle returns EDM policy error when camera is muted by EDM policy
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionBundle004, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_CAMERA_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    std::string muteState(value);
+
+    ASSERT_EQ(0, SetParameter(EDM_CAMERA_MUTE_KEY, "true"));
+    ASSERT_EQ(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED,
+        manager.StartUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+
+    ASSERT_EQ(0, SetParameter(EDM_CAMERA_MUTE_KEY, muteState.c_str()));
+}
+
+/*
+ * @tc.name: StartUsingPermissionBundle005
+ * @tc.desc: StartUsingPermission bundle appends a new record when the bundle bucket already exists
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionBundle005, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_EQ(1, manager.bundleStartRecordMap_[g_InfoParms1.bundleName].size());
+
+    ASSERT_EQ(RET_SUCCESS,
+        manager.StartUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID2));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_EQ(2, manager.bundleStartRecordMap_[g_InfoParms1.bundleName].size());
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID2));
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID2));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StopUsingPermissionBundle001
+ * @tc.desc: StopUsingPermission bundle returns ERR_PERMISSION_NOT_START_USING when bundle was never started
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermissionBundle001, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        manager.StopUsingPermission(g_InfoParms1.bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StopUsingPermissionBundle002
+ * @tc.desc: StopUsingPermission bundle validates bundle and permission parameters
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermissionBundle002, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, manager.StopUsingPermission("", "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, manager.StopUsingPermission(g_InfoParms1.bundleName, "", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StopUsingPermissionBundle003
+ * @tc.desc: StopUsingPermission bundle returns ERR_PERMISSION_NOT_EXIST for unsupported permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermissionBundle003, TestSize.Level0)
+{
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        manager.StopUsingPermission(g_InfoParms1.bundleName, "ohos.permission.TEST", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+
+/*
+ * @tc.name: StopUsingPermissionBundle004
+ * @tc.desc: StopUsingPermission bundle keeps record when permission does not match
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermissionBundle004, TestSize.Level0)
+{
+    const std::string bundleName = g_InfoParms1.bundleName;
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        manager.StopUsingPermission(bundleName, "ohos.permission.MICROPHONE", CALLER_PID));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_EQ(1, manager.bundleStartRecordMap_[bundleName].size());
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(bundleName, "ohos.permission.CAMERA", CALLER_PID));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+    ASSERT_FALSE(manager.HasCallerInStartList(CALLER_PID));
+}
+
+/*
+ * @tc.name: StopUsingPermissionBundle005
+ * @tc.desc: StopUsingPermission bundle retains other caller records in the same bundle bucket
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermissionBundle005, TestSize.Level0)
+{
+    const std::string bundleName = g_InfoParms1.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(bundleName, permissionName, CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(bundleName, permissionName, CALLER_PID2));
+    ASSERT_EQ(2, manager.bundleStartRecordMap_[bundleName].size());
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID2));
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(bundleName, permissionName, CALLER_PID));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_EQ(1, manager.bundleStartRecordMap_[bundleName].size());
+    ASSERT_FALSE(manager.HasCallerInStartList(CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID2));
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(bundleName, permissionName, CALLER_PID2));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+    ASSERT_FALSE(manager.HasCallerInStartList(CALLER_PID2));
+}
+
+/*
+ * @tc.name: CallerPidCleanup001
+ * @tc.desc: RemoveRecordFromStartListByCallerPid clears bundle records for the specified caller only
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CallerPidCleanup001, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    auto& manager = PermissionRecordManager::GetInstance();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(g_InfoParms1.bundleName, permissionName, CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission(g_InfoParms1.bundleName, permissionName, CALLER_PID2));
+    ASSERT_EQ(RET_SUCCESS, manager.StartUsingPermission("ohos.privacy_test.bundleB", permissionName, CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID2));
+
+    manager.RemoveRecordFromStartListByCallerPid(CALLER_PID);
+    ASSERT_FALSE(manager.HasCallerInStartList(CALLER_PID));
+    ASSERT_TRUE(manager.HasCallerInStartList(CALLER_PID2));
+    ASSERT_EQ(1, manager.bundleStartRecordMap_.size());
+    ASSERT_EQ(1, manager.bundleStartRecordMap_[g_InfoParms1.bundleName].size());
+
+    ASSERT_EQ(RET_SUCCESS, manager.StopUsingPermission(g_InfoParms1.bundleName, permissionName, CALLER_PID2));
+    ASSERT_TRUE(manager.bundleStartRecordMap_.empty());
+}
+#endif
 
 /*
  * @tc.name: AddPermissionUsedRecordTest001
@@ -1829,7 +2071,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest004, TestSize.L
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AddPermParamInfo info;
     info.tokenId = tokenId;
@@ -1868,7 +2110,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest005, TestSize.L
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        GetSelfTokenID(), permList, callback->AsObject()));
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 
     AddPermParamInfo info;
     info.tokenId = tokenId;
@@ -1961,40 +2203,11 @@ HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse004, TestSize.Level1)
 
 /**
  * @tc.name: CheckPermissionInUse005
- * @tc.desc: Test CheckPermissionInUse with empty permission name.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse005, TestSize.Level1)
-{
-    // Empty permission name should return error code
-    bool isUsing = false;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().CheckPermissionInUse("", isUsing));
-}
-
-/**
- * @tc.name: CheckPermissionInUse006
- * @tc.desc: Test CheckPermissionInUse with permission name exceeding 256 characters.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse006, TestSize.Level1)
-{
-    // Permission name exceeding 256 characters should return error code
-    std::string longPermissionName(257, 'a');  // 257 characters, exceeds MAX_PERMISSION_NAME_LENGTH (256)
-    bool isUsing = false;
-    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().CheckPermissionInUse(
-        longPermissionName, isUsing));
-}
-
-/**
- * @tc.name: CheckPermissionInUse007
  * @tc.desc: Test CheckPermissionInUse with multiple permissions.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse007, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse005, TestSize.Level1)
 {
     // Get HAP token from bundle
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
@@ -2028,6 +2241,55 @@ HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse007, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
 }
+
+/**
+ * @tc.name: CheckPermissionInUse006
+ * @tc.desc: Test CheckPermissionInUse with target permission not started while another permission is in use.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse006, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID,
+        g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA"), CALLER_PID));
+
+    bool isUsing = true;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.MICROPHONE", isUsing));
+    EXPECT_FALSE(isUsing);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
+}
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: CheckPermissionInUse007
+ * @tc.desc: Test CheckPermissionInUse with bundle start and stop.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse007, TestSize.Level1)
+{
+    const std::string bundleName = "ohos.permission.record.bundle";
+
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(bundleName, "ohos.permission.CAMERA", CALLER_PID));
+
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(bundleName, "ohos.permission.CAMERA", CALLER_PID));
+}
+#endif
 
 /**
  * @tc.name: CheckPermissionInUse008
@@ -2108,6 +2370,37 @@ HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse009, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, PID, "ohos.permission.CAMERA", CALLER_PID));
 }
+
+#ifdef REMOTE_PRIVACY_ENABLE
+/**
+ * @tc.name: CheckPermissionInUse010
+ * @tc.desc: Test CheckPermissionInUse with remote permission start and stop.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse010, TestSize.Level1)
+{
+    RemotePermissionUsedInfo info;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.remoteDeviceId = "ididid";
+    info.remoteDeviceName = "namename";
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartRemoteUsingPermission(info, CALLER_PID));
+
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_TRUE(isUsing);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopRemoteUsingPermission(
+        info.remoteDeviceId, info.remoteDeviceName, info.permissionName, CALLER_PID));
+
+    isUsing = false;
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
+    EXPECT_FALSE(isUsing);
+}
+#endif
 
 #ifdef MAX_COUNT_TEST
 class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {

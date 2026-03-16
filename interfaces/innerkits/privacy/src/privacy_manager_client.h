@@ -27,6 +27,7 @@
 #include "perm_active_status_customized_cbk.h"
 #include "perm_disable_policy_change_callback.h"
 #include "privacy_death_recipient.h"
+#include "privacy_param.h"
 #include "proxy_death_callback.h"
 #ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_caller_info.h"
@@ -43,6 +44,14 @@ struct StartUsingPermInputInfo {
     PermissionUsedTypeInfo input;
     bool hasCbk;
 };
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+struct StartUsingBundlePermInputInfo {
+    std::string bundleName;
+    std::string permissionName;
+};
+#endif
+
 class PrivacyManagerClient final {
 public:
     static PrivacyManagerClient& GetInstance();
@@ -67,11 +76,17 @@ public:
     int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     void ReStartRemoteUsing();
 #endif
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    int32_t StartUsingPermission(const std::string& bundleName, const std::string& permissionName);
+    int32_t StopUsingPermission(const std::string& bundleName, const std::string& permissionName);
+    void ReStartUsingBundle();
+#endif
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    int32_t RegisterPermActiveStatusCallback(
+        const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, CallbackRegisterType type);
     int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t CreateActiveStatusChangeCbk(
         const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
@@ -113,6 +128,10 @@ private:
     void SetRemoteInputCache(const RemotePermissionUsedInfo& info);
     void DeleteRemoteInputCache(const RemoteCallerInfo& info, const std::string& permissionName);
 #endif
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    void SetBundleInputCache(const std::string& bundleName, const std::string& permissionName);
+    void DeleteBundleInputCache(const std::string& bundleName, const std::string& permissionName);
+#endif
 
 private:
     std::mutex activeCbkMutex_;
@@ -129,6 +148,10 @@ private:
 #ifdef REMOTE_PRIVACY_ENABLE
     std::mutex startRemoteUsingPermInputMutex_;
     std::vector<RemotePermissionUsedInfo> remoteCacheList_;
+#endif
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    std::mutex startUsingBundlePermInputMutex_;
+    std::vector<StartUsingBundlePermInputInfo> bundleCacheList_;
 #endif
 };
 } // namespace AccessToken

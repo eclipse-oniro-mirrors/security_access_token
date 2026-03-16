@@ -90,7 +90,7 @@ bool StartRemoteUsingPermissionStubFuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider provider(data, size);
     std::string permissionName;
     int32_t opCode = provider.ConsumeIntegral<int32_t>() % g_permSize;
-    Constant::TransferOpcodeToPermission(opCode, permissionName);
+    (void)Constant::TransferOpcodeToPermission(opCode, permissionName);
 
     std::string remoteDeviceId = provider.ConsumeRandomLengthString();
     std::string remoteDeviceName = provider.ConsumeRandomLengthString();

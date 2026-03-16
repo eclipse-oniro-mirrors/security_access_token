@@ -79,7 +79,8 @@ std::shared_ptr<AccessEventHandler> ActiveStatusCallbackManager::GetEventHandler
 #endif
 
 int32_t ActiveStatusCallbackManager::AddCallback(
-    AccessTokenID registerTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    AccessTokenID registerTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback,
+    int32_t registerType)
 {
     if (callback == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Input is nullptr");
@@ -97,12 +98,7 @@ int32_t ActiveStatusCallbackManager::AddCallback(
         return PrivacyError::ERR_ADD_DEATH_RECIPIENT_FAILED;
     }
 
-    CallbackData recordInstance;
-    recordInstance.registerTokenId = registerTokenId;
-    recordInstance.callbackObject_ = callback;
-    recordInstance.permList_ = permList;
-
-    callbackDataList_.emplace_back(recordInstance);
+    callbackDataList_.emplace_back(registerTokenId, permList, callback, registerType);
 
     LOGI(PRI_DOMAIN, PRI_TAG, "RecordInstance is added");
     return RET_SUCCESS;
@@ -141,13 +137,23 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
         [permName](const std::string& perm) { return perm == permName; });
 }
 
+bool ActiveStatusCallbackManager::NeedNotify(CallbackRegisterType registerType, CallbackRegisterType sourceType) const
+{
+    if (registerType == CallbackRegisterType::ALL) {
+        return true;
+    }
+    return registerType == sourceType;
+}
 
-void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
+void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info, CallbackRegisterType sourceType)
 {
     std::vector<sptr<IRemoteObject>> list;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
+            if (!NeedNotify(static_cast<CallbackRegisterType>(it->registerType_), sourceType)) {
+                continue;
+            }
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, info.permissionName)) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, perm %{public}s", info.tokenID,
@@ -173,7 +179,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info)
     }
 }
 
-void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& info)
+void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& info, CallbackRegisterType sourceType)
 {
 #ifdef EVENTHANDLER_ENABLE
     auto eventHandler = GetEventHandler();
@@ -184,8 +190,8 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
 
     std::string taskName = info.permissionName + std::to_string(info.tokenID);
     LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
-    std::function<void()> task = ([info]() mutable {
-        ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info);
+    std::function<void()> task = ([info, sourceType]() mutable {
+        ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info, sourceType);
         LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
             "token: %{public}u, pid: %{public}d, permName: %{public}s, changeType: %{public}d, ActiveStatusChange end",
             ConstantCommon::EncryptDevId(info.deviceId).c_str(),

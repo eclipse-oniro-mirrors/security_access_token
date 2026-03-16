@@ -118,7 +118,7 @@ bool StartUsingPermissionCallbackStubFuzzTest(const uint8_t* data, size_t size)
     int32_t pid = provider.ConsumeIntegral<int32_t>();
     std::string permissionName;
     int32_t opCode = provider.ConsumeIntegral<int32_t>() % g_permSize;
-    Constant::TransferOpcodeToPermission(opCode, permissionName);
+    (void)Constant::TransferOpcodeToPermission(opCode, permissionName);
 
     StartUsingPermissionCallbackStub(tokenID, pid, permissionName);
     StopUsingPermissionStub(tokenID, pid, permissionName);

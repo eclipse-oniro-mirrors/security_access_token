@@ -63,7 +63,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const int32_t VALUE_MAX_LEN = 32;
-static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* CAMERA_BACKGROUND_PERMISSION_NAME = "ohos.permission.CAMERA_BACKGROUND";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
@@ -92,12 +91,13 @@ static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 20;
 #endif
 constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
+}
 
-bool IsPermAddCallbackSupported(const std::string& permissionName)
+static bool IsPermAddCallbackSupported(const std::string& permissionName)
 {
     return g_supportAddCallbackPermList.find(permissionName) != g_supportAddCallbackPermList.end();
 }
-}
+
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
     static PermissionRecordManager* instance = nullptr;
@@ -927,7 +927,7 @@ void PermissionRecordManager::CallbackRemoteExecute(const RemoteContinuousPermis
     info.remoteDeviceName = remoteDeviceName;
     info.type = type;
 
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info, CallbackRegisterType::TOKEN_ONLY);
 }
 
 int32_t PermissionRecordManager::AddRecordToStartRemoteList(
@@ -1039,7 +1039,7 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
         for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
             if (((*it).*isEqualFunc)(targetRecord)) {
                 std::string perm;
-                Constant::TransferOpcodeToPermission(it->opCode, perm);
+                (void)Constant::TransferOpcodeToPermission(it->opCode, perm);
                 RemoteContinuousPermissionRecord newRecord = {
                     .opCode = it->opCode,
                     .callerPid = it->callerPid,
@@ -1065,6 +1065,7 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
     }
     return res;
 }
+
 #endif
 
 int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
@@ -1595,40 +1596,41 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
 {
     {
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        for (const auto& record : startRecordList_) {
             std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
-            ActiveChangeResponse info;
-            info.callingTokenID = it->callertokenId;
-            info.tokenID = it->tokenId;
-            info.permissionName = perm;
-            info.deviceId = "";
-            info.type = static_cast<ActiveChangeType>(it->status);
-            info.usedType = it->usedType;
-            info.pid = it->pid;
-            infoList.emplace_back(info);
+            (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
+            infoList.emplace_back(record.callertokenId, record.tokenId, perm,
+                static_cast<ActiveChangeType>(record.status), record.usedType, record.pid);
             LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
-                "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", it->tokenId,
-                perm.c_str(), it->status, it->usedType, it->pid, it->callerPid);
+                "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", record.tokenId,
+                perm.c_str(), record.status, record.usedType, record.pid, record.callerPid);
         }
     }
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+        for (const auto& item : bundleStartRecordMap_) {
+            for (const auto& record : item.second) {
+                std::string perm;
+                (void)Constant::TransferOpcodeToPermission(record.first, perm);
+                infoList.emplace_back(item.first, perm);
+                LOGI(PRI_DOMAIN, PRI_TAG, "Bundle %{public}s using permission %{public}s, callerPid %{public}d.",
+                    item.first.c_str(), perm.c_str(), record.second);
+            }
+        }
+    }
+#endif
 #ifdef REMOTE_PRIVACY_ENABLE
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
+        for (const auto& record : startRemoteRecordList_) {
             std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
-            ActiveChangeResponse info;
-            info.permissionName = perm;
-            info.type = ActiveChangeType::PERM_REMOTE_USING;
-            info.isRemote = true;
-            info.deviceId = uniqueDeviceId_;
-            info.remoteDeviceName = uniqueDeviceName_;
-
-            infoList.emplace_back(info);
+            (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
+            infoList.emplace_back(perm, uniqueDeviceId_, uniqueDeviceName_);
             LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
             "using permission %{public}s, type %{public}d, callerPid %{public}d.",
-                ConstantCommon::EncryptDevId(info.deviceId).c_str(), perm.c_str(), info.type, it->callerPid);
+                ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str(), perm.c_str(),
+                ActiveChangeType::PERM_REMOTE_USING, record.callerPid);
         }
     }
 #endif
@@ -1636,31 +1638,51 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
 
 int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permissionName, bool& isUsing)
 {
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-
-    // Validate permission name parameter
-    if (permissionName.empty() || permissionName.length() > MAX_PERMISSION_NAME_LENGTH) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Permission name is empty or exceeds max length: %{public}zu.",
-            permissionName.length());
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-
-    // Check if permission exists
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Permission(%{public}s) is not exist", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
-    // Iterate and check if opcode is in use
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if (it->opCode == opCode && it->status != PERM_INACTIVE) {
-            isUsing = true;
-            LOGI(PRI_DOMAIN, PRI_TAG, "Permission %{public}s (opcode %{public}d) isUsing: %{public}d",
-                permissionName.c_str(), opCode, isUsing);
-            return RET_SUCCESS;
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            if (it->opCode == opCode && it->status != PERM_INACTIVE) {
+                isUsing = true;
+                LOGI(PRI_DOMAIN, PRI_TAG, "Permission %{public}s (opcode %{public}d) isUsing: %{public}d",
+                    permissionName.c_str(), opCode, isUsing);
+                return RET_SUCCESS;
+            }
         }
     }
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+        for (const auto& item : bundleStartRecordMap_) {
+            for (const auto& record : item.second) {
+                if (record.first == opCode) {
+                    isUsing = true;
+                    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle permission %{public}s (opcode %{public}d) isUsing: %{public}d",
+                        permissionName.c_str(), opCode, isUsing);
+                    return RET_SUCCESS;
+                }
+            }
+        }
+    }
+#endif
+#ifdef REMOTE_PRIVACY_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        for (const auto& record : startRemoteRecordList_) {
+            if (record.opCode == opCode) {
+                isUsing = true;
+                LOGI(PRI_DOMAIN, PRI_TAG, "Remote permission %{public}s (opcode %{public}d) isUsing: %{public}d",
+                    permissionName.c_str(), opCode, isUsing);
+                return RET_SUCCESS;
+            }
+        }
+    }
+#endif
 
     isUsing = false;
     LOGI(PRI_DOMAIN, PRI_TAG, "Permission %{public}s (opcode %{public}d) isUsing: %{public}d",
@@ -1676,7 +1698,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
         if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
             std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            (void)Constant::TransferOpcodeToPermission(it->opCode, perm);
             if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
                 ++it;
                 continue;
@@ -1809,6 +1831,24 @@ void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t calle
     ContinuousPermissionRecord record = {0};
     record.callerPid = callerPid;
     (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualCallerPid);
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+        for (auto mapIt = bundleStartRecordMap_.begin(); mapIt != bundleStartRecordMap_.end();) {
+            auto& records = mapIt->second;
+            records.erase(std::remove_if(records.begin(), records.end(),
+                [callerPid](const std::pair<int32_t, int32_t>& recordInfo) {
+                    return recordInfo.second == callerPid;
+                }), records.end());
+            if (records.empty()) {
+                mapIt = bundleStartRecordMap_.erase(mapIt);
+                continue;
+            }
+            ++mapIt;
+        }
+    }
+#endif
 #ifdef REMOTE_PRIVACY_ENABLE
     RemoteContinuousPermissionRecord targetRecord;
     targetRecord.callerPid = callerPid;
@@ -1831,7 +1871,7 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
         }
         PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
         for (const auto& record: inactiveList) {
-            Constant::TransferOpcodeToPermission(record.opCode, perm);
+            (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
             ContinuousPermissionRecord newRecord;
             newRecord.tokenId = record.tokenId;
             newRecord.status = PERM_INACTIVE;
@@ -1869,7 +1909,8 @@ void PermissionRecordManager::CallbackExecute(
     info.usedType = type;
     info.pid = record.pid;
 
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
+        info, CallbackRegisterType::TOKEN_ONLY);
 }
 
 void PermissionRecordManager::ExecutePermAddCallbackAsync(
@@ -1890,7 +1931,7 @@ void PermissionRecordManager::ExecutePermAddCallbackAsync(
     callbackInfo.deviceId = "";
     callbackInfo.remoteDeviceName = "";
     callbackInfo.extra = info.extra;
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(callbackInfo);
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(callbackInfo, CallbackRegisterType::TOKEN_ONLY);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
@@ -2156,21 +2197,131 @@ int32_t PermissionRecordManager::StopUsingPermission(
     return RemoveRecordFromStartList(tokenId, pid, permissionName, callerPid);
 }
 
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+int32_t PermissionRecordManager::StartUsingPermission(
+    const std::string& bundleName, const std::string& permissionName, int32_t callerPid)
+{
+    if (!DataValidator::IsBundleNameValid(bundleName) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t opCode = 0;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    InitializeMuteState(permissionName);
+    if (IsEdmMuteOrDisable(permissionName)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "EDM not allow.");
+        return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+    }
+    if (!Register()) {
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+
+    std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+    auto mapIt = bundleStartRecordMap_.find(bundleName);
+    if (mapIt == bundleStartRecordMap_.end()) {
+        mapIt = bundleStartRecordMap_.emplace(bundleName, std::vector<std::pair<int32_t, int32_t>> {}).first;
+    }
+    auto& records = mapIt->second;
+    const auto isSameRecord = [opCode, callerPid](const std::pair<int32_t, int32_t>& record) {
+        return (record.first == opCode) && (record.second == callerPid);
+    };
+    if (std::find_if(records.begin(), records.end(), isSameRecord) != records.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Bundle in use: %{public}s, op=%{public}d, caller=%{public}d",
+            bundleName.c_str(), opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
+    }
+    records.emplace_back(opCode, callerPid);
+
+    ActiveChangeResponse info;
+    info.callingTokenID = IPCSkeleton::GetCallingTokenID();
+    info.permissionName = permissionName;
+    info.type = ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND;
+    info.usedType = NORMAL_TYPE;
+    info.bundleName = bundleName;
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info, CallbackRegisterType::ALL);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StopUsingPermission(
+    const std::string& bundleName, const std::string& permissionName, int32_t callerPid)
+{
+    if (!DataValidator::IsBundleNameValid(bundleName) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    int32_t opCode = 0;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s)", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+    auto mapIt = bundleStartRecordMap_.find(bundleName);
+    if (mapIt == bundleStartRecordMap_.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Bundle not started: %{public}s, op=%{public}d, caller=%{public}d",
+            bundleName.c_str(), opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+    }
+
+    auto& records = mapIt->second;
+    auto recordIt = std::find_if(records.begin(), records.end(),
+        [opCode, callerPid](const std::pair<int32_t, int32_t>& record) {
+            return (record.first == opCode) && (record.second == callerPid);
+        });
+    if (recordIt == records.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Bundle not started: %{public}s, op=%{public}d, caller=%{public}d",
+            bundleName.c_str(), opCode, callerPid);
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
+    }
+
+    records.erase(recordIt);
+    if (records.empty()) {
+        bundleStartRecordMap_.erase(mapIt);
+    }
+
+    ActiveChangeResponse info;
+    info.callingTokenID = IPCSkeleton::GetCallingTokenID();
+    info.permissionName = permissionName;
+    info.type = ActiveChangeType::PERM_INACTIVE;
+    info.usedType = NORMAL_TYPE;
+    info.bundleName = bundleName;
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info, CallbackRegisterType::ALL);
+    return Constant::SUCCESS;
+}
+
+#endif
+
 bool PermissionRecordManager::HasCallerInStartList(int32_t callerPid)
 {
     {
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            if (it->callerPid == callerPid) {
+        for (const auto& record : startRecordList_) {
+            if (record.callerPid == callerPid) {
                 return true;
             }
         }
     }
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(bundleStartRecordListMutex_);
+        for (const auto& item : bundleStartRecordMap_) {
+            for (const auto& record : item.second) {
+                if (record.second == callerPid) {
+                    return true;
+                }
+            }
+        }
+    }
+#endif
 #ifdef REMOTE_PRIVACY_ENABLE
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-        for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end(); ++it) {
-            if (it->callerPid == callerPid) {
+        for (const auto& record : startRemoteRecordList_) {
+            if (record.callerPid == callerPid) {
                 return true;
             }
         }
@@ -2404,14 +2555,15 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
 }
 
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
-    AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback,
+    int32_t type)
 {
     std::vector<std::string> permListRes;
     int32_t res = PermissionListFilter(permList, permListRes);
     if (res != Constant::SUCCESS) {
         return res;
     }
-    return ActiveStatusCallbackManager::GetInstance().AddCallback(regiterTokenId, permListRes, callback);
+    return ActiveStatusCallbackManager::GetInstance().AddCallback(regiterTokenId, permListRes, callback, type);
 }
 
 int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
@@ -2424,7 +2576,8 @@ void PermissionRecordManager::AddDataValueToResults(const GenericValues value,
 {
     PermissionUsedTypeInfo info;
     info.tokenId = static_cast<AccessTokenID>(value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
-    Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE), info.permissionName);
+    (void)Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE),
+        info.permissionName);
     uint32_t type = static_cast<uint32_t>(value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
     if ((type & NORMAL_TYPE_ADD_VALUE) == NORMAL_TYPE_ADD_VALUE) { // normal first
         info.type = PermissionUsedType::NORMAL_TYPE;

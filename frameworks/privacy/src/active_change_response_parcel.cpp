@@ -31,6 +31,7 @@ bool ActiveChangeResponseParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.deviceId));
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.remoteDeviceName));
     RETURN_IF_FALSE(out.WriteString(this->changeResponse.extra));
+    RETURN_IF_FALSE(out.WriteString(this->changeResponse.bundleName));
     return true;
 }
 
@@ -61,6 +62,8 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(
         in.ReadString(activeChangeResponseParcel->changeResponse.remoteDeviceName), activeChangeResponseParcel);
     RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.extra), activeChangeResponseParcel);
+    RELEASE_IF_FALSE(
+        in.ReadString(activeChangeResponseParcel->changeResponse.bundleName), activeChangeResponseParcel);
     return activeChangeResponseParcel;
 }
 } // namespace AccessToken

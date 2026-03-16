@@ -155,6 +155,9 @@ void PrivacyManagerClient::OnAddPrivacySa(void)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Enter.");
     ReStartUsing();
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    ReStartUsingBundle();
+#endif
 #ifdef REMOTE_PRIVACY_ENABLE
     ReStartRemoteUsing();
 #endif
@@ -492,6 +495,92 @@ int32_t PrivacyManagerClient::GetRemotePermissionUsedRecords(const PermissionUse
 }
 #endif
 
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+void PrivacyManagerClient::ReStartUsingBundle()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return;
+    }
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(startUsingBundlePermInputMutex_);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle cache size=%{public}zu.", bundleCacheList_.size());
+    for (const auto& info : bundleCacheList_) {
+        int32_t ret = proxy->StartUsingPermission(
+            info.bundleName, info.permissionName, anonyStub->AsObject());
+        ret = ConvertResult(ret);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Recover bundle start ret=%{public}d.", ret);
+    }
+}
+
+void PrivacyManagerClient::SetBundleInputCache(const std::string& bundleName, const std::string& permissionName)
+{
+    std::lock_guard<std::mutex> lock(startUsingBundlePermInputMutex_);
+    for (const auto& info : bundleCacheList_) {
+        if ((info.bundleName == bundleName) && (info.permissionName == permissionName)) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "It already exists in bundle cache.");
+            return;
+        }
+    }
+    bundleCacheList_.emplace_back(StartUsingBundlePermInputInfo { bundleName, permissionName });
+}
+
+void PrivacyManagerClient::DeleteBundleInputCache(const std::string& bundleName, const std::string& permissionName)
+{
+    std::lock_guard<std::mutex> lock(startUsingBundlePermInputMutex_);
+    for (auto it = bundleCacheList_.begin(); it != bundleCacheList_.end(); ++it) {
+        if ((it->bundleName == bundleName) && (it->permissionName == permissionName)) {
+            bundleCacheList_.erase(it);
+            return;
+        }
+    }
+}
+
+int32_t PrivacyManagerClient::StartUsingPermission(const std::string& bundleName, const std::string& permissionName)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+
+    int32_t ret = proxy->StartUsingPermission(bundleName, permissionName, anonyStub->AsObject());
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle start ret=%{public}d.", ret);
+    if (ret == RET_SUCCESS) {
+        SetBundleInputCache(bundleName, permissionName);
+    }
+    return ret;
+}
+
+int32_t PrivacyManagerClient::StopUsingPermission(const std::string& bundleName, const std::string& permissionName)
+{
+    DeleteBundleInputCache(bundleName, permissionName);
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t ret = proxy->StopUsingPermission(bundleName, permissionName);
+    ret = ConvertResult(ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle stop ret=%{public}d.", ret);
+    return ret;
+}
+#endif
+
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
@@ -567,7 +656,7 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
 }
 
 int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
-    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, CallbackRegisterType type)
 {
     if (callback == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "CustomizedCb is nullptr.");
@@ -592,7 +681,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
-    result = proxy->RegisterPermActiveStatusCallback(permList, callbackWrap->AsObject());
+    result = proxy->RegisterPermActiveStatusCallback(permList, callbackWrap->AsObject(), static_cast<int32_t>(type));
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
         activeCbkMap_[callback] = callbackWrap;

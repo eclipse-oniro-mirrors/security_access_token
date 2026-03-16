@@ -63,6 +63,24 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
 }
 
+/**
+ * @tc.name: AddPermissionUsedRecord002
+ * @tc.desc: AddPermissionUsedRecord with AddPermParamInfo and proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = 0xff;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+
+    int32_t ret = PrivacyKit::AddPermissionUsedRecord(info);
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
+
 #ifdef REMOTE_PRIVACY_ENABLE
 /**
  * @tc.name: AddRemotePermissionUsedRecord001
@@ -169,6 +187,22 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
         PrivacyKit::StartUsingPermission(g_TokenId_A, permissionName, callbackPtr));
 }
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: BundleUsingProxyTest001
+ * @tc.desc: Bundle start/stop using permission with proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleUsingProxyTest001, TestSize.Level0)
+{
+    std::string bundleName = "ohos.test.bundle";
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::StopUsingPermission(bundleName, permissionName));
+}
+#endif
 
 /**
  * @tc.name: StopUsingPermission001
@@ -415,6 +449,19 @@ HWTEST_F(PrivacyKitTest, GetCurrUsingPermInfo001, TestSize.Level0)
 {
     std::vector<CurrUsingPermInfo> results;
     EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, PrivacyKit::GetCurrUsingPermInfo(results));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse001
+ * @tc.desc: CheckPermissionInUse proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, CheckPermissionInUse001, TestSize.Level0)
+{
+    bool isUsing = true;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -727,9 +727,7 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
     
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     info.remoteDeviceId = "";
@@ -772,9 +770,7 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest002, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -817,9 +813,7 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
 
@@ -860,9 +854,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -908,9 +900,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -953,9 +943,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1006,9 +994,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
     uint32_t selfUid = getuid();
     setuid(USER_100_UID);
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1049,9 +1035,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission001, TestSize.Level0)
 {
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
 
     info.remoteDeviceId = "";
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
@@ -1111,9 +1095,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission002, TestSize.Level1)
     auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->callTimes, 0);
@@ -1133,17 +1115,14 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission002, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
 {
-    AccessTokenID cameraToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("camera_service");
-    SetSelfTokenID(cameraToken);
+    MockNativeToken mock("camera_service");
     EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.MICROPHONE", false));
 
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->type_, PERM_REMOTE_USING);
@@ -1153,8 +1132,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
     EXPECT_EQ(callbackPtr->callTimes, 1);
 
     info.remoteDeviceId = "ididid2222";
-    EXPECT_EQ(PrivacyError::ERR_REMOTE_USING_CONFLICT,
-        PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(ERR_REMOTE_USING_CONFLICT, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
     info.remoteDeviceId = "ididid";
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->callTimes, 1);
@@ -1168,8 +1146,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
     EXPECT_EQ(callbackPtr->callTimes, 2);
 
     info.remoteDeviceId = "ididid2222";
-    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
-        PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
+    EXPECT_EQ(ERR_PERMISSION_NOT_START_USING, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->callTimes, 2);
     info.remoteDeviceId = "ididid";
@@ -1186,12 +1163,13 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->callTimes, 4);
 
-    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+    EXPECT_EQ(ERR_PERMISSION_NOT_START_USING,
         PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.CAMERA"));
 
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.MICROPHONE"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopRemoteUsingPermission(info, "ohos.permission.MICROPHONE"));
 
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 }
 
 /**
@@ -1202,17 +1180,14 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission004, TestSize.Level1)
 {
-    AccessTokenID cameraToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("camera_service");
-    SetSelfTokenID(cameraToken);
+    MockNativeToken mock("camera_service");
     EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.MICROPHONE", false));
 
     std::vector<std::string> permList;
     auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(info, "ohos.permission.CAMERA"));
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(callbackPtr->type_, PERM_REMOTE_USING);
@@ -1234,8 +1209,6 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission004, TestSize.Level1)
     EXPECT_EQ(callbackPtr->callTimes, 4);
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
-
-    SetSelfTokenID(g_selfTokenId);
 }
 #else
 /**
@@ -1246,9 +1219,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission004, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, RemotePrivacyLiteTest001, TestSize.Level0)
 {
-    RemoteCallerInfo info;
-    info.remoteDeviceId = "ididid";
-    info.remoteDeviceName = "namename";
+    RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
     EXPECT_EQ(PrivacyError::ERR_CAPABILITY_NOT_SUPPORT, PrivacyKit::StartRemoteUsingPermission(info, permissionName));
     EXPECT_EQ(PrivacyError::ERR_CAPABILITY_NOT_SUPPORT, PrivacyKit::StopRemoteUsingPermission(info, permissionName));
@@ -1809,6 +1780,13 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level0)
     permList.emplace_back("ohos.permission.MICROPHONE");
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    std::vector<std::string> validPermList = {"ohos.permission.CAMERA"};
+    auto callbackPtr2 = std::make_shared<CbCustomizeTest3>(validPermList);
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2, static_cast<CallbackRegisterType>(-1)));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2, static_cast<CallbackRegisterType>(2)));
 }
 
 /**
@@ -1932,7 +1910,8 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level0)
 {
     std::shared_ptr<PermActiveStatusCustomizedCbk> callback = nullptr;
     EXPECT_EQ(nullptr, callback);
-    PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback); // callback is null
+    PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(
+        callback, CallbackRegisterType::TOKEN_ONLY); // callback is null
 }
 
 /**
@@ -2763,12 +2742,11 @@ public:
  */
 HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level0)
 {
-    ActiveChangeResponse response = {
-        .tokenID = 123,
-        .permissionName = "ohos.permission.CAMERA",
-        .deviceId = "I don't know",
-        .type = ActiveChangeType::PERM_INACTIVE
-    };
+    ActiveChangeResponse response;
+    response.tokenID = 123;
+    response.permissionName = "ohos.permission.CAMERA";
+    response.deviceId = "I don't know";
+    response.type = ActiveChangeType::PERM_INACTIVE;
 
     ActiveChangeResponseParcel responseParcel;
     responseParcel.changeResponse = response;
@@ -2798,12 +2776,11 @@ HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, ActiveStatusChangeCallback001, TestSize.Level0)
 {
-    ActiveChangeResponse response = {
-        .tokenID = 123,
-        .permissionName = "ohos.permission.CAMERA",
-        .deviceId = "I don't know",
-        .type = ActiveChangeType::PERM_INACTIVE
-    };
+    ActiveChangeResponse response;
+    response.tokenID = 123;
+    response.permissionName = "ohos.permission.CAMERA";
+    response.deviceId = "I don't know";
+    response.type = ActiveChangeType::PERM_INACTIVE;
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     std::shared_ptr<PermActiveStatusCustomizedCbk> callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
     OHOS::sptr<PermActiveStatusChangeCallback> callback = new (
@@ -3723,6 +3700,108 @@ HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus004, TestSize.Level0
     EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
     EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
 }
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: BundleUsingPermissionCacheKeyTest001
+ * @tc.desc: Verify bundle start keeps different permissions for the same bundle observable from kit results.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleUsingPermissionCacheKeyTest001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingPermissionCacheKeyTest001", reqPerm, true);
+    const std::string bundleName = g_infoParmsE.bundleName;
+    const std::string cameraPermission = "ohos.permission.CAMERA";
+    const std::string microphonePermission = "ohos.permission.MICROPHONE";
+
+    auto findBundleInfo = [](const std::vector<CurrUsingPermInfo>& infoList,
+        const std::string& targetBundle, const std::string& targetPermission) {
+        for (const auto& info : infoList) {
+            if ((info.bundleName == targetBundle) && (info.permissionName == targetPermission)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(bundleName, cameraPermission));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(bundleName, microphonePermission));
+
+    MockNativeToken queryToken("audio_server");
+    std::vector<CurrUsingPermInfo> infoList;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetCurrUsingPermInfo(infoList));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleName, cameraPermission));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleName, microphonePermission));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(bundleName, cameraPermission));
+    infoList.clear();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetCurrUsingPermInfo(infoList));
+    EXPECT_FALSE(findBundleInfo(infoList, bundleName, cameraPermission));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleName, microphonePermission));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(bundleName, microphonePermission));
+}
+
+/**
+ * @tc.name: BundleUsingPermissionCacheKeyTest002
+ * @tc.desc: Verify bundle start keeps different bundles for the same permission observable from kit results.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleUsingPermissionCacheKeyTest002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingPermissionCacheKeyTest002", reqPerm, true);
+    const std::string bundleNameA = g_infoParmsE.bundleName;
+    const std::string bundleNameB = g_infoParmsF.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    auto findBundleInfo = [](const std::vector<CurrUsingPermInfo>& infoList,
+        const std::string& targetBundle, const std::string& targetPermission) {
+        for (const auto& info : infoList) {
+            if ((info.bundleName == targetBundle) && (info.permissionName == targetPermission)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(bundleNameA, permissionName));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(bundleNameB, permissionName));
+
+    MockNativeToken queryToken("audio_server");
+    std::vector<CurrUsingPermInfo> infoList;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetCurrUsingPermInfo(infoList));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleNameA, permissionName));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleNameB, permissionName));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(bundleNameA, permissionName));
+    infoList.clear();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetCurrUsingPermInfo(infoList));
+    EXPECT_FALSE(findBundleInfo(infoList, bundleNameA, permissionName));
+    EXPECT_TRUE(findBundleInfo(infoList, bundleNameB, permissionName));
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(bundleNameB, permissionName));
+}
+#endif
+
+#ifndef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: BundleUsingCapabilityTest001
+ * @tc.desc: Verify bundle start and stop return capability not support when feature is disabled.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleUsingCapabilityTest001, TestSize.Level0)
+{
+    EXPECT_EQ(PrivacyError::ERR_CAPABILITY_NOT_SUPPORT,
+        PrivacyKit::StartUsingPermission("ohos.privacy_test.bundle.unsupport", "ohos.permission.CAMERA"));
+    EXPECT_EQ(PrivacyError::ERR_CAPABILITY_NOT_SUPPORT,
+        PrivacyKit::StopUsingPermission("ohos.privacy_test.bundle.unsupport", "ohos.permission.CAMERA"));
+}
+#endif
 
 int32_t PrivacyKitTest::SetDisablePolicy(const std::string& permissionName, bool isDisable)
 {

@@ -68,21 +68,47 @@ enum LockScreenStatusChangeType {
  * @brief Permission active state change response struct
  */
 struct ActiveChangeResponse {
-    AccessTokenID callingTokenID = 0;
-    AccessTokenID tokenID = 0;
+    AccessTokenID callingTokenID = INVALID_TOKENID;
+    AccessTokenID tokenID = INVALID_TOKENID;
     std::string permissionName;
     /**
      * permission active change type, for details about the valid values,
      * see the definition above.
      */
-    ActiveChangeType type;
-    PermissionUsedType usedType;
+    ActiveChangeType type = PERM_INACTIVE;
+    PermissionUsedType usedType = NORMAL_TYPE;
     int32_t pid = -1;
     bool isRemote = false;
     std::string deviceId;
     std::string remoteDeviceName;
     /** extra info propagated from AddPermParamInfo::extra for PERM_ADD callback */
     std::string extra = "";
+    /**
+     * This field is only filled in callbacks triggered by bundle-based start/stop using permission.
+     * The callback contains the bundle name, permission name of this access.
+     */
+    std::string bundleName;
+
+    ActiveChangeResponse() = default;
+
+    // Used by token-based active records and current-using queries.
+    ActiveChangeResponse(AccessTokenID callingTokenID, AccessTokenID tokenID, const std::string& permissionName,
+        ActiveChangeType type, PermissionUsedType usedType, int32_t pid = -1)
+        : callingTokenID(callingTokenID), tokenID(tokenID), permissionName(permissionName), type(type),
+          usedType(usedType), pid(pid)
+    {}
+
+    // Used by bundle-based current-using queries.
+    ActiveChangeResponse(const std::string& bundleName, const std::string& permissionName)
+        : permissionName(permissionName), type(PERM_ACTIVE_IN_FOREGROUND), bundleName(bundleName)
+    {}
+
+    // Used by remote permission active records and callbacks.
+    ActiveChangeResponse(const std::string& permissionName, const std::string& deviceId,
+        const std::string& remoteDeviceName)
+        : permissionName(permissionName), type(PERM_REMOTE_USING), isRemote(true), deviceId(deviceId),
+          remoteDeviceName(remoteDeviceName)
+    {}
 };
 
 typedef ActiveChangeResponse CurrUsingPermInfo;

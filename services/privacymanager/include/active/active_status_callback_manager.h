@@ -27,6 +27,7 @@
 #include "active_change_response_info.h"
 #include "perm_active_status_callback_death_recipient.h"
 #include "perm_active_status_change_callback_proxy.h"
+#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,13 +35,15 @@ namespace AccessToken {
 struct CallbackData {
     CallbackData() : permList_(), callbackObject_(nullptr)
     {}
-    CallbackData(const std::vector<std::string>& permList, sptr<IRemoteObject> callback)
-        : permList_(permList), callbackObject_(callback)
+    CallbackData(AccessTokenID tokenId, const std::vector<std::string>& permList, sptr<IRemoteObject> callback,
+        int32_t type)
+        : registerTokenId(tokenId), permList_(permList), callbackObject_(callback), registerType_(type)
     {}
 
     AccessTokenID registerTokenId {0};
     std::vector<std::string> permList_;
     sptr<IRemoteObject> callbackObject_;
+    int32_t registerType_;
 };
 
 class ActiveStatusCallbackManager {
@@ -50,11 +53,13 @@ public:
     static ActiveStatusCallbackManager& GetInstance();
 
     int32_t AddCallback(
-        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback,
+        int32_t registerType);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
-    void ExecuteCallbackAsync(ActiveChangeResponse& info);
-    void ActiveStatusChange(ActiveChangeResponse& info);
+    bool NeedNotify(CallbackRegisterType registerType, CallbackRegisterType sourceType) const;
+    void ExecuteCallbackAsync(ActiveChangeResponse& info, CallbackRegisterType sourceType);
+    void ActiveStatusChange(ActiveChangeResponse& info, CallbackRegisterType sourceType);
 private:
     std::mutex mutex_;
     std::vector<CallbackData> callbackDataList_;

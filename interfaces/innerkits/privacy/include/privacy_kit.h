@@ -118,6 +118,20 @@ public:
      */
     static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
     /**
+     * @brief Input bundleName start using input permission.
+     * @param bundleName bundle name
+     * @param permissionName permission name
+     * @return error code, see privacy_error.h
+     */
+    static int32_t StartUsingPermission(const std::string& bundleName, const std::string& permissionName);
+    /**
+     * @brief Input bundleName stop using input permission.
+     * @param bundleName bundle name
+     * @param permissionName permission name
+     * @return error code, see privacy_error.h
+     */
+    static int32_t StopUsingPermission(const std::string& bundleName, const std::string& permissionName);
+    /**
      * @brief Input info start remote using input permission.
      * @param info caller info
      * @param permissionName permission nanme
@@ -178,9 +192,11 @@ public:
     /**
      * @brief Register sensitive permission active status change callback.
      * @param callback PermActiveStatusCustomizedCbk smark pointer quote
+     * @param type callback register type, default is TOKEN_ONLY
      * @return error code, see privacy_error.h
      */
-    static int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    static int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
+        CallbackRegisterType type = CallbackRegisterType::TOKEN_ONLY);
     /**
      * @brief Unregister sensitive permission active status change callback.
      * @param callback PermActiveStatusCustomizedCbk smark pointer quote
