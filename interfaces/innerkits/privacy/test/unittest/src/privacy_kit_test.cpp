@@ -3113,7 +3113,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     AddPermParamInfo info;
-    info.tokenId = g_tokenIdH;
+    info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
     info.successCount = 1;
     info.failCount = 0;
@@ -3123,7 +3123,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
     usleep(1000000); // 1000000us = 1s
     EXPECT_EQ(PERM_ADD, callbackPtr->type_);
-    EXPECT_EQ(g_tokenIdH, callbackPtr->tokenId_);
+    EXPECT_EQ(g_tokenIdA, callbackPtr->tokenId_);
     EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", callbackPtr->permissionName_);
     EXPECT_EQ(PICKER_TYPE, callbackPtr->usedType_);
     EXPECT_EQ("perm_add_extra", callbackPtr->extra_);
@@ -3131,7 +3131,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
-    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 1, 1, 0);
@@ -3198,7 +3198,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     AddPermParamInfo info;
-    info.tokenId = g_tokenIdH;
+    info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
     info.successCount = 1;
     info.failCount = 0;
@@ -3213,7 +3213,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level0)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
-    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 1, 1, 0);
@@ -3239,7 +3239,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     AddPermParamInfo info;
-    info.tokenId = g_tokenIdH;
+    info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
     info.successCount = 0;
     info.failCount = 0;
@@ -3254,11 +3254,36 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level0)
     PermissionUsedRequest request;
     PermissionUsedResult result;
     std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
-    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     EXPECT_TRUE(result.bundleRecords.empty());
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest005
+ * @tc.desc: Verify PrivacyKit rejects oversized extra.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest005, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = PICKER_TYPE;
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH - 1, 'a');
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH, 'a');
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1, 'a');
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
 }
 
 /**

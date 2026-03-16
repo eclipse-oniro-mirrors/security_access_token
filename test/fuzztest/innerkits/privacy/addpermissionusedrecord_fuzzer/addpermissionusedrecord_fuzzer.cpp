@@ -28,9 +28,14 @@ bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    return PrivacyKit::AddPermissionUsedRecord(provider.ConsumeIntegral<AccessTokenID>(),
-        provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(),
-        provider.ConsumeIntegral<int32_t>(), provider.ConsumeBool()) == 0;
+    AddPermParamInfo info;
+    info.tokenId = provider.ConsumeIntegral<AccessTokenID>();
+    info.permissionName = provider.ConsumeRandomLengthString();
+    info.successCount = provider.ConsumeIntegral<int32_t>();
+    info.failCount = provider.ConsumeIntegral<int32_t>();
+    info.extra = provider.ConsumeRandomLengthString(
+        provider.ConsumeIntegralInRange<size_t>(0, MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1));
+    return PrivacyKit::AddPermissionUsedRecord(info, provider.ConsumeBool()) == 0;
 }
 }
 
