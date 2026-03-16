@@ -148,7 +148,8 @@ private:
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
-    int32_t AddPermissionUsedRecordInner(const AddPermParamInfo& info);
+    int32_t AddPermissionUsedRecordInner(
+        const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);
     int32_t AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
@@ -196,6 +197,8 @@ private:
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     int32_t AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
+    void ExecutePermAddCallbackAsync(
+        const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
     bool IsCameraWindowShow(AccessTokenID tokenId);

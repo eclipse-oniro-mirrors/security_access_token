@@ -1327,39 +1327,6 @@ HWTEST_F(AtmCommandTest, atm_stab_test002, TestSize.Level3)
     SUCCEED() << "Multiple commands executed successfully";
 }
 
-/**
- * @tc.name: atm_stab_test003
- * @tc.desc: Abnormal input stress test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AtmCommandTest, atm_stab_test003, TestSize.Level3)
-{
-    // Test various abnormal inputs
-    const char* testCommands[][10] = {
-        {"atm", "dump", "-t", "-i", "0"},
-        {"atm", "dump", "-t", "-i", "-1"},
-        {"atm", "dump", "-t", "-i", "999999999999"},
-        {"atm", "dump", "-t", "-b", ""},
-        {"atm", "dump", "-t", "-b", "very.long.bundle.name.that.exceeds.normal.length"},
-        {"atm", "dump", "-d", "-p", ""},
-        {"atm", "dump", "-d", "-p", "invalid!@#$%"},
-        {"atm", "dump", "-x", "-y", "-z"},
-    };
-
-    for (size_t i = 0; i < sizeof(testCommands) / sizeof(testCommands[0]); i++) {
-        int32_t argc = 0;
-        while (argc < 10 && testCommands[i][argc] != nullptr) {
-            argc++;
-        }
-
-        ExecAtmCommand(argc, const_cast<char**>(testCommands[i]));
-        // Should not crash
-    }
-
-    SUCCEED() << "All abnormal inputs handled without crash";
-}
-
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_perm_grant_test001

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,6 +53,7 @@ enum ActiveChangeType {
     PERM_ACTIVE_IN_BACKGROUND = 2,
     PERM_TEMPORARY_CALL = 3,
     PERM_REMOTE_USING = 4,
+    PERM_ADD = 5,
 };
 
 /**
@@ -80,6 +81,8 @@ struct ActiveChangeResponse {
     bool isRemote = false;
     std::string deviceId;
     std::string remoteDeviceName;
+    /** extra info propagated from AddPermParamInfo::extra for PERM_ADD callback */
+    std::string extra = "";
 };
 
 typedef ActiveChangeResponse CurrUsingPermInfo;

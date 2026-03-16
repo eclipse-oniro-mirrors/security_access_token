@@ -1135,6 +1135,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission003, TestSize.Level1)
 {
     AccessTokenID cameraToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("camera_service");
     SetSelfTokenID(cameraToken);
+    EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.MICROPHONE", false));
 
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
@@ -1203,6 +1204,7 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission004, TestSize.Level1)
 {
     AccessTokenID cameraToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("camera_service");
     SetSelfTokenID(cameraToken);
+    EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.MICROPHONE", false));
 
     std::vector<std::string> permList;
     auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
@@ -1987,6 +1989,30 @@ public:
     AccessTokenID callingTokenID_ = INVALID_TOKENID;
     PermissionUsedType usedType_ = INVALID_USED_TYPE;
     int32_t pid_ = NOT_EXSIT_PID;
+};
+
+class CbCustomizeTest7 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest7(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {}
+    ~CbCustomizeTest7()
+    {}
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
+    {
+        type_ = result.type;
+        tokenId_ = result.tokenID;
+        permissionName_ = result.permissionName;
+        usedType_ = result.usedType;
+        extra_ = result.extra;
+    }
+
+    ActiveChangeType type_ = PERM_INACTIVE;
+    AccessTokenID tokenId_ = INVALID_TOKENID;
+    std::string permissionName_;
+    PermissionUsedType usedType_ = INVALID_USED_TYPE;
+    std::string extra_;
 };
 
 /**
@@ -3072,6 +3098,167 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord020, TestSize.Level0)
     info.failCount = 0;
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest001
+ * @tc.desc: Verify PrivacyKit forwards extra and triggers PERM_ADD for permission which supports add callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdH;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = PICKER_TYPE;
+    info.extra = "perm_add_extra";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_ADD, callbackPtr->type_);
+    EXPECT_EQ(g_tokenIdH, callbackPtr->tokenId_);
+    EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", callbackPtr->permissionName_);
+    EXPECT_EQ(PICKER_TYPE, callbackPtr->usedType_);
+    EXPECT_EQ("perm_add_extra", callbackPtr->extra_);
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
+    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+    CheckPermissionUsedResult(request, result, 1, 1, 0);
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", result.bundleRecords[0].permissionRecords[0].permissionName);
+    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest002
+ * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD for permission which does not support add callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest002, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdE;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "perm_add_extra";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_TRUE(callbackPtr->extra_.empty());
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.CAMERA"};
+    BuildQueryRequest(g_tokenIdE, g_infoParmsE.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+    CheckPermissionUsedResult(request, result, 1, 1, 0);
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ("ohos.permission.CAMERA", result.bundleRecords[0].permissionRecords[0].permissionName);
+    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest003
+ * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when extra is empty for permission which supports add callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdH;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_TRUE(callbackPtr->extra_.empty());
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
+    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+    CheckPermissionUsedResult(request, result, 1, 1, 0);
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", result.bundleRecords[0].permissionRecords[0].permissionName);
+    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest004
+ * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when AddPermissionUsedRecord fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdH;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 0;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "perm_add_extra";
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_TRUE(callbackPtr->extra_.empty());
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
+    BuildQueryRequest(g_tokenIdH, g_infoParmsH.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_TRUE(result.bundleRecords.empty());
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 }
 
 /**

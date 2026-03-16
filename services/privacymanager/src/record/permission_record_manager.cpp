@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cinttypes>
 #include <numeric>
+#include <unordered_set>
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
 #include "ability_manager_access_loader.h"
@@ -67,6 +68,9 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* CAMERA_BACKGROUND_PERMISSION_NAME = "ohos.permission.CAMERA_BACKGROUND";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* MICROPHONE_BACKGROUND_PERMISSION_NAME = "ohos.permission.MICROPHONE_BACKGROUND";
+const std::unordered_set<std::string> g_supportAddCallbackPermList = {
+    "ohos.permission.READ_IMAGEVIDEO",
+};
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -88,6 +92,11 @@ static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 20;
 #endif
 constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
+
+bool IsPermAddCallbackSupported(const std::string& permissionName)
+{
+    return g_supportAddCallbackPermList.find(permissionName) != g_supportAddCallbackPermList.end();
+}
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -463,6 +472,8 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    int32_t callingPid = IPCSkeleton::GetCallingPid();
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) == TOKEN_NATIVE) {
         return VerifyNativeRecordPermission(
             info.permissionName, info.tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
@@ -472,8 +483,8 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     if (AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS) {
         if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED && info.permissionName == CAMERA_PERMISSION_NAME) {
             LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, add used record asynchronously.");
-            auto addRecord = [this, info]() {
-                (void)AddPermissionUsedRecordInner(info);
+            auto addRecord = [this, info, callingTokenID, callingPid]() {
+                (void)AddPermissionUsedRecordInner(info, callingTokenID, callingPid);
             };
             std::thread addRecordTask(addRecord);
             addRecordTask.detach();
@@ -483,10 +494,11 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
             return Constant::SUCCESS;
         }
     }
-    return AddPermissionUsedRecordInner(info);
+    return AddPermissionUsedRecordInner(info, callingTokenID, callingPid);
 }
 
-int32_t PermissionRecordManager::AddPermissionUsedRecordInner(const AddPermParamInfo& info)
+int32_t PermissionRecordManager::AddPermissionUsedRecordInner(
+    const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid)
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(info.tokenId, tokenInfo) != Constant::SUCCESS) {
@@ -514,7 +526,15 @@ int32_t PermissionRecordManager::AddPermissionUsedRecordInner(const AddPermParam
         return result;
     }
 
-    return AddOrUpdateUsedTypeIfNeeded(info.tokenId, record.opCode, info.type);
+    result = AddOrUpdateUsedTypeIfNeeded(info.tokenId, record.opCode, info.type);
+    if (result != Constant::SUCCESS) {
+        return result;
+    }
+
+    if (!info.extra.empty() && IsPermAddCallbackSupported(info.permissionName)) {
+        ExecutePermAddCallbackAsync(info, callingTokenID, callingPid);
+    }
+    return Constant::SUCCESS;
 }
 
 static void TransferToOpcode(const std::vector<std::string>& permissionList, std::set<int32_t>& opCodeList)
@@ -1850,6 +1870,27 @@ void PermissionRecordManager::CallbackExecute(
     info.pid = record.pid;
 
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
+}
+
+void PermissionRecordManager::ExecutePermAddCallbackAsync(
+    const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "ExecutePermAddCallbackAsync, callingTokenId %{public}u, tokenId %{public}u, "
+        "permission %{public}s, usedType %{public}d, pid %{public}d.", callingTokenID, info.tokenId,
+        info.permissionName.c_str(), info.type, callingPid);
+
+    ActiveChangeResponse callbackInfo;
+    callbackInfo.callingTokenID = callingTokenID;
+    callbackInfo.tokenID = info.tokenId;
+    callbackInfo.permissionName = info.permissionName;
+    callbackInfo.type = PERM_ADD;
+    callbackInfo.usedType = info.type;
+    callbackInfo.pid = callingPid;
+    callbackInfo.isRemote = false;
+    callbackInfo.deviceId = "";
+    callbackInfo.remoteDeviceName = "";
+    callbackInfo.extra = info.extra;
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(callbackInfo);
 }
 
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
