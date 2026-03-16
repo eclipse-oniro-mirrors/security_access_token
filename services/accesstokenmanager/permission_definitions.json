@@ -8241,6 +8241,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.GET_LOCAL_ACCOUNT_IDENTIFIERS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.SCAN_REMEDIATE_VIRUS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
