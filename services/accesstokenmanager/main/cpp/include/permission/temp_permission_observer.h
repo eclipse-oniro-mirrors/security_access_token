@@ -16,9 +16,11 @@
 #ifndef TEMP_PERMISSION_OBSERVER_H
 #define TEMP_PERMISSION_OBSERVER_H
 
+#include <map>
 #include <mutex>
-#include <vector>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "access_token.h"
 #ifdef EVENTHANDLER_ENABLE
@@ -35,6 +37,15 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+enum class TempPermissionType {
+    INVALID_TYPE = -1,
+    LOCATION_TYPE = 0,
+    PASTEBOARD_TYPE,
+    CAMERA_TYPE,
+    MICROPHONE_TYPE,
+    SCREEN_CAPTURE_TYPE,
+};
+
 class PermissionAppStateObserver : public ApplicationStateObserverStub {
 public:
     PermissionAppStateObserver() = default;
@@ -63,6 +74,7 @@ public:
     ~PermissionBackgroundTaskObserver() = default;
 
     void OnContinuousTaskStart(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override;
+    void OnContinuousTaskUpdate(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override;
     void OnContinuousTaskStop(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override;
 
     DISALLOW_COPY_AND_MOVE(PermissionBackgroundTaskObserver);
@@ -95,14 +107,31 @@ public:
     bool GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list);
     void ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag);
     bool GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID);
-    void AddContinuousTask(AccessTokenID tokenID);
-    void DelContinuousTask(AccessTokenID tokenID);
-    bool FindContinuousTask(AccessTokenID tokenID);
+    TempPermissionType GetPermissionType(const std::string& permissionName) const;
+    bool HasLocationTask(AccessTokenID tokenID);
+    bool HasAudioRecordingOrVoipTask(AccessTokenID tokenID);
+    void UpsertContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
+    void RemoveContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId);
+    bool FindContinuousTask(AccessTokenID tokenID, TempPermissionType type);
+    bool CheckLocationPermission(AccessTokenID tokenID, const std::string& bundleName,
+        const std::string& permissionName, bool isForeground, bool isFormVisible, bool hasLocationTask);
+    bool CheckPasteboardPermission(AccessTokenID tokenID, const std::string& bundleName,
+        const std::string& permissionName, bool isForeground, bool isFormVisible);
+    bool CheckCameraPermission(AccessTokenID tokenID, const std::string& bundleName,
+        const std::string& permissionName, bool isForeground);
+    bool CheckMicrophonePermission(AccessTokenID tokenID, const std::string& bundleName,
+        const std::string& permissionName, bool isForeground, bool hasAudioTask);
+    void HandleBackgroundState(AccessTokenID tokenID, const std::vector<bool>& list);
+    void HandleFormInvisibleState(AccessTokenID tokenID, const std::vector<bool>& list);
+    void HandleContinuousTaskStop(AccessTokenID tokenID, TempPermissionType type, const std::vector<bool>& list);
+    void CancelDelayedTasks(AccessTokenID tokenID);
+    void CancelDelayedTasks(AccessTokenID tokenID, TempPermissionType type);
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler();
 #endif
     void SetCancelTime(int32_t cancelTime);
-    bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
+    bool DelayRevokePermission(AccessToken::AccessTokenID tokenId,
+        const std::string& permissionName, const std::string& taskName);
     bool CancelTaskOfPermissionRevoking(const std::string& taskName);
     void RegisterCallback();
     void RegisterAppStatusListener();
@@ -111,10 +140,38 @@ public:
         const std::string &bundleName, std::vector<FormInstance> &formInstances);
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     void OnContinuousTaskStart(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
+    void OnContinuousTaskUpdate(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
     void OnContinuousTaskStop(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
 #endif
 
 private:
+    struct PermissionCheckContext {
+        bool isForeground = false;
+        bool isFormVisible = false;
+        bool hasLocationTask = false;
+        bool hasAudioTask = false;
+    };
+
+    bool ReportTempPermissionDeny(AccessTokenID tokenID, const std::string& permissionName,
+        const std::string& bundleName) const;
+    bool IsPrivilegedCalling() const;
+    bool CheckTempPermissionByType(AccessTokenID tokenID, const std::string& permissionName,
+        const std::string& bundleName, const PermissionCheckContext& context);
+    bool GetTempPermissionNames(AccessTokenID tokenID, std::set<std::string>& permissionNames);
+    bool HasTempPermissionType(AccessTokenID tokenID, TempPermissionType type);
+    bool GetContinuousTaskTypeIds(AccessTokenID tokenID, int32_t continuousTaskId, std::vector<uint32_t>& typeIds);
+    bool AssociateContinuousTaskIfNeeded(
+        AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
+    bool RemoveTempPermissionRecord(
+        AccessTokenID tokenID, const std::string& permissionName, bool& clearTaskState, bool& needUnregister);
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    void CollectContinuousTaskState(AccessTokenID tokenID, bool& hasLocationTask, bool& hasAudioTask,
+        std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>>& continuousTaskList);
+    void AssociateGrantedPermissionTasks(AccessTokenID tokenID, TempPermissionType permissionType,
+        const std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>>& continuousTaskList);
+#endif
+    void DelayRevokePermissionsByType(AccessTokenID tokenID, TempPermissionType type);
+
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> GetEventHandler();
     std::shared_ptr<AccessEventHandler> eventHandler_;
@@ -123,9 +180,10 @@ private:
     int32_t cancelTimes_;
     std::mutex tempPermissionMutex_;
     std::map<AccessTokenID, std::vector<bool>> tempPermTokenMap_;
+    std::map<AccessTokenID, std::set<std::string>> tempPermPermissionMap_;
 
     std::mutex continuousTaskMutex_;
-    std::map<AccessTokenID, int32_t> continuousTaskMap_;
+    std::map<AccessTokenID, std::map<int32_t, std::vector<uint32_t>>> continuousTaskIdMap_;
 
     // appState
     std::mutex appStateCallbackMutex_;

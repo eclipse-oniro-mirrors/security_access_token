@@ -33,6 +33,8 @@ public:
 
     void OnContinuousTaskStart(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override {}
+    void OnContinuousTaskUpdate(
+        const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override {}
 
     void OnContinuousTaskStop(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) override {}
@@ -40,6 +42,7 @@ public:
     DISALLOW_COPY_AND_MOVE(BackgroundTaskSubscriberStub);
 private:
     void HandleOnContinuousTaskStart(MessageParcel &data, MessageParcel &reply);
+    void HandleOnContinuousTaskUpdate(MessageParcel &data, MessageParcel &reply);
     void HandleOnContinuousTaskStop(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AccessToken

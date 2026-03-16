@@ -68,6 +68,10 @@ bool ContinuousTaskCallbackInfo::Marshalling(Parcel &parcel) const
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteUint64 failed.");
         return false;
     }
+    if (!parcel.WriteInt32(continuousTaskId_)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteInt32 failed.");
+        return false;
+    }
     return true;
 }
 
@@ -132,6 +136,10 @@ bool ContinuousTaskCallbackInfo::ReadFromParcel(Parcel &parcel)
         LOGE(ATM_DOMAIN, ATM_TAG, "ReadUint64 failed.");
         return false;
     }
+    if (!parcel.ReadInt32(continuousTaskId_)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
+        return false;
+    }
     return true;
 }
 
@@ -148,6 +156,16 @@ uint32_t ContinuousTaskCallbackInfo::GetTypeId() const
 std::vector<uint32_t> ContinuousTaskCallbackInfo::GetTypeIds() const
 {
     return typeIds_;
+}
+
+int32_t ContinuousTaskCallbackInfo::GetContinuousTaskId() const
+{
+    return continuousTaskId_;
+}
+
+void ContinuousTaskCallbackInfo::SetContinuousTaskId(int32_t continuousTaskId)
+{
+    continuousTaskId_ = continuousTaskId;
 }
 } // namespace AccessToken
 } // namespace Security
