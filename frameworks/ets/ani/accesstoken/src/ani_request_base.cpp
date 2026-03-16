@@ -119,11 +119,15 @@ void RequestAsyncContextBase::FinishCallback()
 
     int32_t stsCode = ConvertErrorCode(result_.errorCode);
     ani_ref undefRef = nullptr;
-    env->GetUndefined(&undefRef);
+    ani_status status;
+    if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        return;
+    }
     ani_object aniResult = reinterpret_cast<ani_object>(undefRef);
 
     ani_ref nullRef = nullptr;
-    ani_status status = env->GetNull(&nullRef);
+    status = env->GetNull(&nullRef);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetNull: %{public}u.", status);
         return;
