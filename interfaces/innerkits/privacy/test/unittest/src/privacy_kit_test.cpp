@@ -887,6 +887,14 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
     EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].accessCount, RESULT_NUM_TWO);
     EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].rejectCount, 0);
 
+    PermissionUsedRequest request2;
+    request2.isRemote = true;
+    request2.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    request2.permissionList.push_back(std::string(INVALID_PERMISSIONAME_LENGTH, 'a'));
+    PermissionUsedResult result2;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request2, result2));
+    EXPECT_TRUE(result2.bundleRecords.empty());
+
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
