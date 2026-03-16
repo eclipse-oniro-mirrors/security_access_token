@@ -906,6 +906,10 @@ void PermissionRecordManager::CallbackRemoteExecute(const RemoteContinuousPermis
     info.deviceId = remoteDeviceId;
     info.remoteDeviceName = remoteDeviceName;
     info.type = type;
+    info.callingTokenID = 0;
+    info.tokenID = 0;
+    info.usedType = NORMAL_TYPE;
+    info.pid = -1;
 
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(info);
 }

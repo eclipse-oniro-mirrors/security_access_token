@@ -99,8 +99,12 @@ HWTEST_F(PermDenyTest, AddRemotePermissionUsedRecord001, TestSize.Level0)
     RemoteCallerInfo info;
     info.remoteDeviceId = "ididid";
     info.remoteDeviceName = "namename";
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::AddRemotePermissionUsedRecord(info, "ohos.permission.CAMERA", 1, 0));
+
+    info.remoteDeviceId = "idtestasync";
+    info.remoteDeviceName = "nametestasync";
+    EXPECT_EQ(0, PrivacyKit::AddRemotePermissionUsedRecord(info, "ohos.permission.MICROPHONE", 1, 0, true));
 }
 
 /**
