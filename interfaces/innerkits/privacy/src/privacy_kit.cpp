@@ -274,10 +274,20 @@ int32_t PrivacyKit::AddRemotePermissionUsedRecord(const RemoteCallerInfo& info, 
     return (res == PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED) ? RET_SUCCESS : res;
 }
 
+static bool IsRemotePermissionRequestValid(const PermissionUsedRequest& request)
+{
+    int64_t begin = request.beginTimeMillis;
+    int64_t end = request.endTimeMillis;
+    if ((begin < 0) || (end < 0) || (begin > end)) {
+        return false;
+    }
+    return DataValidator::IsRemotePermissionUsedFlagValid(request.flag);
+}
+
 int32_t PrivacyKit::GetRemotePermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    if (!IsPermissionFlagValid(request)) {
+    if (!IsRemotePermissionRequestValid(request)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().GetRemotePermissionUsedRecords(request, result);

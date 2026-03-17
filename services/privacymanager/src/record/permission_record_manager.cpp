@@ -710,7 +710,7 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
     
     RemotePermissionRecord record;
     int32_t result = GetRemotePermissionRecord(info, record, userId);
-    if (result != Constant::SUCCESS) {
+    if (result != Constant::SUCCESS || (!GetGlobalSwitchStatus(info.permissionName))) {
         return result;
     }
 
@@ -761,7 +761,8 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     int32_t userId = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    if (!request.isRemote || !PermissionRecordManager::IsUserIdValid(userId)) {
+    if (!request.isRemote || !PermissionRecordManager::IsUserIdValid(userId) ||
+        !DataValidator::IsRemotePermissionUsedFlagValid(request.flag)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid param");
         return PrivacyError::ERR_PARAM_INVALID;
     }

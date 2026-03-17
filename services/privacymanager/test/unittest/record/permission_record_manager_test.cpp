@@ -1004,6 +1004,15 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
     GenericValues conditions;
     RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
 
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
     EXPECT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
 
