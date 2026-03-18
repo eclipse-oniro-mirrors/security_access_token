@@ -472,6 +472,10 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
+    if (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     int32_t callingPid = IPCSkeleton::GetCallingPid();
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) == TOKEN_NATIVE) {
@@ -2194,7 +2198,6 @@ int32_t PermissionRecordManager::PermissionListFilter(
     const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
 {
     // filter legal permissions
-    PermissionDef permissionDef;
     std::set<std::string> permSet;
     for (const auto& perm : listSrc) {
         if (IsDefinedPermission(perm) && (permSet.count(perm) == 0)) {

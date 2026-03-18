@@ -87,7 +87,8 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     if ((!DataValidator::IsTokenIDValid(info.tokenId)) ||
         (!DataValidator::IsPermissionNameValid(info.permissionName)) ||
         (info.successCount < 0 || info.failCount < 0) ||
-        (!DataValidator::IsPermissionUsedTypeValid(info.type))) {
+        (!DataValidator::IsPermissionUsedTypeValid(info.type)) ||
+        (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(info.tokenId) && !DataValidator::IsNativeCaller(info.tokenId)) {

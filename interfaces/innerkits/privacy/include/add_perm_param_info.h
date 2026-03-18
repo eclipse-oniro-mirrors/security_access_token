@@ -35,6 +35,7 @@
 #ifndef SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
 #define SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
 
+#include <cstdint>
 #include <string>
 #include "access_token.h"
 #include "permission_used_type.h"
@@ -42,6 +43,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr uint32_t MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH = 48 * 1024;
 /**
  * @brief add permission param info
  */
@@ -52,7 +54,9 @@ struct AddPermParamInfo {
     int32_t failCount = 0;
     /** enum PermissionUsedType, see permission_used_type.h */
     PermissionUsedType type = NORMAL_TYPE;
-    /** extra info passed through in PERM_ADD callback when record add succeeds */
+    /** extra info passed through in PERM_ADD callback when record add succeeds, max length is
+     * MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH bytes
+     */
     std::string extra = "";
 };
 } // namespace AccessToken

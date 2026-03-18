@@ -51,6 +51,8 @@ namespace OHOS {
         infoParcel.info.failCount = provider.ConsumeIntegral<int32_t>();
         infoParcel.info.type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        infoParcel.info.extra = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1));
 
         if (!datas.WriteParcelable(&infoParcel)) {
             return false;

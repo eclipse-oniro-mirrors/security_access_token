@@ -1848,6 +1848,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest004, TestSize.L
 
     EXPECT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(tokenId));
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
 
@@ -1885,6 +1886,38 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest005, TestSize.L
 
     EXPECT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordTest006
+ * @tc.desc: Verify AddPermissionUsedRecord rejects oversized extra.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest006, TestSize.Level0)
+{
+    MockNativeToken mock("audio_server"); // native process with have permission
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH - 1, 'a');
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH, 'a');
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1, 'a');
+
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
 }
 
 /**
