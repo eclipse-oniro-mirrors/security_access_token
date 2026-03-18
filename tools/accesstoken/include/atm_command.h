@@ -112,33 +112,33 @@ private:
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
     int32_t RunAsCommandMissingOptionArgument(const std::vector<char>& requiredOptions);
-    void RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context);
     void RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsContext& context);
+    std::string DumpPermissionApps(const std::string& permissionName);
+    int32_t RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName);
+
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    void RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context);
     void RunAsCommandExistentOptionForToggle(int32_t option, AtmToggleParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
-    std::string DumpPermissionApps(const std::string& permissionName);
     int32_t ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName);
-    int32_t RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName);
-
     int32_t SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status);
     int32_t GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo);
-
     int32_t RunToggleCommandByOperationType(const AtmToggleParamInfo& info);
     int32_t HandleToggleRequest(const AtmToggleParamInfo& info, std::string& dumpInfo);
     int32_t HandleToggleRecord(const AtmToggleParamInfo& info, std::string& dumpInfo);
     int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
     int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
     bool IsNumericString(const char* string);
-
+    int32_t RunAsCommonCommandForPerm();
+    int32_t ValidatePermParams(const PermOptionsContext& context);
+    int32_t RunAsCommonCommandForToggle();
+#endif
     int32_t RunAsHelpCommand();
     int32_t RunAsCommonCommandForDump();
     int32_t ParseDumpOptions(DumpOptionsContext& context);
     void DetermineDumpOperationType(DumpOptionsContext& context);
     int32_t ValidateDumpOptions(const DumpOptionsContext& context);
-    int32_t RunAsCommonCommandForPerm();
-    int32_t ValidatePermParams(const PermOptionsContext& context);
-    int32_t RunAsCommonCommandForToggle();
 
     int32_t argc_;
     char** argv_;
