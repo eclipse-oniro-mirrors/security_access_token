@@ -759,6 +759,11 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
     request.beginTimeMillis = RESULT_NUM_ONE;
     request.endTimeMillis = -1;
     EXPECT_EQ(ERR_PARAM_INVALID, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
+
+    request.beginTimeMillis = 0;
+    request.endTimeMillis = 0;
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    EXPECT_EQ(ERR_PARAM_INVALID, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 }
 
 /**

@@ -1017,6 +1017,31 @@ HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest003, Test
 }
 
 /*
+ * @tc.name: AddRemotePermissionUsedRecordTest004
+ * @tc.desc: AddRemotePermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require: issues3049
+ */
+HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest004, TestSize.Level4)
+{
+    bool isMute = PermissionRecordManager::GetInstance().isMicMixMute_;
+    PermissionRecordManager::GetInstance().isMicMixMute_ = true;
+    RemoteAddPermParamInfo info;
+    info.deviceId = "ididid444";
+    info.deviceName = "namename444";
+    info.permissionName = "ohos.permission.MICROPHONE";
+    info.successCount = 1;
+    info.failCount = 0;
+    PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info);
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().remotePermUsedRecList_.empty());
+
+    PermissionRecordManager::GetInstance().isMicMixMute_ = isMute;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+}
+
+/*
  * @tc.name: GetRemotePermissionUsedRecordsTest001
  * @tc.desc: GetRemotePermissionUsedRecords function test
  * @tc.type: FUNC

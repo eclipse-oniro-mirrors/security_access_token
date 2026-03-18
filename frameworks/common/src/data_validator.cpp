@@ -210,6 +210,11 @@ bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
     return true;
 }
 
+bool DataValidator::IsRemotePermissionUsedFlagValid(uint32_t flag)
+{
+    return ((flag == FLAG_PERMISSION_USAGE_SUMMARY) || (flag == FLAG_PERMISSION_USAGE_DETAIL));
+}
+
 bool DataValidator::IsPolicyTypeValid(uint32_t type)
 {
     PolicyType policyType = static_cast<PolicyType>(type);
