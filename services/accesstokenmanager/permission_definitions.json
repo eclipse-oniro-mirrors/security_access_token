@@ -11,7 +11,7 @@
             "distributedSceneEnable": false,
             "isKernelEffect": false,
             "hasValue": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.CONNECT_CRYPTO_EXTENSION",
@@ -24,7 +24,7 @@
             "distributedSceneEnable": false,
             "isKernelEffect": false,
             "hasValue": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ACCESS_BIOMETRIC",
