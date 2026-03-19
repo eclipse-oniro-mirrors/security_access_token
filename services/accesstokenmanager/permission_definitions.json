@@ -8393,6 +8393,28 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ENCRYPT_VOLUME_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ODD_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         }
     ]
 }
