@@ -5145,6 +5145,17 @@
             "description": "$string:ohos_desc_read_call_log"
         },
         {
+            "name": "ohos.permission.CHECK_CALL_LOG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.READ_CALENDAR",
             "grantMode": "user_grant",
             "availableLevel": "normal",
