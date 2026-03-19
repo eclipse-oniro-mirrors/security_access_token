@@ -32,11 +32,17 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static constexpr int32_t MAX_COUNTER = 1000;
+#endif
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "Error: You must specify an option at least.\n";
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static const std::string SHORT_OPTIONS_DUMP = "d::h::t::r::v::i:p:b:n:";
+#else
+static const std::string SHORT_OPTIONS_DUMP = "d::h::t::i:p:b:n:";
+#endif
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -118,13 +124,21 @@ static const struct option LONG_OPTIONS_DUMP[] = {
     {"definition", no_argument, nullptr, 'd'},
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     {"record-info", no_argument, nullptr, 'r'},
+#endif
     {"token-id", required_argument, nullptr, 'i'},
     {"permission-name", required_argument, nullptr, 'p'},
     {"bundle-name", required_argument, nullptr, 'b'},
     {"process-name", required_argument, nullptr, 'n'},
     {nullptr, 0, nullptr, 0}
 };
+// required option
+static const std::vector<char> REQUIRED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+static const std::vector<char> REQUIRED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
+static const std::vector<char> REQUIRED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
+
 static const std::string SHORT_OPTIONS_PERM = "hg::c::i:p:";
 static const struct option LONG_OPTIONS_PERM[] = {
     {"help", no_argument, nullptr, 'h'},
@@ -134,11 +148,6 @@ static const struct option LONG_OPTIONS_PERM[] = {
     {"permission-name", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0}
 };
-
-// required option
-static const std::vector<char> REQUIRED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
-static const std::vector<char> REQUIRED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
-static const std::vector<char> REQUIRED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
 
 static const std::string SHORT_OPTIONS_TOGGLE = "hr::u::s::o::i:p:k:";
 static const struct option LONG_OPTIONS_TOGGLE[] = {
@@ -152,15 +161,19 @@ static const struct option LONG_OPTIONS_TOGGLE[] = {
     {"status", required_argument, nullptr, 'k'},
     {nullptr, 0, nullptr, 0}
 };
+#endif
 
 std::map<char, OptType> DUMP_COMMAND_TYPE = {
     // dump
     {'d', DUMP_PERM},
     {'t', DUMP_TOKEN},
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     {'r', DUMP_RECORD},
     {'v', DUMP_TYPE},
+#endif
 };
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 std::map<char, ToggleModeType> TOGGLE_MODE_TYPE = {
     {'r', TOGGLE_REQUEST},
     {'u', TOGGLE_RECORD},
@@ -169,6 +182,7 @@ std::map<char, ToggleOperateType> TOGGLE_OPERATE_TYPE = {
     {'s', TOGGLE_SET},
     {'o', TOGGLE_GET},
 };
+#endif
 }
 
 AtmCommand::AtmCommand(int32_t argc, char* argv[]) : argc_(argc), argv_(argv), name_(TOOLS_NAME)
@@ -311,6 +325,7 @@ void AtmCommand::RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsCo
     }
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AtmCommand::RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context)
 {
     switch (option) {
@@ -410,6 +425,7 @@ std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& pe
 
     return ToString::PermissionUsedTypeInfoToString(results);
 }
+#endif
 
 static std::string GetBundleName(AccessTokenID tokenID)
 {
@@ -477,6 +493,7 @@ std::string AtmCommand::DumpPermissionApps(const std::string& permissionName)
     return ss.str();
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AtmCommand::ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName)
 {
     int32_t result = 0;
@@ -519,6 +536,7 @@ int32_t AtmCommand::GetToggleStatus(int32_t userID, const std::string& permissio
 
     return result;
 }
+#endif
 
 int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName)
 {
@@ -550,6 +568,7 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
     return ret;
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AtmCommand::SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo)
 {
     if ((userID < 0)) {
@@ -589,7 +608,6 @@ int32_t AtmCommand::HandleToggleRequest(const AtmToggleParamInfo& info, std::str
 {
     int32_t ret = RET_SUCCESS;
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     switch (info.type) {
         case TOGGLE_SET:
             ret = SetToggleStatus(info.userID, info.permissionName, info.status);
@@ -605,7 +623,6 @@ int32_t AtmCommand::HandleToggleRequest(const AtmToggleParamInfo& info, std::str
             resultReceiver_.append("Error: Missing option.\n");
             return ERR_INVALID_VALUE;
         }
-#endif
 
     return ret;
 }
@@ -614,7 +631,6 @@ int32_t AtmCommand::HandleToggleRecord(const AtmToggleParamInfo& info, std::stri
 {
     int32_t ret = RET_SUCCESS;
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     switch (info.type) {
         case TOGGLE_SET:
             ret = SetRecordToggleStatus(info.userID, info.status, dumpInfo);
@@ -628,7 +644,6 @@ int32_t AtmCommand::HandleToggleRecord(const AtmToggleParamInfo& info, std::stri
             resultReceiver_.append("Error: Miss option.\n");
             return ERR_INVALID_VALUE;
     }
-#endif
     return ret;
 }
 
@@ -652,6 +667,7 @@ int32_t AtmCommand::RunToggleCommandByOperationType(const AtmToggleParamInfo& in
     resultReceiver_.append(dumpInfo + "\n");
     return ret;
 }
+#endif
 
 static bool IsTokenIdInvalid(const DumpOptionsContext& context)
 {
@@ -749,6 +765,7 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
     return RunCommandByOperationType(context.info, context.type, context.permissionName);
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AtmCommand::RunAsCommonCommandForPerm()
 {
     int32_t result = RET_SUCCESS;
@@ -914,6 +931,7 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
 
     return RunToggleCommandByOperationType(info);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

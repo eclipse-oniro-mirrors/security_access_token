@@ -38,9 +38,9 @@ ohos_unittest("atm_command_test") {
   ]
 
   sources = [
-    "unittest/atm_command_test.cpp",
     "${access_token_path}/tools/accesstoken/src/atm_command.cpp",
     "${access_token_path}/tools/accesstoken/src/to_string.cpp",
+    "unittest/atm_command_test.cpp",
   ]
 
   deps = [

@@ -332,9 +332,6 @@ HWTEST_F(AtmCommandTest, atm_help_test004, TestSize.Level1)
     EXPECT_TRUE(IsOutputContain(result, "--set") || IsOutputContain(result, "-s"));
     EXPECT_TRUE(IsOutputContain(result, "--get") || IsOutputContain(result, "-o"));
 }
-#endif
-
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_help_test005
  * @tc.desc: Display toggle record help (non-user variant)
