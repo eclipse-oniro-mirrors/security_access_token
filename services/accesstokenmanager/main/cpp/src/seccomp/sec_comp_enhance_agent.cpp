@@ -37,7 +37,7 @@ typedef int32_t (*FUNC_CREATE) (uint32_t, uint8_t*, uint32_t*);
 void SecCompUsageObserver::OnProcessDied(const ProcessData &processData)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "OnProcessDied pid %{public}d", processData.pid);
-    SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
+    SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid, processData.accessTokenId);
 }
 
 void SecCompAppManagerDeathCallback::NotifyAppManagerDeath()
@@ -102,13 +102,16 @@ void SecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
     observer_ = nullptr;
 }
 
-void SecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
+void SecCompEnhanceAgent::RemoveSecCompEnhance(int pid, uint32_t tokenId)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
-        if (iter->pid == pid) {
-            secCompEnhanceData_.erase(iter);
-            LOGI(ATM_DOMAIN, ATM_TAG, "Remove pid %{public}d data.", pid);
+        if (iter->pid == pid && iter->token == tokenId) {
+            --iter->count;
+            if (iter->count <= 0) {
+                secCompEnhanceData_.erase(iter);
+                LOGI(ATM_DOMAIN, ATM_TAG, "Remove pid %{public}d data.", pid);
+            }
             return;
         }
     }
@@ -121,10 +124,14 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
     int pid = IPCSkeleton::GetCallingPid();
-    if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
-        [pid](const auto& e) { return e.pid == pid; })) {
+    uint32_t token = IPCSkeleton::GetCallingTokenID();
+
+    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
+        if (iter->pid == pid && iter->token == token) {
+            ++iter->count;
             LOGE(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance exist, pid %{public}d.", pid);
             return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
+        }
     }
     SecCompEnhanceData enhance;
     enhance.callback = enhanceData.callback;
@@ -133,6 +140,7 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
+    enhance.count = 1;
     if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
         return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
     }

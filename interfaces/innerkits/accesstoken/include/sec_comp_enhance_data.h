@@ -75,6 +75,10 @@ struct SecCompEnhanceData {
      * key to encrypt ipc message.
      */
     uint8_t key[AES_KEY_STORAGE_LEN];
+    /**
+     * count of register.
+     */
+    int32_t count;
 };
 
 } // namespace AccessToken
