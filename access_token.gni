@@ -35,8 +35,11 @@ access_token_external_deps = []
 
 access_token_cflags_cc = [
   "-DHILOG_ENABLE",
-  "-DFUZZ_ENABLE",
 ]
+
+if (use_libfuzzer) {
+  access_token_cflags_cc += [ "-DFUZZ_ENABLE" ]
+}
 
 if (access_token_camera_float_window_enable == true) {
   access_token_cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
