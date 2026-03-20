@@ -41,6 +41,12 @@ public:
     int32_t AddPermissionUsedRecordAsync(const AddPermParamInfoParcel& infoParcel) override;
     int32_t StartUsingPermission(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& anonyStub) override;
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    int32_t StartUsingPermission(
+        const std::string& bundleName, const std::string& permissionName,
+        const sptr<IRemoteObject>& anonyStub) override;
+    int32_t StopUsingPermission(const std::string& bundleName, const std::string& permissionName) override;
+#endif
     int32_t StartUsingPermissionCallback(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub) override;
     int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
@@ -62,7 +68,7 @@ public:
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) override;
     int32_t RegisterPermActiveStatusCallback(
-        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
+        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback, int32_t type) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
     int32_t IsAllowedUsingPermission(
         AccessTokenID tokenId, const std::string& permissionName, int32_t pid, bool& isAllowed) override;

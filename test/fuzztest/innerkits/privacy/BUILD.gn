@@ -31,6 +31,7 @@ group("fuzztest") {
       "setpermissionusedrecordtogglestatus_fuzzer:SetPermissionUsedRecordToggleStatusFuzzTest",
       "startusingpermission001_fuzzer:StartUsingPermission001FuzzTest",
       "startusingpermission_fuzzer:StartUsingPermissionFuzzTest",
+      "startusingpermissionbundle_fuzzer:StartUsingPermissionBundleFuzzTest",
       "stopusingpermission_fuzzer:StopUsingPermissionFuzzTest",
       "unregisterpermactivestatuscallback_fuzzer:UnRegisterPermActiveStatusCallbackFuzzTest",
     ]

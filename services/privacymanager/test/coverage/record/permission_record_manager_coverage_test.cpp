@@ -420,7 +420,8 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level4)
     permList.emplace_back("ohos.permission.CAMERA");
     wptr<IRemoteObject> remote = new (std::nothrow) PermActiveStatusChangeCallbackTest();
     callback = remote.promote();
-    ActiveStatusCallbackManager::GetInstance().AddCallback(GetSelfTokenID(), permList, callback);
+    ActiveStatusCallbackManager::GetInstance().AddCallback(
+        GetSelfTokenID(), permList, callback, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY));
     ASSERT_EQ(static_cast<uint32_t>(1), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());
     recipient->OnRemoteDied(remote); // remote is not nullptr
     ASSERT_EQ(static_cast<uint32_t>(0), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());

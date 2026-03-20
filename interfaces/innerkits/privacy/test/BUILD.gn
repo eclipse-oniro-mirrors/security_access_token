@@ -44,6 +44,10 @@ ohos_unittest("libprivacy_sdk_test") {
     "unittest/src/privacy_test_common.cpp",
   ]
 
+  if (privacy_bundle_start_stop_enable) {
+    sources += [ "unittest/src/privacy_bundle_using_test.cpp" ]
+  }
+
   cflags_cc = access_token_cflags_cc
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

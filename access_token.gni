@@ -203,3 +203,10 @@ if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" || use_libf
 } else {
   access_token_manage_user_policy_enable = false
 }
+
+if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" || "${target_platform}" == "pc") {
+  privacy_bundle_start_stop_enable = true
+  access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
+} else {
+  privacy_bundle_start_stop_enable = false
+}

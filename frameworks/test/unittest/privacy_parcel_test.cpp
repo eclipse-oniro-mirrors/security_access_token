@@ -164,18 +164,17 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
 {
     ActiveChangeResponseParcel activeChangeResponseParcel;
 
-    activeChangeResponseParcel.changeResponse = {
-        .callingTokenID = 100,
-        .tokenID = 100,
-        .permissionName = "ohos.permission.CAMERA",
-        .type = PERM_INACTIVE,
-        .usedType = NORMAL_TYPE,
-        .pid = -1,
-        .isRemote = false,
-        .deviceId = "device",
-        .remoteDeviceName = "name",
-        .extra = "perm_add",
-    };
+    activeChangeResponseParcel.changeResponse.callingTokenID = 100;
+    activeChangeResponseParcel.changeResponse.tokenID = 100;
+    activeChangeResponseParcel.changeResponse.permissionName = "ohos.permission.CAMERA";
+    activeChangeResponseParcel.changeResponse.type = PERM_INACTIVE;
+    activeChangeResponseParcel.changeResponse.usedType = NORMAL_TYPE;
+    activeChangeResponseParcel.changeResponse.pid = -1;
+    activeChangeResponseParcel.changeResponse.isRemote = false;
+    activeChangeResponseParcel.changeResponse.deviceId = "device";
+    activeChangeResponseParcel.changeResponse.remoteDeviceName = "name";
+    activeChangeResponseParcel.changeResponse.extra = "perm_add";
+    activeChangeResponseParcel.changeResponse.bundleName = "com.ohos.permissionmanager";
 
     Parcel parcel;
     EXPECT_EQ(true, activeChangeResponseParcel.Marshalling(parcel));
@@ -193,6 +192,7 @@ HWTEST_F(PrivacyParcelTest, ActiveChangeResponseParcel001, TestSize.Level1)
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.deviceId, readedData->changeResponse.deviceId);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.remoteDeviceName, readedData->changeResponse.remoteDeviceName);
     EXPECT_EQ(activeChangeResponseParcel.changeResponse.extra, readedData->changeResponse.extra);
+    EXPECT_EQ(activeChangeResponseParcel.changeResponse.bundleName, readedData->changeResponse.bundleName);
 }
 
 /**

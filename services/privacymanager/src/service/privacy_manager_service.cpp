@@ -55,8 +55,15 @@ constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 constexpr const char* MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 constexpr const char* GET_PERMISSION_POLICY = "ohos.permission.GET_PERMISSION_POLICY";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
+static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static const int32_t RETRY_COUNT = 128;
+bool IsValidCallbackRegisterType(int32_t type)
+{
+    return (type == static_cast<int32_t>(CallbackRegisterType::ALL)) ||
+        (type == static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY));
+}
+
 static const int32_t RETRY_TIMES_MS = 500; // 0.5s
 static const int32_t ASYNC_RETRY_COUNT = 43200; // 30d * 24h * 60m
 static const int32_t ASYNC_RETRY_TIMES_MS = 60 * 1000; // 1min
@@ -188,6 +195,10 @@ void PrivacyManagerService::ProcessProxyDeathStub(const sptr<IRemoteObject>& ano
 
 void PrivacyManagerService::ReleaseDeathStub(int32_t callerPid)
 {
+    if (PermissionRecordManager::GetInstance().HasCallerInStartList(callerPid)) {
+        return;
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "No permission record from caller = %{public}d", callerPid);
     std::shared_ptr<ProxyDeathParam> param = std::make_shared<PrivacyManagerProxyDeathParam>(callerPid);
     if (param == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Create param failed.");
@@ -256,10 +267,7 @@ int32_t PrivacyManagerService::StopUsingPermission(
     if (ret != Constant::SUCCESS) {
         return ret;
     }
-    if (!PermissionRecordManager::GetInstance().HasCallerInStartList(callerPid)) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "No permission record from caller = %{public}d", callerPid);
-        ReleaseDeathStub(callerPid);
-    }
+    ReleaseDeathStub(callerPid);
     return ret;
 }
 
@@ -300,10 +308,7 @@ int32_t PrivacyManagerService::StopRemoteUsingPermission(const std::string& remo
     if (ret != Constant::SUCCESS) {
         return ret;
     }
-    if (!PermissionRecordManager::GetInstance().HasCallerInStartList(callerPid)) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "No permission record from caller = %{public}d", callerPid);
-        ReleaseDeathStub(callerPid);
-    }
+    ReleaseDeathStub(callerPid);
     return ret;
 }
 
@@ -356,6 +361,50 @@ int32_t PrivacyManagerService::GetRemotePermissionUsedRecords(
     int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
         request.request, permissionRecord);
     resultParcel.result = permissionRecord;
+    return ret;
+}
+#endif
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+int32_t PrivacyManagerService::StartUsingPermission(
+    const std::string& bundleName, const std::string& permissionName, const sptr<IRemoteObject>& anonyStub)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    int32_t callerPid = IPCSkeleton::GetCallingPid();
+    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle start: %{public}s, %{public}s, %{public}d.",
+        bundleName.c_str(), permissionName.c_str(), callerPid);
+    ProcessProxyDeathStub(anonyStub, callerPid);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(bundleName, permissionName, callerPid);
+}
+#endif
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+int32_t PrivacyManagerService::StopUsingPermission(
+    const std::string& bundleName, const std::string& permissionName)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        return PrivacyError::ERR_NOT_SYSTEM_APP;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+
+    int32_t callerPid = IPCSkeleton::GetCallingPid();
+    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle stop: %{public}s, %{public}s, %{public}d.",
+        bundleName.c_str(), permissionName.c_str(), callerPid);
+    int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(bundleName, permissionName, callerPid);
+    if (ret != Constant::SUCCESS) {
+        return ret;
+    }
+    ReleaseDeathStub(callerPid);
     return ret;
 }
 #endif
@@ -417,7 +466,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordsAsync(
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
-    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback, int32_t type)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -431,9 +480,12 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
         LOGE(PRI_DOMAIN, PRI_TAG, "PermList oversize");
         return PrivacyError::ERR_OVERSIZE;
     }
+    if (!IsValidCallbackRegisterType(type)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
 
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
-        IPCSkeleton::GetCallingTokenID(), permList, callback);
+        IPCSkeleton::GetCallingTokenID(), permList, callback, type);
 }
 
 int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector<std::u16string>& args)
@@ -653,6 +705,9 @@ int32_t PrivacyManagerService::CheckPermissionInUse(const std::string& permissio
     }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
+    }
+    if (permissionName.empty() || permissionName.length() > MAX_PERMISSION_NAME_LENGTH) {
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     return PermissionRecordManager::GetInstance().CheckPermissionInUse(permissionName, isUsing);

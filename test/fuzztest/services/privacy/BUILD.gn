@@ -32,7 +32,9 @@ group("fuzztest") {
       "setmutepolicystub_fuzzer:SetMutePolicyStubFuzzTest",
       "setpermissionusedrecordtogglestatusstub_fuzzer:SetPermissionUsedRecordToggleStatusStubFuzzTest",
       "startusingpermissioncallbackstub_fuzzer:StartUsingPermissionCallbackStubFuzzTest",
+      "startusingpermissionbundlestub_fuzzer:StartUsingPermissionBundleStubFuzzTest",
       "startusingpermissionstub_fuzzer:StartUsingPermissionStubFuzzTest",
+      "stopusingpermissionbundlestub_fuzzer:StopUsingPermissionBundleStubFuzzTest",
       "stopusingpermissionstub_fuzzer:StopUsingPermissionStubFuzzTest",
       "unregisterpermactivestatuscallbackstub_fuzzer:UnRegisterPermActiveStatusCallbackStubFuzzTest",
     ]

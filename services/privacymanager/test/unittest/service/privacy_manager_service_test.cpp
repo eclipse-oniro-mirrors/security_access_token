@@ -15,15 +15,18 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <unistd.h>
 
 #include "accesstoken_kit.h"
 #include "constant.h"
 #include "iprivacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #define private public
+#include "proxy_death_handler.h"
 #include "permission_record_manager.h"
 #include "privacy_manager_service.h"
 #undef private
+#include "parameter.h"
 #include "perm_active_status_change_callback_stub.h"
 #include "perm_active_status_change_callback.h"
 #include "privacy_error.h"
@@ -834,6 +837,246 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, privacyManagerService_->StartUsingPermission(parcel, nullptr));
 }
 
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: BundleUsingServiceTest001
+ * @tc.desc: Verify bundle start enters business branch for native caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest001, TestSize.Level0)
+{
+    MockNativeToken mock("privacy_service");
+
+    int32_t ret = privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest001", CAMERA_PERMISSION_NAME, nullptr);
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest001", CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest002
+ * @tc.desc: Verify bundle start returns ERR_NOT_SYSTEM_APP for normal hap caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("BundleUsingServiceTest002", reqPerm, false);
+
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest002", CAMERA_PERMISSION_NAME, nullptr));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest003
+ * @tc.desc: Verify bundle start returns ERR_PERMISSION_DENIED without permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("BundleUsingServiceTest003", reqPerm, true);
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest003", CAMERA_PERMISSION_NAME, nullptr));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest004
+ * @tc.desc: Verify bundle start succeeds for system hap with PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest004, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingServiceTest004", reqPerm, true);
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest004", CAMERA_PERMISSION_NAME, nullptr));
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest004", CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest005
+ * @tc.desc: Verify bundle stop enters business branch for native caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest005, TestSize.Level0)
+{
+    MockNativeToken mock("privacy_service");
+
+    int32_t ret = privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest005", CAMERA_PERMISSION_NAME);
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest006
+ * @tc.desc: Verify bundle stop returns ERR_NOT_SYSTEM_APP for normal hap caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest006, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("BundleUsingServiceTest006", reqPerm, false);
+
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest006", CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest007
+ * @tc.desc: Verify bundle stop returns ERR_PERMISSION_DENIED without permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest007, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("BundleUsingServiceTest007", reqPerm, true);
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest007", CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest008
+ * @tc.desc: Verify bundle stop succeeds for system hap with PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest008, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingServiceTest008", reqPerm, true);
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest008", CAMERA_PERMISSION_NAME, nullptr));
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest008", CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest009
+ * @tc.desc: Verify caller remains in bundle start list when another bundle record is still active after stop.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest009, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingServiceTest009", reqPerm, true);
+    auto& manager = PermissionRecordManager::GetInstance();
+    int32_t callerPid = getpid();
+    manager.bundleStartRecordMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest009", CAMERA_PERMISSION_NAME, nullptr));
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        g_InfoParms1.bundleName, CAMERA_PERMISSION_NAME, nullptr));
+    ASSERT_TRUE(manager.HasCallerInStartList(callerPid));
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest009", CAMERA_PERMISSION_NAME));
+    ASSERT_TRUE(manager.HasCallerInStartList(callerPid));
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        g_InfoParms1.bundleName, CAMERA_PERMISSION_NAME));
+    ASSERT_FALSE(manager.HasCallerInStartList(callerPid));
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest010
+ * @tc.desc: Verify stopping the last bundle record releases the death proxy for the caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest010, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingServiceTest010", reqPerm, true);
+    auto& manager = PermissionRecordManager::GetInstance();
+    int32_t callerPid = getpid();
+    manager.bundleStartRecordMap_.clear();
+
+    sptr<ProxyDeathCallBackStub> callback = new (std::nothrow) ProxyDeathCallBackStub();
+    ASSERT_NE(nullptr, callback);
+
+    auto handler = privacyManagerService_->GetProxyDeathHandler();
+    ASSERT_NE(nullptr, handler);
+    handler->proxyStubAndRecipientMap_.clear();
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest010", CAMERA_PERMISSION_NAME, callback->AsObject()));
+    ASSERT_TRUE(manager.HasCallerInStartList(callerPid));
+    ASSERT_EQ(1, static_cast<int32_t>(handler->proxyStubAndRecipientMap_.size()));
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest010", CAMERA_PERMISSION_NAME));
+    ASSERT_FALSE(manager.HasCallerInStartList(callerPid));
+    ASSERT_TRUE(handler->proxyStubAndRecipientMap_.empty());
+}
+
+/**
+ * @tc.name: BundleUsingServiceTest011
+ * @tc.desc: Verify stopping bundle record does not release death proxy while token record of the same caller remains.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, BundleUsingServiceTest011, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("BundleUsingServiceTest011", reqPerm, true);
+    auto& manager = PermissionRecordManager::GetInstance();
+    int32_t callerPid = getpid();
+    manager.bundleStartRecordMap_.clear();
+
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+
+    sptr<ProxyDeathCallBackStub> callback = new (std::nothrow) ProxyDeathCallBackStub();
+    ASSERT_NE(nullptr, callback);
+
+    auto handler = privacyManagerService_->GetProxyDeathHandler();
+    ASSERT_NE(nullptr, handler);
+    handler->proxyStubAndRecipientMap_.clear();
+
+    PermissionUsedTypeInfoParcel parcel;
+    parcel.info.tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    parcel.info.pid = -1;
+    parcel.info.permissionName = CAMERA_PERMISSION_NAME;
+    parcel.info.type = PermissionUsedType::NORMAL_TYPE;
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(parcel, callback->AsObject()));
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StartUsingPermission(
+        "BundleUsingServiceTest011", CAMERA_PERMISSION_NAME, callback->AsObject()));
+    ASSERT_EQ(1, static_cast<int32_t>(handler->proxyStubAndRecipientMap_.size()));
+    ASSERT_TRUE(manager.HasCallerInStartList(callerPid));
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        "BundleUsingServiceTest011", CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(1, static_cast<int32_t>(handler->proxyStubAndRecipientMap_.size()));
+    ASSERT_TRUE(manager.HasCallerInStartList(callerPid));
+
+    ASSERT_EQ(RET_SUCCESS, privacyManagerService_->StopUsingPermission(
+        tokenIdEx.tokenIdExStruct.tokenID, -1, CAMERA_PERMISSION_NAME));
+    ASSERT_FALSE(manager.HasCallerInStartList(callerPid));
+    ASSERT_TRUE(handler->proxyStubAndRecipientMap_.empty());
+}
+#endif
+
 /**
  * @tc.name: StartUsingPermissionCallbackInner001
  * @tc.desc: StartUsingPermissionCallbackInner test.
@@ -1150,7 +1393,14 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
 
     // permList size oversize
     ASSERT_EQ(PrivacyError::ERR_OVERSIZE,
-        privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr));
+        privacyManagerService_->RegisterPermActiveStatusCallback(
+            permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
+
+    permList.clear();
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr, -1));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr, 2));
 }
 
 /**
@@ -1168,7 +1418,8 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, Te
 
     // callingTokenID is normal hap without need permission
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
-        privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr));
+        privacyManagerService_->RegisterPermActiveStatusCallback(
+            permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
 /**
@@ -1186,7 +1437,8 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
 
     // callingTokenID is system hap without need permission
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr));
+        privacyManagerService_->RegisterPermActiveStatusCallback(
+            permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
 /**
@@ -1200,7 +1452,13 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner004, Te
     std::vector<std::string> permList;
 
     // systemapp with need permission
-    int32_t ret = privacyManagerService_->RegisterPermActiveStatusCallback(permList, nullptr);
+    int32_t ret = privacyManagerService_->RegisterPermActiveStatusCallback(
+        permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY));
+    EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
+    EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
+
+    ret = privacyManagerService_->RegisterPermActiveStatusCallback(
+        permList, nullptr, static_cast<int32_t>(CallbackRegisterType::ALL));
     EXPECT_NE(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
     EXPECT_NE(PrivacyError::ERR_PERMISSION_DENIED, ret);
 }
@@ -1607,7 +1865,7 @@ HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse004, TestSize.Level0)
 
 /**
  * @tc.name: CheckPermissionInUse005
- * @tc.desc: Test CheckPermissionInUse after stopping permission use.
+ * @tc.desc: Test CheckPermissionInUse with permission name exceeding 256 characters.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1616,6 +1874,24 @@ HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse005, TestSize.Level0)
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
     MockHapToken mock("CheckPermissionInUse005", reqPerm, true); // set self tokenID to system app
+
+    std::string longPermissionName(257, 'a');
+    bool isUsing = false;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->CheckPermissionInUse(longPermissionName, isUsing));
+}
+
+/**
+ * @tc.name: CheckPermissionInUse006
+ * @tc.desc: Test CheckPermissionInUse after stopping permission use.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse006, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("CheckPermissionInUse006", reqPerm, true); // set self tokenID to system app
 
     // Start using permission
     PermissionUsedTypeInfoParcel parcel;
@@ -1639,16 +1915,16 @@ HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse005, TestSize.Level0)
 }
 
 /**
- * @tc.name: CheckPermissionInUse006
+ * @tc.name: CheckPermissionInUse007
  * @tc.desc: Test CheckPermissionInUse caller is not system app.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse006, TestSize.Level0)
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse007, TestSize.Level0)
 {
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    MockHapToken mock("CheckPermissionInUse006", reqPerm, false);
+    MockHapToken mock("CheckPermissionInUse007", reqPerm, false);
 
     bool isUsing = false;
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
@@ -1656,15 +1932,15 @@ HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse006, TestSize.Level0)
 }
 
 /**
- * @tc.name: CheckPermissionInUse007
+ * @tc.name: CheckPermissionInUse008
  * @tc.desc: Test CheckPermissionInUse caller is system app without PERMISSION_USED_STATS permission.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse007, TestSize.Level0)
+HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse008, TestSize.Level0)
 {
     std::vector<std::string> reqPerm; // empty permission list - no PERMISSION_USED_STATS
-    MockHapToken mock("CheckPermissionInUse007", reqPerm, true); // isSystemApp = true
+    MockHapToken mock("CheckPermissionInUse008", reqPerm, true); // isSystemApp = true
 
     bool isUsing = false;
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,

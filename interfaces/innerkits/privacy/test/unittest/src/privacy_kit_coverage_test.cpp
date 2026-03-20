@@ -372,3 +372,88 @@ HWTEST_F(PrivacyKitTest, OnAddPrivacySa003, TestSize.Level0)
     EXPECT_EQ(PrivacyManagerClient::GetInstance().remoteCacheList_.size(), 0);
 }
 #endif
+
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+/**
+ * @tc.name: SystemAbilityStatusChangeListener004
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, OnAddPrivacySa004, TestSize.Level0)
+{
+    const std::string bundleName = g_infoParmsE.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+    EXPECT_EQ(0, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+    EXPECT_EQ(ERR_PERMISSION_ALREADY_START_USING, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+
+    PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+    PrivacyManagerClient::GetInstance().OnRemoteDiedHandle();
+    PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+
+    EXPECT_EQ(0, PrivacyKit::StopUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+}
+
+/**
+ * @tc.name: BundleClientCache001
+ * @tc.desc: Verify bundle cache is created after successful bundle start.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleClientCache001, TestSize.Level0)
+{
+    const std::string bundleName = g_infoParmsE.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    PrivacyManagerClient::GetInstance().bundleCacheList_.clear();
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+    EXPECT_EQ(0, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+    EXPECT_EQ(0, PrivacyKit::StopUsingPermission(bundleName, permissionName));
+}
+
+/**
+ * @tc.name: BundleClientCache002
+ * @tc.desc: Verify bundle cache is removed after bundle stop.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleClientCache002, TestSize.Level0)
+{
+    const std::string bundleName = g_infoParmsE.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    PrivacyManagerClient::GetInstance().bundleCacheList_.clear();
+    EXPECT_EQ(0, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+    EXPECT_EQ(0, PrivacyKit::StopUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+}
+
+/**
+ * @tc.name: BundleClientRetry003
+ * @tc.desc: Verify OnAddPrivacySa replays bundle cache without duplicating entries.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, BundleClientRetry003, TestSize.Level0)
+{
+    const std::string bundleName = g_infoParmsE.bundleName;
+    const std::string permissionName = "ohos.permission.CAMERA";
+
+    PrivacyManagerClient::GetInstance().bundleCacheList_.clear();
+    EXPECT_EQ(0, PrivacyKit::StartUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+
+    PrivacyManagerClient::GetInstance().OnAddPrivacySa();
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+
+    EXPECT_EQ(0, PrivacyKit::StopUsingPermission(bundleName, permissionName));
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
+}
+#endif

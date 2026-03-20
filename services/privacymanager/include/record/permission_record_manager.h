@@ -90,7 +90,6 @@ public:
         int32_t callerPid);
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         int32_t callerPid);
-    bool HasCallerInStartList(int32_t callerPid);
 #ifdef REMOTE_PRIVACY_ENABLE
     int32_t StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid);
     int32_t StopRemoteUsingPermission(const std::string& remoteDeviceId, const std::string& remoteDeviceName,
@@ -100,8 +99,13 @@ public:
     int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info);
     int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
 #endif
-    int32_t RegisterPermActiveStatusCallback(
-        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    int32_t StartUsingPermission(const std::string& bundleName, const std::string& permissionName, int32_t callerPid);
+    int32_t StopUsingPermission(const std::string& bundleName, const std::string& permissionName, int32_t callerPid);
+#endif
+    bool HasCallerInStartList(int32_t callerPid);
+    int32_t RegisterPermActiveStatusCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
+        const sptr<IRemoteObject>& callback, int32_t type);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
     void CallbackExecute(const ContinuousPermissionRecord& record, const std::string& permissionName,
@@ -311,6 +315,10 @@ private:
 
     std::mutex remotePermUsedRecMutex_;
     std::vector<RemotePermissionRecordCache> remotePermUsedRecList_;
+#endif
+#ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
+    std::mutex bundleStartRecordListMutex_;
+    std::unordered_map<std::string, std::vector<std::pair<int32_t, int32_t>>> bundleStartRecordMap_;
 #endif
 };
 } // namespace AccessToken
