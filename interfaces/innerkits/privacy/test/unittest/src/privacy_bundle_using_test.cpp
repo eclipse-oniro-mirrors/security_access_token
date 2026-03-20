@@ -34,6 +34,8 @@ uint64_t g_selfTokenId = 0;
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 constexpr const char* TEST_BUNDLE_NAME = "ohos.test.bundle";
 constexpr const char* TEST_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* TEST_PERMISSION_NAME_MIC = "ohos.permission.MICROPHONE";
+constexpr const char* TEST_PERMISSION_NAME_LOCATION = "ohos.permission.LOCATION";
 constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
 constexpr size_t INVALID_NAME_LENGTH = 257;
 
@@ -110,6 +112,13 @@ int32_t SetDisablePolicyAsEdm(const std::string& permissionName, bool isDisable)
 {
     MockNativeToken mock("edm");
     return PrivacyKit::SetDisablePolicy(permissionName, isDisable);
+}
+
+void ExpectPermissionInUse(const std::string& permissionName, bool expected)
+{
+    bool isUsing = false;
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(permissionName, isUsing));
+    EXPECT_EQ(expected, isUsing);
 }
 
 class BundleActiveStatusCallbackTest : public PermActiveStatusCustomizedCbk {
@@ -427,18 +436,16 @@ HWTEST_F(BundleUsingTest, BundleUsingtest011, TestSize.Level1)
 {
     std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
     MockHapToken mock("BundleUsingtest011", reqPerm, true);
-    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token.only", TEST_PERMISSION_NAME);
+    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token.only", TEST_PERMISSION_NAME_MIC);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME_MIC));
 
-    bool isUsing = false;
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-    EXPECT_TRUE(isUsing);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, false);
 
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-    EXPECT_FALSE(isUsing);
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME_MIC));
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
 
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenID));
 }
@@ -454,47 +461,45 @@ HWTEST_F(BundleUsingTest, BundleUsingtest012, TestSize.Level1)
     std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
     MockHapToken mock("BundleUsingtest012", reqPerm, true);
     AccessTokenID callingTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
- 
-    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token", TEST_PERMISSION_NAME);
+    const std::string bundleName = "ohos.test.bundle.mixed";
+    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token", TEST_PERMISSION_NAME_MIC);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission("ohos.test.bundle.mixed", TEST_PERMISSION_NAME));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleName, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME_MIC));
 
     std::vector<CurrUsingPermInfo> infoList;
     {
         MockNativeToken mockQuery("audio_server");
         EXPECT_EQ(RET_SUCCESS, PrivacyKit::GetCurrUsingPermInfo(infoList));
     }
-    const CurrUsingPermInfo* bundleInfo = FindBundleUsingInfo(
-        infoList, "ohos.test.bundle.mixed", TEST_PERMISSION_NAME);
+    const CurrUsingPermInfo* bundleInfo = FindBundleUsingInfo(infoList, bundleName, TEST_PERMISSION_NAME);
     ASSERT_NE(nullptr, bundleInfo);
     EXPECT_EQ(std::string(TEST_PERMISSION_NAME), bundleInfo->permissionName);
-    EXPECT_EQ("ohos.test.bundle.mixed", bundleInfo->bundleName);
+    EXPECT_EQ(bundleName, bundleInfo->bundleName);
     EXPECT_EQ(PERM_ACTIVE_IN_FOREGROUND, bundleInfo->type);
-    const CurrUsingPermInfo* info = FindUsingInfo(infoList, tokenID, TEST_PERMISSION_NAME);
+    const CurrUsingPermInfo* info = FindUsingInfo(infoList, tokenID, TEST_PERMISSION_NAME_MIC);
     EXPECT_NE(nullptr, info);
     if (info != nullptr) {
         EXPECT_EQ(callingTokenID, info->callingTokenID);
         EXPECT_EQ(tokenID, info->tokenID);
-        EXPECT_EQ(std::string(TEST_PERMISSION_NAME), info->permissionName);
-        EXPECT_EQ(-1, info->pid); // -1: bundle start does not carry pid
+        EXPECT_EQ(std::string(TEST_PERMISSION_NAME_MIC), info->permissionName);
+        EXPECT_EQ(-1, info->pid);
         EXPECT_EQ("", info->deviceId);
         EXPECT_EQ(NORMAL_TYPE, info->usedType);
         EXPECT_FALSE(info->isRemote);
     }
 
-    bool isUsing = false;
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-    EXPECT_TRUE(isUsing);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, true);
 
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-    EXPECT_TRUE(isUsing);
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME_MIC));
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
 
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission("ohos.test.bundle.mixed", TEST_PERMISSION_NAME));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-    EXPECT_FALSE(isUsing);
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleName, TEST_PERMISSION_NAME));
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, false);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
 
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenID));
 }
@@ -511,44 +516,50 @@ HWTEST_F(BundleUsingTest, BundleUsingtest013, TestSize.Level1)
     std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
     MockHapToken mock("BundleUsingtest013", reqPerm, true);
     AccessTokenID callingTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
-    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token.remote", TEST_PERMISSION_NAME);
+    AccessTokenID tokenID = CreateGrantedHapToken("ohos.test.bundle.token.remote", TEST_PERMISSION_NAME_LOCATION);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     const std::string bundleName = "ohos.test.bundle.remote.mixed";
     RemoteCallerInfo remoteInfo = {"remote_device_id", "remote_device_name"};
     auto startRemote = [&remoteInfo]() { MockNativeToken mockRemote("camera_service");
-        return PrivacyKit::StartRemoteUsingPermission(remoteInfo, TEST_PERMISSION_NAME); };
+        return PrivacyKit::StartRemoteUsingPermission(remoteInfo, TEST_PERMISSION_NAME_MIC); };
     auto stopRemote = [&remoteInfo]() { MockNativeToken mockRemote("camera_service");
-        return PrivacyKit::StopRemoteUsingPermission(remoteInfo, TEST_PERMISSION_NAME); };
+        return PrivacyKit::StopRemoteUsingPermission(remoteInfo, TEST_PERMISSION_NAME_MIC); };
     auto checkInfo = [&](const std::vector<CurrUsingPermInfo>& infoList) {
         const CurrUsingPermInfo* bundleInfo = FindBundleUsingInfo(infoList, bundleName, TEST_PERMISSION_NAME);
         ASSERT_NE(nullptr, bundleInfo);
         EXPECT_EQ(bundleName, bundleInfo->bundleName);
-        const CurrUsingPermInfo* tokenInfo = FindUsingInfo(infoList, tokenID, TEST_PERMISSION_NAME);
+        EXPECT_EQ(std::string(TEST_PERMISSION_NAME), bundleInfo->permissionName);
+        const CurrUsingPermInfo* tokenInfo = FindUsingInfo(infoList, tokenID, TEST_PERMISSION_NAME_LOCATION);
         ASSERT_NE(nullptr, tokenInfo);
         EXPECT_EQ(callingTokenID, tokenInfo->callingTokenID);
+        EXPECT_EQ(std::string(TEST_PERMISSION_NAME_LOCATION), tokenInfo->permissionName);
         const CurrUsingPermInfo* remoteUsingInfo =
-            FindRemoteUsingInfo(infoList, remoteInfo.remoteDeviceId, TEST_PERMISSION_NAME);
+            FindRemoteUsingInfo(infoList, remoteInfo.remoteDeviceId, TEST_PERMISSION_NAME_MIC);
         ASSERT_NE(nullptr, remoteUsingInfo);
         EXPECT_TRUE(remoteUsingInfo->isRemote);
-    };
-    auto checkUsing = [](bool expected) {
-        bool isUsing = false;
-        EXPECT_EQ(RET_SUCCESS, PrivacyKit::CheckPermissionInUse(TEST_PERMISSION_NAME, isUsing));
-        EXPECT_EQ(expected, isUsing);
+        EXPECT_EQ(std::string(TEST_PERMISSION_NAME_MIC), remoteUsingInfo->permissionName);
     };
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleName, TEST_PERMISSION_NAME));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenID, TEST_PERMISSION_NAME_LOCATION));
     EXPECT_EQ(RET_SUCCESS, startRemote());
     std::vector<CurrUsingPermInfo> infoList;
     { MockNativeToken mockQuery("audio_server"); EXPECT_EQ(RET_SUCCESS, PrivacyKit::GetCurrUsingPermInfo(infoList)); }
     checkInfo(infoList);
-    checkUsing(true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_LOCATION, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, true);
     EXPECT_EQ(RET_SUCCESS, stopRemote());
-    checkUsing(true);
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME));
-    checkUsing(true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_LOCATION, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenID, TEST_PERMISSION_NAME_LOCATION));
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, true);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_LOCATION, false);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleName, TEST_PERMISSION_NAME));
-    checkUsing(false);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME, false);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_LOCATION, false);
+    ExpectPermissionInUse(TEST_PERMISSION_NAME_MIC, false);
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenID));
 }
 #endif
@@ -722,7 +733,7 @@ HWTEST_F(BundleUsingTest, BundleUsingtest019, TestSize.Level1)
 
 /**
  * @tc.name: BundleUsingtest020
- * @tc.desc: Verify ALL callback receives both bundle start and token start active status change.
+ * @tc.desc: Verify callback distinguishes different permissions under the same bundle.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -730,6 +741,71 @@ HWTEST_F(BundleUsingTest, BundleUsingtest020, TestSize.Level1)
 {
     std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
     MockHapToken mock("BundleUsingtest020", reqPerm, true);
+    std::vector<std::string> permList = {TEST_PERMISSION_NAME, TEST_PERMISSION_NAME_MIC};
+    auto callbackPtr = std::make_shared<BundleActiveStatusCallbackTest>(permList);
+    const std::string bundleName = "ohos.test.bundle.callback.same.bundle";
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr, CallbackRegisterType::ALL));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleName, TEST_PERMISSION_NAME));
+    usleep(1000000); // 1000000: 1s
+    EXPECT_EQ(1, callbackPtr->callTimes_);
+    EXPECT_EQ(bundleName, callbackPtr->bundleName_);
+    EXPECT_EQ(std::string(TEST_PERMISSION_NAME), callbackPtr->permissionName_);
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleName, TEST_PERMISSION_NAME_MIC));
+    usleep(1000000); // 1000000: 1s
+    EXPECT_EQ(2, callbackPtr->callTimes_);
+    EXPECT_EQ(bundleName, callbackPtr->bundleName_);
+    EXPECT_EQ(std::string(TEST_PERMISSION_NAME_MIC), callbackPtr->permissionName_);
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleName, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleName, TEST_PERMISSION_NAME_MIC));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: BundleUsingtest021
+ * @tc.desc: Verify callback distinguishes different permissions across different bundles.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(BundleUsingTest, BundleUsingtest021, TestSize.Level1)
+{
+    std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
+    MockHapToken mock("BundleUsingtest021", reqPerm, true);
+    std::vector<std::string> permList = {TEST_PERMISSION_NAME, TEST_PERMISSION_NAME_MIC};
+    auto callbackPtr = std::make_shared<BundleActiveStatusCallbackTest>(permList);
+    const std::string bundleNameA = "ohos.test.bundle.callback.multi.diffperm.a";
+    const std::string bundleNameB = "ohos.test.bundle.callback.multi.diffperm.b";
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr, CallbackRegisterType::ALL));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleNameA, TEST_PERMISSION_NAME));
+    usleep(1000000); // 1000000: 1s
+    EXPECT_EQ(1, callbackPtr->callTimes_);
+    EXPECT_EQ(bundleNameA, callbackPtr->bundleName_);
+    EXPECT_EQ(std::string(TEST_PERMISSION_NAME), callbackPtr->permissionName_);
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(bundleNameB, TEST_PERMISSION_NAME_MIC));
+    usleep(1000000); // 1000000: 1s
+    EXPECT_EQ(2, callbackPtr->callTimes_);
+    EXPECT_EQ(bundleNameB, callbackPtr->bundleName_);
+    EXPECT_EQ(std::string(TEST_PERMISSION_NAME_MIC), callbackPtr->permissionName_);
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleNameA, TEST_PERMISSION_NAME));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(bundleNameB, TEST_PERMISSION_NAME_MIC));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: BundleUsingtest022
+ * @tc.desc: Verify ALL callback receives both bundle start and token start active status change.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(BundleUsingTest, BundleUsingtest022, TestSize.Level1)
+{
+    std::vector<std::string> reqPerm = {PERMISSION_USED_STATS};
+    MockHapToken mock("BundleUsingtest022", reqPerm, true);
     std::vector<std::string> permList = {TEST_PERMISSION_NAME};
     auto callbackPtr = std::make_shared<BundleActiveStatusCallbackTest>(permList);
     const std::string bundleName = "ohos.test.bundle.callback.all";
