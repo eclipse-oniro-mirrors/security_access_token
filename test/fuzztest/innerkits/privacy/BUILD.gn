@@ -33,6 +33,7 @@ group("fuzztest") {
       "startusingpermission_fuzzer:StartUsingPermissionFuzzTest",
       "startusingpermissionbundle_fuzzer:StartUsingPermissionBundleFuzzTest",
       "stopusingpermission_fuzzer:StopUsingPermissionFuzzTest",
+      "stopusingpermissionbundle_fuzzer:StopUsingPermissionBundleFuzzTest",
       "unregisterpermactivestatuscallback_fuzzer:UnRegisterPermActiveStatusCallbackFuzzTest",
     ]
 
