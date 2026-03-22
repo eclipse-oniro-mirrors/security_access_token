@@ -3092,11 +3092,93 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord020, TestSize.Level0)
 
 /**
  * @tc.name: AddPermissionRecordCallbackTest001
- * @tc.desc: Verify PrivacyKit forwards extra and triggers PERM_ADD for permission which supports add callback.
+ * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when extra is empty for permission in add callback list.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_TRUE(callbackPtr->extra_.empty());
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+    CheckPermissionUsedResult(request, result, 1, 1, 0);
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", result.bundleRecords[0].permissionRecords[0].permissionName);
+    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest002
+ * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when extra is empty for permission out of add callback list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest002, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    callbackPtr->type_ = PERM_INACTIVE;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdE;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = NORMAL_TYPE;
+    info.extra = "";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+    EXPECT_TRUE(callbackPtr->extra_.empty());
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList = {"ohos.permission.CAMERA"};
+    BuildQueryRequest(g_tokenIdE, g_infoParmsE.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+    CheckPermissionUsedResult(request, result, 1, 1, 0);
+    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ("ohos.permission.CAMERA", result.bundleRecords[0].permissionRecords[0].permissionName);
+    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: AddPermissionRecordCallbackTest003
+ * @tc.desc: Verify PrivacyKit forwards extra and triggers PERM_ADD for permission in add callback list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
     auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
@@ -3134,12 +3216,12 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level0)
 }
 
 /**
- * @tc.name: AddPermissionRecordCallbackTest002
- * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD for permission which does not support add callback.
+ * @tc.name: AddPermissionRecordCallbackTest004
+ * @tc.desc: Does not trigger PERM_ADD when extra is not empty for permission out of add callback list.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest002, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
@@ -3175,53 +3257,12 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest002, TestSize.Level0)
 }
 
 /**
- * @tc.name: AddPermissionRecordCallbackTest003
- * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when extra is empty for permission which supports add callback.
+ * @tc.name: AddPermissionRecordCallbackTest005
+ * @tc.desc: Does not trigger PERM_ADD when AddPermissionUsedRecord fails for permission in add callback list.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level0)
-{
-    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
-    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
-    callbackPtr->type_ = PERM_INACTIVE;
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
-
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
-    info.successCount = 1;
-    info.failCount = 0;
-    info.type = NORMAL_TYPE;
-    info.extra = "";
-
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
-    usleep(1000000); // 1000000us = 1s
-    EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
-    EXPECT_TRUE(callbackPtr->extra_.empty());
-
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList = {"ohos.permission.READ_IMAGEVIDEO"};
-    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
-    CheckPermissionUsedResult(request, result, 1, 1, 0);
-    ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords[0].permissionRecords.size());
-    EXPECT_EQ("ohos.permission.READ_IMAGEVIDEO", result.bundleRecords[0].permissionRecords[0].permissionName);
-    EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
-    EXPECT_EQ(0, result.bundleRecords[0].permissionRecords[0].rejectCount);
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
-}
-
-/**
- * @tc.name: AddPermissionRecordCallbackTest004
- * @tc.desc: Verify PrivacyKit does not trigger PERM_ADD when AddPermissionUsedRecord fails.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest005, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
     auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
@@ -3252,12 +3293,12 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest004, TestSize.Level0)
 }
 
 /**
- * @tc.name: AddPermissionRecordCallbackTest005
+ * @tc.name: AddPermissionRecordCallbackTest006
  * @tc.desc: Verify PrivacyKit rejects oversized extra.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest005, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest006, TestSize.Level0)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
