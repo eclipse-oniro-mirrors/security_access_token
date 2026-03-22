@@ -49,11 +49,20 @@ enum ColumnType {
     TYPE_STRING,
 };
 
+class ValueObject {
+public:
+    ValueObject() = default;
+    explicit ValueObject(int32_t val) {}
+    explicit ValueObject(int64_t val) {}
+    explicit ValueObject(std::string val) {}
+};
+
 class ValuesBucket {
 public:
     bool IsEmpty();
     void PutString(std::string a, std::string b);
     void PutInt(std::string a, int32_t b);
+    void PutLong(std::string a, int64_t b);
 };
 
 class ResultSet {
@@ -65,6 +74,7 @@ public:
     void GetColumnIndex(std::string a, int32_t& b);
     void GetColumnType(int32_t a, NativeRdb::ColumnType& b);
     void GetInt(int32_t a, int32_t& b);
+    void GetLong(int32_t a, int64_t& b);
     void GetString(int32_t a, std::string& b);
 };
 
@@ -77,7 +87,13 @@ public:
     std::string GetTableName() const;
     void EqualTo(std::string a, std::string b);
     void EqualTo(std::string a, int32_t b);
+    void In(std::string a, const std::vector<std::string>& b);
+    void In(std::string a, const std::vector<ValueObject>& b);
+    void In(std::string a, const std::vector<int32_t>& b);
     void And();
+    void Or();
+    void BeginWrap();
+    void EndWrap();
 };
 
 class Transaction {

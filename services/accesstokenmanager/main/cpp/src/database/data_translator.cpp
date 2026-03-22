@@ -82,6 +82,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStatus& inPermi
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus);
     int32_t grantFlag = static_cast<int32_t>(inPermissionState.grantFlag);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlag);
+    outGenericValues.Put(TokenFiledConst::FIELD_TIMESTAMP, static_cast<int64_t>(inPermissionState.timestamp));
     return RET_SUCCESS;
 }
 
@@ -113,6 +114,7 @@ int DataTranslator::TranslationIntoPermissionStatus(const GenericValues& inGener
         grantStatus = PERMISSION_DENIED;
     }
     outPermissionState.grantStatus = grantStatus;
+    outPermissionState.timestamp = static_cast<uint64_t>(inGenericValues.GetInt64(TokenFiledConst::FIELD_TIMESTAMP));
 
     return RET_SUCCESS;
 }

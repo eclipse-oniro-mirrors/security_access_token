@@ -49,6 +49,41 @@ static constexpr int32_t RANDOM_TOKENID = 123;
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
+std::vector<DbQueryCondition> BuildPermissionStateQueryConditions(AccessTokenID tokenId1, AccessTokenID tokenId2)
+{
+    std::vector<DbQueryCondition> conditionItems;
+    conditionItems.emplace_back(DbQueryCondition {
+        .column = TokenFiledConst::FIELD_PERMISSION_NAME,
+        .values = {VariantValue(std::string("ohos.permission.CAMERA")),
+            VariantValue(std::string("ohos.permission.MICROPHONE"))}
+    });
+    conditionItems.emplace_back(DbQueryCondition {
+        .column = TokenFiledConst::FIELD_TOKEN_ID,
+        .values = {VariantValue(static_cast<int32_t>(tokenId1)), VariantValue(static_cast<int32_t>(tokenId2))}
+    });
+    return conditionItems;
+}
+
+void AssertPermissionStateQueryResults(const std::vector<GenericValues>& results, AccessTokenID tokenId1,
+    AccessTokenID tokenId2)
+{
+    int32_t token1Count = 0;
+    int32_t token2Count = 0;
+    for (const auto& value : results) {
+        const auto tokenId = static_cast<AccessTokenID>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+        const std::string permissionName = value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        EXPECT_TRUE(permissionName == "ohos.permission.CAMERA" || permissionName == "ohos.permission.MICROPHONE");
+        EXPECT_TRUE(tokenId == tokenId1 || tokenId == tokenId2);
+        if (tokenId == tokenId1) {
+            ++token1Count;
+        } else if (tokenId == tokenId2) {
+            ++token2Count;
+        }
+    }
+    EXPECT_EQ(2, token1Count); // 2: count of permissions queried for tokenId1
+    EXPECT_EQ(2, token2Count); // 2: count of permissions queried for tokenId1
+}
+
 static PermissionStatus g_state1 = { // kernel permission
     .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
     .grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED),
@@ -192,6 +227,62 @@ HWTEST_F(AccessTokenManagerServiceTest, SystemConfigTest001, TestSize.Level0)
     std::string dbPermDefVersion = results[0].GetString(TokenFiledConst::FIELD_VALUE);
     const char* curPermDefVersion = GetPermDefVersion();
     ASSERT_EQ(true, dbPermDefVersion == curPermDefVersion);
+}
+
+/**
+ * @tc.name: PermissionStateQueryTest001
+ * @tc.desc: test query permission_state_table by token_id in (...) and permission_name in (...)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PermissionStateQueryTest001, TestSize.Level0)
+{
+    HapInfoParcel infoParcel1;
+    infoParcel1.hapInfoParameter = g_info;
+    infoParcel1.hapInfoParameter.bundleName = "accesstoken_manager_service_test_query_1";
+    infoParcel1.hapInfoParameter.instIndex = 10;
+
+    HapInfoParcel infoParcel2;
+    infoParcel2.hapInfoParameter = g_info;
+    infoParcel2.hapInfoParameter.bundleName = "accesstoken_manager_service_test_query_2";
+    infoParcel2.hapInfoParameter.instIndex = 11;
+
+    PermissionStatus cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    PermissionStatus microphoneState = {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    PermissionStatus motionState = {
+        .permissionName = "ohos.permission.ACTIVITY_MOTION",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_NORMAL;
+    policyParcel.hapPolicy.domain = "test.domain.query";
+    policyParcel.hapPolicy.permStateList = {cameraState, microphoneState, motionState};
+
+    AccessTokenID tokenId1 = INVALID_TOKENID;
+    AccessTokenID tokenId2 = INVALID_TOKENID;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel1, policyParcel, tokenId1, tokenIdAplMap);
+    CreateHapToken(infoParcel2, policyParcel, tokenId2, tokenIdAplMap, true);
+
+    std::vector<DbQueryCondition> conditionItems = BuildPermissionStateQueryConditions(tokenId1, tokenId2);
+    std::vector<GenericValues> results;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::FindByConditionItems(
+        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionItems, results));
+    ASSERT_EQ(4, results.size()); // 4: size
+    AssertPermissionStateQueryResults(results, tokenId1, tokenId2);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId1, false));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId2, false));
 }
 
 /**
@@ -1535,7 +1626,9 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, 
 
     size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
-    std::vector<uint32_t> permCodeList = {opCdde};
+    std::vector<uint32_t> permCodeList;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", opCdde));
+    permCodeList.emplace_back(opCdde);
     std::vector<PermissionStatusIdl> permissionInfoList;
     ErrCode errCode = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
 
@@ -1550,17 +1643,17 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, 
 
 /**
  * @tc.name: QueryStatusByPermissionServiceTest001
- * @tc.desc: Test QueryStatusByPermission with empty permCodeList, return ERR_PARAM_INVALID
+ * @tc.desc: Test QueryStatusByPermission with empty permissionList, return ERR_PARAM_INVALID
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest001, TestSize.Level1)
 {
-    // Arrange: Create empty permCodeList
+    // Arrange: Create empty permissionList
     std::vector<uint32_t> permCodeList;
     std::vector<PermissionStatusIdl> permissionInfoList;
 
-    // Act: Query with empty permCodeList
+    // Act: Query with empty permissionList
     atManagerService_->Initialize();
     ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
 
@@ -1571,7 +1664,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest001, T
 
 /**
  * @tc.name: QueryStatusByPermissionServiceTest002
- * @tc.desc: Test QueryStatusByPermission with permCodeList size exceeding limit (1025), return ERR_PARAM_INVALID
+ * @tc.desc: Test QueryStatusByPermission with permissionList size exceeding limit (1025), return ERR_PARAM_INVALID
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1590,12 +1683,14 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest002, T
     CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
     EXPECT_NE(INVALID_TOKENID, tokenId);
 
-    // Act: Create permCodeList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
+    // Act: Create permissionList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
     std::vector<uint32_t> permCodeList;
-    permCodeList.emplace_back(1);  // Add valid permCode first
-    // Fill remaining 1024 entries with dummy permCodes
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
+    permCodeList.emplace_back(permCode);
+    // Fill remaining 1024 entries with dummy permission names
     for (int32_t i = 0; i < 1024; ++i) { // 1024: size
-        permCodeList.emplace_back(i);
+        permCodeList.emplace_back(1000000 + i);
     }
 
     std::vector<PermissionStatusIdl> permissionInfoList;
@@ -1612,7 +1707,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest002, T
 
 /**
  * @tc.name: QueryStatusByPermissionServiceTest003
- * @tc.desc: Test QueryStatusByPermission with valid permCodeList, return RET_SUCCESS
+ * @tc.desc: Test QueryStatusByPermission with valid permissionList, return RET_SUCCESS
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1648,10 +1743,11 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, T
     CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
     EXPECT_NE(INVALID_TOKENID, tokenID);
 
-    // Act: Query with valid permCodeList
-    uint32_t opCode;
-    (void)TransferPermissionToOpcode("ohos.permission.CAMERA", opCode);
-    std::vector<uint32_t> permCodeList = {opCode};
+    // Act: Query with valid permissionList
+    std::vector<uint32_t> permCodeList;
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
+    permCodeList.emplace_back(permCode);
     std::vector<PermissionStatusIdl> permissionInfoList;
     ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
 
@@ -1661,6 +1757,24 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, T
 
     // Cleanup
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionServiceTest004
+ * @tc.desc: Test QueryStatusByPermission with invalid permCode, return ERR_PERMISSION_NOT_EXIST
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest004, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+
+    std::vector<uint32_t> permCodeList = { 1000000 };
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode ret = atManagerService_->QueryStatusByPermission(permCodeList, permissionInfoList, true);
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+    EXPECT_TRUE(permissionInfoList.empty());
 }
 
 /**

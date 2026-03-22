@@ -32,6 +32,7 @@ static constexpr const int32_t DATABASE_VERSION_3 = 3;
 static constexpr const int32_t DATABASE_VERSION_4 = 4;
 static constexpr const int32_t DATABASE_VERSION_5 = 5;
 static constexpr const int32_t DATABASE_VERSION_6 = 6;
+static constexpr const int32_t DATABASE_VERSION_7 = 7;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -71,6 +72,13 @@ private:
     int32_t AddRequestToggleStatusColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
+    int32_t AddTimestampColumn(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion4(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion5(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion6(NativeRdb::RdbStore& rdbStore);
 };
 } // namespace AccessToken
 } // namespace Security

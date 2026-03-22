@@ -332,11 +332,16 @@ HWTEST_F(AccessTokenParcelTest, PermissionStateFullParcel002, TestSize.Level1)
     permissionStateParcel.permState.permissionName = "permissionName";
     permissionStateParcel.permState.grantStatus = 1;
     permissionStateParcel.permState.grantFlag = 0;
+    permissionStateParcel.permState.timestamp = 123456789;
     Parcel parcel;
     EXPECT_EQ(true, permissionStateParcel.Marshalling(parcel));
 
     std::shared_ptr<PermissionStatusParcel> readedData(PermissionStatusParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
+    EXPECT_EQ(permissionStateParcel.permState.permissionName, readedData->permState.permissionName);
+    EXPECT_EQ(permissionStateParcel.permState.grantStatus, readedData->permState.grantStatus);
+    EXPECT_EQ(permissionStateParcel.permState.grantFlag, readedData->permState.grantFlag);
+    EXPECT_EQ(permissionStateParcel.permState.timestamp, readedData->permState.timestamp);
 }
 
 /**

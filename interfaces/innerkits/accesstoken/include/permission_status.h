@@ -71,6 +71,11 @@ public:
      * see the definition of PermissionFlag in the access_token.h file.
      */
     uint32_t grantFlag;
+    /**
+     * Last permission state change timestamp in UTC milliseconds.
+     * 0 means no change record is available.
+     */
+    uint64_t timestamp = 0;
 };
 } // namespace AccessToken
 } // namespace Security

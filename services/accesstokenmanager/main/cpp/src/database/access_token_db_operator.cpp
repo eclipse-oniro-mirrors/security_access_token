@@ -43,6 +43,16 @@ int32_t AccessTokenDbOperator::Find(AtmDataType type, const GenericValues& condi
 #endif
 }
 
+int32_t AccessTokenDbOperator::FindByConditionItems(AtmDataType type,
+    const std::vector<DbQueryCondition>& conditionItems, std::vector<GenericValues>& results)
+{
+#ifdef DYNAMIC_CLOSE_LIBS
+    return RdbDlopenManager::GetInstance()->FindByConditionItems(type, conditionItems, results);
+#else
+    return AccessTokenDb::GetInstance()->FindByConditionItems(type, conditionItems, results);
+#endif
+}
+
 int32_t AccessTokenDbOperator::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
     const std::vector<AddInfo>& addInfoVec)
 {

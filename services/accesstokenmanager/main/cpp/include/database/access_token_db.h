@@ -38,6 +38,9 @@ public:
 
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
+    // Multiple values in each DbQueryCondition are combined with IN semantics, and all condition items use AND.
+    int32_t FindByConditionItems(AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+        std::vector<GenericValues>& results);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
 
@@ -50,6 +53,8 @@ private:
     int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
         const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
         const std::shared_ptr<NativeRdb::RdbStore>& db);
+    int32_t QueryByPredicates(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
+        std::vector<GenericValues>& results);
 
     int32_t DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void RestoreDatabase(int32_t errCode);

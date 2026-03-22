@@ -1006,6 +1006,9 @@ static ani_ref CreatePermissionStatusInfoArray(ani_env* env,
         // Set grantFlags property
         SetIntProperty(env, aniObject, "grantFlags", static_cast<int32_t>(permStatus.grantFlag));
 
+        // Set grantTimestamp property
+        SetLongProperty(env, aniObject, "grantTimestamp", static_cast<int64_t>(permStatus.timestamp));
+
         // Set array element
         ani_size index = static_cast<ani_size>(i);
         ani_status status = env->Any_SetByIndex(resultArray, index, aniObject);

@@ -29,6 +29,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+struct DbQueryCondition final {
+    std::string column;
+    std::vector<VariantValue> values;
+};
+
 class AccessTokenDbUtil final {
 public:
     static void GetTableNameByType(const AtmDataType type, std::string& tableName);
@@ -37,6 +42,10 @@ public:
     static void ToRdbValueBuckets(const std::vector<GenericValues>& values,
         std::vector<NativeRdb::ValuesBucket>& buckets);
     static void ToRdbPredicates(const GenericValues& conditionValue, NativeRdb::RdbPredicates& predicates);
+    static void ToRdbPredicatesByConditions(const std::vector<GenericValues>& conditionValues,
+        NativeRdb::RdbPredicates& predicates);
+    static void ToRdbPredicatesByConditionItems(const std::vector<DbQueryCondition>& conditionItems,
+        NativeRdb::RdbPredicates& predicates);
     static void ResultToGenericValues(const std::shared_ptr<NativeRdb::ResultSet>& resultSet, GenericValues& value);
 };
 } // namespace AccessToken

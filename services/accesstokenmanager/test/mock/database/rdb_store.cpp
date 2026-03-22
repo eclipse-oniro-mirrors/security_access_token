@@ -33,6 +33,9 @@ void ValuesBucket::PutString(std::string a, std::string b)
 void ValuesBucket::PutInt(std::string a, int32_t b)
 {}
 
+void ValuesBucket::PutLong(std::string a, int64_t b)
+{}
+
 int32_t ResultSet::GetRowCount(int32_t a)
 {
     return NativeRdb::E_OK;
@@ -58,6 +61,9 @@ void ResultSet::GetColumnType(int32_t a, NativeRdb::ColumnType& b)
 void ResultSet::GetInt(int32_t a, int32_t& b)
 {}
 
+void ResultSet::GetLong(int32_t a, int64_t& b)
+{}
+
 void ResultSet::GetString(int32_t a, std::string& b)
 {}
 
@@ -78,7 +84,25 @@ void RdbPredicates::EqualTo(std::string a, std::string b)
 void RdbPredicates::EqualTo(std::string a, int32_t b)
 {}
 
+void RdbPredicates::In(std::string a, const std::vector<std::string>& b)
+{}
+
+void RdbPredicates::In(std::string a, const std::vector<ValueObject>& b)
+{}
+
+void RdbPredicates::In(std::string a, const std::vector<int32_t>& b)
+{}
+
 void RdbPredicates::And()
+{}
+
+void RdbPredicates::Or()
+{}
+
+void RdbPredicates::BeginWrap()
+{}
+
+void RdbPredicates::EndWrap()
 {}
 
 int32_t Transaction::Rollback()

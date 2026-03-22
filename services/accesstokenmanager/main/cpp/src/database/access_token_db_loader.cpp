@@ -55,6 +55,12 @@ int32_t AccessTokenDbLoader::Find(AtmDataType type, const GenericValues& conditi
     return AccessTokenDb::GetInstance()->Find(type, conditionValue, results);
 }
 
+int32_t AccessTokenDbLoader::FindByConditionItems(const AtmDataType type,
+    const std::vector<DbQueryCondition>& conditionItems, std::vector<GenericValues>& results)
+{
+    return AccessTokenDb::GetInstance()->FindByConditionItems(type, conditionItems, results);
+}
+
 int32_t AccessTokenDbLoader::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
     const std::vector<AddInfo>& addInfoVec)
 {

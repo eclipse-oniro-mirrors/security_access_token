@@ -24,6 +24,7 @@ bool PermissionStatusParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->permState.permissionName));
     RETURN_IF_FALSE(out.WriteInt32(this->permState.grantStatus));
     RETURN_IF_FALSE(out.WriteUint32(this->permState.grantFlag));
+    RETURN_IF_FALSE(out.WriteUint64(this->permState.timestamp));
     return true;
 }
 
@@ -37,6 +38,7 @@ PermissionStatusParcel* PermissionStatusParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->permState.permissionName), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionStateParcel->permState.grantStatus), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadUint32(permissionStateParcel->permState.grantFlag), permissionStateParcel);
+    RELEASE_IF_FALSE(in.ReadUint64(permissionStateParcel->permState.timestamp), permissionStateParcel);
     return permissionStateParcel;
 }
 } // namespace AccessToken

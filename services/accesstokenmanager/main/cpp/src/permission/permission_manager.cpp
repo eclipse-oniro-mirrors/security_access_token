@@ -28,7 +28,6 @@
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
-#include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
@@ -287,16 +286,13 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermission(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
+    uint32_t opCode;
+    if (!TransferPermissionToOpcode(permissionName, opCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
-    uint32_t fullFlag;
-    int32_t ret = HapTokenInfoInner::QueryPermissionFlag(tokenID, permissionName, fullFlag);
-    if (ret == RET_SUCCESS) {
-        flag = ConstantCommon::GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
-    }
-    return ret;
+    int32_t status = PERMISSION_DENIED;
+    return  HapTokenInfoInner::QueryPermissionStatusAndFlag(tokenID, opCode, status, flag);
 }
 
 std::shared_ptr<LibraryLoader> PermissionManager::GetAbilityManager()

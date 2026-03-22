@@ -70,4 +70,5 @@ struct PermissionStatusIdl {
     unsigned int permCode;
     int grantStatus;
     unsigned int grantFlag;
+    unsigned long timestamp;
 };

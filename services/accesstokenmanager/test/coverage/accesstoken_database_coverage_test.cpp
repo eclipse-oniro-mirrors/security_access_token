@@ -134,6 +134,36 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level4)
 }
 
 /*
+ * @tc.name: AddTimestampColumn001
+ * @tc.desc: AccessTokenOpenCallback::AddTimestampColumn
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, AddTimestampColumn001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.AddTimestampColumn(*(db.get())));
+}
+
+/*
+ * @tc.name: OnUpgrade002
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade repeat timestamp upgrade
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_6, DATABASE_VERSION_7));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_6, DATABASE_VERSION_7));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_7, DATABASE_VERSION_7));
+}
+
+/*
  * @tc.name: Modify001
  * @tc.desc: AccessTokenDb::Modify
  * @tc.type: FUNC

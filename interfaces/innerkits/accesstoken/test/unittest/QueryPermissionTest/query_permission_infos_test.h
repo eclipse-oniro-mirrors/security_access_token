@@ -78,9 +78,9 @@ protected:
      * @return Created AccessTokenID
      */
     AccessTokenID PrepareTestHap(const std::string& bundleName,
-                                   const std::vector<std::string>& permissions,
-                                   bool isSystemApp = true,
-                                   ATokenAplEnum apl = APL_NORMAL);
+        const std::vector<std::string>& permissions,
+        bool isSystemApp = true,
+        ATokenAplEnum apl = APL_NORMAL);
 
     /**
      * @brief Cleanup test HAP token

@@ -1848,35 +1848,11 @@ ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    // Validate tokenIDs and query permissions
     permissionInfoList.clear();
-    // Reserve space to reduce reallocations (assume avg 10 permissions per token)
-    permissionInfoList.reserve(tokenIDList.size() * 10);
-
-    for (const auto& tokenID : tokenIDList) {
-        if (tokenID == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID cannot be 0.");
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
-
-        if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist.", tokenID);
-            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-        }
-
-        if (this->GetTokenType(tokenID) != ATokenTypeEnum::TOKEN_HAP) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not HAP type.", tokenID);
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
-
-        std::vector<PermissionStatusIdl> idlList;
-        int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByTokenID(tokenID, idlList);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Query failed for tokenID: %{public}u, ret: %{public}d.", tokenID, ret);
-            return ret;
-        }
-
-        permissionInfoList.insert(permissionInfoList.end(), idlList.begin(), idlList.end());
+    int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "QueryStatusByTokenID failed, ret: %{public}d.", ret);
+        return ret;
     }
 
     size_t maxQueryResultSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();

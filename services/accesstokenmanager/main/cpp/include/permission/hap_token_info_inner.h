@@ -56,8 +56,10 @@ public:
     void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
         const HapPolicy& hapPolicy);
     void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
-    void StoreHapInfo(std::vector<GenericValues>& valueList, const std::string& appId, ATokenAplEnum apl) const;
-    void StorePermissionPolicy(std::vector<GenericValues>& permStateValues);
+    void GenerateHapInfoValues(const std::string& appId, ATokenAplEnum apl,
+        std::vector<GenericValues>& valueList) const;
+    void GeneratePermStateValues(const std::vector<GenericValues>& oldPermStateValues,
+        std::vector<GenericValues>& permStateValues) const;
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
 
@@ -87,7 +89,8 @@ public:
         std::map<std::string, bool>& refreshedPermList);
     static int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName);
     static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
-    static int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
+    static int32_t QueryPermissionStatusAndFlag(
+        AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
     static void GetPermStatusListByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     static void GetGrantedPermByTokenId(AccessTokenID tokenID,
@@ -96,6 +99,7 @@ public:
     static bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
 
     uint64_t permUpdateTimestamp_;
+
 private:
     int32_t GetApiVersion(int32_t apiVersion);
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;

@@ -185,6 +185,10 @@ void NapiQueryPermissionStatus::QueryPermissionStatusComplete(napi_env env, napi
         NAPI_CALL_RETURN_VOID(env, napi_create_uint32(env, permStatus.grantFlag, &grantFlagsValue));
         NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, obj, "grantFlags", grantFlagsValue));
 
+        napi_value timestampValue = nullptr;
+        NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, static_cast<int64_t>(permStatus.timestamp), &timestampValue));
+        NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, obj, "grantTimestamp", timestampValue));
+
         NAPI_CALL_RETURN_VOID(env, napi_set_element(env, result, i, obj));
     }
 

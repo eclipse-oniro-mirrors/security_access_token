@@ -16,6 +16,7 @@
 #ifndef ACCESS_TOKEN_DB_LOADER_H
 #define ACCESS_TOKEN_DB_LOADER_H
 
+#include "access_token_db_util.h"
 #include "atm_data_type.h"
 #include "generic_values.h"
 
@@ -32,6 +33,8 @@ public:
         const GenericValues& conditionValue) = 0;
     virtual int32_t Find(AtmDataType type, const GenericValues& conditionValue,
         std::vector<GenericValues>& results) = 0;
+    virtual int32_t FindByConditionItems(const AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+        std::vector<GenericValues>& results) = 0;
     virtual int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec) = 0;
     virtual bool DestroyRdbHelper() = 0;
@@ -46,6 +49,8 @@ public:
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue,
         const GenericValues& conditionValue) override;
     int32_t Find(AtmDataType type, const GenericValues& conditionValue,
+        std::vector<GenericValues>& results) override;
+    int32_t FindByConditionItems(const AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
         std::vector<GenericValues>& results) override;
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec) override;
