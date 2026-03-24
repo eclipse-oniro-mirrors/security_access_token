@@ -54,7 +54,7 @@
 #include "system_ability_definition.h"
 #include "time_util.h"
 #ifdef REMOTE_PRIVACY_ENABLE
-#include "os_account_manager.h"
+#include "os_account_manager_lite.h"
 #include "remote_permission_used_record_db.h"
 #endif
 
@@ -721,7 +721,7 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
     }
 
     int32_t userId = 0;
-    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    int32_t res = OHOS::AccountSA::OsAccountManagerLite::GetForegroundOsAccountLocalId(userId);
     if (res != ERR_OK) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
         return PrivacyError::ERR_SERVICE_ABNORMAL;
@@ -886,7 +886,7 @@ void PermissionRecordManager::BuildBundleUsedRecordsFromRemoteResults(
 int32_t PermissionRecordManager::DeleteRemotePermissionRecord(int32_t days)
 {
     int32_t userId = 0;
-    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    int32_t res = OHOS::AccountSA::OsAccountManagerLite::GetForegroundOsAccountLocalId(userId);
     if (res != ERR_OK) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
         return PrivacyError::ERR_SERVICE_ABNORMAL;

@@ -126,7 +126,7 @@ privacy_manager_base_config = {
 
   if (lite_device_enable == false) {
     sources += [ "${access_token_path}/services/privacymanager/src/database/remote_permission_used_record_db.cpp" ]
-    external_deps += [ "os_account:os_account_innerkits" ]
+    external_deps += [ "os_account:os_account_innerkits_lite" ]
   }
 
   # ========== Cflags ==========
