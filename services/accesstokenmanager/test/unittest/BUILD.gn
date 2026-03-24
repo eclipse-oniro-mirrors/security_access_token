@@ -99,6 +99,13 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   configs = accesstoken_manager_base_config.configs
 
+  if (security_component_enhance_enable == true) {
+    cflags_cc += [ "-DESCURITY_COMPONENT_ENHANCE_ENABLE" ]
+    sources += [
+      "seccomp/sec_comp_enhance_agent_test.cpp",
+    ]
+  }
+
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
