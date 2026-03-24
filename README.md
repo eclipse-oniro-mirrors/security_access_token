@@ -81,8 +81,6 @@ ATM provides unified access control for apps and allows apps or service abilitie
 
 ## Repositories Involved
 
-[startup\_init\_lite](https://gitee.com/openharmony/startup_init_lite)
+[startup\_init\_lite](https://gitcode.com/openharmony/startup_init)
 
-[security\_device\_auth](https://gitee.com/openharmony/security_device_auth)
-
-**[security\_access\_token](https://gitee.com/openharmony/security_access_token)**
+**[security\_access\_token](https://gitcode.com/openharmony/security_access_token)**
