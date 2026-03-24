@@ -7841,7 +7841,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
             "name": "ohos.permission.ACCESS_CLOUD_DISK_INFO",
