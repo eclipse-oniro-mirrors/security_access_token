@@ -8475,7 +8475,7 @@
             "name": "ohos.permission.ASSET_CACHE_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": 24,
             "deprecated": "",
             "provisionEnable": true,
