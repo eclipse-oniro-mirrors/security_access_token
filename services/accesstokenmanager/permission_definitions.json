@@ -8395,6 +8395,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.SET_WINDOW_TOUCH_AREAS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.READ_APP_PROTECTION_RECORD",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
