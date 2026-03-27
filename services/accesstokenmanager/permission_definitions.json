@@ -8439,6 +8439,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.POWER_CONFIG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ENCRYPT_VOLUME_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
