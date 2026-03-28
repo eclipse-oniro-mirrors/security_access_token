@@ -8351,6 +8351,17 @@
             "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
+            "name": "ohos.permission.KEEP_BACKGROUND_RUNNING_SPECIAL_SCENARIO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
+        },
+        {
             "name": "ohos.permission.REGISTER_OBJECTEDITOR_EXTENSION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
