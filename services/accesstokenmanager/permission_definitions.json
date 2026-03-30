@@ -8472,6 +8472,17 @@
             "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
+            "name": "ohos.permission.ACCESS_DEVELOPER_PCAP_SWITCH",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "tablet"]
+        },
+        {
             "name": "ohos.permission.EXEMPT_MOTION_SENSORS_RESTRICTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
