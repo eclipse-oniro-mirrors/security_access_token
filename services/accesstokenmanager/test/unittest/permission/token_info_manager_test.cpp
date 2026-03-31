@@ -1804,7 +1804,8 @@ HWTEST_F(TokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    bool changed = false;
+    PermissionDataBrief::PermissionStatusChangeType changed =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
 
     // permission is invalid
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,

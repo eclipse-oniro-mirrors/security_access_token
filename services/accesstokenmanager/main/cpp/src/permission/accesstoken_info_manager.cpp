@@ -73,7 +73,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 #endif
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
-static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
+static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 
 uint64_t GetPermissionTimestamp(const GenericValues& stateValue)
 {
@@ -92,11 +92,11 @@ int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uin
     } else {
         GetTokenIDByUserID(userId, hapTokenIdSet);
     }
+
     if (hapTokenIdSet.empty()) {
         return RET_SUCCESS;
     }
 
-    std::vector<DbQueryCondition> conditionItems;
     std::vector<VariantValue> permissionValues;
     permissionValues.reserve(permCodeList.size());
     for (const auto permCode : permCodeList) {
@@ -112,22 +112,17 @@ int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uin
         permissionValues.emplace_back(permissionName);
     }
 
-    conditionItems.emplace_back(DbQueryCondition {
-        .column = TokenFiledConst::FIELD_PERMISSION_NAME,
-        .values = std::move(permissionValues)
-    });
-
-    std::vector<VariantValue> tokenIdValues;
-    tokenIdValues.reserve(hapTokenIdSet.size());
-    for (const auto tokenId : hapTokenIdSet) {
-        tokenIdValues.emplace_back(static_cast<int32_t>(tokenId));
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE,
+        TokenFiledConst::FIELD_PERMISSION_NAME, permissionValues, permStateResults);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
-    conditionItems.emplace_back(DbQueryCondition {
-        .column = TokenFiledConst::FIELD_TOKEN_ID,
-        .values = std::move(tokenIdValues)
-    });
-    return AccessTokenDbOperator::FindByConditionItems(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionItems, permStateResults);
+
+    permStateResults.erase(std::remove_if(permStateResults.begin(), permStateResults.end(),
+        [&hapTokenIdSet](const GenericValues& value) {
+            return hapTokenIdSet.count(static_cast<AccessTokenID>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ID))) == 0;
+        }), permStateResults.end());
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenInfoManager::FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
@@ -158,13 +153,8 @@ int32_t AccessTokenInfoManager::FindPermissionByTokenIdFromDb(const std::vector<
         tokenIdValues.emplace_back(static_cast<int32_t>(tokenID));
     }
 
-    std::vector<DbQueryCondition> conditionItems;
-    conditionItems.emplace_back(DbQueryCondition {
-        .column = TokenFiledConst::FIELD_TOKEN_ID,
-        .values = std::move(tokenIdValues)
-    });
-    return AccessTokenDbOperator::FindByConditionItems(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionItems, permStateResults);
+    return AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, TokenFiledConst::FIELD_TOKEN_ID, tokenIdValues, permStateResults);
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager()
@@ -2063,30 +2053,23 @@ int32_t AccessTokenInfoManager::QueryStatusByPermission(const std::vector<uint32
         return ret;
     }
 
-    if (!permStateResults.empty()) {
-        permissionInfoList.reserve(permStateResults.size());
-        for (const auto& stateValue : permStateResults) {
-            const auto tokenID = static_cast<AccessTokenID>(stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
-            const std::string permissionName = stateValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-            const auto permIter = permissionNameToCodeMap.find(permissionName);
-            if (permIter == permissionNameToCodeMap.end()) {
-                continue;
-            }
+    permissionInfoList.reserve(permStateResults.size());
+    for (const auto& stateValue : permStateResults) {
+        const auto tokenID = static_cast<AccessTokenID>(stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+        const std::string permissionName = stateValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        const auto permIter = permissionNameToCodeMap.find(permissionName);
 
         int32_t status = PERMISSION_DENIED;
         uint32_t flag = 0;
-        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permIter->second,
-            status, flag);
+        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permIter->second, status, flag);
 
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;
         idl.permCode = permIter->second;
-        idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permIter->second) ?
-            PERMISSION_DENIED : status;
+        idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permIter->second) ? PERMISSION_DENIED : status;
         idl.grantFlag = flag;
         idl.timestamp = GetPermissionTimestamp(stateValue);
         permissionInfoList.emplace_back(idl);
-        }
     }
 
     if (!onlyHap) {
@@ -2122,8 +2105,7 @@ int32_t AccessTokenInfoManager::QueryStatusByTokenID(const std::vector<AccessTok
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;
         idl.permCode = permCode;
-        idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permCode) ?
-            PERMISSION_DENIED : status;
+        idl.grantStatus = IsPermissionRestrictedByUserPolicy(tokenID, permCode) ? PERMISSION_DENIED : status;
         idl.grantFlag = flag;
         idl.timestamp = GetPermissionTimestamp(stateValue);
         permissionInfoList.emplace_back(idl);

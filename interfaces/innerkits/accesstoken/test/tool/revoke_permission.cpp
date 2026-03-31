@@ -39,9 +39,11 @@ int32_t main(int argc, char *argv[])
     uint32_t tokenId = static_cast<uint32_t>(atoi(argv[1])); // 1: index
     std::string permisisionName = argv[2]; // 2: index
 
-    std::cout << "RevokePermission begin" << std::endl;
+    std::cout << "RevokePermission begin, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << std::endl;
     int32_t ret = AccessTokenKit::RevokePermission(tokenId, permisisionName, PERMISSION_USER_SET);
-    std::cout << "RevokePermission end, ret=" << ret << std::endl;
+    std::cout << "RevokePermission end, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << ", ret=" << ret << std::endl << std::endl;
 
     AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;

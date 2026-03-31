@@ -206,8 +206,8 @@ int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionV
     return res;
 }
 
-int32_t RdbDlopenManager::FindByConditionItems(const AtmDataType type,
-    const std::vector<DbQueryCondition>& conditionItems, std::vector<GenericValues>& results)
+int32_t RdbDlopenManager::Find(const AtmDataType type, const std::string& column,
+    const std::vector<VariantValue>& values, std::vector<GenericValues>& results)
 {
     auto instance = GetDbInstance();
     if (instance == nullptr) {
@@ -215,7 +215,7 @@ int32_t RdbDlopenManager::FindByConditionItems(const AtmDataType type,
     }
 
     ++taskNum_;
-    int32_t res = instance->FindByConditionItems(type, conditionItems, results);
+    int32_t res = instance->Find(type, column, values, results);
     --taskNum_;
     return res;
 }

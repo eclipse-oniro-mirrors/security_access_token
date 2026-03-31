@@ -40,9 +40,12 @@ int32_t main(int argc, char *argv[])
     std::string permisisionName = argv[2]; // 2: index
     uint32_t time = static_cast<uint32_t>(atoi(argv[3])); // 3: index
 
-    std::cout << "GrantPermissionForSpecifiedTime begin" << std::endl;
+    std::cout << "GrantPermissionForSpecifiedTime begin, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << ", time=" << time << std::endl;
     int32_t ret = AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permisisionName, time);
-    std::cout << "GrantPermissionForSpecifiedTime end, " << ret << std::endl;
+    std::cout << "GrantPermissionForSpecifiedTime end, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << ", time=" << time
+        << ", ret=" << ret << std::endl << std::endl;
 
     AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;

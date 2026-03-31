@@ -198,7 +198,7 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
     return QueryByPredicates(tableName, predicates, results);
 }
 
-int32_t AccessTokenDb::FindByConditionItems(AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+int32_t AccessTokenDb::Find(AtmDataType type, const std::string& column, const std::vector<VariantValue>& values,
     std::vector<GenericValues>& results)
 {
     std::string tableName;
@@ -208,7 +208,7 @@ int32_t AccessTokenDb::FindByConditionItems(AtmDataType type, const std::vector<
     }
 
     NativeRdb::RdbPredicates predicates(tableName);
-    AccessTokenDbUtil::ToRdbPredicatesByConditionItems(conditionItems, predicates);
+    AccessTokenDbUtil::ToRdbPredicates(column, values, predicates);
     return QueryByPredicates(tableName, predicates, results);
 }
 
@@ -257,6 +257,7 @@ int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const Nat
 
     return 0;
 }
+
 int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
     const std::vector<AddInfo>& addInfoVec)
 {

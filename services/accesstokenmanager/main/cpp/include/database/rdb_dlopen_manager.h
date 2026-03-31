@@ -41,7 +41,7 @@ public:
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue,
         const GenericValues& conditionValue);
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
-    int32_t FindByConditionItems(const AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+    int32_t Find(const AtmDataType type, const std::string& column, const std::vector<VariantValue>& values,
         std::vector<GenericValues>& results);
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec);

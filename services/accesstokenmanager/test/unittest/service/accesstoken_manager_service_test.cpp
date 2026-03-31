@@ -49,19 +49,10 @@ static constexpr int32_t RANDOM_TOKENID = 123;
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
-std::vector<DbQueryCondition> BuildPermissionStateQueryConditions(AccessTokenID tokenId1, AccessTokenID tokenId2)
+std::vector<VariantValue> BuildPermissionStatePermissionQueryValues()
 {
-    std::vector<DbQueryCondition> conditionItems;
-    conditionItems.emplace_back(DbQueryCondition {
-        .column = TokenFiledConst::FIELD_PERMISSION_NAME,
-        .values = {VariantValue(std::string("ohos.permission.CAMERA")),
-            VariantValue(std::string("ohos.permission.MICROPHONE"))}
-    });
-    conditionItems.emplace_back(DbQueryCondition {
-        .column = TokenFiledConst::FIELD_TOKEN_ID,
-        .values = {VariantValue(static_cast<int32_t>(tokenId1)), VariantValue(static_cast<int32_t>(tokenId2))}
-    });
-    return conditionItems;
+    return {VariantValue(std::string("ohos.permission.CAMERA")),
+        VariantValue(std::string("ohos.permission.MICROPHONE"))};
 }
 
 void AssertPermissionStateQueryResults(const std::vector<GenericValues>& results, AccessTokenID tokenId1,
@@ -274,10 +265,15 @@ HWTEST_F(AccessTokenManagerServiceTest, PermissionStateQueryTest001, TestSize.Le
     CreateHapToken(infoParcel1, policyParcel, tokenId1, tokenIdAplMap);
     CreateHapToken(infoParcel2, policyParcel, tokenId2, tokenIdAplMap, true);
 
-    std::vector<DbQueryCondition> conditionItems = BuildPermissionStateQueryConditions(tokenId1, tokenId2);
     std::vector<GenericValues> results;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::FindByConditionItems(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionItems, results));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, TokenFiledConst::FIELD_PERMISSION_NAME,
+        BuildPermissionStatePermissionQueryValues(), results));
+    results.erase(std::remove_if(results.begin(), results.end(),
+        [tokenId1, tokenId2](const GenericValues& value) {
+            const auto tokenId = static_cast<AccessTokenID>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+            return tokenId != tokenId1 && tokenId != tokenId2;
+        }), results.end());
     ASSERT_EQ(4, results.size()); // 4: size
     AssertPermissionStateQueryResults(results, tokenId1, tokenId2);
 

@@ -33,7 +33,7 @@ public:
         const GenericValues& conditionValue);
     static int32_t Find(AtmDataType type, const GenericValues& conditionValue,
         std::vector<GenericValues>& results);
-    static int32_t FindByConditionItems(AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+    static int32_t Find(AtmDataType type, const std::string& column, const std::vector<VariantValue>& values,
         std::vector<GenericValues>& results);
     static int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec);

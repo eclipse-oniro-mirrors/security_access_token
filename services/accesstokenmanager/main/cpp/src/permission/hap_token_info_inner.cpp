@@ -338,13 +338,17 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
     const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    PermissionDataBrief::PermissionStatusChangeType changeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
     int32_t ret = PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenInfoBasic_.tokenID,
-        permissionName, isGranted, flag, statusChanged);
+        permissionName, isGranted, flag, changeType);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update %{public}s of %{public}u, isGranted(%{public}d), ret(%{public}d).",
             permissionName.c_str(), tokenInfoBasic_.tokenID, isGranted, ret);
         return ret;
     }
+    statusChanged = (changeType == PermissionDataBrief::PermissionStatusChangeType::STATUS_ONLY ||
+        changeType == PermissionDataBrief::PermissionStatusChangeType::STATUS_AND_FLAG);
     if (ShortGrantManager::GetInstance().IsShortGrantPermission(permissionName)) {
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Short grant perm %{public}s should not be notified to db.", permissionName.c_str());
@@ -354,7 +358,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is remote hap token, will not store.", tokenInfoBasic_.tokenID);
         return RET_SUCCESS;
     }
-    if (!statusChanged) {
+    if (changeType == PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE) {
         return RET_SUCCESS;
     }
     std::vector<GenericValues> permStateValues;
@@ -366,14 +370,10 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         if (permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME) != permissionName) {
             continue;
         }
-        permUpdateTimestamp_ = TimeUtil::GetCurrentTimestamp();
+        permUpdateTimestamp_ = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-        if (((flag & PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) ||
-            ((flag & PERMISSION_ADMIN_POLICIES_CANCEL) != 0)) {
-            permStateValues[i].Remove(TokenFiledConst::FIELD_TIMESTAMP);
-        }
         (void)AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     return RET_SUCCESS;
@@ -455,7 +455,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     }
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permListOfHap, aclExtendedMap, false);
 #endif
-    uint64_t timestamp = TimeUtil::GetCurrentTimestamp();
+    uint64_t timestamp = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
     for (auto& permState : permListOfHap) {
         permState.timestamp = timestamp;
     }

@@ -63,6 +63,9 @@ public:
     void PutString(std::string a, std::string b);
     void PutInt(std::string a, int32_t b);
     void PutLong(std::string a, int64_t b);
+
+private:
+    bool isEmpty_ = true;
 };
 
 class ResultSet {
@@ -76,6 +79,9 @@ public:
     void GetInt(int32_t a, int32_t& b);
     void GetLong(int32_t a, int64_t& b);
     void GetString(int32_t a, std::string& b);
+
+private:
+    bool hasNext_ = true;
 };
 
 typedef ResultSet AbsSharedResultSet;
@@ -111,6 +117,7 @@ public:
     int32_t commitFlag_ = 0;
     int32_t insertFlag_ = 0;
     int32_t deleteFlag_ = 0;
+    int64_t insertRows_ = 1;
 };
 
 class RdbStoreConfig {
@@ -141,6 +148,10 @@ public:
     RdbStoreConfig config_;
     int32_t createTransFlag_ = 0;
     int32_t restoreFlag_ = 0;
+    int32_t updateFlag_ = 0;
+    int32_t queryFlag_ = 0;
+    std::vector<int32_t> executeSqlResults_;
+    size_t executeSqlIndex_ = 0;
     std::shared_ptr<OHOS::NativeRdb::Transaction> transaction_;
 };
 

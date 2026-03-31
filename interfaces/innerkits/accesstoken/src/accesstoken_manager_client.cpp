@@ -49,7 +49,6 @@ static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
 #endif
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
-static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = 500 * 100;  // Default max result size for query operations
 } // namespace
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
@@ -1298,9 +1297,6 @@ int32_t AccessTokenManagerClient::QueryStatusByPermission(const std::vector<uint
     if (res != RET_SUCCESS) {
         return ConvertResult(res);
     }
-    if (idlList.size() > DEFAULT_MAX_QUERY_RESULT_SIZE) {
-        return ERR_OVERSIZE;
-    }
 
     // Convert PermissionStatusIdl to PermissionStatus
     permissionInfoList.clear();
@@ -1330,9 +1326,6 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
     int32_t res = proxy->QueryStatusByTokenID(tokenIDList, idlList);
     if (res != RET_SUCCESS) {
         return ConvertResult(res);
-    }
-    if (idlList.size() > DEFAULT_MAX_QUERY_RESULT_SIZE) {
-        return ERR_OVERSIZE;
     }
 
     // Convert PermissionStatusIdl to PermissionStatus

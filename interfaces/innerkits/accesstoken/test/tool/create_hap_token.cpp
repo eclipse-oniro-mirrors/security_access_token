@@ -32,6 +32,9 @@ int32_t main(int argc, char *argv[])
     for (int32_t i = 2; i < argc; ++i) { // 2: start index
         reqPerm.emplace_back(argv[i]);
     }
-    (void)GetHapTokenId(bundleName, reqPerm);
+    FullTokenID tokenId = GetHapTokenId(bundleName, reqPerm);
+    std::cout << "CreateHapToken success, bundleName=" << bundleName
+        << ", permissionCount=" << reqPerm.size()
+        << ", tokenId=" << tokenId << std::endl << std::endl;
     return 0;
 }

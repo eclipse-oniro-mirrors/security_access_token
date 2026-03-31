@@ -30,6 +30,7 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const std::string TEST_PERMISSION = "ohos.permission.DISTRIBUTED_DATASYNC";
 static const std::string TEST_PERMISSION_NOT_REQUESTED = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+static const std::string TEST_PERMISSION_NOT_MATCHED = "ohos.permission.CAMERA";
 static uint64_t g_selfShellTokenId = 0;
 static MockHapToken* g_mock = nullptr;
 PermissionStateFull g_infoManagerTestState1 = {
@@ -552,6 +553,11 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
 
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
+    {
+        MockNativeToken mock("accesstoken_service");
+        EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
+            AccessTokenKit::GetPermissionUsedType(tokenID, TEST_PERMISSION_NOT_REQUESTED));
+    }
 
     // security component revoke
     res = TestCommon::RevokePermissionByTest(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
@@ -561,12 +567,72 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
 
     status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
+    {
+        MockNativeToken mock("accesstoken_service");
+        EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+            AccessTokenKit::GetPermissionUsedType(tokenID, TEST_PERMISSION_NOT_REQUESTED));
+    }
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
 
     res = TestCommon::DeleteTestHapToken(tokenID);
     ASSERT_EQ(res, RET_SUCCESS);
+}
+
+/**
+ * @tc.name: SecurityComponentGrantTest012
+ * @tc.desc: test GetPermissionUsedType when seccomp data tokenId does not match.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest012, TestSize.Level0)
+{
+    AccessTokenID tokenIdA = AllocTestToken();
+    EXPECT_NE(tokenIdA, INVALID_TOKENID);
+
+    HapInfoParams infoParamsB = g_infoManagerTestInfoParms;
+    infoParamsB.bundleName = "security_component_grant_test_b";
+    infoParamsB.appIDDesc = "test5_b";
+    AccessTokenIDEx tokenIdExB = {0};
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParamsB, g_infoManagerTestPolicyPrams, tokenIdExB));
+    AccessTokenID tokenIdB = tokenIdExB.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenIdB, INVALID_TOKENID);
+
+    int32_t res = TestCommon::GrantPermissionByTest(tokenIdA, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
+    EXPECT_EQ(res, RET_SUCCESS);
+
+    {
+        MockNativeToken mock("accesstoken_service");
+        EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+            AccessTokenKit::GetPermissionUsedType(tokenIdB, TEST_PERMISSION_NOT_REQUESTED));
+    }
+
+    EXPECT_EQ(TestCommon::DeleteTestHapToken(tokenIdA), RET_SUCCESS);
+    EXPECT_EQ(TestCommon::DeleteTestHapToken(tokenIdB), RET_SUCCESS);
+}
+
+/**
+ * @tc.name: SecurityComponentGrantTest013
+ * @tc.desc: test GetPermissionUsedType when seccomp data permCode does not match.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest013, TestSize.Level0)
+{
+    AccessTokenID tokenID = AllocTestToken();
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    int32_t res = TestCommon::GrantPermissionByTest(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
+    EXPECT_EQ(res, RET_SUCCESS);
+
+    {
+        MockNativeToken mock("accesstoken_service");
+        EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+            AccessTokenKit::GetPermissionUsedType(tokenID, TEST_PERMISSION_NOT_MATCHED));
+    }
+
+    ASSERT_EQ(TestCommon::DeleteTestHapToken(tokenID), RET_SUCCESS);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

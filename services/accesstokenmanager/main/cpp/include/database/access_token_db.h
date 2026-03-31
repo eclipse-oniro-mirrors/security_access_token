@@ -38,8 +38,7 @@ public:
 
     int32_t Modify(const AtmDataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
-    // Multiple values in each DbQueryCondition are combined with IN semantics, and all condition items use AND.
-    int32_t FindByConditionItems(AtmDataType type, const std::vector<DbQueryCondition>& conditionItems,
+    int32_t Find(AtmDataType type, const std::string& column, const std::vector<VariantValue>& values,
         std::vector<GenericValues>& results);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);

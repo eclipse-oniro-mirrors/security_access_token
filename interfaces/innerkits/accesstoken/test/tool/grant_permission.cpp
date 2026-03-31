@@ -39,9 +39,11 @@ int32_t main(int argc, char *argv[])
     uint32_t tokenId = static_cast<uint32_t>(atoi(argv[1])); // 1: index
     std::string permisisionName = argv[2]; // 2: index
 
-    std::cout << "GrantPermission begin" << std::endl;
+    std::cout << "GrantPermission begin, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << std::endl;
     int32_t ret = AccessTokenKit::GrantPermission(tokenId, permisisionName, PERMISSION_USER_SET);
-    std::cout << "GrantPermission end, ret=" << ret << std::endl;
+    std::cout << "GrantPermission end, tokenId=" << tokenId
+        << ", permissionName=" << permisisionName << ", ret=" << ret << std::endl << std::endl;
 
     AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;

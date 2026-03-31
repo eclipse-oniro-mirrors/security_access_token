@@ -209,7 +209,7 @@ PermissionStatus PermissionDataBrief::GetPermissionStatus(const BriefPermData& b
     permState.grantStatus = static_cast<int32_t>(briefPermData.status);
     permState.permissionName = TransferOpcodeToPermission(briefPermData.permCode);
     permState.grantFlag = briefPermData.flag;
-    permState.timestamp = TimeUtil::GetCurrentTimestamp();
+    permState.timestamp = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
     return permState;
 }
 
@@ -540,7 +540,7 @@ int32_t PermissionDataBrief::UpdateSecCompGrantedPermList(AccessTokenID tokenId,
 }
 
 int32_t PermissionDataBrief::UpdatePermissionStatus(AccessTokenID tokenId,
-    const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged)
+    const std::string& permissionName, bool isGranted, uint32_t flag, PermissionStatusChangeType& changeType)
 {
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
@@ -549,6 +549,9 @@ int32_t PermissionDataBrief::UpdatePermissionStatus(AccessTokenID tokenId,
     }
     int32_t ret;
     int32_t oldStatus = VerifyPermissionStatus(tokenId, opCode);
+    uint32_t oldFlag = 0;
+    int32_t status = PERMISSION_DENIED;
+    (void)QueryPermissionStatusAndFlagInner(tokenId, opCode, status, oldFlag);
     if (!ConstantCommon::IsPermGrantedBySecComp(flag)) {
         ret = UpdatePermStateList(tokenId, opCode, isGranted, flag);
     } else {
@@ -556,7 +559,16 @@ int32_t PermissionDataBrief::UpdatePermissionStatus(AccessTokenID tokenId,
         ret = UpdateSecCompGrantedPermList(tokenId, opCode, isGranted);
     }
     int32_t newStatus = VerifyPermissionStatus(tokenId, opCode);
-    statusChanged = (oldStatus == newStatus) ? false : true;
+    uint32_t newFlag = 0;
+    (void)QueryPermissionStatusAndFlagInner(tokenId, opCode, status, newFlag);
+
+    changeType = PermissionStatusChangeType::NO_CHANGE;
+    if (oldStatus != newStatus) {
+        changeType = (oldFlag != newFlag) ? PermissionStatusChangeType::STATUS_AND_FLAG
+                                          : PermissionStatusChangeType::STATUS_ONLY;
+    } else if (oldFlag != newFlag) {
+        changeType = PermissionStatusChangeType::FLAG_ONLY;
+    }
     return ret;
 }
 

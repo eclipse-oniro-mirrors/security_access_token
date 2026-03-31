@@ -39,28 +39,30 @@ static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
     {AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, "system_config_table"},
 };
 
-void AddStringInPredicate(const DbQueryCondition& condition, NativeRdb::RdbPredicates& predicates)
+void AddStringInPredicate(const std::string& column, const std::vector<VariantValue>& conditionValues,
+    NativeRdb::RdbPredicates& predicates)
 {
     std::vector<std::string> values;
-    values.reserve(condition.values.size());
-    for (const auto& value : condition.values) {
+    values.reserve(conditionValues.size());
+    for (const auto& value : conditionValues) {
         values.emplace_back(value.GetString());
     }
-    predicates.In(condition.column, values);
+    predicates.In(column, values);
 }
 
-void AddNumericInPredicate(const DbQueryCondition& condition, NativeRdb::RdbPredicates& predicates)
+void AddNumericInPredicate(const std::string& column, const std::vector<VariantValue>& conditionValues,
+    NativeRdb::RdbPredicates& predicates)
 {
     std::vector<NativeRdb::ValueObject> values;
-    values.reserve(condition.values.size());
-    for (const auto& value : condition.values) {
+    values.reserve(conditionValues.size());
+    for (const auto& value : conditionValues) {
         if (value.GetType() == ValueType::TYPE_INT64) {
             values.emplace_back(static_cast<int64_t>(value.GetInt64()));
             continue;
         }
         values.emplace_back(value.GetInt());
     }
-    predicates.In(condition.column, values);
+    predicates.In(column, values);
 }
 }
 
@@ -133,37 +135,17 @@ void AccessTokenDbUtil::ToRdbPredicates(const GenericValues& conditionValue, Nat
     }
 }
 
-void AccessTokenDbUtil::ToRdbPredicatesByConditions(const std::vector<GenericValues>& conditionValues,
+void AccessTokenDbUtil::ToRdbPredicates(const std::string& column, const std::vector<VariantValue>& values,
     NativeRdb::RdbPredicates& predicates)
 {
-    for (uint32_t i = 0; i < conditionValues.size(); ++i) {
-        predicates.BeginWrap();
-        ToRdbPredicates(conditionValues[i], predicates);
-        predicates.EndWrap();
-        if (i != conditionValues.size() - 1) {
-            predicates.Or();
-        }
+    if (values.empty()) {
+        return;
     }
-}
 
-void AccessTokenDbUtil::ToRdbPredicatesByConditionItems(const std::vector<DbQueryCondition>& conditionItems,
-    NativeRdb::RdbPredicates& predicates)
-{
-    bool hasAddedCondition = false;
-    for (const auto& condition : conditionItems) {
-        if (condition.values.empty()) {
-            continue;
-        }
-        if (hasAddedCondition) {
-            predicates.And();
-        }
-
-        if (IsColumnStringType(condition.column)) {
-            AddStringInPredicate(condition, predicates);
-        } else {
-            AddNumericInPredicate(condition, predicates);
-        }
-        hasAddedCondition = true;
+    if (IsColumnStringType(column)) {
+        AddStringInPredicate(column, values, predicates);
+    } else {
+        AddNumericInPredicate(column, values, predicates);
     }
 }
 

@@ -120,8 +120,10 @@ int32_t main(int argc, char* argv[])
     std::vector<PermissionStatus> permissionInfoList;
     int32_t ret = RET_SUCCESS;
     if (tokenID != INVALID_TOKENID) {
+        std::cout << "QueryPermissionStatus begin, tokenId=" << tokenID << std::endl;
         ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList);
     } else {
+        std::cout << "QueryPermissionStatus begin, permissionName=" << permissionList.front() << std::endl;
         ret = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList, QUERY_ONLY_HAP);
     }
 
@@ -130,5 +132,6 @@ int32_t main(int argc, char* argv[])
     for (const auto& status : permissionInfoList) {
         PrintPermissionStatus(status);
     }
+    std::cout << std::endl << std::endl;
     return SUCCESS_EXIT_CODE;
 }

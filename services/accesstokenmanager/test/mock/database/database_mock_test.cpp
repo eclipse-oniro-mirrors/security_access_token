@@ -67,9 +67,6 @@ HWTEST_F(AccessTokenDatabaseMockTest, AddValuesTest001, TestSize.Level4)
 
     std::vector<AddInfo> addInfoVec;
     addInfoVec.push_back(addInfo);
-    // invalid tableName
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, accessTokenDb.AddValues(addInfoVec, transaction));
-
     addInfo.addType = ACCESSTOKEN_HAP_INFO;
     std::vector<AddInfo> addInfoVec2;
     addInfoVec2.push_back(addInfo);
@@ -82,11 +79,33 @@ HWTEST_F(AccessTokenDatabaseMockTest, AddValuesTest001, TestSize.Level4)
     std::vector<AddInfo> addInfoVec3;
     addInfoVec3.push_back(addInfo);
     // outInsertNum is zero
+    transaction->insertRows_ = 0;
     EXPECT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, accessTokenDb.AddValues(addInfoVec3, transaction));
 
     // BatchInsert return err
+    transaction->insertRows_ = 1;
     transaction->insertFlag_ = NativeRdb::Transaction::TransactionOperationResult::OPERATION_FAIL;
     EXPECT_NE(NativeRdb::E_OK, accessTokenDb.AddValues(addInfoVec3, transaction));
+}
+
+/*
+ * @tc.name: AddValuesTest002
+ * @tc.desc: test AddValues with empty table name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseMockTest, AddValuesTest002, TestSize.Level4)
+{
+    AccessTokenDb accessTokenDb;
+    auto rdb = accessTokenDb.GetRdb();
+    ASSERT_NE(nullptr, rdb);
+    auto [errcode, transaction] = rdb->CreateTransaction(NativeRdb::Transaction::TransactionType::DEFERRED);
+    ASSERT_NE(nullptr, transaction);
+
+    AddInfo addInfo;
+    addInfo.addType = static_cast<AtmDataType>(INVALID_NUM);
+    std::vector<AddInfo> addInfoVec = {addInfo};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, accessTokenDb.AddValues(addInfoVec, transaction));
 }
 
 /*
@@ -105,11 +124,6 @@ HWTEST_F(AccessTokenDatabaseMockTest, RemoveValuesTest001, TestSize.Level4)
     DelInfo delInfo;
     delInfo.delType = static_cast<AtmDataType>(INVALID_NUM);
 
-    std::vector<DelInfo> delInfoVec;
-    delInfoVec.push_back(delInfo);
-    // invalid tableName
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, accessTokenDb.RemoveValues(delInfoVec, transaction));
-
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
     delInfo.delType = ACCESSTOKEN_HAP_INFO;
@@ -119,6 +133,26 @@ HWTEST_F(AccessTokenDatabaseMockTest, RemoveValuesTest001, TestSize.Level4)
     transaction->deleteFlag_ = NativeRdb::Transaction::TransactionOperationResult::OPERATION_FAIL;
     // RemoveValues return err
     EXPECT_NE(NativeRdb::E_OK, accessTokenDb.RemoveValues(delInfoVec2, transaction));
+}
+
+/*
+ * @tc.name: RemoveValuesTest002
+ * @tc.desc: test RemoveValues with empty table name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseMockTest, RemoveValuesTest002, TestSize.Level4)
+{
+    AccessTokenDb accessTokenDb;
+    auto rdb = accessTokenDb.GetRdb();
+    ASSERT_NE(nullptr, rdb);
+    auto [errcode, transaction] = rdb->CreateTransaction(NativeRdb::Transaction::TransactionType::DEFERRED);
+    ASSERT_NE(nullptr, transaction);
+
+    DelInfo delInfo;
+    delInfo.delType = static_cast<AtmDataType>(INVALID_NUM);
+    std::vector<DelInfo> delInfoVec = {delInfo};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, accessTokenDb.RemoveValues(delInfoVec, transaction));
 }
 
 /*

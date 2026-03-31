@@ -632,6 +632,38 @@ HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest001, TestSize.Level4)
 
     atManagerService = nullptr;
 }
+
+/**
+ * @tc.name: AddHapTokenInfoToDb001
+ * @tc.desc: AccessTokenInfoManager::AddHapTokenInfoToDb returns ERR_TOKENID_NOT_EXIST when hapInfo is nullptr
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, AddHapTokenInfoToDb001, TestSize.Level4)
+{
+    std::shared_ptr<HapTokenInfoInner> hapInfo = nullptr;
+    AccessTokenInfoManager::HapTokenDbContext context("", g_policy, {}, {}, false);
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().AddHapTokenInfoToDb(hapInfo, context);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+}
+
+/**
+ * @tc.name: AddHapTokenInfoToDb002
+ * @tc.desc: AccessTokenInfoManager::AddHapTokenInfoToDb returns ERR_TOKENID_NOT_EXIST when hapInfo is remote
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, AddHapTokenInfoToDb002, TestSize.Level4)
+{
+    std::shared_ptr<HapTokenInfoInner> hapInfo = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hapInfo);
+    hapInfo->SetRemote(true);
+    AccessTokenInfoManager::HapTokenDbContext context("", g_policy, {}, {}, false);
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().AddHapTokenInfoToDb(hapInfo, context);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

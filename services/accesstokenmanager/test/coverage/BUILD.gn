@@ -25,12 +25,16 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = [
+    "${access_token_path}/services/accesstokenmanager/test/mock/database",
+  ]
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
   ]
 
   sources = [
+    "../mock/database/rdb_store.cpp",
     "../unittest/common/parameter.cpp",
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
@@ -50,6 +54,7 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "googletest:gtest_main",
   ]
   external_deps += accesstoken_manager_base_config.external_deps
+  external_deps -= [ "relational_store:native_rdb" ]
 }
 
 group("coverage_tests") {

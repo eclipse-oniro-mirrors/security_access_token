@@ -29,6 +29,8 @@ int32_t main(int argc, char *argv[])
     }
     std::string bundleName = argv[1]; // 1: index
     bool isReservedToken = (std::string(argv[2]) == "true"); // 2: index
-    DeleteHapTokenID(bundleName, isReservedToken);
+    int32_t ret = DeleteHapTokenID(bundleName, isReservedToken);
+    std::cout << "DeleteHapToken end, bundleName=" << bundleName
+        << ", isReservedToken=" << isReservedToken << ", ret=" << ret << std::endl << std::endl;
     return 0;
 }

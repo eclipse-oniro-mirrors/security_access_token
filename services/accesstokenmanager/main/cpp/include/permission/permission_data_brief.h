@@ -55,6 +55,13 @@ typedef enum AppProvisionType {
 
 class PermissionDataBrief final {
 public:
+    enum class PermissionStatusChangeType : uint32_t {
+        NO_CHANGE = 0,
+        STATUS_ONLY = 1,
+        FLAG_ONLY = 2,
+        STATUS_AND_FLAG = 3,
+    };
+
     static PermissionDataBrief& GetInstance();
     virtual ~PermissionDataBrief() = default;
 
@@ -87,7 +94,7 @@ public:
     int32_t BuildPermissionStateValues(AccessTokenID tokenId, const std::vector<GenericValues>& oldPermStateValues,
         std::vector<GenericValues>& permStateValueList);
     int32_t UpdatePermissionStatus(AccessTokenID tokenId,
-        const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
+        const std::string& permissionName, bool isGranted, uint32_t flag, PermissionStatusChangeType& changeType);
     int32_t ResetUserGrantPermissionStatus(AccessTokenID tokenID);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(
