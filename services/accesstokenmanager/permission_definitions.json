@@ -8550,7 +8550,6 @@
         },
         {
             "name": "ohos.permission.DCAS_OTA_PERMISSION",
-
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
