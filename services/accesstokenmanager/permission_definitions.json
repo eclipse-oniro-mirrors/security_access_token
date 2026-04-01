@@ -8483,6 +8483,28 @@
             "deviceTypes": ["phone", "tv", "tablet"]
         },
         {
+            "name": "ohos.permission.MODIFY_AGENT_CARD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.START_ABILITY_TO_PAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tablet", "phone"]
+        },
+        {
             "name": "ohos.permission.EXEMPT_MOTION_SENSORS_RESTRICTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
