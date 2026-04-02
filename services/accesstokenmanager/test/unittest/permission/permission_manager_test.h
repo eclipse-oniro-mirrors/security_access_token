@@ -35,7 +35,7 @@ public:
 
     void TearDown();
 
-    sptr<AccessTokenManagerService> accessTokenService_ = nullptr;
+    std::shared_ptr<AccessTokenManagerService> accessTokenService_ = nullptr;
     std::shared_ptr<PermissionAppStateObserver> appStateObserver_ = nullptr;
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     std::shared_ptr<PermissionBackgroundTaskObserver> backgroundTaskObserver_ = nullptr;

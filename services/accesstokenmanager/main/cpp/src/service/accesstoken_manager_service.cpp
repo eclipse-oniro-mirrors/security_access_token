@@ -115,6 +115,9 @@ AccessTokenManagerService::AccessTokenManagerService()
 AccessTokenManagerService::~AccessTokenManagerService()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "~AccessTokenManagerService()");
+    if (isInitialize_) {
+        featureFuture_.wait();
+    }
 }
 
 void AccessTokenManagerService::OnStart()
@@ -676,9 +679,12 @@ int32_t AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, cons
         return ERR_OK;
     }
 
+    HapPolicy filteredPolicy = policy.hapPolicy;
+    FilterPermFeature(info.hapInfoParameter.isSystemApp, filteredPolicy);
+
     std::vector<GenericValues> undefValues;
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, policy.hapPolicy, tokenIdEx, undefValues);
+        info.hapInfoParameter, filteredPolicy, tokenIdEx, undefValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Hap token info create failed.");
     }
@@ -700,6 +706,7 @@ static void TransferHapPolicy(const HapPolicyParcel& policyIn, HapPolicy& policy
         tmp.permissionName = perm.permissionName;
         tmp.grantStatus = perm.grantStatus;
         tmp.grantFlag = perm.grantFlag;
+        tmp.feature = perm.feature;
         policyOut.permStateList.emplace_back(tmp);
     }
     policyOut.checkIgnore = policyIn.hapPolicy.checkIgnore;
@@ -787,6 +794,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     HapPolicy policyCopy;
     TransferHapPolicy(policy, policyCopy);
+    FilterPermFeature(info.hapInfoParameter.isSystemApp, policyCopy);
 
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
@@ -905,6 +913,17 @@ int32_t AccessTokenManagerService::AllocLocalTokenID(
     return ERR_OK;
 }
 
+void TransferUpdateHapInfo(const UpdateHapInfoParamsIdl& infoIdl, UpdateHapInfoParams& info)
+{
+    info.appIDDesc = infoIdl.appIDDesc;
+    info.apiVersion = infoIdl.apiVersion;
+    info.isSystemApp = infoIdl.isSystemApp;
+    info.appDistributionType = infoIdl.appDistributionType;
+    info.isAtomicService = infoIdl.isAtomicService;
+    info.dataRefresh = infoIdl.dataRefresh;
+    info.appProvisionType = infoIdl.appProvisionType;
+}
+
 int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
     const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl)
 {
@@ -928,13 +947,10 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     }
 
     UpdateHapInfoParams info;
-    info.appIDDesc = infoIdl.appIDDesc;
-    info.apiVersion = infoIdl.apiVersion;
-    info.isSystemApp = infoIdl.isSystemApp;
-    info.appDistributionType = infoIdl.appDistributionType;
-    info.isAtomicService = infoIdl.isAtomicService;
-    info.dataRefresh = infoIdl.dataRefresh;
-    info.appProvisionType = infoIdl.appProvisionType;
+    TransferUpdateHapInfo(infoIdl, info);
+
+    HapPolicy policy = policyParcel.hapPolicy;
+    FilterPermFeature(info.isSystemApp, policy);
 
     resultInfoIdl.realResult = ERR_OK;
     HapInfoCheckResult permCheckResult;
@@ -942,7 +958,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     std::vector<PermissionStatus> initializedList;
     HapInitInfo initInfo;
     initInfo.updateInfo = info;
-    initInfo.policy = policyParcel.hapPolicy;
+    initInfo.policy = policy;
     initInfo.isUpdate = true;
     initInfo.bundleName = hapInfo.bundleName;
     initInfo.tokenID = tokenID;
@@ -953,8 +969,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
         return ERR_OK;
     }
-    error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
-        initializedList, policyParcel.hapPolicy, undefValues);
+    error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info, initializedList, policy, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
     return error;
@@ -1386,7 +1401,7 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         return;
     }
     AccessTokenConfigValue value;
-    if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+    if (policy->GetConfigValue(ConfigType::ACCESSTOKEN_SERVICE, value)) {
         SetFlagIfNeed(value.atConfig, cancelTime, parseConfigFlag);
     }
     TempPermissionObserver::GetInstance().SetCancelTime(cancelTime);
@@ -1397,6 +1412,41 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
         permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
         openSettingAbilityName_.c_str());
+}
+
+void AccessTokenManagerService::GetFeaturesConfig()
+{
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
+        return;
+    }
+    AccessTokenConfigValue value;
+    if (policy->GetConfigValue(ConfigType::PERMISSION_FEATURES, value)) {
+        features_ = value.permissionFeatures;
+    }
+}
+
+void AccessTokenManagerService::FilterPermFeature(bool isSystemApp, HapPolicy& policy)
+{
+    if (!isSystemApp) {
+        return;
+    }
+    for (auto it = policy.permStateList.begin(); it != policy.permStateList.end();) {
+        if (it->feature.empty()) {
+            ++it;
+            continue;
+        }
+
+        featureFuture_.wait();
+        if (features_.find(it->feature) != features_.end()) {
+            ++it;
+            continue;
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s filter by feature", it->permissionName.c_str());
+        it = policy.permStateList.erase(it);
+    }
 }
 
 int32_t AccessTokenManagerService::GetKernelPermissions(
@@ -1670,6 +1720,13 @@ bool AccessTokenManagerService::Initialize()
     dfxInfo.permDefSize = pefDefSize;
     dfxInfo.dlpSize = dlpSize;
     GetConfigValue(dfxInfo.parseConfigFlag);
+
+    isInitialize_ = true;
+    std::thread getFeature([this]() {
+        this->GetFeaturesConfig();
+        this->featurePromise_.set_value();
+    });
+    getFeature.detach();
 
     ReportSysEventServiceStart(dfxInfo);
     std::thread reportUserData(ReportAccessTokenUserData);

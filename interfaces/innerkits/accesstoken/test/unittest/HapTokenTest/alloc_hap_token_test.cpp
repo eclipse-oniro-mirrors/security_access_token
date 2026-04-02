@@ -652,6 +652,43 @@ HWTEST_F(AllocHapTokenTest, AllocHapToken019, TestSize.Level0)
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
     EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
+
+/**
+ * @tc.name: AllocHapToken020
+ * @tc.desc: alloc a tokenId with feature.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AllocHapTokenTest, AllocHapToken020, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    PermissionStateFull infoManagerTestState1 = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+        .feature = "test_feature"
+    };
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestState1}
+    };
+    HapInfoParams infoManagerTestInfoParms1 = {
+        .userID = 1,
+        .bundleName = "AllocHapTokenTest020",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "test3",
+        .apiVersion = DEFAULT_API_VERSION
+    };
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
+    EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

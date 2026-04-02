@@ -242,8 +242,7 @@ void PermissionManagerTest::SetUp()
     if (accessTokenService_ != nullptr) {
         return;
     }
-    AccessTokenManagerService* ptr = new (std::nothrow) AccessTokenManagerService();
-    accessTokenService_ = sptr<AccessTokenManagerService>(ptr);
+    accessTokenService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, accessTokenService_);
     if (appStateObserver_ != nullptr) {
         return;
@@ -263,6 +262,7 @@ void PermissionManagerTest::SetUp()
 
 void PermissionManagerTest::TearDown()
 {
+    DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     accessTokenService_ = nullptr;
     appStateObserver_ = nullptr;
 }

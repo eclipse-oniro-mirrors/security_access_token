@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -72,7 +72,7 @@ HWTEST_F(JsonParseLoaderTest, GetConfigValueFromFileTest001, TestSize.Level4)
 {
     ConfigPolicLoader loader;
     AccessTokenConfigValue config;
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, "", config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, "", config));
 }
 
 /*
@@ -93,7 +93,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest001, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -114,7 +114,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest002, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -135,7 +135,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest003, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -156,7 +156,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest004, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -177,7 +177,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest005, TestSize.Level4)
         "\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -198,7 +198,7 @@ HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest006, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\","
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
 }
 
 /*
@@ -219,7 +219,7 @@ HWTEST_F(JsonParseLoaderTest, GetPrivacyCfgFromJsonTest001, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::PRIVACY_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::PRIVACY_SERVICE, testJson, config));
 }
 
 /*
@@ -240,7 +240,7 @@ HWTEST_F(JsonParseLoaderTest, GetPrivacyCfgFromJsonTest002, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::PRIVACY_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::PRIVACY_SERVICE, testJson, config));
 }
 
 /*
@@ -261,7 +261,7 @@ HWTEST_F(JsonParseLoaderTest, GetPrivacyCfgFromJsonTest003, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::PRIVACY_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::PRIVACY_SERVICE, testJson, config));
 }
 
 /*
@@ -282,7 +282,7 @@ HWTEST_F(JsonParseLoaderTest, GetPrivacyCfgFromJsonTest004, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{\"send_request_repeat_times\":1}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::PRIVACY_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::PRIVACY_SERVICE, testJson, config));
 }
 
 /*
@@ -303,7 +303,7 @@ HWTEST_F(JsonParseLoaderTest, GetTokenSyncCfgFromJsonTest001, TestSize.Level4)
         "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
         "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
         "\"test_ability_name\"},\"tokensync\":{}}";
-    EXPECT_FALSE(loader.GetConfigValueFromFile(ServiceType::TOKENSYNC_SERVICE, testJson, config));
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::TOKENSYNC_SERVICE, testJson, config));
 }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 /*
@@ -535,6 +535,47 @@ HWTEST_F(JsonParseLoaderTest, ParserNativeRawDataTest009, TestSize.Level4)
         "\"dcaps\":[\"abc\"],\"nativeAcls\":[\"abc\"],\"permissions\":[\"perm1\",\"perm2\"]}]";
     EXPECT_TRUE(loader.ParserNativeRawData(testJson, tokenInfos));
 }
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+/*
+ * @tc.name: GetConfigValueTest001
+ * @tc.desc: GetConfigValue with PERMISSION_FEATURES
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(JsonParseLoaderTest, GetConfigValueTest001, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    loader.GetConfigValue(PERMISSION_FEATURES, config);
+    AccessTokenConfigValue config2;
+    loader.GetConfigValue(TOKENSYNC_SERVICE, config2);
+
+    AccessTokenConfigValue config3;
+    std::string testJson3 = "{}";
+    EXPECT_FALSE(loader.GetConfigValueFromFile(INVALID_AT_CONFIG_TYPE, testJson3, config3));
+
+    AccessTokenConfigValue config4;
+    std::string testJson4 = "{\"tokensync\": {\"send_request_repeat_times\":5}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(TOKENSYNC_SERVICE, testJson4, config4));
+
+    AccessTokenConfigValue config5;
+    std::string testJson5 = "{\"features\": [{\"name\":\"feature.name.1\"}]}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(PERMISSION_FEATURES, testJson5, config5));
+
+    AccessTokenConfigValue config6;
+    std::string testJson6 = "{}";
+    EXPECT_FALSE(loader.GetConfigValueFromFile(PERMISSION_FEATURES, testJson6, config6));
+
+    AccessTokenConfigValue config7;
+    std::string testJson7 = "{\"features\": []}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(PERMISSION_FEATURES, testJson7, config7));
+
+    AccessTokenConfigValue config8;
+    std::string testJson8 = "{\"features\": [{\"name\": \"01234567980123456798012345679801234567980123456798"
+    "012345679801234567980123456798012345679801234567980123456798012345679801234567980123456798\"}]}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(PERMISSION_FEATURES, testJson8, config8));
+}
+#endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

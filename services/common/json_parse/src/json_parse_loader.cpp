@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,6 +56,11 @@ static constexpr const char* GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bund
 static constexpr const char* GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
 
 static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
+
+static constexpr const char* PERMISSION_FEATURES_CONFIG_FILE = "/etc/access_token/accesstoken_permission_features.json";
+static constexpr const char* FEATURES_KEY = "features";
+static constexpr const char* FEATURE_NAME_KEY = "name";
+constexpr int32_t MAX_FEATURE_SIZE = 128;
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 
 // native_token.json
@@ -220,7 +225,39 @@ bool GetTokenSyncCfgFromJson(const CJson* j, TokenSyncServiceConfig& t)
     return true;
 }
 
-bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
+bool GetPermissionFeaturesFromJson(CJsonUnique& json, std::unordered_set<std::string>& features)
+{
+    CJson* featuresArray = GetArrayFromJson(json, FEATURES_KEY);
+    if (featuresArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Parse permission features json failed, features array not found.");
+        return false;
+    }
+
+    int32_t len = cJSON_GetArraySize(featuresArray);
+    if (len == 0) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Permission features array is empty.");
+        return true;
+    }
+
+    for (int32_t i = 0; i < len; i++) {
+        CJson* featureItem = cJSON_GetArrayItem(featuresArray, i);
+        if (featureItem == nullptr) {
+            continue;
+        }
+
+        std::string featureName;
+        if (GetStringFromJson(featureItem, FEATURE_NAME_KEY, featureName) && featureName.size() <= MAX_FEATURE_SIZE) {
+            features.insert(featureName);
+            LOGD(ATM_DOMAIN, ATM_TAG, "Add permission feature: %{public}s", featureName.c_str());
+        }
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Parse permission features success, total %{public}d features.",
+        static_cast<int32_t>(features.size()));
+    return true;
+}
+
+bool ConfigPolicLoader::GetConfigValueFromFile(const ConfigType& type, const std::string& fileContent,
     AccessTokenConfigValue& config)
 {
     CJsonUnique jsonRes = CreateJsonFromString(fileContent);
@@ -229,27 +266,38 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const st
         return false;
     }
 
-    if (type == ServiceType::ACCESSTOKEN_SERVICE) {
+    if (type == ConfigType::ACCESSTOKEN_SERVICE) {
         CJson* atJson = GetObjFromJson(jsonRes, "accesstoken");
         return GetAtCfgFromJson(atJson, config.atConfig);
-    } else if (type == ServiceType::PRIVACY_SERVICE) {
+    } else if (type == ConfigType::PRIVACY_SERVICE) {
         CJson* prJson = GetObjFromJson(jsonRes, "privacy");
         return GetPrivacyCfgFromJson(prJson, config.pConfig);
+    } else if (type == ConfigType::TOKENSYNC_SERVICE) {
+        CJson* toSyncJson = GetObjFromJson(jsonRes, "tokensync");
+        return GetTokenSyncCfgFromJson(toSyncJson, config.tsConfig);
+    } else if (type == ConfigType::PERMISSION_FEATURES) {
+        return GetPermissionFeaturesFromJson(jsonRes, config.permissionFeatures);
     }
-    CJson* toSyncJson = GetObjFromJson(jsonRes, "tokensync");
-    return GetTokenSyncCfgFromJson(toSyncJson, config.tsConfig);
+    return false;
 }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 
-bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config)
+bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfigValue& config)
 {
     bool successFlag = false;
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     std::vector<std::string> pathList;
     GetConfigFilePathList(pathList);
 
+    const char* configFile = nullptr;
+    if (type == ConfigType::PERMISSION_FEATURES) {
+        configFile = PERMISSION_FEATURES_CONFIG_FILE;
+    } else {
+        configFile = ACCESSTOKEN_CONFIG_FILE;
+    }
+
     for (const auto& path : pathList) {
-        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
+        std::string filePath = path + configFile;
         std::string fileContent;
         int32_t res = ReadCfgFile(filePath, fileContent);
         if (res != 0) {
@@ -259,7 +307,9 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
         if (GetConfigValueFromFile(type, fileContent, config)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Get valid config value from file [%{public}s]!", filePath.c_str());
             successFlag = true;
-            break; // once get the config value, break the loop
+            if (type != ConfigType::PERMISSION_FEATURES) {
+                break; // once get the config value, break the loop, except feature
+            }
         }
     }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE

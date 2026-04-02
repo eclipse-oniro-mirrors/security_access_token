@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -237,7 +237,7 @@ void SoftBusManager::GetConfigValue()
         return;
     }
     AccessTokenConfigValue value;
-    if (policy->GetConfigValue(ServiceType::TOKENSYNC_SERVICE, value)) {
+    if (policy->GetConfigValue(ConfigType::TOKENSYNC_SERVICE, value)) {
         sendRequestRepeatTimes_ = value.tsConfig.sendRequestRepeatTimes == 0
             ? DEFAULT_SEND_REQUEST_REPEAT_TIMES : value.tsConfig.sendRequestRepeatTimes;
     } else {

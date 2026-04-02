@@ -105,6 +105,7 @@ void AccessTokenDbConsistencyTest::SetUp()
 
 void AccessTokenDbConsistencyTest::TearDown()
 {
+    DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     atManagerService_ = nullptr;
 }
 

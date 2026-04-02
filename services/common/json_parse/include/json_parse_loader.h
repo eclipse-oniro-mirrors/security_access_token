@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 #define ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include "hap_token_info.h"
 #include "permission_def.h"
@@ -54,12 +55,16 @@ struct AccessTokenConfigValue {
     AccessTokenServiceConfig atConfig;
     PrivacyServiceConfig pConfig;
     TokenSyncServiceConfig tsConfig;
+    std::unordered_set<std::string> permissionFeatures;
 };
 
-enum ServiceType {
+enum ConfigType {
     ACCESSTOKEN_SERVICE = 0,
     PRIVACY_SERVICE,
     TOKENSYNC_SERVICE,
+    PERMISSION_FEATURES,
+    // NOTE: Add new types above INVALID_AT_CONFIG_TYPE
+    INVALID_AT_CONFIG_TYPE,
 };
 
 struct PermissionDefParseRet {
@@ -71,7 +76,7 @@ class ConfigPolicyLoaderInterface {
 public:
     ConfigPolicyLoaderInterface() {}
     virtual ~ConfigPolicyLoaderInterface() {}
-    virtual bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+    virtual bool GetConfigValue(const ConfigType& type, AccessTokenConfigValue& config);
     virtual int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
     virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
@@ -80,7 +85,8 @@ public:
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
-    bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+public:
+    bool GetConfigValue(const ConfigType& type, AccessTokenConfigValue& config);
     int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
     std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
@@ -89,7 +95,7 @@ class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
-    bool GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
+    bool GetConfigValueFromFile(const ConfigType& type, const std::string& fileContent,
         AccessTokenConfigValue& config);
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
     bool ParserNativeRawData(const std::string& nativeRawData, std::vector<NativeTokenInfoBase>& tokenInfos);

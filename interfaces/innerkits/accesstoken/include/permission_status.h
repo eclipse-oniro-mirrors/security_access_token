@@ -62,6 +62,10 @@ public:
      */
     std::string permissionName;
     /**
+     * Feature name in input parameters used to filter permissions.
+     */
+    std::string feature;
+    /**
      * Permission grant status, for details about the valid values,
      * see the definition of PermissionState in the access_token.h file.
      */

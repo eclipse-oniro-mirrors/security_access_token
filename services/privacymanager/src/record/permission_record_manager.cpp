@@ -3000,7 +3000,7 @@ void PermissionRecordManager::GetConfigValue()
         return;
     }
     AccessTokenConfigValue value;
-    if (policy->GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
+    if (policy->GetConfigValue(ConfigType::PRIVACY_SERVICE, value)) {
         // set value from config
         recordSizeMaximum_ = value.pConfig.sizeMaxImum == 0
             ? DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM : value.pConfig.sizeMaxImum;
