@@ -76,6 +76,8 @@ struct UsedRecordDetail {
 struct PermissionUsedRecord {
     /** permission name */
     std::string permissionName;
+    /** enhanced identity associated with the permission usage record */
+    std::string enhancedIdentity;
     /** permission access count */
     int32_t accessCount = 0;
     /** permission security access count: picker + seccom */

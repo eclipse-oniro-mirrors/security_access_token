@@ -2634,6 +2634,30 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission009, TestSize.Level0)
     EXPECT_EQ(0, PrivacyKit::StopUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", RANDOM_PID));
 }
 
+/**
+ * @tc.name: StopUsingPermission010
+ * @tc.desc: StopUsingPermission test enhancedIdentity oversize.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission010, TestSize.Level0)
+{
+    std::string invalidIdentity(MAX_ENHANCED_IDENTITY_LENGTH + 1, 'd');
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StopUsingPermission(g_tokenIdA, "ohos.permission.CAMERA", RANDOM_PID, invalidIdentity));
+}
+
+/**
+ * @tc.name: StopUsingPermission011
+ * @tc.desc: StopUsingPermission test invalid permission name with pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission011, TestSize.Level0)
+{
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_tokenIdA, "", RANDOM_PID));
+}
+
 class TestCallBack1 : public StateChangeCallbackStub {
 public:
     TestCallBack1() = default;
@@ -3088,6 +3112,124 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord020, TestSize.Level0)
     info.failCount = 0;
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord021
+ * @tc.desc: Test AddPermissionUsedRecord enhancedIdentity length validation.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord021, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.enhancedIdentity.assign(MAX_ENHANCED_IDENTITY_LENGTH, 'a');
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+
+    info.enhancedIdentity.assign(MAX_ENHANCED_IDENTITY_LENGTH + 1, 'b');
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord022
+ * @tc.desc: Test AddPermissionUsedRecord drops repeated records within 200ms for the same enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord022, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.enhancedIdentity = "agent_200ms";
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    std::vector<std::string> permissionList = {"ohos.permission.READ_CONTACTS"};
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(RESULT_NUM_ONE, static_cast<int32_t>(result.bundleRecords.size()));
+    ASSERT_EQ(RESULT_NUM_ONE, static_cast<int32_t>(result.bundleRecords[FIRST_INDEX].permissionRecords.size()));
+    EXPECT_EQ("agent_200ms",
+        result.bundleRecords[FIRST_INDEX].permissionRecords[FIRST_INDEX].enhancedIdentity);
+    EXPECT_EQ(1, result.bundleRecords[FIRST_INDEX].permissionRecords[FIRST_INDEX].accessCount);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord023
+ * @tc.desc: Test AddPermissionUsedRecord keeps host and enhanced identity records separately within 200ms.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord023, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+
+    info.enhancedIdentity = "";
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    info.enhancedIdentity = "agent_split";
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    std::vector<std::string> permissionList = {"ohos.permission.READ_CONTACTS"};
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(RESULT_NUM_TWO, static_cast<int32_t>(result.bundleRecords.size()));
+
+    bool hostFound = false;
+    bool agentFound = false;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        ASSERT_FALSE(bundleRecord.permissionRecords.empty());
+        hostFound = hostFound || bundleRecord.permissionRecords[FIRST_INDEX].enhancedIdentity.empty();
+        agentFound = agentFound ||
+            (bundleRecord.permissionRecords[FIRST_INDEX].enhancedIdentity == "agent_split");
+    }
+    EXPECT_TRUE(hostFound);
+    EXPECT_TRUE(agentFound);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord025
+ * @tc.desc: Test AddPermissionUsedRecord validates enhancedIdentity by UTF-8 byte length.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord025, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.enhancedIdentity = "你你你你你你你你你你你你你你你你";
+    ASSERT_EQ(static_cast<size_t>(48), info.enhancedIdentity.size());
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+
+    info.enhancedIdentity = "你你你你你你你你你你你你你你你你你";
+    ASSERT_GT(info.enhancedIdentity.size(), static_cast<size_t>(MAX_ENHANCED_IDENTITY_LENGTH));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
 }
 
 /**
@@ -4492,6 +4634,20 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission020, TestSize.Level0)
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.MICROPHONE", callbackPtr, RANDOM_PID));
+}
+
+/**
+ * @tc.name: StartUsingPermission021
+ * @tc.desc: StartUsingPermission test enhancedIdentity oversize.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission021, TestSize.Level0)
+{
+    std::string invalidIdentity(MAX_ENHANCED_IDENTITY_LENGTH + 1, 'e');
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(
+            g_tokenIdA, "ohos.permission.CAMERA", RANDOM_PID, NORMAL_TYPE, invalidIdentity));
 }
 
 /**

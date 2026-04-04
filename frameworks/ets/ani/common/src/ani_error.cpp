@@ -109,7 +109,7 @@ std::string GetErrorMessage(int32_t errCode, const std::string& extendMsg)
 {
     auto iter = g_errorStringMap.find(errCode);
     if (iter != g_errorStringMap.end()) {
-        return iter->second + (extendMsg.empty() ? "" : ("" + extendMsg));
+        return iter->second + (extendMsg.empty() ? "" : (" " + extendMsg));
     }
     std::string errMsg = "Failed to Unknown error, errCode " + std::to_string(errCode) + ".";
     return errMsg;
@@ -200,6 +200,17 @@ bool BusinessErrorAni::ValidatePermissionWithThrowError(ani_env* env, const std:
     if (!DataValidator::IsPermissionNameValid(permission)) {
         std::string errMsg = GetErrorMessage(
             STS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
+        return false;
+    }
+    return true;
+}
+
+bool BusinessErrorAni::ValidateEnhancedIdentityWithThrowError(
+    ani_env* env, const std::string& enhancedIdentity, const std::string& extendMsg)
+{
+    if (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
+        std::string errMsg = GetErrorMessage(STS_ERROR_PARAM_INVALID, extendMsg);
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, errMsg);
         return false;
     }

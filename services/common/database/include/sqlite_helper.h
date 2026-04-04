@@ -35,7 +35,8 @@ public:
         VERISION_2,
         VERISION_3,
         VERISION_4,
-        VERISION_5
+        VERISION_5,
+        VERISION_6
     };
 
     void Open();

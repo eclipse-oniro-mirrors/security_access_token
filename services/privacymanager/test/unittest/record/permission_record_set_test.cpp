@@ -43,6 +43,7 @@ static ContinuousPermissionRecord MakeRecord(const int32_t recordArray[RECORD_IT
     record.status = recordArray[SECOND_PARAM];
     record.pid = recordArray[THIRD_PARAM];
     record.callerPid = recordArray[FORTH_PARAM];
+    record.enhancedIdentity = "";
     return record;
 }
 
@@ -64,10 +65,19 @@ static void MakeRecordList(const int32_t recordArray[][RECORD_ITEM_SIZE], int32_
     }
 }
 
+static void MakeRecordSet(const std::vector<ContinuousPermissionRecord>& recordList,
+    std::set<ContinuousPermissionRecord>& recordSet)
+{
+    for (const auto& record : recordList) {
+        recordSet.emplace(record);
+    }
+}
+
 static void RemoveRecord(std::set<ContinuousPermissionRecord>& recordList,
     const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualRecord, retList);
+    return PermissionRecordSet::RemoveByKey(
+        recordList, record, &ContinuousPermissionRecord::IsEqualBasicRecord, retList);
 }
 
 static void RemoveTokenId(std::set<ContinuousPermissionRecord>& recordList,
@@ -92,7 +102,8 @@ static void RemovePermCode(std::set<ContinuousPermissionRecord>& recordList,
 static void RemoveCallerPid(std::set<ContinuousPermissionRecord>& recordList,
     const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualCallerPid, retList);
+    return PermissionRecordSet::RemoveByKey(
+        recordList, record, &ContinuousPermissionRecord::IsEqualCallerPid, retList);
 }
 
 class PermissionRecordSetTest : public testing::Test {
@@ -171,6 +182,49 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003, TestSize.Level0)
     std::set<ContinuousPermissionRecord> recordSet;
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 2);
+}
+
+/**
+ * @tc.name: PermissionRecordSetTest0003a
+ * @tc.desc: IsEqualRecord compares enhanced identity in addition to the basic record key.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003a, TestSize.Level0)
+{
+    int32_t recordArray[RECORD_ITEM_SIZE] = {
+        HAP_TOKEN_ID[0], OPCODE[0], ACTIVE, HAP_PID[0], CALLER_PID[0]
+    };
+    ContinuousPermissionRecord recordA = MakeRecord(recordArray);
+    ContinuousPermissionRecord recordB = recordA;
+    ContinuousPermissionRecord recordC = recordA;
+    recordA.enhancedIdentity = "agentA";
+    recordB.enhancedIdentity = "agentA";
+    recordC.enhancedIdentity = "agentB";
+
+    EXPECT_TRUE(recordA.IsEqualBasicRecord(recordB));
+    EXPECT_TRUE(recordA.IsEqualRecord(recordB));
+    EXPECT_FALSE(recordA.IsEqualRecord(recordC));
+}
+
+/**
+ * @tc.name: PermissionRecordSetTest0003b
+ * @tc.desc: IsEqualRecord returns false when enhanced identities are different.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0003b, TestSize.Level0)
+{
+    int32_t recordArray[RECORD_ITEM_SIZE] = {
+        HAP_TOKEN_ID[0], OPCODE[0], ACTIVE, HAP_PID[0], CALLER_PID[0]
+    };
+    ContinuousPermissionRecord recordA = MakeRecord(recordArray);
+    ContinuousPermissionRecord recordB = recordA;
+    recordA.enhancedIdentity = "agentA";
+    recordB.enhancedIdentity = "";
+
+    EXPECT_TRUE(recordA.IsEqualBasicRecord(recordB));
+    EXPECT_FALSE(recordA.IsEqualRecord(recordB));
 }
 
 /**
@@ -266,17 +320,17 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0008, TestSize.Level0)
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 6);
     auto it = recordSet.begin();
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[4])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[4])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[5])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[5])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[2])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[2])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[0])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[0])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[3])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[3])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[1])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[1])));
     ++it;
     EXPECT_EQ(it, recordSet.end());
 }
@@ -302,15 +356,15 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0009, TestSize.Level0)
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 5);
     auto it = recordSet.begin();
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[0])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[0])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[1])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[1])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[2])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[2])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[3])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[3])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[4])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[4])));
     ++it;
     EXPECT_EQ(it, recordSet.end());
 }
@@ -335,15 +389,15 @@ HWTEST_F(PermissionRecordSetTest, PermissionRecordSetTest0010, TestSize.Level0)
     MakeRecordSet(recordList, setSize, recordSet);
     EXPECT_EQ(recordSet.size(), 5);
     auto it = recordSet.begin();
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[4])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[4])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[3])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[3])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[2])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[2])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[1])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[1])));
     ++it;
-    EXPECT_TRUE(it->IsEqualRecord(MakeRecord(recordList[0])));
+    EXPECT_TRUE(it->IsEqualBasicRecord(MakeRecord(recordList[0])));
     ++it;
     EXPECT_EQ(it, recordSet.end());
 }
@@ -375,9 +429,33 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0001, TestSize.Level0)
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
+}
+
+/**
+ * @tc.name: RemoveRecord0001a
+ * @tc.desc: RemoveByKey keeps removed records unchanged in retList.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, RemoveRecord0001a, TestSize.Level0)
+{
+    int32_t recordArray[RECORD_ITEM_SIZE] = {
+        HAP_TOKEN_ID[0], OPCODE[0], ACTIVE, HAP_PID[0], CALLER_PID[0]
+    };
+    std::set<ContinuousPermissionRecord> recordSet;
+    ContinuousPermissionRecord record = MakeRecord(recordArray);
+    record.enhancedIdentity = "agentA";
+    recordSet.emplace(record);
+
+    std::vector<ContinuousPermissionRecord> retList;
+    RemoveRecord(recordSet, record, retList);
+    EXPECT_EQ(0, recordSet.size());
+    ASSERT_EQ(1, retList.size());
+    EXPECT_EQ("agentA", retList[0].enhancedIdentity);
 }
 
 /**
@@ -407,8 +485,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0002, TestSize.Level0)
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -439,8 +518,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0003, TestSize.Level0)
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -471,8 +551,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveRecord0005, TestSize.Level0)
     RemoveRecord(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -503,8 +584,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0001, TestSize.Level0)
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -535,8 +617,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0002, TestSize.Level0)
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -567,8 +650,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenId0003, TestSize.Level0)
     RemoveTokenId(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -599,8 +683,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0001, TestSize.Level0)
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 2);
 }
 
@@ -631,8 +716,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0002, TestSize.Level0)
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -663,8 +749,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0003, TestSize.Level0)
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -695,8 +782,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0004, TestSize.Level0)
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -727,8 +815,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveTokenIdAndPid0005, TestSize.Level0)
     RemoveTokenIdAndPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -759,8 +848,9 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0001, TestSize.Level0)
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -791,8 +881,9 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0002, TestSize.Level0)
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -823,8 +914,9 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0003, TestSize.Level0)
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -855,8 +947,9 @@ HWTEST_F(PermissionRecordSetTest, RemovePermCode0004, TestSize.Level0)
     RemovePermCode(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -887,8 +980,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0001, TestSize.Level0)
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -919,8 +1013,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0002, TestSize.Level0)
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 0);
     EXPECT_EQ(retList.size(), 2);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 2);
 }
 
@@ -951,8 +1046,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0003, TestSize.Level0)
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 1);
     EXPECT_EQ(retList.size(), 1);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -983,8 +1079,9 @@ HWTEST_F(PermissionRecordSetTest, RemoveCallerPid0004, TestSize.Level0)
     RemoveCallerPid(recordSet, record, retList);
     EXPECT_EQ(recordSet.size(), 2);
     EXPECT_EQ(retList.size(), 0);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, retList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(retList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -1247,8 +1344,9 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0001, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -1273,8 +1371,9 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0002, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -1299,8 +1398,9 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0003, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -1324,8 +1424,9 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0004, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 1);
 }
 
@@ -1349,8 +1450,9 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0005, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
 }
 
@@ -1375,9 +1477,38 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0006, TestSize.Level0)
     MakeRecordSet(recordArray1, size1, recordSet);
     std::vector<ContinuousPermissionRecord> recordList;
     MakeRecordList(recordArray2, size2, recordList);
-    std::vector<ContinuousPermissionRecord> inactiveList;
-    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, recordList, inactiveList);
+    std::set<ContinuousPermissionRecord> inactiveList;
+    MakeRecordSet(recordList, inactiveList);
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
     EXPECT_EQ(inactiveList.size(), 0);
+}
+
+/**
+ * @tc.name: GetInActiveUniqueRecord0007
+ * @tc.desc: Active record with another enhanced identity does not suppress inactive callback for removed identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0007, TestSize.Level0)
+{
+    int32_t recordArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], OPCODE[1], ACTIVE, HAP_PID[0], CALLER_PID[0] },
+    };
+    std::set<ContinuousPermissionRecord> recordSet;
+    MakeRecordSet(recordArray, 1, recordSet);
+
+    auto activeRecord = *recordSet.begin();
+    activeRecord.enhancedIdentity = "agentB";
+    recordSet.clear();
+    recordSet.emplace(activeRecord);
+
+    ContinuousPermissionRecord removedRecord = activeRecord;
+    removedRecord.enhancedIdentity = "agentA";
+    std::set<ContinuousPermissionRecord> inactiveList = { removedRecord };
+
+    PermissionRecordSet::GetInActiveUniqueRecord(recordSet, inactiveList);
+    ASSERT_EQ(1, static_cast<int32_t>(inactiveList.size()));
+    EXPECT_EQ("agentA", inactiveList.begin()->enhancedIdentity);
 }
 }
 }

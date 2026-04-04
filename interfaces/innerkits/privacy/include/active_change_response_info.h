@@ -83,6 +83,8 @@ struct ActiveChangeResponse {
     std::string remoteDeviceName;
     /** extra info propagated from AddPermParamInfo::extra for PERM_ADD callback */
     std::string extra = "";
+    /** enhanced identity associated with current record */
+    std::string enhancedIdentity = "";
     /**
      * This field is only filled in callbacks triggered by bundle-based start/stop using permission.
      * The callback contains the bundle name, permission name of this access.

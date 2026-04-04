@@ -62,12 +62,13 @@ public:
     int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
     int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
-        PermissionUsedType type);
+        PermissionUsedType type, const std::string& enhancedIdentity = "");
     int32_t CreateStateChangeCbk(uint64_t id, const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);
     int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const std::shared_ptr<StateCustomizedCbk>& callback, PermissionUsedType type);
-    int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+    int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const std::string& enhancedIdentity = "");
 #ifdef REMOTE_PRIVACY_ENABLE
     int32_t StartRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
     int32_t StopRemoteUsingPermission(const RemoteCallerInfo& info, const std::string& permissionName);
@@ -123,7 +124,8 @@ private:
         sptr<PermDisablePolicyChangeCallback>& callbackWrap);
     void SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc);
     void SetInputCache(const PermissionUsedTypeInfo& info, bool hasCbk);
-    void DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+    void DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const std::string& enhancedIdentity);
 #ifdef REMOTE_PRIVACY_ENABLE
     void SetRemoteInputCache(const RemotePermissionUsedInfo& info);
     void DeleteRemoteInputCache(const RemoteCallerInfo& info, const std::string& permissionName);

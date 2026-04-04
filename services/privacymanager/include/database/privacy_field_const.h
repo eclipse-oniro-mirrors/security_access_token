@@ -42,6 +42,7 @@ public:
     const static std::string FIELD_PERMISSION_CODE;
     const static std::string FIELD_USED_TYPE;
     const static std::string FIELD_DISABLE_POLICY;
+    const static std::string FIELD_ENHANCED_IDENTITY;
 };
 } // namespace AccessToken
 } // namespace Security

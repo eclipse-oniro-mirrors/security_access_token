@@ -53,6 +53,8 @@ namespace OHOS {
             0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
         infoParcel.info.extra = provider.ConsumeRandomLengthString(
             provider.ConsumeIntegralInRange<size_t>(0, MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1));
+        infoParcel.info.enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
         if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }

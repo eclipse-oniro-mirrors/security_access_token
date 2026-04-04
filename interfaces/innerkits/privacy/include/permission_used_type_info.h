@@ -52,6 +52,8 @@ struct PermissionUsedTypeInfo {
     int32_t pid;
     /** enum PermissionUsedType, see permission_used_type.h */
     PermissionUsedType type = NORMAL_TYPE;
+    /** enhanced identity for host-subject differentiation */
+    std::string enhancedIdentity = "";
 };
 } // namespace AccessToken
 } // namespace Security

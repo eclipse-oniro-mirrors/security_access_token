@@ -212,7 +212,8 @@ void PrivacyManagerClient::SetInputCache(
     std::lock_guard<std::mutex> lock(startUsingPermInputMutex_);
     for (auto it = cacheList_.begin(); it != cacheList_.end(); ++it) {
         if ((it->input.permissionName == info.permissionName) &&
-            (it->input.pid == info.pid) && (it->input.tokenId == info.tokenId)) {
+            (it->input.pid == info.pid) && (it->input.tokenId == info.tokenId) &&
+            (it->input.enhancedIdentity == info.enhancedIdentity)) {
             LOGE(PRI_DOMAIN, PRI_TAG, "It already exists in cache.");
             return;
         }
@@ -221,12 +222,14 @@ void PrivacyManagerClient::SetInputCache(
     LOGI(PRI_DOMAIN, PRI_TAG, "Cache is added.");
 }
 
-void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+    const std::string& enhancedIdentity)
 {
     std::lock_guard<std::mutex> lock(startUsingPermInputMutex_);
     for (auto it = cacheList_.begin(); it != cacheList_.end(); ++it) {
         if ((it->input.permissionName == permissionName) &&
-            (it->input.pid == pid) && (it->input.tokenId == tokenID)) {
+            (it->input.pid == pid) && (it->input.tokenId == tokenID) &&
+            (it->input.enhancedIdentity == enhancedIdentity)) {
             cacheList_.erase(it);
             LOGI(PRI_DOMAIN, PRI_TAG, "Cache is cleared.");
             break;
@@ -235,7 +238,8 @@ void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, 
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type)
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, PermissionUsedType type,
+    const std::string& enhancedIdentity)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -247,6 +251,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
     parcel.info.pid = pid;
     parcel.info.permissionName = permissionName;
     parcel.info.type = type;
+    parcel.info.enhancedIdentity = enhancedIdentity;
 
     auto anonyStub = GetAnonyStub();
     if (anonyStub == nullptr) {
@@ -330,9 +335,9 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
 }
 
 int32_t PrivacyManagerClient::StopUsingPermission(
-    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName, const std::string& enhancedIdentity)
 {
-    DeleteInputCache(tokenID, pid, permissionName);
+    DeleteInputCache(tokenID, pid, permissionName, enhancedIdentity);
 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -349,7 +354,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(
         }
     }
 
-    int32_t ret = proxy->StopUsingPermission(tokenID, pid, permissionName);
+    int32_t ret = proxy->StopUsingPermission(tokenID, pid, permissionName, enhancedIdentity);
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;

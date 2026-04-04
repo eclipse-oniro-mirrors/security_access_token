@@ -436,6 +436,7 @@ void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
 {
     UsedRecordDetail detailIns = {0, 0, 0L, 0L, 0};
     EXPECT_EQ(true, out.WriteString("permissionName"));
+    EXPECT_EQ(true, out.WriteString(""));
     EXPECT_EQ(true, out.WriteInt32(1));
     EXPECT_EQ(true, out.WriteInt32(0));
     EXPECT_EQ(true, out.WriteInt32(1));

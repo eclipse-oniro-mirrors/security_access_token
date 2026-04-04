@@ -30,12 +30,17 @@ namespace {
 std::mutex g_mutex;
 std::vector<RegisterPermActiveChangeContext*> g_subScribers;
 static constexpr size_t MAX_CALLBACK_SIZE = 200;
+constexpr const char* ADD_PERMISSION_RECORD_ENHANCED_IDENTITY_ERR_MSG =
+    "The enhancedIdentity in AddPermissionUsedRecordOptions exceeds 48 characters.";
+constexpr const char* PERMISSION_USING_ENHANCED_IDENTITY_ERR_MSG =
+    "The enhancedIdentity in PermissionUsingOptions exceeds 48 characters.";
 constexpr const char* ACTIVE_CHANGE_FIELD_CALLING_TOKEN_ID = "callingTokenId";
 constexpr const char* ACTIVE_CHANGE_FIELD_TOKEN_ID = "tokenId";
 constexpr const char* ACTIVE_CHANGE_FIELD_PERMISSION_NAME = "permissionName";
 constexpr const char* ACTIVE_CHANGE_FIELD_DEVICE_ID = "deviceId";
 constexpr const char* ACTIVE_CHANGE_FIELD_ACTIVE_STATUS = "activeStatus";
 constexpr const char* ACTIVE_CHANGE_FIELD_USED_TYPE = "usedType";
+constexpr const char* ACTIVE_CHANGE_FIELD_ENHANCED_IDENTITY = "enhancedIdentity";
 }
 
 static int32_t GetStsErrorCode(int32_t errCode)
@@ -109,12 +114,24 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
     if (!GetEnumProperty(env, options, "usedType", usedType)) {
         return;
     }
+    std::string enhancedIdentity;
+    if (!GetStringProperty(env, options, "enhancedIdentity", enhancedIdentity)) {
+        return;
+    }
+    if (!BusinessErrorAni::ValidateEnhancedIdentityWithThrowError(
+        env, enhancedIdentity, ADD_PERMISSION_RECORD_ENHANCED_IDENTITY_ERR_MSG)) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "The enhancedIdentity in AddPermissionUsedRecordOptions is invalid, length=%{public}zu.",
+            enhancedIdentity.size());
+        return;
+    }
     AddPermParamInfo info;
     info.tokenId = static_cast<AccessTokenID>(tokenID);
     info.permissionName = permission;
     info.successCount = successCount;
     info.failCount = failCount;
     info.type = static_cast<PermissionUsedType>(usedType);
+    info.enhancedIdentity = enhancedIdentity;
     auto retCode = PrivacyKit::AddPermissionUsedRecord(info);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
@@ -202,6 +219,7 @@ static ani_object ConvertActiveChangeResponse(ani_env* env, const ActiveChangeRe
     const char* permUsedTypeDes = "@ohos.privacyManager.privacyManager.PermissionUsedType";
     SetEnumProperty(
         env, aniObject, permUsedTypeDes, ACTIVE_CHANGE_FIELD_USED_TYPE, static_cast<uint32_t>(result.usedType));
+    SetStringProperty(env, aniObject, ACTIVE_CHANGE_FIELD_ENHANCED_IDENTITY, result.enhancedIdentity);
     return aniObject;
 }
 
@@ -472,8 +490,8 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     return;
 }
 
-static void StopUsingPermissionExecute(
-    [[maybe_unused]] ani_env* env, ani_int aniTokenID, ani_string aniPermission, ani_int pid)
+static void StopUsingPermissionExecute([[maybe_unused]] ani_env* env, ani_int aniTokenID, ani_string aniPermission,
+    ani_int pid, ani_string aniEnhancedIdentity)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "StopUsingPermissionExecute begin.");
     if (env == nullptr) {
@@ -484,17 +502,22 @@ static void StopUsingPermissionExecute(
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission;
     (void)ParseAniString(env, aniPermission, permission);
+    std::string enhancedIdentity;
+    (void)ParseAniString(env, aniEnhancedIdentity, enhancedIdentity);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
-        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
-            tokenID, permission.c_str());
+        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission)) ||
+        (!BusinessErrorAni::ValidateEnhancedIdentityWithThrowError(
+            env, enhancedIdentity, PERMISSION_USING_ENHANCED_IDENTITY_ERR_MSG))) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "TokenId(%{public}u), Permission(%{public}s) or enhancedIdentity(length=%{public}zu) is invalid.",
+            tokenID, permission.c_str(), enhancedIdentity.size());
         return;
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d.",
         permission.c_str(), tokenID, pid);
 
-    auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid);
+    auto retCode = PrivacyKit::StopUsingPermission(tokenID, permission, pid, enhancedIdentity);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
@@ -502,7 +525,8 @@ static void StopUsingPermissionExecute(
 }
 
 static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
-    ani_int aniTokenID, ani_string aniPermission, ani_int pid, PermissionUsedType usedType)
+    ani_int aniTokenID, ani_string aniPermission, ani_int pid, PermissionUsedType usedType,
+    ani_string aniEnhancedIdentity)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "StartUsingPermissionExecute begin.");
     if (env == nullptr) {
@@ -512,17 +536,22 @@ static void StartUsingPermissionExecute([[maybe_unused]] ani_env* env,
     AccessTokenID tokenID = static_cast<AccessTokenID>(aniTokenID);
     std::string permission;
     (void)ParseAniString(env, aniPermission, permission);
+    std::string enhancedIdentity;
+    (void)ParseAniString(env, aniEnhancedIdentity, enhancedIdentity);
     if ((!BusinessErrorAni::ValidateTokenIDWithThrowError(env, tokenID)) ||
-        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission))) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "TokenId(%{public}u) or Permission(%{public}s) is invalid.",
-            tokenID, permission.c_str());
+        (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permission)) ||
+        (!BusinessErrorAni::ValidateEnhancedIdentityWithThrowError(
+            env, enhancedIdentity, PERMISSION_USING_ENHANCED_IDENTITY_ERR_MSG))) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "TokenId(%{public}u), Permission(%{public}s) or enhancedIdentity(length=%{public}zu) is invalid.",
+            tokenID, permission.c_str(), enhancedIdentity.size());
         return;
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "PermissionName : %{public}s, tokenID : %{public}u, pid : %{public}d.",
         permission.c_str(), tokenID, pid);
 
-    auto retCode = PrivacyKit::StartUsingPermission(tokenID, permission, pid, usedType);
+    auto retCode = PrivacyKit::StartUsingPermission(tokenID, permission, pid, usedType, enhancedIdentity);
     if (retCode != RET_SUCCESS) {
         int32_t stsCode = GetStsErrorCode(retCode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
@@ -603,6 +632,9 @@ static ani_object ConvertSinglePermissionRecord(ani_env* env, const PermissionUs
         return nullptr;
     }
     if (!SetLongProperty(env, arrayObj, "lastAccessDuration", record.lastAccessDuration)) {
+        return nullptr;
+    }
+    if (!SetStringProperty(env, arrayObj, "enhancedIdentity", record.enhancedIdentity)) {
         return nullptr;
     }
     if (!SetRefProperty(env, arrayObj, "accessRecords", ConvertUsedRecordDetails(env, record.accessRecords))) {

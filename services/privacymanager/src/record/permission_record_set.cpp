@@ -21,6 +21,25 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+namespace {
+bool IsSameInActiveGroup(const ContinuousPermissionRecord& lhs, const ContinuousPermissionRecord& rhs)
+{
+    return lhs.tokenId == rhs.tokenId && lhs.opCode == rhs.opCode &&
+        lhs.enhancedIdentity == rhs.enhancedIdentity;
+}
+
+bool IsLessInActiveGroup(const ContinuousPermissionRecord& lhs, const ContinuousPermissionRecord& rhs)
+{
+    if (lhs.tokenId != rhs.tokenId) {
+        return lhs.tokenId < rhs.tokenId;
+    }
+    if (lhs.enhancedIdentity != rhs.enhancedIdentity) {
+        return lhs.enhancedIdentity < rhs.enhancedIdentity;
+    }
+    return lhs.opCode < rhs.opCode;
+}
+} // namespace
+
 void PermissionRecordSet::RemoveByKey(std::set<ContinuousPermissionRecord>& recordList,
     const ContinuousPermissionRecord& record, const IsEqualFunc& isEqualFunc,
     std::vector<ContinuousPermissionRecord>& retList)
@@ -38,39 +57,36 @@ void PermissionRecordSet::RemoveByKey(std::set<ContinuousPermissionRecord>& reco
 }
 
 void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinuousPermissionRecord>& recordList,
-    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList)
+    std::set<ContinuousPermissionRecord>& removedList)
 {
-    // get unique record with tokenid and opcode
-    uint64_t lastUniqueKey = 0;
-    for (const auto &record: removedList) {
-        uint64_t curUniqueKey = record.GetTokenIdAndPermCode();
-        if (lastUniqueKey != curUniqueKey) {
-            retList.emplace_back(record);
-            lastUniqueKey = curUniqueKey;
+    std::set<ContinuousPermissionRecord> uniqueRemovedList;
+    for (const auto& record : removedList) {
+        if (uniqueRemovedList.empty() || !IsSameInActiveGroup(*uniqueRemovedList.rbegin(), record)) {
+            uniqueRemovedList.emplace(record);
         }
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "Unique list size = %{public}zu", retList.size());
 
-    // filter active records with same tokenid and opcode in set
-    auto iterRemoved = retList.begin();
+    auto iterRemoved = uniqueRemovedList.begin();
     auto iterRemain = recordList.begin();
-    uint64_t removeKey;
-    uint64_t remainKey;
-    while (iterRemoved != retList.end() && iterRemain != recordList.end()) {
-        removeKey = iterRemoved->GetTokenIdAndPermCode();
-        remainKey = iterRemain->GetTokenIdAndPermCode();
-        if (removeKey < remainKey) {
+    while (iterRemoved != uniqueRemovedList.end() && iterRemain != recordList.end()) {
+        if (IsLessInActiveGroup(*iterRemoved, *iterRemain)) {
             ++iterRemoved;
             continue;
-        } else if (removeKey == remainKey) {
-            if (iterRemain->status != PERM_INACTIVE) {
-                iterRemoved = retList.erase(iterRemoved);
-                continue;
-            }
         }
-        ++iterRemain;
+        if (IsLessInActiveGroup(*iterRemain, *iterRemoved)) {
+            ++iterRemain;
+            continue;
+        }
+
+        if (iterRemain->status != PERM_INACTIVE) {
+            iterRemoved = uniqueRemovedList.erase(iterRemoved);
+        } else {
+            ++iterRemain;
+        }
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", retList.size());
+
+    removedList = std::move(uniqueRemovedList);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", removedList.size());
 }
 
 void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,

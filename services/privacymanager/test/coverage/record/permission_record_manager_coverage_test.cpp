@@ -1328,6 +1328,24 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
         PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
 }
 
+/**
+ * @tc.name: GetRecordsFromLocalDBTest003
+ * @tc.desc: test GetRecordsFromLocalDB returns query failure for invalid flag
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest003, TestSize.Level4)
+{
+    PermissionUsedRequest request;
+    request.tokenId = g_selfTokenId;
+    request.isRemote = false;
+    request.flag = static_cast<PermissionUsageFlag>(-1);
+
+    PermissionUsedResult result;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+}
+
 /*
  * @tc.name: AddOrUpdateUsedStatusIfNeeded001
  * @tc.desc: PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded function test

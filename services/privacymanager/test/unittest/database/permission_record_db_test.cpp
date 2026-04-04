@@ -38,6 +38,8 @@ static const int32_t NOT_EXSIT_TYPE = 9;
 static const int32_t PERMISSION_USED_TYPE_VALUE = 1;
 static const int32_t PICKER_TYPE_VALUE = 2;
 static const int32_t RANDOM_TOKENID = 123;
+static const int32_t INVALID_DB_TYPE = 100;
+static const int32_t DEFAULT_ACCESS_DURATION = 123;
 #ifdef REMOTE_PRIVACY_ENABLE
 static const int32_t USER_ID_100 = 100;
 static const int32_t USER_ID_INVALID = 12345;
@@ -76,6 +78,36 @@ void PermissionRecordDBTest::TearDown()
 {
 }
 
+static GenericValues BuildPermissionRecordValue(AccessTokenID tokenId, int64_t timestamp,
+    LockScreenStatusChangeType lockScreenStatus, PermissionUsedType usedType, const std::string& enhancedIdentity)
+{
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, DEFAULT_ACCESS_DURATION);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, lockScreenStatus);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(usedType));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
+    return value;
+}
+
+static GenericValues BuildPermissionRecordKey(AccessTokenID tokenId, int32_t opCode, int32_t status,
+    int64_t timestamp, PermissionUsedType usedType, const std::string& enhancedIdentity)
+{
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, status);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(usedType));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
+    return value;
+}
+
 /*
  * @tc.name: CreateInsertPrepareSqlCmd001
  * @tc.desc: PermissionUsedRecordDb::CreateInsertPrepareSqlCmd function test type not found
@@ -84,7 +116,7 @@ void PermissionRecordDBTest::TearDown()
  */
 HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd001, TestSize.Level0)
 {
-    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(INVALID_DB_TYPE);
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
 }
 
@@ -98,6 +130,19 @@ HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd002, TestSize.Level0)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
+}
+
+/*
+ * @tc.name: CreateInsertPrepareSqlCmd003
+ * @tc.desc: PermissionUsedRecordDb::CreateInsertPrepareSqlCmd contains enhanced_identity field
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, CreateInsertPrepareSqlCmd003, TestSize.Level0)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::string sql = PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type);
+    ASSERT_NE(std::string::npos, sql.find(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY));
 }
 
 /*
@@ -354,6 +399,25 @@ HWTEST_F(PermissionRecordDBTest, InsertLockScreenStatusColumn001, TestSize.Level
 
     ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
         PermissionUsedRecordDb::GetInstance().InsertLockScreenStatusColumn());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+}
+
+/*
+ * @tc.name: InsertEnhancedIdentityColumn001
+ * @tc.desc: PermissionUsedRecordDb::InsertEnhancedIdentityColumn function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, InsertEnhancedIdentityColumn001, TestSize.Level0)
+{
+    ASSERT_EQ(Constant::SUCCESS, PermissionUsedRecordDb::GetInstance().InsertEnhancedIdentityColumn());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionUsedRecordDb::GetInstance().InsertEnhancedIdentityColumn());
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
@@ -617,10 +681,10 @@ HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest003, TestSize.
 HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level0)
 {
     GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 200);
     value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 201); // 201 is random input
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
@@ -650,26 +714,28 @@ HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level0)
 HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level0)
 {
     GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 200);
     value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 201); // 201 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "");
 
     GenericValues value2;
-    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 201);
     value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 202); // 202 is random input
     value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value2.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value2.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "");
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -702,26 +768,28 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level0)
 HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level0)
 {
     GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 300);
     value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 301); // 301 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "");
 
     GenericValues value2; // only used_type diff from value1
-    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 300);
     value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 302); // 302 is random input
     value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value2.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::PICKER_TYPE));
+    value2.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "");
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -735,6 +803,148 @@ HWTEST_F(PermissionRecordDBTest, Add004, TestSize.Level0)
 }
 
 /*
+ * @tc.name: Add005
+ * @tc.desc: PermissionUsedRecordDb::Add function test with same base key and different enhanced identity
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Add005, TestSize.Level0)
+{
+    constexpr AccessTokenID TOKEN_ID = 1000;
+    constexpr int64_t TIMESTAMP = 1005;
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TOKEN_ID));
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, TIMESTAMP);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+
+    GenericValues value2 = BuildPermissionRecordValue(TOKEN_ID, TIMESTAMP,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED, PermissionUsedType::NORMAL_TYPE, "agentB");
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    GenericValues key1 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentA");
+    GenericValues key2 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentB");
+
+    PermissionUsedRecordDb::GetInstance().Remove(type, key1);
+    PermissionUsedRecordDb::GetInstance().Remove(type, key2);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, key1));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, key2));
+}
+
+/*
+ * @tc.name: OnUpdate006
+ * @tc.desc: Verify 6->7 migration updates primary key to include enhanced_identity
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate006, TestSize.Level0)
+{
+    constexpr AccessTokenID TOKEN_ID = 1200;
+    constexpr int64_t TIMESTAMP = 1203;
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table_new"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "used_type integer,"
+        "primary key(token_id,op_code,status,timestamp,used_type))"));
+
+    int32_t version = 6;
+    db.OnUpdate(version);
+
+    GenericValues value1 = BuildPermissionRecordValue(TOKEN_ID, TIMESTAMP,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED, PermissionUsedType::NORMAL_TYPE, "agentA");
+    GenericValues value2 = BuildPermissionRecordValue(TOKEN_ID, TIMESTAMP,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED, PermissionUsedType::NORMAL_TYPE, "agentB");
+    GenericValues key1 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentA");
+    GenericValues key2 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentB");
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values = {value1, value2};
+    db.Remove(type, key1);
+    db.Remove(type, key2);
+    ASSERT_EQ(0, db.Add(type, values));
+
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    andConditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TOKEN_ID));
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, db.FindByConditions(type, opCodeList, andConditions, results, 10));
+    ASSERT_EQ(2, static_cast<int32_t>(results.size()));
+
+    ASSERT_EQ(0, db.Remove(type, key1));
+    ASSERT_EQ(0, db.Remove(type, key2));
+}
+
+/*
+ * @tc.name: OnUpdate007
+ * @tc.desc: Verify 6->7 migration fills legacy records with empty enhanced_identity by default
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate007, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table_new"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "used_type integer,"
+        "primary key(token_id,op_code,status,timestamp,used_type))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_record_table values("
+        "1300, 1, 1, 1303, 123, 1, 0, 1, 0)"));
+
+    db.OnUpdate(6);
+
+    auto stmt = db.Prepare("pragma table_info(permission_record_table)");
+    bool foundEnhancedIdentity = false;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_ENHANCED_IDENTITY) {
+            foundEnhancedIdentity = true;
+            EXPECT_EQ("", stmt.GetColumnString(4));
+        }
+    }
+    EXPECT_TRUE(foundEnhancedIdentity);
+
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    andConditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1300);
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, db.FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD, opCodeList, andConditions,
+        results, 10));
+    ASSERT_EQ(1, static_cast<int32_t>(results.size()));
+    EXPECT_EQ("", results[0].GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY));
+}
+
+/*
  * @tc.name: FindByConditions001
  * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
  * @tc.type: FUNC
@@ -744,15 +954,16 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level0)
 {
     GenericValues value;
     std::set<int32_t> opCodeList;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 400);
     value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 401); // 401 is random input
     value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "");
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -786,6 +997,56 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level0)
 }
 
 /*
+ * @tc.name: FindByConditions003
+ * @tc.desc: PermissionUsedRecordDb::FindByConditions function test with enhanced_identity filter
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, FindByConditions003, TestSize.Level0)
+{
+    constexpr AccessTokenID TOKEN_ID = 1100;
+    constexpr int64_t TIMESTAMP = 1103;
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TOKEN_ID));
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, TIMESTAMP);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+
+    GenericValues value2 = BuildPermissionRecordValue(TOKEN_ID, TIMESTAMP,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED, PermissionUsedType::NORMAL_TYPE, "agentB");
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    GenericValues key1 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentA");
+    GenericValues key2 = BuildPermissionRecordKey(TOKEN_ID, Constant::OP_MICROPHONE,
+        ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND, TIMESTAMP, PermissionUsedType::NORMAL_TYPE, "agentB");
+    PermissionUsedRecordDb::GetInstance().Remove(type, key1);
+    PermissionUsedRecordDb::GetInstance().Remove(type, key2);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    andConditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TOKEN_ID));
+    andConditions.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions, results, 10));
+    ASSERT_EQ(1, static_cast<int32_t>(results.size()));
+    EXPECT_EQ("agentA", results[0].GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY));
+
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, key1));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, key2));
+}
+
+/*
  * @tc.name: FindByConditions002
  * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
  * @tc.type: FUNC
@@ -793,38 +1054,12 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level0)
  */
 HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level0)
 {
-    GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
-    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
-
-    GenericValues value2;
-    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 2); // random input
-    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
-    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    value2.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
-
-    GenericValues value3;
-    value3.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 3); // random input
-    value3.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value3.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
-    value3.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value3.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value3.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value3.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    value3.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    GenericValues value1 = BuildPermissionRecordValue(1, 123, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED,
+        PermissionUsedType::NORMAL_TYPE, "");
+    GenericValues value2 = BuildPermissionRecordValue(2, 123, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED,
+        PermissionUsedType::NORMAL_TYPE, "");
+    GenericValues value3 = BuildPermissionRecordValue(3, 123, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED,
+        PermissionUsedType::NORMAL_TYPE, "");
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;

@@ -26,6 +26,7 @@ bool PermissionUsedTypeInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->info.permissionName));
     RETURN_IF_FALSE(out.WriteInt32(this->info.pid));
     RETURN_IF_FALSE(out.WriteUint32(static_cast<uint32_t>(this->info.type)));
+    RETURN_IF_FALSE(out.WriteString(this->info.enhancedIdentity));
     return true;
 }
 
@@ -43,6 +44,7 @@ PermissionUsedTypeInfoParcel* PermissionUsedTypeInfoParcel::Unmarshalling(Parcel
     uint32_t type = 0;
     RELEASE_IF_FALSE(in.ReadUint32(type), parcel);
     parcel->info.type = static_cast<PermissionUsedType>(type);
+    RELEASE_IF_FALSE(in.ReadString(parcel->info.enhancedIdentity), parcel);
     return parcel;
 }
 } // namespace AccessToken

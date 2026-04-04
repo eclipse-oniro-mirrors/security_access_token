@@ -81,6 +81,7 @@ private:
     int32_t InsertPermissionUsedTypeColumn() const;
     int32_t UpdatePermissionRecordTablePrimaryKey() const;
     int32_t CreatePermissionDisablePolicyTable() const;
+    int32_t InsertEnhancedIdentityColumn() const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
         const std::unordered_set<AccessTokenID>& tokenIDList) const;
@@ -106,7 +107,7 @@ private:
     inline static constexpr const char* PERMISSION_DISABLE_POLICY_TABLE = "permission_disable_policy_table";
     inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 6;
+    static const int32_t DATABASE_VERSION = 7;
 };
 } // namespace AccessToken
 } // namespace Security

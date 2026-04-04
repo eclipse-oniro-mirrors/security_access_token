@@ -89,7 +89,7 @@ public:
     int32_t StartUsingPermission(const PermissionUsedTypeInfo &info, const sptr<IRemoteObject>& callback,
         int32_t callerPid);
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
-        int32_t callerPid);
+        int32_t callerPid, const std::string& enhancedIdentity = "");
 #ifdef REMOTE_PRIVACY_ENABLE
     int32_t StartRemoteUsingPermission(const RemotePermissionUsedInfo &info, int32_t callerPid);
     int32_t StopRemoteUsingPermission(const std::string& remoteDeviceId, const std::string& remoteDeviceName,
@@ -173,7 +173,8 @@ private:
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
         std::vector<PermissionUsedRecord>& permissionRecords);
     bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
-        std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
+        std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+        std::map<std::string, int32_t>& bundleKeyToCountMap,
         PermissionUsedResult& result);
     int32_t GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
 
@@ -188,7 +189,7 @@ private:
 #endif
 #endif
     int32_t RemoveRecordFromStartList(AccessTokenID tokenId, int32_t pid,
-        const std::string& permissionName, int32_t callerPid);
+        const std::string& permissionName, int32_t callerPid, const std::string& enhancedIdentity = "");
     int32_t AddRecordToStartList(const PermissionUsedTypeInfo& info, int32_t status, int32_t callerPid);
 
     void PermListToString(const std::vector<std::string>& permList);

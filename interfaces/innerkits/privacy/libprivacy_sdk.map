@@ -21,7 +21,9 @@
       "OHOS::Security::AccessToken::PrivacyKit::SetPermissionUsedRecordToggleStatus(int, bool)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecordToggleStatus(int, bool&)";
       "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, OHOS::Security::AccessToken::PermissionUsedTypeValue)";
+      "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, OHOS::Security::AccessToken::PermissionUsedTypeValue, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::StopUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
+      "OHOS::Security::AccessToken::PrivacyKit::StopUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::StopUsingPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
       "OHOS::Security::AccessToken::PrivacyKit::StartRemoteUsingPermission(OHOS::Security::AccessToken::RemoteCallerInfo const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";

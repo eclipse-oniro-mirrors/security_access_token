@@ -91,6 +91,11 @@ static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 20;
 #endif
 constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
+
+std::string BuildBundleMapKey(AccessTokenID tokenId, const std::string& enhancedIdentity)
+{
+    return std::to_string(tokenId) + "_" + enhancedIdentity;
+}
 }
 
 static bool IsPermAddCallbackSupported(const std::string& permissionName)
@@ -189,7 +194,8 @@ static bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRe
         (record1.opCode != record2.opCode) ||
         (record1.status != record2.status) ||
         (record1.lockScreenStatus != record2.lockScreenStatus) ||
-        (record1.type != record2.type)) {
+        (record1.type != record2.type) ||
+        (record1.enhancedIdentity != record2.enhancedIdentity)) {
         return false;
     }
 
@@ -274,6 +280,7 @@ int32_t PermissionRecordManager::UpdatePermissionUsedRecordToDb(const Permission
     conditionValue.Put(PrivacyFiledConst::FIELD_STATUS, record.status);
     conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
     conditionValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, record.type);
+    conditionValue.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, record.enhancedIdentity);
 
     std::unique_lock<std::shared_mutex> lk(this->rwLock_);
     return PermissionUsedRecordDb::GetInstance().Update(
@@ -368,6 +375,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     record.type = info.type;
+    record.enhancedIdentity = info.enhancedIdentity;
     LOGD(PRI_DOMAIN, PRI_TAG, "Record status: %{public}d", record.status);
     return Constant::SUCCESS;
 }
@@ -472,7 +480,8 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
-    if (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH) {
+    if (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH ||
+        !DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -1314,13 +1323,15 @@ void PermissionRecordManager::InsteadMergedRecIfNecessary(GenericValues& queryVa
     int32_t status = queryValue.GetInt(PrivacyFiledConst::FIELD_STATUS);
     int64_t timestamp = queryValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     PermissionUsedType type = static_cast<PermissionUsedType>(queryValue.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+    std::string enhancedIdentity = queryValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
 
     for (const auto& record : mergedRecords) {
         if ((tokenId == record.tokenId) &&
             (opCode == record.opCode) &&
             (status == record.status) &&
             (timestamp == record.timestamp) &&
-            (type == record.type)) {
+            (type == record.type) &&
+            (enhancedIdentity == record.enhancedIdentity)) {
             // find merged record, instead accessCount and rejectCount
             queryValue.Remove(PrivacyFiledConst::FIELD_ACCESS_COUNT);
             queryValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
@@ -1377,7 +1388,8 @@ void PermissionRecordManager::FillPermissionUsedRecords(const PermissionUsedReco
 }
 
 bool PermissionRecordManager::FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
-    std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
+    std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+    std::map<std::string, int32_t>& bundleKeyToCountMap,
     PermissionUsedResult& result)
 {
     // translate database value into PermissionUsedRecord value
@@ -1395,8 +1407,10 @@ bool PermissionRecordManager::FillBundleUsedRecord(const GenericValues& value, c
     result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
 
     int32_t tokenId = value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
-    FillPermissionUsedRecords(record, flag, tokenIdToBundleMap[tokenId].permissionRecords);
-    tokenIdToCountMap[tokenId] += 1;
+    std::string enhancedIdentity = value.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
+    std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
+    FillPermissionUsedRecords(record, flag, bundleKeyToBundleMap[bundleKey].permissionRecords);
+    bundleKeyToCountMap[bundleKey] += 1;
 
     return true;
 }
@@ -1410,8 +1424,8 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
         tokenTotalSuccCount += permissionRecord.accessCount;
         tokenTotalFailCount += permissionRecord.rejectCount;
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
-        " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), queryCount, tokenTotalSuccCount,
+    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d[%{public}s] get %{public}d records, success %{public}d, "
+        "failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), queryCount, tokenTotalSuccCount,
         tokenTotalFailCount);
     totalSuccCount += tokenTotalSuccCount;
     totalFailCount += tokenTotalFailCount;
@@ -1445,35 +1459,37 @@ int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedReque
     std::vector<PermissionRecord> mergedRecords;
     GetMergedRecordsFromCache(mergedRecords);
 
-    std::set<int32_t> tokenIdList;
-    std::map<int32_t, BundleUsedRecord> tokenIdToBundleMap;
-    std::map<int32_t, int32_t> tokenIdToCountMap;
-
+    std::set<std::string> bundleKeySet;
+    std::map<std::string, BundleUsedRecord> bundleKeyToBundleMap;
+    std::map<std::string, int32_t> bundleKeyToCountMap;
     for (auto& recordValue : findRecordsValues) {
         InsteadMergedRecIfNecessary(recordValue, mergedRecords);
 
         int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
-        if (tokenIdList.count(tokenId) == 0) {
-            tokenIdList.insert(tokenId); // new tokenId, inset into set
+        std::string enhancedIdentity = recordValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
+        std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
+        if (bundleKeySet.count(bundleKey) == 0) {
+            bundleKeySet.insert(bundleKey);
 
             BundleUsedRecord bundleRecord; // get bundle info
             if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
                 continue;
             }
 
-            tokenIdToBundleMap[tokenId] = bundleRecord; // add into map
-            tokenIdToCountMap[tokenId] = 0;
+            bundleKeyToBundleMap[bundleKey] = bundleRecord;
+            bundleKeyToCountMap[bundleKey] = 0;
         }
 
-        if (!FillBundleUsedRecord(recordValue, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result)) {
+        if (!FillBundleUsedRecord(recordValue, request.flag, bundleKeyToBundleMap, bundleKeyToCountMap, result)) {
             continue;
         }
     }
 
-    for (auto iter = tokenIdToBundleMap.begin(); iter != tokenIdToBundleMap.end(); ++iter) {
+    for (auto iter = bundleKeyToBundleMap.begin(); iter != bundleKeyToBundleMap.end(); ++iter) {
         result.bundleRecords.emplace_back(iter->second);
 
-        AddDebugLog(iter->first, iter->second, tokenIdToCountMap[iter->first], totalSuccCount, totalFailCount);
+        AddDebugLog(iter->second.tokenId, iter->second, bundleKeyToCountMap[iter->first],
+            totalSuccCount, totalFailCount);
     }
 
     if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
@@ -1567,13 +1583,11 @@ int32_t PermissionRecordManager::AddRecordToStartList(
     const PermissionUsedTypeInfo &info, int32_t status, int32_t callerPid)
 {
     int32_t opCode;
-    int ret = Constant::SUCCESS;
     const std::string& permissionName = info.permissionName;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-
     ContinuousPermissionRecord newRecord = {
         .tokenId = info.tokenId,
         .opCode = opCode,
@@ -1582,22 +1596,18 @@ int32_t PermissionRecordManager::AddRecordToStartList(
         .callerPid = callerPid,
         .usedType = info.type,
         .callertokenId = IPCSkeleton::GetCallingTokenID(),
+        .enhancedIdentity = info.enhancedIdentity,
     };
 
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if (it->IsEqualRecord(newRecord)) {
-            ret = PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
-            break;
+            return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
         }
     }
-    if (ret != PrivacyError::ERR_PERMISSION_ALREADY_START_USING) {
-        startRecordList_.emplace(newRecord);
-        newRecord.pid = info.pid;
-        CallbackExecute(newRecord, permissionName, info.type);
-    }
-    
-    return ret;
+    startRecordList_.emplace(newRecord);
+    CallbackExecute(newRecord, permissionName, info.type);
+    return Constant::SUCCESS;
 }
 
 
@@ -1608,11 +1618,15 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
         for (const auto& record : startRecordList_) {
             std::string perm;
             (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
-            infoList.emplace_back(record.callertokenId, record.tokenId, perm,
+            CurrUsingPermInfo info(record.callertokenId, record.tokenId, perm,
                 static_cast<ActiveChangeType>(record.status), record.usedType, record.pid);
+            info.enhancedIdentity = record.enhancedIdentity;
+            infoList.emplace_back(info);
             LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
-                "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", record.tokenId,
-                perm.c_str(), record.status, record.usedType, record.pid, record.callerPid);
+                "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d, "
+                "enhancedIdentity=%{public}s.",
+                record.tokenId, perm.c_str(), record.status, record.usedType, record.pid, record.callerPid,
+                record.enhancedIdentity.c_str());
         }
     }
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
@@ -1786,7 +1800,8 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
 }
 
 int32_t PermissionRecordManager::RemoveRecordFromStartList(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid,
+    const std::string& enhancedIdentity)
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
@@ -1801,10 +1816,12 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
         .opCode = opCode,
         .pid = pid,
         .callerPid = callerPid,
+        .enhancedIdentity = enhancedIdentity,
     };
     if (!ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualRecord, true)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, " \
-            "opCode=%{public}d, callerPid=%{public}d", tokenId, pid, opCode, callerPid);
+        LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, "
+            "opCode=%{public}d, callerPid=%{public}d, enhancedIdentity=%{public}s", tokenId, pid, opCode,
+            callerPid, enhancedIdentity.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_START_USING;
     }
     return Constant::SUCCESS;
@@ -1872,13 +1889,14 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
     std::vector<ContinuousPermissionRecord> unusedCameraRecord;
     {
         std::string perm;
-        std::vector<ContinuousPermissionRecord> removeList, inactiveList;
+        std::vector<ContinuousPermissionRecord> removeList;
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         PermissionRecordSet::RemoveByKey(startRecordList_, targetRecord, isEqualFunc, removeList);
         if (removeList.empty()) {
             return false;
         }
-        PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, removeList, inactiveList);
+        std::set<ContinuousPermissionRecord> inactiveList(removeList.begin(), removeList.end());
+        PermissionRecordSet::GetInActiveUniqueRecord(startRecordList_, inactiveList);
         for (const auto& record: inactiveList) {
             (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
             ContinuousPermissionRecord newRecord;
@@ -1886,6 +1904,7 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
             newRecord.status = PERM_INACTIVE;
             newRecord.pid = record.pid;
             newRecord.callerPid = record.callerPid;
+            newRecord.enhancedIdentity = record.enhancedIdentity;
             CallbackExecute(newRecord, perm);
         }
         if (!needClearCamera) {
@@ -1906,8 +1925,9 @@ void PermissionRecordManager::CallbackExecute(
     const ContinuousPermissionRecord& record, const std::string& permissionName, PermissionUsedType type)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, "
-        "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d.", record.tokenId,
-        permissionName.c_str(), record.status, type, record.pid, record.callerPid);
+        "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d, "
+        "enhancedIdentity=%{public}s.", record.tokenId, permissionName.c_str(), record.status, type, record.pid,
+        record.callerPid, record.enhancedIdentity.c_str());
 
     ActiveChangeResponse info;
     info.callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -1917,6 +1937,7 @@ void PermissionRecordManager::CallbackExecute(
     info.type = static_cast<ActiveChangeType>(record.status);
     info.usedType = type;
     info.pid = record.pid;
+    info.enhancedIdentity = record.enhancedIdentity;
 
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
         info, CallbackRegisterType::TOKEN_ONLY);
@@ -1940,6 +1961,7 @@ void PermissionRecordManager::ExecutePermAddCallbackAsync(
     callbackInfo.deviceId = "";
     callbackInfo.remoteDeviceName = "";
     callbackInfo.extra = info.extra;
+    callbackInfo.enhancedIdentity = info.enhancedIdentity;
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(callbackInfo, CallbackRegisterType::TOKEN_ONLY);
 }
 
@@ -2112,6 +2134,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
     LOGI(PRI_DOMAIN, PRI_TAG,
         "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
         tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
+    if (!DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
         return VerifyNativeRecordPermission(
@@ -2191,8 +2216,12 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
 }
 
 int32_t PermissionRecordManager::StopUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid,
+    const std::string& enhancedIdentity)
 {
+    if (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
         return VerifyNativeRecordPermission(
             permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
@@ -2203,7 +2232,7 @@ int32_t PermissionRecordManager::StopUsingPermission(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
-    return RemoveRecordFromStartList(tokenId, pid, permissionName, callerPid);
+    return RemoveRecordFromStartList(tokenId, pid, permissionName, callerPid, enhancedIdentity);
 }
 
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE

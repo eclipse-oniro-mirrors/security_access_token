@@ -25,6 +25,7 @@ namespace AccessToken {
 bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->permissionRecord.permissionName));
+    RETURN_IF_FALSE(out.WriteString(this->permissionRecord.enhancedIdentity));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.accessCount));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.secAccessCount));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.rejectCount));
@@ -56,6 +57,7 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
     }
 
     RELEASE_IF_FALSE(in.ReadString(permissionRecordParcel->permissionRecord.permissionName), permissionRecordParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionRecordParcel->permissionRecord.enhancedIdentity), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionRecordParcel->permissionRecord.accessCount), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionRecordParcel->permissionRecord.secAccessCount), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionRecordParcel->permissionRecord.rejectCount), permissionRecordParcel);

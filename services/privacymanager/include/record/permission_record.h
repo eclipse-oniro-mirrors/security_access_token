@@ -34,6 +34,7 @@ struct PermissionRecord {
     int32_t accessCount = 0;
     int32_t rejectCount = 0;
     int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+    std::string enhancedIdentity = "";
 
     PermissionRecord() = default;
 
@@ -49,11 +50,13 @@ struct ContinuousPermissionRecord {
     int32_t callerPid = 0;
     PermissionUsedType usedType = NORMAL_TYPE;
     uint32_t callertokenId = 0;
+    std::string enhancedIdentity = "";
 
     bool operator < (const ContinuousPermissionRecord& other) const;
 
     uint64_t GetTokenIdAndPermCode() const;
     uint64_t GetTokenIdAndPid() const;
+    bool IsEqualBasicRecord(const ContinuousPermissionRecord& record) const;
     bool IsEqualRecord(const ContinuousPermissionRecord& record) const;
     bool IsEqualTokenId(const ContinuousPermissionRecord& record) const;
     bool IsEqualPermCode(const ContinuousPermissionRecord& record) const;
