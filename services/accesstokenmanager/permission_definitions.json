@@ -8417,6 +8417,39 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.REVOKE_FILE_ACCESS_PERSIST",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_SHARED_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.GET_FILE_ACCESS_PERSIST",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.HDR_BRIGHTNESS",
             "grantMode": "system_grant",
             "availableLevel": "normal",
