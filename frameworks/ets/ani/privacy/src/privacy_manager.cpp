@@ -134,8 +134,8 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
         return;
     }
     bool isSameThread = (threadId_ == std::this_thread::get_id());
-    ani_option interopEnabled {"--interop=enable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
+    ani_option interopOption {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopOption};
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Current env is null.");
@@ -212,8 +212,8 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
         return;
     }
 
-    ani_option interopEnabled {"--interop=disable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
+    ani_option interopOption {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopOption};
     ani_env* env = GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetCurrentEnv!");
