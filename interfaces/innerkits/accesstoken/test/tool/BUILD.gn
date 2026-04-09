@@ -101,6 +101,25 @@ ohos_executable("GrantPermission") {
   part_name = "access_token"
 }
 
+ohos_executable("QueryPermissionStatus") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [ "query_permission_status.cpp" ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
 ohos_executable("RevokePermission") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -282,8 +301,8 @@ group("accesstoken_tool") {
     ":DeleteHapToken",
     ":GrantPermission",
     ":GrantShortTermWriteImageVideo",
-    ":GrantShortTermWriteImageVideo",
     ":Publish",
+    ":QueryPermissionStatus",
     ":Relabel",
     ":RevokePermission",
     ":SetPermDialogCap",

@@ -44,9 +44,11 @@ int32_t main(int argc, char *argv[])
     baseInfo.instIndex = 0;
     baseInfo.userID = 100; // 100: user id
 
-    std::cout << "SetPermDialogCap begin" << std::endl;
+    std::cout << "SetPermDialogCap begin, bundleName=" << bundle
+        << ", isForbidden=" << isForbidden << std::endl;
     int32_t ret = AccessTokenKit::SetPermDialogCap(baseInfo, isForbidden);
-    std::cout << "SetPermDialogCap end, " << ret << std::endl;
+    std::cout << "SetPermDialogCap end, bundleName=" << bundle
+        << ", isForbidden=" << isForbidden << ", ret=" << ret << std::endl << std::endl;
 
     AccessTokenKit::DeleteToken(static_cast<AccessTokenID>(mockToken));
     return 0;

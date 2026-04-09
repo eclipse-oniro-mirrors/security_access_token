@@ -24,14 +24,23 @@ static constexpr int32_t INT_ONE = 1;
 
 bool ValuesBucket::IsEmpty()
 {
-    return true;
+    return isEmpty_;
 }
 
 void ValuesBucket::PutString(std::string a, std::string b)
-{}
+{
+    isEmpty_ = false;
+}
 
 void ValuesBucket::PutInt(std::string a, int32_t b)
-{}
+{
+    isEmpty_ = false;
+}
+
+void ValuesBucket::PutLong(std::string a, int64_t b)
+{
+    isEmpty_ = false;
+}
 
 int32_t ResultSet::GetRowCount(int32_t a)
 {
@@ -43,7 +52,11 @@ void ResultSet::Close()
 
 int32_t ResultSet::GoToNextRow()
 {
-    return NativeRdb::E_OK;
+    if (hasNext_) {
+        hasNext_ = false;
+        return NativeRdb::E_OK;
+    }
+    return NativeRdb::E_SQLITE_CORRUPT;
 }
 
 void ResultSet::GetAllColumnNames(std::vector<std::string>& a)
@@ -56,6 +69,9 @@ void ResultSet::GetColumnType(int32_t a, NativeRdb::ColumnType& b)
 {}
 
 void ResultSet::GetInt(int32_t a, int32_t& b)
+{}
+
+void ResultSet::GetLong(int32_t a, int64_t& b)
 {}
 
 void ResultSet::GetString(int32_t a, std::string& b)
@@ -78,7 +94,25 @@ void RdbPredicates::EqualTo(std::string a, std::string b)
 void RdbPredicates::EqualTo(std::string a, int32_t b)
 {}
 
+void RdbPredicates::In(std::string a, const std::vector<std::string>& b)
+{}
+
+void RdbPredicates::In(std::string a, const std::vector<ValueObject>& b)
+{}
+
+void RdbPredicates::In(std::string a, const std::vector<int32_t>& b)
+{}
+
 void RdbPredicates::And()
+{}
+
+void RdbPredicates::Or()
+{}
+
+void RdbPredicates::BeginWrap()
+{}
+
+void RdbPredicates::EndWrap()
 {}
 
 int32_t Transaction::Rollback()
@@ -100,7 +134,7 @@ std::pair<int32_t, int64_t> Transaction::BatchInsert(
     if (insertFlag_ == Transaction::TransactionOperationResult::OPERATION_FAIL) {
         return std::make_pair(NativeRdb::E_SQLITE_CORRUPT, INT_ZERO);
     }
-    return std::make_pair(NativeRdb::E_OK, INT_ZERO);
+    return std::make_pair(NativeRdb::E_OK, insertRows_);
 }
 
 std::pair<int32_t, int32_t> Transaction::Delete(const NativeRdb::RdbPredicates& a)
@@ -147,11 +181,17 @@ int32_t RdbStore::Restore(std::string a)
 
 int32_t RdbStore::Update(int32_t a, const NativeRdb::ValuesBucket& b, const NativeRdb::RdbPredicates& c)
 {
+    if (updateFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
+        return NativeRdb::E_SQLITE_CORRUPT;
+    }
     return NativeRdb::E_OK;
 }
 
 std::shared_ptr<ResultSet> RdbStore::Query(const NativeRdb::RdbPredicates& a, const std::vector<std::string>& b)
 {
+    if (queryFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
+        return nullptr;
+    }
     return std::make_shared<ResultSet>();
 }
 
@@ -172,6 +212,9 @@ std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> RdbStore::Crea
 
 int32_t RdbStore::ExecuteSql(const std::string& a)
 {
+    if (executeSqlIndex_ < executeSqlResults_.size()) {
+        return executeSqlResults_[executeSqlIndex_++];
+    }
     return NativeRdb::E_OK;
 }
 

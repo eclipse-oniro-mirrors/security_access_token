@@ -127,7 +127,7 @@ public:
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
-    int32_t QueryStatusByTokenID(AccessTokenID tokenID,
+    int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList);
     size_t GetMaxQueryResultSize() const;
 
@@ -136,6 +136,21 @@ public:
 #endif
 
 private:
+    struct HapTokenDbContext {
+        HapTokenDbContext(const std::string& appIdValue, const HapPolicy& policyValue,
+            const std::vector<GenericValues>& undefValuesValue,
+            const std::vector<GenericValues>& oldPermStateValuesValue = GetEmptyPermStateValues(),
+            bool isUpdateValue = false);
+
+        const std::string& appId;
+        const HapPolicy& policy;
+        const std::vector<GenericValues>& undefValues;
+        const std::vector<GenericValues>& oldPermStateValues;
+        bool isUpdate;
+
+        static const std::vector<GenericValues>& GetEmptyPermStateValues();
+    };
+
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);
 
@@ -152,8 +167,8 @@ private:
     void GenerateDelInfoToVec(AtmDataType type, const GenericValues& delValue,
         std::vector<DelInfo>& delInfoVec);
     void AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
-    int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo, const std::string& appId,
-        const HapPolicy& policy, bool isUpdate, const std::vector<GenericValues>& undefValues);
+    int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
+        const HapTokenDbContext& context);
     int32_t RemoveHapTokenInfoInner(std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id, bool isTokenReserved);
     int RemoveHapTokenInfoFromDb(
         const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId);
@@ -174,6 +189,11 @@ private:
     void GetNativePermissionList(const NativeTokenInfoBase& native,
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     std::string NativeTokenToString(AccessTokenID tokenID);
+    int32_t FindPermissionByNameFromDb(const std::vector<uint32_t>& permCodeList,
+        std::unordered_map<std::string, uint32_t>& permissionNameToCodeMap,
+        std::vector<GenericValues>& permStateResults);
+    int32_t FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
+        std::vector<GenericValues>& permStateResults);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);

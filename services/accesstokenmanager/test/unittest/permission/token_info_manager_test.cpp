@@ -187,9 +187,9 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(hap->IsRemote(), false);
     hap->SetRemote(true);
     std::vector<GenericValues> valueList;
-    hap->StoreHapInfo(valueList, "test", APL_NORMAL);
+    hap->GenerateHapInfoValues("test", APL_NORMAL, valueList);
 
-    hap->StorePermissionPolicy(valueList);
+    hap->GeneratePermStateValues({}, valueList);
     ASSERT_EQ(hap->IsRemote(), true);
     hap->SetRemote(false);
     int32_t version = hap->GetApiVersion(5608);
@@ -1782,32 +1782,6 @@ HWTEST_F(TokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Level0)
 }
 
 /**
- * @tc.name: QueryPermissionFlag001
- * @tc.desc: PermissionPolicySet::QueryPermissionFlag function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level0)
-{
-    PermissionStatus perm = {
-        .permissionName = "ohos.permission.TEST",
-        .grantStatus = PermissionState::PERMISSION_DENIED,
-        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
-    };
-
-    AccessTokenID tokenId = 0x280bc140; // 0x280bc140 is random native
-    std::vector<PermissionStatus> permStateList;
-    permStateList.emplace_back(perm);
-
-    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
-
-    // perm.permissionName != permissionName
-    uint32_t flag = 0;
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
-        PermissionDataBrief::GetInstance().QueryPermissionFlag(tokenId, "ohos.permission.TEST1", flag));
-}
-
-/**
  * @tc.name: UpdatePermissionStatus001
  * @tc.desc: PermissionPolicySet::UpdatePermissionStatus function test
  * @tc.type: FUNC
@@ -1830,7 +1804,8 @@ HWTEST_F(TokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    bool changed = false;
+    PermissionDataBrief::PermissionStatusChangeType changed =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
 
     // permission is invalid
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionDataBrief::GetInstance().UpdatePermissionStatus(tokenId,
@@ -2046,8 +2021,8 @@ HWTEST_F(TokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level0)
 
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permStateValues;
-    hap->StoreHapInfo(hapInfoValues, "test", APL_NORMAL);
-    hap->StorePermissionPolicy(permStateValues); // permPolicySet_ is null
+    hap->GenerateHapInfoValues("test", APL_NORMAL, hapInfoValues);
+    hap->GeneratePermStateValues({}, permStateValues); // permPolicySet_ is null
 
 
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);

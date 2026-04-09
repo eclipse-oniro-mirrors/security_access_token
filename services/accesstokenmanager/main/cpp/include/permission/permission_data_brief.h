@@ -55,6 +55,13 @@ typedef enum AppProvisionType {
 
 class PermissionDataBrief final {
 public:
+    enum class PermissionStatusChangeType : uint32_t {
+        NO_CHANGE = 0,
+        STATUS_ONLY = 1,
+        FLAG_ONLY = 2,
+        STATUS_AND_FLAG = 3,
+    };
+
     static PermissionDataBrief& GetInstance();
     virtual ~PermissionDataBrief() = default;
 
@@ -66,7 +73,7 @@ public:
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission);
-    int32_t QueryPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
+    int32_t QueryPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
     void ClearAllSecCompGrantedPerm();
     void GetGrantedPermByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
@@ -84,9 +91,10 @@ public:
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);
     void RestorePermissionBriefData(AccessTokenID tokenId,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
-    int32_t StorePermissionBriefData(AccessTokenID tokenId, std::vector<GenericValues>& permStateValueList);
+    int32_t BuildPermissionStateValues(AccessTokenID tokenId, const std::vector<GenericValues>& oldPermStateValues,
+        std::vector<GenericValues>& permStateValueList);
     int32_t UpdatePermissionStatus(AccessTokenID tokenId,
-        const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
+        const std::string& permissionName, bool isGranted, uint32_t flag, PermissionStatusChangeType& changeType);
     int32_t ResetUserGrantPermissionStatus(AccessTokenID tokenID);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(
@@ -95,7 +103,7 @@ public:
 private:
     bool GetPermissionBriefData(AccessTokenID tokenID, const PermissionStatus &permState,
         const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData);
-    void GetPermissionStatus(const BriefPermData& briefPermData, PermissionStatus &permState);
+    PermissionStatus GetPermissionStatus(const BriefPermData& briefPermData);
     void GetPermissionBriefDataList(AccessTokenID tokenID,
         const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap,
@@ -104,10 +112,12 @@ private:
     void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void MergePermBriefData(std::vector<BriefPermData>& permBriefDataList, BriefPermData& data);
-    bool isRestrictedPermission(uint32_t oldFlag, uint32_t newFlag);
+    bool IsRestrictedPermission(uint32_t oldFlag, uint32_t newFlag);
     int32_t UpdatePermStateList(AccessTokenID tokenId, uint32_t opCode, bool isGranted, uint32_t flag);
-    int32_t UpdateSecCompGrantedPermList(AccessTokenID tokenId, const std::string& permissionName, bool isToGrant);
+    int32_t UpdateSecCompGrantedPermList(AccessTokenID tokenId, uint32_t permCode, bool isToGrant);
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, uint32_t permCode);
+    int32_t QueryPermissionStatusAndFlagInner(
+        AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
     void ClearAllSecCompGrantedPermById(AccessTokenID tokenID);
     void SecCompGrantedPermListUpdated(AccessTokenID tokenID, const std::string& permissionName, bool isAdded);
     int32_t GetBriefPermDataByTokenIdInner(AccessTokenID tokenID, std::vector<BriefPermData>& list);

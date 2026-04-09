@@ -57,7 +57,7 @@ void AccessTokenDb::InitRdb()
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
-    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_6, callback, res);
+    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_7, callback, res);
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
     }
@@ -187,7 +187,6 @@ int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& 
 int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValue,
     std::vector<GenericValues>& results)
 {
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (tableName.empty()) {
@@ -196,7 +195,27 @@ int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValu
 
     NativeRdb::RdbPredicates predicates(tableName);
     AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
+    return QueryByPredicates(tableName, predicates, results);
+}
 
+int32_t AccessTokenDb::Find(AtmDataType type, const std::string& column, const std::vector<VariantValue>& values,
+    std::vector<GenericValues>& results)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    if (tableName.empty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    NativeRdb::RdbPredicates predicates(tableName);
+    AccessTokenDbUtil::ToRdbPredicates(column, values, predicates);
+    return QueryByPredicates(tableName, predicates, results);
+}
+
+int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
+    std::vector<GenericValues>& results)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     std::vector<std::string> columns; // empty columns means query all columns
     int count = 0;
     {

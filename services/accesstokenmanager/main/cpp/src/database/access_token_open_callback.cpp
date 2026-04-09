@@ -18,6 +18,7 @@
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "time_util.h"
 #include "token_field_const.h"
 
 namespace OHOS {
@@ -158,6 +159,8 @@ int32_t AccessTokenOpenCallback::CreatePermissionStateTable(NativeRdb::RdbStore&
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_GRANT_FLAG)
         .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_TIMESTAMP)
+        .append(" integer default 0,")
         .append("primary key(")
         .append(TokenFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -390,8 +393,8 @@ int32_t AccessTokenOpenCallback::AddAvailableTypeColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_AVAILABLE_TYPE + " integer default " + std::to_string(ATokenAvailableTypeEnum::NORMAL);
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Insert column result is %{public}d.", res);
-
+    LOGI(ATM_DOMAIN, ATM_TAG, "Add column %{public}s to table %{public}s, result is %{public}d.",
+        TokenFiledConst::FIELD_AVAILABLE_TYPE.c_str(), tableName.c_str(), res);
     return res;
 }
 
@@ -416,7 +419,8 @@ int32_t AccessTokenOpenCallback::AddRequestToggleStatusColumn(NativeRdb::RdbStor
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + " integer default " + std::to_string(0); // 0: close
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Insert column result is %{public}d.", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Add column %{public}s to table %{public}s, result is %{public}d.",
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS.c_str(), tableName.c_str(), res);
 
     return res;
 }
@@ -442,7 +446,8 @@ int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdb
         TokenFiledConst::FIELD_FORBID_PERM_DIALOG + " integer default " + std::to_string(false);
 
     int32_t res = rdbStore.ExecuteSql(sql);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Insert column result is %{public}d.", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Add column %{public}s to table %{public}s, result is %{public}d.",
+        TokenFiledConst::FIELD_FORBID_PERM_DIALOG.c_str(), tableName.c_str(), res);
 
     return res;
 }
@@ -498,49 +503,119 @@ int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::Rdb
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::AddTimestampColumn(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, tableName);
+
+    std::string checkSql = "SELECT 1 FROM " + tableName + " WHERE " + TokenFiledConst::FIELD_TIMESTAMP + "=" +
+        std::to_string(0);
+
+    int32_t checkRes = rdbStore.ExecuteSql(checkSql);
+    if (checkRes == NativeRdb::E_OK) {
+        return NativeRdb::E_OK;
+    }
+
+    std::string executeSql = "alter table " + tableName + " add column " + TokenFiledConst::FIELD_TIMESTAMP +
+        " integer default " + std::to_string(0);
+
+    int32_t executeRes = rdbStore.ExecuteSql(executeSql);
+    if (executeRes != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column timestamp to table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), executeRes);
+        return executeRes;
+    }
+
+    std::string updateSql = "update " + tableName + " set " + TokenFiledConst::FIELD_TIMESTAMP + "=" +
+        std::to_string(TimeUtil::GetCurrentTimestamp());
+    executeRes = rdbStore.ExecuteSql(updateSql);
+    if (executeRes != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to refresh timestamp column in table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), executeRes);
+        return executeRes;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to add column timestamp to permission_state_table.");
+
+    return NativeRdb::E_OK;
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = AddAvailableTypeColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    return AddPermDialogCapColumn(rdbStore);
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore)
+{
+    return CreateVersionThreeTable(rdbStore);
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore)
+{
+    return AddRequestToggleStatusColumn(rdbStore);
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion4(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateVersionFiveTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    return AddKernelEffectAndHasValueColumn(rdbStore);
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion5(NativeRdb::RdbStore& rdbStore)
+{
+    return CreateVersionSixTable(rdbStore);
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion6(NativeRdb::RdbStore& rdbStore)
+{
+    return AddTimestampColumn(rdbStore);
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
 
-    int32_t res = 0;
+    int32_t res = NativeRdb::E_OK;
     switch (currentVersion) { // upgrade to the latest db version in rom, no mather how much the version is
         case DATABASE_VERSION_1: // 1->2
-            res = AddAvailableTypeColumn(rdbStore);
+            res = UpgradeFromVersion1(rdbStore);
             if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column available_type, res is %{public}d.", res);
-                return res;
-            }
-            res = AddPermDialogCapColumn(rdbStore);
-            if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column perm_dialog_cap_state, res is %{public}d.", res);
                 return res;
             }
             [[fallthrough]];
         case DATABASE_VERSION_2: // 2->3
-            res = CreateVersionThreeTable(rdbStore);
+            res = UpgradeFromVersion2(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }
             [[fallthrough]];
         case DATABASE_VERSION_3: // 3->4
-            res = AddRequestToggleStatusColumn(rdbStore);
+            res = UpgradeFromVersion3(rdbStore);
             if (res != NativeRdb::E_OK) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column status.");
                 return res;
             }
             [[fallthrough]];
         case DATABASE_VERSION_4: // 4->5
-            res = CreateVersionFiveTable(rdbStore);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            res = AddKernelEffectAndHasValueColumn(rdbStore);
+            res = UpgradeFromVersion4(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }
             [[fallthrough]];
         case DATABASE_VERSION_5: // 5->6
-            res = CreateVersionSixTable(rdbStore);
+            res = UpgradeFromVersion5(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+        case DATABASE_VERSION_6: // 6->7
+            res = UpgradeFromVersion6(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }

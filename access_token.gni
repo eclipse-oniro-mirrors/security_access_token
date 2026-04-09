@@ -38,6 +38,15 @@ access_token_cflags_cc = [
   "-DHILOG_ENABLE",
 ]
 
+if (defined(product_name) &&
+    (product_name == "rk3568" || product_name == "standard")) {
+  access_token_cflags_cc +=
+      [ "-DACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE=10000" ]
+} else {
+  access_token_cflags_cc +=
+      [ "-DACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE=20000" ]
+}
+
 if (use_libfuzzer) {
   access_token_cflags_cc += [ "-DFUZZ_ENABLE" ]
 }

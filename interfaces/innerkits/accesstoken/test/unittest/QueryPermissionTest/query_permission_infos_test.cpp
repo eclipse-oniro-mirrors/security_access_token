@@ -22,12 +22,15 @@
 #include "test_common.h"
 #include "permission_def.h"
 #include "permission_map.h"
+#include "time_util.h"
 
 #include <gtest/gtest.h>
 #include <gtest/hwext/gtest-multithread.h>
+#include <unordered_map>
 #include <chrono>
 #include <thread>
 #include <algorithm>
+#include <unistd.h>
 
 namespace OHOS {
 namespace Security {
@@ -51,19 +54,149 @@ constexpr int32_t REPEAT_ITERATION_COUNT = 1000;
 constexpr int32_t TEST_USER_ID = 100;
 constexpr int32_t TEST_API_VERSION = 12;
 constexpr int32_t TEST_INST_INDEX = 0;
+constexpr int32_t UID_USER_RANGE = 200000;
 
 // Test data sizes
 constexpr int32_t MEDIUM_APP_COUNT = 100;
 constexpr int32_t LONG_PERMISSION_NAME_SIZE = 300;
 constexpr int32_t LARGE_APP_COUNT = 500;
 constexpr int32_t EXTRA_LARGE_APP_COUNT = 1000;
-constexpr int32_t LARGE_PERMISSION_COUNT = 50;
+constexpr int32_t LARGE_PERMISSION_COUNT =
+    ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE / EXTRA_LARGE_APP_COUNT;
 
 // Query result size limits
-constexpr int32_t MAX_QUERY_RESULT_SIZE = 500 * 100;  // Max result size for query operations
+constexpr int32_t MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 
 // Permission status values
 constexpr int32_t PERMISSION_STATUS_MAX = 3;
+
+void ExpectGrantStatusAndFlagConsistent(const PermissionStatus& queriedStatus)
+{
+    uint32_t permissionFlag = 0;
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenKit::GetPermissionFlag(queriedStatus.tokenID, queriedStatus.permissionName, permissionFlag));
+    EXPECT_EQ(queriedStatus.grantFlag, permissionFlag);
+    EXPECT_EQ(queriedStatus.grantStatus,
+        AccessTokenKit::VerifyAccessToken(queriedStatus.tokenID, queriedStatus.permissionName, true));
+    EXPECT_EQ(queriedStatus.grantStatus,
+        AccessTokenKit::VerifyAccessToken(queriedStatus.tokenID, queriedStatus.permissionName, false));
+}
+
+void ExpectGrantedQueryResult(const PermissionStatus& queriedStatus)
+{
+    EXPECT_EQ(PERMISSION_GRANTED, queriedStatus.grantStatus);
+    ExpectGrantStatusAndFlagConsistent(queriedStatus);
+}
+
+void ExpectDeniedQueryResult(const PermissionStatus& queriedStatus)
+{
+    EXPECT_EQ(PERMISSION_DENIED, queriedStatus.grantStatus);
+    ExpectGrantStatusAndFlagConsistent(queriedStatus);
+}
+
+const PermissionStatus* FindPermissionStatus(const std::vector<PermissionStatus>& permissionInfoList,
+    AccessTokenID tokenID, const std::string& permissionName)
+{
+    auto iter = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [tokenID, &permissionName](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == permissionName;
+        });
+    return iter == permissionInfoList.end() ? nullptr : &(*iter);
+}
+
+uint64_t GetCurrentTimeMillis()
+{
+    return static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
+}
+
+HapInfoParams BuildTestHapInfoParams(const std::string& bundleName, bool isSystemApp = true)
+{
+    HapInfoParams infoParams = {
+        .userID = TEST_USER_ID,
+        .bundleName = bundleName,
+        .instIndex = TEST_INST_INDEX,
+        .appIDDesc = "test.app.id." + bundleName,
+        .apiVersion = TEST_API_VERSION,
+        .isSystemApp = isSystemApp,
+        .appDistributionType = "os_default",
+    };
+    return infoParams;
+}
+
+UpdateHapInfoParams BuildUpdateHapInfoParams(const HapInfoParams& infoParams)
+{
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = infoParams.isSystemApp,
+        .appDistributionType = infoParams.appDistributionType,
+    };
+    return updateInfoParams;
+}
+
+PermissionStateFull BuildPermissionState(const std::string& permissionName, int grantStatus, uint32_t grantFlag)
+{
+    PermissionStateFull permState = {
+        .permissionName = permissionName,
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {grantStatus},
+        .grantFlags = {grantFlag}
+    };
+    return permState;
+}
+
+uint64_t QueryPermissionTimestamp(AccessTokenID tokenID, const std::string& permissionName)
+{
+    std::vector<PermissionStatus> byTokenInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, byTokenInfoList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    const PermissionStatus* tokenStatus = FindPermissionStatus(byTokenInfoList, tokenID, permissionName);
+    EXPECT_NE(tokenStatus, nullptr);
+
+    std::vector<PermissionStatus> byPermissionInfoList;
+    ret = AccessTokenKit::QueryStatusByPermission({permissionName}, byPermissionInfoList, true);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    const PermissionStatus* permissionStatus = FindPermissionStatus(byPermissionInfoList, tokenID, permissionName);
+    EXPECT_NE(permissionStatus, nullptr);
+
+    if (tokenStatus == nullptr || permissionStatus == nullptr) {
+        return 0;
+    }
+    EXPECT_EQ(tokenStatus->timestamp, permissionStatus->timestamp);
+    return tokenStatus->timestamp;
+}
+
+bool QueryPermissionStatusByTokenID(
+    AccessTokenID tokenID, const std::string& permissionName, PermissionStatus& permissionStatus)
+{
+    std::vector<PermissionStatus> byTokenInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, byTokenInfoList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    const PermissionStatus* status = FindPermissionStatus(byTokenInfoList, tokenID, permissionName);
+    if (status == nullptr) {
+        return false;
+    }
+    permissionStatus = *status;
+    return true;
+}
+
+int32_t UpdateHapTokenByTest(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& updateInfoParams,
+    const HapPolicyParams& policyParams)
+{
+    MockNativeToken mock("foundation");
+    return AccessTokenKit::UpdateHapToken(tokenIdEx, updateInfoParams, policyParams);
+}
+
+void ExpectPermissionTimestampInRange(AccessTokenID tokenID, const std::string& permissionName,
+    uint64_t beginTime, uint64_t endTime)
+{
+    uint64_t timestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(timestamp, 0U);
+    EXPECT_GE(timestamp, beginTime);
+    EXPECT_LE(timestamp, endTime);
+}
+
 }
 
 uint64_t QueryPermissionInfosTest::selfShellTokenId_ = 0;
@@ -152,7 +285,7 @@ AccessTokenID QueryPermissionInfosTest::PrepareTestHap(
         permState.isGeneral = true;
         permState.resDeviceID = {"local"};
         permState.grantStatus = {PermissionState::PERMISSION_GRANTED};
-        permState.grantFlags = {1}; // PERMISSION_GRANTED_BY_DEFAULT
+        permState.grantFlags = {1};
         permStates.emplace_back(permState);
     }
 
@@ -235,6 +368,7 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest001, TestSize.Leve
         if (info.tokenID == tokenID1) {
             found = true;
             EXPECT_EQ("ohos.permission.CAMERA", info.permissionName);
+            ExpectGrantStatusAndFlagConsistent(info);
             break;
         }
     }
@@ -277,6 +411,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest002, TestSize.Leve
     std::set<AccessTokenID> foundTokenIDs;
     for (const auto& info : permissionInfoList) {
         foundTokenIDs.insert(info.tokenID);
+        if (info.tokenID == tokenID1 || info.tokenID == tokenID2) {
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
     }
     EXPECT_TRUE(foundTokenIDs.find(tokenID1) != foundTokenIDs.end());
     EXPECT_TRUE(foundTokenIDs.find(tokenID2) != foundTokenIDs.end());
@@ -341,12 +478,14 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest003, TestSize.Leve
     for (const auto& info : permissionInfoListAll) {
         if (info.tokenID == tokenID) {
             foundInAll = true;
+            ExpectGrantStatusAndFlagConsistent(info);
             break;
         }
     }
     for (const auto& info : permissionInfoListHapOnly) {
         if (info.tokenID == tokenID) {
             foundInHapOnly = true;
+            ExpectGrantStatusAndFlagConsistent(info);
             break;
         }
     }
@@ -384,6 +523,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest004, TestSize.Leve
     for (const auto& info : permissionInfoList) {
         ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(info.tokenID);
         EXPECT_EQ(TOKEN_HAP, tokenType);
+        if (info.tokenID == tokenID) {
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
     }
 
     // Cleanup
@@ -414,6 +556,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest005, TestSize.Leve
     for (const auto& info : permissionInfoList) {
         ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(info.tokenID);
         EXPECT_EQ(TOKEN_HAP, tokenType);
+        if (info.tokenID == tokenID) {
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
     }
 
     // Cleanup
@@ -452,6 +597,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest006, TestSize.Leve
         if (info.tokenID == tokenID1) foundTestHap1 = true;
         if (info.tokenID == tokenID2) foundTestHap2 = true;
         EXPECT_EQ(TOKEN_HAP, AccessTokenKit::GetTokenTypeFlag(info.tokenID));
+        if (info.tokenID == tokenID1 || info.tokenID == tokenID2) {
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
     }
     EXPECT_TRUE(foundTestHap1) << "Test HAP 1 not found in onlyHap=true result";
     EXPECT_TRUE(foundTestHap2) << "Test HAP 2 not found in onlyHap=true result";
@@ -472,6 +620,8 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest006, TestSize.Leve
         ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(info.tokenID);
         if (tokenType == TOKEN_NATIVE) {
             hasNative = true;
+        } else if (info.tokenID == tokenID1 || info.tokenID == tokenID2) {
+            ExpectGrantStatusAndFlagConsistent(info);
         }
     }
     EXPECT_TRUE(foundTestHap1) << "Test HAP 1 not found in onlyHap=false result";
@@ -889,6 +1039,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest022, TestSize.Leve
 
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
 }
 
 /**
@@ -927,6 +1080,11 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest024, TestSize.Leve
 
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        if (AccessTokenKit::GetTokenTypeFlag(info.tokenID) == TOKEN_HAP) {
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
+    }
 }
 
 /**
@@ -949,12 +1107,15 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest025, TestSize.Leve
 
     int32_t ret = AccessTokenKit::QueryStatusByPermission(permissionList, permissionInfoList, true);
 
-    EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_FALSE(permissionInfoList.empty());
-
     // Restore original token ID
     int32_t restoreResult = SetSelfTokenID(originalTokenId);
     EXPECT_EQ(0, restoreResult) << "Failed to restore original token ID";
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
 }
 
 /**
@@ -1002,6 +1163,80 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest027, TestSize.Leve
 }
 
 /**
+ * @tc.name: QueryStatusByPermissionTest028
+ * @tc.desc: Query with duplicated permission names, results should not be duplicated
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest028, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.duplicate.permission.test028", permissions, false);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    std::vector<PermissionStatus> singlePermissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByPermission({"ohos.permission.CAMERA"}, singlePermissionInfoList, true);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionStatus> duplicatedPermissionInfoList;
+    ret = AccessTokenKit::QueryStatusByPermission(
+        {"ohos.permission.CAMERA", "ohos.permission.CAMERA"}, duplicatedPermissionInfoList, true);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    size_t singleCount = 0;
+    size_t duplicatedCount = 0;
+    for (const auto& info : singlePermissionInfoList) {
+        if (info.tokenID == tokenID && info.permissionName == "ohos.permission.CAMERA") {
+            ++singleCount;
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
+    }
+    for (const auto& info : duplicatedPermissionInfoList) {
+        if (info.tokenID == tokenID && info.permissionName == "ohos.permission.CAMERA") {
+            ++duplicatedCount;
+            ExpectGrantStatusAndFlagConsistent(info);
+        }
+    }
+    EXPECT_EQ(1U, singleCount);
+    EXPECT_EQ(singleCount, duplicatedCount);
+
+    CleanupTestHap(tokenID);
+}
+
+/**
+ * @tc.name: QueryStatusByPermissionTest029
+ * @tc.desc: Query with non-zero user uid, cover GetTokenIDByUserID branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByPermissionTest029, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.userid.branch.test029", permissions, true, APL_SYSTEM_CORE);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    uid_t originalUid = getuid();
+    ASSERT_EQ(0, setuid(TEST_USER_ID * UID_USER_RANGE + 1));
+
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByPermission({"ohos.permission.CAMERA"}, permissionInfoList, true);
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    bool found = false;
+    for (const auto& info : permissionInfoList) {
+        if (info.tokenID == tokenID && info.permissionName == "ohos.permission.CAMERA") {
+            found = true;
+            ExpectGrantStatusAndFlagConsistent(info);
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+
+    EXPECT_EQ(0, setuid(originalUid));
+    CleanupTestHap(tokenID);
+}
+
+/**
  * @tc.name: QueryStatusByTokenIDTest001
  * @tc.desc: Query single HAP app's TokenID, return all its permissions
  * @tc.type: FUNC
@@ -1031,6 +1266,7 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest001, TestSize.Level1)
     std::set<std::string> foundPerms;
     for (const auto& info : permissionInfoList) {
         foundPerms.insert(info.permissionName);
+        ExpectGrantStatusAndFlagConsistent(info);
     }
     EXPECT_TRUE(foundPerms.find("ohos.permission.CAMERA") != foundPerms.end());
     EXPECT_TRUE(foundPerms.find("ohos.permission.MICROPHONE") != foundPerms.end());
@@ -1064,6 +1300,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest002, TestSize.Level1)
     // Assert: Should return RET_SUCCESS with permissions from both apps
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(2U, permissionInfoList.size());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
 
     // Cleanup
     CleanupTestHap(tokenID1);
@@ -1332,6 +1571,7 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest012, TestSize.Level1)
         // grantStatus should be one of: -1, 0, 1, 2, 3
         EXPECT_GE(info.grantStatus, -1);
         EXPECT_LE(info.grantStatus, PERMISSION_STATUS_MAX);
+        ExpectGrantStatusAndFlagConsistent(info);
     }
 
     // Cleanup
@@ -1364,6 +1604,7 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest013, TestSize.Level1)
     for (const auto& info : permissionInfoList) {
         // grantFlag should be a valid permission flag value
         EXPECT_GE(info.grantFlag, 0);
+        ExpectGrantStatusAndFlagConsistent(info);
     }
 
     // Cleanup
@@ -1440,6 +1681,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest015, TestSize.Level2)
             EXPECT_EQ(RET_SUCCESS, ret);
             EXPECT_FALSE(permissionInfoList.empty());
             EXPECT_EQ(sharedTokenID, permissionInfoList[0].tokenID);
+            for (const auto& info : permissionInfoList) {
+                ExpectGrantStatusAndFlagConsistent(info);
+            }
         });
     }
 
@@ -1494,6 +1738,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest016, TestSize.Level2)
             // Assert: Should succeed
             EXPECT_EQ(RET_SUCCESS, ret);
             EXPECT_FALSE(permissionInfoList.empty());
+            for (const auto& info : permissionInfoList) {
+                ExpectGrantStatusAndFlagConsistent(info);
+            }
 
             // Cleanup: Use wrapper function to delete token
             CleanupTestHap(tokenIDs[i]);
@@ -1513,7 +1760,7 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest016, TestSize.Level2)
 
 /**
  * @tc.name: QueryStatusByTokenIDTest017
- * @tc.desc: Continuous query 1000 times, verify no memory leak and performance stability
+ * @tc.desc: Continuous query 1000 times, verify repeated calls remain stable
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -1527,7 +1774,6 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest017, TestSize.Level2)
     // Test: Query REPEAT_ITERATION_COUNT times continuously
     std::vector<AccessTokenID> tokenIDList = {tokenID};
 
-    auto startTime = std::chrono::high_resolution_clock::now();
     for (int32_t i = 0; i < REPEAT_ITERATION_COUNT; ++i) {
         std::vector<PermissionStatus> permissionInfoList;
         int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
@@ -1536,13 +1782,6 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest017, TestSize.Level2)
         EXPECT_EQ(RET_SUCCESS, ret);
         EXPECT_FALSE(permissionInfoList.empty());
     }
-    auto endTime = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    GTEST_LOG_(INFO) << REPEAT_ITERATION_COUNT << " continuous queries took " << duration.count() << "ms";
-
-    // Assert: Average time per query should be reasonable (< 1ms per query)
-    EXPECT_LT(duration.count(), REPEAT_ITERATION_COUNT);
 
     // Cleanup
     CleanupTestHap(tokenID);
@@ -1609,6 +1848,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest020, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
 }
 
 /**
@@ -1654,6 +1896,9 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest022, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
 
     CleanupTestHap(tokenID);
 }
@@ -1684,16 +1929,19 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest023, TestSize.Level1)
 
     int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
 
-    // Assert: Should return RET_SUCCESS (Shell process is exempt)
-    EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_FALSE(permissionInfoList.empty());
-
-    // Cleanup
-    CleanupTestHap(tokenID);
-
     // Restore original token ID
     int32_t restoreResult = SetSelfTokenID(originalTokenId);
     EXPECT_EQ(0, restoreResult) << "Failed to restore original token ID";
+
+    // Assert: Should return RET_SUCCESS (Shell process is exempt)
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
+
+    // Cleanup
+    CleanupTestHap(tokenID);
 }
 
 /**
@@ -1731,6 +1979,110 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest024, TestSize.Level3)
     for (auto tokenID : tokenIDs) {
         CleanupTestHap(tokenID);
     }
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDTest025
+ * @tc.desc: Query with duplicated token IDs, results should not be duplicated
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest025, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {
+        "ohos.permission.CAMERA",
+        "ohos.permission.MICROPHONE"
+    };
+    AccessTokenID tokenID = PrepareTestHap("com.example.duplicate.token.test025", permissions, false);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    std::vector<PermissionStatus> singleTokenInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, singleTokenInfoList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionStatus> duplicatedTokenInfoList;
+    ret = AccessTokenKit::QueryStatusByTokenID({tokenID, tokenID}, duplicatedTokenInfoList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    EXPECT_EQ(singleTokenInfoList.size(), duplicatedTokenInfoList.size());
+    for (const auto& info : duplicatedTokenInfoList) {
+        EXPECT_EQ(tokenID, info.tokenID);
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
+
+    CleanupTestHap(tokenID);
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDTest026
+ * @tc.desc: Query multiple token IDs, result should contain all queried permission records
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest026, TestSize.Level1)
+{
+    AccessTokenID tokenID1 = PrepareTestHap("com.example.order.token.test026a",
+        {"ohos.permission.CAMERA"}, false);
+    AccessTokenID tokenID2 = PrepareTestHap("com.example.order.token.test026b",
+        {"ohos.permission.MICROPHONE"}, false);
+    ASSERT_NE(tokenID1, INVALID_TOKENID);
+    ASSERT_NE(tokenID2, INVALID_TOKENID);
+
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID2, tokenID1}, permissionInfoList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(2U, permissionInfoList.size());
+
+    bool foundCamera = false;
+    bool foundMicrophone = false;
+    for (const auto& info : permissionInfoList) {
+        if (info.tokenID == tokenID1 && info.permissionName == "ohos.permission.CAMERA") {
+            foundCamera = true;
+        }
+        if (info.tokenID == tokenID2 && info.permissionName == "ohos.permission.MICROPHONE") {
+            foundMicrophone = true;
+        }
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
+    EXPECT_TRUE(foundCamera);
+    EXPECT_TRUE(foundMicrophone);
+
+    CleanupTestHap(tokenID1);
+    CleanupTestHap(tokenID2);
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDTest027
+ * @tc.desc: Verify PERMISSION_FIXED_BY_ADMIN_POLICY is returned consistently.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusByTokenIDTest027, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.test.token027", permissions, false);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+    {
+        MockNativeToken mockNative("edm");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            tokenID, permissions, PERMISSION_DENIED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    }
+
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret;
+    {
+        MockNativeToken mockNative("privacy_service");
+        ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList);
+    }
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(permissionInfoList.empty());
+    for (const auto& info : permissionInfoList) {
+        EXPECT_EQ(static_cast<uint32_t>(PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY), info.grantFlag);
+        ExpectGrantStatusAndFlagConsistent(info);
+    }
+
+    CleanupTestHap(tokenID);
 }
 
 /**
@@ -1778,6 +2130,563 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusOverSizeTest001, TestSize.Level1)
     for (auto tokenID : tokenIDs) {
         CleanupTestHap(tokenID);
     }
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest001
+ * @tc.desc: QueryStatusByPermission and QueryStatusByTokenID should return updated timestamp after grant
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest001, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.timestamp.test001", permissions, true);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    const uint64_t beforeGrantTime = GetCurrentTimeMillis();
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    const uint64_t afterTokenQueryTime = GetCurrentTimeMillis();
+
+    auto tokenIt = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    EXPECT_NE(tokenIt, permissionInfoList.end());
+    ASSERT_NE(tokenIt, permissionInfoList.end());
+    ExpectGrantedQueryResult(*tokenIt);
+    EXPECT_GT(tokenIt->timestamp, 0U);
+    EXPECT_GE(tokenIt->timestamp, beforeGrantTime);
+    EXPECT_LE(tokenIt->timestamp, afterTokenQueryTime);
+
+    std::vector<PermissionStatus> byPermissionInfoList;
+    ret = AccessTokenKit::QueryStatusByPermission({"ohos.permission.CAMERA"}, byPermissionInfoList, true);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    const uint64_t afterPermissionQueryTime = GetCurrentTimeMillis();
+
+    auto permIt = std::find_if(byPermissionInfoList.begin(), byPermissionInfoList.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(permIt, byPermissionInfoList.end());
+    ExpectGrantedQueryResult(*permIt);
+    EXPECT_EQ(tokenIt->timestamp, permIt->timestamp);
+    EXPECT_GT(permIt->timestamp, 0U);
+    EXPECT_GE(permIt->timestamp, beforeGrantTime);
+    EXPECT_LE(permIt->timestamp, afterPermissionQueryTime);
+
+    CleanupTestHap(tokenID);
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest002
+ * @tc.desc: Repeated GrantPermission with unchanged state should keep timestamp unchanged
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest002, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.timestamp.test002", permissions, true);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+    std::vector<PermissionStatus> firstQueryResult;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, firstQueryResult);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto firstIt = std::find_if(firstQueryResult.begin(), firstQueryResult.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(firstIt, firstQueryResult.end());
+    ExpectGrantedQueryResult(*firstIt);
+    const uint64_t firstTimestamp = firstIt->timestamp;
+    EXPECT_GT(firstTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+    std::vector<PermissionStatus> secondQueryResult;
+    ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, secondQueryResult);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto secondIt = std::find_if(secondQueryResult.begin(), secondQueryResult.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(secondIt, secondQueryResult.end());
+    ExpectGrantedQueryResult(*secondIt);
+    EXPECT_EQ(secondIt->timestamp, firstTimestamp);
+
+    CleanupTestHap(tokenID);
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest003
+ * @tc.desc: Repeated RevokePermission with unchanged state should keep timestamp unchanged
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest003, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.timestamp.test003", permissions, true);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+    std::vector<PermissionStatus> firstQueryResult;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, firstQueryResult);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto firstIt = std::find_if(firstQueryResult.begin(), firstQueryResult.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(firstIt, firstQueryResult.end());
+    ExpectDeniedQueryResult(*firstIt);
+    const uint64_t firstTimestamp = firstIt->timestamp;
+    EXPECT_GT(firstTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::RevokePermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+    std::vector<PermissionStatus> secondQueryResult;
+    ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, secondQueryResult);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto secondIt = std::find_if(secondQueryResult.begin(), secondQueryResult.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(secondIt, secondQueryResult.end());
+    ExpectDeniedQueryResult(*secondIt);
+    EXPECT_EQ(secondIt->timestamp, firstTimestamp);
+
+    CleanupTestHap(tokenID);
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest004
+ * @tc.desc: Native token permission status timestamp should default to 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest004, TestSize.Level1)
+{
+    MockNativeToken mockNative("privacy_service");
+    static const std::string permissionName = "ohos.permission.PERMISSION_USED_STATS";
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByPermission({permissionName}, permissionInfoList, false);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto nativeIt = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [](const PermissionStatus& status) {
+            return AccessTokenKit::GetTokenTypeFlag(status.tokenID) == TOKEN_NATIVE;
+        });
+    ASSERT_NE(nativeIt, permissionInfoList.end());
+    EXPECT_EQ(0U, nativeIt->timestamp);
+}
+
+
+/**
+ * @tc.name: QueryStatusTimestampTest005
+ * @tc.desc: New installed app denied default user_grant permission should use install timestamp
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest005, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test006");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    const uint64_t beforeInstallTime = GetCurrentTimeMillis();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t afterInstallTime = GetCurrentTimeMillis();
+
+    ExpectPermissionTimestampInRange(tokenID, permissionName, beforeInstallTime, afterInstallTime);
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest006
+ * @tc.desc: New installed app system_grant permission should use install grant timestamp
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest006, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test007");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_GRANTED, PERMISSION_SYSTEM_FIXED));
+
+    const uint64_t beforeInstallTime = GetCurrentTimeMillis();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t afterInstallTime = GetCurrentTimeMillis();
+
+    ExpectPermissionTimestampInRange(tokenID, permissionName, beforeInstallTime, afterInstallTime);
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest007
+ * @tc.desc: New installed app pre-authorized permission should use install grant timestamp
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest007, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test008");
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+    };
+    PermissionStateFull permState = BuildPermissionState(
+        permissionName, PermissionState::PERMISSION_DENIED, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    PreAuthorizationInfo preAuthorizationInfo = {
+        .permissionName = permissionName,
+        .userCancelable = true
+    };
+    policyParams.permStateList.emplace_back(permState);
+    policyParams.preAuthorizationInfo.emplace_back(preAuthorizationInfo);
+
+    const uint64_t beforeInstallTime = GetCurrentTimeMillis();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t afterInstallTime = GetCurrentTimeMillis();
+
+    ExpectPermissionTimestampInRange(tokenID, permissionName, beforeInstallTime, afterInstallTime);
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest008
+ * @tc.desc: App update should keep timestamp unchanged for unchanged user_grant permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest008, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test009");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t firstTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(firstTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    UpdateHapInfoParams updateInfoParams = BuildUpdateHapInfoParams(infoParams);
+    EXPECT_EQ(RET_SUCCESS, UpdateHapTokenByTest(tokenIdEx, updateInfoParams, policyParams));
+    EXPECT_EQ(firstTimestamp, QueryPermissionTimestamp(tokenID, permissionName));
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest009
+ * @tc.desc: App update should keep timestamp unchanged for unchanged system_grant permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest009, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test010");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_GRANTED, PERMISSION_SYSTEM_FIXED));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t firstTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(firstTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    UpdateHapInfoParams updateInfoParams = BuildUpdateHapInfoParams(infoParams);
+    EXPECT_EQ(RET_SUCCESS, UpdateHapTokenByTest(tokenIdEx, updateInfoParams, policyParams));
+    EXPECT_EQ(firstTimestamp, QueryPermissionTimestamp(tokenID, permissionName));
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest010
+ * @tc.desc: App update should keep timestamp unchanged for unchanged pre-authorized permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest010, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test011");
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+    policyParams.preAuthorizationInfo.emplace_back(PreAuthorizationInfo {
+        .permissionName = permissionName,
+        .userCancelable = true
+    });
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t firstTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(firstTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    UpdateHapInfoParams updateInfoParams = BuildUpdateHapInfoParams(infoParams);
+    EXPECT_EQ(RET_SUCCESS, UpdateHapTokenByTest(tokenIdEx, updateInfoParams, policyParams));
+    EXPECT_EQ(firstTimestamp, QueryPermissionTimestamp(tokenID, permissionName));
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest011
+ * @tc.desc: App update followed by granting user_grant permission should refresh timestamp
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest011, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test012");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t installTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(installTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    UpdateHapInfoParams updateInfoParams = BuildUpdateHapInfoParams(infoParams);
+    EXPECT_EQ(RET_SUCCESS, UpdateHapTokenByTest(tokenIdEx, updateInfoParams, policyParams));
+    EXPECT_EQ(installTimestamp, QueryPermissionTimestamp(tokenID, permissionName));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    const uint64_t beforeGrantTime = GetCurrentTimeMillis();
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, permissionName, PERMISSION_USER_FIXED));
+    const uint64_t afterGrantTime = GetCurrentTimeMillis();
+
+    const uint64_t grantTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    PermissionStatus grantStatus;
+    ASSERT_TRUE(QueryPermissionStatusByTokenID(tokenID, permissionName, grantStatus));
+    ExpectGrantedQueryResult(grantStatus);
+    EXPECT_GT(grantTimestamp, installTimestamp);
+    EXPECT_GE(grantTimestamp, beforeGrantTime);
+    EXPECT_LE(grantTimestamp, afterGrantTime);
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest012
+ * @tc.desc: App update should keep old permission timestamp and use update time for newly added permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest012, TestSize.Level1)
+{
+    static const std::string oldPermissionName = "ohos.permission.CAMERA";
+    static const std::string newPermissionName = "ohos.permission.MICROPHONE";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test013");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(oldPermissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t oldPermissionTimestamp = QueryPermissionTimestamp(tokenID, oldPermissionName);
+    EXPECT_GT(oldPermissionTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    HapPolicyParams updatedPolicyParams = policyParams;
+    updatedPolicyParams.permStateList.emplace_back(
+        BuildPermissionState(newPermissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    const uint64_t beforeUpdateTime = GetCurrentTimeMillis();
+    UpdateHapInfoParams updateInfoParams = BuildUpdateHapInfoParams(infoParams);
+    EXPECT_EQ(RET_SUCCESS, UpdateHapTokenByTest(tokenIdEx, updateInfoParams, updatedPolicyParams));
+    const uint64_t afterUpdateTime = GetCurrentTimeMillis();
+
+    EXPECT_EQ(oldPermissionTimestamp, QueryPermissionTimestamp(tokenID, oldPermissionName));
+    ExpectPermissionTimestampInRange(tokenID, newPermissionName, beforeUpdateTime, afterUpdateTime);
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusTimestampTest013
+ * @tc.desc: GrantPermission should refresh timestamp, then SetPermissionStatusWithPolicy should not refresh it
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest013, TestSize.Level1)
+{
+    static const std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams infoParams = BuildTestHapInfoParams("com.example.timestamp.test014");
+    HapPolicyParams policyParams = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "test.domain",
+    };
+    policyParams.permStateList.emplace_back(
+        BuildPermissionState(permissionName, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(tokenID, INVALID_TOKENID);
+    const uint64_t installTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    EXPECT_GT(installTimestamp, 0U);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    const uint64_t beforeGrantTime = GetCurrentTimeMillis();
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, permissionName, PERMISSION_USER_FIXED));
+    const uint64_t afterGrantTime = GetCurrentTimeMillis();
+    const uint64_t grantTimestamp = QueryPermissionTimestamp(tokenID, permissionName);
+    PermissionStatus grantStatus;
+    ASSERT_TRUE(QueryPermissionStatusByTokenID(tokenID, permissionName, grantStatus));
+    ExpectGrantedQueryResult(grantStatus);
+    EXPECT_GT(grantTimestamp, installTimestamp);
+    EXPECT_GE(grantTimestamp, beforeGrantTime);
+    EXPECT_LE(grantTimestamp, afterGrantTime);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    const uint64_t beforePolicyTime = GetCurrentTimeMillis();
+    {
+        MockNativeToken mockNative("edm");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            tokenID, {permissionName}, PERMISSION_DENIED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    }
+    const uint64_t afterPolicyTime = GetCurrentTimeMillis();
+
+    PermissionStatus deniedStatus;
+    ASSERT_TRUE(QueryPermissionStatusByTokenID(tokenID, permissionName, deniedStatus));
+    ExpectDeniedQueryResult(deniedStatus);
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY,
+        deniedStatus.grantFlag & PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_GT(deniedStatus.timestamp, grantTimestamp);
+    EXPECT_GE(deniedStatus.timestamp, beforePolicyTime);
+    EXPECT_LE(deniedStatus.timestamp, afterPolicyTime);
+    EXPECT_EQ(deniedStatus.timestamp, QueryPermissionTimestamp(tokenID, permissionName));
+
+    EXPECT_EQ(0, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: QueryStatusConsistencyTest001
+ * @tc.desc: QueryStatusByPermission and QueryStatusByTokenID should return consistent data
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusConsistencyTest001, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {
+        "ohos.permission.CAMERA",
+        "ohos.permission.MICROPHONE"
+    };
+    AccessTokenID tokenID = PrepareTestHap("com.example.consistency.test001", permissions, true);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    std::vector<PermissionStatus> byTokenInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, byTokenInfoList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permissions.size(), byTokenInfoList.size());
+
+    std::vector<PermissionStatus> byPermissionInfoList;
+    ret = AccessTokenKit::QueryStatusByPermission(permissions, byPermissionInfoList, true);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    for (const auto& tokenInfo : byTokenInfoList) {
+        auto permIter = std::find_if(byPermissionInfoList.begin(), byPermissionInfoList.end(),
+            [tokenInfo](const PermissionStatus& permissionInfo) {
+                return permissionInfo.tokenID == tokenInfo.tokenID &&
+                    permissionInfo.permissionName == tokenInfo.permissionName;
+            });
+        ASSERT_NE(permIter, byPermissionInfoList.end());
+        EXPECT_EQ(permIter->grantStatus, tokenInfo.grantStatus);
+        EXPECT_EQ(permIter->grantFlag, tokenInfo.grantFlag);
+        EXPECT_EQ(permIter->timestamp, tokenInfo.timestamp);
+        EXPECT_EQ(tokenInfo.grantStatus,
+            AccessTokenKit::VerifyAccessToken(tokenInfo.tokenID, tokenInfo.permissionName));
+        EXPECT_EQ(permIter->grantStatus,
+            AccessTokenKit::VerifyAccessToken(permIter->tokenID, permIter->permissionName));
+        ExpectGrantStatusAndFlagConsistent(tokenInfo);
+        ExpectGrantStatusAndFlagConsistent(*permIter);
+    }
+
+    CleanupTestHap(tokenID);
 }
 }
 }

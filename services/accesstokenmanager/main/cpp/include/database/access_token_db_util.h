@@ -37,6 +37,8 @@ public:
     static void ToRdbValueBuckets(const std::vector<GenericValues>& values,
         std::vector<NativeRdb::ValuesBucket>& buckets);
     static void ToRdbPredicates(const GenericValues& conditionValue, NativeRdb::RdbPredicates& predicates);
+    static void ToRdbPredicates(const std::string& column, const std::vector<VariantValue>& values,
+        NativeRdb::RdbPredicates& predicates);
     static void ResultToGenericValues(const std::shared_ptr<NativeRdb::ResultSet>& resultSet, GenericValues& value);
 };
 } // namespace AccessToken

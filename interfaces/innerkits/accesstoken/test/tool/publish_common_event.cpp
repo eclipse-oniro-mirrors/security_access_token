@@ -155,7 +155,9 @@ int32_t main(int argc, char *argv[])
             return -1;
         }
         std::string level = std::string(argv[2]);
+        std::cout << "Publish begin, event=" << g_event[event] << ", level=" << level << std::endl;
         PublishThermalLevelCommonEvent(g_event[event], level);
+        std::cout << std::endl << std::endl;
         return 0;
     }
 
@@ -165,10 +167,14 @@ int32_t main(int argc, char *argv[])
             return -1;
         }
         int32_t capacity = atoi(argv[2]);
+        std::cout << "Publish begin, event=" << g_event[event] << ", capacity=" << capacity << std::endl;
         PublishBatteryCommonEvent(g_event[event], capacity);
+        std::cout << std::endl << std::endl;
         return 0;
     }
     
+    std::cout << "Publish begin, event=" << g_event[event] << std::endl;
     PublishCommonEvent(g_event[event]);
+    std::cout << std::endl << std::endl;
     return 0;
 }

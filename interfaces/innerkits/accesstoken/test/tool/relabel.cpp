@@ -110,6 +110,7 @@ int32_t main(int argc, char *argv[])
     std::cout << "Self token is " << GetSelfTokenID() << std::endl;
 
     bool isStart = static_cast<bool>(atoi(argv[1]));
+    std::cout << "Relabel begin, isStart=" << isStart << std::endl;
     if (isStart) {
         PublishCommonEvent("usual.event.SCREEN_LOCKED");
         PublishCommonEvent("usual.event.USER_UNLOCKED");

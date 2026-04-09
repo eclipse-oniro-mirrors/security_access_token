@@ -206,6 +206,20 @@ int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionV
     return res;
 }
 
+int32_t RdbDlopenManager::Find(const AtmDataType type, const std::string& column,
+    const std::vector<VariantValue>& values, std::vector<GenericValues>& results)
+{
+    auto instance = GetDbInstance();
+    if (instance == nullptr) {
+        return AccessTokenError::ERR_LOAD_SO_FAILED;
+    }
+
+    ++taskNum_;
+    int32_t res = instance->Find(type, column, values, results);
+    --taskNum_;
+    return res;
+}
+
 int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
     const std::vector<AddInfo>& addInfoVec)
 {
